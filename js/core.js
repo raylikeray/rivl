@@ -72,6 +72,8 @@ const favs = {
   all() { const u = store.get('favs', null); if (u) return u; const o = {}; ORDER.forEach(k => o[k] = [...LEAGUES[k].favs]); return o; },
   has(lk, id) { return (this.all()[lk] || []).includes(String(id)); },
   toggle(lk, id) { const a = this.all(); a[lk] = a[lk] || []; id = String(id); a[lk] = a[lk].includes(id) ? a[lk].filter(x => x !== id) : [...a[lk], id]; store.set('favs', a); return a[lk].includes(id); },
+  /* the order you keep them in: Home and the lists follow it */
+  reorder(lk, ids) { const a = this.all(); const cur = a[lk] || []; const want = ids.map(String).filter(id => cur.includes(id)); a[lk] = [...want, ...cur.filter(id => !want.includes(id))]; store.set('favs', a); },
   reset() { store.set('favs', null); }
 };
 

@@ -168,8 +168,17 @@
     // today's game for each team, from the slate already in hand: on now, the result, or the tip
     const byTeam = new Map(); (S.today[lk] || []).forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
     const todayLine = (g, r) => { const home = g.home.id === String(r.id); const us = home ? g.home : g.away, them = home ? g.away : g.home; const vs = `${g.neutral ? 'vs' : home ? 'vs' : 'at'} ${esc(them.abbr || them.short)}`; if (g.off) return `${esc(g.off)} ${vs}`; if (g.state === 'in') return `<i class="dot"></i>${us.score}–${them.score} ${vs}, ${esc(g.detail)}`; if (g.state === 'post') return `${us.score > them.score ? 'W' : 'L'} ${us.score}–${them.score} ${vs}`; return `${esc(tipOf(g))} ${vs}`; };
+    let ordering = false;
     const paint = () => {
       const q = (store.get('v5:tq', '') || '').trim().toLowerCase(), tab = store.get('v5:ttab', 'all');
+      if (tab === 'following' && !q) {   // your teams in your own order, with a way to change it
+        const all = groups.flatMap(g => g.rows); const mine = (favs.all()[lk] || []).map(id => all.find(r => String(r.id) === String(id))).filter(Boolean);
+        const el = $main.querySelector('#tlist'); if (!el) return;
+        if (!mine.length) { el.innerHTML = empty('No followed teams yet', '<p style="margin:6px 0 0">Tap the star on any team to follow it.</p>'); return; }
+        el.innerHTML = sec('Following', `${mine.length}`, mine.length > 1 ? `<button data-act="torder" aria-pressed="${ordering}">${ordering ? 'Done' : 'Reorder'}</button>` : '') + `<div class="rows${ordering ? ' ordering' : ''}" data-order="teams">${mine.map(r => { const g = byTeam.get(String(r.id)); const today = g ? todayLine(g, r) : ''; const body = `<span class="t"><b>${esc(r.name || r.short)}</b><span>${esc(standingLine(r, L) || '')}${today ? `<em class="today">${today}</em>` : ''}</span></span>`; return ordering ? `<div class="row prow ordrow" data-oid="${esc(r.id)}"><span class="go">${logo(r.logo, '', teamColor({ id: r.id, abbr: r.abbr }, L))}</span>${body}${V._.orderTools}</div>` : `<div class="row prow${g && g.state === 'in' ? ' live' : ''}"><a class="go" href="${href.team(lk, r.id)}" aria-label="${esc(r.name)}">${logo(r.logo, '', teamColor({ id: r.id, abbr: r.abbr }, L))}</a><a class="t" href="${href.team(lk, r.id)}">${body.replace(/^<span class="t">|<\/span>$/g, '')}</a><button class="star on" data-act="fav" data-lk="${lk}" data-id="${esc(r.id)}" aria-pressed="true" aria-label="Unfollow ${esc(r.name)}">${starSvg}</button></div>`; }).join('')}</div>`;
+        const ol = el.querySelector('[data-order="teams"].ordering'); if (ol) V._.dragOrder(ol, ids => favs.reorder(lk, ids));
+        return;
+      }
       const blocks = groups.map(g => {
         let rows = g.rows.slice().sort((a, b) => (a.name || a.short).localeCompare(b.name || b.short));
         if (tab === 'following') rows = rows.filter(r => favs.has(lk, r.id));
@@ -185,6 +194,7 @@
     inp.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { store.set('v5:tq', inp.value); paint(); }, 120); });
     $main.addEventListener('click', e => { const b = e.target.closest('[data-act="ttab"]'); if (!b) return; store.set('v5:ttab', b.dataset.tab); $main.querySelectorAll('[data-act="ttab"]').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); }); paint(); });
     $main.addEventListener('rivl:fav', paint);
+    $main.addEventListener('click', e => { const b = e.target.closest('[data-act="torder"]'); if (!b) return; e.preventDefault(); ordering = !ordering; paint(); });
     const onPoll = () => { if (!$main.querySelector('#tlist')) { document.removeEventListener('rivl:polled', onPoll); return; } byTeam.clear(); (S.today[lk] || []).forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); }); if ((S.today[lk] || []).some(isLive)) paint(); };
     document.addEventListener('rivl:polled', onPoll);
   }

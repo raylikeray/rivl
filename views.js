@@ -45,7 +45,7 @@
   /* a followed player's colour: the one stored with the follow when it is real, else their team's */
   const playerColor = (p, L) => { if (!p) return NONE; if (p.color && !BAD(p.color)) return hx(p.color); return teamColor({ id: p.teamId, abbr: p.team }, L); };
   /* team colour on the two grounds: lifted toward white on black, deepened toward black on white */
-  const rgbOf = c => { const h = String(c || '').replace('#', ''); return h.length >= 6 ? [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)) : null; };
+  const rgbOf = c => { const s = String(c || ''); const m = s.match(/^rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/); if (m) return [+m[1], +m[2], +m[3]]; const h = s.replace('#', ''); return h.length >= 6 ? [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)) : null; };   // hex or an rgb() a lift produced
   const lumOf = c => { const v = rgbOf(c); return v ? (0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]) / 255 : .5; };
   const mixTo = (c, to, k) => { const v = rgbOf(c); if (!v) return c; const m = x => Math.round(x + (to - x) * k); return `rgb(${m(v[0])},${m(v[1])},${m(v[2])})`; };
   const V_lift = c => { const l = lumOf(c); return l > 0.45 ? c : mixTo(c, 255, l < 0.15 ? 0.6 : 0.4); };
@@ -103,6 +103,8 @@
     has(lk, id) { return this.all().some(p => p.lk === lk && p.id === String(id)); },
     toggle(p) { const a = this.all(); const i = a.findIndex(x => x.lk === p.lk && x.id === String(p.id)); if (i >= 0) a.splice(i, 1); else a.push({ ...p, id: String(p.id) }); store.set('v5:players', a); return i < 0; },
     /* a follow is a snapshot taken the day it was made; the player's page and the league list bring it up to date (a trade, a new photo) */
+    /* the order you keep them in, per league; the other leagues' players stay where they are */
+    reorder(lk, ids) { const a = this.all(); const mine = a.filter(p => p.lk === lk); const byId = Object.fromEntries(mine.map(p => [p.id, p])); const want = ids.map(String).filter(id => byId[id]).map(id => byId[id]); const rest = mine.filter(p => !ids.map(String).includes(p.id)); const ordered = [...want, ...rest]; let i = 0; store.set('v5:players', a.map(p => p.lk === lk ? ordered[i++] : p)); },
     update(lk, id, patch) { const a = this.all(); const i = a.findIndex(x => x.lk === lk && x.id === String(id)); if (i < 0) return false; const cur = a[i]; const next = { ...cur }; let changed = false; Object.entries(patch).forEach(([k, v]) => { if (v != null && v !== '' && v !== cur[k]) { next[k] = v; changed = true; } }); if (changed) { a[i] = next; store.set('v5:players', a); } return changed; }
   };
 
@@ -225,15 +227,24 @@
     const alive = () => { if (token !== homeToken) return false; const r = HW.v5.route && HW.v5.route(); return !r || (r.name === 'home' && r.lk === lk); };   // still the screen being shown, even while the old one is kept on screen during the load
     const secs = {}; let painted = false;
     const wrap = (k, quiet) => `<section class="hsec${quiet ? ' quiet' : ''}" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;
+    // two columns on a wide screen (the games and your people on the left, injuries and news on the right); one stack on a phone
+    const SIDE = new Set(['injuries', 'news']);
+    const col = k => $main.querySelector(SIDE.has(k) ? '.hcol.side' : '.hcol.main') || $main;
     const paint = (quiet = false) => {
       if (!alive()) return;
-      if (!painted) { painted = true; $main.innerHTML = SECS.map(k => secs[k] ? wrap(k, false) : '').join('') || empty('Everything is switched off', '<p style="margin:6px 0 0">Turn some sections back on and Home fills up again.</p>', `<a class="btn" href="#settings">Settings</a>`); return; }
+      if (!painted) {
+        painted = true;
+        const colHtml = side => SECS.filter(k => SIDE.has(k) === side && secs[k]).map(k => wrap(k, false)).join('');
+        $main.innerHTML = SECS.some(k => secs[k]) ? `<div class="hcols"><div class="hcol main">${colHtml(false)}</div><div class="hcol side">${colHtml(true)}</div></div>` : empty('Everything is switched off', '<p style="margin:6px 0 0">Turn some sections back on and Home fills up again.</p>', `<a class="btn" href="#settings">Settings</a>`);
+        return;
+      }
+      if (!$main.querySelector('.hcols')) { painted = false; return paint(quiet); }   // the empty state is on screen and something arrived
       SECS.forEach(k => {
         const cur = $main.querySelector(`section[data-sec="${k}"]`);
         if (!secs[k]) { if (cur) cur.remove(); return; }
         if (cur) { if (cur.dataset.h !== hashOf(secs[k])) cur.outerHTML = wrap(k, quiet); return; }
-        const after = SECS.slice(SECS.indexOf(k) + 1).map(j => $main.querySelector(`section[data-sec="${j}"]`)).find(Boolean);
-        if (after) after.insertAdjacentHTML('beforebegin', wrap(k, quiet)); else $main.insertAdjacentHTML('beforeend', wrap(k, quiet));
+        const after = SECS.slice(SECS.indexOf(k) + 1).filter(j => SIDE.has(j) === SIDE.has(k)).map(j => $main.querySelector(`section[data-sec="${j}"]`)).find(Boolean);
+        if (after) after.insertAdjacentHTML('beforebegin', wrap(k, quiet)); else col(k).insertAdjacentHTML('beforeend', wrap(k, quiet));
       });
     };
 
@@ -304,7 +315,7 @@
         secs.players = sec('My players', '', `<a href="#players">${fp.length ? 'Edit' : 'Find players'}</a>`) + (fp.length
           ? `<div class="rail">${fp.map(p => { const is = teamOf(p); const g = games.find(g => is(g.home) || is(g.away)); const us = g ? (is(g.home) ? g.home : g.away) : null, them = g ? (is(g.home) ? g.away : g.home) : null; const ln = lineBy[p.id];
             // under the average: the game tonight (on now, the tip, or the result), else last night's line
-            const now = g && !g.off ? (g.state === 'in' ? `<i class="on">${us.score}–${them.score}</i> ${esc(g.detail)}` : g.state === 'post' ? `${us.score > them.score ? 'W' : 'L'} ${us.score}–${them.score} ${is(g.home) ? 'vs' : 'at'} ${esc(them.abbr)}` : `${esc(tipOf(g))} ${g.neutral ? 'vs' : is(g.home) ? 'vs' : 'at'} ${esc(them.abbr)}`) : ln ? (ln.dnp ? esc(ln.dnp) : `${esc(ln.pts)} / ${esc(ln.reb)} / ${esc(ln.ast)} last night`) : '';
+            const now = g && !g.off ? (g.state === 'in' ? `<i class="on">${us.score}–${them.score}</i> ${esc(g.detail)}` : g.state === 'post' ? `${us.score > them.score ? 'W' : 'L'} ${us.score}–${them.score} ${is(g.home) ? 'vs' : 'at'} ${esc(them.abbr)}` : `${esc(tipOf(g))} ${g.neutral ? 'vs' : is(g.home) ? 'vs' : 'at'} ${esc(them.abbr)}`) : ln ? (ln.dnp ? esc(ln.dnp) : `${esc(ln.pts)} / ${esc(ln.reb)} / ${esc(ln.ast)}<small>pts / reb / ast last night</small>`) : '';
             return `<a class="pl" href="${href.player(lk, p.id)}" style="${tcv(playerColor(p, L))}">${headshot(p.img, playerColor(p, L), 64, p.name)}<b>${esc(p.short || p.name)}</b><span>${esc(ppgOf(p) || p.team || '')}</span>${now ? `<em class="nx">${now}</em>` : ''}</a>`; }).join('')}</div>`
           : empty('Follow the players you watch', '<p style="margin:6px 0 0">They show up here with their scoring line, and their profile is one tap away.</p>', `<a class="btn" href="#players">Find players</a>`));
       } else delete secs.players;
@@ -540,8 +551,9 @@
     const gradYear = classIdx ? HW.seasonYear() + (4 - classIdx) : 0;
     const facts = [a.displayHeight, a.displayWeight, college ? classWord : (a.age ? `Age ${a.age}` : ''), country, !college && a.college && a.college.name, hometown].filter(Boolean);
     const snap = { lk, id: String(id), name: a.displayName, short: a.shortName || a.displayName, img: a.headshot && a.headshot.href, team: tm.abbreviation || '', teamId: tm.id ? String(tm.id) : '', color: BAD(color) ? '' : color };
+    const tlogo = teamLogo || tm.logo || '';
     const hero = `<div class="ehero" style="--a:${esc(color)}">
-      <div class="wm">${esc(a.jersey || '')}</div>
+      ${tlogo ? `<img class="tlg" src="${esc(tlogo)}" alt="" ${hide}>` : ''}<div class="wm">${esc(a.jersey || '')}</div>
       <div class="in"><div class="sub">${subLine}</div><h1>${esc(a.firstName || '')}<br>${esc(a.lastName || a.displayName)}</h1>
         <div class="facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div>
         <div class="acts"><button class="${following ? 'on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${following}">${following ? starSvg : starLine}${following ? 'Following' : 'Follow'}</button>${tm.id ? `<a href="${href.team(lk, tm.id)}">${esc(tm.shortDisplayName || tm.name || 'Team')}</a>` : ''}</div>
@@ -701,12 +713,40 @@
     return { team, players };
   }
   /* a player row: in setup the whole row is the follow toggle; on the Players tab the row opens the profile and the star follows */
-  function playerRow(p, { sub, on, select = false, right = '', rank = 0 } = {}) {
+  /* rows you can put in your own order: drag a row by its grip (touch or mouse), or tap the arrows; when the pointer lets go,
+     the order read off the list goes to onChange(ids). The container is wired once. */
+  const gripSvg = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg>`;
+  const orderTools = `<span class="ord"><button class="mv" data-mv="up" aria-label="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 6-6 6 6"/></svg></button><button class="mv" data-mv="down" aria-label="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 10 6 6 6-6"/></svg></button><span class="grip" aria-label="Drag to reorder">${gripSvg}</span></span>`;
+  function dragOrder(list, onChange) {
+    if (!list || list.dataset.drag) return; list.dataset.drag = '1';
+    const ids = () => [...list.querySelectorAll('[data-oid]')].map(r => r.dataset.oid);
+    list.addEventListener('click', e => {
+      const b = e.target.closest('.mv'); if (!b) return; e.preventDefault(); e.stopPropagation();
+      const row = b.closest('[data-oid]'); const sib = b.dataset.mv === 'up' ? row.previousElementSibling : row.nextElementSibling; if (!sib || !sib.dataset.oid) return;
+      if (b.dataset.mv === 'up') sib.before(row); else sib.after(row); row.classList.add('moved'); setTimeout(() => row.classList.remove('moved'), 320); onChange(ids());
+    });
+    let row = null, y0 = 0, dy = 0;
+    list.addEventListener('pointerdown', e => {
+      const g = e.target.closest('.grip'); if (!g) return; row = g.closest('[data-oid]'); if (!row) return;
+      e.preventDefault(); g.setPointerCapture(e.pointerId); y0 = e.clientY; dy = 0; row.classList.add('lift'); list.classList.add('dragging');
+    });
+    list.addEventListener('pointermove', e => {
+      if (!row) return; dy = e.clientY - y0; row.style.transform = `translateY(${dy}px)`;
+      const r = row.getBoundingClientRect(); const mid = r.top + r.height / 2;
+      const prev = row.previousElementSibling, next = row.nextElementSibling;
+      if (prev && prev.dataset.oid && mid < prev.getBoundingClientRect().top + prev.getBoundingClientRect().height / 2) { prev.before(row); y0 += -(prev.getBoundingClientRect().height); row.style.transform = `translateY(${e.clientY - y0}px)`; }
+      else if (next && next.dataset.oid && mid > next.getBoundingClientRect().top + next.getBoundingClientRect().height / 2) { next.after(row); y0 += next.getBoundingClientRect().height; row.style.transform = `translateY(${e.clientY - y0}px)`; }
+    });
+    const drop = () => { if (!row) return; row.style.transform = ''; row.classList.remove('lift'); list.classList.remove('dragging'); row = null; onChange(ids()); };
+    list.addEventListener('pointerup', drop); list.addEventListener('pointercancel', drop);
+  }
+  function playerRow(p, { sub, on, select = false, right = '', rank = 0, order = false } = {}) {
     const snap = { lk: p.lk, id: p.id, name: p.name, short: p.short || p.name, img: p.img || '', team: p.team || '', teamId: p.teamId ? String(p.teamId) : '', color: BAD(p.color) ? '' : hx(p.color) };
     const star = `<span class="star${on ? ' on' : ''}">${on ? starSvg : starLine}</span>`;
     const pc = playerColor(p, LEAGUES[p.lk]);
     const rk = rank ? `<span class="lrk">${rank}</span>` : '';
     if (select) return `<button class="row prow sel${on ? ' on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${on}">${rk}${headshot(p.img, pc, 46, p.name)}<span class="t"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></span>${right}${star}</button>`;
+    if (order) return `<div class="row prow ordrow" data-oid="${esc(p.id)}"><span class="go">${headshot(p.img, pc, 46, p.name)}</span><span class="t"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></span>${orderTools}</div>`;
     return `<div class="row prow"><a class="go" href="${href.player(p.lk, p.id)}" aria-label="${esc(p.name)}">${rk}${headshot(p.img, pc, 46, p.name)}</a><a class="t" href="${href.player(p.lk, p.id)}"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></a>${right}<button class="star${on ? ' on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(p.name)}">${on ? starSvg : starLine}</button></div>`;
   }
   const lastName = n => { const w = String(n || '').replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/i, '').trim().split(/\s+/); return w[w.length - 1] || ''; };
@@ -734,7 +774,7 @@
         const teams = Object.values(idx).filter(t => `${t.name} ${t.short} ${t.abbr}`.toLowerCase().includes(q) && !sections.some(s => s.key === t.id)).sort((a, b) => (a.short || '').localeCompare(b.short || '')).slice(0, 5);
         if (teams.length) parts.push(sec('Teams', 'tap to see the roster') + `<div class="rows">${teams.map(t => `<button class="row" data-pp="browse" data-id="${esc(t.id)}">${logo(t.logo)}<span class="t"><b>${esc(t.name)}</b><span>Show the roster</span></span>${chev}</button>`).join('')}</div>`);
       }
-      if (following && !q) { const fl = fplayers.all().filter(p => p.lk === lk); if (fl.length) parts.push(sec('Following', `${fl.length}`) + `<div class="rows">${fl.map(p => playerRow(p, { sub: p.team || '', on: true, select })).join('')}</div>`); }
+      if (following && !q) { const fl = fplayers.all().filter(p => p.lk === lk); if (fl.length) parts.push(sec('Following', `${fl.length}`, fl.length > 1 ? `<button data-pp="order" aria-pressed="${!!paint.order}">${paint.order ? 'Done' : 'Reorder'}</button>` : '') + `<div class="rows${paint.order ? ' ordering' : ''}" data-order="players">${fl.map(p => playerRow(p, { sub: p.team || '', on: true, select, order: !!paint.order })).join('')}</div>`); }
       sections.forEach(s => {
         const rows = q ? s.rows.filter(p => `${p.name} ${s.team.name} ${s.team.abbr}`.toLowerCase().includes(q)) : s.rows; if (!rows.length) return;
         const folded = !q && !!(store.get('v5:ppcol', {}) || {})[s.key];   // a search always opens every team
@@ -755,12 +795,14 @@
         : empty(pro ? 'Follow a team first' : 'Players come from the teams you follow', `<p style="margin:6px 0 0">${pro ? 'Your teams\' rosters show here, with the league\'s top scorers below.' : 'Follow a school and its roster shows here, or search any school above.'}</p>`));
       if (missing.length && !q) parts.push(`<p class="foot">${missing.length} of your teams didn't answer; search for the team to load its roster.</p>`);
       list.innerHTML = parts.join('');
+      const ol = list.querySelector('[data-order="players"].ordering'); if (ol) dragOrder(ol, ids => { fplayers.reorder(lk, ids); document.dispatchEvent(new CustomEvent('rivl:follow', { detail: { reorder: true } })); });
     };
     paint();
     let t = null; inp.addEventListener('input', () => { clearTimeout(t); t = setTimeout(paint, 120); });
     el.addEventListener('click', async e => {
       const b = e.target.closest('[data-pp]'); if (!b) return; e.preventDefault();
       if (b.dataset.pp === 'top') { paint.topOpen = true; paint(); }
+      else if (b.dataset.pp === 'order') { paint.order = !paint.order; paint(); }
       else if (b.dataset.pp === 'lcat') {
         const was = list.querySelector('.lchips'); const sl = was ? was.scrollLeft : 0;   // the row is rebuilt; it must not jump back to the start
         paint.lcat = b.dataset.cat; paint.topOpen = false; paint();
@@ -769,7 +811,7 @@
       else if (b.dataset.pp === 'fold') { const f = store.get('v5:ppcol', {}) || {}; const k = b.dataset.id; if (f[k]) delete f[k]; else f[k] = 1; store.set('v5:ppcol', f); const body = b.nextElementSibling; const open = !f[k]; b.setAttribute('aria-expanded', String(open)); if (body) body.hidden = !open; }
       else if (b.dataset.pp === 'browse') { b.querySelector('.t span').textContent = 'Loading…'; const r = await rosterOf(L, b.dataset.id, idx).catch(() => null); if (r) { sections.push({ key: r.team.id, team: r.team, rows: r.players.slice().sort(byLine), open: true }); inp.value = ''; } paint(); }
     });
-    const sync = () => { if (!el.isConnected) { document.removeEventListener('rivl:follow', sync); return; } const fset = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('[data-act="follow-player"]').forEach(b => { let id = ''; try { id = JSON.parse(b.dataset.snap).id; } catch { } const on = fset.has(String(id)); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); const st = b.classList.contains('star') ? b : b.querySelector('.star'); if (st) { st.classList.toggle('on', on); st.innerHTML = on ? starSvg : starLine; } }); if (following && !inp.value) paint(); };
+    const sync = (e) => { if (!el.isConnected) { document.removeEventListener('rivl:follow', sync); return; } if (e && e.detail && e.detail.reorder) return; const fset = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('[data-act="follow-player"]').forEach(b => { let id = ''; try { id = JSON.parse(b.dataset.snap).id; } catch { } const on = fset.has(String(id)); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); const st = b.classList.contains('star') ? b : b.querySelector('.star'); if (st) { st.classList.toggle('on', on); st.innerHTML = on ? starSvg : starLine; } }); if (following && !inp.value) paint(); };
     document.addEventListener('rivl:follow', sync);
   }
   async function players(lk) {
@@ -779,5 +821,5 @@
   }
 
   HW.v5 = Object.assign(HW.v5 || {}, { home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, learn, statusWord, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
+    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, dragOrder, orderTools, learn, statusWord, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

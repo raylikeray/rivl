@@ -213,6 +213,7 @@ table,.num{font-variant-numeric:tabular-nums}
   background:linear-gradient(118deg,var(--a) 0 58%,var(--a2,color-mix(in srgb,var(--a) 62%,#000)) 58% 100%);min-height:236px}
 .ehero .wm{position:absolute;right:10px;top:-22px;font:800 230px/1 var(--num);color:rgba(255,255,255,.09);letter-spacing:-.02em;pointer-events:none;user-select:none}
 .ehero .shot{position:absolute;right:-4px;bottom:0;width:172px;height:172px;display:block;pointer-events:none}
+.ehero .tlg{display:none;position:absolute;right:36%;top:50%;width:260px;height:260px;object-fit:contain;transform:translateY(-50%);opacity:.14;filter:grayscale(1) brightness(3);pointer-events:none}
 .ehero .shot img{width:100%;height:100%;object-fit:contain;object-position:bottom;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
 .ehero .tlogo{position:absolute;right:16px;top:16px;width:96px;height:96px;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
 .ehero .in{position:relative;z-index:1;padding:16px 18px 18px;max-width:64%}
@@ -328,6 +329,21 @@ table,.num{font-variant-numeric:tabular-nums}
 [style*="--tf-d:"]{--tf:var(--tf-d)}
 :root[data-theme="light"] [style*="--tf-d:"]{--tf:var(--tf-l)}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) [style*="--tf-d:"]{--tf:var(--tf-l)} }
+/* rows in your own order: a grip to drag, arrows to nudge; the lifted row floats over the list */
+.rows.ordering > .row{touch-action:pan-y;transition:box-shadow .15s ease,background .15s ease;animation:none!important}   /* the rise-in's end frame would pin the transform a drag needs */
+.ordrow .go{display:block}
+.ordrow .t{flex:1;min-width:0}
+.ord{display:flex;align-items:center;gap:2px;margin-left:auto;flex:none}
+.ord .mv{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;color:var(--ink-2)}
+.ord .mv svg{width:18px;height:18px}
+.ord .mv:active{background:var(--surf-2)}
+.ord .grip{width:38px;height:44px;display:grid;place-items:center;color:var(--ink-3);cursor:grab;touch-action:none;border-radius:10px}
+.ord .grip svg{width:20px;height:20px}
+.ordrow.lift{position:relative;z-index:5;background:var(--surf);border-radius:14px;box-shadow:0 14px 34px -14px rgba(0,0,0,.7),0 0 0 1px var(--line-2);cursor:grabbing}
+.ordrow.lift .grip{cursor:grabbing;color:var(--ink)}
+.rows.dragging .row:not(.lift){transition:transform .15s ease}
+.ordrow.moved{animation:ordpop .32s ease}
+@keyframes ordpop{0%{background:var(--surf-2)}100%{background:transparent}}
 .todayfab{position:fixed;left:50%;bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 14px);transform:translate(-50%,10px);display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 16px 0 13px;border-radius:999px;background:var(--ink);color:var(--bg);font:700 13.5px/1 var(--ui);white-space:nowrap;z-index:70;opacity:0;pointer-events:none;transition:opacity .2s,transform .22s cubic-bezier(.2,.8,.2,1);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 10px 24px -10px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.3)}
 .todayfab.in{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .todayfab:active{transform:translate(-50%,0) scale(.96)}
@@ -1124,10 +1140,10 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
 .swatch.on{color:var(--ink);box-shadow:var(--edge),inset 0 0 0 2px var(--sw)}
 .swatch.on i{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 0 0 2px var(--bg),0 0 0 4px var(--sw)}
 /* the rail's names match the rows' */
-.pl{width:98px}
-.pl b{font-size:15px}
+.pl{width:126px}
+.pl b{font-size:14.5px;letter-spacing:-.01em}
 .pl span{font-size:13px}
-.rail{gap:12px}
+.rail{gap:10px}
 
 /* players: a team band folds its roster */
 button.thead{border:0;font:inherit;text-align:left;cursor:pointer}
@@ -1301,7 +1317,76 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .pfchips .chip small{font-size:11px;font-weight:700;color:var(--ink-3);margin-left:1px}
 .pfchips .chip.on small{color:inherit;opacity:.75}
 /* the rail card's second line: tonight's game or last night's line */
-.pl em.nx{display:block;font-style:normal;font-size:11.5px;font-weight:700;color:var(--ink-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl em.nx{display:block;font-style:normal;font-size:12px;font-weight:800;color:var(--ink-2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--num)}
+.pl em.nx small{display:block;font:600 10.5px/1.2 var(--ui);color:var(--ink-3);margin-top:2px;letter-spacing:.01em}
 .pl em.nx i.on{font-style:normal;color:var(--live);font-weight:800}
 .tbl.cup .pos{color:var(--win);font-weight:700}
 .tbl.cup .neg{color:var(--loss);font-weight:700}
+
+/* ---- desktop: a rail on the left, the header in one row, the content wide, two columns where a screen has them ---- */
+@media (min-width:1040px){
+  :root{--rail:236px;--gut:36px;--gut-r:36px}
+  body{overflow-y:scroll}
+  .app{max-width:none;margin:0 0 0 var(--rail);padding:0 0 64px;min-height:100vh}
+  .app>*:not(.hdr){max-width:1160px;margin-left:auto;margin-right:auto}
+  .app>#main{max-width:1232px}
+  /* the header: wordmark, the league switch, search and settings in one row */
+  .hdr{display:flex;align-items:center;gap:28px;max-width:1232px;margin:0 auto;padding:14px var(--gut-r) 6px var(--gut)}
+  .hdr .top{flex:none;height:56px;padding:0;gap:0;width:auto;min-width:0;order:1}
+  .hdr .top .lockup{display:none}
+  .hdr .top::before{display:none}
+  .hdr .top .sp{margin-left:0}
+  .hdr .pills{flex:none;width:520px;margin:0 auto;order:0}
+  .hdr .top[hidden]{display:none}
+  .hdr:has(.top[hidden]){display:none}
+  .pill,.pill.on,[data-accent] .pill.on{height:40px;font-size:14.5px}
+  /* the rail: the mark, then the five screens as rows */
+  .tabs{position:fixed;left:0;top:0;bottom:0;right:auto;width:var(--rail);max-width:none;margin:0;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:104px 14px 20px;border-top:0;border-right:1px solid var(--line);background:var(--bg);box-shadow:none}
+  .tabs::before{content:"";position:absolute;left:26px;top:30px;width:112px;height:55px;background:var(--ink);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 123.41'%3E%3Cpath d='M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0ZM108 0H132V123.41H108ZM140 0H164.5L168.0 96L171.5 0H196L192 123.41H144ZM204 0H228V99.41H250V123.41H204Z'/%3E%3C/svg%3E") no-repeat left top/contain;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 123.41'%3E%3Cpath d='M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0ZM108 0H132V123.41H108ZM140 0H164.5L168.0 96L171.5 0H196L192 123.41H144ZM204 0H228V99.41H250V123.41H204Z'/%3E%3C/svg%3E") no-repeat left top/contain}
+  .tab{height:46px;flex-direction:row;justify-content:flex-start;gap:13px;padding:0 14px;border-radius:12px;font-size:14.5px;font-weight:700;color:var(--ink-2);transition:background .15s ease,color .15s ease}
+  .tab:hover{background:var(--surf);color:var(--ink)}
+  .tab.on{background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),var(--plate-shadow);color:var(--ink)}
+  .tab svg{width:22px;height:22px}
+  .tab:active{transform:none}
+  /* what hangs off the bottom on a phone sits above the content column here */
+  .toast,.upd,.todayfab{bottom:28px;left:calc(var(--rail) + (100vw - var(--rail)) / 2)}
+  .loadbar{left:var(--rail)}
+  .stale{margin-left:var(--rail)}
+  /* the screens themselves */
+  .games{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .games:has(> .game:only-child){grid-template-columns:minmax(0,640px)}
+  .heroes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dates{justify-content:safe center}
+  .day{min-width:72px;height:68px}
+  .chip{height:36px;font-size:14px;padding:0 16px}
+  .chips{gap:8px}
+  .sec h2{font-size:24px}
+  .ehero{min-height:300px;border-radius:22px}
+  .ehero .in{padding:26px 30px 28px;max-width:58%}
+  .ehero h1{font-size:64px}
+  .ehero .facts{font-size:14px;margin-top:16px}
+  .ehero .acts{margin-top:22px}
+  .ehero .wm{font-size:320px;top:-36px;right:30px}
+  .ehero .shot{width:300px;height:300px;right:24px}
+  .ehero .tlg{display:block}
+  .ehero.team .biglogo{width:200px;height:200px;right:48px}
+  .ehero.team .in{max-width:62%}
+  .reader .body{font-size:18px;max-width:72ch}
+  .reader h1{font-size:40px}
+  .reader img.lead{max-height:520px;object-fit:cover}
+  .tbl.stand{max-width:980px}
+  .tw{max-width:980px}
+  .pl{width:104px}
+  .pl .hs{width:76px;height:76px}
+  /* Home: the games and your teams on the left, injuries and news on the right */
+  .hcols{display:grid;grid-template-columns:minmax(0,1fr) 400px;column-gap:32px;align-items:start}
+  .hcols .hcol.side{position:sticky;top:16px}
+  .row .thumb{width:112px}
+  .onb{max-width:760px}
+  .onb-grid{grid-template-columns:repeat(4,1fr)}
+}
+@media (min-width:1300px){
+  .games{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .games:has(> .game:only-child){grid-template-columns:minmax(0,640px)}
+  .heroes{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
