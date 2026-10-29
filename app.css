@@ -1088,3 +1088,10 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
 .pl b{font-size:15px}
 .pl span{font-size:13px}
 .rail{gap:12px}
+
+/* players: a team band folds its roster */
+button.thead{border:0;font:inherit;text-align:left;cursor:pointer}
+button.thead .chev{margin-left:auto;color:var(--ink-3);transition:transform .18s}
+button.thead .chev svg{width:18px;height:18px;transform:rotate(90deg)}
+button.thead[aria-expanded="false"] .chev svg{transform:rotate(0)}
+button.thead:active{transform:scale(.985)}

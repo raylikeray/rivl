@@ -273,7 +273,7 @@
   applyTheme(); window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', applyTheme);
   /* accent: mono chrome, or the colour of the first team you follow in the league you're on */
   /* accents: black and white, the first team's colour, or one of these — the same colour runs the switcher, chips, tab bar, buttons and the header wash */
-  const ACCENTS = { electric: ['#2F7CFF', 'Electric'], violet: ['#7C4DFF', 'Violet'], emerald: ['#17B26A', 'Emerald'], tangerine: ['#FF7A1A', 'Tangerine'], crimson: ['#E5304A', 'Crimson'], gold: ['#F2B705', 'Gold'], teal: ['#13B5C8', 'Teal'], pink: ['#FF4FA3', 'Pink'] };
+  const ACCENTS = { electric: ['#2F7CFF', 'Electric'], sky: ['#38BDF8', 'Sky'], indigo: ['#4F46E5', 'Indigo'], violet: ['#7C4DFF', 'Violet'], lavender: ['#A78BFA', 'Lavender'], pink: ['#FF4FA3', 'Pink'], rose: ['#F43F5E', 'Rose'], crimson: ['#E5304A', 'Crimson'], coral: ['#FF6B6B', 'Coral'], tangerine: ['#FF7A1A', 'Tangerine'], amber: ['#F59E0B', 'Amber'], gold: ['#F2B705', 'Gold'], lime: ['#A3E635', 'Lime'], emerald: ['#17B26A', 'Emerald'], mint: ['#2DD4BF', 'Mint'], teal: ['#13B5C8', 'Teal'] };
   V.ACCENTS = ACCENTS;
   const setAccent = (root, c, kind) => { const h = c.replace('#', ''); const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; root.style.setProperty('--acc', c); root.style.setProperty('--acc-ink', lum > 0.6 ? '#000' : '#fff'); root.setAttribute('data-accent', kind); };
   async function applyAccent() {

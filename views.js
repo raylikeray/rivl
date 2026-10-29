@@ -664,7 +664,8 @@
       if (following && !q) { const fl = fplayers.all().filter(p => p.lk === lk); if (fl.length) parts.push(sec('Following', `${fl.length}`) + `<div class="rows">${fl.map(p => playerRow(p, { sub: p.team || '', on: true, select })).join('')}</div>`); }
       sections.forEach(s => {
         const rows = q ? s.rows.filter(p => `${p.name} ${s.team.name} ${s.team.abbr}`.toLowerCase().includes(q)) : s.rows; if (!rows.length) return;
-        parts.push(`<div class="thead pp-team" style="--tc:${esc(teamColor(s.team, L))}"><i class="bar"></i>${logo(s.team.logo, 's')}<b>${esc(s.team.short)}</b><span class="n">${rows.length}</span></div><div class="rows">${rows.map(p => rowOf(p, s)).join('')}</div>`);
+        const folded = !q && !!(store.get('v5:ppcol', {}) || {})[s.key];   // a search always opens every team
+        parts.push(`<button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}" style="--tc:${esc(teamColor(s.team, L))}"><i class="bar"></i>${logo(s.team.logo, 's')}<b>${esc(s.team.short)}</b><span class="n">${rows.length}</span>${chev}</button><div class="rows"${folded ? ' hidden' : ''}>${rows.map(p => rowOf(p, s)).join('')}</div>`);
       });
       if (lp && leaders) {
         const have = shown(); const top = lp.rows.filter(p => !have.has(p.id) && (!q || `${p.name} ${p.team}`.toLowerCase().includes(q))).sort((a, b) => b.pts - a.pts);
@@ -682,6 +683,7 @@
     el.addEventListener('click', async e => {
       const b = e.target.closest('[data-pp]'); if (!b) return; e.preventDefault();
       if (b.dataset.pp === 'top') { paint.topOpen = true; paint(); }
+      else if (b.dataset.pp === 'fold') { const f = store.get('v5:ppcol', {}) || {}; const k = b.dataset.id; if (f[k]) delete f[k]; else f[k] = 1; store.set('v5:ppcol', f); const body = b.nextElementSibling; const open = !f[k]; b.setAttribute('aria-expanded', String(open)); if (body) body.hidden = !open; }
       else if (b.dataset.pp === 'browse') { b.querySelector('.t span').textContent = 'Loading…'; const r = await rosterOf(L, b.dataset.id, idx).catch(() => null); if (r) { sections.push({ key: r.team.id, team: r.team, rows: r.players.slice().sort(byLine), open: true }); inp.value = ''; } paint(); }
     });
     const sync = () => { if (!el.isConnected) { document.removeEventListener('rivl:follow', sync); return; } const fset = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('[data-act="follow-player"]').forEach(b => { let id = ''; try { id = JSON.parse(b.dataset.snap).id; } catch { } const on = fset.has(String(id)); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); const st = b.classList.contains('star') ? b : b.querySelector('.star'); if (st) { st.classList.toggle('on', on); st.innerHTML = on ? starSvg : starLine; } }); if (following && !inp.value) paint(); };

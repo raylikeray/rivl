@@ -34,7 +34,7 @@
 
   /* ---------- haptics: a tick when something is followed or switched ---------- */
   const buzz = ms => { try { if (navigator.vibrate) navigator.vibrate(ms); } catch { } };
-  document.addEventListener('click', e => { if (e.target.closest('[data-act="follow-player"],[data-act="fav"],[data-act="pref"],[data-act="theme"],[data-act="accent"],.tab')) buzz(8); }, true);
+  document.addEventListener('click', e => { if (e.target.closest('[data-act="follow-player"],[data-act="fav"],[data-act="pref"],[data-act="theme"],[data-act="accent"],.tab,[data-pp="fold"],[data-act="injcol"]')) buzz(8); }, true);
 
   /* ---------- score ticks: numbers count to the new score instead of snapping ---------- */
   V.tick = (el, to) => {
