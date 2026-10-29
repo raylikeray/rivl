@@ -200,7 +200,7 @@
     if (a === 'mix') {
       e.preventDefault();
       const want = act.dataset.mix;
-      $main.querySelectorAll('[data-act="mix"]').forEach(b => { const on = b.dataset.mix === want; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+      $main.querySelectorAll('[data-act="mix"]').forEach(b => { const on = b.dataset.mix === want; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-selected', String(on)); });
       $main.querySelectorAll('[data-mix-panel]').forEach(p => { p.hidden = p.dataset.mixPanel !== want; });
     }
     if (a === 'share') {

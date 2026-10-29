@@ -1239,3 +1239,13 @@ button.thead:active{transform:scale(.985)}
 button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .injgrp:first-child button.injhd{margin-top:0}
 .injgrp .row{padding:9px 0}
+.why-h.why-n4,.why-r.why-n4{grid-template-columns:1fr 64px 64px 64px 64px}
+.why-h.why-n4 .wt b{font-size:12px}
+.why-r.why-n4 b{font-size:13px}
+.chips a.chip{text-decoration:none}
+/* reduced motion: nothing rises, blinks, bumps, spins or slides; state changes still show, instantly */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  .livebar .dot,.hero .mid .st.on::before,.live::before{animation:none!important;opacity:1}
+  .loadbar{animation:none!important;background:var(--acc,var(--ink))}
+}

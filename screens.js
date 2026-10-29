@@ -14,7 +14,7 @@
   const hide = `onerror="this.style.visibility='hidden'"`;
   const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
   const topbar = (title, backHref = '#home', extra = '', card = null, share = true) => `<div class="topbar"><a class="ib" href="${backHref}" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><span class="ttl">${title}</span><div class="sp">${extra}${share === false ? '' : `<button class="ib" data-act="share" data-title="${esc(title.replace(/<[^>]+>/g, ''))}"${card ? ` data-card='${esc(JSON.stringify(card))}'` : ''} aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>`}</div></div><div class="lb-slot"></div>`;
-  const chips = (items, on, act, key) => `<div class="chips" role="tablist">${items.map(([k, l]) => `<button class="chip${k === on ? ' on' : ''}" data-act="${act}" data-${key}="${esc(k)}" aria-pressed="${k === on}">${esc(l)}</button>`).join('')}</div>`;
+  const chips = (items, on, act, key) => `<div class="chips" role="tablist">${items.map(([k, l]) => `<button class="chip${k === on ? ' on' : ''}" role="tab" data-act="${act}" data-${key}="${esc(k)}" aria-selected="${k === on}" aria-pressed="${k === on}">${esc(l)}</button>`).join('')}</div>`;
   const standingLine = (r, L) => !r ? '' : L.standingsMode === 'conferences' ? `${r.w}-${r.l}${r.conf ? `, ${r.conf} in the ${confName(r.group, r.groupAbbr)}` : ''}` : `${r.w}-${r.l}, ${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}`;
 
   /* news items, shared by every list: cache the object so the reader can open it without a second list fetch */
@@ -122,7 +122,7 @@
     if (page && page.dataset.lk === (V.route && V.route() || {}).lk) {
       const have = [...page.querySelectorAll('#stchips .chip')].map(c => c.dataset.tab).join();
       if (have !== items.map(([k]) => k).join()) page.querySelector('#stchips').innerHTML = chips(items, tab, 'stab', 'tab');
-      else page.querySelectorAll('#stchips .chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); });
+      else page.querySelectorAll('#stchips .chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); c.setAttribute('aria-selected', String(on)); });
       page.querySelector('#stbody').innerHTML = body;
     } else $main.innerHTML = `<div id="stpage" data-lk="${esc((V.route && V.route() || {}).lk || '')}"><div id="stchips">${chips(items, tab, 'stab', 'tab')}</div><div id="stbody">${body}</div></div>`;
     const on = $main.querySelector('#stchips .chip.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
@@ -523,7 +523,7 @@
       if (page && page.dataset.gid === String(id)) {
         const head = page.querySelector('#ghead'); if (head.dataset.h !== hh) { head.innerHTML = headHtml; head.dataset.h = hh; }
         const tabsEl = page.querySelector('#gtabs'); if (tabsEl.dataset.k !== tabKey) { tabsEl.innerHTML = tabs; tabsEl.dataset.k = tabKey; }
-        else tabsEl.querySelectorAll('.chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); });
+        else tabsEl.querySelectorAll('.chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); c.setAttribute('aria-selected', String(on)); });
         const bodyEl = page.querySelector('#gbody'); if (bodyEl.dataset.h !== hashOf(body) || bodyEl.dataset.tab !== tab) { bodyEl.innerHTML = body; bodyEl.dataset.h = hashOf(body); bodyEl.dataset.tab = tab; }
       } else $main.innerHTML = `<div id="gpage" data-gid="${esc(String(id))}"><div id="ghead" data-h="${hh}">${headHtml}</div><div id="gtabs" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div>`;
       document.title = `${g.away.short} at ${g.home.short} · RIVL`;
@@ -743,22 +743,27 @@
     $main.innerHTML = topbar('Record', '#settings/about', '', null, false) + skeleton(6, 'row');
     const d = await HW.record(L).catch(() => null);
     const games = d && Array.isArray(d.games) ? d.games.filter(g => g.hs != null && g.as != null && g.p != null) : [];
-    const lkChips = `<div class="chips" role="tablist">${ORDER.map(k => `<a class="chip${k === lk ? ' on' : ''}" href="#record/${k}" aria-pressed="${k === lk}">${esc(LEAGUES[k].label)}</a>`).join('')}</div>`;
+    const lkChips = `<div class="chips" role="tablist">${ORDER.map(k => `<a class="chip${k === lk ? ' on' : ''}" role="tab" href="#record/${k}" aria-selected="${k === lk}" aria-pressed="${k === lk}">${esc(LEAGUES[k].label)}</a>`).join('')}</div>`;
     if (!games.length) { $main.innerHTML = topbar('Record', '#settings/about', '', null, false) + lkChips + empty('No scored games yet', `<p style="margin:6px 0 0">The nightly job scores every pregame call once the game is final. ${d ? 'Nothing is final for the ' + esc(L.label) + ' yet.' : 'The record file has not been published for the ' + esc(L.label) + '.'}</p>`); return; }
     // the market's own chance from its line, on the same curve as the model; ESPN's as published
     const sd = L.sd || 12;
     const lineP = g => { const m = String(g.line || '').match(/^([A-Z]{2,5})\s*([+-]?\d+(?:\.\d+)?)$/i); if (!m) return null; const pts = Math.abs(parseFloat(m[2])); const homeFav = m[1].toUpperCase() === String(g.h || '').toUpperCase(); return HW.Phi((homeFav ? pts : -pts) / sd); };
     const score = (rows, f) => { let n = 0, bs = 0, hit = 0; rows.forEach(g => { const p = f(g); if (p == null) return; const y = g.hs > g.as ? 1 : 0; n++; bs += (p - y) * (p - y); hit += ((p >= .5) === (y === 1)) ? 1 : 0; }); return n ? { n, brier: bs / n, hit: hit / n } : null; };
-    const cols = [['RIVL', g => g.p], ['ESPN', g => g.ep != null ? g.ep : null], ['Market', lineP]];
+    // the blend the app actually shows: the market line pulled by RIVL's own pregame margin (the nightly keeps that margin with each call)
+    const params = await HW.params(L).catch(() => null); const w = params && params.mkt != null ? params.mkt : 0.6;
+    const spreadOf = g => { const m = String(g.line || '').match(/^([A-Z]{2,5})\s*([+-]?\d+(?:\.\d+)?)$/i); if (!m) return null; const pts = Math.abs(parseFloat(m[2])); return m[1].toUpperCase() === String(g.h || '').toUpperCase() ? pts : -pts; };
+    const blendP = g => { const mk = spreadOf(g); if (mk == null || g.m == null) return null; return HW.calibrate(HW.Phi((w * mk + (1 - w) * g.m) / sd), params && params.calib ? params.calib : null); };
+    const anyBlend = games.some(g => blendP(g) != null);
+    const cols = anyBlend ? [['RIVL', g => g.p], ['Blend', blendP], ['ESPN', g => g.ep != null ? g.ep : null], ['Market', lineP]] : [['RIVL', g => g.p], ['ESPN', g => g.ep != null ? g.ep : null], ['Market', lineP]];
     const since = days => { const cut = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10); return games.filter(g => g.date >= cut); };
     const spans = [['Season', games], ['Last 30 days', since(30)], ['Last 7 days', since(7)]];
     const fmt = x => x == null ? '—' : x.toFixed(3);
     const pctf = x => x == null ? '—' : Math.round(x * 100) + '%';
-    const table = (title, rows) => { const sc = cols.map(([k, f]) => [k, score(rows, f)]); const best = sc.filter(([, x]) => x).sort((a, b) => a[1].brier - b[1].brier)[0]; return sec(title, `${rows.length} game${rows.length === 1 ? '' : 's'}`) + `<div class="why"><div class="why-h why3"><span></span>${sc.map(([k]) => `<span class="wt"><b>${k}</b></span>`).join('')}</div><div class="why-r why3"><span>Brier score</span>${sc.map(([k, x]) => `<b class="${best && best[0] === k ? 'up' : ''}">${fmt(x && x.brier)}</b>`).join('')}</div><div class="why-r why3"><span>Right side</span>${sc.map(([k, x]) => `<b class="${best && best[0] === k ? 'up' : ''}">${pctf(x && x.hit)}</b>`).join('')}</div><div class="why-r why3"><span>Calls scored</span>${sc.map(([, x]) => `<b>${x ? x.n : '—'}</b>`).join('')}</div></div>`; };
+    const table = (title, rows) => { const sc = cols.map(([k, f]) => [k, score(rows, f)]); const best = sc.filter(([, x]) => x).sort((a, b) => a[1].brier - b[1].brier)[0]; return sec(title, `${rows.length} game${rows.length === 1 ? '' : 's'}`) + `<div class="why"><div class="why-h why3 why-n${cols.length}"><span></span>${sc.map(([k]) => `<span class="wt"><b>${k}</b></span>`).join('')}</div><div class="why-r why3 why-n${cols.length}"><span>Brier score</span>${sc.map(([k, x]) => `<b class="${best && best[0] === k ? 'up' : ''}">${fmt(x && x.brier)}</b>`).join('')}</div><div class="why-r why3 why-n${cols.length}"><span>Right side</span>${sc.map(([k, x]) => `<b class="${best && best[0] === k ? 'up' : ''}">${pctf(x && x.hit)}</b>`).join('')}</div><div class="why-r why3 why-n${cols.length}"><span>Scored</span>${sc.map(([, x]) => `<b>${x ? x.n : '—'}</b>`).join('')}</div></div>`; };
     const recent = games.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 12);
     const list = sec('Latest calls') + `<div class="rows">${recent.map(g => { const homeWon = g.hs > g.as; const pick = g.p >= .5 ? g.h : g.a; const hit = (g.p >= .5) === homeWon; const conf = Math.round(Math.max(g.p, 1 - g.p) * 100); return `<a class="row" href="${href.game(lk, g.id)}"><span class="t"><b>${esc(g.a)} ${g.as} at ${esc(g.h)} ${g.hs}</b><span>${esc(dayLabel(g.date, { weekday: 'short', month: 'short', day: 'numeric' }))} · RIVL had ${esc(pick)} ${conf}%${g.line ? ` · line ${esc(g.line)}` : ''}</span></span><span class="res ${hit ? 'w' : 'l'}">${hit ? 'Hit' : 'Miss'}</span></a>`; }).join('')}</div>`;
     $main.innerHTML = topbar('Record', '#settings/about', '', null, false) + lkChips + spans.map(([t, rows]) => rows.length ? table(t, rows) : '').join('') + list +
-      `<p class="legend">Brier score is the squared error of the chance given to the home team, averaged: 0 is perfect, 0.25 is a coin flip, lower is better. The market's chance is read off the closing line on the same curve the model uses. ESPN's is their published pregame number. Every call is the one made before tip-off and never revised.</p>`;
+      `<p class="legend">Brier score is the squared error of the chance given to the home team, averaged: 0 is perfect, 0.25 is a coin flip, lower is better. The market's chance is read off the closing line on the same curve the model uses. ${anyBlend ? 'Blend is what the game pages show: the line pulled by RIVL\'s own pregame margin, scored from the same two numbers. ' : ''}ESPN's is their published pregame number. Every call is the one made before tip-off and never revised. The injury adjustment isn't scored: the lists aren't kept game by game.</p>`;
   }
 
   Object.assign(V, { record: recordV, standings: standingsV, teams: teamsV, team: teamV, game: gameV, article: articleV, search: searchV, settings: settingsV });
