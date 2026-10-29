@@ -10,6 +10,7 @@
   { const proto = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML'); let bar = null, barT = null;
     const showBar = () => { if (!bar) { bar = document.createElement('div'); bar.className = 'loadbar'; document.body.appendChild(bar); } clearTimeout(barT); barT = setTimeout(() => { bar.classList.add('on'); $main.setAttribute('aria-busy', 'true'); }, 160); };
     const hideBar = () => { clearTimeout(barT); if (bar) bar.classList.remove('on'); $main.removeAttribute('aria-busy'); };
+    V.busy = on => on ? showBar() : hideBar();   // for views that patch themselves in place and have no paint to hang the bar on
     Object.defineProperty($main, 'innerHTML', {
       get() { return proto.get.call($main); },
       set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { showBar(); return; } proto.set.call($main, s); $main.dataset.real = s.includes('<!--skel-->') ? '0' : '1'; if ($main.dataset.real === '1') { hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; window.scrollTo(0, 0); } } }
@@ -65,7 +66,8 @@
     catch (err) { if (my === seq) $main.innerHTML = `<div class="empty"><b>Something went wrong</b><p style="margin:6px 0 0">${esc(err && err.message || 'Try again in a moment.')}</p></div>`; console.error(err); }
     if (my !== seq) return;
     paintPills(r.lk, leagueScreen);   // live counts may have arrived while the view loaded
-    $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter');
+    // the rise plays for a new screen; a screen repainting itself (another day on Scores, another conference) keeps still
+    const key = `${r.name}/${r.args.join('/')}`; if (key !== render.key) { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); } else $main.classList.remove('enter'); render.key = key;
     document.dispatchEvent(new CustomEvent('rivl:rendered'));
   }
   window.addEventListener('hashchange', render);

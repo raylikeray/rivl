@@ -365,19 +365,33 @@
     const calPill = `<div class="calrow"><span id="phase"></span><button class="chip cal" data-act="calendar" data-ymd="${esc(ymd)}" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>${esc(dayLabel(ymd, { month: 'long', year: 'numeric' }))}<svg class="dn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>${(favs.all()[lk] || []).length ? `<button class="chip mine${mineOnly ? ' on' : ''}" data-act="scmine" aria-pressed="${mineOnly}">${starSvg}Mine</button>` : '<span></span>'}</div>`;
     const strip = calPill + `<div class="dates" id="dates">${far ? dayBtn(today, 'Today') + '<span class="gap"></span>' : ''}${days.map(d => dayBtn(d, d === today ? 'Today' : dayLabel(d, { weekday: 'short' }))).join('')}</div>`;
     const head = strip;
-    $main.innerHTML = head + skeleton(4, 'card');
+    /* the page is two parts: the date strip, which only moves its highlight from one day to the next (and is rebuilt when
+       the window of days shifts), and the list below it, which swaps. A day change never repaints the strip or the screen. */
+    const page0 = $main.querySelector('#scpage');
+    const inPlace = page0 && page0.dataset.lk === lk;
+    const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+    const paint = body => {
+      const page = $main.querySelector('#scpage');
+      if (page && page.dataset.lk === lk) {
+        const hd = page.querySelector('#schead'); const hh = hashOf(head);
+        if (hd.dataset.h !== hh) { const dates = hd.querySelector('#dates'); const same = dates && [...dates.querySelectorAll('.day')].map(b => b.dataset.ymd).join() === (far ? [today, ...days] : days).join(); if (same) { dates.querySelectorAll('.day').forEach(b => { const on = b.dataset.ymd === ymd; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); const cal = hd.querySelector('.chip.cal'); if (cal) cal.dataset.ymd = ymd; } else { hd.innerHTML = head; hd.dataset.h = hh; } }
+        const bd = page.querySelector('#scbody'); const bh = hashOf(body); if (bd.dataset.h !== bh) { bd.innerHTML = body; bd.dataset.h = bh; }
+        if (HW.v5.busy) HW.v5.busy(false);
+      } else $main.innerHTML = `<div id="scpage" data-lk="${lk}"><div id="schead" data-h="${hashOf(head)}">${head}</div><div id="scbody">${body}</div></div>`;
+    };
+    if (inPlace) { paint($main.querySelector("#scbody").innerHTML); if (HW.v5.busy) HW.v5.busy(true); } else $main.innerHTML = `<div id="scpage" data-lk="${lk}"><div id="schead" data-h="${hashOf(head)}">${head}</div><div id="scbody">${skeleton(4, 'card')}</div></div>`;
     const [games, ctx, meta] = await Promise.all([ymd === today && S.today[lk] && S.today[lk].length ? S.today[lk] : scoreboard(L, ymd).catch(() => null), forecastCtx(L, ymd).catch(() => null), sbMeta(L, ymd)]);
     if (ymd === today && games) S.today[lk] = games;
     const el = $main.querySelector('#dates .on'); if (el) el.scrollIntoView({ inline: 'center', block: 'nearest' });
     const phase = ''; const phaseTag = meta.phase ? `<span class="phase">${esc(meta.phase)}</span>` : '';
     const setPhase = () => { const el = $main.querySelector('#phase'); if (el) el.innerHTML = phaseTag; };
-    if (!games) { $main.innerHTML = head + phase + empty("Couldn't load the scoreboard", '<p style="margin:6px 0 0">The feed didn\'t answer. It usually comes back within a minute.</p>'); setPhase(); return; }
+    if (!games) { paint(phase + empty("Couldn't load the scoreboard", '<p style="margin:6px 0 0">The feed didn\'t answer. It usually comes back within a minute.</p>')); setPhase(); return; }
     if (!games.length) {
       // say when the next games are, and let the strip jump there; the season's calendar comes with the scoreboard
       const next = meta.cal.find(d => d > ymd), last = meta.cal.filter(d => d < ymd).slice(-1)[0];
       const when = next ? (next === addDays(today, 1) ? 'tomorrow' : next === today ? 'today' : `on ${dayLabel(next, { weekday: 'long', month: 'short', day: 'numeric' })}`) : '';
       const body = next ? `<p style="margin:6px 0 0">Next ${esc(L.label)} games are ${esc(when)}.</p>` : meta.cal.length ? `<p style="margin:6px 0 0">The season is over${last ? `; the last games were ${esc(dayLabel(last, { month: 'long', day: 'numeric' }))}` : ''}. Next season shows here once the schedule is posted.</p>` : '';
-      $main.innerHTML = head + phase + empty(`No ${L.label} games ${ymd === today ? 'today' : 'on ' + dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, body, next ? `<button class="btn" data-act="date" data-ymd="${esc(next)}">Jump to ${esc(dayLabel(next, { weekday: 'short', month: 'short', day: 'numeric' }))}</button>` : '');
+      paint(phase + empty(`No ${L.label} games ${ymd === today ? 'today' : 'on ' + dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, body, next ? `<button class="btn" data-act="date" data-ymd="${esc(next)}">Jump to ${esc(dayLabel(next, { weekday: 'short', month: 'short', day: 'numeric' }))}</button>` : ''));
       setPhase(); return;
     }
     const shown = mineOnly ? games.filter(isFav) : games;   // your teams always sort first; Mine hides the rest
@@ -385,7 +399,7 @@
     const live = by('in'), pre = by('pre'), post = by('post');
     const block = (title, list) => list.length ? sec(title, `${list.length}`) + `<div class="games">${list.map(g => gameCard(L, g, ctx, false, true)).join('')}</div>` : '';
     const none = mineOnly && !shown.length ? empty(`None of your teams play ${ymd === today ? 'today' : dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, `<p style="margin:6px 0 0">${games.length} game${games.length === 1 ? '' : 's'} on the slate.</p>`, `<button class="btn ghost" data-act="scmine">Show all</button>`) : '';
-    $main.innerHTML = head + phase + none + block('Live', live) + block(ymd === today ? 'Upcoming' : 'Scheduled', pre) + block('Final', post);
+    paint(phase + none + block('Live', live) + block(ymd === today ? 'Upcoming' : 'Scheduled', pre) + block('Final', post));
     setPhase();
     const el2 = $main.querySelector('#dates .on'); if (el2) el2.scrollIntoView({ inline: 'center', block: 'nearest' });
   }
