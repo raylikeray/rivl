@@ -3,8 +3,8 @@
    ESPN's feeds go network-first with a short leash: a fresh answer when there is one, the last good copy
    when the network is slow, down, or ESPN is throttling (429/5xx). Logos, headshots and fonts are cached
    on first sight and served from cache after that. */
-const VERSION = 'rivl-v67';
-const SHELL = `${VERSION}-shell`, DATA = `${VERSION}-data`, MEDIA = 'rivl-media';
+const VERSION = 'rivl-v68';
+const SHELL = `${VERSION}-shell`, DATA = 'rivl-data', MEDIA = 'rivl-media';   // feed copies and media outlive a version: the app reads the feed copies for a warm start
 const Q = `?v=${VERSION.replace(/^rivl-v/, '')}`;   // the same stamp index.html puts on its assets
 const SHELL_FILES = ['./', './index.html', ...['./app.css', './app.js', './views.js', './screens.js', './config.js', './js/core.js', './js/sim.js', './more.js'].map(f => f + Q), './manifest.webmanifest', './img/mark.svg', './img/icon-192.png', './img/icon-512.png', './img/apple-touch-icon.png'];
 const FEED = /(^|\.)espn\.com$|\.workers\.dev$/;
@@ -16,14 +16,27 @@ self.addEventListener('install', e => {
 });
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
-    const keep = new Set([SHELL, DATA, MEDIA]);
+    const keep = new Set([SHELL, DATA, MEDIA, 'rivl-meta']);
     for (const k of await caches.keys()) if (!keep.has(k) && k.startsWith('rivl-')) await caches.delete(k);
     await self.clients.claim();
     const cs = await self.clients.matchAll({ type: 'window' }); cs.forEach(c => c.postMessage({ type: 'rivl:updated', version: VERSION }));
+    await prune();
   })());
 });
+/* the feed copies: anything older than three days goes, checked at most twice a day */
+async function prune() {
+  try {
+    const m = await caches.open('rivl-meta'); const last = await m.match('./prune'); const t = last ? +(await last.text()) : 0;
+    if (Date.now() - t < 12 * 3600000) return;
+    await m.put('./prune', new Response(String(Date.now())));
+    const c = await caches.open(DATA); const cutoff = Date.now() - 3 * 86400000;
+    for (const req of await c.keys()) { const r = await c.match(req); const at = r ? +(r.headers.get('x-rivl-t') || 0) : 0; if (!at || at < cutoff) await c.delete(req); }
+  } catch { }
+}
 self.addEventListener('message', e => { if (e.data && e.data.type === 'rivl:skip') self.skipWaiting(); });
 
+/* a feed copy carries the time it was fetched (a cross-origin answer's own Date header isn't readable), so the app and the prune can age it */
+const stamp = async r => { const b = await r.clone().arrayBuffer(); const h = new Headers(); const ct = r.headers.get('content-type'); if (ct) h.set('content-type', ct); h.set('x-rivl-t', String(Date.now())); return new Response(b, { status: 200, headers: h }); };
 const withTimeout = (p, ms) => new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('timeout')), ms); p.then(v => { clearTimeout(t); res(v); }, err => { clearTimeout(t); rej(err); }); });
 
 self.addEventListener('fetch', e => {
@@ -31,7 +44,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin === self.location.origin) {
     // the app itself: cache first (files are versioned by their query string), the network fills gaps; navigations fall back to the shell
-    if (req.mode === 'navigate') { e.respondWith((async () => { try { const r = await withTimeout(fetch(req), 4000); const c = await caches.open(SHELL); c.put('./index.html', r.clone()); return r; } catch { return (await caches.match('./index.html')) || (await caches.match('./')) || Response.error(); } })()); return; }
+    if (req.mode === 'navigate') { e.waitUntil(prune()); e.respondWith((async () => { try { const r = await withTimeout(fetch(req), 4000); const c = await caches.open(SHELL); c.put('./index.html', r.clone()); return r; } catch { return (await caches.match('./index.html')) || (await caches.match('./')) || Response.error(); } })()); return; }
     e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(r => { if (r.ok) caches.open(SHELL).then(c => c.put(req, r.clone())); return r; })));
     return;
   }
@@ -40,7 +53,7 @@ self.addEventListener('fetch', e => {
       const c = await caches.open(DATA);
       try {
         const r = await withTimeout(fetch(req), DATA_TIMEOUT);
-        if (r.ok) { c.put(req, r.clone()); return r; }
+        if (r.ok) { stamp(r).then(sr => c.put(req, sr)).catch(() => { }); return r; }
         const hit = await c.match(req); if (hit) return hit;   // throttled or broken upstream: the last good copy
         return r;
       } catch {

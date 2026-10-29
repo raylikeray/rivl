@@ -7,9 +7,23 @@ const { LEAGUES, ORDER, SPORTS, ESPN, TZ } = HW;
 /* ---------- small utilities ---------- */
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const cache = new Map();
+/* a warm start: the service worker keeps the last copy of every feed answer, so in the first seconds after the app opens a
+   screen paints from that copy at once instead of a placeholder; the copy is dated when it was fetched, so the next
+   call for it goes to the network as usual and the live answer replaces it */
+const BOOT = Date.now(); let warmC = null;
+async function warm(url) {
+  if (typeof caches === 'undefined' || Date.now() - BOOT > 8000) return null;
+  try {
+    if (!warmC) warmC = caches.open('rivl-data');
+    const r = await (await warmC).match(url); if (!r) return null;
+    const t = +(r.headers.get('x-rivl-t') || 0); if (!t || Date.now() - t > 12 * 3600000) return null;   // only a stamped copy, and nothing older than half a day
+    return { t, v: await r.json() };
+  } catch { return null; }
+}
 async function j(url, ttl = 60000) {
   const hit = cache.get(url);
   if (hit && Date.now() - hit.t < ttl) return hit.v;
+  if (!hit) { const w = await warm(url); if (w) { cache.set(url, w); return w.v; } }
   const ctl = new AbortController();
   const to = setTimeout(() => ctl.abort(), 15000);
   try {

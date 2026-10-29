@@ -82,7 +82,9 @@
   const chev = `<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>`;
   const sec = (title, small, action) => `<div class="sec"><h2>${esc(title)}${small ? `<small>${esc(small)}</small>` : ''}</h2>${action || ''}</div>`;
   const empty = (title, body, cta) => `<div class="empty"><b>${esc(title)}</b>${body || ''}${cta || ''}</div>`;
-  const skeleton = (n = 3, kind = 'row') => '<!--skel-->' + Array.from({ length: n }, () => `<div class="skel ${kind}"></div>`).join('');   // the marker lets the screen keep what it has while the next one loads
+  /* the placeholder while a screen loads: an outline of what is coming — a disc and two lines per row, two discs and a score line for a
+     card — faint and breathing, never slabs. The marker lets the screen keep what it has while the next one loads. */
+  const skeleton = (n = 3, kind = 'row') => '<!--skel-->' + Array.from({ length: n }, (_, i) => kind === 'card' ? `<div class="skel card"><i></i><b></b><i></i></div>` : `<div class="skel row"><i></i><b style="width:${[58, 44, 66, 50, 38, 62][i % 6]}%"></b><b style="width:${[34, 26, 40, 30, 22, 36][i % 6]}%"></b></div>`).join('');
   const recOf = t => t && t.rec ? t.rec : '';
   /* group names the way people say them: "Eastern Conference" is the East, "Southeast Division" is the Southeast,
      and a college conference loses the word Conference (the two everyone abbreviates get their initials) */
