@@ -315,10 +315,15 @@ async function statCategory(L, cat, sort, limit = 50, season) {
 }
 
 /* ---------- league player list ---------- */
+const lpMem = {};
 async function leaguePlayers(L, season) {
+  // the season's list is kept on the device for six hours: stats move nightly, and every page is a request the feed may refuse
+  const key = `v5:lp:${L.key}${season ? ':' + season : ''}`;
+  if (lpMem[key] && Date.now() - lpMem[key].t < 6 * 3600000) return lpMem[key].v;
+  const kept = store.get(key, null); if (kept && kept.t && Date.now() - kept.t < 6 * 3600000 && kept.v && kept.v.rows && kept.v.rows.length) { lpMem[key] = kept; return kept.v; }
   const base = `${WEB(L)}/statistics/byathlete?region=us&lang=en&contentorigin=espn&isqualified=false&limit=100&sort=offensive.avgPoints:desc${season ? `&season=${season}&seasontype=2` : ''}`;
   const first = await j(base + '&page=1', 600000);
-  const pages = Math.min((first.pagination && first.pagination.pages) || 1, L.key.startsWith('ncaa') ? 8 : 10);
+  const pages = Math.min((first.pagination && first.pagination.pages) || 1, L.key.startsWith('ncaa') ? 8 : 5);   // 500 covers every pro player who has played
   const rest = await Promise.all(Array.from({ length: pages - 1 }, (_, i) => jSoft(base + '&page=' + (i + 2), 600000)));
   const idx = {}; (first.categories || []).forEach(c => { idx[c.name] = c.names || []; });
   const rows = [];
@@ -331,7 +336,9 @@ async function leaguePlayers(L, season) {
       fg: v.fieldGoalPct || 0, tp: v.threePointFieldGoalPct || 0, ft: v.freeThrowPct || 0, tpm: v.avgThreePointFieldGoalsMade || 0, ts: (fga + 0.44 * fta) > 0 ? pts / (2 * (fga + 0.44 * fta)) * 100 : 0 });
   }));
   const label = (first.requestedSeason && (first.requestedSeason.displayName || first.requestedSeason.year)) || (first.currentSeason && first.currentSeason.displayName) || '';
-  return { rows, label };
+  const v = { rows, label }; lpMem[key] = { t: Date.now(), v };
+  if (!L.key.startsWith('ncaa')) { try { store.set(key, { t: Date.now(), v }); } catch { } }   // the college lists are too big to keep
+  return v;
 }
 
 /* ---------- where to watch ----------

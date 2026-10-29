@@ -158,7 +158,7 @@
     const next = evs.find(g => g.state !== 'post');
     const ctx = next ? await forecastCtx(L, ymdOf(next.date)).catch(() => null) : null;
     const facts = [r ? `${r.w}-${r.l}` : (t0.recordSummary || ''), rank ? `Ranked No. ${rank}` : '', r && L.standingsMode !== 'conferences' ? `${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}` : (t0.standingSummary || ''), r && r.strk ? (/^W/.test(r.strk) ? `Won ${r.strk.slice(1)} straight` : `Lost ${r.strk.slice(1)} straight`) : ''].filter(Boolean);
-    const hero = `<div class="ehero team" style="--a:${esc(color)}"><div class="wm">${esc(t0.abbreviation || '')}</div><img class="biglogo" src="${esc(lg)}" alt="" ${hide}>
+    const hero = `<div class="ehero team" style="--a:${esc(color)}"><div class="wm">${esc(t0.abbreviation || '')}</div>${V._.imgSized(lg, 256, 256, 'class="biglogo"')}
       <div class="in"><div class="sub">${esc(r && r.group && L.standingsMode === 'conferences' ? r.group : (t0.standingSummary && /Division/.test(t0.standingSummary) ? '' : L.label))}</div><h1 class="${(() => { const w = Math.max(...`${t0.location || ''} ${t0.name || t0.displayName || ''}`.split(/\s+/).map(x => x.length)); return w > 10 ? 'xlong' : w > 7 ? 'long' : ''; })()}">${esc(t0.location || '')}<br>${esc(t0.name || t0.displayName)}</h1>
         <div class="facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div>
         <div class="acts"><button class="${on ? 'on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(id)}" data-name="${esc(t0.shortDisplayName || t0.name)}" aria-pressed="${on}">${on ? starSvg : starLine}${on ? 'Following' : 'Follow'}</button></div>

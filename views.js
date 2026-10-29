@@ -56,14 +56,20 @@
   const scVars = (t, L) => { const c = L ? scoreColor(L, t) : teamColor(t); return `--tc:${esc(c)};--tcd:${esc(V_lift(c))};--tcl:${esc(V_deep(c))}`; };
   const href = { player: (lk, id) => `#player/${lk}/${id}`, team: (lk, id) => `#team/${lk}/${id}`, game: (lk, id) => `#game/${lk}/${id}` };
   const hide = `onerror="this.style.visibility='hidden'"`;
+  /* ESPN's art at the size it is drawn: the CDN's combiner scales a logo or headshot on the fly, so a 46px disc doesn't
+     pull the 500px original. If the combiner ever refuses, the image falls back to the original it was made from. */
+  const sized = (src, w, h) => { const m = /^https:\/\/a\.espncdn\.com(\/i\/[^?]+\.png)(?:\?.*)?$/i.exec(String(src || '')); return m ? `https://a.espncdn.com/combiner/i?img=${m[1]}&w=${w}&h=${h}` : src || ''; };
+  const fallback = then => `onerror="if(this.dataset.o){this.src=this.dataset.o;this.removeAttribute('data-o')}else{${then}}"`;
+  const imgSized = (src, w, h, extra = '', then = "this.style.visibility='hidden'") => { const u = sized(src, w, h); return `<img src="${esc(u)}"${u !== src ? ` data-o="${esc(src)}"` : ''} alt="" loading="lazy" ${extra} ${fallback(then)}>`; };
   /* a logo disc; with a team colour it takes a tint and a ring in that colour */
-  const logo = (src, size = '', color = '') => { const c = BAD(color) ? '' : hx(color); return `<span class="logo ${size}${c ? ' tint' : ''}"${c ? ` style="--tc:${esc(c)}"` : ''}><img src="${esc(src || '')}" alt="" loading="lazy" ${hide}></span>`; };
+  const LOGO_PX = { s: 96, m: 128, '': 128, l: 192, hero: 256 };
+  const logo = (src, size = '', color = '') => { const c = BAD(color) ? '' : hx(color); const px = LOGO_PX[size] || 128; return `<span class="logo ${size === 'hero' ? '' : size}${c ? ' tint' : ''}"${c ? ` style="--tc:${esc(c)}"` : ''}>${imgSized(src, px, px)}</span>`; };
   /* a player's id from whatever the feed gave us: the id field, the uid, the headshot file name or a link */
   const athId = a => { if (!a) return ''; if (a.id != null && a.id !== '') return String(a.id); let m = String(a.uid || '').match(/~a:(\d+)/); if (m) return m[1]; const hs = typeof a.headshot === 'string' ? a.headshot : a.headshot && a.headshot.href || ''; m = hs.match(/\/(\d+)\.png/); if (m) return m[1]; m = (a.links || []).map(l => l && l.href || '').join(' ').match(/\/id\/(\d+)/); return m ? m[1] : ''; };
   const hsUrl = a => { const h = a && a.headshot; return typeof h === 'string' ? h : h && h.href || ''; };
   const initials = name => String(name || '').replace(/[^A-Za-z\s'-]/g, '').trim().split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   /* headshot disc: the photo when the feed has one, the player's initials on the team colour when it doesn't */
-  const headshot = (src, color, size = 64, name = '') => `<span class="hs${src ? '' : ' noimg'}${BAD(color) ? ' plain' : ''}" style="${BAD(color) ? '' : `--tc:${esc(hx(color))};`}width:${size}px;height:${size}px;font-size:${Math.round(size * .34)}px"><i>${esc(initials(name))}</i>${src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()">` : ''}</span>`;
+  const headshot = (src, color, size = 64, name = '') => `<span class="hs${src ? '' : ' noimg'}${BAD(color) ? ' plain' : ''}" style="${BAD(color) ? '' : `--tc:${esc(hx(color))};`}width:${size}px;height:${size}px;font-size:${Math.round(size * .34)}px"><i>${esc(initials(name))}</i>${src ? imgSized(src, size >= 56 ? 254 : 160, size >= 56 ? 185 : 116, '', "this.parentNode.classList.add('noimg');this.remove()") : ''}</span>`;
   /* what a return date means: ESPN pencils in the next season's opener for anyone out for the year */
   const statusWord = s => String(s || '').replace(/\bDay-To-Day\b/i, 'Day to day').replace(/\bGame Time Decision\b/i, 'Game-time decision').replace(/\bOut For Season\b/i, 'Out for season');
   const retInfo = (L, iso) => { if (!iso) return null; const d = new Date(iso); if (isNaN(d)) return null; const exact = dayUTC(iso); const ss = String(L && L.seasonStart || '2026-10-01').slice(5); const now = new Date(); let next = new Date(`${now.getUTCFullYear()}-${ss}T00:00:00Z`); if (next - now < 30 * 864e5) next = new Date(`${now.getUTCFullYear() + 1}-${ss}T00:00:00Z`); const far = d >= next - 14 * 864e5; if (far) return { short: 'no return date this season', long: `Not before next season (ESPN lists ${exact})`, far: true }; if (d < now - 36e5 * 36) return { short: `no new date (was ${exact})`, long: `Was ${exact}; no new date yet`, far: false, past: true }; return { short: `back around ${exact}`, long: exact, far: false }; };
@@ -90,7 +96,9 @@
   const fplayers = {
     all() { return store.get('v5:players', []) || []; },
     has(lk, id) { return this.all().some(p => p.lk === lk && p.id === String(id)); },
-    toggle(p) { const a = this.all(); const i = a.findIndex(x => x.lk === p.lk && x.id === String(p.id)); if (i >= 0) a.splice(i, 1); else a.push({ ...p, id: String(p.id) }); store.set('v5:players', a); return i < 0; }
+    toggle(p) { const a = this.all(); const i = a.findIndex(x => x.lk === p.lk && x.id === String(p.id)); if (i >= 0) a.splice(i, 1); else a.push({ ...p, id: String(p.id) }); store.set('v5:players', a); return i < 0; },
+    /* a follow is a snapshot taken the day it was made; the player's page and the league list bring it up to date (a trade, a new photo) */
+    update(lk, id, patch) { const a = this.all(); const i = a.findIndex(x => x.lk === lk && x.id === String(id)); if (i < 0) return false; const cur = a[i]; const next = { ...cur }; let changed = false; Object.entries(patch).forEach(([k, v]) => { if (v != null && v !== '' && v !== cur[k]) { next[k] = v; changed = true; } }); if (changed) { a[i] = next; store.set('v5:players', a); } return changed; }
   };
 
   /* ---------- game cards ---------- */
@@ -129,7 +137,7 @@
     const f = prefs.get('forecast') ? safeF(L, g, ctx) : null;
     const a = teamColor(g.away, L), b = teamColor(g.home, L);
     const fav = f ? (f.pHome >= .5 ? g.home : g.away) : null; const p = f ? Math.max(f.pHome, 1 - f.pHome) : 0;
-    const tm = t => page ? `<a class="tm" href="${href.team(L.key, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo)}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></a>` : `<div class="tm">${logo(t.logo)}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></div>`;
+    const tm = t => page ? `<a class="tm" href="${href.team(L.key, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></a>` : `<div class="tm">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></div>`;
     const inner = `<div class="in">
       <div class="vs">${tm(g.away)}<div class="mid"><span class="st${g.state === 'in' ? ' on' : ''}">${esc(g.state === 'in' ? g.detail : g.state === 'post' ? finalWord(g) : tip(g.date))}</span><div class="sc">${g.off ? '' : `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`}</div><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>${tm(g.home)}</div>
       ${f && !g.off ? `<div class="fc${f.pHome >= .5 ? ' home' : ''}"><div class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></div><b>${g.state === 'post' ? 'Had ' : ''}${esc(fav.short)} ${pct(p)}${g.state === 'pre' && f.proj ? `<small>${esc(g.away.abbr)} ${f.proj.away}–${f.proj.home} ${esc(g.home.abbr)}</small>` : ''}</b></div>` : ''}
@@ -220,7 +228,7 @@
     const S0 = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null };
     const favTeam = t => mine.includes(String(t.id));
     const teamOf = p => { const k = String(p.team || '').toLowerCase(); return t => (p.teamId && String(t.id) === String(p.teamId)) || (k && [t.abbr, t.short, t.name].some(x => String(x || '').toLowerCase() === k)); };
-    const chipOf = g => { const sc = g.state === 'pre' ? `<span>${esc(tip(g.date))}</span>` : g.state === 'in' ? `<span class="on">${g.away.score}–${g.home.score} · ${esc(g.detail)}</span>` : `<span>${g.away.score}–${g.home.score} · Final</span>`; return `<a class="bchip" href="${href.game(lk, g.id)}">${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b>${sc}</a>`; };
+    const chipOf = g => { const sc = g.off ? `<span>${esc(g.off)}</span>` : g.state === 'pre' ? `<span>${esc(tip(g.date))}</span>` : g.state === 'in' ? `<span class="on">${g.away.score}–${g.home.score} · ${esc(g.detail)}</span>` : `<span>${g.away.score}–${g.home.score} · ${esc(finalWord(g))}</span>`; return `<a class="bchip" href="${href.game(lk, g.id)}">${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b>${sc}</a>`; };
     const dayWord = (ymd, long) => { const rd = relDay(ymd); return rd === 'Tomorrow' || rd === 'Tonight' ? rd : dayLabel(ymd, { weekday: long ? 'long' : 'short' }); };
     const nextChip = g => `<a class="bchip next" href="${href.game(lk, g.id)}"><em>${esc(dayWord(HW.ymdOf(g.date)))}</em>${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b><span>${esc(tip(g.date))}</span></a>`;
     const basicTeam = id => { const t = S0.tIdx[id]; const r = S0.st && S0.st.byId && S0.st.byId[id]; if (!t && !r) return null; return { id, abbr: t ? t.abbr : r.abbr, name: t ? t.name : r.name, short: t ? t.short : r.short, loc: t ? t.loc : r.loc, color: teamColor({ id, color: t && t.color }, L), logo: (t && t.logo) || (r && r.logo) || '', rec: r ? `${r.w}-${r.l}` : '', standing: r && L.standingsMode !== 'conferences' ? `${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}` : '', row: r || null, next: null, last: null }; };
@@ -470,7 +478,8 @@
     }
     if (a.team && a.team.color) learn(L, { id: a.team.id, ...a.team });
     if (a.team && !a.team.color) { const idx0 = await teamsIndex(L); const t0 = idx0[String(a.team.id)] || teamEntry({ id: a.team.id, abbr: a.team.abbreviation }, L); if (t0) a.team = { ...a.team, ...{ color: (t0.color || '').replace('#', ''), alternateColor: a.team.alternateColor || (t0.alt || '').replace('#', ''), displayName: a.team.displayName || t0.name, shortDisplayName: a.team.shortDisplayName || t0.short, logos: a.team.logos || [{ href: t0.logo }], abbreviation: a.team.abbreviation || t0.abbr } }; }
-    const tm = a.team || {}; const color = teamColor({ id: tm.id, abbr: tm.abbreviation, color: tm.color }, L); const alt = teamAlt({ id: tm.id, abbr: tm.abbreviation, alt: tm.alternateColor }, L) || hx(tm.alternateColor);
+    const tm = a.team || {}; const color = teamColor({ id: tm.id, abbr: tm.abbreviation, color: tm.color }, L);
+    if (fplayers.has(lk, id)) fplayers.update(lk, id, { name: a.displayName, short: a.shortName, img: a.headshot && a.headshot.href, team: tm.abbreviation, teamId: tm.id ? String(tm.id) : '', color: BAD(color) ? '' : color }); const alt = teamAlt({ id: tm.id, abbr: tm.abbreviation, alt: tm.alternateColor }, L) || hx(tm.alternateColor);
     const teamLogo = tm.logos && tm.logos[0] && tm.logos[0].href;
     const college = /^ncaa/.test(lk);
     const st = ov && ov.statistics; const labels = st && st.labels || [];
@@ -664,6 +673,7 @@
     const idx = await teamsIndex(L);
     const mine = favs.all()[lk] || [];
     const [lp, rosters] = await Promise.all([pro && leaders ? leaguePlayers(L).catch(() => null) : null, Promise.all(mine.map(id => rosterOf(L, id, idx).catch(() => null)))]);
+    if (lp) fplayers.all().filter(p => p.lk === lk).forEach(p => { const r = lp.rows.find(x => x.id === p.id); if (r) { const c = teamColor({ id: r.teamId, abbr: r.team }, L); fplayers.update(lk, p.id, { name: r.name, short: r.short, img: r.img, team: r.team, teamId: r.teamId, color: BAD(c) ? null : c }); } });   // follows catch up with trades and new photos
     const ppg = {}; if (lp) lp.rows.forEach(r => { ppg[r.id] = r; });
     const line = p => { const r = ppg[p.id]; return r && r.gp ? `${r.pts.toFixed(1)} ppg` : ''; };
     const byLine = (a, b) => ((ppg[b.id] || {}).pts || 0) - ((ppg[a.id] || {}).pts || 0) || lastName(a.name).localeCompare(lastName(b.name)) || (a.name || '').localeCompare(b.name || '');
@@ -714,5 +724,5 @@
   }
 
   HW.v5 = Object.assign(HW.v5 || {}, { home, scores, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, learn, statusWord, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep } });
+    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, learn, statusWord, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

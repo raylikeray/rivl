@@ -138,7 +138,7 @@
   }
   function liveChip(g, L) {
     const tc = t => V._.teamColor(t, L);
-    const side = (t, o) => { const lead = t.score != null && o.score != null && t.score > o.score; return `<span class="tm"${!tc(t) || /^#(2A2D33|55606e)$/i.test(tc(t)) ? '' : ` style="--tc:${esc(tc(t))}"`}><img src="${esc(t.logo || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><b>${esc(t.abbr)}</b><i class="sc${lead ? ' on' : ''}">${t.score ?? ''}</i></span>`; };
+    const side = (t, o) => { const lead = t.score != null && o.score != null && t.score > o.score; return `<span class="tm"${!tc(t) || /^#(2A2D33|55606e)$/i.test(tc(t)) ? '' : ` style="--tc:${esc(tc(t))}"`}>${V._.imgSized(t.logo || '', 64, 64)}<b>${esc(t.abbr)}</b><i class="sc${lead ? ' on' : ''}">${t.score ?? ''}</i></span>`; };
     return `<a class="lg${HW.isFav(g) ? ' fav' : ''}" href="#game/${L.key}/${esc(g.id)}" data-lid="${L.key}:${esc(g.id)}">${side(g.away, g.home)}${side(g.home, g.away)}<span class="st"><span class="dot"></span>${esc(g.detail)}</span></a>`;
   }
   function paintLive() {
@@ -376,7 +376,7 @@
         } else groups.push({ name: '', rows: Object.keys(idx).map(id => tile(id)).sort(byShort) });
         const paint = () => {
           const q = inp.value.trim().toLowerCase();
-          const html = groups.map(g => { const rows = g.rows.filter(tm => !q || `${tm.name} ${tm.short} ${tm.abbr} ${g.name}`.toLowerCase().includes(q)); if (!rows.length) return ''; return `${g.name ? `<div class="onb-sec"><b>${esc(g.name)}</b><span>${rows.length}</span></div>` : ''}<div class="onb-grid">${rows.map(tm => { const on = HW.favs.has(lk, tm.id); return `<button class="onb-team${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tm.id)}" data-name="${esc(tm.short)}" aria-pressed="${on}"><span class="logo"><img src="${esc(tm.logo || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"></span><b>${esc(tm.short)}</b><span>${tm.rank ? `<em>No. ${tm.rank}</em>` : ''}${esc(tm.rec)}</span><i></i></button>`; }).join('')}</div>`; }).join('');
+          const html = groups.map(g => { const rows = g.rows.filter(tm => !q || `${tm.name} ${tm.short} ${tm.abbr} ${g.name}`.toLowerCase().includes(q)); if (!rows.length) return ''; return `${g.name ? `<div class="onb-sec"><b>${esc(g.name)}</b><span>${rows.length}</span></div>` : ''}<div class="onb-grid">${rows.map(tm => { const on = HW.favs.has(lk, tm.id); return `<button class="onb-team${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tm.id)}" data-name="${esc(tm.short)}" aria-pressed="${on}"><span class="logo">${V._.imgSized(tm.logo || '', 128, 128)}</span><b>${esc(tm.short)}</b><span>${tm.rank ? `<em>No. ${tm.rank}</em>` : ''}${esc(tm.rec)}</span><i></i></button>`; }).join('')}</div>`; }).join('');
           list.innerHTML = html || `<div class="empty"><b>No team matches</b><p style="margin:6px 0 0">Try the school, the nickname or the conference.</p></div>`;
           onbCount();
         };
