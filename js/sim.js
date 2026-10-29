@@ -75,40 +75,50 @@
     const H = HW.strength(L, h, ctx), A = HW.strength(L, a, ctx); const P = HW.paramsOf(L, ctx);
     return HW.calibrate(Phi(((H.rating - A.rating) + (neutral ? 0 : P.hca)) / P.sd), P.calib);
   }
+  const SEASON_GAMES = { nba: 82, wnba: 44 };
+  /* a normal draw (Box–Muller) */
+  const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
   function simulate(L, ctx, sched, { n = 2000, today = DAY(), live = {} } = {}) {
     const cur = ctx && ctx.cur; if (!cur || !cur.byId) return null;
     const teams = Object.values(cur.byId).filter(r => r.id); const ids = teams.map(r => r.id); const ix = new Map(ids.map((id, i) => [id, i])); const T = ids.length;
+    // each team's rating, and how sure it is: early in the season a rating is a guess with a few points of give, so every
+    // run of the season draws its own version of each team around it (about 3 points after 5 games, half that by midseason)
+    const P = HW.paramsOf(L, ctx); const rat = new Float64Array(T), give = new Float64Array(T);
+    teams.forEach((r, i) => { const st = HW.strength(L, r.id, ctx); rat[i] = st.rating; const gp = (r.w || 0) + (r.l || 0); give[i] = 3.4 * Math.sqrt(8 / (gp + 8)); });
+    const pOf = (hi, ai, neutral, off) => HW.calibrate(Phi(((rat[hi] + off[hi]) - (rat[ai] + off[ai]) + (neutral ? 0 : P.hca)) / P.sd), P.calib);
     const regular = sched.games.filter(g => g.t === 2 && !g.x && ix.has(g.h) && ix.has(g.a));
     // head-to-head so far, from the finished games the schedule carries
     const h2h = new Int16Array(T * T); regular.filter(g => g.st === 'post' && g.hs != null && g.as != null).forEach(g => { const hi = ix.get(g.h), ai = ix.get(g.a); if (g.hs > g.as) h2h[hi * T + ai]++; else h2h[ai * T + hi]++; });
     const known = regular.some(g => g.st === 'post');
     // what is left: games not final, decided by the forecast (a game in progress by its live chance when the caller has one)
-    const left = regular.filter(g => g.st !== 'post' && g.d >= addDays(today, -1)).map(g => ({ hi: ix.get(g.h), ai: ix.get(g.a), p: live[g.id] != null ? live[g.id] : pHomeOf(L, ctx, g.h, g.a, !!g.n) }));
+    const left = regular.filter(g => g.st !== 'post' && g.d >= addDays(today, -1)).map(g => ({ hi: ix.get(g.h), ai: ix.get(g.a), n: !!g.n, p: live[g.id] != null ? live[g.id] : null }));
     const remaining = new Array(T).fill(0); left.forEach(g => { remaining[g.hi]++; remaining[g.ai]++; });
     // the format: conferences with a play-in (NBA) or one league table (WNBA)
     const conf = L.standingsMode === 'conference'; const cut = L.playoffLine || []; const top = cut[0] || 0, playIn = cut.length === 2 ? cut[1] : 0;
     const groups = conf ? [...new Set(teams.map(r => r.group))].map(gname => teams.filter(r => r.group === gname).map(r => ix.get(r.id))) : [ids.map((_, i) => i)];
     const out = teams.map(r => ({ id: r.id, w: 0, top: 0, playin: 0, playoffs: 0, first: 0, seeds: new Array(Math.max(16, T)).fill(0), remaining: remaining[ix.get(r.id)] }));
     const w0 = teams.map(r => r.w || 0), l0 = teams.map(r => r.l || 0);
-    const wins = new Float64Array(T), hh = new Int16Array(T * T), rnd = Math.random;
+    const wins = new Float64Array(T), hh = new Int16Array(T * T), off = new Float64Array(T), rnd = Math.random;
     const cmp = (x, y) => wins[y] - wins[x] || (hh[y * T + x] - hh[x * T + y]) || (rnd() < .5 ? -1 : 1);
     for (let s = 0; s < n; s++) {
-      wins.set(w0); hh.set(h2h);
-      for (let k = 0; k < left.length; k++) { const g = left[k]; if (rnd() < g.p) { wins[g.hi]++; hh[g.hi * T + g.ai]++; } else { wins[g.ai]++; hh[g.ai * T + g.hi]++; } }
+      wins.set(w0); hh.set(h2h); for (let i = 0; i < T; i++) off[i] = gauss() * give[i];
+      for (let k = 0; k < left.length; k++) { const g = left[k]; const p = g.p != null ? g.p : pOf(g.hi, g.ai, g.n, off); if (rnd() < p) { wins[g.hi]++; hh[g.hi * T + g.ai]++; } else { wins[g.ai]++; hh[g.ai * T + g.hi]++; } }
       for (let i = 0; i < T; i++) out[i].w += wins[i];
       groups.forEach(gr => {
         const order = gr.slice().sort(cmp);
         order.forEach((ti, pos) => { const o = out[ti]; o.seeds[pos]++; if (pos === 0) o.first++; if (top && pos < top) { o.top++; o.playoffs++; } else if (playIn && pos < playIn) { o.playin++; } });
         if (playIn && order.length >= playIn) {   // the play-in: 7 hosts 8 for the 7 seed; 9 hosts 10, the winner visits the 7–8 loser for the 8 seed
           const [s7, s8, s9, s10] = [order[top], order[top + 1], order[top + 2], order[top + 3]];
-          const win = (h, a) => rnd() < pHomeOf(L, ctx, ids[h], ids[a], false) ? h : a;
+          const win = (h, a) => rnd() < pOf(h, a, false, off) ? h : a;
           const w78 = win(s7, s8), l78 = w78 === s7 ? s8 : s7; const w910 = win(s9, s10); const w8 = win(l78, w910);
           out[w78].playoffs++; out[w8].playoffs++;
         }
       });
     }
+    // games the schedule doesn't carry yet (the NBA Cup's knockout and make-up dates land in December) are projected at the team's own pace
+    const full = SEASON_GAMES[L.key] || 0;
     const games = w0.map((w, i) => w + l0[i] + remaining[i]);
-    return { n, left: left.length, known, teams: out.map((o, i) => ({ id: o.id, w: o.w / n, l: games[i] - o.w / n, games: games[i], remaining: o.remaining, top: o.top / n, playin: o.playin / n, playoffs: o.playoffs / n, first: o.first / n, seeds: o.seeds.map(v => v / n) })) };
+    return { n, left: left.length, known, teams: out.map((o, i) => { const w = o.w / n; const g = games[i]; const wF = full > g && g ? w * full / g : w; const gF = full > g ? full : g; return { id: o.id, w: wF, l: gF - wF, games: gF, scheduled: g, remaining: o.remaining, top: o.top / n, playin: o.playin / n, playoffs: o.playoffs / n, first: o.first / n, seeds: o.seeds.map(v => v / n) }; }) };
   }
   /* what is left for each team: how many games, how many at home, and how strong the opponents are (rating, home-court adjusted) */
   function restOf(L, ctx, sched, today = DAY()) {
