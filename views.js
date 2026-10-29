@@ -53,7 +53,10 @@
   /* teams whose signature colour is their secondary: their score takes that one so the Lakers read gold, not Jazz purple */
   const SIG_ALT = { nba: { LAL: 1, IND: 1, DEN: 1, MIN: 1 }, wnba: { LA: 1, LAS: 1 } };
   const scoreColor = (L, t) => { const alt = teamAlt(t, L); return alt && SIG_ALT[L.key] && SIG_ALT[L.key][t.abbr] ? alt : teamColor(t, L); };
-  const scVars = (t, L) => { const c = L ? scoreColor(L, t) : teamColor(t); return `--tc:${esc(c)};--tcd:${esc(V_lift(c))};--tcl:${esc(V_deep(c))}`; };
+  /* a team colour on an element: --tc raw (tints, rings), --tf-d/--tf-l the readable fill for black and white backgrounds — the
+     stylesheet maps --tf to the one in use, so a black Spurs bar reads on black and a white one on white */
+  const tcv = c => `--tc:${esc(c)};--tf-d:${esc(V_lift(c))};--tf-l:${esc(V_deep(c))}`;
+  const scVars = (t, L) => { const c = L ? scoreColor(L, t) : teamColor(t); return `${tcv(c)};--tcd:${esc(V_lift(c))};--tcl:${esc(V_deep(c))}`; };
   const href = { player: (lk, id) => `#player/${lk}/${id}`, team: (lk, id) => `#team/${lk}/${id}`, game: (lk, id) => `#game/${lk}/${id}` };
   const hide = `onerror="this.style.visibility='hidden'"`;
   /* ESPN's art at the size it is drawn: the CDN's combiner scales a logo or headshot on the fly, so a 46px disc doesn't
@@ -63,13 +66,13 @@
   const imgSized = (src, w, h, extra = '', then = "this.style.visibility='hidden'") => { const u = sized(src, w, h); return `<img src="${esc(u)}"${u !== src ? ` data-o="${esc(src)}"` : ''} alt="" loading="lazy" ${extra} ${fallback(then)}>`; };
   /* a logo disc; with a team colour it takes a tint and a ring in that colour */
   const LOGO_PX = { s: 96, m: 128, '': 128, l: 192, hero: 256 };
-  const logo = (src, size = '', color = '') => { const c = BAD(color) ? '' : hx(color); const px = LOGO_PX[size] || 128; return `<span class="logo ${size === 'hero' ? '' : size}${c ? ' tint' : ''}"${c ? ` style="--tc:${esc(c)}"` : ''}>${imgSized(src, px, px)}</span>`; };
+  const logo = (src, size = '', color = '') => { const c = BAD(color) ? '' : hx(color); const px = LOGO_PX[size] || 128; return `<span class="logo ${size === 'hero' ? '' : size}${c ? ' tint' : ''}"${c ? ` style="${tcv(c)}"` : ''}>${imgSized(src, px, px)}</span>`; };
   /* a player's id from whatever the feed gave us: the id field, the uid, the headshot file name or a link */
   const athId = a => { if (!a) return ''; if (a.id != null && a.id !== '') return String(a.id); let m = String(a.uid || '').match(/~a:(\d+)/); if (m) return m[1]; const hs = typeof a.headshot === 'string' ? a.headshot : a.headshot && a.headshot.href || ''; m = hs.match(/\/(\d+)\.png/); if (m) return m[1]; m = (a.links || []).map(l => l && l.href || '').join(' ').match(/\/id\/(\d+)/); return m ? m[1] : ''; };
   const hsUrl = a => { const h = a && a.headshot; return typeof h === 'string' ? h : h && h.href || ''; };
   const initials = name => String(name || '').replace(/[^A-Za-z\s'-]/g, '').trim().split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   /* headshot disc: the photo when the feed has one, the player's initials on the team colour when it doesn't */
-  const headshot = (src, color, size = 64, name = '') => `<span class="hs${src ? '' : ' noimg'}${BAD(color) ? ' plain' : ''}" style="${BAD(color) ? '' : `--tc:${esc(hx(color))};`}width:${size}px;height:${size}px;font-size:${Math.round(size * .34)}px"><i>${esc(initials(name))}</i>${src ? imgSized(src, size >= 56 ? 254 : 160, size >= 56 ? 185 : 116, '', "this.parentNode.classList.add('noimg');this.remove()") : ''}</span>`;
+  const headshot = (src, color, size = 64, name = '') => `<span class="hs${src ? '' : ' noimg'}${BAD(color) ? ' plain' : ''}" style="${BAD(color) ? '' : `${tcv(hx(color))};`}width:${size}px;height:${size}px;font-size:${Math.round(size * .34)}px"><i>${esc(initials(name))}</i>${src ? imgSized(src, size >= 56 ? 254 : 160, size >= 56 ? 185 : 116, '', "this.parentNode.classList.add('noimg');this.remove()") : ''}</span>`;
   /* what a return date means: ESPN pencils in the next season's opener for anyone out for the year */
   const statusWord = s => String(s || '').replace(/\bDay-To-Day\b/i, 'Day to day').replace(/\bGame Time Decision\b/i, 'Game-time decision').replace(/\bOut For Season\b/i, 'Out for season');
   const retInfo = (L, iso) => { if (!iso) return null; const d = new Date(iso); if (isNaN(d)) return null; const exact = dayUTC(iso); const ss = String(L && L.seasonStart || '2026-10-01').slice(5); const now = new Date(); let next = new Date(`${now.getUTCFullYear()}-${ss}T00:00:00Z`); if (next - now < 30 * 864e5) next = new Date(`${now.getUTCFullYear() + 1}-${ss}T00:00:00Z`); const far = d >= next - 14 * 864e5; if (far) return { short: 'no return date this season', long: `Not before next season (ESPN lists ${exact})`, far: true }; if (d < now - 36e5 * 36) return { short: `no new date (was ${exact})`, long: `Was ${exact}; no new date yet`, far: false, past: true }; return { short: `back around ${exact}`, long: exact, far: false }; };
@@ -115,7 +118,7 @@
     const label = g.state === 'post' ? `Had ${esc(fav.short)} ${pct(p)}` : `${esc(fav.short)} ${pct(p)}`;
     const proj = g.state === 'pre' && f.proj ? `${esc(g.away.abbr)} ${f.proj.away}–${f.proj.home} ${esc(g.home.abbr)}` : '';
     const small = [note, proj].filter(Boolean).join(' · ');
-    return `<div class="fc"><div class="bar"><i style="width:${(f.pHome * 100).toFixed(1)}%;background:${esc(teamColor(g.home, L))}"></i><i style="width:${((1 - f.pHome) * 100).toFixed(1)}%;background:${esc(teamColor(g.away, L))}"></i></div><b>${label}${small ? `<small>${small}</small>` : ''}</b></div>`;
+    return `<div class="fc"><div class="bar"><i style="width:${(f.pHome * 100).toFixed(1)}%;${tcv(teamColor(g.home, L))}"></i><i style="width:${((1 - f.pHome) * 100).toFixed(1)}%;${tcv(teamColor(g.away, L))}"></i></div><b>${label}${small ? `<small>${small}</small>` : ''}</b></div>`;
   }
   /* one team's line on a card: the side that is ahead (leading live, or the winner) gets its score in the team colour */
   /* 'NBA Cup - Semifinals' → 'NBA Cup Semifinals': the feed's note on a game whose teams aren't set */
@@ -300,7 +303,7 @@
           ? `<div class="rail">${fp.map(p => { const is = teamOf(p); const g = games.find(g => is(g.home) || is(g.away)); const us = g ? (is(g.home) ? g.home : g.away) : null, them = g ? (is(g.home) ? g.away : g.home) : null; const ln = lineBy[p.id];
             // under the average: the game tonight (on now, the tip, or the result), else last night's line
             const now = g && !g.off ? (g.state === 'in' ? `<i class="on">${us.score}–${them.score}</i> ${esc(g.detail)}` : g.state === 'post' ? `${us.score > them.score ? 'W' : 'L'} ${us.score}–${them.score} ${is(g.home) ? 'vs' : 'at'} ${esc(them.abbr)}` : `${esc(tipOf(g))} ${g.neutral ? 'vs' : is(g.home) ? 'vs' : 'at'} ${esc(them.abbr)}`) : ln ? (ln.dnp ? esc(ln.dnp) : `${esc(ln.pts)} / ${esc(ln.reb)} / ${esc(ln.ast)} last night`) : '';
-            return `<a class="pl" href="${href.player(lk, p.id)}" style="--tc:${esc(playerColor(p, L))}">${headshot(p.img, playerColor(p, L), 64, p.name)}<b>${esc(p.short || p.name)}</b><span>${esc(ppgOf(p) || p.team || '')}</span>${now ? `<em class="nx">${now}</em>` : ''}</a>`; }).join('')}</div>`
+            return `<a class="pl" href="${href.player(lk, p.id)}" style="${tcv(playerColor(p, L))}">${headshot(p.img, playerColor(p, L), 64, p.name)}<b>${esc(p.short || p.name)}</b><span>${esc(ppgOf(p) || p.team || '')}</span>${now ? `<em class="nx">${now}</em>` : ''}</a>`; }).join('')}</div>`
           : empty('Follow the players you watch', '<p style="margin:6px 0 0">They show up here with their scoring line, and their profile is one tap away.</p>', `<a class="btn" href="#players">Find players</a>`));
       } else delete secs.players;
       // injuries: one list grouped by team. Your teams show every report, with your players marked; a team you don't
@@ -315,7 +318,7 @@
         const have = new Set(groups.map(g => g.t.id));
         if (fp.length) (inj.teams || []).forEach(tt => { const tid = String(tt.id || ''); if (!tid || have.has(tid)) return; const rows = (tt.injuries || []).map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })).filter(r => r.p); if (!rows.length) return; const ti = S0.tIdx[tid] || {}; groups.push({ t: { id: tid, short: ti.short || tt.displayName || rows[0].p.team || '', logo: ti.logo || '', color: ti.color || playerColor(rows[0].p, L) }, rows, only: true }); });
         const folds = store.get('v5:injcol', {}) || {};
-        const blocks = groups.map(({ t, rows, only }) => `<div class="injgrp"><button class="injhd" data-act="injcol" data-id="${esc(t.id)}" aria-expanded="${!folds[t.id]}" style="--tc:${esc(teamColor(t, L))}"><i class="bar"></i>${logo(t.logo, 's')}<b>${esc(t.short)}</b><span class="n">${only ? 'your players' : `${rows.length} listed`}</span>${chev}</button><div class="injbody"${folds[t.id] ? ' hidden' : ''}>${rows.map(({ x, i, p }) => row(x, i, t, p)).join('')}</div></div>`);
+        const blocks = groups.map(({ t, rows, only }) => `<div class="injgrp"><button class="injhd" data-act="injcol" data-id="${esc(t.id)}" aria-expanded="${!folds[t.id]}" style="${tcv(teamColor(t, L))}"><i class="bar"></i>${logo(t.logo, 's')}<b>${esc(t.short)}</b><span class="n">${only ? 'your players' : `${rows.length} listed`}</span>${chev}</button><div class="injbody"${folds[t.id] ? ' hidden' : ''}>${rows.map(({ x, i, p }) => row(x, i, t, p)).join('')}</div></div>`);
         if (blocks.length) secs.injuries = sec('Injuries', 'your teams and players') + `<div class="rows">${blocks.join('')}</div>`; else delete secs.injuries;
       } else delete secs.injuries;
       // news about my teams and players: ESPN tags every story with the teams and athletes it covers; full names are the fallback
@@ -574,7 +577,7 @@
       return `<div class="ring" style="${toneVars}"><svg width="150" height="150" viewBox="0 0 140 140" role="img" aria-label="${esc(title)}"><g fill="none" transform="rotate(-90 70 70)">${arcs}</g><text x="70" y="73" text-anchor="middle" fill="var(--ink)" style="font:800 34px var(--num)">${esc(center)}</text><text x="70" y="91" text-anchor="middle" fill="var(--ink-3)" style="font:700 11px var(--ui);letter-spacing:.06em">${esc(label)}</text></svg><div class="key">${segs.map(x => `<div><i style="background:${x.c}"></i><span>${esc(x.l)}</span><b>${x.v == null ? '—' : x.v.toFixed(1)}</b><em>${total && x.v > 0 ? Math.round(x.v / total * 100) + '%' : ''}</em></div>`).join('')}</div></div>`;
     };
     // three tints of the team colour that read on both grounds (set per theme in CSS from these variables)
-    const toneVars = `--c1:${esc(color)};--c2d:${esc(mixTo(color, 255, .38))};--c3d:${esc(mixTo(color, 255, .68))};--c2l:${esc(mixTo(color, 255, .42))};--c3l:${esc(mixTo(color, 255, .72))}`;
+    const toneVars = `--c1d:${esc(V_lift(color))};--c1l:${esc(V_deep(color))};--c2d:${esc(mixTo(V_lift(color), 255, .38))};--c3d:${esc(mixTo(V_lift(color), 255, .68))};--c2l:${esc(mixTo(V_deep(color), 255, .42))};--c3l:${esc(mixTo(V_deep(color), 255, .72))}`;   // the first tone is the colour as it reads on the ground (a black team lifts on black)
     const tones = [{ c: 'var(--c1)' }, { c: 'var(--c2)' }, { c: 'var(--c3)' }];
     const views = [];
     // points: twos, threes and free throws per game, from the game log when it has games
@@ -590,7 +593,7 @@
     if (stat('FG%') != null) {
       const bar = (l, v, sub) => `<div><span>${l}</span><em><i style="width:${Math.max(0, Math.min(100, v || 0))}%"></i></em><b>${v == null ? '—' : v.toFixed(1)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</div>`;
       const att = (k) => { const v = crow(k); return v; };
-      views.push(['sh', 'Shooting', `<div class="bars" style="--tc:${esc(color)}">${bar('Field goals', stat('FG%'), crow('FG') != null ? '' : '')}${bar('Threes', stat('3P%'))}${bar('Free throws', stat('FT%'))}</div>` + (cur && ci('FG') >= 0 ? `<p class="ringnote">Per game: ${esc(String(cur.stats[ci('FG')]))} FG, ${esc(String(cur.stats[ci('3PT')] || ''))} 3PT, ${esc(String(cur.stats[ci('FT')] || ''))} FT (made-attempted)</p>` : '')]);
+      views.push(['sh', 'Shooting', `<div class="bars" style="${tcv(color)}">${bar('Field goals', stat('FG%'), crow('FG') != null ? '' : '')}${bar('Threes', stat('3P%'))}${bar('Free throws', stat('FT%'))}</div>` + (cur && ci('FG') >= 0 ? `<p class="ringnote">Per game: ${esc(String(cur.stats[ci('FG')]))} FG, ${esc(String(cur.stats[ci('3PT')] || ''))} 3PT, ${esc(String(cur.stats[ci('FT')] || ''))} FT (made-attempted)</p>` : '')]);
     }
     const avgCard = (views.length || grid.length) ? `<section class="card avg"><div class="card-h"><h2>Season averages</h2><small>${esc(seasonName)}</small></div>
       ${views.length ? `<div class="chips" role="tablist">${views.map(([k, l], i) => `<button class="chip${i === 0 ? ' on' : ''}" role="tab" data-act="mix" data-mix="${k}" aria-selected="${i === 0}" aria-pressed="${i === 0}">${l}</button>`).join('')}</div>${views.map(([k, , html], i) => `<div data-mix-panel="${k}"${i === 0 ? '' : ' hidden'}>${html}</div>`).join('')}` : ''}
@@ -733,7 +736,7 @@
       sections.forEach(s => {
         const rows = q ? s.rows.filter(p => `${p.name} ${s.team.name} ${s.team.abbr}`.toLowerCase().includes(q)) : s.rows; if (!rows.length) return;
         const folded = !q && !!(store.get('v5:ppcol', {}) || {})[s.key];   // a search always opens every team
-        parts.push(`<button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}" style="--tc:${esc(teamColor(s.team, L))}"><i class="bar"></i>${logo(s.team.logo, 's')}<b>${esc(s.team.short)}</b><span class="n">${rows.length}</span>${chev}</button><div class="rows"${folded ? ' hidden' : ''}>${rows.map(p => rowOf(p, s)).join('')}</div>`);
+        parts.push(`<button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}" style="${tcv(teamColor(s.team, L))}"><i class="bar"></i>${logo(s.team.logo, 's')}<b>${esc(s.team.short)}</b><span class="n">${rows.length}</span>${chev}</button><div class="rows"${folded ? ' hidden' : ''}>${rows.map(p => rowOf(p, s)).join('')}</div>`);
       });
       if (lp && leaders) {
         // league leaders, per game, by category; a search keeps the whole list and filters it by name
@@ -774,5 +777,5 @@
   }
 
   HW.v5 = Object.assign(HW.v5 || {}, { home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, learn, statusWord, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
+    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, learn, statusWord, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

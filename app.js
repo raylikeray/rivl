@@ -152,7 +152,7 @@
   }
   function liveChip(g, L) {
     const tc = t => V._.teamColor(t, L);
-    const side = (t, o) => { const lead = t.score != null && o.score != null && t.score > o.score; return `<span class="tm"${!tc(t) || /^#(2A2D33|55606e)$/i.test(tc(t)) ? '' : ` style="--tc:${esc(tc(t))}"`}>${V._.imgSized(t.logo || '', 64, 64)}<b>${esc(t.abbr)}</b><i class="sc${lead ? ' on' : ''}">${t.score ?? ''}</i></span>`; };
+    const side = (t, o) => { const lead = t.score != null && o.score != null && t.score > o.score; return `<span class="tm"${!tc(t) || /^#(2A2D33|55606e)$/i.test(tc(t)) ? '' : ` style="${V._.tcv(tc(t))}"`}>${V._.imgSized(t.logo || '', 64, 64)}<b>${esc(t.abbr)}</b><i class="sc${lead ? ' on' : ''}">${t.score ?? ''}</i></span>`; };
     return `<a class="lg${HW.isFav(g) ? ' fav' : ''}" href="#game/${L.key}/${esc(g.id)}" data-lid="${L.key}:${esc(g.id)}">${side(g.away, g.home)}${side(g.home, g.away)}<span class="st"><span class="dot"></span>${esc(g.detail)}</span></a>`;
   }
   function paintLive() {

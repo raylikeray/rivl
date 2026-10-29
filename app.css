@@ -132,7 +132,7 @@ table,.num{font-variant-numeric:tabular-nums}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 .fc{display:flex;align-items:center;gap:12px;padding:10px 16px 13px;margin-top:6px;border-top:1px solid var(--line)}
 .fc .bar{flex:1;height:8px;border-radius:4px;overflow:hidden;display:flex;background:var(--surf-3)}
-.fc .bar i{display:block;height:100%;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.fc .bar i{display:block;height:100%;background:var(--tf,var(--ink));transition:width .6s cubic-bezier(.2,.8,.2,1)}
 .fc b{font-size:13.5px;font-weight:800;white-space:nowrap}
 .fc b small{font-weight:500;color:var(--ink-3);font-size:12.5px;margin-left:6px}
 .bump{animation:bump 1.4s cubic-bezier(.2,.8,.2,1)}
@@ -190,7 +190,7 @@ table,.num{font-variant-numeric:tabular-nums}
 .rail{display:flex;gap:14px;padding:4px var(--gut-r) 6px var(--gut);overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity}
 .rail::-webkit-scrollbar{display:none}
 .pl{flex:none;width:88px;text-align:center;color:inherit;text-decoration:none;scroll-snap-align:start}
-.pl .hs{width:64px;height:64px;margin:0 auto 8px;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--tc,var(--surf-3))}
+.pl .hs{width:64px;height:64px;margin:0 auto 8px;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--tf,var(--surf-3))}
 .pl b{display:block;font-size:13px;line-height:1.2;font-weight:700;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .pl span{display:block;font-size:12px;color:var(--ink-3);margin-top:2px}
 
@@ -252,7 +252,7 @@ table,.num{font-variant-numeric:tabular-nums}
 .bars div{display:grid;grid-template-columns:92px 1fr 52px;align-items:center;gap:12px;font-size:14px}
 .bars div span{color:var(--ink-2)}
 .bars div em{font-style:normal;height:8px;border-radius:4px;background:var(--surf-3);overflow:hidden;display:block}
-.bars div em i{display:block;height:100%;background:var(--tc,var(--ink))}
+.bars div em i{display:block;height:100%;background:var(--tf,var(--ink))}
 .bars div b{text-align:right;font:800 18px/1 var(--num)}
 
 /* flat table */
@@ -316,6 +316,10 @@ table,.num{font-variant-numeric:tabular-nums}
 .wire .wr:first-of-type{border-top:0}
 .wire .wr b{display:block;font-size:15px;font-weight:800;line-height:1.3;letter-spacing:-.01em}
 .wire .wr span{display:block;font-size:12.5px;color:var(--ink-3);margin-top:3px}
+/* a team colour as a fill: lifted on black, deepened on white — the element that carries the pair picks the one in use */
+[style*="--tf-d:"]{--tf:var(--tf-d)}
+:root[data-theme="light"] [style*="--tf-d:"]{--tf:var(--tf-l)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) [style*="--tf-d:"]{--tf:var(--tf-l)} }
 .todayfab{position:fixed;left:50%;bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 14px);transform:translate(-50%,10px);display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 16px 0 13px;border-radius:999px;background:var(--ink);color:var(--bg);font:700 13.5px/1 var(--ui);white-space:nowrap;z-index:70;opacity:0;pointer-events:none;transition:opacity .2s,transform .22s cubic-bezier(.2,.8,.2,1);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 10px 24px -10px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.3)}
 .todayfab.in{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .todayfab:active{transform:translate(-50%,0) scale(.96)}
@@ -387,7 +391,7 @@ button.row:last-child{border-bottom:0}
 .cmp>div b.lead{color:var(--ink)}
 .cmp>div b:last-child{text-align:right}
 .cmp>div em{font-style:normal;height:8px;border-radius:4px;background:var(--surf-3);overflow:hidden;position:relative}
-.cmp>div em i{position:absolute;top:0;bottom:0;display:block}
+.cmp>div em i{position:absolute;top:0;bottom:0;display:block;background:var(--tf,var(--ink))}
 .cmp>div em.l i{right:0}
 .cmp>div em.r i{left:0}
 .cmp .lab{grid-column:1/-1;text-align:center;font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:-8px}
@@ -697,7 +701,7 @@ body{overscroll-behavior-y:none}
 .tracker .tk{display:flex;gap:16px;padding:8px 2px 0;font-size:12px;font-weight:700;color:var(--ink-3)}
 .tracker .tk i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .runmark{display:flex;align-items:center;gap:8px;padding:8px 0 6px;font-size:12.5px;font-weight:700;color:var(--ink-2)}
-.runmark::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--tc,var(--ink))}
+.runmark::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--tf,var(--ink))}
 .runmark b{font:800 14px var(--num);color:var(--ink)}
 /* standings: the playoff picture under the name */
 .tbl.stand .nm{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
@@ -717,9 +721,9 @@ body{overscroll-behavior-y:none}
 /* rings draw in */
 .ring svg{animation:ringin .5s cubic-bezier(.2,.8,.2,1) both}
 @keyframes ringin{from{opacity:0;transform:rotate(-14deg) scale(.94)}to{opacity:1;transform:none}}
-.ring{--c2:var(--c2d);--c3:var(--c3d)}
-:root[data-theme="light"] .ring{--c2:var(--c2l);--c3:var(--c3l)}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .ring{--c2:var(--c2l);--c3:var(--c3l)} }
+.ring{--c1:var(--c1d);--c2:var(--c2d);--c3:var(--c3d)}
+:root[data-theme="light"] .ring{--c1:var(--c1l);--c2:var(--c2l);--c3:var(--c3l)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .ring{--c1:var(--c1l);--c2:var(--c2l);--c3:var(--c3l)} }
 
 /* status tags inside a row's subtitle stay small and inline */
 .row .t span .tag,.row .t .tag{display:inline-block;width:auto;margin:0 0 0 6px;vertical-align:middle;position:relative;top:-1px;font-size:10px;padding:2px 6px;line-height:1.3;white-space:nowrap}
@@ -823,7 +827,7 @@ body{overscroll-behavior-y:none}
 .hs i{background:linear-gradient(160deg,rgba(255,255,255,.2),rgba(0,0,0,.18))}
 :root[data-theme="light"] .hs{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 1px 2px rgba(16,24,40,.18),0 4px 10px -4px rgba(16,24,40,.35)}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .hs{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 1px 2px rgba(16,24,40,.18),0 4px 10px -4px rgba(16,24,40,.35)} }
-.pl .hs{box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 0 0 2px var(--bg),0 0 0 4px var(--tc,var(--disc-plain)),0 4px 12px -2px color-mix(in srgb,var(--tc,#000) 45%,transparent)}
+.pl .hs{box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 0 0 2px var(--bg),0 0 0 4px var(--tf,var(--disc-plain)),0 4px 12px -2px color-mix(in srgb,var(--tf,#000) 45%,transparent)}
 
 /* ---- motion: things arrive, press, and fill ---- */
 @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -895,7 +899,7 @@ body{overscroll-behavior-y:none}
 /* injury team headers: a plate band with the team's colour bar and a bare logo, so it reads as a heading, not another row */
 button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:10px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge);font-size:14px}
 .injgrp:first-child button.injhd{margin-top:0}
-.injhd .bar{flex:none;width:4px;height:22px;border-radius:2px;background:var(--tc,var(--ink-3));box-shadow:0 0 8px color-mix(in srgb,var(--tc,transparent) 50%,transparent)}
+.injhd .bar{flex:none;width:4px;height:22px;border-radius:2px;background:var(--tf,var(--ink-3));box-shadow:0 0 8px color-mix(in srgb,var(--tf,transparent) 50%,transparent)}
 .injhd .logo{width:30px;height:30px;background:none;box-shadow:none}
 .injhd .logo::before{display:none}
 .injhd .logo img{width:100%;height:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
@@ -928,7 +932,7 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
 /* plays: scoring plays carry the team's colour on the left; the period chips and the scoring toggle sit above */
 .plays .row.play{position:relative;padding-left:10px}
 .plays .row.play::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:2px;background:transparent}
-.plays .row.play.score::before{background:var(--tc,var(--ink-3))}
+.plays .row.play.score::before{background:var(--tf,var(--ink-3))}
 .plays .row.play.score .t b{font-weight:700}
 .plays .row .tag.pts{min-width:30px;text-align:center}
 .pchips{padding:12px 0 10px}
@@ -993,7 +997,7 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
 /* one team-group header everywhere: a band with the colour bar, a bare logo, a count pill */
 .thead,button.injhd{display:flex;align-items:center;gap:10px;margin:8px var(--gut-r) 2px var(--gut);padding:8px 10px;border-radius:12px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge);font-size:14px;font-weight:800;color:inherit}
 .rows .thead,.rows button.injhd,.injgrp button.injhd{margin-left:0;margin-right:0}
-.thead .bar,.injhd .bar{flex:none;width:4px;height:22px;border-radius:2px;background:var(--tc,var(--ink-3));box-shadow:0 0 8px color-mix(in srgb,var(--tc,transparent) 50%,transparent)}
+.thead .bar,.injhd .bar{flex:none;width:4px;height:22px;border-radius:2px;background:var(--tf,var(--ink-3));box-shadow:0 0 8px color-mix(in srgb,var(--tf,transparent) 50%,transparent)}
 .thead .logo,.injhd .logo{width:30px;height:30px;background:none;box-shadow:none}
 .thead .logo::before,.thead .logo::after{display:none}
 .thead .logo img{width:100%;height:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
@@ -1194,7 +1198,7 @@ button.thead:active{transform:scale(.985)}
 .units .unit .pm{font:800 16px/1 var(--num);font-variant-numeric:tabular-nums;color:var(--ink-3);min-width:40px;text-align:right}
 .units .unit .pm.up{color:var(--win)}
 .units .unit .pm.dn{color:var(--loss)}
-.units .unit.now{box-shadow:inset 3px 0 0 var(--tc,var(--ink))}
+.units .unit.now{box-shadow:inset 3px 0 0 var(--tf,var(--ink))}
 .chart{--ca:var(--ca-d);--ch:var(--ch-d)}
 :root[data-theme="light"] .chart{--ca:var(--ca-l);--ch:var(--ch-l)}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .chart{--ca:var(--ca-l);--ch:var(--ch-l)} }
