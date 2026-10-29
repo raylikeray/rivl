@@ -139,6 +139,11 @@ const finalWord = g => g.off ? g.off : (g.detail && /final/i.test(g.detail) ? g.
 /* played to a result (not postponed, cancelled, or still without a score) */
 const isDone = g => g.state === 'post' && !g.off && g.home.score != null && g.away.score != null;
 const isFav = g => favs.has(g.lk, g.home.id) || favs.has(g.lk, g.away.id);
+/* the wire: ESPN files its short news posts (a surgery, a benching, a signing — the insider reports) as HeadlineNews under the
+   'news' topic; features, previews, recaps and game stories are typed otherwise or carry no news topic. Facts from the feed, nothing read into the words. */
+const isWire = a => a && a.type === 'HeadlineNews' && (a.categories || []).some(c => c.type === 'topic' && /^news\b/i.test(c.description || ''));
+const wireTeams = a => (a.categories || []).filter(c => c.type === 'team').map(c => String(c.teamId || (c.team && c.team.id) || '')).filter(Boolean);
+const wirePlayers = a => (a.categories || []).filter(c => c.type === 'athlete').map(c => String(c.athleteId || (c.athlete && c.athlete.id) || '')).filter(Boolean);
 const isRanked = g => g.home.rank || g.away.rank;
 const order = g => g.state === 'in' ? 0 : g.state === 'pre' ? 1 : 2;
 /* interest score: favorites, then ranked-vs-ranked, then ranked, then closeness later in the slate */
@@ -426,5 +431,5 @@ ORDER.forEach(k => S.today[k] = []);
 const allToday = () => ORDER.flatMap(k => S.today[k]);
 
 Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, tipOf, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, API, API2, WEB, logoUrl, seasonYear, favs,
-  parseEvent, isLive, isDone, finalWord, isFav, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
+  parseEvent, isLive, isDone, finalWord, isFav, isWire, wireTeams, wirePlayers, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
 })();

@@ -252,6 +252,7 @@
     if (a === 'onb-done') { e.preventDefault(); store.set('v5:onboarded', true); store.set('v5:lk', 'nba'); store.set('v5:screen', 'home'); closePanel(); if (location.hash !== '#home') location.hash = '#home'; else render(); }
     if (a === 'install') { e.preventDefault(); install(); }
     if (a === 'install-later') { e.preventDefault(); store.set('v5:installDismissed', Date.now()); const b = document.getElementById('installBar'); if (b) b.remove(); }
+    if (a === 'wire-x') { e.preventDefault(); const ids = (act.dataset.ids || '').split(',').filter(Boolean); const seen = store.get('v5:wire:seen', []) || []; store.set('v5:wire:seen', [...new Set([...ids, ...seen])].slice(0, 80)); const sec = act.closest('section'); if (sec) sec.remove(); return; }
     if (a === 'scmine') { e.preventDefault(); store.set('v5:scmine', !store.get('v5:scmine', false)); render(); return; }
     if (a === 'panel-close') { e.preventDefault(); closePanel(); const to = act.getAttribute('href'); if (to && to.startsWith('#')) location.hash = to; }
     if (a === 'date') { e.preventDefault(); store.set('v5:date', act.dataset.ymd); closePanel(); if (current && current.name === 'scores') render(); else location.hash = '#scores'; }

@@ -1,7 +1,7 @@
 /* RIVL worker — one Cloudflare Worker, no dependencies. Three jobs:
    1. /espn/*   a caching proxy in front of ESPN's public feeds, so the app never sees a throttle and loads faster
    2. /sync     your follows and settings behind a short code, so a second device can pick them up
-   3. push      alerts for your teams and players: tip-off, close game, final, injury changes (cron, once a minute)
+   3. push      alerts for your teams and players: tip-off, close game, final, injury changes, breaking news (cron, once a minute)
    Bindings: KV (KV namespace). Variables: VAPID_PUBLIC, VAPID_PRIVATE_JWK (secret), VAPID_SUBJECT (mailto:…),
    ALLOWED_ORIGINS (comma list), SELF_URL (this worker's URL), CRON_TOKEN (any word). */
 
@@ -184,6 +184,30 @@ async function runInjuries(env, lk, subs) {
   for (const pid of players) { if (seen[pid]) continue; const prev = await env.KV.get(`pinj:${lk}:${pid}`, 'json'); if (prev) { await deliver(env, subs, `${lk}:${pid}`, 'inj', { title: `${prev.n} is off the injury report`, body: `Was ${prev.s}${prev.d ? ' · ' + prev.d : ''}`, tag: `inj:${pid}`, url: `#player/${lk}/${pid}`, league: lk }, 'players'); await env.KV.delete(`pinj:${lk}:${pid}`); } }
 }
 
+/* ---------- the wire: ESPN's news posts (HeadlineNews under the 'news' topic) about your teams and players, each once ---------- */
+async function runWire(env, lk, subs) {
+  const L = LEAGUES[lk]; if (!L) return;
+  const teams = new Set(subs.flatMap(s => (s.teams || []).filter(t => t.startsWith(lk + ':')).map(t => t.slice(lk.length + 1))));
+  const players = new Set(subs.flatMap(s => (s.players || []).filter(t => t.startsWith(lk + ':')).map(t => t.slice(lk.length + 1))));
+  if (!teams.size && !players.size) return;
+  let d; try { d = await getJson(`${API(L)}/news?limit=25`); } catch (e) { console.log(lk, 'news', e.message); return; }
+  const cutoff = Date.now() - 3 * 3600000;   // the first run after a quiet spell says nothing older than three hours
+  for (const a of (d.articles || [])) {
+    if (!a || a.type !== 'HeadlineNews' || !a.headline || !a.published || new Date(a.published) < cutoff) continue;
+    const cats = a.categories || []; if (!cats.some(c => c.type === 'topic' && /^news\b/i.test(c.description || ''))) continue;
+    const tIds = cats.filter(c => c.type === 'team').map(c => String(c.teamId || (c.team && c.team.id) || '')).filter(id => teams.has(id));
+    const pIds = cats.filter(c => c.type === 'athlete').map(c => String(c.athleteId || (c.athlete && c.athlete.id) || '')).filter(id => players.has(id));
+    if (!tIds.length && !pIds.length) continue;
+    const id = String(a.id); const payload = { title: a.headline, body: String(a.description || '').slice(0, 160), tag: `news:${id}`, url: `#article/${lk}/${id}`, league: lk };
+    await once(env, `news:${lk}:${id}`, async () => {
+      const done = new Set();   // one alert per phone even when both a team and a player of theirs are in it
+      const each = async (key, field) => { for (const s of subs) { if (done.has(s.key) || !(s[field] || []).includes(key) || (s.prefs || {}).news === false) continue; done.add(s.key); try { const st = await sendPush(env, s.sub, payload); if (st === 404 || st === 410) await env.KV.delete(s.key); } catch (e) { console.log('push failed', e.message); } } };
+      for (const id of pIds) await each(`${lk}:${id}`, 'players');
+      for (const id of tIds) await each(`${lk}:${id}`, 'teams');
+    });
+  }
+}
+
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url); const h = cors(env, req);
@@ -208,13 +232,13 @@ export default {
     if (url.pathname === '/test' && req.method === 'POST') {
       let b; try { b = await req.json(); } catch { return json({ error: 'bad json' }, 400, h); }
       const v = await env.KV.get('sub:' + await sha(b.endpoint || ''), 'json'); if (!v) return json({ error: 'not subscribed' }, 404, h);
-      const st = await sendPush(env, v.sub, { title: 'RIVL alerts are on', body: 'Tip-off, close games, finals and injury changes for your teams and players.', tag: 'welcome', url: '#home' });
+      const st = await sendPush(env, v.sub, { title: 'RIVL alerts are on', body: 'Tip-off, close games, finals, injury changes and breaking news for your teams and players.', tag: 'welcome', url: '#home' });
       return json({ ok: st < 300, status: st }, 200, h);
     }
     if (url.pathname === '/run' && req.headers.get('x-rivl-cron') === (env.CRON_TOKEN || 'rivl')) {
       const lk = url.searchParams.get('lk'); const what = url.searchParams.get('what') || 'games';
       const subs = await loadSubs(env);
-      if (what === 'games') await runLeague(env, lk, subs); else await runInjuries(env, lk, subs);
+      if (what === 'games') await runLeague(env, lk, subs); else if (what === 'wire') await runWire(env, lk, subs); else await runInjuries(env, lk, subs);
       return json({ ok: true });
     }
     return json({ error: 'not found' }, 404, h);
@@ -227,6 +251,7 @@ export default {
     const H = { headers: { 'x-rivl-cron': env.CRON_TOKEN || 'rivl' } };
     const calls = leagues.map(lk => fetch(`${self}/run?lk=${lk}&what=games`, H).catch(() => null));
     if (minute % 15 === 3) leagues.forEach(lk => calls.push(fetch(`${self}/run?lk=${lk}&what=injuries`, H).catch(() => null)));
+    if (minute % 5 === 1) leagues.forEach(lk => calls.push(fetch(`${self}/run?lk=${lk}&what=wire`, H).catch(() => null)));   // the wire every five minutes
     ctx.waitUntil(Promise.all(calls));
   }
 };

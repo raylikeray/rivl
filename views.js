@@ -74,7 +74,7 @@
   const statusWord = s => String(s || '').replace(/\bDay-To-Day\b/i, 'Day to day').replace(/\bGame Time Decision\b/i, 'Game-time decision').replace(/\bOut For Season\b/i, 'Out for season');
   const retInfo = (L, iso) => { if (!iso) return null; const d = new Date(iso); if (isNaN(d)) return null; const exact = dayUTC(iso); const ss = String(L && L.seasonStart || '2026-10-01').slice(5); const now = new Date(); let next = new Date(`${now.getUTCFullYear()}-${ss}T00:00:00Z`); if (next - now < 30 * 864e5) next = new Date(`${now.getUTCFullYear() + 1}-${ss}T00:00:00Z`); const far = d >= next - 14 * 864e5; if (far) return { short: 'no return date this season', long: `Not before next season (ESPN lists ${exact})`, far: true }; if (d < now - 36e5 * 36) return { short: `no new date (was ${exact})`, long: `Was ${exact}; no new date yet`, far: false, past: true }; return { short: `back around ${exact}`, long: exact, far: false }; };
   /* what Home shows: every section on by default */
-  const PREF_KEYS = ['brief', 'live', 'teams', 'players', 'injuries', 'news', 'forecast'];
+  const PREF_KEYS = ['wire', 'brief', 'live', 'teams', 'players', 'injuries', 'news', 'forecast'];
   const prefs = { all() { const d = {}; PREF_KEYS.forEach(k => d[k] = true); return Object.assign(d, store.get('v5:prefs', {}) || {}); }, get(k) { return this.all()[k] !== false; }, set(k, v) { const a = store.get('v5:prefs', {}) || {}; a[k] = !!v; store.set('v5:prefs', a); } };
   const chev = `<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>`;
   const sec = (title, small, action) => `<div class="sec"><h2>${esc(title)}${small ? `<small>${esc(small)}</small>` : ''}</h2>${action || ''}</div>`;
@@ -205,7 +205,7 @@
      while the app is open never repaint what hasn't changed, and never move the page under your thumb. */
   const rankGame = g => (isFav(g) ? 1000 : 0) + (g.tv.national.length ? 100 : 0) + interest(g) / 1000;
   const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
-  const SECS = ['live', 'tonight', 'last', 'teams', 'players', 'injuries', 'news'];   // a game on now leads
+  const SECS = ['wire', 'live', 'tonight', 'last', 'teams', 'players', 'injuries', 'news'];   // the wire first when it has something, then a game on now
   let homeToken = 0;
   async function home(lk) {
     const L = LEAGUES[lk]; const today = todayCT(); const token = ++homeToken;
@@ -320,11 +320,20 @@
       } else delete secs.injuries;
       // news about my teams and players: ESPN tags every story with the teams and athletes it covers; full names are the fallback
       const news = S0.news;
+      const tIds = new Set(mine.map(String)), pIds = new Set(fp.map(p => p.id));
+      const tagged = a => (a.categories || []).some(c => (c.type === 'team' && tIds.has(String(c.teamId || (c.team && c.team.id) || ''))) || (c.type === 'athlete' && pIds.has(String(c.athleteId || (c.athlete && c.athlete.id) || ''))));
+      // the wire: ESPN's news posts about your teams and players from the last eight hours, newest first, until dismissed
+      if (P.wire && news && news.articles) {
+        const seen = new Set(store.get('v5:wire:seen', []) || []); const cutoff = Date.now() - 8 * 3600000;
+        const items = news.articles.filter(a => a.headline && HW.isWire(a) && tagged(a) && !seen.has(String(a.id)) && a.published && new Date(a.published) > cutoff).sort((a, b) => new Date(b.published) - new Date(a.published)).slice(0, 3);
+        if (items.length) {
+          const who = a => { const t = HW.wireTeams(a).map(id => (S0.tIdx[id] || {}).short).filter(Boolean); const p = (a.categories || []).filter(c => c.type === 'athlete' && pIds.has(String(c.athleteId || (c.athlete && c.athlete.id) || ''))).map(c => c.description).filter(Boolean); return [...new Set([...p, ...t])].slice(0, 2).join(' · '); };
+          secs.wire = `<div class="wire"><div class="wh"><i class="dot"></i><b>Breaking</b><span>${esc(ago(items[0].published))}</span><button class="x" data-act="wire-x" data-ids="${esc(items.map(a => a.id).join(','))}" aria-label="Dismiss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>${items.map(a => { (S.news = S.news || {})[String(a.id)] = a; return `<a class="wr" href="#article/${lk}/${esc(String(a.id))}"><b>${esc(a.headline)}</b><span>${esc([who(a), items.length > 1 ? ago(a.published) : ''].filter(Boolean).join(' · '))}</span></a>`; }).join('')}</div>`;
+        } else delete secs.wire;
+      } else delete secs.wire;
       if (P.news && news) {
-        const tIds = new Set(mine.map(String)), pIds = new Set(fp.map(p => p.id));
         const tNames = teams.flatMap(t => [t.name, t.short, t.loc]).filter(n => n && n.length > 3);
         const pNames = fp.map(p => p.name).filter(n => n && n.length > 3);
-        const tagged = a => (a.categories || []).some(c => (c.type === 'team' && tIds.has(String(c.teamId || (c.team && c.team.id) || ''))) || (c.type === 'athlete' && pIds.has(String(c.athleteId || (c.athlete && c.athlete.id) || ''))));
         const named = a => { const txt = `${a.headline || ''} ${a.description || ''}`; return pNames.some(n => txt.includes(n)) || tNames.some(n => txt.includes(n)); };
         const arts = news.articles ? news.articles.filter(a => a.headline && (tagged(a) || named(a))).slice(0, 6) : [];
         if (arts.length) secs.news = sec('News', 'your teams and players') + `<div class="rows">${arts.map(a => HW.v5.newsRow(lk, a)).join('')}</div>`; else delete secs.news;
@@ -352,7 +361,7 @@
       await Promise.all(ids.map(async id => { S0.sums[id] = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 3600000); }));
       if (!alive()) return; build(); paint();
     })());
-    if (P.news) later.push((async () => { S0.news = await jSoft(`${API(L)}/news?limit=25`, 600000); if (!alive()) return; build(); paint(); })());
+    if (P.news || P.wire) later.push((async () => { S0.news = await jSoft(`${API(L)}/news?limit=25`, 600000); if (!alive()) return; build(); paint(); })());
     if (!S0.inj && mine.length && P.injuries) later.push((async () => { S0.inj = await injuries(L).catch(() => null); if (!alive()) return; build(); paint(); })());
     Promise.all(later).catch(() => { });
 
@@ -365,7 +374,7 @@
       if (due) {
         quietAt = Date.now();
         try { for (const k of [...HW.cache.keys()]) if (/\/injuries|\/news\?|\/summary\?event=/.test(k) && k.includes(L.path)) HW.cache.delete(k); } catch { }
-        const [last2, inj2, news2] = await Promise.all([scoreboard(L, yday, 0).catch(() => null), mine.length && P.injuries ? injuries(L).catch(() => null) : null, P.news ? jSoft(`${API(L)}/news?limit=25`, 0) : null]);
+        const [last2, inj2, news2] = await Promise.all([scoreboard(L, yday, 0).catch(() => null), mine.length && P.injuries ? injuries(L).catch(() => null) : null, P.news || P.wire ? jSoft(`${API(L)}/news?limit=25`, 0) : null]);
         if (!alive()) return;
         if (last2) S0.last = last2; if (inj2) S0.inj = inj2; if (news2) S0.news = news2;
         if (fp.length) { const ids = [...new Set(fp.map(p => { const is = teamOf(p); const g = S0.last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? g.id : null; }).filter(Boolean))]; await Promise.all(ids.map(async id => { const d = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 0); if (d) S0.sums[id] = d; })); }

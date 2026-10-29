@@ -4,7 +4,7 @@ One Cloudflare Worker (free plan), no dependencies. It does three things:
 
 1. **Proxy** — `GET /espn/...` fetches ESPN's public feeds through Cloudflare's cache, so the app is faster and never sees a throttle.
 2. **Sync** — `POST /sync` stores your follows and settings behind a six-character code; `GET /sync?code=` returns them.
-3. **Alerts** — a cron runs once a minute and sends web-push notifications for your teams and players: tip-off, close games, finals, injury changes.
+3. **Alerts** — a cron runs once a minute and sends web-push notifications for your teams and players: tip-off, close games, finals, injury changes, and breaking news (ESPN's news posts about your teams and players, checked every five minutes).
 
 ## Setup (about ten minutes, all on cloudflare.com)
 
