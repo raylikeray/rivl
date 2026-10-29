@@ -657,7 +657,7 @@
   async function playerPicker(el, L, { following = false, leaders = true, select = false } = {}) {
     const lk = L.key, pro = !/^ncaa/.test(lk);
     el.classList.add('pp');
-    el.innerHTML = `<div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input type="search" placeholder="Search players, or a team to see its roster" autocomplete="off" aria-label="Search players"></div><div class="pp-list">${skeleton(6, 'row')}</div>`;
+    el.innerHTML = `<div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input type="search" placeholder="Search players or teams" autocomplete="off" aria-label="Search players"></div><div class="pp-list">${skeleton(6, 'row')}</div>`;
     const inp = el.querySelector('input'), list = el.querySelector('.pp-list');
     const idx = await teamsIndex(L);
     const mine = favs.all()[lk] || [];
