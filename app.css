@@ -1142,3 +1142,33 @@ button.thead:active{transform:scale(.985)}
 .five .fr span{font-size:10.5px;font-weight:700;color:var(--ink-3);margin-top:-3px}
 .ginfo td:last-child span{display:block;font-size:12.5px;color:var(--ink-3);font-weight:500}
 .chips.wrapchips{flex-wrap:wrap;overflow:visible;gap:8px;padding-bottom:6px;-webkit-mask-image:none;mask-image:none}
+/* shot chart: the half court as a plate, made shots filled, misses as rings */
+.chart{margin:0 var(--gut-r) 0 var(--gut);padding:12px 10px 8px;border-radius:18px;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),var(--plate-shadow)}
+.court{display:block;width:100%;height:auto}
+.court .mk{filter:drop-shadow(0 .4px .6px rgba(0,0,0,.45))}
+.clegend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;padding:10px 0 2px;font-size:11.5px;font-weight:700;color:var(--ink-3)}
+.clegend span{display:inline-flex;align-items:center;gap:6px}
+.clegend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.clegend i.miss{background:none;border:2px solid var(--ink-3);width:9px;height:9px}
+.zones{margin:0 var(--gut-r) 0 var(--gut)}
+.zones .zh,.zones .zr{display:grid;grid-template-columns:1.3fr 1fr 1fr;align-items:center;gap:8px;padding:9px 0;box-shadow:inset 0 -1px 0 var(--line)}
+.zones .zr:has(em:only-of-type){grid-template-columns:1.3fr 1fr}
+.zones .zh{padding:0 0 8px;box-shadow:inset 0 -1px 0 var(--line-2)}
+.zones .zh span{font-size:12px;font-weight:800;color:var(--ink-3);text-align:right;letter-spacing:.02em}
+.zones .zr>span{font-size:14px;color:var(--ink-2)}
+.zones .zr em{font-style:normal;text-align:right;display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;font-variant-numeric:tabular-nums}
+.zones .zr em b{font-size:14px;font-weight:800}
+.zones .zr em span{font-size:11.5px;color:var(--ink-3);font-weight:600}
+.zones .zr.tot{box-shadow:none}
+.zones .zr.tot>span{font-weight:800;color:var(--ink)}
+/* five-man units */
+.units .unit .t b{font-size:13px;line-height:1.3}
+.units .unit .pm{font:800 16px/1 var(--num);font-variant-numeric:tabular-nums;color:var(--ink-3);min-width:40px;text-align:right}
+.units .unit .pm.up{color:var(--win)}
+.units .unit .pm.dn{color:var(--loss)}
+.units .unit.now{box-shadow:inset 3px 0 0 var(--tc,var(--ink))}
+.chart{--ca:var(--ca-d);--ch:var(--ch-d)}
+:root[data-theme="light"] .chart{--ca:var(--ca-l);--ch:var(--ch-l)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .chart{--ca:var(--ca-l);--ch:var(--ch-l)} }
+.five .fr b{white-space:normal;overflow-wrap:anywhere;hyphens:manual;line-height:1.1;font-size:clamp(10px,2.85vw,11.5px);letter-spacing:-.01em;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.five .fr a{align-self:start}
