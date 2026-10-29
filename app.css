@@ -1233,3 +1233,9 @@ button.thead:active{transform:scale(.985)}
 .row.prow.live .t em.today{color:var(--ink)}
 .row.prow .t em.today .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--live);margin:0 5px 1px 0;animation:blink 1.6s infinite}
 .row.prow .go,.row.prow .go .lrk{text-decoration:none}
+/* injuries on Home: a team's band sits in the same rhythm as the people under it — nine above, nine below, like a row's own padding */
+.injgrp{padding-top:0}
+.injgrp + .injgrp{margin-top:0}
+button.injhd,.injgrp button.injhd{margin:9px 0 9px}
+.injgrp:first-child button.injhd{margin-top:0}
+.injgrp .row{padding:9px 0}
