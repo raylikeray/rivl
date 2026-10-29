@@ -39,7 +39,26 @@
     const groups = st.groups;
     let tab = store.get('v5:stab:' + lk, groups[0].abbr || groups[0].name);
     const items = conf ? groups.map(g => [g.abbr || g.name, confName(g.name, g.abbr)]) : [...groups.map(g => [g.abbr || g.name, confName(g.name, g.abbr)]), ['league', 'League']];
+    if ((L.playoffLine || []).length) items.push(['picture', 'Picture']);
     if (!items.some(([k]) => k === tab)) tab = items[0][0];
+    if (tab === 'picture') {
+      // the bracket as the table stands today: play-in pairs, then the first round, per conference
+      const cut = L.playoffLine; const playIn = cut.length === 2;
+      const tm = (r, seed, fr, sd) => r ? `<a class="bt ${sd}" href="${href.team(lk, r.id)}" style="--tc:${esc(teamColor({ id: r.id, abbr: r.abbr }, L))}"><i>${seed}</i>${logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))}<span class="tx"><b>${esc(r.short || r.name)}</b><span>${r.w}-${r.l}</span></span></a>` : `<span class="bt tbd ${sd}"><i>${seed}</i><span class="tx"><b>${fr && playIn && seed > cut[0] ? 'Play-in winner' : 'TBD'}</b></span></span>`;
+      const mu = (a, sa, b, sb, note, fr) => `<div class="mu${favs.has(lk, (a || {}).id) || favs.has(lk, (b || {}).id) ? ' me' : ''}">${tm(a, sa, fr, 'l')}<em>vs</em>${tm(b, sb, fr, 'r')}${note ? `<small>${note}</small>` : ''}</div>`;
+      const block = g => {
+        const r = g.rows; const top = cut[0];
+        const first = top === 6 || top === 8 ? [[1, 8], [4, 5], [3, 6], [2, 7]] : [[1, top], [2, top - 1], [3, top - 2], [4, top - 3]];
+        const seedOf = n => n <= top ? r[n - 1] : null;
+        const fr = first.map(([x, y]) => mu(seedOf(x), x, seedOf(y), y, '', true));
+        const pi = playIn ? [mu(r[6], 7, r[7], 8, 'winner is the 7 seed'), mu(r[8], 9, r[9], 10, 'winner plays the 7–8 loser for the 8 seed')] : [];
+        return (conf || groups.length > 1 ? sec(confName(g.name, g.abbr)) : '') + (pi.length ? `<h3 class="bh">Play-in</h3><div class="bracket">${pi.join('')}</div>` : '') + `<h3 class="bh">First round</h3><div class="bracket">${fr.join('')}</div>`;
+      };
+      const legend = `<p class="legend">If the season ended today. ${playIn ? `Seeds 1–${cut[0]} are in; ${cut[0] + 1} through ${cut[1]} play in for the last two spots.` : `The top ${cut[0]} make the playoffs.`} Your teams are marked.</p>`;
+      $main.innerHTML = chips(items, tab, 'stab', 'tab') + (conf || groups.length > 1 ? groups.map(block).join('') : block({ rows: groups.flatMap(g => g.rows).sort((a, b) => (b.w - b.l) - (a.w - a.l) || (b.pct || 0) - (a.pct || 0) || (b.diff || 0) - (a.diff || 0)), name: L.label })) + legend;
+      const on0 = $main.querySelector('.chip.on'); if (on0) on0.scrollIntoView({ inline: 'center', block: 'nearest' });
+      return;
+    }
     let rows, title;
     if (tab === 'league') { rows = groups.flatMap(g => g.rows).sort((a, b) => (b.w - b.l) - (a.w - a.l) || (b.pct || 0) - (a.pct || 0) || (b.diff || 0) - (a.diff || 0)).map((r, i) => ({ ...r, pos: i + 1 })); title = L.label; }
     else { const g = groups.find(x => (x.abbr || x.name) === tab); rows = g.rows; title = g.name; }
@@ -53,7 +72,8 @@
     const fmtGb = n => n % 1 ? n.toFixed(1) : String(n);
     const gbLine = (r, i) => { if (tab === 'league' || cuts.length < 1) return ''; const c1 = cuts[0], c2 = cuts[1]; if (c2 && i >= c2) { const b = back(r, rows[c2 - 1]); return b != null && b > 0 ? `${fmtGb(b)} back of the play-in` : b === 0 ? 'Tied for the last play-in spot' : ''; } if (i >= c1) { const b = back(r, rows[c1 - 1]); return b != null && b > 0 ? `${fmtGb(b)} back of the ${c1} seed` : b === 0 ? `Tied for the ${c1} seed` : ''; } return ''; };
     const clinchTag = r => { const k = String(r.clinch || '').toLowerCase(); if (!k) return ''; const t = CL[k] || CL[k[0]] || r.clinch; const bad = /elim|^e|^o/.test(k); return `<span class="tag ${bad ? 'out' : 'ok'} cl" title="${esc(t)}">${esc(bad ? 'Out' : 'Clinched')}</span>`; };
-    const trs = rows.map((r, i) => { const gl = gbLine(r, i); return `<tr class="click${favs.has(lk, r.id) ? ' me' : ''}${cuts.includes(i + 1) ? ' cut' : ''}" data-href="${href.team(lk, r.id)}"><td><span class="tm"><span class="rk">${r.pos}</span>${logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))}<span class="nm"><a href="${href.team(lk, r.id)}">${rk && rk[r.id] ? `<i class="ap">${rk[r.id]}</i>` : ''}${esc(r.short || r.name)}</a>${clinchTag(r)}${gl ? `<small>${esc(gl)}</small>` : ''}</span></span></td>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}</tr>`; }).join('');
+    const tieNote = (r, i) => { const same = x => x && x.w === r.w && x.l === r.l; const up = same(rows[i - 1]), dn = same(rows[i + 1]); if (!up && !dn) return ''; const with_ = [up ? rows[i - 1] : null, dn ? rows[i + 1] : null].filter(Boolean).map(x => x.short || x.name); return `tied with ${with_.join(' and ')}`; };
+    const trs = rows.map((r, i) => { const gl = [gbLine(r, i), tieNote(r, i)].filter(Boolean).join(' · '); return `<tr class="click${favs.has(lk, r.id) ? ' me' : ''}${cuts.includes(i + 1) ? ' cut' : ''}" data-href="${href.team(lk, r.id)}"><td><span class="tm"><span class="rk">${r.pos}</span>${logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))}<span class="nm"><a href="${href.team(lk, r.id)}">${rk && rk[r.id] ? `<i class="ap">${rk[r.id]}</i>` : ''}${esc(r.short || r.name)}</a>${clinchTag(r)}${gl ? `<small>${esc(gl)}</small>` : ''}</span></span></td>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}</tr>`; }).join('');
     const legend = tab === 'league' ? '' : cuts.length === 2 ? `<p class="legend">Top ${cuts[0]} go straight to the playoffs; ${cuts[0] + 1} through ${cuts[1]} play in. Games back count the ${cuts[0]} seed and the last play-in spot. Your teams are marked.</p>` : cuts.length === 1 ? `<p class="legend">Top ${cuts[0]} make the playoffs. Your teams are marked.</p>` : '<p class="legend">Your teams are marked.</p>';
     $main.innerHTML = chips(items, tab, 'stab', 'tab') + `<div class="tw"><table class="tbl stand"><thead><tr><th>${esc(title)}</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${trs}</tbody></table></div>` + legend;
     const on = $main.querySelector('.chip.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
