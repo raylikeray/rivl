@@ -96,8 +96,10 @@ function parseEvent(e, L) {
   const comp = c.competitors || [];
   const home = parseTeamSide(comp.find(x => x.homeAway === 'home') || comp[0] || {}, L);
   const away = parseTeamSide(comp.find(x => x.homeAway === 'away') || comp[1] || {}, L);
+  // a game that isn't happening: ESPN files it as "post" with no score, so it needs its own word everywhere
+  const offWord = /postpone/i.test(t.name || t.description || t.shortDetail || '') ? 'Postponed' : /cancel/i.test(t.name || t.description || t.shortDetail || '') ? 'Cancelled' : /suspend/i.test(t.name || t.description || t.shortDetail || '') ? 'Suspended' : /delay/i.test(t.name || t.description || '') ? 'Delayed' : '';
   return {
-    lk: L.key, id: String(e.id), date: e.date, state: t.state || 'pre', detail: prettyDetail(t.shortDetail || t.detail || '', L), completed: !!t.completed,
+    lk: L.key, id: String(e.id), date: e.date, state: t.state || 'pre', detail: prettyDetail(t.shortDetail || t.detail || '', L), completed: !!t.completed, off: offWord,
     period: st.period || 0, clock: st.displayClock || '', home, away,
     venue: c.venue && c.venue.fullName, city: c.venue && c.venue.address && [c.venue.address.city, c.venue.address.state].filter(Boolean).join(', '),
     tv: tvOf(c), neutral: !!c.neutralSite, confGame: !!c.conferenceCompetition,
@@ -128,6 +130,10 @@ function situationOf(c, L, state) {
   return null;
 }
 const isLive = g => g.state === 'in';
+/* the word for a game that is over: "Final", "Final OT", "Final 2OT" — or why it isn't happening */
+const finalWord = g => g.off ? g.off : (g.detail && /final/i.test(g.detail) ? g.detail.replace(/^Final\/?/, 'Final ').trim() : 'Final');
+/* played to a result (not postponed, cancelled, or still without a score) */
+const isDone = g => g.state === 'post' && !g.off && g.home.score != null && g.away.score != null;
 const isFav = g => favs.has(g.lk, g.home.id) || favs.has(g.lk, g.away.id);
 const isRanked = g => g.home.rank || g.away.rank;
 const order = g => g.state === 'in' ? 0 : g.state === 'pre' ? 1 : 2;
@@ -407,5 +413,5 @@ ORDER.forEach(k => S.today[k] = []);
 const allToday = () => ORDER.flatMap(k => S.today[k]);
 
 Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, API, API2, WEB, logoUrl, seasonYear, favs,
-  parseEvent, isLive, isFav, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, injuries, forecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
+  parseEvent, isLive, isDone, finalWord, isFav, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, injuries, forecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
 })();

@@ -86,7 +86,7 @@
     const P = HW.paramsOf(L, ctx); const rat = new Float64Array(T), give = new Float64Array(T);
     teams.forEach((r, i) => { const st = HW.strength(L, r.id, ctx); rat[i] = st.rating; const gp = (r.w || 0) + (r.l || 0); give[i] = 3.4 * Math.sqrt(8 / (gp + 8)); });
     const pOf = (hi, ai, neutral, off) => HW.calibrate(Phi(((rat[hi] + off[hi]) - (rat[ai] + off[ai]) + (neutral ? 0 : P.hca)) / P.sd), P.calib);
-    const regular = sched.games.filter(g => g.t === 2 && !g.x && ix.has(g.h) && ix.has(g.a));
+    const regular = sched.games.filter(g => g.t === 2 && !g.x && ix.has(g.h) && ix.has(g.a) && !(g.st === 'post' && (g.hs == null || g.as == null)));   // a postponed game (post, no score) comes back on its new date
     // head-to-head so far, from the finished games the schedule carries
     const h2h = new Int16Array(T * T); regular.filter(g => g.st === 'post' && g.hs != null && g.as != null).forEach(g => { const hi = ix.get(g.h), ai = ix.get(g.a); if (g.hs > g.as) h2h[hi * T + ai]++; else h2h[ai * T + hi]++; });
     const known = regular.some(g => g.st === 'post');

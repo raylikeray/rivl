@@ -24,7 +24,7 @@
   { const sb = HW.scoreboard, pe = HW.parseEvent;   // every scoreboard and every parsed event teaches as it passes
     HW.scoreboard = async (L, ...a) => { const g = await sb(L, ...a); learnGames(L, g); return g; };
     HW.parseEvent = (e, L) => { const g = pe(e, L); if (g) { learn(L, g.home); learn(L, g.away); } return g; }; }
-  const { LEAGUES, ORDER, esc, j, jSoft, todayCT, addDays, dayLabel, relDay, tip, dateShort, ago, pct, ordinal, hx, store, API, WEB,
+  const { LEAGUES, ORDER, esc, j, jSoft, todayCT, addDays, dayLabel, relDay, tip, dateShort, ago, pct, ordinal, hx, store, API, WEB, finalWord, isDone,
     favs, parseEvent, isLive, isFav, interest, scoreboard, standings, injuries, forecast, forecastCtx, leaguePlayers, S } = HW;
   const $main = document.getElementById('main');
 
@@ -97,11 +97,11 @@
   function statusLine(L, g, timeOnly) {
     if (g.state === 'in') return `<span class="live">${esc(g.detail || 'Live')}</span>`;
     if (timeOnly && g.state === 'pre') return `<span>${esc(tip(g.date))}</span>`;
-    if (g.state === 'post') return `<span>${esc(g.detail && /final/i.test(g.detail) ? g.detail.replace(/^Final\/?/, 'Final ').trim() : 'Final')}</span>`;
+    if (g.state === 'post') return `<span${g.off ? ' class="off"' : ''}>${esc(finalWord(g))}</span>`;
     return `<span>${esc(relDay(HW.ymdOf(g.date)))}, ${esc(tip(g.date))}</span>`;
   }
   function forecastRow(L, g, f) {
-    if (!f) return '';
+    if (!f || g.off) return '';
     const homeFav = f.pHome >= .5; const p = homeFav ? f.pHome : 1 - f.pHome; const fav = homeFav ? g.home : g.away;
     const note = g.state === 'post' ? '' : f.soH ? `${esc(f.soH.name)} out` : f.soA ? `${esc(f.soA.name)} out` : (f.restH && !f.restA) ? `${esc(g.home.short)} on a back-to-back` : (f.restA && !f.restH) ? `${esc(g.away.short)} on a back-to-back` : '';
     const label = g.state === 'post' ? `Had ${esc(fav.short)} ${pct(p)}` : `${esc(fav.short)} ${pct(p)}`;
@@ -131,8 +131,8 @@
     const fav = f ? (f.pHome >= .5 ? g.home : g.away) : null; const p = f ? Math.max(f.pHome, 1 - f.pHome) : 0;
     const tm = t => page ? `<a class="tm" href="${href.team(L.key, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo)}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></a>` : `<div class="tm">${logo(t.logo)}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></div>`;
     const inner = `<div class="in">
-      <div class="vs">${tm(g.away)}<div class="mid"><span class="st${g.state === 'in' ? ' on' : ''}">${esc(g.state === 'in' ? g.detail : g.state === 'post' ? 'Final' : tip(g.date))}</span><div class="sc">${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}</div><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>${tm(g.home)}</div>
-      ${f ? `<div class="fc${f.pHome >= .5 ? ' home' : ''}"><div class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></div><b>${g.state === 'post' ? 'Had ' : ''}${esc(fav.short)} ${pct(p)}${g.state === 'pre' && f.proj ? `<small>${esc(g.away.abbr)} ${f.proj.away}–${f.proj.home} ${esc(g.home.abbr)}</small>` : ''}</b></div>` : ''}
+      <div class="vs">${tm(g.away)}<div class="mid"><span class="st${g.state === 'in' ? ' on' : ''}">${esc(g.state === 'in' ? g.detail : g.state === 'post' ? finalWord(g) : tip(g.date))}</span><div class="sc">${g.off ? '' : `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`}</div><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>${tm(g.home)}</div>
+      ${f && !g.off ? `<div class="fc${f.pHome >= .5 ? ' home' : ''}"><div class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></div><b>${g.state === 'post' ? 'Had ' : ''}${esc(fav.short)} ${pct(p)}${g.state === 'pre' && f.proj ? `<small>${esc(g.away.abbr)} ${f.proj.away}–${f.proj.home} ${esc(g.home.abbr)}</small>` : ''}</b></div>` : ''}
     </div>`;
     return page ? `<div class="hero page" data-gid="${esc(g.id)}" style="--a:${esc(a)};--b:${esc(b)}">${inner}</div>`
       : `<a class="hero" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}" style="--a:${esc(a)};--b:${esc(b)}">${inner}</a>`;
@@ -151,7 +151,7 @@
     if (!t.id && !x) return { id, abbr: '', name: 'Team', short: 'Team', color: '', logo: '', rec: '', standing: 'Feed is slow, pull to refresh', row: null, next: null, last: null };
     const evs = (sched && sched.events || []).map(e => { try { return parseEvent(e, L); } catch { return null; } }).filter(Boolean);
     const next = evs.find(g => g.state !== 'post') || (x && x.nextEvent && x.nextEvent[0] ? (() => { try { return parseEvent(x.nextEvent[0], L); } catch { return null; } })() : null);
-    const last = evs.filter(g => g.state === 'post').slice(-1)[0] || null;
+    const last = evs.filter(isDone).slice(-1)[0] || null;
     const recItem = x && x.record && x.record.items && (x.record.items.find(i => i.type === 'total') || x.record.items[0]);
     return { id, abbr: t.abbr || (x && x.abbreviation), name: t.name || (x && x.displayName), short: t.short || (x && x.shortDisplayName), loc: t.loc, color: teamColor({ id, color: t.color || (x && x.color) || '' }, L), alt: teamAlt({ id, alt: t.alt || (x && x.alternateColor) || '' }, L),
       logo: t.logo || (x && x.logos && x.logos[0] && x.logos[0].href) || HW.logoUrl(L, t.abbr || (x && x.abbreviation)),
@@ -189,7 +189,7 @@
      while the app is open never repaint what hasn't changed, and never move the page under your thumb. */
   const rankGame = g => (isFav(g) ? 1000 : 0) + (g.tv.national.length ? 100 : 0) + interest(g) / 1000;
   const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
-  const SECS = ['tonight', 'last', 'live', 'teams', 'players', 'injuries', 'news'];
+  const SECS = ['live', 'tonight', 'last', 'teams', 'players', 'injuries', 'news'];   // a game on now leads
   let homeToken = 0;
   async function home(lk) {
     const L = LEAGUES[lk]; const today = todayCT(); const token = ++homeToken;
@@ -230,10 +230,11 @@
       const { games, last, ctx } = S0; const teams = teamList();
       const byTeam = new Map(); games.forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
       // tonight: your games, or the next ones on the calendar once the schedules are in
-      if (P.brief && mine.length) {
-        const tonight = games.filter(isFav).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
+      const liveMine = games.filter(g => isLive(g) && isFav(g));
+      if (P.brief && mine.length && !(P.live && liveMine.length && games.filter(isFav).length === liveMine.length)) {   // when every game of yours is on now, the hero says it all
+        const tonight = games.filter(g => isFav(g) && !(P.live && isLive(g))).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
         let body = '', note = '';
-        if (tonight.length) { note = `${tonight.length} game${tonight.length === 1 ? '' : 's'} for your teams`; body = `<div class="brief-row">${tonight.map(chipOf).join('')}</div>`; }
+        if (tonight.length) { note = `${tonight.length} ${P.live && liveMine.length ? 'more ' : ''}game${tonight.length === 1 ? '' : 's'} for your teams`; body = `<div class="brief-row">${tonight.map(chipOf).join('')}</div>`; }
         else {
           const seen = new Set(); const next = teams.map(t => t.next).filter(g => g && g.state === 'pre' && !seen.has(g.id) && seen.add(g.id)).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 4);
           if (next.length) { const d0 = HW.ymdOf(next[0].date); const w = dayWord(d0, true); note = `no games tonight · next ${esc(w === 'Tonight' ? 'later tonight' : w === 'Tomorrow' ? 'tomorrow' : w)}`; body = `<div class="brief-row">${next.map(nextChip).join('')}</div>`; }
@@ -243,8 +244,8 @@
       } else delete secs.tonight;
       // last night: results, then your players' lines once the box scores are in
       if (P.brief) {
-        const mineLast = last.filter(g => g.state === 'post' && isFav(g));
-        const pGames = fp.map(p => { const is = teamOf(p); const g = last.find(g => g.state === 'post' && (is(g.home) || is(g.away))); return g ? { p, g } : null; }).filter(Boolean);
+        const mineLast = last.filter(g => isDone(g) && isFav(g));
+        const pGames = fp.map(p => { const is = teamOf(p); const g = last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? { p, g } : null; }).filter(Boolean);
         const lines = pGames.map(({ p, g }) => { const d = S0.sums[g.id]; const bx = d && d.boxscore && d.boxscore.players || []; for (const side of bx) { const st = side.statistics && side.statistics[0]; if (!st) continue; const labels = st.labels || st.names || []; const a = (st.athletes || []).find(x => x.athlete && String(x.athlete.id) === p.id); if (!a) continue; if (a.didNotPlay || !a.stats || !a.stats.length) return { p, g, dnp: a.reason || 'Did not play' }; const get = l => { const i = labels.indexOf(l); return i >= 0 ? a.stats[i] : ''; }; const is = teamOf(p); const us = is(g.home) ? g.home : g.away, them = is(g.home) ? g.away : g.home; return { p, g, pts: get('PTS'), reb: get('REB'), ast: get('AST'), min: get('MIN'), won: us.score > them.score, us, them }; } return null; }).filter(Boolean);
         if (mineLast.length || lines.length) {
           const res = mineLast.map(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = us.score > them.score; return `<a class="bchip res" href="${href.game(lk, g.id)}">${logo(us.logo, 's', teamColor(us, L))}<b class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</b><span>${us.score}–${them.score} ${us === g.home ? 'vs' : 'at'} ${esc(them.abbr || them.short)}</span></a>`; });
@@ -264,10 +265,11 @@
           if (g) {
             const home = g.home.id === t.id; const vs = `${home ? 'vs' : 'at'} ${esc(them.short)}`;
             if (g.state === 'in') { const lead = us.score - them.score; line = `${lead > 0 ? `Leading ${esc(them.short)} by ${lead}` : lead < 0 ? `Trailing ${esc(them.short)} by ${-lead}` : `Tied with ${esc(them.short)}`}, ${esc(g.detail)}`; }
+            else if (g.off) line = `${esc(g.off)} ${vs}`;
             else if (g.state === 'post') line = `${us.score > them.score ? 'Won' : 'Lost'} ${esc(String(us.score))}-${esc(String(them.score))} ${vs}`;
             else line = `<em>${esc(relDay(HW.ymdOf(g.date)))} ${vs}, ${esc(tip(g.date))}</em>${tvLabel(g) ? `<i class="tvt">${esc(tvLabel(g))}</i>` : ''}`;
             if (f && g.state !== 'post') { const p = home ? f.pHome : 1 - f.pHome; right = `<span class="r"><b>${pct(p)}</b><span>to win</span></span>`; }
-            else if (g.state === 'post') right = `<span class="r"><b class="${us.score > them.score ? 'res w' : 'res l'}" style="font-size:22px">${us.score > them.score ? 'W' : 'L'}</b></span>`;
+            else if (g.state === 'post' && !g.off) right = `<span class="r"><b class="${us.score > them.score ? 'res w' : 'res l'}" style="font-size:22px">${us.score > them.score ? 'W' : 'L'}</b></span>`;
           }
           const to = g ? href.game(lk, g.id) : href.team(lk, t.id);
           return `<div class="row prow teamrow"><a class="go" href="${href.team(lk, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, '', teamColor(t, L))}</a><a class="t2" href="${to}"><span class="t"><b>${esc(t.short)}<small>${esc(t.rec)}</small></b><span class="${line.includes('<em>') ? 'sub2' : ''}">${line || '&nbsp;'}</span></span>${right || chev}</a></div>`;
@@ -326,7 +328,7 @@
     const later = [];
     if (mine.length) later.push((async () => { const teams = await Promise.all(mine.map(id => teamInfo(L, id, { idx: tIdx, st }).catch(() => null))); if (!alive()) return; S0.teams = teams; build(); paint(); })());
     if (P.brief && fp.length) later.push((async () => {
-      const ids = [...new Set(fp.map(p => { const is = teamOf(p); const g = last.find(g => g.state === 'post' && (is(g.home) || is(g.away))); return g ? g.id : null; }).filter(Boolean))];
+      const ids = [...new Set(fp.map(p => { const is = teamOf(p); const g = last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? g.id : null; }).filter(Boolean))];
       await Promise.all(ids.map(async id => { S0.sums[id] = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 3600000); }));
       if (!alive()) return; build(); paint();
     })());
@@ -346,7 +348,7 @@
         const [last2, inj2, news2] = await Promise.all([scoreboard(L, yday, 0).catch(() => null), mine.length && P.injuries ? injuries(L).catch(() => null) : null, P.news ? jSoft(`${API(L)}/news?limit=25`, 0) : null]);
         if (!alive()) return;
         if (last2) S0.last = last2; if (inj2) S0.inj = inj2; if (news2) S0.news = news2;
-        if (fp.length) { const ids = [...new Set(fp.map(p => { const is = teamOf(p); const g = S0.last.find(g => g.state === 'post' && (is(g.home) || is(g.away))); return g ? g.id : null; }).filter(Boolean))]; await Promise.all(ids.map(async id => { const d = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 0); if (d) S0.sums[id] = d; })); }
+        if (fp.length) { const ids = [...new Set(fp.map(p => { const is = teamOf(p); const g = S0.last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? g.id : null; }).filter(Boolean))]; await Promise.all(ids.map(async id => { const d = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 0); if (d) S0.sums[id] = d; })); }
         if (!alive()) return;
       }
       build(); paint(true);
@@ -395,11 +397,11 @@
       setPhase(); return;
     }
     const shown = mineOnly ? games.filter(isFav) : games;   // your teams always sort first; Mine hides the rest
-    const by = st => shown.filter(g => g.state === st).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
-    const live = by('in'), pre = by('pre'), post = by('post');
+    const by = st => shown.filter(g => g.state === st && !g.off).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
+    const live = by('in'), pre = by('pre'), post = by('post'), off = shown.filter(g => g.off);
     const block = (title, list) => list.length ? sec(title, `${list.length}`) + `<div class="games">${list.map(g => gameCard(L, g, ctx, false, true)).join('')}</div>` : '';
     const none = mineOnly && !shown.length ? empty(`None of your teams play ${ymd === today ? 'today' : dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, `<p style="margin:6px 0 0">${games.length} game${games.length === 1 ? '' : 's'} on the slate.</p>`, `<button class="btn ghost" data-act="scmine">Show all</button>`) : '';
-    paint(phase + none + block('Live', live) + block(ymd === today ? 'Upcoming' : 'Scheduled', pre) + block('Final', post));
+    paint(phase + none + block('Live', live) + block(ymd === today ? 'Upcoming' : 'Scheduled', pre) + block('Final', post) + block('Not played', off));
     setPhase();
     const el2 = $main.querySelector('#dates .on'); if (el2) el2.scrollIntoView({ inline: 'center', block: 'nearest' });
   }

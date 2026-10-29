@@ -3,7 +3,7 @@
 (() => {
   'use strict';
   const { LEAGUES, ORDER, esc, j, jSoft, todayCT, addDays, dayLabel, relDay, tip, dateShort, ago, pct, ordinal, sign, hx, store, API, WEB,
-    favs, parseEvent, isLive, isFav, interest, scoreboard, standings, rankings, injuries, forecast, forecastCtx, leaguePlayers, watchFor, S, ymdOf } = HW;
+    favs, parseEvent, isLive, isDone, finalWord, isFav, interest, scoreboard, standings, rankings, injuries, forecast, forecastCtx, leaguePlayers, watchFor, S, ymdOf } = HW;
   const V = HW.v5;
   const { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, confName, dayUTC, athId, hsUrl, retInfo, teamColor, playerColor, learn, statusWord } = V._;
   /* a story's tags: ESPN marks each article with the teams and athletes it is about */
@@ -41,7 +41,9 @@
     let tab = store.get('v5:stab:' + lk, groups[0].abbr || groups[0].name);
     const items = conf ? groups.map(g => [g.abbr || g.name, confName(g.name, g.abbr)]) : [...groups.map(g => [g.abbr || g.name, confName(g.name, g.abbr)]), ['league', 'League']];
     if ((L.playoffLine || []).length) items.push(['picture', 'Picture']);
-    const simOk = HW.sim && (L.playoffLine || []).length && (lk === 'nba' || lk === 'wnba');
+    // the odds chip: NBA and WNBA, while regular-season games remain (the nightly schedule says; without it the chip stays)
+    const sched0 = HW.sim && (lk === 'nba' || lk === 'wnba') ? await HW.sim.schedule(L, { feed: false }).catch(() => null) : null;
+    const simOk = HW.sim && (L.playoffLine || []).length && (lk === 'nba' || lk === 'wnba') && (!sched0 || sched0.games.some(g => g.t === 2 && !g.x && g.st !== 'post'));
     if (simOk) items.push(['odds', 'Odds']);
     if (!items.some(([k]) => k === tab)) tab = items[0][0];
     if (tab === 'odds') { await oddsTab(L, items, tab, st); return; }
@@ -76,7 +78,7 @@
     const gbLine = (r, i) => { if (tab === 'league' || cuts.length < 1) return ''; const c1 = cuts[0], c2 = cuts[1]; if (c2 && i >= c2) { const b = back(r, rows[c2 - 1]); return b != null && b > 0 ? `${fmtGb(b)} back of the play-in` : b === 0 ? 'Tied for the last play-in spot' : ''; } if (i >= c1) { const b = back(r, rows[c1 - 1]); return b != null && b > 0 ? `${fmtGb(b)} back of the ${c1} seed` : b === 0 ? `Tied for the ${c1} seed` : ''; } return ''; };
     const clinchTag = r => { const k = String(r.clinch || '').toLowerCase(); if (!k) return ''; const t = CL[k] || CL[k[0]] || r.clinch; const bad = /elim|^e|^o/.test(k); return `<span class="tag ${bad ? 'out' : 'ok'} cl" title="${esc(t)}">${esc(bad ? 'Out' : 'Clinched')}</span>`; };
     // ties at a cut line: who holds the head-to-head, from the season's results when the nightly schedule has them
-    const sched = simOk ? await HW.sim.schedule(L, { feed: false }).catch(() => null) : null;
+    const sched = sched0;
     const h2hNote = (r, o) => { if (!sched) return ''; const h = HW.sim.h2hOf(sched, r.id, o.id); if (!h || !h.played) return ''; return h.wa > h.wb ? `${esc(r.abbr)} holds the tiebreak ${h.wa}-${h.wb}` : h.wa < h.wb ? `${esc(o.abbr)} holds the tiebreak ${h.wb}-${h.wa}` : `${h.wa}-${h.wb} head-to-head`; };
     const tieNote = (r, i) => { if (tab === 'league') return ''; const same = x => x && x.w === r.w && x.l === r.l; for (const c of cuts) { if (i === c - 1 && same(rows[c])) return [c === cuts[0] ? `tied for the ${c} seed` : 'tied for the last play-in spot', h2hNote(r, rows[c])].filter(Boolean).join(', '); if (i === c && same(rows[c - 1])) return h2hNote(r, rows[c - 1]); } return ''; };
     const trs = rows.map((r, i) => { const gl = [gbLine(r, i), tieNote(r, i)].filter(Boolean).join(' · '); return `<tr class="click${favs.has(lk, r.id) ? ' me' : ''}${cuts.includes(i + 1) ? ' cut' : ''}" data-href="${href.team(lk, r.id)}"><td><span class="tm"><span class="rk">${r.pos}</span>${logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))}<span class="nm"><a href="${href.team(lk, r.id)}">${rk && rk[r.id] ? `<i class="ap">${rk[r.id]}</i>` : ''}${esc(r.short || r.name)}</a>${clinchTag(r)}${gl ? `<small>${esc(gl)}</small>` : ''}</span></span></td>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}</tr>`; }).join('');
@@ -161,11 +163,16 @@
         <div class="facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div>
         <div class="acts"><button class="${on ? 'on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(id)}" data-name="${esc(t0.shortDisplayName || t0.name)}" aria-pressed="${on}">${on ? starSvg : starLine}${on ? 'Following' : 'Follow'}</button></div>
       </div></div>`;
-    const strip = r ? `<div class="stats four"><div><b>${r.ppg != null ? (+r.ppg).toFixed(1) : '—'}</b><span>PPG</span></div><div><b>${r.opp != null ? (+r.opp).toFixed(1) : '—'}</b><span>OPP</span></div><div><b>${r.diff != null ? sign(+r.diff) : '—'}</b><span>NET</span></div><div><b>${esc(L.standingsMode === 'conferences' ? (r.conf || '—') : (r.l10 || r.home || '—'))}</b><span>${L.standingsMode === 'conferences' ? 'CONF' : r.l10 ? 'LAST 10' : 'HOME'}</span></div></div>` : '';
+    // four tiles: scoring, allowed, net, and whichever split the standings carry (conference record, last ten, home, road, streak)
+    const fourth = L.standingsMode === 'conferences' ? [['CONF', r && r.conf]] : [['LAST 10', r && r.l10], ['HOME', r && r.home], ['ROAD', r && r.road], ['STREAK', r && r.strk]];
+    const tile4 = fourth.find(([, v]) => v) || null;
+    const tiles = r ? [[r.ppg != null ? (+r.ppg).toFixed(1) : null, 'PPG'], [r.opp != null ? (+r.opp).toFixed(1) : null, 'OPP'], [r.diff != null ? sign(+r.diff) : null, 'NET'], tile4 ? [tile4[1], tile4[0]] : null].filter(t => t && t[0] != null) : [];
+    const strip = tiles.length ? `<div class="stats four" style="grid-template-columns:repeat(${tiles.length},1fr)">${tiles.map(([v, k]) => `<div><b>${esc(String(v))}</b><span>${esc(k)}</span></div>`).join('')}</div>` : '';
     // form: the last five results as pips, newest on the right; splits from the standings row
-    const last5 = evs.filter(g => g.state === 'post').slice(-5);
+    const last5 = evs.filter(isDone).slice(-5);
     const form = last5.length ? `<div class="form"><span>Last ${last5.length}</span>${last5.map(g => { const us = g.home.id === String(id) ? g.home : g.away, them = us === g.home ? g.away : g.home; const w = us.score > them.score; return `<a class="pip ${w ? 'w' : 'l'}" href="${href.game(lk, g.id)}" title="${esc(`${w ? 'W' : 'L'} ${us.score}-${them.score} ${us === g.home ? 'vs' : 'at'} ${them.short}`)}"><b>${w ? 'W' : 'L'}</b><i>${esc(them.abbr || '')}</i></a>`; }).join('')}</div>` : '';
-    const splits = r ? [['Home', r.home], ['Road', r.road], ['Last 10', r.l10], ['Streak', r.strk], [L.standingsMode === 'conferences' ? 'In conference' : 'vs conference', r.conf]].filter(([, x]) => x) : [];
+    const shown = new Set(tiles.map(([, k]) => k));
+    const splits = r ? [['Home', r.home, 'HOME'], ['Road', r.road, 'ROAD'], ['Last 10', r.l10, 'LAST 10'], ['Streak', r.strk, 'STREAK'], [L.standingsMode === 'conferences' ? 'In conference' : 'vs conference', r.conf, 'CONF']].filter(([, x, k]) => x && !shown.has(k)) : [];
     const splitsHtml = splits.length ? `<div class="stats splits" style="grid-template-columns:repeat(${Math.min(splits.length, 5)},1fr)">${splits.map(([k, x]) => `<div><b>${esc(x)}</b><span>${esc(k.toUpperCase())}</span></div>`).join('')}</div>` : '';
     const nextHtml = form + splitsHtml + (next ? sec(next.state === 'in' ? 'Live now' : 'Next up') + `<div class="games">${gameCard(L, next, ctx)}</div>` : '');
     // roster, by scoring when we have it
@@ -173,11 +180,11 @@
     const ppg = {}; if (lp) lp.rows.forEach(p => { if (p.teamId === String(id)) ppg[p.id] = p; });
     const sorted = ath.slice().sort((a, b) => ((ppg[b.id] || {}).pts || 0) - ((ppg[a.id] || {}).pts || 0) || (a.displayName || '').localeCompare(b.displayName || ''));
     const posWord = p => ({ G: 'Guard', F: 'Forward', C: 'Center', 'G-F': 'Guard/forward', 'F-G': 'Forward/guard', 'F-C': 'Forward/center', 'C-F': 'Center/forward', PG: 'Point guard', SG: 'Shooting guard', SF: 'Small forward', PF: 'Power forward' }[p] || p || '');
-    const rRow = (a, extra) => { const p = ppg[a.id]; const injd = a.injuries && a.injuries[0]; return `<a class="row${extra ? ' more' : ''}" href="${href.player(lk, a.id)}"${extra ? ' hidden data-more="roster"' : ''}>${headshot(hsUrl(a), color, 46, a.displayName)}<span class="t"><b>${esc(a.displayName)}</b><span>${esc([posWord(a.position && a.position.abbreviation), a.jersey ? `No. ${a.jersey}` : ''].filter(Boolean).join(', '))}${injd ? `<span class="tag ${/out/i.test(injd.status) ? 'out' : 'q'}">${esc(injd.status)}</span>` : ''}</span></span>${p ? `<span class="r"><b>${p.pts.toFixed(1)}</b><span>ppg</span></span>` : chev}</a>`; };
+    const rRow = (a, extra) => { const p = ppg[a.id]; const injd = a.injuries && a.injuries[0]; return `<a class="row${extra ? ' more' : ''}" href="${href.player(lk, a.id)}"${extra ? ' hidden data-more="roster"' : ''}>${headshot(hsUrl(a), color, 46, a.displayName)}<span class="t"><b>${esc(a.displayName)}</b><span>${esc([posWord(a.position && a.position.abbreviation), a.jersey ? `No. ${a.jersey}` : ''].filter(Boolean).join(', '))}${injd ? `<span class="tag ${/out/i.test(injd.status) ? 'out' : 'q'}">${esc(statusWord(injd.status))}</span>` : ''}</span></span>${p ? `<span class="r"><b>${p.pts.toFixed(1)}</b><span>ppg</span></span>` : chev}</a>`; };
     const rosterHtml = sorted.length ? sec('Roster', `${sorted.length}`, sorted.length > 6 ? `<button data-act="expand" data-more="roster">Everyone</button>` : '') + `<div class="rows">${sorted.slice(0, 6).map(a => rRow(a, false)).join('')}${sorted.slice(6).map(a => rRow(a, true)).join('')}</div>` : '';
     // schedule: next five and last five, expandable to the season
-    const sRow = (g, extra) => { const homeSide = g.home.id === String(id); const me = homeSide ? g.home : g.away, op = homeSide ? g.away : g.home; const d = new Date(g.date); const res = g.state === 'post' ? `<span class="res ${me.score > op.score ? 'w' : 'l'}" style="font-size:15px">${me.score > op.score ? 'W' : 'L'} ${me.score}-${op.score}</span>` : g.state === 'in' ? `<span class="live">${esc(g.detail)}</span>` : chev; return `<a class="row" href="${href.game(lk, g.id)}"${extra ? ' hidden data-more="sched"' : ''}><span class="d">${esc(d.toLocaleDateString('en-US', { month: 'short', timeZone: HW.TZ }))}<b>${esc(d.toLocaleDateString('en-US', { day: 'numeric', timeZone: HW.TZ }))}</b></span>${logo(op.logo, 'm', V._.teamColor(op, L))}<span class="t"><b>${g.neutral ? 'vs' : homeSide ? 'vs' : 'at'} ${esc(op.short)}</b><span>${g.state === 'post' ? 'Final' : g.state === 'in' ? 'Live' : esc([tip(g.date), tvLabel(g)].filter(Boolean).join(', '))}</span></span>${res}</a>`; };
-    const done = evs.filter(g => g.state === 'post'), up = evs.filter(g => g.state !== 'post');
+    const sRow = (g, extra) => { const homeSide = g.home.id === String(id); const me = homeSide ? g.home : g.away, op = homeSide ? g.away : g.home; const d = new Date(g.date); const res = isDone(g) ? `<span class="res ${me.score > op.score ? 'w' : 'l'}" style="font-size:15px">${me.score > op.score ? 'W' : 'L'} ${me.score}-${op.score}</span>` : g.off ? `<span class="tag">${esc(g.off)}</span>` : g.state === 'in' ? `<span class="live">${esc(g.detail)}</span>` : chev; return `<a class="row" href="${href.game(lk, g.id)}"${extra ? ' hidden data-more="sched"' : ''}><span class="d">${esc(d.toLocaleDateString('en-US', { month: 'short', timeZone: HW.TZ }))}<b>${esc(d.toLocaleDateString('en-US', { day: 'numeric', timeZone: HW.TZ }))}</b></span>${logo(op.logo, 'm', V._.teamColor(op, L))}<span class="t"><b>${g.neutral ? 'vs' : homeSide ? 'vs' : 'at'} ${esc(op.short)}</b><span>${g.off ? esc(g.off) : g.state === 'post' ? esc(finalWord(g)) : g.state === 'in' ? 'Live' : esc([tip(g.date), tvLabel(g)].filter(Boolean).join(', '))}</span></span>${res}</a>`; };
+    const done = evs.filter(isDone), up = evs.filter(g => !isDone(g));
     const recent = done.slice(-3).reverse(), soon = up.slice(0, 4); const restUp = up.slice(4), restDone = done.slice(0, -3).reverse();
     const schedHtml = evs.length ? sec('Schedule', `${evs.length} games`, (restUp.length || restDone.length) ? `<button data-act="expand" data-more="sched">Full season</button>` : '') + `<div class="rows sched">${up.length ? `<div class="sub">Up next<span>${up.length} to play</span></div>` : ''}${soon.map(g => sRow(g, false)).join('')}${restUp.map(g => sRow(g, true)).join('')}${done.length ? `<div class="sub res">Results<span>${done.filter(g => (g.home.id === String(id) ? g.home : g.away).score > (g.home.id === String(id) ? g.away : g.home).score).length}-${done.filter(g => (g.home.id === String(id) ? g.home : g.away).score < (g.home.id === String(id) ? g.away : g.home).score).length}, newest first</span></div>` : ''}${recent.map(g => sRow(g, false)).join('')}${restDone.map(g => sRow(g, true)).join('')}</div>` : '';
     // injuries, news
@@ -202,6 +209,7 @@
     const box = $main.querySelector(`.outlook[data-lk="${L.key}"][data-id="${id}"]`); if (!box) return;
     const v = await HW.sim.season(L, { feed }).catch(() => null);
     const box2 = $main.querySelector(`.outlook[data-lk="${L.key}"][data-id="${id}"]`); if (!box2 || !v) return;
+    if (!v.sim.left) { box2.innerHTML = ''; return; }   // nothing left to play: the standings are the season
     const t = v.byId[id]; if (!t) return; r = r || (v.ctx && v.ctx.cur && v.ctx.cur.byId[id]) || {};
     const cut = L.playoffLine || []; const playIn = cut.length === 2; const o = v.rest[id] || { n: 0, opp: 0 };
     const pc = p => p >= .995 ? '>99%' : p < .005 ? (p > 0 ? '<1%' : '0%') : `${Math.round(p * 100)}%`;
@@ -462,7 +470,7 @@
       }
       const scrollY = window.scrollY;
       const side = t => ({ short: t.short, abbr: t.abbr, logo: t.logo, color: V._.teamColor(t), score: t.score, rec: t.rec || '' });
-      const card = g.state === 'pre' ? null : { kind: 'game', away: side(g.away), home: side(g.home), status: g.state === 'post' ? 'Final' : g.detail, sub: tvLabel(g) || (d.gameInfo && d.gameInfo.venue && d.gameInfo.venue.fullName) || '', date: dayLabel(ymdOf(g.date), { weekday: 'long', month: 'long', day: 'numeric' }), note: f && prefs.get('forecast') ? `RIVL had ${(f.pHome >= .5 ? g.home : g.away).short} ${pct(Math.max(f.pHome, 1 - f.pHome))}` : '', title: `${g.away.short} ${g.away.score ?? ''}, ${g.home.short} ${g.home.score ?? ''}`, text: `${g.away.short} ${g.away.score ?? ''}, ${g.home.short} ${g.home.score ?? ''} · ${g.state === 'post' ? 'Final' : g.detail}`, file: `${g.away.abbr}-${g.home.abbr}-${ymdOf(g.date)}` };
+      const card = g.state === 'pre' ? null : { kind: 'game', away: side(g.away), home: side(g.home), status: g.state === 'post' ? finalWord(g) : g.detail, sub: tvLabel(g) || (d.gameInfo && d.gameInfo.venue && d.gameInfo.venue.fullName) || '', date: dayLabel(ymdOf(g.date), { weekday: 'long', month: 'long', day: 'numeric' }), note: f && prefs.get('forecast') ? `RIVL had ${(f.pHome >= .5 ? g.home : g.away).short} ${pct(Math.max(f.pHome, 1 - f.pHome))}` : '', title: `${g.away.short} ${g.away.score ?? ''}, ${g.home.short} ${g.home.score ?? ''}`, text: `${g.away.short} ${g.away.score ?? ''}, ${g.home.short} ${g.home.score ?? ''} · ${g.state === 'post' ? finalWord(g) : g.detail}`, file: `${g.away.abbr}-${g.home.abbr}-${ymdOf(g.date)}` };
       // the page is three parts: the head (bar + hero) changes only when the score does, the chips only toggle, the body swaps
       const headHtml = topbar(title, '#scores', '', card) + hero, hh = hashOf(headHtml), page = $main.querySelector('#gpage');
       if (page && page.dataset.gid === String(id)) {
