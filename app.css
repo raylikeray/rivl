@@ -1263,3 +1263,5 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 /* the rail card's second line: tonight's game or last night's line */
 .pl em.nx{display:block;font-style:normal;font-size:11.5px;font-weight:700;color:var(--ink-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pl em.nx i.on{font-style:normal;color:var(--live);font-weight:800}
+.tbl.cup .pos{color:var(--win);font-weight:700}
+.tbl.cup .neg{color:var(--loss);font-weight:700}

@@ -47,9 +47,14 @@
     if (simOk) items.push(['odds', 'Odds']);
     const TS = await HW.teamStats(L).catch(() => null);
     if (TS) items.push(['stats', 'Stats']);
+    // the NBA Cup, while it's on: from the week before group play to a couple of days after the final
+    const cupGames = lk === 'nba' && sched0 ? sched0.games.filter(g => g.cup) : [];
+    const cupOn = cupGames.length && todayCT() >= addDays(cupGames.map(g => g.d).sort()[0], -7) && todayCT() <= addDays(cupGames.map(g => g.d).sort().pop(), 2);
+    if (cupOn) items.push(['cup', 'Cup']);
     if (!items.some(([k]) => k === tab)) tab = items[0][0];
     if (tab === 'odds') { await oddsTab(L, items, tab, st); return; }
     if (tab === 'stats') { statsTab(L, items, tab, st, TS); return; }
+    if (tab === 'cup') { cupTab(L, items, tab, st, cupGames, idx); return; }
     if (tab === 'picture') {
       // the bracket as the table stands today: play-in pairs, then the first round, per conference
       const cut = L.playoffLine; const playIn = cut.length === 2;
@@ -87,6 +92,31 @@
     const trs = rows.map((r, i) => { const gl = [gbLine(r, i), tieNote(r, i)].filter(Boolean).join(' · '); return `<tr class="click${favs.has(lk, r.id) ? ' me' : ''}${cuts.includes(i + 1) ? ' cut' : ''}" data-href="${href.team(lk, r.id)}"><td><span class="tm"><span class="rk">${r.pos}</span>${logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))}<span class="nm"><a href="${href.team(lk, r.id)}">${rk && rk[r.id] ? `<i class="ap">${rk[r.id]}</i>` : ''}${esc(r.short || r.name)}</a>${clinchTag(r)}${gl ? `<small>${esc(gl)}</small>` : ''}</span></span></td>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}</tr>`; }).join('');
     const legend = tab === 'league' ? '' : cuts.length === 2 ? `<p class="legend">Top ${cuts[0]} go straight to the playoffs; ${cuts[0] + 1} through ${cuts[1]} play in. Games back count the ${cuts[0]} seed and the last play-in spot. Your teams are marked.</p>` : cuts.length === 1 ? `<p class="legend">Top ${cuts[0]} make the playoffs. Your teams are marked.</p>` : '<p class="legend">Your teams are marked.</p>';
     stPaint(items, tab, `<div class="tw"><table class="tbl stand"><thead><tr><th>${esc(title)}</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${trs}</tbody></table></div>` + legend);
+  }
+  /* the NBA Cup: group standings built from the group-play results in the nightly schedule, then the knockout games.
+     The groups are the NBA's own draw for 2026 (nba.com, July 2026); the schedule's group games are checked against it. */
+  const CUP_2026 = { season: '2026-10-20', groups: [['East Group A', ['DET', 'TOR', 'ORL', 'MIL', 'BKN']], ['East Group B', ['NY', 'CLE', 'PHI', 'MIA', 'IND']], ['East Group C', ['BOS', 'ATL', 'CHA', 'CHI', 'WSH']], ['West Group A', ['DEN', 'HOU', 'PHX', 'DAL', 'UTAH']], ['West Group B', ['OKC', 'MIN', 'LAC', 'NO', 'MEM']], ['West Group C', ['SA', 'LAL', 'POR', 'GS', 'SAC']]] };
+  function cupTab(L, items, tab, st, cupGames, idx = {}) {
+    const lk = L.key; const rows = st.groups.flatMap(g => g.rows).concat(Object.values(idx).filter(t => t.abbr && !st.groups.some(g => g.rows.some(r => r.id === String(t.id)))).map(t => ({ id: String(t.id), abbr: t.abbr, short: t.short || t.name, name: t.name, logo: t.logo })));
+    const byAbbr = {}; rows.forEach(r => { byAbbr[String(r.abbr).toUpperCase()] = r; });
+    const abbrOf = id => { const r = rows.find(x => x.id === id); return r ? String(r.abbr).toUpperCase() : ''; };
+    const play = cupGames.filter(g => /group/i.test(g.cup)); const done = play.filter(g => g.st === 'post' && g.hs != null && g.as != null);
+    // the draw, checked against the schedule: a group game between teams the draw puts in different groups means the draw is wrong for this season
+    const groupOf = {}; CUP_2026.groups.forEach(([name, abbrs]) => abbrs.forEach(a => groupOf[a] = name));
+    const mismatch = L.seasonStart !== CUP_2026.season || play.some(g => { const h = abbrOf(g.h), a = abbrOf(g.a); return h && a && groupOf[h] && groupOf[a] && groupOf[h] !== groupOf[a]; });
+    if (mismatch) { stPaint(items, tab, empty('Cup groups not on file', '<p style="margin:6px 0 0">The schedule\'s group games don\'t match the draw this app knows. Nothing is shown rather than the wrong groups.</p>')); return; }
+    const rec = {}; const get = a => rec[a] || (rec[a] = { w: 0, l: 0, pf: 0, pa: 0, beat: new Set() });
+    done.forEach(g => { const h = abbrOf(g.h), a = abbrOf(g.a); if (!h || !a) return; const H = get(h), A = get(a); H.pf += g.hs; H.pa += g.as; A.pf += g.as; A.pa += g.hs; if (g.hs > g.as) { H.w++; A.l++; H.beat.add(a); } else { A.w++; H.l++; A.beat.add(h); } });
+    const nextOf = a => { const r = byAbbr[a]; if (!r) return ''; const g = play.filter(x => !(x.st === 'post' && x.hs != null) && (x.h === r.id || x.a === r.id)).sort((x, y) => x.d.localeCompare(y.d))[0]; if (!g) return ''; const home = g.h === r.id; return `${dayLabel(g.d, { month: 'short', day: 'numeric' })} ${home ? 'vs' : 'at'} ${abbrOf(home ? g.a : g.h)}`; };
+    const cmp = (x, y) => { const X = get(x), Y = get(y); return (Y.w - Y.l) - (X.w - X.l) || (X.beat.has(y) ? -1 : Y.beat.has(x) ? 1 : 0) || (Y.pf - Y.pa) - (X.pf - X.pa) || Y.pf - X.pf || x.localeCompare(y); };
+    const sg = n => n > 0 ? `+${n}` : String(n);
+    const table = ([name, abbrs]) => { const order = abbrs.slice().sort(cmp); return sec(name) + `<div class="tw"><table class="tbl stand cup"><thead><tr><th>${esc(name.split(' ')[0])}</th><th>W-L</th><th>Diff</th><th>PF</th></tr></thead><tbody>${order.map((a, i) => { const r = byAbbr[a]; const R = get(a); const nx = nextOf(a); return `<tr class="click${r && favs.has(lk, r.id) ? ' me' : ''}${i === 0 ? ' cut' : ''}"${r ? ` data-href="${href.team(lk, r.id)}"` : ''}><td><span class="tm"><span class="rk">${i + 1}</span>${r ? logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L)) : ''}<span class="nm">${r ? `<a href="${href.team(lk, r.id)}">${esc(r.short || r.name)}</a>` : esc(a)}${nx ? `<small>${esc(nx)}</small>` : ''}</span></span></td><td>${R.w}-${R.l}</td><td><span class="${R.pf - R.pa > 0 ? 'pos' : R.pf - R.pa < 0 ? 'neg' : ''}">${R.w + R.l ? sg(R.pf - R.pa) : '–'}</span></td><td>${R.pf || '–'}</td></tr>`; }).join('')}</tbody></table></div>`; };
+    // the wild card: the best second-place team in each conference, by the same order
+    const wild = ['East', 'West'].map(conf => { const seconds = CUP_2026.groups.filter(([n]) => n.startsWith(conf)).map(([, abbrs]) => abbrs.slice().sort(cmp)[1]); const best = seconds.sort(cmp)[0]; const r = byAbbr[best]; return best && done.length ? `<p class="legend">${conf} wild card as it stands: ${r ? esc(r.short || r.name) : esc(best)} (${get(best).w}-${get(best).l}, ${sg(get(best).pf - get(best).pa)}).</p>` : ''; }).join('');
+    const ko = cupGames.filter(g => !/group/i.test(g.cup)).sort((x, y) => x.d.localeCompare(y.d));
+    const koHtml = ko.length ? sec('Knockout rounds') + `<div class="rows">${ko.map(g => { const h = rows.find(x => x.id === g.h), a = rows.find(x => x.id === g.a); const label = g.cup.replace(/^NBA Cup[ -]*/i, '').replace(/^- /, ''); const who = h && a ? `${esc(a.short)} at ${esc(h.short)}` : 'Teams to be decided'; const res = g.st === 'post' && g.hs != null ? `${esc(a.abbr)} ${g.as}, ${esc(h.abbr)} ${g.hs}` : dayLabel(g.d, { weekday: 'short', month: 'short', day: 'numeric' }); return h && a ? `<a class="row" href="${href.game(lk, g.id)}"><span class="t"><b>${who}</b><span>${esc(label)} · ${res}</span></span>${chev}</a>` : `<div class="row"><span class="t"><b>${esc(label)}</b><span>${who} · ${esc(res)}</span></span></div>`; }).join('')}</div>` : '';
+    const legend = `<p class="legend">Group play: ${play.length ? `${done.length} of ${play.length} games played` : 'not started'}. Each group's winner and the best second-place team in each conference go to the knockout rounds. Ties break on head-to-head, then point differential in group play, then points scored; the NBA's later tiebreaks aren't applied here.</p>`;
+    stPaint(items, tab, CUP_2026.groups.map(table).join('') + wild + koHtml + legend);
   }
   /* every team's ratings and four factors, one league table, best net rating first */
   function statsTab(L, items, tab, st, TS) {
