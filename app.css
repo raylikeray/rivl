@@ -1029,3 +1029,8 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
 /* rails snap to the padded edge, so the first item never slides under the gutter */
 .rail,.brief-row,.media,.dates{scroll-padding-left:var(--gut);scroll-padding-right:var(--gut-r)}
 .rail .pl:first-child{scroll-snap-align:start}
+
+/* the label turns only once the knob has arrived under it; the label it left turns back at once */
+.pill{transition:color .16s ease}
+.pill.on{transition:color .16s ease .22s}
+.pill:active{transform:none}

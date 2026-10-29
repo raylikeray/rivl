@@ -28,8 +28,9 @@
   function paintPills(lk, show) {
     $pills.hidden = !show;
     if (!show) return;
-    const html = ORDER.map(k => { const n = S.today[k].filter(isLive).length; return `<a class="pill${k === lk ? ' on' : ''}" href="#${k}"${k === lk ? ' aria-current="page"' : ''}><span>${esc(LEAGUES[k].label)}</span>${n ? `<span class="ct live">${n}</span>` : ''}</a>`; }).join('');
-    if ($pills.innerHTML !== html) $pills.innerHTML = html;
+    // built once; after that only the chosen league and the live counts change, so the knob slides and the labels fade in step
+    if ($pills.children.length !== ORDER.length) $pills.innerHTML = ORDER.map(k => `<a class="pill" href="#${k}" data-lk="${k}"><span>${esc(LEAGUES[k].label)}</span></a>`).join('');
+    ORDER.forEach((k, i) => { const el = $pills.children[i]; const on = k === lk; el.classList.toggle('on', on); if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); const n = S.today[k].filter(isLive).length; let ct = el.querySelector('.ct'); if (n && !ct) { ct = document.createElement('span'); ct.className = 'ct live'; el.appendChild(ct); } if (ct) { if (!n) ct.remove(); else if (ct.textContent !== String(n)) ct.textContent = n; } });
     $pills.style.setProperty('--n', ORDER.length); $pills.style.setProperty('--i', Math.max(0, ORDER.indexOf(lk)));   // the knob slides to the chosen league
   }
   function paintTabs(name) {
