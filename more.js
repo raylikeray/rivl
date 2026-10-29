@@ -52,6 +52,23 @@
     try { if (n) navigator.setAppBadge(n); else navigator.clearAppBadge && navigator.clearAppBadge(); } catch { }
   });
 
+  /* ---------- logos sized by their artwork, not their file: ESPN's PNGs carry different padding ---------- */
+  const fitCache = new Map();
+  function measure(src) {
+    if (fitCache.has(src)) return fitCache.get(src);
+    const p = new Promise(res => {
+      const im = new Image(); im.crossOrigin = 'anonymous';
+      im.onload = () => { try { const S = 72; const c = document.createElement('canvas'); c.width = S; c.height = S; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, S, S); const d = x.getImageData(0, 0, S, S).data; let x0 = S, y0 = S, x1 = -1, y1 = -1; for (let y = 0; y < S; y++) for (let xx = 0; xx < S; xx++) if (d[(y * S + xx) * 4 + 3] > 30) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; } if (x1 < 0) return res(null); const w = (x1 - x0 + 1) / S, h = (y1 - y0 + 1) / S; res({ scale: Math.min(1.7, Math.min(1 / w, 1 / h) * 0.94), fx: -(((x0 + x1 + 1) / 2) / S - .5), fy: -(((y0 + y1 + 1) / 2) / S - .5) }); } catch { res(null); } };
+      im.onerror = () => res(null); im.src = src;
+    });
+    fitCache.set(src, p); return p;
+  }
+  async function fitLogos() {
+    const els = [...document.querySelectorAll('.ehero .biglogo:not(.fitted), .hero .tm .logo img:not(.fitted)')];
+    for (const img of els) { img.classList.add('fitted'); const m = await measure(img.getAttribute('src') || ''); if (!m) continue; img.style.setProperty('--fit', m.scale.toFixed(3)); img.style.setProperty('--fx', (m.fx * 100).toFixed(1) + '%'); img.style.setProperty('--fy', (m.fy * 100).toFixed(1) + '%'); img.classList.add('fit'); }
+  }
+  document.addEventListener('rivl:rendered', fitLogos); setTimeout(fitLogos, 1200);
+
   /* ---------- share cards: a picture of the result or the line, not a link ---------- */
   const loadImg = src => new Promise(res => { if (!src) return res(null); const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
   const rr = (ctx, x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
