@@ -4,6 +4,16 @@
   const { LEAGUES, ORDER, store, scoreboard, isLive, todayCT, S, esc } = HW;
   const V = HW.v5;
   const $main = document.getElementById('main'), $pills = document.getElementById('pills'), $tabs = document.getElementById('tabs'), $toast = document.getElementById('toast');
+  /* Loading never blanks the screen. A view's first paint is a skeleton (marked by views.js); when there is real content
+     on screen already, that paint is swallowed: the old screen stays, dims a touch, a slim bar runs under the header, and the
+     next real paint swaps it out. The skeleton still shows when there is nothing to keep (first open, after an error). */
+  { const proto = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML'); let bar = null, barT = null;
+    const showBar = () => { if (!bar) { bar = document.createElement('div'); bar.className = 'loadbar'; document.body.appendChild(bar); } clearTimeout(barT); barT = setTimeout(() => { bar.classList.add('on'); $main.setAttribute('aria-busy', 'true'); }, 160); };
+    const hideBar = () => { clearTimeout(barT); if (bar) bar.classList.remove('on'); $main.removeAttribute('aria-busy'); };
+    Object.defineProperty($main, 'innerHTML', {
+      get() { return proto.get.call($main); },
+      set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { showBar(); return; } proto.set.call($main, s); $main.dataset.real = s.includes('<!--skel-->') ? '0' : '1'; if ($main.dataset.real === '1') { hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; window.scrollTo(0, 0); } } }
+    }); }
   S.today = S.today || {}; ORDER.forEach(k => { S.today[k] = S.today[k] || []; });
 
   /* ---------- routes ----------
@@ -49,7 +59,7 @@
     paintPills(r.lk, leagueScreen);
     paintTabs(leagueScreen ? r.name : (r.name === 'player' ? 'players' : r.name === 'team' ? 'teams' : r.name === 'game' ? 'scores' : r.name === 'article' ? 'home' : ''));
     document.title = leagueScreen ? `${TITLES[r.name]} · ${LEAGUES[r.lk].label} · RIVL` : `${TITLES[r.name] || ''} RIVL`.trim();
-    window.scrollTo(0, 0);
+    $main.dataset.top = '1';   // scroll to the top with the new screen's first real paint, not before it
     try { await (V[r.name] || V.home)(...r.args); }
     catch (err) { if (my === seq) $main.innerHTML = `<div class="empty"><b>Something went wrong</b><p style="margin:6px 0 0">${esc(err && err.message || 'Try again in a moment.')}</p></div>`; console.error(err); }
     if (my !== seq) return;
@@ -115,7 +125,7 @@
 
   /* ---------- delegated actions ---------- */
   function toast(msg) { $toast.textContent = msg; $toast.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => $toast.classList.remove('on'), 1800); }
-  V.toast = toast; V.rerender = () => render();
+  V.toast = toast; V.rerender = () => render(); V.route = () => current;
   V.refreshAll = async () => { try { HW.cache.clear(); } catch { } await render(); poll(); };
   document.addEventListener('click', e => {
     const back = e.target.closest('[data-act="back"]');
@@ -262,14 +272,18 @@
   }
   applyTheme(); window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', applyTheme);
   /* accent: mono chrome, or the colour of the first team you follow in the league you're on */
+  /* accents: black and white, the first team's colour, or one of these — the same colour runs the switcher, chips, tab bar, buttons and the header wash */
+  const ACCENTS = { electric: ['#2F7CFF', 'Electric'], violet: ['#7C4DFF', 'Violet'], emerald: ['#17B26A', 'Emerald'], tangerine: ['#FF7A1A', 'Tangerine'], crimson: ['#E5304A', 'Crimson'], gold: ['#F2B705', 'Gold'], teal: ['#13B5C8', 'Teal'], pink: ['#FF4FA3', 'Pink'] };
+  V.ACCENTS = ACCENTS;
+  const setAccent = (root, c, kind) => { const h = c.replace('#', ''); const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; root.style.setProperty('--acc', c); root.style.setProperty('--acc-ink', lum > 0.6 ? '#000' : '#fff'); root.setAttribute('data-accent', kind); };
   async function applyAccent() {
     const root = document.documentElement; const mode = store.get('v5:accent', 'mono');
+    if (ACCENTS[mode]) { setAccent(root, ACCENTS[mode][0], mode); return; }
     if (mode !== 'team') { root.removeAttribute('data-accent'); root.style.removeProperty('--acc'); root.style.removeProperty('--acc-ink'); return; }
     const lk = lkOf(store.get('v5:lk', 'nba')); const F = HW.favs.all(); const pick = (F[lk] || [])[0] ? [lk, F[lk][0]] : ORDER.map(k => [k, (F[k] || [])[0]]).find(([, id]) => id);
     if (!pick) { root.removeAttribute('data-accent'); return; }
     await V.teamsIndex(LEAGUES[pick[0]]).catch(() => ({})); const c = V._.teamColor({ id: String(pick[1]) }, LEAGUES[pick[0]]); if (!c || c === '#2A2D33' || c === '#55606e') { root.removeAttribute('data-accent'); return; }
-    const h = c.replace('#', ''); const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-    root.style.setProperty('--acc', c); root.style.setProperty('--acc-ink', lum > 0.6 ? '#000' : '#fff'); root.setAttribute('data-accent', 'team');
+    setAccent(root, c, 'team');
   }
   V.applyAccent = applyAccent; applyAccent();
   document.addEventListener('rivl:fav', () => applyAccent());

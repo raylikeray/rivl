@@ -73,7 +73,7 @@
   const chev = `<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>`;
   const sec = (title, small, action) => `<div class="sec"><h2>${esc(title)}${small ? `<small>${esc(small)}</small>` : ''}</h2>${action || ''}</div>`;
   const empty = (title, body, cta) => `<div class="empty"><b>${esc(title)}</b>${body || ''}${cta || ''}</div>`;
-  const skeleton = (n = 3, kind = 'row') => Array.from({ length: n }, () => `<div class="skel ${kind}"></div>`).join('');
+  const skeleton = (n = 3, kind = 'row') => '<!--skel-->' + Array.from({ length: n }, () => `<div class="skel ${kind}"></div>`).join('');   // the marker lets the screen keep what it has while the next one loads
   const recOf = t => t && t.rec ? t.rec : '';
   /* group names the way people say them: "Eastern Conference" is the East, "Southeast Division" is the Southeast,
      and a college conference loses the word Conference (the two everyone abbreviates get their initials) */
@@ -199,7 +199,7 @@
     }
     $main.innerHTML = skeleton(1, 'card') + skeleton(4, 'row');
     const P = prefs.all(); const yday = addDays(today, -1);
-    const alive = () => token === homeToken && $main.querySelector('.hsec, .skel');
+    const alive = () => { if (token !== homeToken) return false; const r = HW.v5.route && HW.v5.route(); return !r || (r.name === 'home' && r.lk === lk); };   // still the screen being shown, even while the old one is kept on screen during the load
     const secs = {}; let painted = false;
     const wrap = (k, quiet) => `<section class="hsec${quiet ? ' quiet' : ''}" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;
     const paint = (quiet = false) => {
