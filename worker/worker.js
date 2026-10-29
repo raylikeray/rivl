@@ -65,7 +65,9 @@ async function sendPush(env, sub, payload) {
 /* ---------- ESPN parsing ---------- */
 function parseGame(e) {
   const c = e.competitions[0]; const st = (c.status || e.status || {}); const t = st.type || {};
-  const side = x => { const tm = x.team || {}; return { id: String(tm.id), abbr: tm.abbreviation || '', short: tm.shortDisplayName || tm.name || '', score: x.score != null && x.score !== '' ? +x.score : null }; };
+  // each side's scoring leader, for the final's line ("SGA 34 pts")
+  const top = x => { const L1 = (x.leaders || []).find(l => /^points$/i.test(l.name || '')); const a = L1 && L1.leaders && L1.leaders[0]; const v = a && parseFloat(a.displayValue); if (!a || !a.athlete || !isFinite(v) || v <= 0) return ''; const nm = String(a.athlete.shortName || a.athlete.displayName || ''); return `${nm} ${Math.round(v)} pts`; };
+  const side = x => { const tm = x.team || {}; return { id: String(tm.id), abbr: tm.abbreviation || '', short: tm.shortDisplayName || tm.name || '', score: x.score != null && x.score !== '' ? +x.score : null, top: top(x) }; };
   const comp = c.competitors || [];
   return { id: String(e.id), date: e.date, state: t.state || 'pre', detail: t.shortDetail || '', period: st.period || 0, clock: st.displayClock || '', home: side(comp.find(x => x.homeAway === 'home') || comp[0] || {}), away: side(comp.find(x => x.homeAway === 'away') || comp[1] || {}), tv: (c.broadcasts || []).flatMap(b => b.names || []).slice(0, 2).join(' · ') };
 }
@@ -140,9 +142,9 @@ async function runLeague(env, lk, subs) {
       const next = { period: g.period, hs, as, live: 1 };
       if (JSON.stringify(next) !== JSON.stringify(snap)) await env.KV.put('st:' + gk, JSON.stringify(next), { expirationTtl: 172800 });
     }
-    if (g.state === 'post') {
+    if (g.state === 'post' && g.home.score != null && g.away.score != null) {   // a postponed game is filed as post with no score: nothing to say
       const snap = await env.KV.get('st:' + gk, 'json');
-      if (snap && snap.live) { const w = (g.home.score || 0) > (g.away.score || 0) ? g.home : g.away, l = w === g.home ? g.away : g.home; await send('final', { title: `Final: ${w.short} ${w.score}, ${l.short} ${l.score}`, body: name, tag: `game:${gk}` }, `final:${gk}`); await env.KV.put('st:' + gk, JSON.stringify({ ...snap, live: 0 }), { expirationTtl: 172800 }); }
+      if (snap && snap.live) { const w = (g.home.score || 0) > (g.away.score || 0) ? g.home : g.away, l = w === g.home ? g.away : g.home; await send('final', { title: `Final${/OT/i.test(g.detail) ? ' (' + g.detail.replace(/^Final\/?/, '') + ')' : ''}: ${w.short} ${w.score}, ${l.short} ${l.score}`, body: [w.top, l.top].filter(Boolean).join(' · ') || name, tag: `game:${gk}` }, `final:${gk}`); await env.KV.put('st:' + gk, JSON.stringify({ ...snap, live: 0 }), { expirationTtl: 172800 }); }
     }
   }
 }

@@ -1253,3 +1253,13 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .game .fc .bar{flex:1 1 40%;min-width:84px}
 .game .fc b{white-space:normal;min-width:0;flex:1 1 auto;line-height:1.25}
 .game .fc b small{display:block;margin-left:0;margin-top:1px}
+/* box score sorting and the plays' player filter */
+.tbl.box th button{all:unset;cursor:pointer;font:inherit;color:inherit;padding:2px 0}
+.tbl.box th.sorted,.tbl.box td.sorted{color:var(--ink);background:color-mix(in srgb,var(--acc,var(--ink)) 7%,transparent)}
+.tbl.box th.sorted button{color:var(--ink);font-weight:800}
+.pfchips{padding-top:0;margin-top:-6px}
+.pfchips .chip small{font-size:11px;font-weight:700;color:var(--ink-3);margin-left:1px}
+.pfchips .chip.on small{color:inherit;opacity:.75}
+/* the rail card's second line: tonight's game or last night's line */
+.pl em.nx{display:block;font-style:normal;font-size:11.5px;font-weight:700;color:var(--ink-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl em.nx i.on{font-style:normal;color:var(--live);font-weight:800}
