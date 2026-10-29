@@ -897,3 +897,13 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
 /* Home sections: patched in place; a quiet patch arrives without the entrance */
 .hsec.quiet .row,.hsec.quiet .bchip,.hsec.quiet .hero,.hsec.quiet .pl,.hsec.quiet .injgrp{animation:none}
 .bchip.next em{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);margin-right:2px}
+
+/* plays: scoring plays carry the team's colour on the left; the period chips and the scoring toggle sit above */
+.plays .row.play{position:relative;padding-left:10px}
+.plays .row.play::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:2px;background:transparent}
+.plays .row.play.score::before{background:var(--tc,var(--ink-3))}
+.plays .row.play.score .t b{font-weight:700}
+.plays .row .tag.pts{min-width:30px;text-align:center}
+.pchips{padding:12px 0 10px}
+.chip.tog{margin-left:auto}
+.tbl.box tr.dnp td{color:var(--ink-3)}
