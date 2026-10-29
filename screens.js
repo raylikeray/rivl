@@ -2,7 +2,7 @@
    Loaded after views.js; shares its helpers through HW.v5. */
 (() => {
   'use strict';
-  const { LEAGUES, ORDER, esc, j, jSoft, todayCT, addDays, dayLabel, relDay, tip, dateShort, ago, pct, ordinal, sign, hx, store, API, WEB,
+  const { LEAGUES, ORDER, esc, j, jSoft, todayCT, addDays, dayLabel, relDay, tip, tipOf, dateShort, ago, pct, ordinal, sign, hx, store, API, WEB,
     favs, parseEvent, isLive, isDone, finalWord, isFav, interest, scoreboard, standings, rankings, injuries, forecast, forecastCtx, leaguePlayers, watchFor, S, ymdOf } = HW;
   const V = HW.v5;
   const { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, confName, dayUTC, athId, hsUrl, retInfo, teamColor, playerColor, learn, statusWord } = V._;
@@ -22,7 +22,7 @@
     const id = String(a.id || (a.links && a.links.api && a.links.api.news && a.links.api.news.href || '').split('/').pop() || '');
     if (id) S.news[id] = a;
     const vids = (a.video || a.videos || []).filter(v => v && v.links); vids.forEach(v => { if (v.id != null) S.videos[String(v.id)] = v; });
-    const im = a.images && a.images[0] && a.images[0].url;
+    const ims = (a.images || []).filter(x => x && x.url); const im = (ims.slice().sort((x, y) => Math.abs((x.width / x.height || 16 / 9) - 16 / 9) - Math.abs((y.width / y.height || 16 / 9) - 16 / 9))[0] || {}).url;   // the one shaped closest to 16:9, the thumbnail's shape
     const isVideo = vids.length && (/media|video/i.test(a.type || '') || !a.description);
     const meta = [a.byline, a.published ? ago(a.published) : ''].filter(Boolean).join(', ');
     if (isVideo) return `<button class="row" data-act="play" data-vid="${esc(String(vids[0].id))}">${thumb ? `<span class="thumb vid">${im ? `<img src="${esc(im)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<i></i></span>` : ''}<span class="t"><b class="wrap">${esc(a.headline)}</b><span>${esc(meta || 'Video')}</span></span></button>`;
@@ -58,7 +58,7 @@
     if (tab === 'picture') {
       // the bracket as the table stands today: play-in pairs, then the first round, per conference
       const cut = L.playoffLine; const playIn = cut.length === 2;
-      const tm = (r, seed, fr, sd) => r ? `<a class="bt ${sd}" href="${href.team(lk, r.id)}" style="--tc:${esc(teamColor({ id: r.id, abbr: r.abbr }, L))}"><i>${seed}</i>${logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))}<span class="tx"><b>${esc(r.short || r.name)}</b><span>${r.w}-${r.l}</span></span></a>` : `<span class="bt tbd ${sd}"><i>${seed}</i><span class="tx"><b>${fr && playIn && seed > cut[0] ? 'Play-in winner' : 'TBD'}</b></span></span>`;
+      const tm = (r, seed, fr, sd) => r ? `<a class="bt ${sd}${favs.has(lk, r.id) ? ' me' : ''}" href="${href.team(lk, r.id)}" style="--tc:${esc(teamColor({ id: r.id, abbr: r.abbr }, L))}"><i>${seed}</i>${logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))}<span class="tx"><b>${esc(r.short || r.name)}</b><span>${r.w}-${r.l}</span></span></a>` : `<span class="bt tbd ${sd}"><i>${seed}</i><span class="tx"><b>${fr && playIn && seed > cut[0] ? 'Play-in winner' : 'TBD'}</b></span></span>`;
       const mu = (a, sa, b, sb, note, fr) => `<div class="mu${favs.has(lk, (a || {}).id) || favs.has(lk, (b || {}).id) ? ' me' : ''}">${tm(a, sa, fr, 'l')}<em>vs</em>${tm(b, sb, fr, 'r')}${note ? `<small>${note}</small>` : ''}</div>`;
       const block = g => {
         const r = g.rows; const top = cut[0];
@@ -167,7 +167,7 @@
     const groups = st && st.groups.length ? st.groups.map(g => ({ name: confName(g.name, g.abbr), full: g.name, rows: g.rows.map(r => ({ ...r, logo: r.logo || (idx[r.id] || {}).logo })) })) : [{ name: L.label, full: L.label, rows: Object.values(idx).map(t => ({ id: t.id, short: t.short, name: t.name, logo: t.logo })) }];
     // today's game for each team, from the slate already in hand: on now, the result, or the tip
     const byTeam = new Map(); (S.today[lk] || []).forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
-    const todayLine = (g, r) => { const home = g.home.id === String(r.id); const us = home ? g.home : g.away, them = home ? g.away : g.home; const vs = `${g.neutral ? 'vs' : home ? 'vs' : 'at'} ${esc(them.abbr || them.short)}`; if (g.off) return `${esc(g.off)} ${vs}`; if (g.state === 'in') return `<i class="dot"></i>${us.score}–${them.score} ${vs}, ${esc(g.detail)}`; if (g.state === 'post') return `${us.score > them.score ? 'W' : 'L'} ${us.score}–${them.score} ${vs}`; return `${esc(tip(g.date))} ${vs}`; };
+    const todayLine = (g, r) => { const home = g.home.id === String(r.id); const us = home ? g.home : g.away, them = home ? g.away : g.home; const vs = `${g.neutral ? 'vs' : home ? 'vs' : 'at'} ${esc(them.abbr || them.short)}`; if (g.off) return `${esc(g.off)} ${vs}`; if (g.state === 'in') return `<i class="dot"></i>${us.score}–${them.score} ${vs}, ${esc(g.detail)}`; if (g.state === 'post') return `${us.score > them.score ? 'W' : 'L'} ${us.score}–${them.score} ${vs}`; return `${esc(tipOf(g))} ${vs}`; };
     const paint = () => {
       const q = (store.get('v5:tq', '') || '').trim().toLowerCase(), tab = store.get('v5:ttab', 'all');
       const blocks = groups.map(g => {
@@ -230,7 +230,7 @@
     const rRow = (a, extra) => { const p = ppg[a.id]; const injd = a.injuries && a.injuries[0]; return `<a class="row${extra ? ' more' : ''}" href="${href.player(lk, a.id)}"${extra ? ' hidden data-more="roster"' : ''}>${headshot(hsUrl(a), color, 46, a.displayName)}<span class="t"><b>${esc(a.displayName)}</b><span>${esc([posWord(a.position && a.position.abbreviation), a.jersey ? `No. ${a.jersey}` : ''].filter(Boolean).join(', '))}${injd ? `<span class="tag ${/out/i.test(injd.status) ? 'out' : 'q'}">${esc(statusWord(injd.status))}</span>` : ''}</span></span>${p ? `<span class="r"><b>${p.pts.toFixed(1)}</b><span>ppg</span></span>` : chev}</a>`; };
     const rosterHtml = sorted.length ? sec('Roster', `${sorted.length}`, sorted.length > 6 ? `<button data-act="expand" data-more="roster">Everyone</button>` : '') + `<div class="rows">${sorted.slice(0, 6).map(a => rRow(a, false)).join('')}${sorted.slice(6).map(a => rRow(a, true)).join('')}</div>` : '';
     // schedule: next five and last five, expandable to the season
-    const sRow = (g, extra) => { const homeSide = g.home.id === String(id); const me = homeSide ? g.home : g.away, op = homeSide ? g.away : g.home; const d = new Date(g.date); const res = isDone(g) ? `<span class="res ${me.score > op.score ? 'w' : 'l'}" style="font-size:15px">${me.score > op.score ? 'W' : 'L'} ${me.score}-${op.score}</span>` : g.off ? `<span class="tag">${esc(g.off)}</span>` : g.state === 'in' ? `<span class="live">${esc(g.detail)}</span>` : chev; return `<a class="row" href="${href.game(lk, g.id)}"${extra ? ' hidden data-more="sched"' : ''}><span class="d">${esc(d.toLocaleDateString('en-US', { month: 'short', timeZone: HW.TZ }))}<b>${esc(d.toLocaleDateString('en-US', { day: 'numeric', timeZone: HW.TZ }))}</b></span>${logo(op.logo, 'm', V._.teamColor(op, L))}<span class="t"><b>${g.neutral ? 'vs' : homeSide ? 'vs' : 'at'} ${esc(op.short)}</b><span>${g.off ? esc(g.off) : g.state === 'post' ? esc(finalWord(g)) : g.state === 'in' ? 'Live' : esc([tip(g.date), tvLabel(g)].filter(Boolean).join(', '))}</span></span>${res}</a>`; };
+    const sRow = (g, extra) => { const homeSide = g.home.id === String(id); const me = homeSide ? g.home : g.away, op = homeSide ? g.away : g.home; const d = new Date(g.date); const res = isDone(g) ? `<span class="res ${me.score > op.score ? 'w' : 'l'}" style="font-size:15px">${me.score > op.score ? 'W' : 'L'} ${me.score}-${op.score}</span>` : g.off ? `<span class="tag">${esc(g.off)}</span>` : g.state === 'in' ? `<span class="live">${esc(g.detail)}</span>` : chev; return `<a class="row" href="${href.game(lk, g.id)}"${extra ? ' hidden data-more="sched"' : ''}><span class="d">${esc(d.toLocaleDateString('en-US', { month: 'short', timeZone: HW.TZ }))}<b>${esc(d.toLocaleDateString('en-US', { day: 'numeric', timeZone: HW.TZ }))}</b></span>${logo(op.logo, 'm', V._.teamColor(op, L))}<span class="t"><b>${g.neutral ? 'vs' : homeSide ? 'vs' : 'at'} ${esc(op.short)}</b><span>${g.off ? esc(g.off) : g.state === 'post' ? esc(finalWord(g)) : g.state === 'in' ? 'Live' : esc([tipOf(g), tvLabel(g)].filter(Boolean).join(', '))}</span></span>${res}</a>`; };
     const done = evs.filter(isDone), up = evs.filter(g => !isDone(g));
     const recent = done.slice(-3).reverse(), soon = up.slice(0, 4); const restUp = up.slice(4), restDone = done.slice(0, -3).reverse();
     const schedHtml = evs.length ? sec('Schedule', `${evs.length} games`, (restUp.length || restDone.length) ? `<button data-act="expand" data-more="sched">Full season</button>` : '') + `<div class="rows sched">${up.length ? `<div class="sub">Up next<span>${up.length} to play</span></div>` : ''}${soon.map(g => sRow(g, false)).join('')}${restUp.map(g => sRow(g, true)).join('')}${done.length ? `<div class="sub res">Results<span>${done.filter(g => (g.home.id === String(id) ? g.home : g.away).score > (g.home.id === String(id) ? g.away : g.home).score).length}-${done.filter(g => (g.home.id === String(id) ? g.home : g.away).score < (g.home.id === String(id) ? g.away : g.home).score).length}, newest first</span></div>` : ''}${recent.map(g => sRow(g, false)).join('')}${restDone.map(g => sRow(g, true)).join('')}</div>` : '';
@@ -383,7 +383,7 @@
       if (!ctx) ctx = await forecastCtx(L, ymdOf(g.date)).catch(() => null);
       if (sched === undefined) sched = HW.sim && (lk === 'nba' || lk === 'wnba') ? await HW.sim.schedule(L, { feed: false }).catch(() => null) : null;
       const f = safeF(L, g, ctx);
-      const title = `${esc(g.away.short)} ${g.neutral ? 'vs' : 'at'} ${esc(g.home.short)}`;
+      const title = g.tbd ? esc(String(g.note || '').replace(/\s+-\s+/g, ' ') || 'Teams to be decided') : `${esc(g.away.short)} ${g.neutral ? 'vs' : 'at'} ${esc(g.home.short)}`;
       const hero = heroCard(L, g, ctx, { page: true });
       const shots = g.state === 'pre' ? [] : shotsOf(d.plays, g); const shotsOk = shots.length > 0 && shotsTrusted(shots);
       const tabList = [['summary', 'Summary'], ['box', 'Box score'], ['plays', 'Plays'], ['shots', 'Shots'], ['stats', 'Team stats']].filter(([k]) => (g.state !== 'pre' || k === 'summary' || k === 'stats') && (k !== 'shots' || shotsOk));
@@ -430,7 +430,7 @@
       // the game's particulars: where, who's officiating, how many came, when it tips
       const giRows = [];
       if (d.gameInfo && d.gameInfo.venue) giRows.push(['Venue', `${esc(d.gameInfo.venue.fullName || '')}${d.gameInfo.venue.address ? `<span>${esc([d.gameInfo.venue.address.city, d.gameInfo.venue.address.state].filter(Boolean).join(', '))}</span>` : ''}`]);
-      if (g.state === 'pre' && g.date) giRows.push(['Tip-off', `${esc(dayLabel(ymdOf(g.date), { weekday: 'long', month: 'long', day: 'numeric' }))}<span>${esc(tip(g.date))}</span>`]);
+      if (g.state === 'pre' && g.date) giRows.push(['Tip-off', `${esc(dayLabel(ymdOf(g.date), { weekday: 'long', month: 'long', day: 'numeric' }))}<span>${esc(tipOf(g))}</span>`]);
       if (tvLabel(g)) giRows.push(['TV', esc(tvLabel(g))]);
       const offs = (d.gameInfo && d.gameInfo.officials || []).map(o => o.fullName || o.displayName).filter(Boolean);
       if (offs.length) giRows.push([offs.length > 1 ? 'Officials' : 'Official', offs.map(esc).join(', ')]);
@@ -567,7 +567,7 @@
         else tabsEl.querySelectorAll('.chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); c.setAttribute('aria-selected', String(on)); });
         const bodyEl = page.querySelector('#gbody'); if (bodyEl.dataset.h !== hashOf(body) || bodyEl.dataset.tab !== tab) { bodyEl.innerHTML = body; bodyEl.dataset.h = hashOf(body); bodyEl.dataset.tab = tab; }
       } else $main.innerHTML = `<div id="gpage" data-gid="${esc(String(id))}"><div id="ghead" data-h="${hh}">${headHtml}</div><div id="gtabs" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div>`;
-      document.title = `${g.away.short} at ${g.home.short} · RIVL`;
+      document.title = `${g.tbd ? 'Teams to be decided' : `${g.away.short} at ${g.home.short}`} · RIVL`;
       return g;
     };
     const g = await paint();

@@ -10,10 +10,13 @@
   { const proto = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML'); let bar = null, barT = null, slowT = null;
     const showBar = () => { if (!bar) { bar = document.createElement('div'); bar.className = 'loadbar'; document.body.appendChild(bar); } clearTimeout(barT); barT = setTimeout(() => { bar.classList.add('on'); $main.setAttribute('aria-busy', 'true'); }, 160); };
     const hideBar = () => { clearTimeout(barT); if (bar) bar.classList.remove('on'); $main.removeAttribute('aria-busy'); };
+    /* real content is on screen: the bar goes, the slow note is off, and a new screen lands at its remembered scroll */
+    const settle = () => { $main.dataset.real = '1'; clearTimeout(slowT); const sl = $main.querySelector('.slow'); if (sl) sl.remove(); hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; const y = +$main.dataset.y || 0; window.scrollTo(0, y); if (y) requestAnimationFrame(() => window.scrollTo(0, y)); } };
     V.busy = on => on ? showBar() : hideBar();   // for views that patch themselves in place and have no paint to hang the bar on
+    V.settled = settle;   // for a view whose first real paint went into a part of the screen (Scores' list, a standings table) rather than the whole
     Object.defineProperty($main, 'innerHTML', {
       get() { return proto.get.call($main); },
-      set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { showBar(); return; } proto.set.call($main, s); $main.dataset.real = s.includes('<!--skel-->') ? '0' : '1'; clearTimeout(slowT); if ($main.dataset.real === '1') { hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; const y = +$main.dataset.y || 0; window.scrollTo(0, y); if (y) requestAnimationFrame(() => window.scrollTo(0, y)); } } else slowT = setTimeout(() => { if ($main.dataset.real === '0' && !$main.querySelector('.slow')) $main.insertAdjacentHTML('beforeend', '<p class="legend slow">The feed is slow to answer. It usually clears within a minute; pull down to try again.</p>'); }, 7000); }
+      set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { showBar(); return; } proto.set.call($main, s); clearTimeout(slowT); if (!s.includes('<!--skel-->')) settle(); else { $main.dataset.real = '0'; slowT = setTimeout(() => { if ($main.dataset.real === '0' && !$main.querySelector('.slow')) $main.insertAdjacentHTML('beforeend', '<p class="legend slow">The feed is slow to answer. It usually clears within a minute; pull down to try again.</p>'); }, 7000); } }
     }); }
   S.today = S.today || {}; ORDER.forEach(k => { S.today[k] = S.today[k] || []; });
 
@@ -56,6 +59,7 @@
   const scrollMem = new Map();
   async function render() {
     const r = route(); const my = ++seq; current = r; V.refresh = null; closeSheet();
+    if (r.name !== 'scores' && V.todayPill) V.todayPill(false);   // the Scores screen's back-to-today pill goes with it
     const key = `${r.name}/${r.args.join('/')}`;
     if (render.key && render.key !== key) scrollMem.set(render.key, window.scrollY);
     $main.dataset.y = render.key !== key ? String(scrollMem.get(key) || 0) : '';
@@ -70,8 +74,7 @@
     try { await (V[r.name] || V.home)(...r.args); }
     catch (err) { if (my === seq) $main.innerHTML = `<div class="empty"><b>Something went wrong</b><p style="margin:6px 0 0">${esc(err && err.message || 'Try again in a moment.')}</p></div>`; console.error(err); }
     if (my !== seq) return;
-    V.busy(false);   // a view that patched itself in place (a standings chip, a refreshed game) made no full paint to clear the bar and the dimming
-    if ($main.dataset.top === '1') $main.dataset.top = '0';   // nor did it consume the scroll-to-top mark; the next screen sets its own
+    V.settled();   // a view that painted into part of the screen (Scores' list, a standings chip, a refreshed game) made no full paint to clear the bar, the dimming and the slow note, or to land at its scroll
     paintPills(r.lk, leagueScreen);   // live counts may have arrived while the view loaded
     // the rise plays for a new screen; a screen repainting itself (another day on Scores, another conference) keeps still
     if (key !== render.key) { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); } else $main.classList.remove('enter'); render.key = key;

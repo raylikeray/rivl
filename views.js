@@ -24,7 +24,7 @@
   { const sb = HW.scoreboard, pe = HW.parseEvent;   // every scoreboard and every parsed event teaches as it passes
     HW.scoreboard = async (L, ...a) => { const g = await sb(L, ...a); learnGames(L, g); return g; };
     HW.parseEvent = (e, L) => { const g = pe(e, L); if (g) { learn(L, g.home); learn(L, g.away); } return g; }; }
-  const { LEAGUES, ORDER, esc, j, jSoft, todayCT, addDays, dayLabel, relDay, tip, dateShort, ago, pct, ordinal, hx, store, API, WEB, finalWord, isDone,
+  const { LEAGUES, ORDER, esc, j, jSoft, todayCT, addDays, dayLabel, relDay, tip, tipOf, dateShort, ago, pct, ordinal, hx, store, API, WEB, finalWord, isDone,
     favs, parseEvent, isLive, isFav, interest, scoreboard, standings, injuries, forecast, forecastCtx, leaguePlayers, S } = HW;
   const $main = document.getElementById('main');
 
@@ -104,9 +104,9 @@
   /* ---------- game cards ---------- */
   function statusLine(L, g, timeOnly) {
     if (g.state === 'in') return `<span class="live">${esc(g.detail || 'Live')}</span>`;
-    if (timeOnly && g.state === 'pre') return `<span>${esc(tip(g.date))}</span>`;
+    if (timeOnly && g.state === 'pre') return `<span>${esc(tipOf(g))}</span>`;
     if (g.state === 'post') return `<span${g.off ? ' class="off"' : ''}>${esc(finalWord(g))}</span>`;
-    return `<span>${esc(relDay(HW.ymdOf(g.date)))}, ${esc(tip(g.date))}</span>`;
+    return `<span>${esc(relDay(HW.ymdOf(g.date)))}, ${esc(tipOf(g))}</span>`;
   }
   function forecastRow(L, g, f) {
     if (!f || g.off) return '';
@@ -118,7 +118,10 @@
     return `<div class="fc"><div class="bar"><i style="width:${(f.pHome * 100).toFixed(1)}%;background:${esc(teamColor(g.home, L))}"></i><i style="width:${((1 - f.pHome) * 100).toFixed(1)}%;background:${esc(teamColor(g.away, L))}"></i></div><b>${label}${small ? `<small>${small}</small>` : ''}</b></div>`;
   }
   /* one team's line on a card: the side that is ahead (leading live, or the winner) gets its score in the team colour */
+  /* 'NBA Cup - Semifinals' → 'NBA Cup Semifinals': the feed's note on a game whose teams aren't set */
+  const noteWord = g => String(g.note || '').replace(/\s+-\s+/g, ' ').trim();
   function side(L, g, t, other) {
+    if (t.tbd) return `<div class="side tbd"><span class="logo tbd"></span><span class="nm"><b>To be decided</b><span>${esc(noteWord(g))}</span></span></div>`;
     const has = g.state !== 'pre' && t.score != null && other.score != null;
     const lo = has && t.score < other.score, lead = has && t.score > other.score;
     const sc = g.state === 'pre' ? '' : `<span class="sc${lead ? ' on' : ''}${lead && g.state === 'post' ? ' won' : ''}">${t.score == null ? '' : t.score}</span>`;
@@ -129,7 +132,8 @@
   /* "Jokic 28 pts" from a side's scoreboard leaders (points first; nothing if the feed has none yet) */
   const topScorer = t => { const L1 = (t.leaders || []).find(l => /^points$/i.test(l.name || '') || /points/i.test(l.displayName || '')); const a = L1 && L1.leaders && L1.leaders[0]; if (!a || !a.athlete || a.displayValue == null || a.displayValue === '') return ''; const v = parseFloat(a.displayValue); if (!isFinite(v) || v <= 0) return ''; return `${lastName(a.athlete.displayName || a.athlete.shortName || '')} ${Math.round(v)} pts`; };
   function gameCard(L, g, ctx, withForecast = true, timeOnly = false) {
-    const f = withForecast && prefs.get('forecast') ? safeF(L, g, ctx) : null;
+    if (g.tbd) return `<a class="game tbd" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}"><div class="side tbd"><span class="logo tbd"></span><span class="nm"><b>Teams to be decided</b><span>${esc(noteWord(g) || 'Matchup not set yet')}</span></span></div><div class="status">${statusLine(L, g, timeOnly)}<span class="ln"></span><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div></a>`;
+    const f = withForecast && prefs.get('forecast') && !g.tbd ? safeF(L, g, ctx) : null;
     return `<a class="game" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}">
       ${side(L, g, g.away, g.home)}
       <div class="status">${statusLine(L, g, timeOnly)}<span class="ln"></span><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>
@@ -138,12 +142,12 @@
   }
   /* the hero: on Home it is one link to the game; on the game page each team is a link to its own page */
   function heroCard(L, g, ctx, { page = false } = {}) {
-    const f = prefs.get('forecast') ? safeF(L, g, ctx) : null;
+    const f = prefs.get('forecast') && !g.tbd ? safeF(L, g, ctx) : null;
     const a = teamColor(g.away, L), b = teamColor(g.home, L);
     const fav = f ? (f.pHome >= .5 ? g.home : g.away) : null; const p = f ? Math.max(f.pHome, 1 - f.pHome) : 0;
-    const tm = t => page ? `<a class="tm" href="${href.team(L.key, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></a>` : `<div class="tm">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></div>`;
+    const tm = t => t.tbd ? `<div class="tm"><span class="logo tbd"></span><b>TBD</b><span>${esc(noteWord(g))}</span></div>` : page ? `<a class="tm" href="${href.team(L.key, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></a>` : `<div class="tm">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></div>`;
     const inner = `<div class="in">
-      <div class="vs">${tm(g.away)}<div class="mid"><span class="st${g.state === 'in' ? ' on' : ''}">${esc(g.state === 'in' ? g.detail : g.state === 'post' ? finalWord(g) : tip(g.date))}</span><div class="sc">${g.off ? '' : `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`}</div><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>${tm(g.home)}</div>
+      <div class="vs">${tm(g.away)}<div class="mid"><span class="st${g.state === 'in' ? ' on' : ''}">${esc(g.state === 'in' ? g.detail : g.state === 'post' ? finalWord(g) : tipOf(g))}</span><div class="sc">${g.off ? '' : `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`}</div><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>${tm(g.home)}</div>
       ${f && !g.off ? `<div class="fc${f.pHome >= .5 ? ' home' : ''}"><div class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></div><b>${g.state === 'post' ? 'Had ' : ''}${esc(fav.short)} ${pct(p)}${g.state === 'pre' && f.proj ? `<small>${esc(g.away.abbr)} ${f.proj.away}–${f.proj.home} ${esc(g.home.abbr)}</small>` : ''}</b></div>` : ''}
     </div>`;
     return page ? `<div class="hero page" data-gid="${esc(g.id)}" style="--a:${esc(a)};--b:${esc(b)}">${inner}</div>`
@@ -232,9 +236,9 @@
     const S0 = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null };
     const favTeam = t => mine.includes(String(t.id));
     const teamOf = p => { const k = String(p.team || '').toLowerCase(); return t => (p.teamId && String(t.id) === String(p.teamId)) || (k && [t.abbr, t.short, t.name].some(x => String(x || '').toLowerCase() === k)); };
-    const chipOf = g => { const sc = g.off ? `<span>${esc(g.off)}</span>` : g.state === 'pre' ? `<span>${esc(tip(g.date))}</span>` : g.state === 'in' ? `<span class="on">${g.away.score}–${g.home.score} · ${esc(g.detail)}</span>` : `<span>${g.away.score}–${g.home.score} · ${esc(finalWord(g))}</span>`; return `<a class="bchip" href="${href.game(lk, g.id)}">${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b>${sc}</a>`; };
+    const chipOf = g => { const sc = g.off ? `<span>${esc(g.off)}</span>` : g.state === 'pre' ? `<span>${esc(tipOf(g))}</span>` : g.state === 'in' ? `<span class="on">${g.away.score}–${g.home.score} · ${esc(g.detail)}</span>` : `<span>${g.away.score}–${g.home.score} · ${esc(finalWord(g))}</span>`; return `<a class="bchip" href="${href.game(lk, g.id)}">${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b>${sc}</a>`; };
     const dayWord = (ymd, long) => { const rd = relDay(ymd); return rd === 'Tomorrow' || rd === 'Tonight' ? rd : dayLabel(ymd, { weekday: long ? 'long' : 'short' }); };
-    const nextChip = g => `<a class="bchip next" href="${href.game(lk, g.id)}"><em>${esc(dayWord(HW.ymdOf(g.date)))}</em>${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b><span>${esc(tip(g.date))}</span></a>`;
+    const nextChip = g => `<a class="bchip next" href="${href.game(lk, g.id)}"><em>${esc(dayWord(HW.ymdOf(g.date)))}</em>${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b><span>${esc(tipOf(g))}</span></a>`;
     const basicTeam = id => { const t = S0.tIdx[id]; const r = S0.st && S0.st.byId && S0.st.byId[id]; if (!t && !r) return null; return { id, abbr: t ? t.abbr : r.abbr, name: t ? t.name : r.name, short: t ? t.short : r.short, loc: t ? t.loc : r.loc, color: teamColor({ id, color: t && t.color }, L), logo: (t && t.logo) || (r && r.logo) || '', rec: r ? `${r.w}-${r.l}` : '', standing: r && L.standingsMode !== 'conferences' ? `${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}` : '', row: r || null, next: null, last: null }; };
     const teamList = () => S0.teams ? S0.teams.filter(Boolean) : mine.map(basicTeam).filter(Boolean);
 
@@ -280,7 +284,7 @@
             if (g.state === 'in') { const lead = us.score - them.score; line = `${lead > 0 ? `Leading ${esc(them.short)} by ${lead}` : lead < 0 ? `Trailing ${esc(them.short)} by ${-lead}` : `Tied with ${esc(them.short)}`}, ${esc(g.detail)}`; }
             else if (g.off) line = `${esc(g.off)} ${vs}`;
             else if (g.state === 'post') line = `${us.score > them.score ? 'Won' : 'Lost'} ${esc(String(us.score))}-${esc(String(them.score))} ${vs}`;
-            else line = `<em>${esc(relDay(HW.ymdOf(g.date)))} ${vs}, ${esc(tip(g.date))}</em>${tvLabel(g) ? `<i class="tvt">${esc(tvLabel(g))}</i>` : ''}`;
+            else line = `<em>${esc(relDay(HW.ymdOf(g.date)))} ${vs}, ${esc(tipOf(g))}</em>${tvLabel(g) ? `<i class="tvt">${esc(tvLabel(g))}</i>` : ''}`;
             if (f && g.state !== 'post') { const p = home ? f.pHome : 1 - f.pHome; right = `<span class="r"><b>${pct(p)}</b><span>to win</span></span>`; }
             else if (g.state === 'post' && !g.off) right = `<span class="r"><b class="${us.score > them.score ? 'res w' : 'res l'}" style="font-size:22px">${us.score > them.score ? 'W' : 'L'}</b></span>`;
           }
@@ -295,7 +299,7 @@
         secs.players = sec('My players', '', `<a href="#players">${fp.length ? 'Edit' : 'Find players'}</a>`) + (fp.length
           ? `<div class="rail">${fp.map(p => { const is = teamOf(p); const g = games.find(g => is(g.home) || is(g.away)); const us = g ? (is(g.home) ? g.home : g.away) : null, them = g ? (is(g.home) ? g.away : g.home) : null; const ln = lineBy[p.id];
             // under the average: the game tonight (on now, the tip, or the result), else last night's line
-            const now = g && !g.off ? (g.state === 'in' ? `<i class="on">${us.score}–${them.score}</i> ${esc(g.detail)}` : g.state === 'post' ? `${us.score > them.score ? 'W' : 'L'} ${us.score}–${them.score} ${is(g.home) ? 'vs' : 'at'} ${esc(them.abbr)}` : `${esc(tip(g.date))} ${g.neutral ? 'vs' : is(g.home) ? 'vs' : 'at'} ${esc(them.abbr)}`) : ln ? (ln.dnp ? esc(ln.dnp) : `${esc(ln.pts)} / ${esc(ln.reb)} / ${esc(ln.ast)} last night`) : '';
+            const now = g && !g.off ? (g.state === 'in' ? `<i class="on">${us.score}–${them.score}</i> ${esc(g.detail)}` : g.state === 'post' ? `${us.score > them.score ? 'W' : 'L'} ${us.score}–${them.score} ${is(g.home) ? 'vs' : 'at'} ${esc(them.abbr)}` : `${esc(tipOf(g))} ${g.neutral ? 'vs' : is(g.home) ? 'vs' : 'at'} ${esc(them.abbr)}`) : ln ? (ln.dnp ? esc(ln.dnp) : `${esc(ln.pts)} / ${esc(ln.reb)} / ${esc(ln.ast)} last night`) : '';
             return `<a class="pl" href="${href.player(lk, p.id)}" style="--tc:${esc(playerColor(p, L))}">${headshot(p.img, playerColor(p, L), 64, p.name)}<b>${esc(p.short || p.name)}</b><span>${esc(ppgOf(p) || p.team || '')}</span>${now ? `<em class="nx">${now}</em>` : ''}</a>`; }).join('')}</div>`
           : empty('Follow the players you watch', '<p style="margin:6px 0 0">They show up here with their scoring line, and their profile is one tap away.</p>', `<a class="btn" href="#players">Find players</a>`));
       } else delete secs.players;
@@ -408,6 +412,7 @@
     const [games, ctx, meta] = await Promise.all([ymd === today && S.today[lk] && S.today[lk].length ? S.today[lk] : scoreboard(L, ymd).catch(() => null), forecastCtx(L, ymd).catch(() => null), sbMeta(L, ymd)]);
     if (ymd === today && games) S.today[lk] = games;
     const el = $main.querySelector('#dates .on'); if (el) el.scrollIntoView({ inline: 'center', block: 'nearest' });
+    todayPill(ymd !== today, today);
     const phase = ''; const phaseTag = meta.phase ? `<span class="phase">${esc(meta.phase)}</span>` : '';
     const setPhase = () => { const el = $main.querySelector('#phase'); if (el) el.innerHTML = phaseTag; };
     if (!games) { paint(phase + empty("Couldn't load the scoreboard", '<p style="margin:6px 0 0">The feed didn\'t answer. It usually comes back within a minute.</p>')); setPhase(); return; }
@@ -419,7 +424,7 @@
       paint(phase + empty(`No ${L.label} games ${ymd === today ? 'today' : 'on ' + dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, body, next ? `<button class="btn" data-act="date" data-ymd="${esc(next)}">Jump to ${esc(dayLabel(next, { weekday: 'short', month: 'short', day: 'numeric' }))}</button>` : ''));
       setPhase(); return;
     }
-    const shown = mineOnly ? games.filter(isFav) : games;   // your teams always sort first; Mine hides the rest
+    const shown = mineOnly ? games.filter(g => isFav(g) || g.tbd) : games;   // your teams always sort first; Mine hides the rest (a game whose teams aren't set yet stays: it could be yours)
     const by = st => shown.filter(g => g.state === st && !g.off).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
     const live = by('in'), pre = by('pre'), post = by('post'), off = shown.filter(g => g.off);
     const block = (title, list) => list.length ? sec(title, `${list.length}`) + `<div class="games">${list.map(g => gameCard(L, g, ctx, false, true)).join('')}</div>` : '';
@@ -427,6 +432,14 @@
     paint(phase + none + block('Live', live) + block(ymd === today ? 'Upcoming' : 'Scheduled', pre) + block('Final', post) + block('Not played', off));
     setPhase();
     const el2 = $main.querySelector('#dates .on'); if (el2) el2.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }
+  /* a pill that stays put above the tab bar while another day is shown: one tap back to today, wherever the strip is scrolled */
+  function todayPill(show, today) {
+    let el = document.getElementById('todayfab');
+    if (!show) { if (el) { el.classList.remove('in'); setTimeout(() => { if (el && !el.classList.contains('in')) el.remove(); }, 220); } return; }
+    if (!el) { el = document.createElement('button'); el.id = 'todayfab'; el.className = 'todayfab'; el.dataset.act = 'date'; el.setAttribute('aria-label', 'Back to today'); el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="12" cy="15.5" r="1.6" fill="currentColor" stroke="none"/></svg>Today`; document.body.appendChild(el); requestAnimationFrame(() => el.classList.add('in')); }
+    else el.classList.add('in');
+    el.dataset.ymd = today;
   }
   /* a month of games at a glance. Your teams' days come from their schedules (one small request each, usually
      already cached by Home). Game counts come from the league's whole month in one request (a week at a time for
@@ -734,7 +747,11 @@
     el.addEventListener('click', async e => {
       const b = e.target.closest('[data-pp]'); if (!b) return; e.preventDefault();
       if (b.dataset.pp === 'top') { paint.topOpen = true; paint(); }
-      else if (b.dataset.pp === 'lcat') { paint.lcat = b.dataset.cat; paint.topOpen = false; paint(); const y = list.querySelector('.lchips'); if (y && y.getBoundingClientRect().top < 60) y.scrollIntoView({ block: 'start' }); }
+      else if (b.dataset.pp === 'lcat') {
+        const was = list.querySelector('.lchips'); const sl = was ? was.scrollLeft : 0;   // the row is rebuilt; it must not jump back to the start
+        paint.lcat = b.dataset.cat; paint.topOpen = false; paint();
+        const y = list.querySelector('.lchips'); if (y) { y.scrollLeft = sl; const on = y.querySelector('.chip.on'); if (on) on.scrollIntoView({ inline: 'nearest', block: 'nearest' }); if (y.getBoundingClientRect().top < 60) y.scrollIntoView({ block: 'start' }); }
+      }
       else if (b.dataset.pp === 'fold') { const f = store.get('v5:ppcol', {}) || {}; const k = b.dataset.id; if (f[k]) delete f[k]; else f[k] = 1; store.set('v5:ppcol', f); const body = b.nextElementSibling; const open = !f[k]; b.setAttribute('aria-expanded', String(open)); if (body) body.hidden = !open; }
       else if (b.dataset.pp === 'browse') { b.querySelector('.t span').textContent = 'Loading…'; const r = await rosterOf(L, b.dataset.id, idx).catch(() => null); if (r) { sections.push({ key: r.team.id, team: r.team, rows: r.players.slice().sort(byLine), open: true }); inp.value = ''; } paint(); }
     });
@@ -747,6 +764,6 @@
     await playerPicker($main.querySelector('#ppick'), L, { following: true, leaders: true });
   }
 
-  HW.v5 = Object.assign(HW.v5 || {}, { home, scores, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
+  HW.v5 = Object.assign(HW.v5 || {}, { home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
     _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, learn, statusWord, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

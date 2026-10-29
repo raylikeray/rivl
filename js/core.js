@@ -33,6 +33,8 @@ const ymdOf = iso => ymdFmt.format(new Date(iso));
 function dayLabel(ymd, opts = { weekday: 'long', month: 'short', day: 'numeric' }) { const [y, m, d] = ymd.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString('en-US', { ...opts, timeZone: 'UTC' }); }
 function relDay(ymd) { const t = todayCT(); if (ymd === t) return 'Tonight'; if (ymd === addDays(t, 1)) return 'Tomorrow'; if (ymd === addDays(t, -1)) return 'Last night'; return dayLabel(ymd); }
 const tip = iso => new Date(iso).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' });
+/* a game's tip, or 'Time TBD' when the feed says the time isn't set (timeValid false — a Cup knockout, a playoff game not yet scheduled) */
+const tipOf = g => g && g.timeValid === false ? 'Time TBD' : tip(g.date);
 const dateShort = iso => new Date(iso).toLocaleDateString('en-US', { timeZone: TZ, month: 'short', day: 'numeric' });
 const timeCT = (d = new Date()) => d.toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit', second: '2-digit' });
 function ago(iso) { const s = (Date.now() - new Date(iso)) / 1000; if (s < 3600) return Math.max(1, Math.round(s / 60)) + 'm ago'; if (s < 86400) return Math.round(s / 3600) + 'h ago'; return dateShort(iso); }
@@ -80,7 +82,8 @@ function parseTeamSide(x, L) {
     color: hx(t.color), alt: hx(t.alternateColor), logo: t.logo || (t.logos && t.logos[0] && t.logos[0].href) || logoUrl(L, t.abbreviation),
     score: sc != null && sc !== '' ? +sc : null, rank,
     rec: (x.records && x.records[0] && x.records[0].summary) || (x.record && x.record[0] && (x.record[0].displayValue || x.record[0].summary)) || '',
-    winner: !!x.winner, lines: (x.linescores || []).map(l => l.displayValue ?? l.value), leaders: x.leaders || [], conf: t.conferenceId
+    winner: !!x.winner, lines: (x.linescores || []).map(l => l.displayValue ?? l.value), leaders: x.leaders || [], conf: t.conferenceId,
+    tbd: !t.id || +t.id < 0 || /^tbd$/i.test(t.abbreviation || t.displayName || '')   // a side not decided yet: ESPN files it as team -1 / -2, 'TBD'
   };
 }
 function tvOf(c) {
@@ -100,6 +103,7 @@ function parseEvent(e, L) {
   const offWord = /postpone/i.test(t.name || t.description || t.shortDetail || '') ? 'Postponed' : /cancel/i.test(t.name || t.description || t.shortDetail || '') ? 'Cancelled' : /suspend/i.test(t.name || t.description || t.shortDetail || '') ? 'Suspended' : /delay/i.test(t.name || t.description || '') ? 'Delayed' : '';
   return {
     lk: L.key, id: String(e.id), date: e.date, state: t.state || 'pre', detail: prettyDetail(t.shortDetail || t.detail || '', L), completed: !!t.completed, off: offWord,
+    timeValid: c.timeValid !== false, tbd: !!(home.tbd || away.tbd),
     period: st.period || 0, clock: st.displayClock || '', home, away,
     venue: c.venue && c.venue.fullName, city: c.venue && c.venue.address && [c.venue.address.city, c.venue.address.state].filter(Boolean).join(', '),
     tv: tvOf(c), neutral: !!c.neutralSite, confGame: !!c.conferenceCompetition,
@@ -421,6 +425,6 @@ const S = { today: {}, todayYmd: null, lastOk: 0, err: false, timer: null, route
 ORDER.forEach(k => S.today[k] = []);
 const allToday = () => ORDER.flatMap(k => S.today[k]);
 
-Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, API, API2, WEB, logoUrl, seasonYear, favs,
+Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, tipOf, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, API, API2, WEB, logoUrl, seasonYear, favs,
   parseEvent, isLive, isDone, finalWord, isFav, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
 })();
