@@ -579,7 +579,7 @@ button.row.prow.sel:active{transform:scale(.985)}
 .card .chip{background:var(--surf-3)}
 .card .chip.on,.card .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .ring{display:flex;align-items:center;gap:12px;padding:2px 0 6px}
-.ring svg{flex:none;width:136px;height:136px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.18))}
+.ring svg{flex:none;width:136px;height:136px}
 .ring .key{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
 .ring .key div{display:grid;grid-template-columns:9px 1fr auto 34px;align-items:center;gap:8px;font-size:13.5px}
 .ring .key i{width:10px;height:10px;border-radius:50%}
@@ -687,3 +687,6 @@ body{overscroll-behavior-y:none}
 /* rings draw in */
 .ring svg{animation:ringin .5s cubic-bezier(.2,.8,.2,1) both}
 @keyframes ringin{from{opacity:0;transform:rotate(-14deg) scale(.94)}to{opacity:1;transform:none}}
+.ring{--c2:var(--c2d);--c3:var(--c3d)}
+:root[data-theme="light"] .ring{--c2:var(--c2l);--c3:var(--c3l)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .ring{--c2:var(--c2l);--c3:var(--c3l)} }
