@@ -69,6 +69,16 @@
   }
   document.addEventListener('rivl:rendered', fitLogos); setTimeout(fitLogos, 1200);
 
+  /* ---------- strips fade at the edge that still has more to show ---------- */
+  const STRIPS = '.dates,.brief-row,.chips,.rail,.media';
+  const edge = el => { const more = el.scrollWidth - el.clientWidth > 4; const l = more && el.scrollLeft > 4, r = more && el.scrollLeft < el.scrollWidth - el.clientWidth - 4; const v = l && r ? 'lr' : l ? 'l' : r ? 'r' : ''; if (el.dataset.edge !== v) { if (v) el.dataset.edge = v; else delete el.dataset.edge; } };
+  const edges = () => document.querySelectorAll(STRIPS).forEach(edge);
+  V.edges = edges;
+  document.addEventListener('scroll', e => { const t = e.target; if (t && t.nodeType === 1 && t.matches && t.matches(STRIPS)) edge(t); }, true);
+  document.addEventListener('rivl:rendered', () => { edges(); setTimeout(edges, 300); });
+  window.addEventListener('resize', edges);
+  new MutationObserver(() => { clearTimeout(edges.t); edges.t = setTimeout(edges, 60); }).observe(document.getElementById('main'), { childList: true, subtree: true });
+
   /* ---------- share cards: a picture of the result or the line, not a link ---------- */
   const loadImg = src => new Promise(res => { if (!src) return res(null); const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
   const rr = (ctx, x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };

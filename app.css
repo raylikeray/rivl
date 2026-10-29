@@ -943,3 +943,20 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
   .top{height:56px}
   .pills{margin-bottom:8px}
 }
+
+/* ---- audit pass A ---- */
+/* long team names in the hero size down; the text column never reaches the logo */
+.ehero.team .in{max-width:calc(100% - 150px)}
+.ehero h1.long{font-size:36px}
+.ehero h1.xlong{font-size:30px;letter-spacing:0}
+/* a game line with the channel as its own tag: the words keep, the channel clips first */
+.row .t span.sub2{display:flex;align-items:center;gap:6px;min-width:0}
+.row .t span.sub2 em{font-style:normal;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto}
+.row .t .tvt{flex:0 1 auto;max-width:42%;font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.02em;padding:2px 6px;border-radius:6px;background:var(--surf-3);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:inset 0 0 0 1px var(--plate-line)}
+/* names on the performer cards may take two lines */
+.perf b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.15;text-overflow:clip}
+/* strips fade at whichever edge still has more to show */
+.dates,.brief-row,.chips,.rail,.media{-webkit-mask-image:var(--em,none);mask-image:var(--em,none)}
+[data-edge="r"]{--em:linear-gradient(90deg,#000 calc(100% - 36px),transparent)}
+[data-edge="l"]{--em:linear-gradient(90deg,transparent,#000 36px)}
+[data-edge="lr"]{--em:linear-gradient(90deg,transparent,#000 36px,#000 calc(100% - 36px),transparent)}
