@@ -885,3 +885,15 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .logo.tint::after{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--tc) 82%,#fff),inset 0 0 0 3.5px #fff} }
 .hero .tm .logo::after,.onb-team .logo::after,.pp .sec.pp-team h2 .logo::after,.injhd .logo::after{display:none}
 .hero .tm .logo{overflow:visible}
+
+/* Scores: the Mine toggle sits at the right of the calendar row */
+.calrow{position:relative}
+.chip.mine{position:absolute;right:var(--gut-r);top:50%;transform:translateY(-50%);height:32px;padding:0 11px 0 9px;gap:5px;display:inline-flex;align-items:center;white-space:nowrap}
+.chip.mine svg{width:14px;height:14px}
+.chip.mine:active{transform:translateY(-50%) scale(.96)}
+.foot.about{padding-top:4px}
+.app{padding-bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 32px)}
+
+/* Home sections: patched in place; a quiet patch arrives without the entrance */
+.hsec.quiet .row,.hsec.quiet .bchip,.hsec.quiet .hero,.hsec.quiet .pl,.hsec.quiet .injgrp{animation:none}
+.bchip.next em{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);margin-right:2px}

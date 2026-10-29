@@ -139,8 +139,10 @@
      (the bare /teams/{id} endpoint is used only as an extra; the row renders without it) ---------- */
   async function teamInfo(L, id, pre) {
     id = String(id);
-    const [idx, st, sched, extra] = await Promise.all([pre && pre.idx ? pre.idx : teamsIndex(L), pre && pre.st !== undefined ? pre.st : standings(L).catch(() => null), jSoft(`${API(L)}/teams/${id}/schedule`, 300000), jSoft(`${API(L)}/teams/${id}`, 600000)]);
-    const r = st && st.byId && st.byId[id]; const x = extra && extra.team;
+    const [idx, st, sched] = await Promise.all([pre && pre.idx ? pre.idx : teamsIndex(L), pre && pre.st !== undefined ? pre.st : standings(L).catch(() => null), jSoft(`${API(L)}/teams/${id}/schedule`, 300000)]);
+    const r = st && st.byId && st.byId[id];
+    // the bare team record is one more request per team; it is only worth it when the standings or the schedule came up empty
+    const extra = (!r || !sched || !(idx[id] || r)) ? await jSoft(`${API(L)}/teams/${id}`, 600000) : null; const x = extra && extra.team;
     if (sched && sched.team) learn(L, { id, ...sched.team }); if (x) learn(L, { id, ...x });
     const t = idx[id] || (r ? { id: r.id, abbr: r.abbr, name: r.name, short: r.short, loc: r.loc, color: '', logo: r.logo } : {});
     if (!t.id && !x) return { id, abbr: '', name: 'Team', short: 'Team', color: '', logo: '', rec: '', standing: 'Feed is slow, pull to refresh', row: null, next: null, last: null };
@@ -177,10 +179,17 @@
   }
   async function refreshTeams(L) { const idx = await fetchTeams(L).catch(() => null); if (idx) { teamIdx[L.key] = idx; store.set(`v5:teams:${L.key}`, { t: Date.now(), idx }); } }
 
-  /* ================= HOME: your teams, your players, nothing else ================= */
+  /* ================= HOME: your teams, your players, nothing else =================
+     Home is a pipeline. The first paint needs only what is already on hand or one round trip away (today's and last
+     night's scoreboards, standings, the forecast context); schedules, box scores and news fill their sections in a
+     moment later. Each section is patched in place by a content hash, so later data and the quiet refresh that runs
+     while the app is open never repaint what hasn't changed, and never move the page under your thumb. */
   const rankGame = g => (isFav(g) ? 1000 : 0) + (g.tv.national.length ? 100 : 0) + interest(g) / 1000;
+  const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+  const SECS = ['tonight', 'last', 'live', 'teams', 'players', 'injuries', 'news'];
+  let homeToken = 0;
   async function home(lk) {
-    const L = LEAGUES[lk]; const today = todayCT();
+    const L = LEAGUES[lk]; const today = todayCT(); const token = ++homeToken;
     const mine = favs.all()[lk] || [];
     const fp = fplayers.all().filter(p => p.lk === lk);
     if (!mine.length && !fp.length) {
@@ -188,94 +197,158 @@
       return;
     }
     $main.innerHTML = skeleton(1, 'card') + skeleton(4, 'row');
-    const tIdx = await teamsIndex(L);
-    const [games, ctx, inj, news, lp, teams] = await Promise.all([
+    const P = prefs.all(); const yday = addDays(today, -1);
+    const alive = () => token === homeToken && $main.querySelector('.hsec, .skel');
+    const secs = {}; let painted = false;
+    const wrap = (k, quiet) => `<section class="hsec${quiet ? ' quiet' : ''}" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;
+    const paint = (quiet = false) => {
+      if (!alive()) return;
+      if (!painted) { painted = true; $main.innerHTML = SECS.map(k => secs[k] ? wrap(k, false) : '').join('') || empty('Everything is switched off', '<p style="margin:6px 0 0">Turn some sections back on and Home fills up again.</p>', `<a class="btn" href="#settings">Settings</a>`); return; }
+      SECS.forEach(k => {
+        const cur = $main.querySelector(`section[data-sec="${k}"]`);
+        if (!secs[k]) { if (cur) cur.remove(); return; }
+        if (cur) { if (cur.dataset.h !== hashOf(secs[k])) cur.outerHTML = wrap(k, quiet); return; }
+        const after = SECS.slice(SECS.indexOf(k) + 1).map(j => $main.querySelector(`section[data-sec="${j}"]`)).find(Boolean);
+        if (after) after.insertAdjacentHTML('beforebegin', wrap(k, quiet)); else $main.insertAdjacentHTML('beforeend', wrap(k, quiet));
+      });
+    };
+
+    // ----- what everything is built from -----
+    const S0 = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null };
+    const favTeam = t => mine.includes(String(t.id));
+    const teamOf = p => { const k = String(p.team || '').toLowerCase(); return t => (p.teamId && String(t.id) === String(p.teamId)) || (k && [t.abbr, t.short, t.name].some(x => String(x || '').toLowerCase() === k)); };
+    const chipOf = g => { const sc = g.state === 'pre' ? `<span>${esc(tip(g.date))}</span>` : g.state === 'in' ? `<span class="on">${g.away.score}–${g.home.score} · ${esc(g.detail)}</span>` : `<span>${g.away.score}–${g.home.score} · Final</span>`; return `<a class="bchip" href="${href.game(lk, g.id)}">${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b>${sc}</a>`; };
+    const dayWord = (ymd, long) => { const rd = relDay(ymd); return rd === 'Tomorrow' || rd === 'Tonight' ? rd : dayLabel(ymd, { weekday: long ? 'long' : 'short' }); };
+    const nextChip = g => `<a class="bchip next" href="${href.game(lk, g.id)}"><em>${esc(dayWord(HW.ymdOf(g.date)))}</em>${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b><span>${esc(tip(g.date))}</span></a>`;
+    const basicTeam = id => { const t = S0.tIdx[id]; const r = S0.st && S0.st.byId && S0.st.byId[id]; if (!t && !r) return null; return { id, abbr: t ? t.abbr : r.abbr, name: t ? t.name : r.name, short: t ? t.short : r.short, loc: t ? t.loc : r.loc, color: teamColor({ id, color: t && t.color }, L), logo: (t && t.logo) || (r && r.logo) || '', rec: r ? `${r.w}-${r.l}` : '', standing: r && L.standingsMode !== 'conferences' ? `${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}` : '', row: r || null, next: null, last: null }; };
+    const teamList = () => S0.teams ? S0.teams.filter(Boolean) : mine.map(basicTeam).filter(Boolean);
+
+    const build = () => {
+      const { games, last, ctx } = S0; const teams = teamList();
+      const byTeam = new Map(); games.forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
+      // tonight: your games, or the next ones on the calendar once the schedules are in
+      if (P.brief && mine.length) {
+        const tonight = games.filter(isFav).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
+        let body = '', note = '';
+        if (tonight.length) { note = `${tonight.length} game${tonight.length === 1 ? '' : 's'} for your teams`; body = `<div class="brief-row">${tonight.map(chipOf).join('')}</div>`; }
+        else {
+          const seen = new Set(); const next = teams.map(t => t.next).filter(g => g && g.state === 'pre' && !seen.has(g.id) && seen.add(g.id)).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 4);
+          if (next.length) { const d0 = HW.ymdOf(next[0].date); const w = dayWord(d0, true); note = `no games tonight · next ${esc(w === 'Tonight' ? 'later tonight' : w === 'Tomorrow' ? 'tomorrow' : w)}`; body = `<div class="brief-row">${next.map(nextChip).join('')}</div>`; }
+          else note = S0.teams ? 'no games for your teams' : 'no games tonight';
+        }
+        secs.tonight = `<div class="brief"><div class="brief-h"><b>Tonight</b><span>${note}</span></div>${body}</div>`;
+      } else delete secs.tonight;
+      // last night: results, then your players' lines once the box scores are in
+      if (P.brief) {
+        const mineLast = last.filter(g => g.state === 'post' && isFav(g));
+        const pGames = fp.map(p => { const is = teamOf(p); const g = last.find(g => g.state === 'post' && (is(g.home) || is(g.away))); return g ? { p, g } : null; }).filter(Boolean);
+        const lines = pGames.map(({ p, g }) => { const d = S0.sums[g.id]; const bx = d && d.boxscore && d.boxscore.players || []; for (const side of bx) { const st = side.statistics && side.statistics[0]; if (!st) continue; const labels = st.labels || st.names || []; const a = (st.athletes || []).find(x => x.athlete && String(x.athlete.id) === p.id); if (!a) continue; if (a.didNotPlay || !a.stats || !a.stats.length) return { p, g, dnp: a.reason || 'Did not play' }; const get = l => { const i = labels.indexOf(l); return i >= 0 ? a.stats[i] : ''; }; const is = teamOf(p); const us = is(g.home) ? g.home : g.away, them = is(g.home) ? g.away : g.home; return { p, g, pts: get('PTS'), reb: get('REB'), ast: get('AST'), min: get('MIN'), won: us.score > them.score, us, them }; } return null; }).filter(Boolean);
+        if (mineLast.length || lines.length) {
+          const res = mineLast.map(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = us.score > them.score; return `<a class="bchip res" href="${href.game(lk, g.id)}">${logo(us.logo, 's', teamColor(us, L))}<b class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</b><span>${us.score}–${them.score} ${us === g.home ? 'vs' : 'at'} ${esc(them.abbr || them.short)}</span></a>`; });
+          const rows = lines.map(x => `<a class="row" href="${href.game(lk, x.g.id)}">${headshot(x.p.img, x.us ? teamColor(x.us, L) : playerColor(x.p, L), 44, x.p.name)}<span class="t"><b>${esc(x.p.short || x.p.name)}</b><span>${x.dnp ? esc(x.dnp) : `${esc(x.pts)} pts, ${esc(x.reb)} reb, ${esc(x.ast)} ast in a ${x.won ? 'win' : 'loss'} ${x.us === x.g.home ? 'vs' : 'at'} ${esc(x.them.short)}`}</span></span>${x.dnp ? '' : `<span class="r"><b>${esc(x.pts)}</b><span>pts</span></span>`}</a>`);
+          secs.last = `<div class="brief"><div class="brief-h"><b>Last night</b><span>${esc(dayLabel(yday, { weekday: 'long' }))}</span></div>${res.length ? `<div class="brief-row">${res.join('')}</div>` : ''}${rows.length ? `<div class="rows brief-rows">${rows.join('')}</div>` : ''}</div>`;
+        } else delete secs.last;
+      }
+      // your teams playing right now: the hero
+      const live = games.filter(g => isLive(g) && isFav(g)).sort((a, b) => rankGame(b) - rankGame(a));
+      if (live.length && P.live) secs.live = sec('Live now') + `<div class="heroes">${live.map(g => heroCard(L, g, ctx)).join('')}</div>`; else delete secs.live;
+      // my teams: record, what's next or how it's going, win chance
+      if (P.teams) {
+        const rows = teams.map(t => {
+          const g = byTeam.get(t.id) || t.next || t.last; const f = g ? safeF(L, g, ctx) : null;
+          const us = g ? (g.home.id === t.id ? g.home : g.away) : null, them = g ? (g.home.id === t.id ? g.away : g.home) : null;
+          let line = t.standing || (S0.teams ? 'No game scheduled' : ''), right = '';
+          if (g) {
+            const home = g.home.id === t.id; const vs = `${home ? 'vs' : 'at'} ${esc(them.short)}`;
+            if (g.state === 'in') { const lead = us.score - them.score; line = `${lead > 0 ? `Leading ${esc(them.short)} by ${lead}` : lead < 0 ? `Trailing ${esc(them.short)} by ${-lead}` : `Tied with ${esc(them.short)}`}, ${esc(g.detail)}`; }
+            else if (g.state === 'post') line = `${us.score > them.score ? 'Won' : 'Lost'} ${esc(String(us.score))}-${esc(String(them.score))} ${vs}`;
+            else line = `${esc(relDay(HW.ymdOf(g.date)))} ${vs}, ${esc(tip(g.date))}${tvLabel(g) ? ` on ${esc(tvLabel(g))}` : ''}`;
+            if (f && g.state !== 'post') { const p = home ? f.pHome : 1 - f.pHome; right = `<span class="r"><b>${pct(p)}</b><span>to win</span></span>`; }
+            else if (g.state === 'post') right = `<span class="r"><b class="${us.score > them.score ? 'res w' : 'res l'}" style="font-size:22px">${us.score > them.score ? 'W' : 'L'}</b></span>`;
+          }
+          const to = g ? href.game(lk, g.id) : href.team(lk, t.id);
+          return `<div class="row prow teamrow"><a class="go" href="${href.team(lk, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, '', teamColor(t, L))}</a><a class="t2" href="${to}"><span class="t"><b>${esc(t.short)}<small>${esc(t.rec)}</small></b><span>${line || '&nbsp;'}</span></span>${right || chev}</a></div>`;
+        });
+        secs.teams = sec('My teams', '', `<a href="#teams">Edit</a>`) + (rows.length ? `<div class="rows">${rows.join('')}</div>` : mine.length ? skeleton(mine.length, 'row') : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`));
+      } else delete secs.teams;
+      // my players
+      if (P.players) {
+        const ppgOf = p => { const r = ctx && ctx.ppg && ctx.ppg[(p.name || '').toLowerCase()]; return r && r.pts != null ? `${(+r.pts).toFixed(1)} ppg` : ''; };
+        secs.players = sec('My players', '', `<a href="#players">${fp.length ? 'Edit' : 'Find players'}</a>`) + (fp.length
+          ? `<div class="rail">${fp.map(p => `<a class="pl" href="${href.player(lk, p.id)}" style="--tc:${esc(playerColor(p, L))}">${headshot(p.img, playerColor(p, L), 64, p.name)}<b>${esc(p.short || p.name)}</b><span>${esc(ppgOf(p) || p.team || '')}</span></a>`).join('')}</div>`
+          : empty('Follow the players you watch', '<p style="margin:6px 0 0">They show up here with their scoring line, and their profile is one tap away.</p>', `<a class="btn" href="#players">Find players</a>`));
+      } else delete secs.players;
+      // injuries: one list grouped by team. Your teams show every report, with your players marked; a team you don't
+      // follow appears only for the players you follow on it. Rows are keyed by the report, so two reports on one player never collide.
+      const inj = S0.inj;
+      if (inj && P.injuries) {
+        S.injuries = S.injuries || {};
+        const pById = new Map(fp.map(p => [p.id, p]));
+        const row = (x, i, t, p) => { const a = x.athlete || {}; const id = athId(a) || (p && p.id) || ''; const key = `h:${t.id}:${id}:${x.id || i}`; S.injuries[key] = { x, id, team: t }; const st = x.status || ''; const cls = /out/i.test(st) ? 'out' : /day|quest|doubt/i.test(st) ? 'q' : /prob|avail/i.test(st) ? 'ok' : ''; const det = x.details || {}; const ret = retInfo(L, det.returnDate); const why = [det.type || det.detail, ret ? ret.short : ''].filter(Boolean).join(', '); const name = a.displayName || (p && p.name) || ''; return `<button class="row${p ? ' fav' : ''}" data-act="injury" data-key="${esc(key)}">${headshot(hsUrl(a) || (p && p.img) || '', teamColor(t, L), 44, name)}<span class="t"><b>${esc(name)}${p ? `<i class="fstar" title="You follow them">${starSvg}</i>` : ''}</b><span>${esc(why || (x.shortComment || '').slice(0, 80))}</span></span><span class="tag ${cls}">${esc(st)}</span></button>`; };
+        const groups = [];
+        teams.forEach(t => { const b = inj.byTeam[t.id]; if (b && b.list.length) groups.push({ t, rows: b.list.map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })) }); });
+        const have = new Set(groups.map(g => g.t.id));
+        if (fp.length) (inj.teams || []).forEach(tt => { const tid = String(tt.id || ''); if (!tid || have.has(tid)) return; const rows = (tt.injuries || []).map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })).filter(r => r.p); if (!rows.length) return; const ti = S0.tIdx[tid] || {}; groups.push({ t: { id: tid, short: ti.short || tt.displayName || rows[0].p.team || '', logo: ti.logo || '', color: ti.color || playerColor(rows[0].p, L) }, rows, only: true }); });
+        const folds = store.get('v5:injcol', {}) || {};
+        const blocks = groups.map(({ t, rows, only }) => `<div class="injgrp"><button class="injhd" data-act="injcol" data-id="${esc(t.id)}" aria-expanded="${!folds[t.id]}" style="--tc:${esc(teamColor(t, L))}"><i class="bar"></i>${logo(t.logo, 's')}<b>${esc(t.short)}</b><span class="n">${only ? 'your players' : `${rows.length} listed`}</span>${chev}</button><div class="injbody"${folds[t.id] ? ' hidden' : ''}>${rows.map(({ x, i, p }) => row(x, i, t, p)).join('')}</div></div>`);
+        if (blocks.length) secs.injuries = sec('Injuries', 'your teams and players') + `<div class="rows">${blocks.join('')}</div>`; else delete secs.injuries;
+      } else delete secs.injuries;
+      // news about my teams and players: ESPN tags every story with the teams and athletes it covers; full names are the fallback
+      const news = S0.news;
+      if (P.news && news) {
+        const tIds = new Set(mine.map(String)), pIds = new Set(fp.map(p => p.id));
+        const tNames = teams.flatMap(t => [t.name, t.short, t.loc]).filter(n => n && n.length > 3);
+        const pNames = fp.map(p => p.name).filter(n => n && n.length > 3);
+        const tagged = a => (a.categories || []).some(c => (c.type === 'team' && tIds.has(String(c.teamId || (c.team && c.team.id) || ''))) || (c.type === 'athlete' && pIds.has(String(c.athleteId || (c.athlete && c.athlete.id) || ''))));
+        const named = a => { const txt = `${a.headline || ''} ${a.description || ''}`; return pNames.some(n => txt.includes(n)) || tNames.some(n => txt.includes(n)); };
+        const arts = news.articles ? news.articles.filter(a => a.headline && (tagged(a) || named(a))).slice(0, 6) : [];
+        if (arts.length) secs.news = sec('News', 'your teams and players') + `<div class="rows">${arts.map(a => HW.v5.newsRow(lk, a)).join('')}</div>`; else delete secs.news;
+      } else delete secs.news;
+    };
+
+    // ----- phase 1: one round trip, then paint -----
+    const [tIdx, games, last, ctx, st] = await Promise.all([
+      teamsIndex(L),
       S.today[lk] && S.today[lk].length ? S.today[lk] : scoreboard(L, today).catch(() => []),
-      forecastCtx(L, today).catch(() => null), mine.length ? injuries(L) : null, jSoft(`${API(L)}/news?limit=25`, 600000),
-      fp.length && L.sport === 'basketball' ? leaguePlayers(L).catch(() => null) : null,
-      (async () => { const st = await standings(L).catch(() => null); return Promise.all(mine.map(id => teamInfo(L, id, { idx: tIdx, st }).catch(() => null))); })()
+      scoreboard(L, yday, 600000).catch(() => []),
+      forecastCtx(L, today).catch(() => null),
+      standings(L).catch(() => null)
     ]);
+    if (!alive()) return;
+    Object.assign(S0, { tIdx, games, last, ctx, st, inj: ctx && ctx.inj ? ctx.inj : null });
     S.today[lk] = games;
-    const P = prefs.all();
-    const parts = [];
-    const byTeam = new Map(); games.forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
+    build(); paint();
 
-    // the brief: tonight for your teams in one line, and last night's results with your players' lines
-    if (P.brief) {
-      const chipOf = g => { const sc = g.state === 'pre' ? `<span>${esc(tip(g.date))}</span>` : g.state === 'in' ? `<span class="on">${g.away.score}–${g.home.score} · ${esc(g.detail)}</span>` : `<span>${g.away.score}–${g.home.score} · Final</span>`; return `<a class="bchip" href="${href.game(lk, g.id)}">${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b>${sc}</a>`; };
-      const tonight = games.filter(isFav).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
-      if (mine.length) parts.push(`<div class="brief"><div class="brief-h"><b>Tonight</b>${tonight.length ? `<span>${tonight.length} game${tonight.length === 1 ? '' : 's'} for your teams</span>` : '<span>no games for your teams</span>'}</div>${tonight.length ? `<div class="brief-row">${tonight.map(chipOf).join('')}</div>` : ''}</div>`);
-      const yday = addDays(today, -1);
-      const last = await scoreboard(L, yday).catch(() => []);
-      const favTeam = t => mine.includes(String(t.id));
-      const mineLast = last.filter(g => g.state === 'post' && isFav(g));
-      const teamOf = p => { const k = String(p.team || '').toLowerCase(); return t => k && [t.abbr, t.short, t.name].some(x => String(x || '').toLowerCase() === k); };
-      const pGames = fp.map(p => { const is = teamOf(p); const g = last.find(g => g.state === 'post' && (is(g.home) || is(g.away))); return g ? { p, g } : null; }).filter(Boolean);
-      const sums = {}; await Promise.all([...new Set(pGames.map(x => x.g.id))].map(async id => { sums[id] = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 3600000); }));
-      const lines = pGames.map(({ p, g }) => { const d = sums[g.id]; const bx = d && d.boxscore && d.boxscore.players || []; for (const side of bx) { const st = side.statistics && side.statistics[0]; if (!st) continue; const labels = st.labels || st.names || []; const a = (st.athletes || []).find(x => x.athlete && String(x.athlete.id) === p.id); if (!a) continue; if (a.didNotPlay || !a.stats || !a.stats.length) return { p, g, dnp: a.reason || 'Did not play' }; const get = l => { const i = labels.indexOf(l); return i >= 0 ? a.stats[i] : ''; }; const is = teamOf(p); const us = is(g.home) ? g.home : g.away, them = is(g.home) ? g.away : g.home; return { p, g, pts: get('PTS'), reb: get('REB'), ast: get('AST'), min: get('MIN'), won: us.score > them.score, us, them }; } return null; }).filter(Boolean);
-      if (mineLast.length || lines.length) {
-        const res = mineLast.map(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = us.score > them.score; return `<a class="bchip res" href="${href.game(lk, g.id)}">${logo(us.logo, 's', teamColor(us, L))}<b class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</b><span>${us.score}–${them.score} ${us === g.home ? 'vs' : 'at'} ${esc(them.abbr || them.short)}</span></a>`; });
-        const rows = lines.map(x => `<a class="row" href="${href.game(lk, x.g.id)}">${headshot(x.p.img, x.us ? teamColor(x.us, L) : playerColor(x.p, L), 44, x.p.name)}<span class="t"><b>${esc(x.p.short || x.p.name)}</b><span>${x.dnp ? esc(x.dnp) : `${esc(x.pts)} pts, ${esc(x.reb)} reb, ${esc(x.ast)} ast in a ${x.won ? 'win' : 'loss'} ${x.us === x.g.home ? 'vs' : 'at'} ${esc(x.them.short)}`}</span></span>${x.dnp ? '' : `<span class="r"><b>${esc(x.pts)}</b><span>pts</span></span>`}</a>`);
-        parts.push(`<div class="brief"><div class="brief-h"><b>Last night</b><span>${esc(dayLabel(yday, { weekday: 'long' }))}</span></div>${res.length ? `<div class="brief-row">${res.join('')}</div>` : ''}${rows.length ? `<div class="rows brief-rows">${rows.join('')}</div>` : ''}</div>`);
+    // ----- phase 2: schedules, box scores, news — each patches its section as it lands -----
+    const later = [];
+    if (mine.length) later.push((async () => { const teams = await Promise.all(mine.map(id => teamInfo(L, id, { idx: tIdx, st }).catch(() => null))); if (!alive()) return; S0.teams = teams; build(); paint(); })());
+    if (P.brief && fp.length) later.push((async () => {
+      const ids = [...new Set(fp.map(p => { const is = teamOf(p); const g = last.find(g => g.state === 'post' && (is(g.home) || is(g.away))); return g ? g.id : null; }).filter(Boolean))];
+      await Promise.all(ids.map(async id => { S0.sums[id] = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 3600000); }));
+      if (!alive()) return; build(); paint();
+    })());
+    if (P.news) later.push((async () => { S0.news = await jSoft(`${API(L)}/news?limit=25`, 600000); if (!alive()) return; build(); paint(); })());
+    if (!S0.inj && mine.length && P.injuries) later.push((async () => { S0.inj = await injuries(L).catch(() => null); if (!alive()) return; build(); paint(); })());
+    Promise.all(later).catch(() => { });
+
+    // ----- while the app sits on Home: scores every pass, the rest every few minutes, patched quietly -----
+    let quietAt = Date.now();
+    HW.v5.refresh = async () => {
+      if (!alive()) return;
+      S0.games = S.today[lk] || S0.games;
+      const due = Date.now() - quietAt > 180000;
+      if (due) {
+        quietAt = Date.now();
+        try { for (const k of [...HW.cache.keys()]) if (/\/injuries|\/news\?|\/summary\?event=/.test(k) && k.includes(L.path)) HW.cache.delete(k); } catch { }
+        const [last2, inj2, news2] = await Promise.all([scoreboard(L, yday, 0).catch(() => null), mine.length && P.injuries ? injuries(L).catch(() => null) : null, P.news ? jSoft(`${API(L)}/news?limit=25`, 0) : null]);
+        if (!alive()) return;
+        if (last2) S0.last = last2; if (inj2) S0.inj = inj2; if (news2) S0.news = news2;
+        if (fp.length) { const ids = [...new Set(fp.map(p => { const is = teamOf(p); const g = S0.last.find(g => g.state === 'post' && (is(g.home) || is(g.away))); return g ? g.id : null; }).filter(Boolean))]; await Promise.all(ids.map(async id => { const d = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 0); if (d) S0.sums[id] = d; })); }
+        if (!alive()) return;
       }
-    }
-
-    // your teams playing right now: the hero
-    const live = games.filter(g => isLive(g) && isFav(g)).sort((a, b) => rankGame(b) - rankGame(a));
-    if (live.length && P.live) parts.push(sec('Live now') + `<div class="heroes">${live.map(g => heroCard(L, g, ctx)).join('')}</div>`);
-
-    // my teams: record, what's next or how it's going, win chance
-    const rows = teams.filter(Boolean).map(t => {
-      const g = byTeam.get(t.id) || t.next || t.last; const f = g ? safeF(L, g, ctx) : null;
-      const us = g ? (g.home.id === t.id ? g.home : g.away) : null, them = g ? (g.home.id === t.id ? g.away : g.home) : null;
-      let line = t.standing || 'No game scheduled', right = '';
-      if (g) {
-        const home = g.home.id === t.id; const vs = `${home ? 'vs' : 'at'} ${esc(them.short)}`;
-        if (g.state === 'in') { const lead = us.score - them.score; line = `${lead > 0 ? `Leading ${esc(them.short)} by ${lead}` : lead < 0 ? `Trailing ${esc(them.short)} by ${-lead}` : `Tied with ${esc(them.short)}`}, ${esc(g.detail)}`; }
-        else if (g.state === 'post') line = `${us.score > them.score ? 'Won' : 'Lost'} ${esc(String(us.score))}-${esc(String(them.score))} ${vs}`;
-        else line = `${esc(relDay(HW.ymdOf(g.date)))} ${vs}, ${esc(tip(g.date))}${tvLabel(g) ? ` on ${esc(tvLabel(g))}` : ''}`;
-        if (f && g.state !== 'post') { const p = home ? f.pHome : 1 - f.pHome; right = `<span class="r"><b>${pct(p)}</b><span>to win</span></span>`; }
-        else if (g.state === 'post') right = `<span class="r"><b class="${us.score > them.score ? 'res w' : 'res l'}" style="font-size:22px">${us.score > them.score ? 'W' : 'L'}</b></span>`;
-      }
-      const to = g ? href.game(lk, g.id) : href.team(lk, t.id);
-      return `<div class="row prow teamrow"><a class="go" href="${href.team(lk, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, '', teamColor(t, L))}</a><a class="t2" href="${to}"><span class="t"><b>${esc(t.short)}<small>${esc(t.rec)}</small></b><span>${line}</span></span>${right || chev}</a></div>`;
-    });
-    if (P.teams) parts.push(sec('My teams', '', `<a href="#teams">Edit</a>`) + (rows.length ? `<div class="rows">${rows.join('')}</div>` : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`)));
-
-    // my players
-    const ppgOf = id => { const r = lp && lp.rows.find(x => x.id === String(id)); return r ? `${r.pts.toFixed(1)} ppg` : ''; };
-    if (P.players) parts.push(sec('My players', '', `<a href="#players">${fp.length ? 'Edit' : 'Find players'}</a>`) + (fp.length
-      ? `<div class="rail">${fp.map(p => `<a class="pl" href="${href.player(lk, p.id)}" style="--tc:${esc(playerColor(p, L))}">${headshot(p.img, playerColor(p, L), 64, p.name)}<b>${esc(p.short || p.name)}</b><span>${esc(ppgOf(p.id) || p.team || '')}</span></a>`).join('')}</div>`
-      : empty('Follow the players you watch', '<p style="margin:6px 0 0">They show up here with their scoring line, and their profile is one tap away.</p>', `<a class="btn" href="#players">Find players</a>`)));
-
-    // injuries: one list grouped by team. Your teams show every report, with your players marked; a team you don't
-    // follow appears only for the players you follow on it. Rows are keyed by the report, so two reports on one player never collide.
-    if (inj && P.injuries) {
-      S.injuries = S.injuries || {};
-      const pById = new Map(fp.map(p => [p.id, p]));
-      const row = (x, i, t, p) => { const a = x.athlete || {}; const id = athId(a) || (p && p.id) || ''; const key = `h:${t.id}:${id}:${x.id || i}`; S.injuries[key] = { x, id, team: t }; const st = x.status || ''; const cls = /out/i.test(st) ? 'out' : /day|quest|doubt/i.test(st) ? 'q' : /prob|avail/i.test(st) ? 'ok' : ''; const det = x.details || {}; const ret = retInfo(L, det.returnDate); const why = [det.type || det.detail, ret ? ret.short : ''].filter(Boolean).join(', '); const name = a.displayName || (p && p.name) || ''; return `<button class="row${p ? ' fav' : ''}" data-act="injury" data-key="${esc(key)}">${headshot(hsUrl(a) || (p && p.img) || '', teamColor(t, L), 44, name)}<span class="t"><b>${esc(name)}${p ? `<i class="fstar" title="You follow them">${starSvg}</i>` : ''}</b><span>${esc(why || (x.shortComment || '').slice(0, 80))}</span></span><span class="tag ${cls}">${esc(st)}</span></button>`; };
-      const groups = [];
-      teams.filter(Boolean).forEach(t => { const b = inj.byTeam[t.id]; if (b && b.list.length) groups.push({ t, rows: b.list.map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })) }); });
-      const have = new Set(groups.map(g => g.t.id));
-      if (fp.length) (inj.teams || []).forEach(tt => { const tid = String(tt.id || ''); if (!tid || have.has(tid)) return; const rows = (tt.injuries || []).map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })).filter(r => r.p); if (!rows.length) return; const ti = tIdx[tid] || {}; groups.push({ t: { id: tid, short: ti.short || tt.displayName || rows[0].p.team || '', logo: ti.logo || '', color: ti.color || playerColor(rows[0].p, L) }, rows, only: true }); });
-      const folds = store.get('v5:injcol', {}) || {};
-      const blocks = groups.map(({ t, rows, only }) => `<div class="injgrp"><button class="injhd" data-act="injcol" data-id="${esc(t.id)}" aria-expanded="${!folds[t.id]}" style="--tc:${esc(teamColor(t, L))}"><i class="bar"></i>${logo(t.logo, 's')}<b>${esc(t.short)}</b><span class="n">${only ? 'your players' : `${rows.length} listed`}</span>${chev}</button><div class="injbody"${folds[t.id] ? ' hidden' : ''}>${rows.map(({ x, i, p }) => row(x, i, t, p)).join('')}</div></div>`);
-      if (blocks.length) parts.push(sec('Injuries', 'your teams and players') + `<div class="rows">${blocks.join('')}</div>`);
-    }
-
-    // news about my teams and players: ESPN tags every story with the teams and athletes it covers; full names are the fallback
-    if (P.news) {
-      const tIds = new Set(mine.map(String)), pIds = new Set(fp.map(p => p.id));
-      const tNames = teams.filter(Boolean).flatMap(t => [t.name, t.short, t.loc]).filter(n => n && n.length > 3);
-      const pNames = fp.map(p => p.name).filter(n => n && n.length > 3);
-      const tagged = a => (a.categories || []).some(c => (c.type === 'team' && tIds.has(String(c.teamId || (c.team && c.team.id) || ''))) || (c.type === 'athlete' && pIds.has(String(c.athleteId || (c.athlete && c.athlete.id) || ''))));
-      const named = a => { const txt = `${a.headline || ''} ${a.description || ''}`; return pNames.some(n => txt.includes(n)) || tNames.some(n => txt.includes(n)); };
-      const arts = news && news.articles ? news.articles.filter(a => a.headline && (tagged(a) || named(a))).slice(0, 6) : [];
-      if (arts.length) parts.push(sec('News', 'your teams and players') + `<div class="rows">${arts.map(a => HW.v5.newsRow(lk, a)).join('')}</div>`);
-    }
-
-    if (!parts.length) parts.push(empty('Everything is switched off', '<p style="margin:6px 0 0">Turn some sections back on and Home fills up again.</p>', `<a class="btn" href="#settings">Settings</a>`));
-    $main.innerHTML = parts.join('');
+      build(); paint(true);
+    };
+    HW.v5.refresh.every = 90000;
   }
 
   /* ================= SCORES: every game, compact ================= */
@@ -283,9 +356,10 @@
     const L = LEAGUES[lk]; const today = todayCT();
     let ymd = store.get('v5:date', today); if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd) || Math.abs(new Date(ymd) - new Date(today)) > 200 * 864e5) ymd = today;
     const far = Math.abs(new Date(ymd) - new Date(today)) > 4 * 864e5; const center = far ? ymd : today;
+    const mineOnly = !!store.get('v5:scmine', false) && (favs.all()[lk] || []).length > 0;
     const days = Array.from({ length: 9 }, (_, i) => addDays(center, i - 4));
     const dayBtn = (d, lab) => `<button class="day${d === ymd ? ' on' : ''}" data-act="date" data-ymd="${d}" aria-pressed="${d === ymd}"><em>${esc(lab)}</em><b>${+d.slice(8)}</b></button>`;
-    const calPill = `<div class="calrow"><button class="chip cal" data-act="calendar" data-ymd="${esc(ymd)}" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>${esc(dayLabel(ymd, { month: 'long', year: 'numeric' }))}<svg class="dn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><span id="phase"></span></div>`;
+    const calPill = `<div class="calrow"><button class="chip cal" data-act="calendar" data-ymd="${esc(ymd)}" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>${esc(dayLabel(ymd, { month: 'long', year: 'numeric' }))}<svg class="dn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><span id="phase"></span>${(favs.all()[lk] || []).length ? `<button class="chip mine${mineOnly ? ' on' : ''}" data-act="scmine" aria-pressed="${mineOnly}">${starSvg}Mine</button>` : ''}</div>`;
     const strip = calPill + `<div class="dates" id="dates">${far ? dayBtn(today, 'Today') + '<span class="gap"></span>' : ''}${days.map(d => dayBtn(d, d === today ? 'Today' : dayLabel(d, { weekday: 'short' }))).join('')}</div>`;
     const head = strip;
     $main.innerHTML = head + skeleton(4, 'card');
@@ -303,10 +377,12 @@
       $main.innerHTML = head + phase + empty(`No ${L.label} games ${ymd === today ? 'today' : 'on ' + dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, body, next ? `<button class="btn" data-act="date" data-ymd="${esc(next)}">Jump to ${esc(dayLabel(next, { weekday: 'short', month: 'short', day: 'numeric' }))}</button>` : '');
       setPhase(); return;
     }
-    const by = st => games.filter(g => g.state === st).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
+    const shown = mineOnly ? games.filter(isFav) : games;   // your teams always sort first; Mine hides the rest
+    const by = st => shown.filter(g => g.state === st).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
     const live = by('in'), pre = by('pre'), post = by('post');
     const block = (title, list) => list.length ? sec(title, `${list.length}`) + `<div class="games">${list.map(g => gameCard(L, g, ctx, false, true)).join('')}</div>` : '';
-    $main.innerHTML = head + phase + block('Live', live) + block(ymd === today ? 'Upcoming' : 'Scheduled', pre) + block('Final', post);
+    const none = mineOnly && !shown.length ? empty(`None of your teams play ${ymd === today ? 'today' : dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, `<p style="margin:6px 0 0">${games.length} game${games.length === 1 ? '' : 's'} on the slate.</p>`, `<button class="btn ghost" data-act="scmine">Show all</button>`) : '';
+    $main.innerHTML = head + phase + none + block('Live', live) + block(ymd === today ? 'Upcoming' : 'Scheduled', pre) + block('Final', post);
     setPhase();
     const el2 = $main.querySelector('#dates .on'); if (el2) el2.scrollIntoView({ inline: 'center', block: 'nearest' });
   }
