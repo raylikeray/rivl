@@ -28,7 +28,9 @@
   function paintPills(lk, show) {
     $pills.hidden = !show;
     if (!show) return;
-    $pills.innerHTML = ORDER.map(k => { const n = S.today[k].filter(isLive).length; return `<a class="pill${k === lk ? ' on' : ''}" href="#${k}"${k === lk ? ' aria-current="page"' : ''}>${esc(LEAGUES[k].label)}${n ? `<span class="ct live">${n}</span>` : ''}</a>`; }).join('');
+    const html = ORDER.map(k => { const n = S.today[k].filter(isLive).length; return `<a class="pill${k === lk ? ' on' : ''}" href="#${k}"${k === lk ? ' aria-current="page"' : ''}><span>${esc(LEAGUES[k].label)}</span>${n ? `<span class="ct live">${n}</span>` : ''}</a>`; }).join('');
+    if ($pills.innerHTML !== html) $pills.innerHTML = html;
+    $pills.style.setProperty('--n', ORDER.length); $pills.style.setProperty('--i', Math.max(0, ORDER.indexOf(lk)));   // the knob slides to the chosen league
   }
   function paintTabs(name) {
     $tabs.querySelectorAll('.tab').forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('on', on); if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });

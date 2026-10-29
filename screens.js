@@ -193,16 +193,31 @@
           const fav = f.pHome >= .5 ? g.home : g.away; const p = Math.max(f.pHome, 1 - f.pHome);
           const gap = f.H.rating - f.A.rating; const lead = gap >= 0 ? g.home : g.away;
           const wp = (d.winprobability || []).filter(x => x.homeWinPercentage != null);
-          const bpi = d.predictor && d.predictor.homeTeam && d.predictor.homeTeam.gameProjection != null ? parseFloat(d.predictor.homeTeam.gameProjection) / 100 : null;
-          const kv = [];
-          if (g.state === 'in') kv.push(['Score and time', `${esc((g.home.score > g.away.score ? g.home : g.away).short)} up ${Math.abs(g.home.score - g.away.score)}, ${esc(g.detail)}`]);
-          kv.push(['Ratings', Math.abs(gap) < 1.5 ? 'Even' : `${esc(lead.short)} +${Math.abs(gap).toFixed(1)}`]);
-          if (!g.neutral) kv.push(['Home court', `${esc(g.home.short)} +${f.hca.toFixed(1)}`]);
-          if (f.restH || f.restA) kv.push(['Rest', f.restH && f.restA ? 'Both on a back-to-back' : `${esc((f.restH ? g.home : g.away).short)} played last night, ${f.restH ? f.restH.toFixed(1) : f.restA.toFixed(1)}`]);
-          if (f.soH || f.soA) kv.push(['Injuries', [f.soH ? `${esc(g.home.short)} without ${esc(f.soH.name)}` : '', f.soA ? `${esc(g.away.short)} without ${esc(f.soA.name)}` : ''].filter(Boolean).join('; ')]);
-          kv.push([g.state === 'pre' ? 'Projected margin' : 'Pregame margin', `${esc((f.margin >= 0 ? g.home : g.away).short)} by ${Math.abs(f.margin).toFixed(1)}`]);
-          if (g.state === 'in' && wp.length) kv.push(['ESPN live', `${esc(g.home.short)} ${pct(wp[wp.length - 1].homeWinPercentage)}`]); else if (g.state === 'pre' && bpi != null) kv.push(['ESPN', `${esc(g.home.short)} ${pct(bpi)}`]);
-          body += sec(g.state === 'post' ? `Had ${esc(fav.short)} ${pct(p)}` : `Why ${esc(fav.short)} ${pct(p)}`) + `<table class="tbl kv"><tbody>${kv.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</tbody></table>`;
+          // RIVL's own case, side by side: rating, this season's numbers, rest and who's out — then home court and the margin they add up to
+          const R = (ctx && ctx.cur && ctx.cur.byId) || {}; const ra = R[g.away.id] || {}, rh = R[g.home.id] || {};
+          const sg = x => x == null || !isFinite(x) ? '—' : (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toFixed(1);
+          const pctOf = r => { const m = /^(\d+)-(\d+)/.exec(String(r || '')); return m && (+m[1] + +m[2]) ? +m[1] / (+m[1] + +m[2]) : null; };
+          const strkN = s => { const m = /^([WL])(\d+)$/.exec(String(s || '')); return m ? (m[1] === 'W' ? 1 : -1) * +m[2] : null; };
+          const cmp = (x, y) => x == null || y == null || x === y ? 0 : x > y ? -1 : 1;   // -1: away better, 1: home better
+          const rows = [];
+          const push = (label, av, hv, better) => rows.push({ label, av, hv, better: better || 0 });
+          push('RIVL rating', sg(f.A.rating), sg(f.H.rating), cmp(f.A.rating, f.H.rating));
+          if (ra.w != null || rh.w != null) push('Record', ra.w != null ? `${ra.w}-${ra.l}` : '—', rh.w != null ? `${rh.w}-${rh.l}` : '—', cmp(pctOf(`${ra.w}-${ra.l}`), pctOf(`${rh.w}-${rh.l}`)));
+          if (ra.diff != null || rh.diff != null) push('Scoring margin', sg(ra.diff), sg(rh.diff), cmp(ra.diff, rh.diff));
+          if (ra.l10 || rh.l10) push('Last 10', ra.l10 || '—', rh.l10 || '—', cmp(pctOf(ra.l10), pctOf(rh.l10)));
+          if (!g.neutral && (ra.road || rh.home)) push('Road / home', ra.road || '—', rh.home || '—', cmp(pctOf(ra.road), pctOf(rh.home)));
+          if (ra.strk || rh.strk) push('Streak', ra.strk || '—', rh.strk || '—', cmp(strkN(ra.strk), strkN(rh.strk)));
+          if (f.restH || f.restA) push('Rest', f.restA ? 'Back-to-back' : 'Rested', f.restH ? 'Back-to-back' : 'Rested', cmp(f.restA ? 0 : 1, f.restH ? 0 : 1));
+          if (f.soH || f.soA) push('Out', f.soA ? esc(f.soA.name) : 'Full strength', f.soH ? esc(f.soH.name) : 'Full strength', cmp(f.soA ? f.soA.pts : 0, f.soH ? f.soH.pts : 0));
+          const head = t => `<span class="wt" style="--tc:${esc(V._.teamColor(t, L))}">${logo(t.logo, 's', V._.teamColor(t, L))}<b>${esc(t.abbr || t.short)}</b></span>`;
+          const grid = `<div class="why"><div class="why-h"><span></span>${head(g.away)}${head(g.home)}</div>${rows.map(r => `<div class="why-r"><span>${r.label}</span><b class="${r.better < 0 ? 'up' : ''}">${r.av}</b><b class="${r.better > 0 ? 'up' : ''}">${r.hv}</b></div>`).join('')}</div>`;
+          const lines = [];
+          if (g.state === 'in') lines.push(['Score and time', `${esc((g.home.score > g.away.score ? g.home : g.away).short)} up ${Math.abs(g.home.score - g.away.score)}, ${esc(g.detail)}`]);
+          lines.push(['Home court', g.neutral ? 'Neutral floor' : `${esc(g.home.short)} +${f.hca.toFixed(1)}`]);
+          lines.push([g.state === 'pre' ? 'Projected margin' : 'Pregame margin', `${esc((f.margin >= 0 ? g.home : g.away).short)} by ${Math.abs(f.margin).toFixed(1)}`]);
+          lines.push([g.state === 'pre' ? 'Win chance' : 'Pregame chance', `${esc(fav.short)} ${pct(p)}`]);
+          const note = f.source === 'elo' ? 'RIVL\'s rating is an Elo built from scoring margin, rebuilt every night.' : 'RIVL\'s rating is this season\'s scoring margin blended with last season\'s, weighted by games played.';
+          body += sec(g.state === 'post' ? `Had ${esc(fav.short)} ${pct(p)}` : `Why ${esc(fav.short)} ${pct(p)}`) + grid + `<table class="tbl kv why-kv"><tbody>${lines.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</tbody></table><p class="why-n">${note}</p>`;
         }
         if (ta && th && g.state !== 'pre') { const rows = cmpRows(WANT.slice(0, 6)); if (rows) body += sec('Team stats', '', `<button data-act="gtab" data-tab="stats">All</button>`) + `<div class="cmp">${rows}</div>`; }
         if (plays.length && g.state !== 'pre') body += sec(g.state === 'in' ? 'Last plays' : 'Final plays', '', `<button data-act="gtab" data-tab="plays">All plays</button>`) + `<div class="rows plays">${plays.map((p, i) => [p, i]).slice(-5).reverse().map(([p, i]) => playRow(p, i)).join('')}</div>`;
