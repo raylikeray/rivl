@@ -208,6 +208,8 @@
       else if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('Link copied')).catch(() => toast(url));
     }
     if (a === 'pref') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; V.prefs.set(act.dataset.pref, on); act.setAttribute('aria-checked', String(on)); }
+    if (a === 'outlook') { e.preventDefault(); act.classList.add('busy'); act.querySelector('.t span').textContent = 'Reading the rest of the schedule…'; const box = act.closest('.outlook'); if (V.outlookFill) V.outlookFill(LEAGUES[box.dataset.lk], box.dataset.id, null, { feed: true }); return; }
+    if (a === 'stab-odds') { store.set('v5:stab:' + (current ? current.lk : 'nba'), 'odds'); return; }   // the link itself goes to #standings
     if (a === 'watch') { e.preventDefault(); const id = act.dataset.id; const mine = HW.myServices(); const on = !mine.includes(id); store.set('watch', on ? [...mine, id] : mine.filter(x => x !== id)); act.classList.toggle('on', on); act.setAttribute('aria-pressed', String(on)); if (navigator.vibrate) navigator.vibrate(8); return; }
     if (a === 'theme') { e.preventDefault(); store.set('v5:theme', act.dataset.theme); applyTheme(); $main.querySelectorAll('[data-act="theme"]').forEach(b => { const on = b.dataset.theme === act.dataset.theme; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); }
     if (a === 'onb-restart') { e.preventDefault(); onbLk = 'nba'; onbStep(0); }

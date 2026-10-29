@@ -216,12 +216,30 @@ function starOut(L, side, ctx) {
     out.forEach(x => { const n = x.athlete && x.athlete.displayName; if (!n || !lead[n]) return; total += /pass/i.test(lead[n]) ? 4 : 1.2; names.push(n.split(' ').pop()); });
     return names.length ? { name: names.join(', '), names, pts: -Math.min(6, total) } : null;
   }
-  const ppgOf = n => { const r = ctx.ppg && ctx.ppg[(n || '').toLowerCase()]; return r && r.teamId === side.id ? r.pts : null; };
+  /* basketball: each missing player is worth what he produces above the team's own replacement level, scaled by the
+     minutes he plays — a deep bench loses less than a thin one. Box value per 36 minutes (points, rebounds, assists,
+     steals, blocks, less turnovers) stands in for impact, about half a point of plus-minus per point of value. Listed statuses short
+     of Out count in part: doubtful ¾, questionable or a game-time decision ½, day-to-day ¼. Capped at 10 points. */
+  const listed = ctx.inj.byTeam[side.id].list.filter(x => /out|suspen|doubt|quest|game.?time|day.?to.?day/i.test(x.status || ''));
+  if (!listed.length) return null;
+  const weightOf = st => /out|suspen/i.test(st) ? 1 : /doubt/i.test(st) ? .75 : /quest|game.?time/i.test(st) ? .5 : /day.?to.?day/i.test(st) ? .25 : 0;
+  const roster = ctx.players && ctx.players[side.id] || [];
+  const val36 = p => p && p.min >= 8 && p.gp >= 1 ? (p.pts + 0.7 * p.reb + 1.1 * p.ast + 1.5 * p.stl + 1.2 * p.blk - 1.2 * p.tov) / p.min * 36 : null;
+  const rot = roster.filter(p => val36(p) != null && p.min >= 10).sort((a, b) => b.min - a.min);
+  const tail = rot.slice(7, 11).map(val36); const repl = tail.length ? 0.5 * 22 + 0.5 * tail.reduce((a, b) => a + b, 0) / tail.length : 22;   // half a typical bench, half this team's own 8th–11th men
+  const byName = {}; roster.forEach(p => { byName[(p.name || '').toLowerCase()] = p; });
   const L1 = (side.leaders || []).find(l => /points/i.test(l.name)); const top = L1 && L1.leaders && L1.leaders[0];
-  let total = 0; const names = [];
-  out.forEach(x => { const n = x.athlete && x.athlete.displayName; if (!n) return; let ppg = ppgOf(n); if (ppg == null && top && top.athlete && top.athlete.displayName === n) ppg = parseFloat(top.displayValue) || 20; if (ppg != null && ppg >= 6) { total += ppg * 0.18; names.push(n.split(' ').pop()); } });
+  let total = 0; const names = [], detail = [];
+  listed.forEach(x => {
+    const n = x.athlete && x.athlete.displayName; if (!n) return; const w = weightOf(x.status); if (!w) return;
+    const p = byName[n.toLowerCase()]; let loss = null;
+    if (p && val36(p) != null) loss = Math.max(0, val36(p) - repl) * p.min / 100;   // value above the bench, per minute he'd have played
+    else if (top && top.athlete && top.athlete.displayName === n) loss = (parseFloat(top.displayValue) || 20) * 0.18;   // the scoring leader with no stat line yet
+    if (loss == null || loss < 0.3) return;
+    total += loss * w; names.push(n.split(' ').pop()); detail.push({ name: n, last: n.split(' ').pop(), pts: -loss * w, w, status: x.status || '' });
+  });
   if (!names.length) return null;
-  return { name: names.join(', '), names, pts: -Math.min(8, total) };
+  return { name: names.join(', '), names, pts: -Math.min(10, total), detail, repl };
 }
 /* tuned parameters (data/<league>/params.json, refit nightly) override the config defaults */
 const paramsOf = (L, ctx) => { const P = ctx && ctx.params; return { hca: P && P.hca != null ? P.hca : L.hca, b2b: P && P.b2b != null ? P.b2b : L.b2b, sd: P && P.sd != null ? P.sd : L.sd, calib: P && P.calib ? P.calib : null }; };
@@ -271,8 +289,8 @@ async function forecastCtx(L, ymd) {
   const [rt, cur, yday, inj, lp, params] = await Promise.all([ratings(L), standings(L).catch(() => null), scoreboard(L, addDays(ymd, -1)).catch(() => []), injuries(L), L.hasInjuries && L.sport === 'basketball' ? leaguePlayers(L).catch(() => null) : null, jSoft(`${HW.DATA || 'data/'}${L.key}/params.json?d=${todayCT()}`, 900000)]);
   const prior = rt ? null : await priorStandings(L);
   const b2b = new Set(); yday.forEach(g => { if (g.state !== 'pre') { b2b.add(g.home.id); b2b.add(g.away.id); } });
-  const ppg = {}; if (lp) lp.rows.forEach(r => { ppg[(r.name || '').toLowerCase()] = { pts: r.pts, teamId: r.teamId }; });
-  const v = { ratings: rt, cur, prior, b2b, inj, ppg, params };
+  const ppg = {}, players = {}; if (lp) lp.rows.forEach(r => { ppg[(r.name || '').toLowerCase()] = { pts: r.pts, teamId: r.teamId }; (players[r.teamId] = players[r.teamId] || []).push(r); });
+  const v = { ratings: rt, cur, prior, b2b, inj, ppg, players, params };
   ctxCache.set(k, { t: Date.now(), v }); return v;
 }
 
@@ -389,5 +407,5 @@ ORDER.forEach(k => S.today[k] = []);
 const allToday = () => ORDER.flatMap(k => S.today[k]);
 
 Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, API, API2, WEB, logoUrl, seasonYear, favs,
-  parseEvent, isLive, isFav, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, injuries, forecast, forecastCtx, leaguePlayers, S, allToday });
+  parseEvent, isLive, isFav, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, injuries, forecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
 })();

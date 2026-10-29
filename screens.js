@@ -41,7 +41,10 @@
     let tab = store.get('v5:stab:' + lk, groups[0].abbr || groups[0].name);
     const items = conf ? groups.map(g => [g.abbr || g.name, confName(g.name, g.abbr)]) : [...groups.map(g => [g.abbr || g.name, confName(g.name, g.abbr)]), ['league', 'League']];
     if ((L.playoffLine || []).length) items.push(['picture', 'Picture']);
+    const simOk = HW.sim && (L.playoffLine || []).length && (lk === 'nba' || lk === 'wnba');
+    if (simOk) items.push(['odds', 'Odds']);
     if (!items.some(([k]) => k === tab)) tab = items[0][0];
+    if (tab === 'odds') { await oddsTab(L, items, tab, st); return; }
     if (tab === 'picture') {
       // the bracket as the table stands today: play-in pairs, then the first round, per conference
       const cut = L.playoffLine; const playIn = cut.length === 2;
@@ -72,10 +75,32 @@
     const fmtGb = n => n % 1 ? n.toFixed(1) : String(n);
     const gbLine = (r, i) => { if (tab === 'league' || cuts.length < 1) return ''; const c1 = cuts[0], c2 = cuts[1]; if (c2 && i >= c2) { const b = back(r, rows[c2 - 1]); return b != null && b > 0 ? `${fmtGb(b)} back of the play-in` : b === 0 ? 'Tied for the last play-in spot' : ''; } if (i >= c1) { const b = back(r, rows[c1 - 1]); return b != null && b > 0 ? `${fmtGb(b)} back of the ${c1} seed` : b === 0 ? `Tied for the ${c1} seed` : ''; } return ''; };
     const clinchTag = r => { const k = String(r.clinch || '').toLowerCase(); if (!k) return ''; const t = CL[k] || CL[k[0]] || r.clinch; const bad = /elim|^e|^o/.test(k); return `<span class="tag ${bad ? 'out' : 'ok'} cl" title="${esc(t)}">${esc(bad ? 'Out' : 'Clinched')}</span>`; };
-    const tieNote = (r, i) => { if (tab === 'league') return ''; const same = x => x && x.w === r.w && x.l === r.l; for (const c of cuts) { if (i === c - 1 && same(rows[c])) return c === cuts[0] ? `tied for the ${c} seed` : 'tied for the last play-in spot'; } return ''; };
+    // ties at a cut line: who holds the head-to-head, from the season's results when the nightly schedule has them
+    const sched = simOk ? await HW.sim.schedule(L, { feed: false }).catch(() => null) : null;
+    const h2hNote = (r, o) => { if (!sched) return ''; const h = HW.sim.h2hOf(sched, r.id, o.id); if (!h || !h.played) return ''; return h.wa > h.wb ? `${esc(r.abbr)} holds the tiebreak ${h.wa}-${h.wb}` : h.wa < h.wb ? `${esc(o.abbr)} holds the tiebreak ${h.wb}-${h.wa}` : `${h.wa}-${h.wb} head-to-head`; };
+    const tieNote = (r, i) => { if (tab === 'league') return ''; const same = x => x && x.w === r.w && x.l === r.l; for (const c of cuts) { if (i === c - 1 && same(rows[c])) return [c === cuts[0] ? `tied for the ${c} seed` : 'tied for the last play-in spot', h2hNote(r, rows[c])].filter(Boolean).join(', '); if (i === c && same(rows[c - 1])) return h2hNote(r, rows[c - 1]); } return ''; };
     const trs = rows.map((r, i) => { const gl = [gbLine(r, i), tieNote(r, i)].filter(Boolean).join(' · '); return `<tr class="click${favs.has(lk, r.id) ? ' me' : ''}${cuts.includes(i + 1) ? ' cut' : ''}" data-href="${href.team(lk, r.id)}"><td><span class="tm"><span class="rk">${r.pos}</span>${logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))}<span class="nm"><a href="${href.team(lk, r.id)}">${rk && rk[r.id] ? `<i class="ap">${rk[r.id]}</i>` : ''}${esc(r.short || r.name)}</a>${clinchTag(r)}${gl ? `<small>${esc(gl)}</small>` : ''}</span></span></td>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}</tr>`; }).join('');
     const legend = tab === 'league' ? '' : cuts.length === 2 ? `<p class="legend">Top ${cuts[0]} go straight to the playoffs; ${cuts[0] + 1} through ${cuts[1]} play in. Games back count the ${cuts[0]} seed and the last play-in spot. Your teams are marked.</p>` : cuts.length === 1 ? `<p class="legend">Top ${cuts[0]} make the playoffs. Your teams are marked.</p>` : '<p class="legend">Your teams are marked.</p>';
     stPaint(items, tab, `<div class="tw"><table class="tbl stand"><thead><tr><th>${esc(title)}</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${trs}</tbody></table></div>` + legend);
+  }
+  /* the odds: the rest of the season played out from today's ratings, per conference */
+  async function oddsTab(L, items, tab, st) {
+    const lk = L.key; const conf = L.standingsMode === 'conference'; const cut = L.playoffLine || []; const playIn = cut.length === 2;
+    const have = HW.sim.ready(L);
+    if (!have) stPaint(items, tab, `<div class="simwait"><div class="skel row"></div><p class="legend" id="simnote">Reading the rest of the schedule…</p></div>`);
+    const note = document.getElementById('simnote');
+    const v = await HW.sim.season(L, { onProgress: f => { if (note) note.textContent = `Reading the rest of the schedule… ${Math.round(f * 100)}%`; } }).catch(() => null);
+    if ((V.route() || {}).name !== 'standings' || store.get('v5:stab:' + lk) !== 'odds') return;   // they moved on while it loaded
+    if (!v) { stPaint(items, tab, empty('No odds yet', '<p style="margin:6px 0 0">The season schedule couldn\'t be read. Try again in a moment.</p>')); return; }
+    const { sim, rest, sched } = v;
+    const pc = p => p >= .995 ? '>99%' : p < .005 ? (p > 0 ? '<1%' : '—') : `${Math.round(p * 100)}%`;
+    const cls = p => p >= .995 ? 'sure' : p < .005 ? 'none' : p >= .5 ? 'likely' : '';
+    const groups = conf ? st.groups : [{ name: L.label, abbr: L.short, rows: st.groups.flatMap(g => g.rows) }];
+    const cols = playIn ? [['Proj.', 'proj'], ['Playoffs', 'playoffs'], ['Top ' + cut[0], 'top'], ['Play-in', 'playin'], ['Left', 'left']] : [['Proj.', 'proj'], ['Playoffs', 'playoffs'], ['No. 1', 'first'], ['Left', 'left']];
+    const cell = (t, r, k) => { if (k === 'proj') return `<b>${Math.round(t.w)}-${Math.round(t.l)}</b>`; if (k === 'left') { const o = rest[r.id]; if (!o || !o.n) return '<span class="mut">—</span>'; return `<span class="${o.opp > 1 ? 'hard' : o.opp < -1 ? 'easy' : ''}">${o.n}<small>${o.opp > 0 ? '+' : o.opp < 0 ? '−' : ''}${Math.abs(o.opp).toFixed(1)}</small></span>`; } return `<span class="od ${cls(t[k])}">${pc(t[k])}</span>`; };
+    const table = g => { const rows = g.rows.map(r => ({ r, t: v.byId[r.id] })).filter(x => x.t).sort((a, b) => b.t.playoffs - a.t.playoffs || b.t.top - a.t.top || b.t.w - a.t.w); return (conf ? sec(confName(g.name, g.abbr)) : '') + `<div class="tw"><table class="tbl stand odds"><thead><tr><th>${esc(conf ? '' : L.label)}</th>${cols.map(([h]) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(({ r, t }, i) => `<tr class="click${favs.has(lk, r.id) ? ' me' : ''}${cut.includes(i + 1) ? ' cut' : ''}" data-href="${href.team(lk, r.id)}"><td><span class="tm"><span class="rk">${i + 1}</span>${logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))}<span class="nm"><a href="${href.team(lk, r.id)}">${esc(r.short || r.name)}</a><small>${r.w}-${r.l} now</small></span></span></td>${cols.map(([, k]) => `<td>${cell(t, r, k)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`; };
+    const legend = `<p class="legend">The rest of the season played out ${sim.n.toLocaleString()} times from today's ratings, with the finished games as they stand${sim.known ? ' and ties going to the head-to-head record' : ''}. ${playIn ? `Playoffs counts a top-${cut[0]} finish or coming through the play-in.` : `The top ${cut[0]} make the playoffs.`} Left: games to play, and how strong the opponents are — points better than an average team, with home court counted; above +1 is a hard run, below −1 an easy one.${sched.source === 'feed' ? ' The schedule was read from the feed today; the nightly copy wasn\'t available.' : ''}</p>`;
+    stPaint(items, tab, groups.map(table).join('') + legend);
   }
   /* standings: the chips stay put and only toggle; the table below them swaps */
   function stPaint(items, tab, body) {
@@ -165,9 +190,27 @@
     const about = a => taggedTeam(a, id) || tn.some(n => `${a.headline || ''} ${a.description || ''}`.includes(n));
     const arts = news && news.articles ? news.articles.filter(a => a.headline && (about(a) || (!college && !cats(a).length))).slice(0, 6) : [];
     const newsHtml = arts.length ? sec('News') + `<div class="rows">${arts.map(a => newsRow(lk, a)).join('')}</div>` : '';
-    $main.innerHTML = topbar(esc(t0.shortDisplayName || t0.name || t0.displayName || ''), '#teams') + hero + strip + nextHtml + rosterHtml + schedHtml + injHtml + newsHtml;
+    // the season outlook: playoff odds and a projected record when the simulation is cheap to have (nightly schedule, or already run today)
+    const simOk = HW.sim && (L.playoffLine || []).length && (lk === 'nba' || lk === 'wnba') && r;
+    const outlook = simOk ? `<div class="outlook" data-lk="${lk}" data-id="${esc(String(id))}">${HW.sim.ready(L) ? '' : `<div class="rows"><button class="row" data-act="outlook"><span class="t"><b>Season outlook</b><span class="wrap">Playoff odds and a projected record, from the rest of the schedule</span></span>${chev}</button></div>`}</div>` : '';
+    $main.innerHTML = topbar(esc(t0.shortDisplayName || t0.name || t0.displayName || ''), '#teams') + hero + strip + nextHtml + outlook + rosterHtml + schedHtml + injHtml + newsHtml;
     document.title = `${t0.displayName} · RIVL`;
+    if (simOk) outlookFill(L, String(id), r, { feed: HW.sim.ready(L) });   // fills in from the nightly file when there is one; otherwise the row above offers it
   }
+  /* a team's line from the simulation: odds, projected record, the run left */
+  async function outlookFill(L, id, r, { feed = false } = {}) {
+    const box = $main.querySelector(`.outlook[data-lk="${L.key}"][data-id="${id}"]`); if (!box) return;
+    const v = await HW.sim.season(L, { feed }).catch(() => null);
+    const box2 = $main.querySelector(`.outlook[data-lk="${L.key}"][data-id="${id}"]`); if (!box2 || !v) return;
+    const t = v.byId[id]; if (!t) return; r = r || (v.ctx && v.ctx.cur && v.ctx.cur.byId[id]) || {};
+    const cut = L.playoffLine || []; const playIn = cut.length === 2; const o = v.rest[id] || { n: 0, opp: 0 };
+    const pc = p => p >= .995 ? '>99%' : p < .005 ? (p > 0 ? '<1%' : '0%') : `${Math.round(p * 100)}%`;
+    const ordinalSeed = () => { let best = 0; t.seeds.forEach((p, i) => { if (p > t.seeds[best]) best = i; }); return best + 1; };
+    const runWord = o.n ? (o.opp > 1 ? 'a hard run' : o.opp < -1 ? 'a soft run' : 'an average run') : '';
+    box2.innerHTML = sec('Season outlook') + `<div class="stats four outl"><div><b>${pc(t.playoffs)}</b><span>PLAYOFFS</span></div>${playIn ? `<div><b>${pc(t.top)}</b><span>TOP ${cut[0]}</span></div>` : `<div><b>${pc(t.first)}</b><span>NO. 1</span></div>`}<div><b>${Math.round(t.w)}-${Math.round(t.l)}</b><span>PROJECTED</span></div><div><b>${o.n}</b><span>LEFT</span></div></div><p class="legend">Most likely finish: ${ordinal(ordinalSeed())} in the ${esc(confName(r.group, r.groupAbbr))}${playIn ? ` · play-in ${pc(t.playin)}` : ''}. ${o.n ? `${runWord[0].toUpperCase()}${runWord.slice(1)} left: opponents ${o.opp > 0 ? '+' : o.opp < 0 ? '−' : ''}${Math.abs(o.opp).toFixed(1)} against an average team with home court counted, ${o.home} of ${o.n} at home.` : ''} <a href="#standings" data-act="stab-odds">All the odds</a></p>`;
+  }
+
+  V.outlookFill = outlookFill;
 
   /* ================= GAME ================= */
   const WANT = ['fieldGoalPct', 'threePointFieldGoalPct', 'freeThrowPct', 'totalRebounds', 'assists', 'turnovers', 'steals', 'blocks', 'pointsInPaint', 'fastBreakPoints', 'largestLead'];
@@ -354,7 +397,7 @@
           const strkN = s => { const m = /^([WL])(\d+)$/.exec(String(s || '')); return m ? (m[1] === 'W' ? 1 : -1) * +m[2] : null; };
           const cmp = (x, y) => x == null || y == null || x === y ? 0 : x > y ? -1 : 1;   // -1: away better, 1: home better
           const rows = [];
-          const push = (label, av, hv, better) => rows.push({ label, av, hv, better: better || 0 });
+          const push = (label, av, hv, better, cls = '') => rows.push({ label, av, hv, better: better || 0, cls });
           push('RIVL rating', sg(f.A.rating), sg(f.H.rating), cmp(f.A.rating, f.H.rating));
           if (ra.w != null || rh.w != null) push('Record', ra.w != null ? `${ra.w}-${ra.l}` : '—', rh.w != null ? `${rh.w}-${rh.l}` : '—', cmp(pctOf(`${ra.w}-${ra.l}`), pctOf(`${rh.w}-${rh.l}`)));
           if (ra.diff != null || rh.diff != null) push('Scoring margin', sg(ra.diff), sg(rh.diff), cmp(ra.diff, rh.diff));
@@ -362,9 +405,10 @@
           if (!g.neutral && (ra.road || rh.home)) push('Road / home', ra.road || '—', rh.home || '—', cmp(pctOf(ra.road), pctOf(rh.home)));
           if (ra.strk || rh.strk) push('Streak', ra.strk || '—', rh.strk || '—', cmp(strkN(ra.strk), strkN(rh.strk)));
           if (f.restH || f.restA) push('Rest', f.restA ? 'Back-to-back' : 'Rested', f.restH ? 'Back-to-back' : 'Rested', cmp(f.restA ? 0 : 1, f.restH ? 0 : 1));
-          if (f.soH || f.soA) push('Out', f.soA ? esc(f.soA.name) : 'Full strength', f.soH ? esc(f.soH.name) : 'Full strength', cmp(f.soA ? f.soA.pts : 0, f.soH ? f.soH.pts : 0));
+          const soCell = so => { if (!so) return 'Full strength'; const det = so.detail || []; const dups = a => new Set(a.filter((l, i) => a.indexOf(l) !== i)); const dup = dups(det.map(d => d.last)); const ini = d => `${d.name[0]}. ${d.last}`; const dup2 = dups(det.filter(d => dup.has(d.last)).map(ini)); const lab = d => !dup.has(d.last) ? d.last : dup2.has(ini(d)) ? d.name : ini(d); return `${det.map(d => `${esc(lab(d))}${d.w < 1 ? '<i>?</i>' : ''}`).join(', ') || esc(so.name)}<small>${so.pts.toFixed(1)}</small>`; };
+          if (f.soH || f.soA) push('Missing', soCell(f.soA), soCell(f.soH), cmp(f.soA ? f.soA.pts : 0, f.soH ? f.soH.pts : 0), 'names');
           const head = t => `<span class="wt" style="--tc:${esc(V._.teamColor(t, L))}">${logo(t.logo, 's', V._.teamColor(t, L))}<b>${esc(t.abbr || t.short)}</b></span>`;
-          const grid = `<div class="why"><div class="why-h"><span></span>${head(g.away)}${head(g.home)}</div>${rows.map(r => `<div class="why-r"><span>${r.label}</span><b class="${r.better < 0 ? 'up' : ''}">${r.av}</b><b class="${r.better > 0 ? 'up' : ''}">${r.hv}</b></div>`).join('')}</div>`;
+          const grid = `<div class="why"><div class="why-h"><span></span>${head(g.away)}${head(g.home)}</div>${rows.map(r => `<div class="why-r"><span>${r.label}</span><b class="${r.better < 0 ? 'up' : ''} ${r.cls}">${r.av}</b><b class="${r.better > 0 ? 'up' : ''} ${r.cls}">${r.hv}</b></div>`).join('')}</div>`;
           const lines = [];
           if (g.state === 'in') lines.push(['Score and time', `${esc((g.home.score > g.away.score ? g.home : g.away).short)} up ${Math.abs(g.home.score - g.away.score)}, ${esc(g.detail)}`]);
           lines.push(['Home court', g.neutral ? 'Neutral floor' : `${esc(g.home.short)} +${f.hca.toFixed(1)}`]);
@@ -373,7 +417,7 @@
           lines.push([g.state === 'pre' ? 'Projected margin' : 'Pregame margin', byLine(f.margin)]);
           if (f.proj) lines.push([g.state === 'pre' ? 'Projected score' : 'Pregame projection', `${esc(g.away.abbr)} ${f.proj.away} · ${esc(g.home.abbr)} ${f.proj.home}`]);
           lines.push([g.state === 'pre' ? 'Win chance' : 'Pregame chance', `${esc(fav.short)} ${pct(p)}`]);
-          const ratingNote = f.source === 'elo' ? 'RIVL\'s rating is an Elo built from scoring margin, rebuilt every night.' : 'RIVL\'s rating is this season\'s scoring margin blended with last season\'s, weighted by games played.';
+          const ratingNote = (f.source === 'elo' ? 'RIVL\'s rating is an Elo built from scoring margin, rebuilt every night.' : 'RIVL\'s rating is this season\'s scoring margin blended with last season\'s, weighted by games played.') + (f.soH || f.soA ? ' A missing player costs what he produces above his team\'s own bench, scaled by his minutes; a ? marks a status short of out, counted in part.' : '');
           const note = (f.mkt != null ? `The forecast starts from the market line and lets RIVL's rating, rest and injuries pull it (${Math.round((1 - f.w) * 100)}% RIVL). ` : '') + ratingNote + ` <a href="#record">How the calls have done</a>`;
           body += sec(g.state === 'post' ? `Had ${esc(fav.short)} ${pct(p)}` : `Why ${esc(fav.short)} ${pct(p)}`) + grid + `<table class="tbl kv why-kv"><tbody>${lines.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</tbody></table><p class="why-n">${note}</p>`;
         }
