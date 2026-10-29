@@ -594,6 +594,7 @@
   /* ================= ARTICLE READER ================= */
   const ALLOW = new Set(['P', 'H2', 'H3', 'H4', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'STRONG', 'B', 'EM', 'I', 'A', 'BR', 'FIGURE', 'FIGCAPTION', 'IMG']);
   const DROP = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'ASIDE', 'NAV', 'FORM', 'OBJECT', 'EMBED', 'VIDEO', 'AUDIO', 'SVG', 'BUTTON', 'INPUT']);
+  const WRAPS = new Set(['DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'MAIN', 'TABLE', 'TR', 'TD', 'TH', 'DL', 'DT', 'DD', 'PRE', 'H1', 'H5', 'H6', 'CENTER', 'SUMMARY', 'DETAILS']);
   /* ESPN links inside a story that have a screen here: players, teams, games and other stories stay in the app */
   const LG = { nba: 'nba', wnba: 'wnba', 'mens-college-basketball': 'ncaam', 'womens-college-basketball': 'ncaaw' };
   const ESPN_LINK = /^https?:\/\/(?:www\.)?espn\.com\/(nba|wnba|mens-college-basketball|womens-college-basketball)\/(player|team|game|recap|boxscore|story)\/_\/(id|name|gameId)\/([A-Za-z0-9]+)/i;
@@ -613,14 +614,53 @@
         if (n.nodeType !== 1) return;
         if (DROP.has(n.tagName) || /inline-?video|video-?container|ad-|promo/i.test(n.className || '')) { n.remove(); return; }
         walk(n);
-        if (!ALLOW.has(n.tagName)) { n.replaceWith(...n.childNodes); return; }
+        if (!ALLOW.has(n.tagName)) { if (WRAPS.has(n.tagName)) n.replaceWith(doc.createElement('br'), ...n.childNodes, doc.createElement('br')); else n.replaceWith(...n.childNodes); return; }   // a block wrapper's edges are paragraph edges; tidy turns the breaks into paragraphs
         [...n.attributes].forEach(a => { if (!((n.tagName === 'A' && a.name === 'href') || (n.tagName === 'IMG' && a.name === 'src'))) n.removeAttribute(a.name); });
         if (n.tagName === 'A') { const u = n.getAttribute('href') || ''; const here = inApp(u, idxs); if (here) n.setAttribute('href', here); else if (!/^https?:/i.test(u)) n.replaceWith(...n.childNodes); else { n.setAttribute('target', '_blank'); n.setAttribute('rel', 'noopener'); } }
         if (n.tagName === 'IMG') { const u = n.getAttribute('src') || ''; if (!/^https:/i.test(u)) n.remove(); else { n.setAttribute('loading', 'lazy'); n.setAttribute('alt', ''); } }
       });
     };
     walk(root);
+    tidy(root, doc);
     return root.innerHTML.trim();
+  }
+  /* paragraphs, evenly: a story that arrives as one run of text (the wire previews and recaps — newlines lost, section labels
+     run together) is broken on its newlines and its labels; stray text between blocks gets a paragraph; a line break run
+     inside a paragraph is a paragraph break; empty paragraphs go. Nothing is reworded — only where the breaks fall. */
+  const BLOCKS = new Set(['P', 'H2', 'H3', 'H4', 'UL', 'OL', 'BLOCKQUOTE', 'FIGURE']);
+  const blank = s => !String(s == null ? '' : s).replace(/[\s ]/g, '');
+  const LABEL = /(?:^|\s)((?:BOTTOM LINE|TOP PERFORMERS?|LAST 10 GAMES|INJURIES|UP NEXT|NEXT GAMES?|NEXT UP|KEY STATS?|TAKEAWAYS?|THE TAKEAWAY|WHAT'S NEXT|BIG PICTURE|STAT OF THE GAME|POLL IMPLICATIONS|KEY MATCHUP)):\s+(?=\S)/g;
+  function tidy(root, doc) {
+    const P = (nodes) => { const p = doc.createElement('p'); nodes.forEach(n => p.appendChild(n)); return p; };
+    // 1. one run of text, no blocks at all: its newlines are the paragraphs
+    if (![...root.children].some(c => BLOCKS.has(c.tagName))) {
+      const parts = root.textContent.split(/\n\s*\n|\r?\n/).map(s => s.trim()).filter(Boolean);
+      root.innerHTML = ''; parts.forEach(s => { const p = doc.createElement('p'); p.textContent = s; root.appendChild(p); });
+    }
+    // 2. text and inline elements lying between blocks become a paragraph of their own
+    let run = [];
+    const flush = (before) => { if (run.some(n => n.nodeType === 1 || !blank(n.textContent))) root.insertBefore(P(run), before); else run.forEach(n => n.remove()); run = []; };
+    [...root.childNodes].forEach(n => { if (n.nodeType === 1 && (BLOCKS.has(n.tagName) || n.tagName === 'IMG')) flush(n); else if (n.nodeType === 1 && n.tagName === 'BR') { flush(n); n.remove(); } else run.push(n); });
+    flush(null);
+    // 3. a run of line breaks inside a paragraph is a paragraph break
+    [...root.querySelectorAll('p')].forEach(p => {
+      if (!p.querySelector('br')) return;
+      const groups = [[]]; [...p.childNodes].forEach(n => { if (n.nodeType === 1 && n.tagName === 'BR') { if (groups[groups.length - 1].length) groups.push([]); } else groups[groups.length - 1].push(n); });
+      const ps = groups.filter(g => g.some(n => n.nodeType === 1 || !blank(n.textContent))).map(P);
+      ps.forEach(q => p.before(q)); p.remove();
+    });
+    // 4. the wire's section labels (BOTTOM LINE, TOP PERFORMERS, …) head their own paragraphs
+    [...root.querySelectorAll('p')].forEach(p => {
+      if (p.children.length && [...p.children].some(c => c.tagName !== 'STRONG' && c.tagName !== 'B')) return;   // only plain text paragraphs (links and the like stay as they are)
+      const text = p.textContent; LABEL.lastIndex = 0; if (!LABEL.test(text)) return;
+      const out = []; let last = 0; LABEL.lastIndex = 0; let m;
+      while ((m = LABEL.exec(text))) { const before = text.slice(last, m.index).trim(); if (before) out.push(['p', before]); out.push(['h', m[1]]); last = m.index + m[0].length; }
+      const rest = text.slice(last).trim(); if (rest) out.push(['p', rest]);
+      out.forEach(([k, s]) => { const el = doc.createElement(k === 'h' ? 'h3' : 'p'); if (k === 'h') { el.className = 'lab'; el.textContent = s.charAt(0) + s.slice(1).toLowerCase(); } else el.textContent = s; p.before(el); });
+      p.remove();
+    });
+    // 5. empty paragraphs go
+    [...root.querySelectorAll('p')].forEach(p => { if (blank(p.textContent) && !p.querySelector('img')) p.remove(); });
   }
   async function articleV(lk, id) {
     const cached = S.news[id] || null;

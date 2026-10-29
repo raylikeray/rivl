@@ -409,7 +409,12 @@ button.row:last-child{border-bottom:0}
 .reader .dek{font-size:17px;line-height:1.5;color:var(--ink-2);margin:16px 0 0}
 .reader .body{margin-top:18px;font-size:17px;line-height:1.6;max-width:68ch}
 .reader .body p{margin:0 0 1.1em}
+.reader .body>:first-child{margin-top:0}
+.reader .body>:last-child{margin-bottom:0}
 .reader .body h2,.reader .body h3,.reader .body h4{font-size:19px;margin:1.5em 0 .5em;letter-spacing:-.01em}
+.reader .body h3.lab{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:1.6em 0 .45em}
+.reader .body p+h2,.reader .body p+h3:not(.lab){margin-top:1.3em}
+.reader .body>br{display:none}
 .reader .body ul,.reader .body ol{padding-left:1.2em;margin:0 0 1.1em}
 .reader .body li{margin:0 0 .4em}
 .reader .body blockquote{margin:0 0 1.1em;padding:0 0 0 14px;border-left:3px solid var(--line-2);color:var(--ink-2)}
