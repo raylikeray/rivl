@@ -58,7 +58,7 @@
     if (fitCache.has(src)) return fitCache.get(src);
     const p = new Promise(res => {
       const im = new Image(); im.crossOrigin = 'anonymous';
-      im.onload = () => { try { const S = 72; const c = document.createElement('canvas'); c.width = S; c.height = S; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, S, S); const d = x.getImageData(0, 0, S, S).data; let x0 = S, y0 = S, x1 = -1, y1 = -1; for (let y = 0; y < S; y++) for (let xx = 0; xx < S; xx++) if (d[(y * S + xx) * 4 + 3] > 30) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; } if (x1 < 0) return res(null); const w = (x1 - x0 + 1) / S, h = (y1 - y0 + 1) / S; res({ scale: Math.min(1.7, Math.min(1 / w, 1 / h) * 0.94), fx: -(((x0 + x1 + 1) / 2) / S - .5), fy: -(((y0 + y1 + 1) / 2) / S - .5) }); } catch { res(null); } };
+      im.onload = () => { try { const S = 72; const c = document.createElement('canvas'); c.width = S; c.height = S; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, S, S); const d = x.getImageData(0, 0, S, S).data; let x0 = S, y0 = S, x1 = -1, y1 = -1; for (let y = 0; y < S; y++) for (let xx = 0; xx < S; xx++) if (d[(y * S + xx) * 4 + 3] > 30) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; } if (x1 < 0) return res(null); const w = (x1 - x0 + 1) / S, h = (y1 - y0 + 1) / S; res({ scale: Math.min(1.45, Math.max(1, Math.min(1 / w, 1 / h) * 0.94)), fx: -(((x0 + x1 + 1) / 2) / S - .5), fy: -(((y0 + y1 + 1) / 2) / S - .5) }); } catch { res(null); } };
       im.onerror = () => res(null); im.src = src;
     });
     fitCache.set(src, p); return p;

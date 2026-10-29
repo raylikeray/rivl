@@ -9,7 +9,9 @@
   /* ---------- small helpers ---------- */
   const H = (strings, ...vals) => strings.reduce((out, s, i) => out + s + (i < vals.length ? vals[i] : ''), '');
   const dark = c => c && HW.darkOf(c, c) || '#1d2633';
-  const teamColor = t => hx(t && t.color) || '#2A2D33';
+  const teamIdx = {};   // every team in a league, keyed by id, once the list has loaded
+  const UNK = '#55606e';   // what core.js's hx() hands back when a feed has no colour (schedules, some summaries)
+  const teamColor = (t, L) => { const c = t && t.color ? hx(t.color) : ''; if (c && c.toLowerCase() !== UNK) return c; const ix = L && teamIdx[L.key] && teamIdx[L.key][String(t && t.id)]; return (ix && ix.color) || c || '#2A2D33'; };
   /* team colour on the two grounds: lifted toward white on black, deepened toward black on white */
   const rgbOf = c => { const h = String(c || '').replace('#', ''); return h.length >= 6 ? [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)) : null; };
   const lumOf = c => { const v = rgbOf(c); return v ? (0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]) / 255 : .5; };
@@ -18,7 +20,7 @@
   const V_deep = c => { const l = lumOf(c); return l < 0.5 ? c : mixTo(c, 0, l > 0.75 ? 0.5 : 0.32); };
   /* teams whose signature colour is their secondary: their score takes that one so the Lakers read gold, not Jazz purple */
   const SIG_ALT = { nba: { LAL: 1, IND: 1, DEN: 1, MIN: 1 }, wnba: { LA: 1, LAS: 1 } };
-  const scoreColor = (L, t) => { const alt = hx(t && t.alt); return alt && SIG_ALT[L.key] && SIG_ALT[L.key][t.abbr] ? alt : teamColor(t); };
+  const scoreColor = (L, t) => { const alt = hx(t && t.alt); return alt && SIG_ALT[L.key] && SIG_ALT[L.key][t.abbr] ? alt : teamColor(t, L); };
   const scVars = (t, L) => { const c = L ? scoreColor(L, t) : teamColor(t); return `--tc:${esc(c)};--tcd:${esc(V_lift(c))};--tcl:${esc(V_deep(c))}`; };
   const href = { player: (lk, id) => `#player/${lk}/${id}`, team: (lk, id) => `#team/${lk}/${id}`, game: (lk, id) => `#game/${lk}/${id}` };
   const hide = `onerror="this.style.visibility='hidden'"`;
@@ -69,7 +71,7 @@
     const homeFav = f.pHome >= .5; const p = homeFav ? f.pHome : 1 - f.pHome; const fav = homeFav ? g.home : g.away;
     const note = g.state === 'post' ? '' : f.soH ? `${esc(f.soH.name)} out` : f.soA ? `${esc(f.soA.name)} out` : (f.restH && !f.restA) ? `${esc(g.home.short)} on a back-to-back` : (f.restA && !f.restH) ? `${esc(g.away.short)} on a back-to-back` : '';
     const label = g.state === 'post' ? `Had ${esc(fav.short)} ${pct(p)}` : `${esc(fav.short)} ${pct(p)}`;
-    return `<div class="fc"><div class="bar"><i style="width:${(f.pHome * 100).toFixed(1)}%;background:${esc(teamColor(g.home))}"></i><i style="width:${((1 - f.pHome) * 100).toFixed(1)}%;background:${esc(teamColor(g.away))}"></i></div><b>${label}${note ? `<small>${note}</small>` : ''}</b></div>`;
+    return `<div class="fc"><div class="bar"><i style="width:${(f.pHome * 100).toFixed(1)}%;background:${esc(teamColor(g.home, L))}"></i><i style="width:${((1 - f.pHome) * 100).toFixed(1)}%;background:${esc(teamColor(g.away, L))}"></i></div><b>${label}${note ? `<small>${note}</small>` : ''}</b></div>`;
   }
   /* one team's line on a card: the side that is ahead (leading live, or the winner) gets its score in the team colour */
   function side(L, g, t, other) {
@@ -89,7 +91,7 @@
   /* the hero: on Home it is one link to the game; on the game page each team is a link to its own page */
   function heroCard(L, g, ctx, { page = false } = {}) {
     const f = prefs.get('forecast') ? safeF(L, g, ctx) : null;
-    const a = teamColor(g.away), b = teamColor(g.home);
+    const a = teamColor(g.away, L), b = teamColor(g.home, L);
     const fav = f ? (f.pHome >= .5 ? g.home : g.away) : null; const p = f ? Math.max(f.pHome, 1 - f.pHome) : 0;
     const tm = t => page ? `<a class="tm" href="${href.team(L.key, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo)}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></a>` : `<div class="tm">${logo(t.logo)}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></div>`;
     const inner = `<div class="in">
@@ -118,7 +120,6 @@
   }
 
   /* every team in the league, keyed by id: colour and logo for discs and rails */
-  const teamIdx = {};
   async function teamsIndex(L) {
     if (teamIdx[L.key]) return teamIdx[L.key];
     let d = await jSoft(`${API(L)}/teams?limit=500`, 3600000);
