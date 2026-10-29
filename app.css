@@ -1110,3 +1110,7 @@ button.thead:active{transform:scale(.985)}
 /* hero team names shrink before they clip; the score gives a little on narrow phones */
 .hero .tm b{font-size:clamp(12.5px,3.9vw,16px);white-space:nowrap}
 .hero .mid .sc{font-size:clamp(44px,13.5vw,58px)}
+
+/* record: three columns */
+.why-h.why3,.why-r.why3{grid-template-columns:1fr 80px 80px 80px}
+.why-h.why3 .wt b{font-size:12.5px}

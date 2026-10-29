@@ -102,8 +102,22 @@ function parseEvent(e, L) {
     tv: tvOf(c), neutral: !!c.neutralSite, confGame: !!c.conferenceCompetition,
     note: (c.notes && c.notes[0] && c.notes[0].headline) || (e.season && e.season.slug === 'post-season' ? 'Postseason' : ''),
     headline: c.headlines && c.headlines[0] && (c.headlines[0].shortLinkText || c.headlines[0].description) || '',
-    sit: situationOf(c, L, t.state)
+    sit: situationOf(c, L, t.state),
+    odds: oddsOf(c.odds || e.pickcenter || [], home, away)
   };
+}
+/* the market's line, from the home side: spread (negative when the home team is favoured), total, moneylines */
+function oddsOf(list, home, away) {
+  const o = Array.isArray(list) ? (list.find(x => x && (x.details || x.spread != null)) || null) : null; if (!o) return null;
+  const det = String(o.details || '').trim(); let spread = null;
+  const m = det.match(/^([A-Z]{2,5})\s*([+-]?\d+(?:\.\d+)?)$/i);
+  const hFav = o.homeTeamOdds && o.homeTeamOdds.favorite === true, aFav = o.awayTeamOdds && o.awayTeamOdds.favorite === true;
+  if (m) { const line = Math.abs(parseFloat(m[2])); const favHome = m[1].toUpperCase() === String(home.abbr || '').toUpperCase() || (hFav && !aFav); spread = favHome ? -line : line; }
+  else if (o.spread != null && isFinite(+o.spread)) { const line = Math.abs(+o.spread); spread = hFav ? -line : aFav ? line : +o.spread; }
+  else if (/^EVEN$/i.test(det) || /pick/i.test(det)) spread = 0;
+  if (spread == null) return null;
+  const ml = x => x && x.moneyLine != null && isFinite(+x.moneyLine) ? +x.moneyLine : null;
+  return { spread, total: o.overUnder != null && isFinite(+o.overUnder) ? +o.overUnder : null, mlHome: ml(o.homeTeamOdds), mlAway: ml(o.awayTeamOdds), provider: o.provider && o.provider.name || '', details: det };
 }
 /* live situation: down and distance with the ball (football), outs and runners (baseball); null otherwise */
 function situationOf(c, L, state) {
@@ -212,6 +226,7 @@ function starOut(L, side, ctx) {
 const paramsOf = (L, ctx) => { const P = ctx && ctx.params; return { hca: P && P.hca != null ? P.hca : L.hca, b2b: P && P.b2b != null ? P.b2b : L.b2b, sd: P && P.sd != null ? P.sd : L.sd, calib: P && P.calib ? P.calib : null }; };
 const logit = p => Math.log(p / (1 - p)), sigm = z => 1 / (1 + Math.exp(-z));
 const calibrate = (p, c) => { if (!c || !isFinite(c.a) || !isFinite(c.b)) return p; const q = Math.min(.995, Math.max(.005, p)); return sigm(c.a * logit(q) + c.b); };
+const AVG_TOTAL = { nba: 228, wnba: 166, ncaam: 146, ncaaw: 132 };
 function forecast(L, g, ctx) {
   const H = strength(L, g.home.id, ctx), A = strength(L, g.away.id, ctx);
   const P = paramsOf(L, ctx);
@@ -219,7 +234,17 @@ function forecast(L, g, ctx) {
   const restH = ctx.b2b && ctx.b2b.has(g.home.id) ? -P.b2b : 0, restA = ctx.b2b && ctx.b2b.has(g.away.id) ? -P.b2b : 0;
   const soH = starOut(L, g.home, ctx), soA = starOut(L, g.away, ctx);
   const inj = (soH ? soH.pts : 0) - (soA ? soA.pts : 0);
-  const margin = (H.rating - A.rating) + hca + (restH - restA) + (H.form - A.form) + inj;
+  const own = (H.rating - A.rating) + hca + (restH - restA) + (H.form - A.form) + inj;   // RIVL's own margin, home side
+  /* the market anchor: the closing line is the best single forecast there is, so when a line exists the margin starts
+     there and RIVL's own number pulls it (the line may not have moved for a late injury report or a rest edge) */
+  const mkt = g.odds && g.odds.spread != null ? -g.odds.spread : null;
+  const w = mkt == null ? 0 : (ctx.params && ctx.params.mkt != null ? ctx.params.mkt : 0.6);
+  const margin = mkt == null ? own : w * mkt + (1 - w) * own;
+  // a projected score: the market total when there is one, else both teams' scoring, else the league's typical game
+  const rH = ctx.cur && ctx.cur.byId && ctx.cur.byId[g.home.id], rA = ctx.cur && ctx.cur.byId && ctx.cur.byId[g.away.id];
+  const pace = rH && rA && rH.ppg && rA.ppg && rH.opp && rA.opp ? ((+rH.ppg + +rA.opp) / 2 + (+rA.ppg + +rH.opp) / 2) : null;
+  const total = g.odds && g.odds.total ? g.odds.total : pace || AVG_TOTAL[L.key] || 150;
+  const proj = { home: Math.round((total + margin) / 2), away: Math.round((total - margin) / 2) };
   let p = calibrate(Phi(margin / P.sd), P.calib), live = false;
   if (g.state === 'in' && g.home.score != null && g.away.score != null) {
     const frac = fracLeft(L, g);
@@ -227,7 +252,7 @@ function forecast(L, g, ctx) {
     const sd = (P.sd + 2) * Math.sqrt(frac) + 1.5;
     p = Phi((lead + margin * frac) / sd); live = true;
   }   // finals keep the pregame estimate so cards can show hit/miss
-  return { pHome: p, margin, live, H, A, hca, restH, restA, soH, soA, source: H.source === 'elo' && A.source === 'elo' ? 'elo' : 'margin' };
+  return { pHome: p, margin, own, mkt, w, total, proj, odds: g.odds || null, live, H, A, hca, restH, restA, soH, soA, source: H.source === 'elo' && A.source === 'elo' ? 'elo' : 'margin' };
 }
 /* share of the game still to be played, by sport */
 function fracLeft(L, g) {

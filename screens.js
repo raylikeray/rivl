@@ -251,9 +251,13 @@
           const lines = [];
           if (g.state === 'in') lines.push(['Score and time', `${esc((g.home.score > g.away.score ? g.home : g.away).short)} up ${Math.abs(g.home.score - g.away.score)}, ${esc(g.detail)}`]);
           lines.push(['Home court', g.neutral ? 'Neutral floor' : `${esc(g.home.short)} +${f.hca.toFixed(1)}`]);
-          lines.push([g.state === 'pre' ? 'Projected margin' : 'Pregame margin', `${esc((f.margin >= 0 ? g.home : g.away).short)} by ${Math.abs(f.margin).toFixed(1)}`]);
+          const byLine = m => `${esc((m >= 0 ? g.home : g.away).short)} by ${Math.abs(m).toFixed(1)}`;
+          if (f.mkt != null) { lines.push(['Market line', `${byLine(f.mkt)}${f.odds && f.odds.total ? ` · total ${f.odds.total}` : ''}`]); lines.push(['RIVL alone', byLine(f.own)]); }
+          lines.push([g.state === 'pre' ? 'Projected margin' : 'Pregame margin', byLine(f.margin)]);
+          if (f.proj) lines.push([g.state === 'pre' ? 'Projected score' : 'Pregame projection', `${esc(g.away.abbr)} ${f.proj.away} · ${esc(g.home.abbr)} ${f.proj.home}`]);
           lines.push([g.state === 'pre' ? 'Win chance' : 'Pregame chance', `${esc(fav.short)} ${pct(p)}`]);
-          const note = f.source === 'elo' ? 'RIVL\'s rating is an Elo built from scoring margin, rebuilt every night.' : 'RIVL\'s rating is this season\'s scoring margin blended with last season\'s, weighted by games played.';
+          const ratingNote = f.source === 'elo' ? 'RIVL\'s rating is an Elo built from scoring margin, rebuilt every night.' : 'RIVL\'s rating is this season\'s scoring margin blended with last season\'s, weighted by games played.';
+          const note = (f.mkt != null ? `The forecast starts from the market line and lets RIVL's rating, rest and injuries pull it (${Math.round((1 - f.w) * 100)}% RIVL). ` : '') + ratingNote + ` <a href="#record">How the calls have done</a>`;
           body += sec(g.state === 'post' ? `Had ${esc(fav.short)} ${pct(p)}` : `Why ${esc(fav.short)} ${pct(p)}`) + grid + `<table class="tbl kv why-kv"><tbody>${lines.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</tbody></table><p class="why-n">${note}</p>`;
         }
         if (ta && th && g.state !== 'pre') { const rows = cmpRows(WANT.slice(0, 6)); if (rows) body += sec('Team stats', '', `<button data-act="gtab" data-tab="stats">All</button>`) + `<div class="cmp">${rows}</div>`; }
@@ -470,7 +474,7 @@
     } else if (cat === 'app') {
       body = sec('App') + `<div class="rows">${standalone ? '' : `<button class="row" data-act="install"><span class="t"><b>Add to home screen</b><span class="wrap">Opens full screen like an app, your teams first</span></span>${chev}</button>`}<button class="row" data-act="onb-restart"><span class="t"><b>Run setup again</b><span class="wrap">Pick teams and players from the start</span></span>${chev}</button></div>`;
     } else if (cat === 'about') {
-      body = sec('About') + `<p class="foot about">RIVL is a personal fan project. Team names and logos belong to the leagues and their teams. Scores, stats and injury reports come from the leagues' public feeds. Win chances are RIVL's own estimate, not betting advice. All times Central.</p>`;
+      body = sec('Model') + `<div class="rows"><a class="row" href="#record"><span class="t"><b>How the calls have done</b><span class="wrap">Every pregame chance, scored against the result, next to ESPN and the market</span></span>${chev}</a></div>` + sec('About') + `<p class="foot about">RIVL is a personal fan project. Team names and logos belong to the leagues and their teams. Scores, stats and injury reports come from the leagues' public feeds. Win chances are RIVL's own estimate, not betting advice. All times Central.</p>`;
     }
     $main.innerHTML = bar(here[1], '#settings') + body;
     if (V._settingsL) { $main.removeEventListener('rivl:fav', V._settingsL); $main.removeEventListener('rivl:follow', V._settingsL); }
@@ -478,5 +482,30 @@
     $main.addEventListener('rivl:fav', V._settingsL); $main.addEventListener('rivl:follow', V._settingsL);
   }
 
-  Object.assign(V, { standings: standingsV, teams: teamsV, team: teamV, game: gameV, article: articleV, search: searchV, settings: settingsV });
+
+  /* ================= RECORD: how the calls have done, scored honestly against ESPN and the market ================= */
+  async function recordV(lk) {
+    const L = LEAGUES[lk] || LEAGUES.nba; lk = L.key;
+    $main.innerHTML = topbar('Record', '#settings/about', '', null, false) + skeleton(6, 'row');
+    const d = await HW.record(L).catch(() => null);
+    const games = d && Array.isArray(d.games) ? d.games.filter(g => g.hs != null && g.as != null && g.p != null) : [];
+    const lkChips = `<div class="chips" role="tablist">${ORDER.map(k => `<a class="chip${k === lk ? ' on' : ''}" href="#record/${k}" aria-pressed="${k === lk}">${esc(LEAGUES[k].label)}</a>`).join('')}</div>`;
+    if (!games.length) { $main.innerHTML = topbar('Record', '#settings/about', '', null, false) + lkChips + empty('No scored games yet', `<p style="margin:6px 0 0">The nightly job scores every pregame call once the game is final. ${d ? 'Nothing is final for the ' + esc(L.label) + ' yet.' : 'The record file has not been published for the ' + esc(L.label) + '.'}</p>`); return; }
+    // the market's own chance from its line, on the same curve as the model; ESPN's as published
+    const sd = L.sd || 12;
+    const lineP = g => { const m = String(g.line || '').match(/^([A-Z]{2,5})\s*([+-]?\d+(?:\.\d+)?)$/i); if (!m) return null; const pts = Math.abs(parseFloat(m[2])); const homeFav = m[1].toUpperCase() === String(g.h || '').toUpperCase(); return HW.Phi((homeFav ? pts : -pts) / sd); };
+    const score = (rows, f) => { let n = 0, bs = 0, hit = 0; rows.forEach(g => { const p = f(g); if (p == null) return; const y = g.hs > g.as ? 1 : 0; n++; bs += (p - y) * (p - y); hit += ((p >= .5) === (y === 1)) ? 1 : 0; }); return n ? { n, brier: bs / n, hit: hit / n } : null; };
+    const cols = [['RIVL', g => g.p], ['ESPN', g => g.ep != null ? g.ep : null], ['Market', lineP]];
+    const since = days => { const cut = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10); return games.filter(g => g.date >= cut); };
+    const spans = [['Season', games], ['Last 30 days', since(30)], ['Last 7 days', since(7)]];
+    const fmt = x => x == null ? '—' : x.toFixed(3);
+    const pctf = x => x == null ? '—' : Math.round(x * 100) + '%';
+    const table = (title, rows) => { const sc = cols.map(([k, f]) => [k, score(rows, f)]); const best = sc.filter(([, x]) => x).sort((a, b) => a[1].brier - b[1].brier)[0]; return sec(title, `${rows.length} game${rows.length === 1 ? '' : 's'}`) + `<div class="why"><div class="why-h why3"><span></span>${sc.map(([k]) => `<span class="wt"><b>${k}</b></span>`).join('')}</div><div class="why-r why3"><span>Brier score</span>${sc.map(([k, x]) => `<b class="${best && best[0] === k ? 'up' : ''}">${fmt(x && x.brier)}</b>`).join('')}</div><div class="why-r why3"><span>Right side</span>${sc.map(([k, x]) => `<b class="${best && best[0] === k ? 'up' : ''}">${pctf(x && x.hit)}</b>`).join('')}</div><div class="why-r why3"><span>Calls scored</span>${sc.map(([, x]) => `<b>${x ? x.n : '—'}</b>`).join('')}</div></div>`; };
+    const recent = games.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 12);
+    const list = sec('Latest calls') + `<div class="rows">${recent.map(g => { const homeWon = g.hs > g.as; const pick = g.p >= .5 ? g.h : g.a; const hit = (g.p >= .5) === homeWon; const conf = Math.round(Math.max(g.p, 1 - g.p) * 100); return `<a class="row" href="${href.game(lk, g.id)}"><span class="t"><b>${esc(g.a)} ${g.as} at ${esc(g.h)} ${g.hs}</b><span>${esc(dayLabel(g.date, { weekday: 'short', month: 'short', day: 'numeric' }))} · RIVL had ${esc(pick)} ${conf}%${g.line ? ` · line ${esc(g.line)}` : ''}</span></span><span class="res ${hit ? 'w' : 'l'}">${hit ? 'Hit' : 'Miss'}</span></a>`; }).join('')}</div>`;
+    $main.innerHTML = topbar('Record', '#settings/about', '', null, false) + lkChips + spans.map(([t, rows]) => rows.length ? table(t, rows) : '').join('') + list +
+      `<p class="legend">Brier score is the squared error of the chance given to the home team, averaged: 0 is perfect, 0.25 is a coin flip, lower is better. The market's chance is read off the closing line on the same curve the model uses. ESPN's is their published pregame number. Every call is the one made before tip-off and never revised.</p>`;
+  }
+
+  Object.assign(V, { record: recordV, standings: standingsV, teams: teamsV, team: teamV, game: gameV, article: articleV, search: searchV, settings: settingsV });
 })();
