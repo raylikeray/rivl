@@ -1172,3 +1172,10 @@ button.thead:active{transform:scale(.985)}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .chart{--ca:var(--ca-l);--ch:var(--ch-l)} }
 .five .fr b{white-space:normal;overflow-wrap:anywhere;hyphens:manual;line-height:1.1;font-size:clamp(10px,2.85vw,11.5px);letter-spacing:-.01em;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .five .fr a{align-self:start}
+/* game page rhythm: the same breath above and below the tab chips, and the first block starts right under them */
+#gtabs .chips{padding-top:14px;padding-bottom:14px}
+#gbody>.tw:first-child>.tbl{margin-top:0}
+#gbody>.chips:first-child,#gbody>.pchips:first-child{padding-top:0}
+/* the hero's middle column never squeezes the team names: a long TV line ellipsizes instead */
+.hero .mid .tv{max-width:min(160px,40vw);margin-left:auto;margin-right:auto}
+.hero .mid .tv{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.25;text-overflow:clip}
