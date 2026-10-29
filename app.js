@@ -201,12 +201,12 @@
       <div class="cal-h"><button class="ib" data-act="cal-nav" data-ym="${prev}" aria-label="Previous month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button><h3>${esc(title)}<small>${esc(L.label)}</small></h3><button class="ib" data-act="cal-nav" data-ym="${next}" aria-label="Next month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button></div>
       <div class="cal-w">${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(w => `<span>${w}</span>`).join('')}</div>
       <div class="cal-g">${grid(days, counted)}</div>
-      <p class="cal-f"><i class="dot"></i> your teams play${counted ? ' · numbers are games that day' : ''}${note ? ` · ${esc(note)}` : ''}</p>`;
+      <p class="cal-f"><i class="dot"></i> your teams play${counted ? ' · numbers are games that day' : ' · <u></u> games that day'}${note ? ` · ${esc(note)}` : ''}</p>`;
     const html = (days, note, counted = true) => page(days, note, counted);
     if (!keep || $panel.hidden) openPanel(html(null, 'loading'), {}); else $panel.querySelector('.panel-in').innerHTML = html(null, 'loading');
     const r = await V.monthGames(L, ym).catch(() => null);
     if ($panel.hidden || !$panel.querySelector('.cal-g')) return;
-    $panel.querySelector('.panel-in').innerHTML = html(r ? r.days : {}, r ? (r.truncated ? 'counts are partial on the busiest days' : !r.counted ? "counts didn't load" : '') : "the feed didn't answer", !!(r && r.counted));
+    $panel.querySelector('.panel-in').innerHTML = html(r ? r.days : {}, r ? (r.truncated ? 'counts are partial on the busiest days' : '') : "the feed didn't answer", !!(r && r.counted));
   }
 
   function openInjury(key) {

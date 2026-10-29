@@ -144,11 +144,12 @@
       return;
     }
     $main.innerHTML = skeleton(1, 'card') + skeleton(4, 'row');
+    const tIdx = await teamsIndex(L);
     const [games, ctx, inj, news, lp, teams] = await Promise.all([
       S.today[lk] && S.today[lk].length ? S.today[lk] : scoreboard(L, today).catch(() => []),
       forecastCtx(L, today).catch(() => null), mine.length ? injuries(L) : null, jSoft(`${API(L)}/news?limit=25`, 600000),
       fp.length && L.sport === 'basketball' ? leaguePlayers(L).catch(() => null) : null,
-      (async () => { const idx = await teamsIndex(L); const st = await standings(L).catch(() => null); return Promise.all(mine.map(id => teamInfo(L, id, { idx, st }).catch(() => null))); })()
+      (async () => { const st = await standings(L).catch(() => null); return Promise.all(mine.map(id => teamInfo(L, id, { idx: tIdx, st }).catch(() => null))); })()
     ]);
     S.today[lk] = games;
     const P = prefs.all();
@@ -183,23 +184,19 @@
       ? `<div class="rail">${fp.map(p => `<a class="pl" href="${href.player(lk, p.id)}" style="--tc:${esc(p.color || '#2A2D33')}">${headshot(p.img, p.color, 64, p.name)}<b>${esc(p.short || p.name)}</b><span>${esc(ppgOf(p.id) || p.team || '')}</span></a>`).join('')}</div>`
       : empty('Follow the players you watch', '<p style="margin:6px 0 0">They show up here with their scoring line, and their profile is one tap away.</p>', `<a class="btn" href="#players">Find players</a>`)));
 
-    // injuries: one row per injury report, keyed by the report itself so two reports on one player never collide
+    // injuries: one list grouped by team. Your teams show every report, with your players marked; a team you don't
+    // follow appears only for the players you follow on it. Rows are keyed by the report, so two reports on one player never collide.
     if (inj && P.injuries) {
       S.injuries = S.injuries || {};
-      const row = (x, i, t, p) => { const a = x.athlete || {}; const id = athId(a) || (p && p.id) || ''; const key = `h:${t.id}:${id}:${x.id || i}`; S.injuries[key] = { x, id, team: t }; const st = x.status || ''; const cls = /out/i.test(st) ? 'out' : /day|quest|doubt/i.test(st) ? 'q' : /prob|avail/i.test(st) ? 'ok' : ''; const det = x.details || {}; const ret = retInfo(L, det.returnDate); const why = [det.type || det.detail, ret ? ret.short : ''].filter(Boolean).join(', '); const name = a.displayName || (p && p.name) || ''; return `<button class="row" data-act="injury" data-key="${esc(key)}">${headshot(hsUrl(a) || (p && p.img) || '', t.color, 44, name)}<span class="t"><b>${esc(name)}${p && p.team ? `<small>${esc(p.team)}</small>` : ''}</b><span>${esc(why || (x.shortComment || '').slice(0, 80))}</span></span><span class="tag ${cls}">${esc(st)}</span></button>`; };
-      if (mine.length) {
-        const blocks = teams.filter(Boolean).map(t => {
-          const b = inj.byTeam[t.id]; if (!b || !b.list.length) return '';
-          const folded = !!(store.get('v5:injcol', {}) || {})[t.id];
-          return `<div class="injgrp"><button class="injhd" data-act="injcol" data-id="${esc(t.id)}" aria-expanded="${!folded}">${logo(t.logo, 's')}<b>${esc(t.short)}</b><span>${b.list.length}</span>${chev}</button><div class="injbody"${folded ? ' hidden' : ''}>${b.list.map((x, i) => row(x, i, t, null)).join('')}</div></div>`;
-        }).filter(Boolean);
-        if (blocks.length) parts.push(sec('Injuries', 'your teams') + `<div class="rows">${blocks.join('')}</div>`);
-      }
-      if (fp.length) {
-        const want = new Map(fp.map(p => [p.id, p])); const hits = [];
-        (inj.teams || []).forEach(tt => (tt.injuries || []).forEach((x, i) => { const id = athId(x.athlete); if (want.has(id)) hits.push({ x, i, tt, p: want.get(id) }); }));
-        if (hits.length) parts.push(sec('Injuries', 'your players') + `<div class="rows">${hits.map(({ x, i, tt, p }) => row(x, i, { id: String(tt.id || ''), short: tt.displayName || p.team || '', color: p.color || '' }, p)).join('')}</div>`);
-      }
+      const pById = new Map(fp.map(p => [p.id, p]));
+      const row = (x, i, t, p) => { const a = x.athlete || {}; const id = athId(a) || (p && p.id) || ''; const key = `h:${t.id}:${id}:${x.id || i}`; S.injuries[key] = { x, id, team: t }; const st = x.status || ''; const cls = /out/i.test(st) ? 'out' : /day|quest|doubt/i.test(st) ? 'q' : /prob|avail/i.test(st) ? 'ok' : ''; const det = x.details || {}; const ret = retInfo(L, det.returnDate); const why = [det.type || det.detail, ret ? ret.short : ''].filter(Boolean).join(', '); const name = a.displayName || (p && p.name) || ''; return `<button class="row${p ? ' fav' : ''}" data-act="injury" data-key="${esc(key)}">${headshot(hsUrl(a) || (p && p.img) || '', t.color, 44, name)}<span class="t"><b>${esc(name)}${p ? `<i class="fstar" title="You follow them">${starSvg}</i>` : ''}</b><span>${esc(why || (x.shortComment || '').slice(0, 80))}</span></span><span class="tag ${cls}">${esc(st)}</span></button>`; };
+      const groups = [];
+      teams.filter(Boolean).forEach(t => { const b = inj.byTeam[t.id]; if (b && b.list.length) groups.push({ t, rows: b.list.map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })) }); });
+      const have = new Set(groups.map(g => g.t.id));
+      if (fp.length) (inj.teams || []).forEach(tt => { const tid = String(tt.id || ''); if (!tid || have.has(tid)) return; const rows = (tt.injuries || []).map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })).filter(r => r.p); if (!rows.length) return; const ti = tIdx[tid] || {}; groups.push({ t: { id: tid, short: ti.short || tt.displayName || rows[0].p.team || '', logo: ti.logo || '', color: ti.color || rows[0].p.color || '' }, rows, only: true }); });
+      const folds = store.get('v5:injcol', {}) || {};
+      const blocks = groups.map(({ t, rows, only }) => `<div class="injgrp"><button class="injhd" data-act="injcol" data-id="${esc(t.id)}" aria-expanded="${!folds[t.id]}">${logo(t.logo, 's')}<b>${esc(t.short)}</b><span>${only ? 'your players' : rows.length}</span>${chev}</button><div class="injbody"${folds[t.id] ? ' hidden' : ''}>${rows.map(({ x, i, p }) => row(x, i, t, p)).join('')}</div></div>`);
+      if (blocks.length) parts.push(sec('Injuries', 'your teams and players') + `<div class="rows">${blocks.join('')}</div>`);
     }
 
     // news about my teams and players: ESPN tags every story with the teams and athletes it covers; full names are the fallback
@@ -265,12 +262,16 @@
     const d0 = `${ym}-01`, d1 = `${ym}-${String(last).padStart(2, '0')}`;
     const spans = /^ncaa/.test(L.key) ? Array.from({ length: Math.ceil(last / 7) }, (_, i) => [`${ym}-${String(i * 7 + 1).padStart(2, '0')}`, `${ym}-${String(Math.min(last, i * 7 + 7)).padStart(2, '0')}`]) : [[d0, d1]];
     const params = L.sbParams.replace(/&limit=\d+/, '');
-    const [scheds, pages] = await Promise.all([
+    const weeks = Array.from({ length: Math.ceil(last / 7) }, (_, i) => [`${ym}-${String(i * 7 + 1).padStart(2, '0')}`, `${ym}-${String(Math.min(last, i * 7 + 7)).padStart(2, '0')}`]);
+    const span = ([a, b], lim) => fetchJson(`${API(L)}/scoreboard?dates=${HW.compact(addDays(a, -1))}-${HW.compact(addDays(b, 1))}${params}&limit=${lim}`, 30000);
+    const ok = pg => pg && Array.isArray(pg.events);
+    let [scheds, pages] = await Promise.all([
       Promise.all(mine.map(id => jSoft(`${API(L)}/teams/${id}/schedule`, 300000))),
-      Promise.all(spans.map(([a, b]) => fetchJson(`${API(L)}/scoreboard?dates=${HW.compact(addDays(a, -1))}-${HW.compact(addDays(b, 1))}${params}&limit=1000`, 30000)))
+      Promise.all(spans.map(sp => span(sp, 1000)))
     ]);
+    if (!pages.every(ok) && spans.length === 1) pages = await Promise.all(weeks.map(w => span(w, 400)));   // the month was too much in one go: a week at a time
     scheds.forEach(sc => (sc && sc.events || []).forEach(e => mark(dayOf(e), d => { d.mine = true; d.has = true; })));
-    const counted = pages.length > 0 && pages.every(pg => pg && Array.isArray(pg.events)); let truncated = false;
+    const counted = pages.length > 0 && pages.every(ok); let truncated = false;
     pages.forEach(pg => { const evs = pg && pg.events || []; if (evs.length >= 1000) truncated = true; evs.forEach(e => mark(dayOf(e), d => { d.n++; d.has = true; const comp = e.competitions && e.competitions[0]; if (comp && (comp.competitors || []).some(c => c.team && mineSet.has(String(c.team.id)))) d.mine = true; })); });
     if (!counted) { const meta = await sbMeta(L, todayCT()).catch(() => ({ cal: [] })); (meta.cal || []).forEach(d => mark(d, x => { x.has = true; })); }
     const v = { days, counted, truncated };

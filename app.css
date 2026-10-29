@@ -625,3 +625,9 @@ button.injhd{width:100%;border:0;padding:10px 0 4px;font:inherit;color:inherit;t
 button.injhd .chev{margin-left:auto;color:var(--ink-3);transition:transform .18s}
 button.injhd .chev svg{width:18px;height:18px;transform:rotate(90deg)}
 button.injhd[aria-expanded="false"] .chev svg{transform:rotate(0)}
+.calrow{justify-content:center}
+.cal-f u{width:5px;height:5px;border-radius:50%;background:var(--ink-3);display:inline-block;margin:0 2px}
+.row.fav .t b{display:flex;align-items:center;gap:6px}
+.fstar{display:inline-flex;color:var(--ink);font-style:normal}
+.fstar svg{width:13px;height:13px}
+.injhd span{font-weight:700}
