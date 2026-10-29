@@ -1034,3 +1034,36 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
 .pill{transition:color .16s ease}
 .pill.on{transition:color .16s ease .22s}
 .pill:active{transform:none}
+
+/* settings index: an icon disc per category */
+.setidx .row{padding:13px 0}
+.sico{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--ink);background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),var(--plate-shadow)}
+.sico svg{width:20px;height:20px}
+
+/* ---- setup ---- */
+.onb .pills.onb-pills{margin:0 0 14px}
+.onb .pill .ct{background:var(--surf-3);color:var(--ink-2)}
+.onb .pill.on .ct{background:rgba(255,255,255,.25);color:inherit}
+/* the footer: a solid band that covers the list, with a soft fade above it and the safe area below */
+.onb-foot{position:sticky;bottom:calc(-18px - env(safe-area-inset-bottom,0px));margin:auto calc(-1 * var(--gut-r)) calc(-18px - env(safe-area-inset-bottom,0px)) calc(-1 * var(--gut));padding:12px var(--gut-r) calc(14px + env(safe-area-inset-bottom,0px)) var(--gut);background:var(--bg)}
+.onb-foot::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:32px;background:linear-gradient(180deg,transparent,var(--bg));pointer-events:none}
+.onb-list{padding-bottom:8px}
+/* what's picked so far: one rail across every league, each chip removes on tap */
+.onb-picked{margin:-4px 0 10px}
+.onb-picked:empty{display:none}
+.onb-picked-h{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding:0 0 8px}
+.onb-picked-h span{margin-left:6px;font-weight:700;letter-spacing:0;text-transform:none}
+.onb-picked-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 6px;margin:0 -2px}
+.onb-picked-row::-webkit-scrollbar{display:none}
+.pick{flex:none;display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 10px 0 6px;border-radius:12px;border:0;font:inherit;color:inherit;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),var(--plate-shadow);transition:transform .14s ease}
+.pick:active{transform:scale(.96)}
+.pick .logo{width:26px;height:26px;background:none;box-shadow:none}
+.pick .logo::before,.pick .logo::after{display:none}
+.pick .logo img{width:100%;height:100%}
+.pick b{font-size:13px;font-weight:800;white-space:nowrap}
+.pick i{font-style:normal;font-size:10.5px;font-weight:700;color:var(--ink-3);white-space:nowrap}
+.pick s{width:16px;height:16px;border-radius:50%;background:var(--surf-3);position:relative;text-decoration:none;flex:none;margin-left:2px}
+.pick s::before,.pick s::after{content:"";position:absolute;left:4px;top:7.25px;width:8px;height:1.5px;background:var(--ink-2);transform:rotate(45deg)}
+.pick s::after{transform:rotate(-45deg)}
+.onb-sec em{margin-left:auto;font-style:normal;font-size:12px;font-weight:800;color:var(--ink);padding:3px 8px;border-radius:999px;background:var(--surf-3);box-shadow:inset 0 0 0 1px var(--plate-line)}
+[data-accent="team"] .onb-sec em{background:var(--acc);color:var(--acc-ink);box-shadow:none}

@@ -392,29 +392,74 @@
     ['news', 'News', 'Stories about your teams and players']
   ];
   const sw = (k, on, title, body) => `<button class="row sw" data-act="pref" data-pref="${k}" role="switch" aria-checked="${on}"><span class="t"><b>${esc(title)}</b><span class="wrap">${esc(body)}</span></span><span class="switch"></span></button>`;
-  async function settingsV() {
+  /* Settings is an index of categories; each opens its own screen at #settings/<category>. */
+  const SETTINGS = [
+    ['following', 'Following', 'Your teams and players, by league'],
+    ['home', 'Home', 'What the Home screen shows'],
+    ['look', 'Appearance', 'Theme and accent'],
+    ['alerts', 'Alerts', 'Tip-off, close games, finals, injuries'],
+    ['sync', 'Sync', 'Carry your follows to another device'],
+    ['app', 'App', 'Home screen, setup'],
+    ['about', 'About', 'What RIVL is and where the numbers come from']
+  ];
+  const ICONS = {
+    following: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>',
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11 12 3l9 8v10h-6v-6H9v6H3z"/></svg>',
+    look: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>',
+    alerts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/></svg>',
+    sync: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-14.5 4.6M4 12a8 8 0 0 1 14.5-4.6M18 3v5h-5M6 21v-5h5"/></svg>',
+    app: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10 18h4"/></svg>',
+    about: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>'
+  };
+  async function settingsV(cat = '') {
     const P = prefs.all(); const theme = store.get('v5:theme', 'system'); const accent = store.get('v5:accent', 'mono');
     const F = favs.all(); const fp = fplayers.all();
-    const back = `<div class="topbar"><a class="ib" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><span class="ttl">Settings</span></div>`;
-    $main.innerHTML = back + skeleton(6, 'row');
-    const leagues = ORDER.filter(k => (F[k] || []).length);
-    const idxs = {}; await Promise.all(leagues.map(async k => { idxs[k] = await teamsIndex(LEAGUES[k]).catch(() => ({})); }));
-    const teamRows = leagues.flatMap(k => (F[k] || []).map(id => { const t = idxs[k][String(id)] || { id: String(id), name: 'Team', logo: '' }; return `<div class="row prow"><a class="go" href="${href.team(k, t.id)}">${logo(t.logo, '', teamColor(t, LEAGUES[k]))}</a><a class="t" href="${href.team(k, t.id)}"><b>${esc(t.name || t.short)}</b><span>${esc(LEAGUES[k].label)}</span></a><button class="star on" data-act="fav" data-lk="${k}" data-id="${esc(t.id)}" data-name="${esc(t.short || t.name)}" aria-pressed="true" aria-label="Unfollow ${esc(t.name || '')}">${starSvg}</button></div>`; }));
-    const playerRows = fp.map(p => `<div class="row prow"><a class="go" href="${href.player(p.lk, p.id)}">${headshot(p.img, playerColor(p, LEAGUES[p.lk]), 46, p.name)}</a><a class="t" href="${href.player(p.lk, p.id)}"><b>${esc(p.name)}</b><span>${esc([p.team, LEAGUES[p.lk] && LEAGUES[p.lk].label].filter(Boolean).join(', '))}</span></a><button class="star on" data-act="follow-player" data-snap='${esc(JSON.stringify(p))}' aria-pressed="true" aria-label="Unfollow ${esc(p.name)}">${starSvg}</button></div>`);
+    const here = SETTINGS.find(([k]) => k === cat);
+    const bar = (title, backTo) => `<div class="topbar"><a class="ib" href="${backTo}" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><span class="ttl">${esc(title)}</span></div>`;
+    const nTeams = ORDER.reduce((n, k) => n + (F[k] || []).length, 0);
     const standalone = V.standalone ? V.standalone() : false;
-    $main.innerHTML = back +
-      sec('My teams', `${teamRows.length}`, `<a href="#teams">Add</a>`) + (teamRows.length ? `<div class="rows">${teamRows.join('')}</div>` : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`)) +
-      sec('My players', `${playerRows.length}`, `<a href="#players">Add</a>`) + (playerRows.length ? `<div class="rows">${playerRows.join('')}</div>` : empty('No players yet', '', `<a class="btn" href="#players">Find players</a>`)) +
-      sec('Home shows') + `<div class="rows">${PREFS.map(([k, t, b]) => sw(k, P[k] !== false, t, b)).join('')}</div>` +
-      sec('Game cards') + `<div class="rows">${sw('forecast', P.forecast !== false, 'Win chances', "RIVL's own estimate on each game card and game page")}</div>` +
-      sec('Appearance') + `<div class="chips" role="radiogroup" aria-label="Theme">${[['system', 'Match my phone'], ['dark', 'Dark'], ['light', 'Light']].map(([k, l]) => `<button class="chip${theme === k ? ' on' : ''}" data-act="theme" data-theme="${k}" role="radio" aria-checked="${theme === k}">${l}</button>`).join('')}</div>` +
-      `<p class="legend" style="padding-top:0;padding-bottom:8px">Accent</p><div class="chips" role="radiogroup" aria-label="Accent">${[['mono', 'Black and white'], ['team', "My team's colour"]].map(([k, l]) => `<button class="chip${accent === k ? ' on' : ''}" data-act="accent" data-accent="${k}" role="radio" aria-checked="${accent === k}">${l}</button>`).join('')}</div>` +
-      sec('Alerts') + (V.alerts && V.alerts.available() ? `<div class="rows">${sw('alerts', V.alerts.on(), 'Alerts for my teams and players', 'Tip-off, close games, finals and injury changes; nothing else')}${V.alerts.on() ? [['pre', 'Tip-off', '20 minutes before your teams play'], ['close', 'Close games', 'Within 5 in the last 3 minutes'], ['final', 'Finals', 'The score when it ends'], ['inj', 'Injuries', 'Status changes for your players, and anyone newly out on your teams']].map(([k, t, b]) => `<button class="row sw" data-act="alert-pref" data-pref="${k}" role="switch" aria-checked="${V.alerts.prefs()[k] !== false}"><span class="t"><b>${esc(t)}</b><span class="wrap">${esc(b)}</span></span><span class="switch"></span></button>`).join('') + `<button class="row" data-act="alert-test"><span class="t"><b>Send a test alert</b></span>${chev}</button>` : ''}</div>` : empty('Alerts need the RIVL server', '<p style="margin:6px 0 0">Tip-off, close games, finals and injury changes for your teams and players. Available once the server is deployed.</p>')) +
-      sec('Sync') + (V.sync && V.sync.available() ? `<div class="rows"><button class="row" data-act="sync-up"><span class="t"><b>${V.sync.code() ? `Back up to code ${esc(V.sync.code())}` : 'Back up to a code'}</b><span class="wrap">Your teams, players and settings, so another device can pick them up</span></span>${chev}</button></div><div class="search" style="margin-top:6px"><input id="syncCode" type="text" placeholder="Enter a code from another device" autocomplete="off" autocapitalize="characters" maxlength="6" aria-label="Sync code"></div><div class="rows"><button class="row" data-act="sync-down"><span class="t"><b>Restore from that code</b><span class="wrap">Replaces what's followed on this device</span></span>${chev}</button></div>` : empty('Sync needs the RIVL server', '<p style="margin:6px 0 0">Carry your teams and players to another phone or laptop with a six-character code.</p>')) +
-      sec('App') + `<div class="rows">${standalone ? '' : `<button class="row" data-act="install"><span class="t"><b>Add to home screen</b><span class="wrap">Opens full screen like an app, your teams first</span></span>${chev}</button>`}<button class="row" data-act="onb-restart"><span class="t"><b>Run setup again</b><span class="wrap">Pick teams and players from the start</span></span>${chev}</button></div>` +
-      sec('About') + `<p class="foot about">RIVL is a personal fan project. Team names and logos belong to the leagues and their teams. Scores, stats and injury reports come from the leagues' public feeds. Win chances are RIVL's own estimate, not betting advice. All times Central.</p>`;
+
+    if (!here) {   // the index
+      const summary = { following: `${nTeams} team${nTeams === 1 ? '' : 's'} · ${fp.length} player${fp.length === 1 ? '' : 's'}`, home: `${PREFS.filter(([k]) => P[k] !== false).length} of ${PREFS.length} sections on`, look: `${({ system: 'Match my phone', dark: 'Dark', light: 'Light' })[theme] || 'Match my phone'} · ${accent === 'team' ? "team colour" : 'black and white'}`, alerts: V.alerts && V.alerts.available() ? (V.alerts.on() ? 'On' : 'Off') : 'Needs the RIVL server', sync: V.sync && V.sync.available() ? (V.sync.code() ? `Code ${V.sync.code()}` : 'Not backed up') : 'Needs the RIVL server', app: standalone ? 'Installed' : 'Add to home screen', about: '' };
+      $main.innerHTML = bar('Settings', '#home') + `<div class="rows setidx">${SETTINGS.map(([k, t, b]) => `<a class="row" href="#settings/${k}"><span class="sico">${ICONS[k]}</span><span class="t"><b>${esc(t)}</b><span>${esc(summary[k] || b)}</span></span>${chev}</a>`).join('')}</div>`;
+      return;
+    }
+
+    let body = '';
+    if (cat === 'following') {
+      $main.innerHTML = bar('Following', '#settings') + skeleton(6, 'row');
+      const leagues = ORDER.filter(k => (F[k] || []).length || fp.some(p => p.lk === k));
+      const idxs = {}, sts = {}; await Promise.all(leagues.map(async k => { [idxs[k], sts[k]] = await Promise.all([teamsIndex(LEAGUES[k]).catch(() => ({})), standings(LEAGUES[k]).catch(() => null)]); }));
+      const teamRow = (k, t) => { const r = sts[k] && sts[k].byId && sts[k].byId[String(t.id)]; return `<div class="row prow"><a class="go" href="${href.team(k, t.id)}">${logo(t.logo, '', teamColor(t, LEAGUES[k]))}</a><a class="t" href="${href.team(k, t.id)}"><b>${esc(t.name || t.short)}</b><span>${esc(r ? standingLine(r, LEAGUES[k]) : LEAGUES[k].label)}</span></a><button class="star on" data-act="fav" data-lk="${k}" data-id="${esc(t.id)}" data-name="${esc(t.short || t.name)}" aria-pressed="true" aria-label="Unfollow ${esc(t.name || '')}">${starSvg}</button></div>`; };
+      const playerRow = p => `<div class="row prow"><a class="go" href="${href.player(p.lk, p.id)}">${headshot(p.img, playerColor(p, LEAGUES[p.lk]), 46, p.name)}</a><a class="t" href="${href.player(p.lk, p.id)}"><b>${esc(p.name)}</b><span>${esc(p.team || '')}</span></a><button class="star on" data-act="follow-player" data-snap='${esc(JSON.stringify(p))}' aria-pressed="true" aria-label="Unfollow ${esc(p.name)}">${starSvg}</button></div>`;
+      // teams: a sub-label per league. Players: a band per team, under the league
+      const teamsHtml = leagues.map(k => { const list = (F[k] || []).map(id => idxs[k][String(id)] || { id: String(id), name: 'Team', logo: '' }); return list.length ? `<div class="sub">${esc(LEAGUES[k].label)}<span>${list.length}</span></div>${list.map(t => teamRow(k, t)).join('')}` : ''; }).join('');
+      const playersHtml = leagues.map(k => {
+        const mine = fp.filter(p => p.lk === k); if (!mine.length) return '';
+        const groups = new Map(); mine.forEach(p => { const key = p.teamId || p.team || '?'; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(p); });
+        const band = (key, list) => { const p0 = list[0]; const t = idxs[k][String(p0.teamId)] || Object.values(idxs[k]).find(x => [x.abbr, x.short, x.name].some(v => v && String(v).toLowerCase() === String(p0.team || '').toLowerCase())) || null; const name = t ? (t.name || t.short) : (p0.team || 'Team'); return `<div class="thead" style="--tc:${esc(t ? teamColor(t, LEAGUES[k]) : playerColor(p0, LEAGUES[k]))}"><i class="bar"></i>${t && t.logo ? logo(t.logo, 's') : ''}<b>${esc(name)}</b><span class="n">${list.length}</span></div>${list.map(playerRow).join('')}`; };
+        return `<div class="sub">${esc(LEAGUES[k].label)}<span>${mine.length}</span></div>${[...groups.entries()].map(([key, list]) => band(key, list)).join('')}`;
+      }).join('');
+      body = sec('Teams', `${nTeams}`, `<a href="#teams">Add</a>`) + (nTeams ? `<div class="rows">${teamsHtml}</div>` : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`)) +
+        sec('Players', `${fp.length}`, `<a href="#players">Add</a>`) + (fp.length ? `<div class="rows">${playersHtml}</div>` : empty('No players yet', '', `<a class="btn" href="#players">Find players</a>`));
+    } else if (cat === 'home') {
+      body = sec('Home shows') + `<div class="rows">${PREFS.map(([k, t, b]) => sw(k, P[k] !== false, t, b)).join('')}</div>` +
+        sec('Game cards') + `<div class="rows">${sw('forecast', P.forecast !== false, 'Win chances', "RIVL's own estimate on each game card and game page")}</div>`;
+    } else if (cat === 'look') {
+      body = sec('Theme') + `<div class="chips" role="radiogroup" aria-label="Theme">${[['system', 'Match my phone'], ['dark', 'Dark'], ['light', 'Light']].map(([k, l]) => `<button class="chip${theme === k ? ' on' : ''}" data-act="theme" data-theme="${k}" role="radio" aria-checked="${theme === k}">${l}</button>`).join('')}</div>` +
+        sec('Accent') + `<div class="chips" role="radiogroup" aria-label="Accent">${[['mono', 'Black and white'], ['team', "My team's colour"]].map(([k, l]) => `<button class="chip${accent === k ? ' on' : ''}" data-act="accent" data-accent="${k}" role="radio" aria-checked="${accent === k}">${l}</button>`).join('')}</div><p class="legend">The accent colours the switcher, the selected chips and the tab bar after the first team you follow.</p>`;
+    } else if (cat === 'alerts') {
+      body = (V.alerts && V.alerts.available() ? sec('Alerts') + `<div class="rows">${sw('alerts', V.alerts.on(), 'Alerts for my teams and players', 'Tip-off, close games, finals and injury changes; nothing else')}${V.alerts.on() ? [['pre', 'Tip-off', '20 minutes before your teams play'], ['close', 'Close games', 'Within 5 in the last 3 minutes'], ['final', 'Finals', 'The score when it ends'], ['inj', 'Injuries', 'Status changes for your players, and anyone newly out on your teams']].map(([k, t, b]) => `<button class="row sw" data-act="alert-pref" data-pref="${k}" role="switch" aria-checked="${V.alerts.prefs()[k] !== false}"><span class="t"><b>${esc(t)}</b><span class="wrap">${esc(b)}</span></span><span class="switch"></span></button>`).join('') + `<button class="row" data-act="alert-test"><span class="t"><b>Send a test alert</b></span>${chev}</button>` : ''}</div>` : sec('Alerts') + empty('Alerts need the RIVL server', '<p style="margin:6px 0 0">Tip-off, close games, finals and injury changes for your teams and players. Available once the server is deployed.</p>'));
+    } else if (cat === 'sync') {
+      body = sec('Sync') + (V.sync && V.sync.available() ? `<div class="rows"><button class="row" data-act="sync-up"><span class="t"><b>${V.sync.code() ? `Back up to code ${esc(V.sync.code())}` : 'Back up to a code'}</b><span class="wrap">Your teams, players and settings, so another device can pick them up</span></span>${chev}</button></div><div class="search" style="margin-top:6px"><input id="syncCode" type="text" placeholder="Enter a code from another device" autocomplete="off" autocapitalize="characters" maxlength="6" aria-label="Sync code"></div><div class="rows"><button class="row" data-act="sync-down"><span class="t"><b>Restore from that code</b><span class="wrap">Replaces what's followed on this device</span></span>${chev}</button></div>` : empty('Sync needs the RIVL server', '<p style="margin:6px 0 0">Carry your teams and players to another phone or laptop with a six-character code.</p>'));
+    } else if (cat === 'app') {
+      body = sec('App') + `<div class="rows">${standalone ? '' : `<button class="row" data-act="install"><span class="t"><b>Add to home screen</b><span class="wrap">Opens full screen like an app, your teams first</span></span>${chev}</button>`}<button class="row" data-act="onb-restart"><span class="t"><b>Run setup again</b><span class="wrap">Pick teams and players from the start</span></span>${chev}</button></div>`;
+    } else if (cat === 'about') {
+      body = sec('About') + `<p class="foot about">RIVL is a personal fan project. Team names and logos belong to the leagues and their teams. Scores, stats and injury reports come from the leagues' public feeds. Win chances are RIVL's own estimate, not betting advice. All times Central.</p>`;
+    }
+    $main.innerHTML = bar(here[1], '#settings') + body;
     if (V._settingsL) { $main.removeEventListener('rivl:fav', V._settingsL); $main.removeEventListener('rivl:follow', V._settingsL); }
-    V._settingsL = () => { if ((location.hash || '') === '#settings') settingsV(); };
+    V._settingsL = () => { if ((location.hash || '').startsWith('#settings')) settingsV(cat); };
     $main.addEventListener('rivl:fav', V._settingsL); $main.addEventListener('rivl:follow', V._settingsL);
   }
 

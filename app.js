@@ -18,7 +18,7 @@
     if ((m = h.match(/^(player|team|game|article)\/([a-z]+)\/([A-Za-z0-9]+)$/))) return { name: m[1], lk: lkOf(m[2]), args: [lkOf(m[2]), m[3]] };
     if (LEAGUES[h]) { if (store.get('v5:lk') !== h) { store.set('v5:lk', h); if (V.applyAccent) V.applyAccent(); } return { name: store.get('v5:screen', 'home'), lk: h, args: [h] }; }
     if (h === 'search') return { name: 'search', lk: lkOf(store.get('v5:lk', 'nba')), args: [] };
-    if (h === 'settings') return { name: 'settings', lk: lkOf(store.get('v5:lk', 'nba')), args: [] };
+    let sm; if ((sm = h.match(/^settings(?:\/([a-z]+))?$/))) return { name: 'settings', lk: lkOf(store.get('v5:lk', 'nba')), args: [sm[1] || ''] };
     const name = SCREENS.includes(h) ? h : 'home';
     const lk = lkOf(store.get('v5:lk', 'nba'));
     return { name, lk, args: [lk] };
@@ -287,12 +287,13 @@
   async function onbStep(n) {
     const lk = lkOf(onbLk); const L = LEAGUES[lk];
     const dots = `<div class="onb-dots">${Array.from({ length: STEPS }, (_, i) => `<i class="${i === n ? 'on' : ''}"></i>`).join('')}</div>`;
-    const leaguePills = `<div class="pills" style="padding:0 0 14px">${ORDER.map(k => `<button class="pill${k === lk ? ' on' : ''}" data-act="onb-lk" data-lk="${k}" data-step="${n}">${esc(LEAGUES[k].label)}</button>`).join('')}</div>`;
+    const countFor = k => n === 1 ? V.fplayers.all().filter(p => p.lk === k).length : (HW.favs.all()[k] || []).length;
+    const leaguePills = `<div class="pills onb-pills" style="--n:${ORDER.length};--i:${Math.max(0, ORDER.indexOf(lk))}">${ORDER.map(k => `<button class="pill${k === lk ? ' on' : ''}" data-act="onb-lk" data-lk="${k}" data-step="${n}"><span>${esc(LEAGUES[k].label)}</span>${countFor(k) ? `<span class="ct">${countFor(k)}</span>` : ''}</button>`).join('')}</div>`;
     const frame = (title, body, inner, foot) => openPanel(`<div class="onb"><div class="onb-logo">${onbMark}</div>${dots}<h2>${title}</h2><p>${body}</p>${inner}<div class="onb-foot">${foot}</div></div>`, { full: true });
     if (n === 0 || n === 1) {
       const nn = n === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length;
       frame(n === 0 ? 'Pick your teams' : 'Follow some players', n === 0 ? 'They lead Home and are the only ones you get updates about.' : 'Picked from the rosters of the teams you follow. Search any team to see its roster.',
-        n === 0 ? `${leaguePills}<div class="search" style="margin:0 0 12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input id="onbq" type="search" placeholder="Search teams" autocomplete="off"></div><div id="onbList" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`
+        n === 0 ? `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div class="search" style="margin:0 0 12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input id="onbq" type="search" placeholder="Search teams" autocomplete="off"></div><div id="onbList" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`
           : `${leaguePills}<div id="onbPick" class="onb-list"></div>`,
         `<button class="btn ghost" data-act="onb-next" data-step="${n + 1}">Skip</button><button class="btn" data-act="onb-next" data-step="${n + 1}" id="onbNext">${nn ? `Continue with ${nn}` : 'Continue'}</button>`);
       if (n === 1) { await V.playerPicker(document.getElementById('onbPick'), L, { leaders: true, select: true }); return; }
@@ -313,6 +314,7 @@
           const q = inp.value.trim().toLowerCase();
           const html = groups.map(g => { const rows = g.rows.filter(tm => !q || `${tm.name} ${tm.short} ${tm.abbr} ${g.name}`.toLowerCase().includes(q)); if (!rows.length) return ''; return `${g.name ? `<div class="onb-sec"><b>${esc(g.name)}</b><span>${rows.length}</span></div>` : ''}<div class="onb-grid">${rows.map(tm => { const on = HW.favs.has(lk, tm.id); return `<button class="onb-team${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tm.id)}" data-name="${esc(tm.short)}" aria-pressed="${on}"><span class="logo"><img src="${esc(tm.logo || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"></span><b>${esc(tm.short)}</b><span>${tm.rank ? `<em>No. ${tm.rank}</em>` : ''}${esc(tm.rec)}</span><i></i></button>`; }).join('')}</div>`; }).join('');
           list.innerHTML = html || `<div class="empty"><b>No team matches</b><p style="margin:6px 0 0">Try the school, the nickname or the conference.</p></div>`;
+          onbCount();
         };
         paint(); inp.addEventListener('input', paint);
       }
@@ -333,7 +335,15 @@
   /* the Continue button counts what has been picked so far; a team in the Top 25 and in its conference is one tile drawn twice, so every tile re-syncs */
   const onbCount = () => { const b = document.getElementById('onbNext'); if (!b || $panel.hidden) return;
     $panel.querySelectorAll('.onb-team').forEach(t => { const on = HW.favs.has(t.dataset.lk, t.dataset.id); t.classList.toggle('on', on); t.setAttribute('aria-pressed', String(on)); });
-    const step = +(b.dataset.step || 1) - 1; const nn = step === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length; b.textContent = nn ? `Continue with ${nn}` : 'Continue'; };
+    const step = +(b.dataset.step || 1) - 1; const nn = step === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length; b.textContent = nn ? `Continue with ${nn}` : 'Continue';
+    // each section says how many of its tiles are picked; the league pills carry their counts; the rail shows every pick
+    $panel.querySelectorAll('.onb-sec').forEach(h => { const grid = h.nextElementSibling; const k = grid ? grid.querySelectorAll('.onb-team.on').length : 0; let em = h.querySelector('em'); if (k && !em) { em = document.createElement('em'); h.appendChild(em); } if (em) { if (k) em.textContent = `${k} picked`; else em.remove(); } });
+    $panel.querySelectorAll('.onb-pills .pill').forEach(p => { const k = p.dataset.lk; const c = step === 0 ? (HW.favs.all()[k] || []).length : V.fplayers.all().filter(x => x.lk === k).length; let ct = p.querySelector('.ct'); if (c && !ct) { ct = document.createElement('span'); ct.className = 'ct'; p.appendChild(ct); } if (ct) { if (c) ct.textContent = c; else ct.remove(); } });
+    const rail = document.getElementById('onbPicked');
+    if (rail) { const names = {}; $panel.querySelectorAll('.onb-team').forEach(t => { names[`${t.dataset.lk}:${t.dataset.id}`] = { name: t.dataset.name, logo: (t.querySelector('img') || {}).src || '' }; }); const kept = store.get('v5:onbNames', {}) || {}; Object.assign(kept, names); store.set('v5:onbNames', kept);
+      const F = HW.favs.all(); const picks = ORDER.flatMap(k => (F[k] || []).map(id => ({ k, id, ...(kept[`${k}:${id}`] || { name: 'Team', logo: '' }) })));
+      rail.innerHTML = picks.length ? `<div class="onb-picked-h">Picked <span>${picks.length}</span></div><div class="onb-picked-row">${picks.map(p => `<button class="pick" data-act="fav" data-lk="${p.k}" data-id="${esc(p.id)}" data-name="${esc(p.name)}" aria-label="Unfollow ${esc(p.name)}"><span class="logo s"><img src="${esc(p.logo)}" alt="" onerror="this.style.visibility='hidden'"></span><b>${esc(p.name)}</b><i>${esc(LEAGUES[p.k].label)}</i><s></s></button>`).join('')}</div>` : ''; }
+  };
   $panel.addEventListener('rivl:fav', onbCount); $panel.addEventListener('rivl:follow', onbCount);
 
   /* ---------- boot ---------- */
