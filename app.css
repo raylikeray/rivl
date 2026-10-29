@@ -353,7 +353,7 @@ button.row:last-child{border-bottom:0}
 .ehero.team .biglogo.fit{transform:translate(var(--fx,0),calc(-50% + var(--fy,0))) scale(var(--fit,1))}
 .hero .tm .logo img.fit{transform:translate(var(--fx,0),var(--fy,0)) scale(var(--fit,1))}
 .ehero.team .in{max-width:60%}
-.sched .row .d{flex:none;width:34px;font-size:12px;color:var(--ink-3);font-weight:700;line-height:1.15}
+.sched .row .d{flex:none;width:34px;font-size:12px;color:var(--ink-3);font-weight:700;line-height:1.15;text-align:center}
 .sched .row{gap:10px}
 .sched .row .d b{display:block;color:var(--ink);font:800 18px/1 var(--num)}
 .hero.page .mid .sc{font-size:52px}
@@ -816,11 +816,6 @@ body{overscroll-behavior-y:none}
 .fc .bar i + i,.hero .fc.home .bar i{transform-origin:right center}
 .ring svg{animation:ringin .5s cubic-bezier(.2,.8,.2,1) both}
 
-/* injury rows: the face opens the profile, the rest of the row opens the report */
-.row.injrow{padding:9px 0}
-.row.injrow .go{flex:none;display:block;border-radius:50%}
-.row.injrow .t2{flex:1;min-width:0;display:flex;align-items:center;gap:12px;background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
-.row.injrow .t2 .t{flex:1;min-width:0}
-.row.injrow .go:active{transform:scale(.94)}
-.row.injrow .t2:active .t b{color:var(--ink-2)}
+/* injury report sheet: the face opens the profile */
 .inj-head a{flex:none;display:block;border-radius:50%}
+.inj-head a:active{transform:scale(.94)}
