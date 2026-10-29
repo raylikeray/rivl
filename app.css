@@ -878,7 +878,7 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
 .injgrp .injbody{padding:0 2px}
 /* logo discs: the ring is drawn above the artwork, so a round logo never covers it */
 .logo{overflow:hidden}
-.logo img{width:74%;height:74%}
+.logo img{width:70%;height:70%}
 .logo::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;z-index:2}
 .logo.tint::after{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tc) 75%,rgba(255,255,255,.35))}
 :root[data-theme="light"] .logo.tint::after{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--tc) 82%,#fff),inset 0 0 0 3.5px #fff}
@@ -1023,3 +1023,9 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
 .pills{background:linear-gradient(180deg,#121419,#1A1D23);box-shadow:inset 0 1px 2px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.11),0 1px 0 rgba(255,255,255,.03)}
 :root[data-theme="light"] .pills{background:var(--well);box-shadow:var(--well-shadow)}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .pills{background:var(--well);box-shadow:var(--well-shadow)} }
+
+/* disc logos: the artwork centred and sized by its own box (see more.js), not the file's */
+.logo img.fit{transform:translate(var(--fx,0),var(--fy,0)) scale(var(--fit,1));transform-origin:50% 50%}
+/* rails snap to the padded edge, so the first item never slides under the gutter */
+.rail,.brief-row,.media,.dates{scroll-padding-left:var(--gut);scroll-padding-right:var(--gut-r)}
+.rail .pl:first-child{scroll-snap-align:start}
