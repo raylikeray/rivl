@@ -699,3 +699,9 @@ body{overscroll-behavior-y:none}
 .row .t span:has(> .tag){display:flex;align-items:center;gap:6px;white-space:nowrap}
 .row .t span:has(> .tag) .tag{margin:0;top:0}
 .hero .tm .logo{overflow:visible}
+
+/* the hero's win-chance fill grows from the favoured team's side */
+.hero .fc.home .bar{justify-content:flex-end}
+/* brief chips: a hairline edge, no clipped shadow */
+.bchip{box-shadow:inset 0 0 0 1px var(--line)}
+.brief-row{padding:2px 0 10px}

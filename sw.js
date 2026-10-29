@@ -3,9 +3,9 @@
    ESPN's feeds go network-first with a short leash: a fresh answer when there is one, the last good copy
    when the network is slow, down, or ESPN is throttling (429/5xx). Logos, headshots and fonts are cached
    on first sight and served from cache after that. */
-const VERSION = 'rivl-v21';
+const VERSION = 'rivl-v22';
 const SHELL = `${VERSION}-shell`, DATA = `${VERSION}-data`, MEDIA = 'rivl-media';
-const SHELL_FILES = ['./', './index.html', './app.css?v=21', './app.js?v=21', './views.js?v=21', './screens.js?v=21', './config.js?v=21', './js/core.js?v=21', './more.js?v=21', './manifest.webmanifest', './img/mark.svg', './img/icon-192.png', './img/icon-512.png', './img/apple-touch-icon.png'];
+const SHELL_FILES = ['./', './index.html', './app.css?v=22', './app.js?v=22', './views.js?v=22', './screens.js?v=22', './config.js?v=22', './js/core.js?v=22', './more.js?v=22', './manifest.webmanifest', './img/mark.svg', './img/icon-192.png', './img/icon-512.png', './img/apple-touch-icon.png'];
 const FEED = /(^|\.)espn\.com$|\.workers\.dev$/;
 const MEDIA_HOST = /espncdn\.com$|fonts\.gstatic\.com$|fonts\.googleapis\.com$/;
 const DATA_TIMEOUT = 6000;
