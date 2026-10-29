@@ -864,3 +864,24 @@ body{overscroll-behavior-y:none}
 .why-r b.up{font-weight:800;color:var(--ink)}
 .why-kv{margin-top:2px}
 .why-n{margin:10px var(--gut-r) 0 var(--gut);font-size:12.5px;line-height:1.45;color:var(--ink-3)}
+
+/* injury team headers: a plate band with the team's colour bar and a bare logo, so it reads as a heading, not another row */
+button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:10px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge);font-size:14px}
+.injgrp:first-child button.injhd{margin-top:0}
+.injhd .bar{flex:none;width:4px;height:22px;border-radius:2px;background:var(--tc,var(--ink-3));box-shadow:0 0 8px color-mix(in srgb,var(--tc,transparent) 50%,transparent)}
+.injhd .logo{width:30px;height:30px;background:none;box-shadow:none}
+.injhd .logo::before{display:none}
+.injhd .logo img{width:100%;height:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+.injhd b{font-weight:800;letter-spacing:-.01em}
+.injhd span.n{margin-left:2px;font-size:11.5px;font-weight:700;color:var(--ink-2);padding:3px 8px;border-radius:999px;background:var(--surf-3);box-shadow:inset 0 0 0 1px var(--plate-line)}
+.injhd:active{transform:scale(.985)}
+.injgrp .injbody{padding:0 2px}
+/* logo discs: the ring is drawn above the artwork, so a round logo never covers it */
+.logo{overflow:hidden}
+.logo img{width:74%;height:74%}
+.logo::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;z-index:2}
+.logo.tint::after{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tc) 75%,rgba(255,255,255,.35))}
+:root[data-theme="light"] .logo.tint::after{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--tc) 82%,#fff),inset 0 0 0 3.5px #fff}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .logo.tint::after{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--tc) 82%,#fff),inset 0 0 0 3.5px #fff} }
+.hero .tm .logo::after,.onb-team .logo::after,.pp .sec.pp-team h2 .logo::after,.injhd .logo::after{display:none}
+.hero .tm .logo{overflow:visible}
