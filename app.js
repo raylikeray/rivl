@@ -279,11 +279,7 @@
   async function applyAccent() {
     const root = document.documentElement; const mode = store.get('v5:accent', 'mono');
     if (ACCENTS[mode]) { setAccent(root, ACCENTS[mode][0], mode); return; }
-    if (mode !== 'team') { root.removeAttribute('data-accent'); root.style.removeProperty('--acc'); root.style.removeProperty('--acc-ink'); return; }
-    const lk = lkOf(store.get('v5:lk', 'nba')); const F = HW.favs.all(); const pick = (F[lk] || [])[0] ? [lk, F[lk][0]] : ORDER.map(k => [k, (F[k] || [])[0]]).find(([, id]) => id);
-    if (!pick) { root.removeAttribute('data-accent'); return; }
-    await V.teamsIndex(LEAGUES[pick[0]]).catch(() => ({})); const c = V._.teamColor({ id: String(pick[1]) }, LEAGUES[pick[0]]); if (!c || c === '#2A2D33' || c === '#55606e') { root.removeAttribute('data-accent'); return; }
-    setAccent(root, c, 'team');
+    root.removeAttribute('data-accent'); root.style.removeProperty('--acc'); root.style.removeProperty('--acc-ink');   // black and white (an old "team" setting lands here too)
   }
   V.applyAccent = applyAccent; applyAccent();
   document.addEventListener('rivl:fav', () => applyAccent());
