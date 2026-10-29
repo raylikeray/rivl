@@ -45,8 +45,11 @@
     const sched0 = HW.sim && (lk === 'nba' || lk === 'wnba') ? await HW.sim.schedule(L, { feed: false }).catch(() => null) : null;
     const simOk = HW.sim && (L.playoffLine || []).length && (lk === 'nba' || lk === 'wnba') && (!sched0 || sched0.games.some(g => g.t === 2 && !g.x && g.st !== 'post'));
     if (simOk) items.push(['odds', 'Odds']);
+    const TS = await HW.teamStats(L).catch(() => null);
+    if (TS) items.push(['stats', 'Stats']);
     if (!items.some(([k]) => k === tab)) tab = items[0][0];
     if (tab === 'odds') { await oddsTab(L, items, tab, st); return; }
+    if (tab === 'stats') { statsTab(L, items, tab, st, TS); return; }
     if (tab === 'picture') {
       // the bracket as the table stands today: play-in pairs, then the first round, per conference
       const cut = L.playoffLine; const playIn = cut.length === 2;
@@ -84,6 +87,15 @@
     const trs = rows.map((r, i) => { const gl = [gbLine(r, i), tieNote(r, i)].filter(Boolean).join(' · '); return `<tr class="click${favs.has(lk, r.id) ? ' me' : ''}${cuts.includes(i + 1) ? ' cut' : ''}" data-href="${href.team(lk, r.id)}"><td><span class="tm"><span class="rk">${r.pos}</span>${logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))}<span class="nm"><a href="${href.team(lk, r.id)}">${rk && rk[r.id] ? `<i class="ap">${rk[r.id]}</i>` : ''}${esc(r.short || r.name)}</a>${clinchTag(r)}${gl ? `<small>${esc(gl)}</small>` : ''}</span></span></td>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}</tr>`; }).join('');
     const legend = tab === 'league' ? '' : cuts.length === 2 ? `<p class="legend">Top ${cuts[0]} go straight to the playoffs; ${cuts[0] + 1} through ${cuts[1]} play in. Games back count the ${cuts[0]} seed and the last play-in spot. Your teams are marked.</p>` : cuts.length === 1 ? `<p class="legend">Top ${cuts[0]} make the playoffs. Your teams are marked.</p>` : '<p class="legend">Your teams are marked.</p>';
     stPaint(items, tab, `<div class="tw"><table class="tbl stand"><thead><tr><th>${esc(title)}</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${trs}</tbody></table></div>` + legend);
+  }
+  /* every team's ratings and four factors, one league table, best net rating first */
+  function statsTab(L, items, tab, st, TS) {
+    const lk = L.key; const rows = st.groups.flatMap(g => g.rows).map(r => ({ r, t: TS.teams[r.id] })).filter(x => x.t).sort((a, b) => (b.t.net ?? -99) - (a.t.net ?? -99));
+    const f1 = v => v == null ? '—' : (+v).toFixed(1); const sg1 = v => v == null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1); const pc = v => v == null ? '—' : (v * 100).toFixed(1);
+    const cols = [['Off', t => f1(t.ortg)], ['Def', t => f1(t.drtg)], ['Net', t => `<span class="${t.net > 0 ? 'pos' : t.net < 0 ? 'neg' : ''}">${sg1(t.net)}</span>`], ['Pace', t => f1(t.pace)], ['eFG%', t => pc(t.efg)], ['TOV%', t => pc(t.tovr)], ['ORB%', t => pc(t.orbr)], ['FTr', t => pc(t.ftr)]];
+    const table = `<div class="tw"><table class="tbl stand odds tstat"><thead><tr><th>${esc(L.label)}</th>${cols.map(([h]) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(({ r, t }, i) => `<tr class="click${favs.has(lk, r.id) ? ' me' : ''}" data-href="${href.team(lk, r.id)}"><td><span class="tm"><span class="rk">${i + 1}</span>${logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))}<span class="nm"><a href="${href.team(lk, r.id)}">${esc(r.short || r.name)}</a><small>${r.w}-${r.l}</small></span></span></td>${cols.map(([, f]) => `<td>${f(t)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    const legend = `<p class="legend">Off and Def: points scored and allowed per 100 possessions; Net is the gap. Pace: possessions per game. eFG% counts a three as one and a half makes; TOV% is turnovers per possession; ORB% the share of their own misses they rebound; FTr free throws attempted per shot. From each team's season totals, updated nightly.</p>`;
+    stPaint(items, tab, table + legend);
   }
   /* the odds: the rest of the season played out from today's ratings, per conference */
   async function oddsTab(L, items, tab, st) {
@@ -123,6 +135,9 @@
     const [st, idx] = await Promise.all([standings(L).catch(() => null), teamsIndex(L)]);
     const q0 = store.get('v5:tq', '') || '', tab0 = store.get('v5:ttab', 'all');
     const groups = st && st.groups.length ? st.groups.map(g => ({ name: confName(g.name, g.abbr), full: g.name, rows: g.rows.map(r => ({ ...r, logo: r.logo || (idx[r.id] || {}).logo })) })) : [{ name: L.label, full: L.label, rows: Object.values(idx).map(t => ({ id: t.id, short: t.short, name: t.name, logo: t.logo })) }];
+    // today's game for each team, from the slate already in hand: on now, the result, or the tip
+    const byTeam = new Map(); (S.today[lk] || []).forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
+    const todayLine = (g, r) => { const home = g.home.id === String(r.id); const us = home ? g.home : g.away, them = home ? g.away : g.home; const vs = `${g.neutral ? 'vs' : home ? 'vs' : 'at'} ${esc(them.abbr || them.short)}`; if (g.off) return `${esc(g.off)} ${vs}`; if (g.state === 'in') return `<i class="dot"></i>${us.score}–${them.score} ${vs}, ${esc(g.detail)}`; if (g.state === 'post') return `${us.score > them.score ? 'W' : 'L'} ${us.score}–${them.score} ${vs}`; return `${esc(tip(g.date))} ${vs}`; };
     const paint = () => {
       const q = (store.get('v5:tq', '') || '').trim().toLowerCase(), tab = store.get('v5:ttab', 'all');
       const blocks = groups.map(g => {
@@ -130,7 +145,7 @@
         if (tab === 'following') rows = rows.filter(r => favs.has(lk, r.id));
         if (q) rows = rows.filter(r => `${r.name} ${r.short} ${r.abbr || ''}`.toLowerCase().includes(q));
         if (!rows.length) return '';
-        return sec(g.name, '') + `<div class="rows">${rows.map(r => { const on = favs.has(lk, r.id); return `<div class="row prow"><a class="go" href="${href.team(lk, r.id)}" aria-label="${esc(r.name)}">${logo(r.logo, '', teamColor({ id: r.id, abbr: r.abbr }, L))}</a><a class="t" href="${href.team(lk, r.id)}"><b>${esc(r.name || r.short)}</b><span>${esc(standingLine(r, L) || '')}</span></a><button class="star${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(r.id)}" aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(r.name)}">${on ? starSvg : starLine}</button></div>`; }).join('')}</div>`;
+        return sec(g.name, '') + `<div class="rows">${rows.map(r => { const on = favs.has(lk, r.id); const g = byTeam.get(String(r.id)); const today = g ? todayLine(g, r) : ''; return `<div class="row prow${g && g.state === 'in' ? ' live' : ''}"><a class="go" href="${href.team(lk, r.id)}" aria-label="${esc(r.name)}">${logo(r.logo, '', teamColor({ id: r.id, abbr: r.abbr }, L))}</a><a class="t" href="${href.team(lk, r.id)}"><b>${esc(r.name || r.short)}</b><span>${esc(standingLine(r, L) || '')}${today ? `<em class="today">${today}</em>` : ''}</span></a><button class="star${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(r.id)}" aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(r.name)}">${on ? starSvg : starLine}</button></div>`; }).join('')}</div>`;
       }).filter(Boolean).join('');
       const el = $main.querySelector('#tlist'); if (el) el.innerHTML = blocks || empty(tab === 'following' ? 'No followed teams yet' : 'No team matches', tab === 'following' ? '<p style="margin:6px 0 0">Tap the star on any team to follow it.</p>' : '');
     };
@@ -140,6 +155,8 @@
     inp.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { store.set('v5:tq', inp.value); paint(); }, 120); });
     $main.addEventListener('click', e => { const b = e.target.closest('[data-act="ttab"]'); if (!b) return; store.set('v5:ttab', b.dataset.tab); $main.querySelectorAll('[data-act="ttab"]').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); }); paint(); });
     $main.addEventListener('rivl:fav', paint);
+    const onPoll = () => { if (!$main.querySelector('#tlist')) { document.removeEventListener('rivl:polled', onPoll); return; } byTeam.clear(); (S.today[lk] || []).forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); }); if ((S.today[lk] || []).some(isLive)) paint(); };
+    document.addEventListener('rivl:polled', onPoll);
   }
 
   /* ================= TEAM ================= */
@@ -199,8 +216,14 @@
     const newsHtml = arts.length ? sec('News') + `<div class="rows">${arts.map(a => newsRow(lk, a)).join('')}</div>` : '';
     // the season outlook: playoff odds and a projected record when the simulation is cheap to have (nightly schedule, or already run today)
     const simOk = HW.sim && (L.playoffLine || []).length && (lk === 'nba' || lk === 'wnba') && r;
+    const TS = await HW.teamStats(L).catch(() => null); const ts = TS && TS.teams[String(id)];
+    const ord = n => n ? ordinal(n) : '';
+    const pctS = v => v == null ? '—' : `${(v * 100).toFixed(1)}%`; const f1 = v => v == null ? '—' : (+v).toFixed(1); const sg1 = v => v == null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
+    const rk = k => ts && ts.rank && ts.rank[k] ? `<i class="rk ${ts.rank[k] <= 5 ? 'hi' : ts.rank[k] > TS.n - 5 ? 'lo' : ''}">${ord(ts.rank[k])}</i>` : '';
+    const statsHtml = ts ? sec('Team stats', `ranked among ${TS.n}`) + `<div class="stats four tsg"><div><b>${f1(ts.ortg)}</b><span>OFF RTG</span>${rk('ortg')}</div><div><b>${f1(ts.drtg)}</b><span>DEF RTG</span>${rk('drtg')}</div><div><b>${sg1(ts.net)}</b><span>NET</span>${rk('net')}</div><div><b>${f1(ts.pace)}</b><span>PACE</span>${rk('pace')}</div></div>` +
+      `<table class="tbl ff"><thead><tr><th>Four factors</th><th>Offense</th><th>Defense</th></tr></thead><tbody>${[['Effective FG%', 'efg', 'oefg', pctS], ['Turnover rate', 'tovr', 'otovr', pctS], ['Rebounding', 'orbr', 'drbr', pctS], ['Free-throw rate', 'ftr', 'oftr', pctS]].map(([lab, a, b, fmt]) => `<tr><td>${lab}</td><td><b>${fmt(ts[a])}</b>${rk(a)}</td><td><b>${fmt(ts[b])}</b>${rk(b)}</td></tr>`).join('')}</tbody></table><p class="legend">Ratings are points per 100 possessions scored and allowed; pace is possessions per game. The four factors: shooting (effective field-goal %), turnovers per possession, offensive rebounds taken (and defensive rebounds kept), free throws attempted per shot. Ranks are among the league: 1st is best on each line.</p>` : '';
     const outlook = simOk ? `<div class="outlook" data-lk="${lk}" data-id="${esc(String(id))}">${HW.sim.ready(L) ? '' : `<div class="rows"><button class="row" data-act="outlook"><span class="t"><b>Season outlook</b><span class="wrap">Playoff odds and a projected record, from the rest of the schedule</span></span>${chev}</button></div>`}</div>` : '';
-    $main.innerHTML = topbar(esc(t0.shortDisplayName || t0.name || t0.displayName || ''), '#teams') + hero + strip + nextHtml + outlook + rosterHtml + schedHtml + injHtml + newsHtml;
+    $main.innerHTML = topbar(esc(t0.shortDisplayName || t0.name || t0.displayName || ''), '#teams') + hero + strip + nextHtml + outlook + statsHtml + rosterHtml + schedHtml + injHtml + newsHtml;
     document.title = `${t0.displayName} · RIVL`;
     if (simOk) outlookFill(L, String(id), r, { feed: HW.sim.ready(L) });   // fills in from the nightly file when there is one; otherwise the row above offers it
   }

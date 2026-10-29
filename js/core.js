@@ -189,6 +189,8 @@ async function rankings(L) { if (!L.hasRankings) return null; const d = await jS
 async function ratings(L) { return jSoft(`${HW.DATA || 'data/'}${L.key}/ratings.json?d=${todayCT()}`, 900000); }
 async function record(L) { return jSoft(`${HW.DATA || 'data/'}${L.key}/record.json?d=${todayCT()}`, 900000); }
 async function params(L) { return jSoft(`${HW.DATA || 'data/'}${L.key}/params.json?d=${todayCT()}`, 900000); }
+/* every team's four factors, pace and ratings with league ranks (nightly, NBA and WNBA) */
+async function teamStats(L) { if (L.key !== 'nba' && L.key !== 'wnba') return null; const d = await jSoft(`${HW.DATA || 'data/'}${L.key}/teamstats.json?d=${todayCT()}`, 1800000); return d && d.teams && Object.keys(d.teams).length ? d : null; }
 async function injuries(L) { if (!L.hasInjuries) return null; const d = await jSoft(`${API(L)}/injuries`, 600000); if (!d || !d.injuries) return null; const byTeam = {}; d.injuries.forEach(t => { const id = String(t.id || (t.injuries && t.injuries[0] && t.injuries[0].athlete && t.injuries[0].athlete.team && t.injuries[0].athlete.team.id) || ''); byTeam[id] = { name: t.displayName, list: t.injuries || [] }; }); return { teams: d.injuries, byTeam }; }
 
 /* ---------- forecast model ----------
@@ -420,5 +422,5 @@ ORDER.forEach(k => S.today[k] = []);
 const allToday = () => ORDER.flatMap(k => S.today[k]);
 
 Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, API, API2, WEB, logoUrl, seasonYear, favs,
-  parseEvent, isLive, isDone, finalWord, isFav, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, injuries, forecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
+  parseEvent, isLive, isDone, finalWord, isFav, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
 })();

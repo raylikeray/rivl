@@ -1207,3 +1207,29 @@ button.thead:active{transform:scale(.985)}
 /* the scoring leader on a card's team line */
 .game .nm span em.lead{font-style:normal;color:var(--ink-2);font-weight:600}
 .game .nm span em.lead::before{content:" · ";color:var(--ink-3)}
+/* team stats: rank badges on tiles and the four-factors table */
+.stats.tsg div{position:relative;padding-bottom:22px}
+.stats div .rk,.tbl.ff .rk{font-style:normal;font-size:10.5px;font-weight:800;color:var(--ink-3);letter-spacing:.02em}
+.stats.tsg div .rk{position:absolute;left:0;right:0;bottom:7px;text-align:center}
+.rk.hi{color:var(--win)}
+.rk.lo{color:var(--loss)}
+.tbl.ff{margin-top:4px}
+.tbl.ff td b{display:block;font-weight:800}
+.tbl.ff td .rk{display:block;margin-top:1px}
+.tbl.ff td:first-child{color:var(--ink-2)}
+.tbl.tstat th,.tbl.tstat td{padding-left:4px;padding-right:4px;font-size:13px}
+.tbl.tstat td:first-child{padding-left:var(--gut)}
+.tbl.tstat .pos{color:var(--win);font-weight:700}
+.tbl.tstat .neg{color:var(--loss);font-weight:700}
+/* leaders: rank beside the face, the number on the right */
+.row.prow .go{display:flex;align-items:center;gap:8px}
+.lrk{width:18px;text-align:right;font-size:12.5px;font-weight:800;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.row.prow .r{margin-right:-4px}
+.row.prow .r b{font-size:20px}
+.row.prow .r span{font-size:11px;color:var(--ink-3);font-weight:700;display:block}
+.chips.lchips{padding-bottom:10px}
+/* teams list: today's game under the standing */
+.row.prow .t em.today{display:block;font-style:normal;font-size:12.5px;color:var(--ink-2);font-weight:600;margin-top:1px}
+.row.prow.live .t em.today{color:var(--ink)}
+.row.prow .t em.today .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--live);margin:0 5px 1px 0;animation:blink 1.6s infinite}
+.row.prow .go,.row.prow .go .lrk{text-decoration:none}

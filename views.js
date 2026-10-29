@@ -661,12 +661,13 @@
     return { team, players };
   }
   /* a player row: in setup the whole row is the follow toggle; on the Players tab the row opens the profile and the star follows */
-  function playerRow(p, { sub, on, select = false } = {}) {
+  function playerRow(p, { sub, on, select = false, right = '', rank = 0 } = {}) {
     const snap = { lk: p.lk, id: p.id, name: p.name, short: p.short || p.name, img: p.img || '', team: p.team || '', teamId: p.teamId ? String(p.teamId) : '', color: BAD(p.color) ? '' : hx(p.color) };
     const star = `<span class="star${on ? ' on' : ''}">${on ? starSvg : starLine}</span>`;
     const pc = playerColor(p, LEAGUES[p.lk]);
-    if (select) return `<button class="row prow sel${on ? ' on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${on}">${headshot(p.img, pc, 46, p.name)}<span class="t"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></span>${star}</button>`;
-    return `<div class="row prow"><a class="go" href="${href.player(p.lk, p.id)}" aria-label="${esc(p.name)}">${headshot(p.img, pc, 46, p.name)}</a><a class="t" href="${href.player(p.lk, p.id)}"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></a><button class="star${on ? ' on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(p.name)}">${on ? starSvg : starLine}</button></div>`;
+    const rk = rank ? `<span class="lrk">${rank}</span>` : '';
+    if (select) return `<button class="row prow sel${on ? ' on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${on}">${rk}${headshot(p.img, pc, 46, p.name)}<span class="t"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></span>${right}${star}</button>`;
+    return `<div class="row prow"><a class="go" href="${href.player(p.lk, p.id)}" aria-label="${esc(p.name)}">${rk}${headshot(p.img, pc, 46, p.name)}</a><a class="t" href="${href.player(p.lk, p.id)}"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></a>${right}<button class="star${on ? ' on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(p.name)}">${on ? starSvg : starLine}</button></div>`;
   }
   const lastName = n => { const w = String(n || '').replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/i, '').trim().split(/\s+/); return w[w.length - 1] || ''; };
   async function playerPicker(el, L, { following = false, leaders = true, select = false } = {}) {
@@ -700,9 +701,14 @@
         parts.push(`<button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}" style="--tc:${esc(teamColor(s.team, L))}"><i class="bar"></i>${logo(s.team.logo, 's')}<b>${esc(s.team.short)}</b><span class="n">${rows.length}</span>${chev}</button><div class="rows"${folded ? ' hidden' : ''}>${rows.map(p => rowOf(p, s)).join('')}</div>`);
       });
       if (lp && leaders) {
-        const have = shown(); const top = lp.rows.filter(p => !have.has(p.id) && (!q || `${p.name} ${p.team}`.toLowerCase().includes(q))).sort((a, b) => b.pts - a.pts);
+        // league leaders, per game, by category; a search keeps the whole list and filters it by name
+        const CATS = [['pts', 'Points', 'ppg'], ['reb', 'Rebounds', 'rpg'], ['ast', 'Assists', 'apg'], ['tpm', 'Threes', '3PM'], ['stl', 'Steals', 'spg'], ['blk', 'Blocks', 'bpg']];
+        const cat = CATS.find(([k]) => k === paint.lcat) ? paint.lcat : 'pts'; const unit = CATS.find(([k]) => k === cat)[2];
+        const have = q ? new Set() : shown();
+        const top = lp.rows.filter(p => !have.has(p.id) && p.gp >= 3 && (!q || `${p.name} ${p.team}`.toLowerCase().includes(q))).sort((a, b) => (b[cat] || 0) - (a[cat] || 0) || b.pts - a.pts);
         const cut = q || paint.topOpen ? Math.min(top.length, 100) : Math.min(top.length, 15);
-        if (top.length) parts.push(sec('Top scorers', 'this season', cut < top.length ? `<button data-pp="top">More</button>` : '') + `<div class="rows">${top.slice(0, cut).map(p => { const t = idx[p.teamId] || {}; return playerRow({ ...p, lk, color: t.color || '', teamId: p.teamId, team: t.short || p.team }, { sub: [t.short || p.team, posWord(p.pos).toLowerCase(), `${p.pts.toFixed(1)} ppg`].filter(Boolean).join(', '), on: fset.has(p.id), select }); }).join('')}</div>`);
+        const chips = q ? '' : `<div class="chips lchips">${CATS.map(([k, l]) => `<button class="chip${k === cat ? ' on' : ''}" data-pp="lcat" data-cat="${k}" aria-pressed="${k === cat}">${l}</button>`).join('')}</div>`;
+        if (top.length) parts.push(sec(q ? 'Around the league' : 'Leaders', q ? '' : 'per game, three games or more', cut < top.length ? `<button data-pp="top">More</button>` : '') + chips + `<div class="rows">${top.slice(0, cut).map((p, i) => { const t = idx[p.teamId] || {}; const v = p[cat] || 0; return playerRow({ ...p, lk, color: t.color || '', teamId: p.teamId, team: t.short || p.team }, { sub: [t.short || p.team, posWord(p.pos).toLowerCase()].filter(Boolean).join(', '), on: fset.has(p.id), select, right: `<span class="r"><b>${v.toFixed(1)}</b><span>${unit}</span></span>`, rank: q ? 0 : i + 1 }); }).join('')}</div>`);
       }
       if (!parts.length) parts.push(q ? empty('No one matches', '<p style="margin:6px 0 0">Try a last name, or a team to see its whole roster.</p>')
         : mine.length ? empty("Couldn't load your teams' rosters", '<p style="margin:6px 0 0">The feed didn\'t answer. Search a team to try again.</p>')
@@ -715,6 +721,7 @@
     el.addEventListener('click', async e => {
       const b = e.target.closest('[data-pp]'); if (!b) return; e.preventDefault();
       if (b.dataset.pp === 'top') { paint.topOpen = true; paint(); }
+      else if (b.dataset.pp === 'lcat') { paint.lcat = b.dataset.cat; paint.topOpen = false; paint(); const y = list.querySelector('.lchips'); if (y && y.getBoundingClientRect().top < 60) y.scrollIntoView({ block: 'start' }); }
       else if (b.dataset.pp === 'fold') { const f = store.get('v5:ppcol', {}) || {}; const k = b.dataset.id; if (f[k]) delete f[k]; else f[k] = 1; store.set('v5:ppcol', f); const body = b.nextElementSibling; const open = !f[k]; b.setAttribute('aria-expanded', String(open)); if (body) body.hidden = !open; }
       else if (b.dataset.pp === 'browse') { b.querySelector('.t span').textContent = 'Loading…'; const r = await rosterOf(L, b.dataset.id, idx).catch(() => null); if (r) { sections.push({ key: r.team.id, team: r.team, rows: r.players.slice().sort(byLine), open: true }); inp.value = ''; } paint(); }
     });
