@@ -130,10 +130,10 @@
   /* the odds: the rest of the season played out from today's ratings, per conference */
   async function oddsTab(L, items, tab, st) {
     const lk = L.key; const conf = L.standingsMode === 'conference'; const cut = L.playoffLine || []; const playIn = cut.length === 2;
-    const have = HW.sim.ready(L);
-    if (!have) stPaint(items, tab, `<div class="simwait"><div class="skel row"></div><p class="legend" id="simnote">Reading the rest of the schedule…</p></div>`);
+    // today's simulation runs once and is kept; until it has, a note counts the work up (the schedule read, then the runs)
+    if (!HW.sim.have(L)) stPaint(items, tab, `<div class="simwait"><div class="skel row"></div><p class="legend" id="simnote">${HW.sim.ready(L) ? 'Playing out the season…' : 'Reading the rest of the schedule…'}</p></div>`);
     const note = document.getElementById('simnote');
-    const v = await HW.sim.season(L, { onProgress: f => { if (note) note.textContent = `Reading the rest of the schedule… ${Math.round(f * 100)}%`; } }).catch(() => null);
+    const v = await HW.sim.season(L, { onProgress: (f, stage) => { if (note) note.textContent = `${stage === 'sim' ? 'Playing out the season' : 'Reading the rest of the schedule'}… ${Math.round(f * 100)}%`; } }).catch(() => null);
     if ((V.route() || {}).name !== 'standings' || store.get('v5:stab:' + lk) !== 'odds') return;   // they moved on while it loaded
     if (!v) { stPaint(items, tab, empty('No odds yet', '<p style="margin:6px 0 0">The season schedule couldn\'t be read. Try again in a moment.</p>')); return; }
     const { sim, rest, sched } = v;

@@ -56,17 +56,24 @@
     mem[key] = out; return out;
   }
   const ready = L => !!mem[`${L.key}:${DAY()}`];
-  /* the simulation for a league, run once a day and kept */
-  const simMem = {};
-  async function season(L, opts = {}) {
-    const key = `${L.key}:${DAY()}`; if (simMem[key]) return simMem[key];
-    const sched = await schedule(L, opts); if (!sched) return null;
-    const ctx = await HW.forecastCtx(L, DAY()).catch(() => null); if (!ctx || !ctx.cur) return null;
-    const live = {}; (HW.S.today[L.key] || []).forEach(g => { if (g.state === 'in') { try { live[g.id] = HW.forecast(L, g, ctx).pHome; } catch { } } });
-    const sim = simulate(L, ctx, sched, { live }); if (!sim) return null;
-    const rest = restOf(L, ctx, sched);
-    const v = { sim, rest, sched, ctx, byId: Object.fromEntries(sim.teams.map(t => [t.id, t])) };
-    simMem[key] = v; return v;
+  /* the simulation for a league, run once a day and kept; one run at a time, however many screens ask for it.
+     onProgress(f, stage) hears the schedule read ('schedule') and the runs ('sim'), each from 0 to 1. */
+  const simMem = {}, simRun = {};
+  const have = L => !!simMem[`${L.key}:${DAY()}`];
+  function season(L, opts = {}) {
+    const key = `${L.key}:${DAY()}`; if (simMem[key]) return Promise.resolve(simMem[key]);
+    if (simRun[key]) { if (opts.onProgress) simRun[key].listeners.push(opts.onProgress); return simRun[key]; }
+    const listeners = opts.onProgress ? [opts.onProgress] : []; const tell = (f, stage) => listeners.forEach(fn => { try { fn(f, stage); } catch { } });
+    const run = (async () => {
+      const sched = await schedule(L, { ...opts, onProgress: f => tell(f, 'schedule') }); if (!sched) return null;
+      const ctx = await HW.forecastCtx(L, DAY()).catch(() => null); if (!ctx || !ctx.cur) return null;
+      const live = {}; (HW.S.today[L.key] || []).forEach(g => { if (g.state === 'in') { try { live[g.id] = HW.forecast(L, g, ctx).pHome; } catch { } } });
+      const sim = await simulate(L, ctx, sched, { live, onProgress: f => tell(f, 'sim') }); if (!sim) return null;
+      const rest = restOf(L, ctx, sched);
+      const v = { sim, rest, sched, ctx, byId: Object.fromEntries(sim.teams.map(t => [t.id, t])) };
+      simMem[key] = v; return v;
+    })().finally(() => { delete simRun[key]; });
+    run.listeners = listeners; simRun[key] = run; return run;
   }
 
   /* ---------- the simulation ---------- */
@@ -78,7 +85,9 @@
   const SEASON_GAMES = { nba: 82, wnba: 44 };
   /* a normal draw (Box–Muller) */
   const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
-  function simulate(L, ctx, sched, { n = 2000, today = DAY(), live = {} } = {}) {
+  /* the runs go in slices with the screen given a turn between them, so a tap lands and the note can count up while it works */
+  const breathe = () => new Promise(r => setTimeout(r, 0));
+  async function simulate(L, ctx, sched, { n = 2000, today = DAY(), live = {}, onProgress = null, slice = 200 } = {}) {
     const cur = ctx && ctx.cur; if (!cur || !cur.byId) return null;
     const teams = Object.values(cur.byId).filter(r => r.id); const ids = teams.map(r => r.id); const ix = new Map(ids.map((id, i) => [id, i])); const T = ids.length;
     // each team's rating, and how sure it is: early in the season a rating is a guess with a few points of give, so every
@@ -101,6 +110,7 @@
     const wins = new Float64Array(T), hh = new Int16Array(T * T), off = new Float64Array(T), rnd = Math.random;
     const cmp = (x, y) => wins[y] - wins[x] || (hh[y * T + x] - hh[x * T + y]) || (rnd() < .5 ? -1 : 1);
     for (let s = 0; s < n; s++) {
+      if (s && s % slice === 0) { if (onProgress) onProgress(s / n); await breathe(); }
       wins.set(w0); hh.set(h2h); for (let i = 0; i < T; i++) off[i] = gauss() * give[i];
       for (let k = 0; k < left.length; k++) { const g = left[k]; const p = g.p != null ? g.p : pOf(g.hi, g.ai, g.n, off); if (rnd() < p) { wins[g.hi]++; hh[g.hi * T + g.ai]++; } else { wins[g.ai]++; hh[g.ai * T + g.hi]++; } }
       for (let i = 0; i < T; i++) out[i].w += wins[i];
@@ -137,5 +147,5 @@
     let wa = 0, wb = 0; games.forEach(g => { const aWon = (g.h === a && g.hs > g.as) || (g.a === a && g.as > g.hs); if (aWon) wa++; else wb++; });
     return { wa, wb, played: games.length };
   }
-  HW.sim = { schedule, simulate, restOf, h2hOf, seasonEnd, season, ready };
+  HW.sim = { schedule, simulate, restOf, h2hOf, seasonEnd, season, ready, have };
 })();

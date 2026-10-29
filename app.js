@@ -70,6 +70,8 @@
     try { await (V[r.name] || V.home)(...r.args); }
     catch (err) { if (my === seq) $main.innerHTML = `<div class="empty"><b>Something went wrong</b><p style="margin:6px 0 0">${esc(err && err.message || 'Try again in a moment.')}</p></div>`; console.error(err); }
     if (my !== seq) return;
+    V.busy(false);   // a view that patched itself in place (a standings chip, a refreshed game) made no full paint to clear the bar and the dimming
+    if ($main.dataset.top === '1') $main.dataset.top = '0';   // nor did it consume the scroll-to-top mark; the next screen sets its own
     paintPills(r.lk, leagueScreen);   // live counts may have arrived while the view loaded
     // the rise plays for a new screen; a screen repainting itself (another day on Scores, another conference) keeps still
     if (key !== render.key) { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); } else $main.classList.remove('enter'); render.key = key;
