@@ -1,0 +1,356 @@
+/* Tipoff — data layer: fetching, parsing, the forecast model, shared state. */
+(function () {
+'use strict';
+const HW = window.HW;
+const { LEAGUES, ORDER, SPORTS, ESPN, TZ } = HW;
+
+/* ---------- small utilities ---------- */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const cache = new Map();
+async function j(url, ttl = 60000) {
+  const hit = cache.get(url);
+  if (hit && Date.now() - hit.t < ttl) return hit.v;
+  const ctl = new AbortController();
+  const to = setTimeout(() => ctl.abort(), 15000);
+  try {
+    const r = await fetch(url, { signal: ctl.signal });
+    if (!r.ok) { const e = new Error('HTTP ' + r.status); e.status = r.status; throw e; }
+    const v = await r.json();
+    cache.set(url, { t: Date.now(), v });
+    return v;
+  } finally { clearTimeout(to); }
+}
+async function jSoft(url, ttl) { try { return await j(url, ttl); } catch { return null; } }
+
+const ymdFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
+const hourFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: 'numeric', hour12: false });
+/* the basketball "day" runs until 4 AM Central, so a late West Coast tip stays on tonight's slate */
+function todayCT() { const now = new Date(); const h = +hourFmt.format(now) % 24; const d = ymdFmt.format(now); return h < 4 ? addDays(d, -1) : d; }
+function addDays(ymd, n) { const [y, m, d] = ymd.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); }
+const compact = ymd => ymd.replace(/-/g, '');
+const expand = c => `${c.slice(0, 4)}-${c.slice(4, 6)}-${c.slice(6, 8)}`;
+const ymdOf = iso => ymdFmt.format(new Date(iso));
+function dayLabel(ymd, opts = { weekday: 'long', month: 'short', day: 'numeric' }) { const [y, m, d] = ymd.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString('en-US', { ...opts, timeZone: 'UTC' }); }
+function relDay(ymd) { const t = todayCT(); if (ymd === t) return 'Tonight'; if (ymd === addDays(t, 1)) return 'Tomorrow'; if (ymd === addDays(t, -1)) return 'Last night'; return dayLabel(ymd); }
+const tip = iso => new Date(iso).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' });
+const dateShort = iso => new Date(iso).toLocaleDateString('en-US', { timeZone: TZ, month: 'short', day: 'numeric' });
+const timeCT = (d = new Date()) => d.toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit', second: '2-digit' });
+function ago(iso) { const s = (Date.now() - new Date(iso)) / 1000; if (s < 3600) return Math.max(1, Math.round(s / 60)) + 'm ago'; if (s < 86400) return Math.round(s / 3600) + 'h ago'; return dateShort(iso); }
+const pct = x => Math.round(x * 100) + '%';
+const sign = x => (x > 0 ? '+' : '') + (+x).toFixed(1);
+const ordinal = n => { n = +n; if (!n) return '—'; const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+function lum(hex) { const h = (hex || '').replace('#', ''); if (h.length < 6) return 0.3; const c = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
+const hx = c => c ? (c.startsWith('#') ? c : '#' + c) : '#55606e';
+/* a team color dark enough to carry white text */
+function darkOf(a, b) { const A = hx(a), B = hx(b); const d = lum(A) <= lum(B) ? A : B; return lum(d) > 0.22 ? '#1d2633' : d; }
+function erf(x) { const s = Math.sign(x); x = Math.abs(x); const t = 1 / (1 + 0.3275911 * x); const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return s * y; }
+const Phi = z => 0.5 * (1 + erf(z / Math.SQRT2));
+const store = { get(k, d) { try { const v = localStorage.getItem('hw:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem('hw:' + k, JSON.stringify(v)); } catch { } } };
+const API = L => ESPN.site + L.path, API2 = L => ESPN.v2 + L.path, WEB = L => ESPN.web + L.path;
+const logoUrl = (L, abbr) => `https://a.espncdn.com/i/teamlogos/${L.logo}/500/${String(abbr || '').toLowerCase()}.png`;
+const sportOf = L => SPORTS.find(s => s.leagues.includes(L.key)) || SPORTS[0];
+function seasonYear() { const now = new Date(); return now.getUTCMonth() >= 6 ? now.getUTCFullYear() + 1 : now.getUTCFullYear(); }
+
+/* ---------- favorites (defaults from config, editable per viewer) ---------- */
+const favs = {
+  all() { const u = store.get('favs', null); if (u) return u; const o = {}; ORDER.forEach(k => o[k] = [...LEAGUES[k].favs]); return o; },
+  has(lk, id) { return (this.all()[lk] || []).includes(String(id)); },
+  toggle(lk, id) { const a = this.all(); a[lk] = a[lk] || []; id = String(id); a[lk] = a[lk].includes(id) ? a[lk].filter(x => x !== id) : [...a[lk], id]; store.set('favs', a); return a[lk].includes(id); },
+  reset() { store.set('favs', null); }
+};
+
+/* ---------- parsing ---------- */
+function parseTeamSide(x, L) {
+  const t = x.team || {};
+  const sc = x.score && typeof x.score === 'object' ? x.score.displayValue : x.score;
+  const rank = x.curatedRank && x.curatedRank.current && x.curatedRank.current <= 25 ? x.curatedRank.current : null;
+  return {
+    id: String(t.id), abbr: t.abbreviation || t.shortDisplayName || '', name: t.displayName || t.name || '', short: t.shortDisplayName || t.name || t.displayName || '', loc: t.location || '',
+    color: hx(t.color), alt: hx(t.alternateColor), logo: t.logo || (t.logos && t.logos[0] && t.logos[0].href) || logoUrl(L, t.abbreviation),
+    score: sc != null && sc !== '' ? +sc : null, rank,
+    rec: (x.records && x.records[0] && x.records[0].summary) || (x.record && x.record[0] && (x.record[0].displayValue || x.record[0].summary)) || '',
+    winner: !!x.winner, lines: (x.linescores || []).map(l => l.displayValue ?? l.value), leaders: x.leaders || [], conf: t.conferenceId
+  };
+}
+function tvOf(c) {
+  const nat = [], loc = [];
+  (c.geoBroadcasts || []).forEach(b => { const n = b.media && b.media.shortName; if (!n) return; ((b.market && b.market.type) === 'National' ? nat : loc).push(n); });
+  (c.broadcasts || []).forEach(b => { const names = b.names && b.names.length ? b.names : (b.media && b.media.shortName ? [b.media.shortName] : []); const national = typeof b.market === 'string' ? b.market === 'national' : !!(b.market && /national/i.test(b.market.type || '')); names.forEach(n => (national ? nat : loc).push(n)); });   // scoreboard and game-summary shapes differ
+  const u = a => [...new Set(a)];
+  return { national: u(nat), local: u(loc), label: u(nat).join(' · ') || u(loc).filter(n => !/League Pass/i.test(n)).slice(0, 2).join(' · ') || (u(loc).length ? u(loc)[0] : '') };
+}
+function parseEvent(e, L) {
+  const c = e.competitions[0];
+  const st = c.status || e.status || {}; const t = st.type || {};
+  const comp = c.competitors || [];
+  const home = parseTeamSide(comp.find(x => x.homeAway === 'home') || comp[0] || {}, L);
+  const away = parseTeamSide(comp.find(x => x.homeAway === 'away') || comp[1] || {}, L);
+  return {
+    lk: L.key, id: String(e.id), date: e.date, state: t.state || 'pre', detail: t.shortDetail || t.detail || '', completed: !!t.completed,
+    period: st.period || 0, clock: st.displayClock || '', home, away,
+    venue: c.venue && c.venue.fullName, city: c.venue && c.venue.address && [c.venue.address.city, c.venue.address.state].filter(Boolean).join(', '),
+    tv: tvOf(c), neutral: !!c.neutralSite, confGame: !!c.conferenceCompetition,
+    note: (c.notes && c.notes[0] && c.notes[0].headline) || (e.season && e.season.slug === 'post-season' ? 'Postseason' : ''),
+    headline: c.headlines && c.headlines[0] && (c.headlines[0].shortLinkText || c.headlines[0].description) || '',
+    sit: situationOf(c, L, t.state)
+  };
+}
+/* live situation: down and distance with the ball (football), outs and runners (baseball); null otherwise */
+function situationOf(c, L, state) {
+  const s = c.situation; if (!s || state !== 'in') return null;
+  if (L.sport === 'football') { const txt = s.shortDownDistanceText || s.downDistanceText || ''; const poss = s.possession ? String(s.possession) : ''; return txt || poss ? { text: txt, short: txt, poss, redzone: !!s.isRedZone } : null; }
+  if (L.sport === 'baseball') { const on = [s.onFirst, s.onSecond, s.onThird].map(Boolean); const outs = s.outs != null ? s.outs : null; return { text: `${outs == null ? '' : outs + ' out'}${on.some(Boolean) ? (outs == null ? '' : ' · ') + ['1st', '2nd', '3rd'].filter((_, i) => on[i]).join(', ') + ' on' : ''}`, short: outs == null ? '' : outs + ' out', on, outs, balls: s.balls, strikes: s.strikes }; }
+  return null;
+}
+const isLive = g => g.state === 'in';
+const isFav = g => favs.has(g.lk, g.home.id) || favs.has(g.lk, g.away.id);
+const isRanked = g => g.home.rank || g.away.rank;
+const order = g => g.state === 'in' ? 0 : g.state === 'pre' ? 1 : 2;
+/* interest score: favorites, then ranked-vs-ranked, then ranked, then closeness later in the slate */
+function interest(g) { let s = 0; if (isFav(g)) s += 100; if (g.home.rank && g.away.rank) s += 40 + (50 - g.home.rank - g.away.rank); else if (isRanked(g)) s += 20 + (26 - (g.home.rank || g.away.rank)) / 2; if (g.lk === 'nba') s += 10; if (g.tv.national.length) s += 5; return s; }
+
+/* ---------- data access ---------- */
+async function scoreboard(L, ymd, ttl) {
+  const t = todayCT();
+  // football is a weekly sport: the "today" slate is the current week's games (ESPN's default scoreboard); other dates still work by day
+  const q = L.weekly && ymd === t ? `${API(L)}/scoreboard?${L.sbParams.replace(/^&/, '')}` : `${API(L)}/scoreboard?dates=${compact(ymd)}${L.sbParams}`;
+  const d = await j(q, ttl ?? (ymd === t ? 25000 : (ymd < t ? 3600000 : 300000)));
+  return (d.events || []).map(e => parseEvent(e, L)).sort((a, b) => (order(a) - order(b)) || (new Date(a.date) - new Date(b.date)));
+}
+function statMap(stats) { const s = {}; (stats || []).forEach(x => { if (x.name) s[x.name] = x; if (x.type) s[x.type] = s[x.type] || x; if (x.displayName) s[x.displayName] = s[x.displayName] || x; if (x.abbreviation) s[x.abbreviation] = s[x.abbreviation] || x; }); return s; }
+function parseStandingRow(en, L, grp) {
+  const s = statMap(en.stats); const val = k => s[k] ? (s[k].value ?? parseFloat(s[k].displayValue)) : null; const dv = k => s[k] ? s[k].displayValue : '';
+  const t = en.team || {};
+  const w = val('wins') || 0, l = val('losses') || 0, ties = val('ties') || 0;
+  const gp = w + l + ties;
+  let diff = val('differential') ?? val('pointDifferential') ?? (val('avgPointsFor') != null && val('avgPointsAgainst') != null ? val('avgPointsFor') - val('avgPointsAgainst') : null);
+  let ppg = val('avgPointsFor'), opp = val('avgPointsAgainst');
+  if (L.diffIsTotal) { if (diff != null && gp) diff = +(diff / gp).toFixed(1); if (ppg == null && val('pointsFor') != null && gp) ppg = +(val('pointsFor') / gp).toFixed(1); if (opp == null && val('pointsAgainst') != null && gp) opp = +(val('pointsAgainst') / gp).toFixed(1); }
+  return {
+    id: String(t.id), abbr: t.abbreviation, name: t.displayName, short: t.shortDisplayName || t.name, loc: t.location,
+    logo: (t.logos && t.logos[0] && t.logos[0].href) || logoUrl(L, t.abbreviation),
+    w, l, t: ties, pct: dv('winPercent') || (w + l ? (w / (w + l)).toFixed(3).replace(/^0/, '') : ''), gb: dv('gamesBehind'),
+    home: dv('Home'), road: dv('Road') || dv('Away'), l10: dv('Last Ten Games'), strk: dv('streak'), conf: dv('vs. Conf.') || dv('vsConf') || dv('vs. Div.'),
+    diff, ppg, opp, seed: val('playoffSeed') || null,
+    group: grp.name, groupAbbr: grp.abbr
+  };
+}
+async function standings(L, season) {
+  const url = `${API2(L)}/standings${season ? '?season=' + season : ''}${L.standingsMode === 'conferences' ? (season ? '&' : '?') + `group=${L.standingsGroup || 50}&level=3` : ''}`;
+  const d = await j(url, 600000);
+  const groups = [], byId = {};
+  const addGroup = (name, abbr, entries) => {
+    const rows = (entries || []).map(en => parseStandingRow(en, L, { name, abbr })).sort((a, b) => (a.seed || 99) - (b.seed || 99) || (b.w - b.l) - (a.w - a.l) || (b.diff || 0) - (a.diff || 0));
+    rows.forEach((r, i) => { r.pos = i + 1; byId[r.id] = r; });
+    groups.push({ name, abbr, rows });
+  };
+  const walk = node => {
+    if (!node) return;
+    if (node.standings && node.standings.entries && node.standings.entries.length) addGroup(node.name || L.label, node.abbreviation || node.name || L.short, node.standings.entries);
+    (node.children || []).forEach(walk);
+  };
+  walk(d);
+  if (!groups.length && d.standings) addGroup(L.label, L.short, d.standings.entries);
+  return { groups, byId, season: d.seasonDisplayName || '' };
+}
+async function priorStandings(L) { try { return await standings(L, seasonYear() - 1); } catch { return null; } }
+async function rankings(L) { if (!L.hasRankings) return null; const d = await jSoft(`${API(L)}/rankings`, 1800000); if (!d || !d.rankings) return null; const ap = d.rankings.find(r => /AP/i.test(r.name)) || d.rankings[0]; return { name: ap.name, week: ap.headline || ap.shortHeadline || '', ranks: (ap.ranks || []).map(r => ({ rank: r.current, prev: r.previous, trend: r.trend, team: (() => { const t = r.team || {}; const loc = t.location || t.nickname || t.name || ''; const mascot = t.name && t.name !== loc ? t.name : ''; return { id: String(t.id), name: mascot ? `${loc} ${mascot}` : loc, short: t.nickname || loc, abbr: t.abbreviation, logo: t.logos && t.logos[0] && t.logos[0].href }; })(), rec: r.recordSummary, pts: r.points, first: r.firstPlaceVotes })) }; }
+async function ratings(L) { return jSoft(`${HW.DATA || 'data/'}${L.key}/ratings.json?d=${todayCT()}`, 900000); }
+async function record(L) { return jSoft(`${HW.DATA || 'data/'}${L.key}/record.json?d=${todayCT()}`, 900000); }
+async function params(L) { return jSoft(`${HW.DATA || 'data/'}${L.key}/params.json?d=${todayCT()}`, 900000); }
+async function injuries(L) { if (!L.hasInjuries) return null; const d = await jSoft(`${API(L)}/injuries`, 600000); if (!d || !d.injuries) return null; const byTeam = {}; d.injuries.forEach(t => { const id = String(t.id || (t.injuries && t.injuries[0] && t.injuries[0].athlete && t.injuries[0].athlete.team && t.injuries[0].athlete.team.id) || ''); byTeam[id] = { name: t.displayName, list: t.injuries || [] }; }); return { teams: d.injuries, byTeam }; }
+
+/* ---------- forecast model ----------
+   Ratings come from data/<league>/ratings.json (margin-based Elo, rebuilt nightly by tools/nightly.mjs).
+   Fallback when that file is missing: this season's point margin blended with last season's.
+   Projected margin = rating gap + home court + rest + star-out adjustment (+ form in fallback).
+   Win probability = normal CDF of margin / league SD; in-game it updates from score and time left. */
+function strengthFallback(id, cur, prior) {
+  const r = cur && cur.byId[id]; const p = prior && prior.byId[id];
+  const gp = r ? r.w + r.l : 0; const curDiff = r && r.diff != null ? r.diff : 0; const priorDiff = p && p.diff != null ? p.diff * 0.65 : 0;
+  const w = gp / (gp + 10);
+  const l10 = r && r.l10 && /^(\d+)-(\d+)$/.test(r.l10) ? r.l10.split('-').map(Number) : null;
+  const form = l10 && (l10[0] + l10[1]) >= 5 ? ((l10[0] / (l10[0] + l10[1])) - 0.5) * 3 : 0;
+  return { rating: w * curDiff + (1 - w) * priorDiff, gp, weight: w, form, source: 'margin' };
+}
+function strength(L, id, ctx) {
+  const R = ctx.ratings && ctx.ratings.teams && ctx.ratings.teams[id];
+  if (R && R.elo != null) return { rating: (R.elo - 1500) / L.eloPerPoint, gp: R.gp || 0, weight: 1, form: 0, source: 'elo', elo: R.elo };
+  return strengthFallback(id, ctx.cur, ctx.prior);
+}
+/* players ruled out, weighted by their scoring: about 0.18 points of margin per point per game, capped at 8.
+   (The nightly record is scored without this, since injury reports aren't kept historically.) */
+function starOut(L, side, ctx) {
+  if (!ctx.inj || !ctx.inj.byTeam[side.id]) return null;
+  const out = ctx.inj.byTeam[side.id].list.filter(x => /out|suspen/i.test(x.status || ''));
+  if (!out.length) return null;
+  if (L.sport === 'baseball') return null;   // IL moves are mostly a wash; the starting pitcher matters more and is ESPN's probable, not an injury
+  if (L.sport === 'football') {               // a starting quarterback out is worth about four points; another listed leader about one
+    const lead = {}; (side.leaders || []).forEach(l => { const a = l.leaders && l.leaders[0]; if (a && a.athlete) lead[a.athlete.displayName] = l.name || ''; });
+    let total = 0; const names = [];
+    out.forEach(x => { const n = x.athlete && x.athlete.displayName; if (!n || !lead[n]) return; total += /pass/i.test(lead[n]) ? 4 : 1.2; names.push(n.split(' ').pop()); });
+    return names.length ? { name: names.join(', '), names, pts: -Math.min(6, total) } : null;
+  }
+  const ppgOf = n => { const r = ctx.ppg && ctx.ppg[(n || '').toLowerCase()]; return r && r.teamId === side.id ? r.pts : null; };
+  const L1 = (side.leaders || []).find(l => /points/i.test(l.name)); const top = L1 && L1.leaders && L1.leaders[0];
+  let total = 0; const names = [];
+  out.forEach(x => { const n = x.athlete && x.athlete.displayName; if (!n) return; let ppg = ppgOf(n); if (ppg == null && top && top.athlete && top.athlete.displayName === n) ppg = parseFloat(top.displayValue) || 20; if (ppg != null && ppg >= 6) { total += ppg * 0.18; names.push(n.split(' ').pop()); } });
+  if (!names.length) return null;
+  return { name: names.join(', '), names, pts: -Math.min(8, total) };
+}
+/* tuned parameters (data/<league>/params.json, refit nightly) override the config defaults */
+const paramsOf = (L, ctx) => { const P = ctx && ctx.params; return { hca: P && P.hca != null ? P.hca : L.hca, b2b: P && P.b2b != null ? P.b2b : L.b2b, sd: P && P.sd != null ? P.sd : L.sd, calib: P && P.calib ? P.calib : null }; };
+const logit = p => Math.log(p / (1 - p)), sigm = z => 1 / (1 + Math.exp(-z));
+const calibrate = (p, c) => { if (!c || !isFinite(c.a) || !isFinite(c.b)) return p; const q = Math.min(.995, Math.max(.005, p)); return sigm(c.a * logit(q) + c.b); };
+function forecast(L, g, ctx) {
+  const H = strength(L, g.home.id, ctx), A = strength(L, g.away.id, ctx);
+  const P = paramsOf(L, ctx);
+  const hca = g.neutral ? 0 : P.hca;
+  const restH = ctx.b2b && ctx.b2b.has(g.home.id) ? -P.b2b : 0, restA = ctx.b2b && ctx.b2b.has(g.away.id) ? -P.b2b : 0;
+  const soH = starOut(L, g.home, ctx), soA = starOut(L, g.away, ctx);
+  const inj = (soH ? soH.pts : 0) - (soA ? soA.pts : 0);
+  const margin = (H.rating - A.rating) + hca + (restH - restA) + (H.form - A.form) + inj;
+  let p = calibrate(Phi(margin / P.sd), P.calib), live = false;
+  if (g.state === 'in' && g.home.score != null && g.away.score != null) {
+    const frac = fracLeft(L, g);
+    const lead = g.home.score - g.away.score;
+    const sd = (P.sd + 2) * Math.sqrt(frac) + 1.5;
+    p = Phi((lead + margin * frac) / sd); live = true;
+  }   // finals keep the pregame estimate so cards can show hit/miss
+  return { pHome: p, margin, live, H, A, hca, restH, restA, soH, soA, source: H.source === 'elo' && A.source === 'elo' ? 'elo' : 'margin' };
+}
+/* share of the game still to be played, by sport */
+function fracLeft(L, g) {
+  const per = g.period || 1;
+  if (L.sport === 'baseball') return Math.max(0, (L.periods - Math.min(per, L.periods) + 0.5)) / L.periods;
+  const [mm, ss] = String(g.clock || '0:00').split(':').map(Number);
+  const left = isFinite(mm) ? (mm + (ss || 0) / 60) : 0;
+  const perLen = L.minutes / L.periods;
+  const rem = per <= L.periods ? (L.periods - per) * perLen + left : left;
+  return Math.max(rem, 0) / L.minutes;
+}
+const ctxCache = new Map();
+async function forecastCtx(L, ymd) {
+  const k = L.key + ymd; const hit = ctxCache.get(k); if (hit && Date.now() - hit.t < 300000) return hit.v;
+  const [rt, cur, yday, inj, lp, params] = await Promise.all([ratings(L), standings(L).catch(() => null), scoreboard(L, addDays(ymd, -1)).catch(() => []), injuries(L), L.hasInjuries && L.sport === 'basketball' ? leaguePlayers(L).catch(() => null) : null, jSoft(`${HW.DATA || 'data/'}${L.key}/params.json?d=${todayCT()}`, 900000)]);
+  const prior = rt ? null : await priorStandings(L);
+  const b2b = new Set(); yday.forEach(g => { if (g.state !== 'pre') { b2b.add(g.home.id); b2b.add(g.away.id); } });
+  const ppg = {}; if (lp) lp.rows.forEach(r => { ppg[(r.name || '').toLowerCase()] = { pts: r.pts, teamId: r.teamId }; });
+  const v = { ratings: rt, cur, prior, b2b, inj, ppg, params };
+  ctxCache.set(k, { t: Date.now(), v }); return v;
+}
+
+/* ---------- stat categories (football, baseball): the API's own columns ---------- */
+const STAT_CATS = {
+  football: [['passing', 'Passing', 'passing.passingYards:desc'], ['rushing', 'Rushing', 'rushing.rushingYards:desc'], ['receiving', 'Receiving', 'receiving.receivingYards:desc'], ['defensive', 'Defense', 'defensive.totalTackles:desc']],
+  baseball: [['batting', 'Batting', 'batting.homeRuns:desc'], ['pitching', 'Pitching', 'pitching.ERA:asc']]
+};
+async function statCategory(L, cat, sort, limit = 50, season) {
+  const u = `${WEB(L)}/statistics/byathlete?region=us&lang=en&contentorigin=espn&isqualified=true&page=1&limit=${limit}&category=${cat}&sort=${encodeURIComponent(sort)}${season ? `&season=${season}&seasontype=2` : ''}`;
+  const d = await jSoft(u, 900000); if (!d || !d.athletes) return null;
+  const meta = (d.categories || []).find(c => c.name === cat) || (d.categories || [])[0] || {};
+  const labels = meta.labels || meta.names || [], names = meta.names || [], full = meta.displayNames || meta.descriptions || [];
+  const rows = (d.athletes || []).map(a => { const c = (a.categories || []).find(x => x.name === cat) || (a.categories || [])[0] || {}; const at = a.athlete || {}; return { id: String(at.id), name: at.displayName, team: at.teamShortName || at.teamName || '', teamId: String(at.teamId || ''), pos: at.position && at.position.abbreviation || '', img: at.headshot && at.headshot.href, vals: c.displayValues || (c.values || []).map(v => v == null ? '' : String(v)), nums: c.values || [] }; });
+  return { cat, labels, names, full, rows, label: (d.requestedSeason && (d.requestedSeason.displayName || d.requestedSeason.year)) || (d.currentSeason && d.currentSeason.displayName) || '' };
+}
+
+/* ---------- league player list ---------- */
+async function leaguePlayers(L, season) {
+  const base = `${WEB(L)}/statistics/byathlete?region=us&lang=en&contentorigin=espn&isqualified=false&limit=100&sort=offensive.avgPoints:desc${season ? `&season=${season}&seasontype=2` : ''}`;
+  const first = await j(base + '&page=1', 600000);
+  const pages = Math.min((first.pagination && first.pagination.pages) || 1, L.key.startsWith('ncaa') ? 8 : 10);
+  const rest = await Promise.all(Array.from({ length: pages - 1 }, (_, i) => jSoft(base + '&page=' + (i + 2), 600000)));
+  const idx = {}; (first.categories || []).forEach(c => { idx[c.name] = c.names || []; });
+  const rows = [];
+  [first, ...rest].filter(Boolean).forEach(pg => (pg.athletes || []).forEach(a => {
+    const v = {}; (a.categories || []).forEach(c => (idx[c.name] || []).forEach((n, i) => { if (!(n in v)) v[n] = c.values ? c.values[i] : parseFloat(c.totals && c.totals[i]); }));
+    const at = a.athlete || {};
+    const pts = v.avgPoints || 0, fga = v.avgFieldGoalsAttempted || 0, fta = v.avgFreeThrowsAttempted || 0;
+    rows.push({ id: String(at.id), name: at.displayName, short: at.shortName, team: at.teamShortName || at.teamName || '', teamId: String(at.teamId || ''), pos: at.position && at.position.abbreviation || '', img: at.headshot && at.headshot.href,
+      gp: v.gamesPlayed || 0, min: v.avgMinutes || 0, pts, reb: v.avgRebounds || 0, ast: v.avgAssists || 0, stl: v.avgSteals || 0, blk: v.avgBlocks || 0, tov: v.avgTurnovers || 0,
+      fg: v.fieldGoalPct || 0, tp: v.threePointFieldGoalPct || 0, ft: v.freeThrowPct || 0, tpm: v.avgThreePointFieldGoalsMade || 0, ts: (fga + 0.44 * fta) > 0 ? pts / (2 * (fga + 0.44 * fta)) * 100 : 0 });
+  }));
+  const label = (first.requestedSeason && (first.requestedSeason.displayName || first.requestedSeason.year)) || (first.currentSeason && first.currentSeason.displayName) || '';
+  return { rows, label };
+}
+
+/* ---------- where to watch ----------
+   SERVICES: every app a game can be watched in. `match` = channel names the service itself streams; `channels` = what a
+   live-TV bundle carries. The viewer picks the services they pay for (store key `watch`, in priority order); a game's
+   options are their services that carry its channel first, then the channel's own app. On Android the link is an
+   intent: URL that launches the installed app (falls back to the web page when it isn't installed); elsewhere it is the
+   service's live page. Sling's web player refuses to play inside an installed web app, so the app launch matters there. */
+const NAT = {
+  espnFam: /^(ESPN ?[23]?|ESPNU|ESPNEWS|ESPN Deportes|ESPN3|ESPN App|SECN|SEC Network|ACCN|ACCNX|ACC Network( Extra)?|Longhorn Network|LHN)$/i,
+  cable: /^(TNT|TBS|truTV|NBA ?TV|FS1|FS2|FOX Sports ?[12]|USA( Network)?|NFL Network|NFLN|NFL RedZone|MLB Network|MLBN|BTN|Big Ten Network|CBSSN|CBS Sports Network)$/i,
+  bcast: /^(FOX|NBC|ABC)$/i,
+  regional: /FanDuel Sports|FDSN|^YES|^MSG|^NESN|^SNY$|Marquee|Spectrum SportsNet|^NBCS|^NBC Sports (Bay Area|Boston|California|Philadelphia|Chicago)|ROOT Sports|Monumental|Altitude|Space City|CHSN|Chicago Sports Network|Gulf Coast Sports/i
+};
+const any = (...res) => ({ test: n => res.some(r => r.test(n)) });
+const SERVICES = {
+  // live-TV bundles
+  sling:     { label: 'Sling TV', short: 'Sling', web: 'https://watch.sling.com', android: 'com.sling', hosts: ['watch.sling.com/1/browse/sports', 'watch.sling.com/', 'www.sling.com/'], schemes: ['slingtv', 'sling'], bundle: true, channels: any(NAT.espnFam, NAT.cable, NAT.bcast) },
+  youtubetv: { label: 'YouTube TV', short: 'YouTube TV', web: 'https://tv.youtube.com', android: 'com.google.android.youtube.tvunplugged', hosts: ['tv.youtube.com/'], schemes: ['youtubetv'], bundle: true, channels: any(NAT.espnFam, NAT.cable, NAT.bcast, /^(CBS|ION|The CW|CW)$/i) },
+  hululive:  { label: 'Hulu + Live TV', short: 'Hulu', web: 'https://www.hulu.com/live-tv', android: 'com.hulu.plus', hosts: ['www.hulu.com/live-tv', 'www.hulu.com/'], schemes: ['hulu'], bundle: true, channels: any(NAT.espnFam, NAT.cable, NAT.bcast, /^(CBS|ION|The CW|CW|ESPN\+)$/i) },
+  fubo:      { label: 'Fubo', short: 'Fubo', web: 'https://www.fubo.tv', android: 'tv.fubo.mobile', hosts: ['www.fubo.tv/'], schemes: ['fubotv', 'fubo'], bundle: true, channels: any(NAT.espnFam, /^(NBA ?TV|FS1|FS2|USA( Network)?|NFL Network|NFLN|NFL RedZone|MLB Network|MLBN|BTN|Big Ten Network|CBSSN|CBS Sports Network|CBS|ION|The CW|CW)$/i, NAT.bcast, NAT.regional) },
+  directv:   { label: 'DirecTV Stream', short: 'DirecTV', web: 'https://stream.directv.com', android: 'com.att.tv', hosts: ['stream.directv.com/'], schemes: ['dtvstream'], bundle: true, channels: any(NAT.espnFam, NAT.cable, NAT.bcast, /^(CBS|ION|The CW|CW)$/i, NAT.regional) },
+  // networks' own apps and streamers
+  abc:       { label: 'ABC', short: 'ABC', web: 'https://abc.com/watch-live', android: 'com.disney.datg.videoplatforms.android.abc', hosts: ['abc.com/watch-live', 'abc.com/'], schemes: ['abc'], match: /^ABC$/i },
+  espn:      { label: 'ESPN app', short: 'ESPN', web: 'https://www.espn.com/watch', android: 'com.espn.score_center', hosts: ['www.espn.com/watch', 'www.espn.com/'], schemes: ['sportscenter'], match: any(NAT.espnFam, /^(ESPN\+|SECN\+|ACCN\+|Big 12 Now|ABC)$/i) },
+  peacock:   { label: 'Peacock', short: 'Peacock', web: 'https://www.peacocktv.com/sports', android: 'com.peacocktv.peacockandroid', hosts: ['www.peacocktv.com/sports', 'www.peacocktv.com/'], schemes: ['peacock'], match: /^(Peacock|NBC|USA( Network)?)$/i },
+  nbc:       { label: 'NBC', short: 'NBC', web: 'https://www.nbc.com/live', android: 'com.nbcuni.nbc', hosts: ['www.nbc.com/live', 'www.nbc.com/'], schemes: ['nbc'], match: /^NBC$/i },
+  fox:       { label: 'FOX Sports', short: 'FOX', web: 'https://www.foxsports.com/live', android: 'com.foxsports.android', hosts: ['www.foxsports.com/live', 'www.foxsports.com/'], schemes: ['foxsports'], match: /^(FOX|FS1|FS2|FOX Sports ?[12]?|FOX Deportes|FOX One|BTN|Big Ten Network)$/i },
+  paramount: { label: 'Paramount+', short: 'Paramount+', web: 'https://www.paramountplus.com/live-tv/', android: 'com.cbs.app', hosts: ['www.paramountplus.com/live-tv/', 'www.paramountplus.com/'], schemes: ['cbsaa', 'paramountplus'], match: /^(CBS|Paramount\+|CBSSN|CBS Sports Network)$/i },
+  max:       { label: 'Max', short: 'Max', web: 'https://play.max.com', android: 'com.wbd.stream', hosts: ['play.max.com/', 'www.max.com/'], schemes: ['hbomax', 'max'], match: /^(TNT|TBS|truTV|Max|HBO Max|TNT Sports)$/i },
+  prime:     { label: 'Prime Video', short: 'Prime', web: 'https://www.amazon.com/primevideo', webBy: { basketball: 'https://www.amazon.com/nba', football: 'https://www.amazon.com/tnf' }, android: 'com.amazon.avod.thirdpartyclient', hosts: ['app.primevideo.com/', 'www.amazon.com/gp/video/storefront'], schemes: ['aiv'], match: /^(Prime Video|Amazon Prime Video|Amazon|Prime)$/i },
+  netflix:   { label: 'Netflix', short: 'Netflix', web: 'https://www.netflix.com', android: 'com.netflix.mediaclient', hosts: ['www.netflix.com/'], schemes: ['nflx'], match: /^Netflix$/i },
+  appletv:   { label: 'Apple TV', short: 'Apple TV', web: 'https://tv.apple.com', android: 'com.apple.atve.androidtv.appletv', hosts: ['tv.apple.com/'], schemes: ['videos'], match: /^Apple TV\+?$/i },
+  nba:       { label: 'NBA app · League Pass', short: 'NBA app', web: 'https://www.nba.com/watch', android: 'com.nbaimd.gametime.nba2011', hosts: ['www.nba.com/watch', 'www.nba.com/'], schemes: ['gametime'], match: /^(NBA League Pass|NBA ?TV)$/i },
+  wnba:      { label: 'WNBA app · League Pass', short: 'WNBA app', web: 'https://www.wnba.com/watch', match: /^(WNBA League Pass|ION)$/i },
+  nfl:       { label: 'NFL+', short: 'NFL+', web: 'https://www.nfl.com/plus/', android: 'com.gotv.nflgamecenter.us.lite', hosts: ['www.nfl.com/plus/', 'www.nfl.com/'], schemes: ['nflmobile', 'nfl'], match: /^(NFL Network|NFLN|NFL\+|NFL RedZone)$/i },
+  youtube:   { label: 'YouTube · Sunday Ticket', short: 'YouTube', web: 'https://www.youtube.com', android: 'com.google.android.youtube', hosts: ['www.youtube.com/'], schemes: ['youtube', 'vnd.youtube'], match: /^(YouTube|NFL Sunday Ticket)$/i },
+  mlb:       { label: 'MLB.TV', short: 'MLB.TV', web: 'https://www.mlb.com/tv', android: 'com.bamnetworks.mobile.android.gameday.atbat', hosts: ['www.mlb.com/tv', 'www.mlb.com/'], schemes: ['atbat'], match: /^(MLB\.TV|MLB Network|MLBN)$/i },
+  cw:        { label: 'The CW', short: 'CW', web: 'https://www.cwtv.com/live', match: /^(The CW|CW)$/i },
+  ion:       { label: 'ION', short: 'ION', web: 'https://iontelevision.com', match: /^ION$/i },
+  regional:  { label: 'Regional network', short: 'Regional', web: '', match: NAT.regional }
+};
+/* the regional networks' own sites, when the viewer has no bundle that carries them */
+const REGIONAL = [[/FanDuel Sports|FDSN/i, 'FanDuel Sports Network', 'https://www.fanduelsportsnetwork.com'], [/^YES/i, 'YES Network', 'https://www.yesnetwork.com'], [/^MSG/i, 'MSG Networks', 'https://www.msgnetworks.com'], [/^NESN/i, 'NESN', 'https://nesn.com'], [/^SNY$/i, 'SNY', 'https://sny.tv'], [/Marquee/i, 'Marquee Sports Network', 'https://www.marqueesportsnetwork.com'], [/Spectrum SportsNet/i, 'Spectrum SportsNet', 'https://www.spectrumsportsnet.com'], [/^NBCS|^NBC Sports/i, 'NBC Sports regional', 'https://www.nbcsports.com/regional'], [/ROOT Sports/i, 'ROOT Sports', 'https://www.rootsports.com'], [/Monumental/i, 'Monumental Sports Network', 'https://monumentalsportsnetwork.com'], [/Altitude/i, 'Altitude', 'https://www.altitudesports.net'], [/Space City/i, 'Space City Home Network', 'https://spacecityhn.com'], [/CHSN|Chicago Sports Network/i, 'Chicago Sports Network', 'https://chsn.com'], [/Gulf Coast Sports/i, 'Gulf Coast Sports', 'https://www.gulfcoastsports.com']];
+/* the chooser: what the viewer can say they have */
+const SERVICE_GROUPS = [
+  { label: 'Live TV', ids: ['sling', 'youtubetv', 'hululive', 'fubo', 'directv'] },
+  { label: 'Streaming', ids: ['espn', 'prime', 'peacock', 'paramount', 'max', 'netflix', 'appletv'] },
+  { label: 'League passes', ids: ['nba', 'wnba', 'nfl', 'youtube', 'mlb'] }
+];
+const myServices = () => (store.get('watch', []) || []).filter(id => SERVICES[id]);
+const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent || '');
+/* the service's web page (the anchor's href everywhere; on Android the click handler tries the app first) */
+function serviceHref(id, L, webOverride) { const s = SERVICES[id]; if (!s) return webOverride || ''; return webOverride || (s.webBy && L && s.webBy[L.sport]) || s.web; }
+/* Android app launches to try, in order: the app's own web hosts as intents aimed at its package, then its custom schemes.
+   Chrome only launches activities an app marks browsable, and each app claims different URLs, so the click handler walks
+   this list until the page loses focus (an app took over) and opens the web page if nothing does. */
+function launchTries(id) {
+  const s = SERVICES[id]; if (!s || !s.android) return [];
+  const pkg = s.android;
+  return [...(s.hosts || []).map(h => `intent://${h}#Intent;scheme=https;package=${pkg};end`), ...(s.schemes || []).map(sc => `intent://open#Intent;scheme=${sc};package=${pkg};end`)];
+}
+/* a game's watch options: the viewer's own services that carry it (their order), then the channel's own app */
+function watchFor(g, L) {
+  if (!g || !g.tv) return [];
+  const names = [...(g.tv.national || []), ...(g.tv.local || [])].filter(n => n && !/radio|sirius/i.test(n));
+  if (!names.length) return [];
+  const out = []; const push = (id, net, web) => { if (!out.some(o => o.id === id)) out.push({ id, net, bundle: !!SERVICES[id].bundle, label: SERVICES[id].label, short: SERVICES[id].short, url: serviceHref(id, L, web), href: serviceHref(id, L, web), launch: IS_ANDROID && !!SERVICES[id].android, mine: myServices().includes(id) }); };
+  myServices().forEach(id => { const s = SERVICES[id]; const net = names.find(n => (s.bundle ? s.channels : s.match).test(n)); if (net) push(id, net); });
+  names.forEach(n => { for (const [id, s] of Object.entries(SERVICES)) { if (s.bundle || !s.match.test(n)) continue; if (id === 'regional') { const r = REGIONAL.find(x => x[0].test(n)); if (r) { if (!out.some(o => o.url === r[2])) out.push({ id: 'regional', net: n, label: r[1], short: r[1], url: r[2], href: r[2], launch: false, mine: false }); } } else push(id, n); break; } });
+  return out.filter(o => o.href);
+}
+const watchLink = (name, L) => watchFor({ tv: { national: [name], local: [] } }, L)[0] || null;
+
+/* ---------- shared state ---------- */
+const S = { today: {}, todayYmd: null, lastOk: 0, err: false, timer: null, route: null, open: new Set(), prevScores: {}, league: 'nba' };
+ORDER.forEach(k => S.today[k] = []);
+const allToday = () => ORDER.flatMap(k => S.today[k]);
+
+Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, API, API2, WEB, logoUrl, seasonYear, favs,
+  parseEvent, isLive, isFav, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, injuries, forecast, forecastCtx, leaguePlayers, S, allToday });
+})();
