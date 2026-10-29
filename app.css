@@ -950,9 +950,9 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
 .ehero h1.long{font-size:36px}
 .ehero h1.xlong{font-size:30px;letter-spacing:0}
 /* a game line with the channel as its own tag: the words keep, the channel clips first */
-.row .t span.sub2{display:flex;align-items:center;gap:6px;min-width:0}
-.row .t span.sub2 em{font-style:normal;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto}
-.row .t .tvt{flex:0 1 auto;max-width:42%;font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.02em;padding:2px 6px;border-radius:6px;background:var(--surf-3);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:inset 0 0 0 1px var(--plate-line)}
+.row .t span.sub2{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden}
+.row .t span.sub2 em{font-style:normal;flex:0 0 auto;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .t .tvt{flex:0 0 auto;max-width:46%;font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.02em;padding:2px 6px;border-radius:6px;background:var(--surf-3);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:inset 0 0 0 1px var(--plate-line)}
 /* names on the performer cards may take two lines */
 .perf b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.15;text-overflow:clip}
 /* strips fade at whichever edge still has more to show */
@@ -982,3 +982,30 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
 .calrow #phase{justify-self:start}
 .calrow .chip.mine{position:static;transform:none;justify-self:end}
 .calrow .chip.mine:active{transform:scale(.96)}
+
+/* ---- audit pass C ---- */
+/* standings: differential coloured, the table scrolls under a sticky team column */
+.tbl td .pos{color:var(--win)} .tbl td .neg{color:var(--loss)}
+.tbl.stand th:first-child,.tbl.stand td:first-child{position:sticky;left:0;z-index:1;background:var(--bg)}
+.tbl.stand tr.me td:first-child{background:var(--surf)}
+.tw{-webkit-mask-image:var(--em,none);mask-image:var(--em,none)}
+/* team page: form pips and record splits */
+.form{display:flex;align-items:center;gap:6px;padding:12px var(--gut-r) 0 var(--gut)}
+.form > span{font-size:12px;font-weight:700;color:var(--ink-3);margin-right:4px}
+.pip{display:flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;text-decoration:none;color:inherit;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),var(--plate-shadow);transition:transform .14s ease}
+.pip:active{transform:scale(.94)}
+.pip b{font:800 15px/1 var(--num)}
+.pip.w b{color:var(--win)} .pip.l b{color:var(--loss)}
+.pip i{font-style:normal;font-size:10px;font-weight:700;color:var(--ink-3);margin-top:2px}
+.stats.splits{padding-top:8px}
+.stats.splits b{font-size:19px}
+/* search: a clear button in the well, league chips under it */
+.search .clr{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--surf-3);color:var(--ink-2);border:0;padding:0}
+.search .clr svg{width:14px;height:14px}
+#slk{padding-top:2px}
+/* offline / stale line */
+.stale{margin:0 var(--gut-r) 10px var(--gut);padding:8px 12px;border-radius:10px;font-size:12.5px;font-weight:600;color:var(--ink-2);background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge);display:flex;align-items:center;gap:8px}
+.stale span{width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 8px var(--warn)}
+/* light mode secondary text a shade darker for 12px labels */
+:root[data-theme="light"]{--ink-3:#5F6775}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){--ink-3:#5F6775} }

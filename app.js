@@ -71,12 +71,26 @@
       catch { failed = true; }
     }
     if (!failed) lastOk = Date.now();
+    stale(failed);
     document.dispatchEvent(new CustomEvent('rivl:polled'));
     if (SCREENS.includes((current || route()).name)) paintPills((current || route()).lk, true);
     if (anyLive && current && (current.name === 'home' || current.name === 'scores')) refreshCards();
     if (V.refresh) { try { await V.refresh(); } catch { } }
     pollT = setTimeout(poll, anyLive ? 25000 : V.refresh ? (V.refresh.every || 25000) : 90000);
   }
+  /* a quiet line when the feed is unreachable: what's on screen is the last good copy */
+  let staleEl = null, staleSince = 0;
+  function stale(failed) {
+    const off = failed || navigator.onLine === false;
+    if (off && !staleSince) staleSince = lastOk || Date.now();
+    if (!off) staleSince = 0;
+    if (!staleEl) { staleEl = document.createElement('div'); staleEl.className = 'stale'; staleEl.hidden = true; document.getElementById('main').before(staleEl); }
+    if (!off) { staleEl.hidden = true; return; }
+    const m = Math.max(1, Math.round((Date.now() - staleSince) / 60000));
+    staleEl.innerHTML = `<span></span>${navigator.onLine === false ? 'Offline' : 'Feed not answering'} · showing the last copy from ${m} min ago`;
+    staleEl.hidden = false;
+  }
+  window.addEventListener('online', () => { stale(false); poll(); }); window.addEventListener('offline', () => stale(true));
   /* swap live scores into the cards on screen without repainting the whole page */
   function refreshCards() {
     const r = current; if (!r) return; const L = LEAGUES[r.lk];

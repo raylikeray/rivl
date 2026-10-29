@@ -70,7 +70,7 @@
   document.addEventListener('rivl:rendered', fitLogos); setTimeout(fitLogos, 1200);
 
   /* ---------- strips fade at the edge that still has more to show ---------- */
-  const STRIPS = '.dates,.brief-row,.chips,.rail,.media';
+  const STRIPS = '.dates,.brief-row,.chips,.rail,.media,.tw';
   const edge = el => { const more = el.scrollWidth - el.clientWidth > 4; const l = more && el.scrollLeft > 4, r = more && el.scrollLeft < el.scrollWidth - el.clientWidth - 4; const v = l && r ? 'lr' : l ? 'l' : r ? 'r' : ''; if (el.dataset.edge !== v) { if (v) el.dataset.edge = v; else delete el.dataset.edge; } };
   const edges = () => document.querySelectorAll(STRIPS).forEach(edge);
   V.edges = edges;
