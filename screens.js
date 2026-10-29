@@ -279,8 +279,7 @@
   /* ================= SETTINGS: what you follow, what Home shows, how it looks ================= */
   const PREFS = [
     ['live', 'Live now', 'A big card when one of your teams is playing'],
-    ['teams', 'My teams', 'Record, next game and the chance to win'],
-    ['games', 'Your games', 'The next game for each team you follow'],
+    ['teams', 'My teams', 'Record, the game that matters and the chance to win'],
     ['players', 'My players', 'Scoring lines, one tap to the profile'],
     ['injuries', 'Injuries', 'Reports on your teams and players'],
     ['news', 'News', 'Stories about your teams and players']

@@ -145,6 +145,7 @@
     if (a === 'stab') { e.preventDefault(); store.set('v5:stab:' + (current ? current.lk : 'nba'), act.dataset.tab); render(); }
     if (a === 'play') { e.preventDefault(); openSheet(act.dataset.vid); }
     if (a === 'injury') { e.preventDefault(); openInjury(act.dataset.key); }
+    if (a === 'injcol') { e.preventDefault(); const body = act.nextElementSibling; const open = body.hidden; body.hidden = !open; act.setAttribute('aria-expanded', String(open)); const c = store.get('v5:injcol', {}) || {}; if (open) delete c[act.dataset.id]; else c[act.dataset.id] = true; store.set('v5:injcol', c); }
     if (a === 'reload') { e.preventDefault(); render(); }
     if (a === 'onb-next') { e.preventDefault(); onbLk = 'nba'; onbStep(+act.dataset.step); }
     if (a === 'onb-lk') { e.preventDefault(); onbLk = act.dataset.lk; onbStep(+(act.dataset.step || 0)); }
@@ -278,7 +279,7 @@
       }
     } else if (n === 2) {
       const P = V.prefs.all();
-      const items = [['live', 'Live now', 'A big card when one of your teams is playing'], ['teams', 'My teams', 'Record, next game and the chance to win'], ['games', 'Your games', 'The next game for each team you follow'], ['players', 'My players', 'Scoring lines, one tap to the profile'], ['injuries', 'Injuries', 'Reports on your teams and players'], ['news', 'News', 'Stories about your teams and players'], ['forecast', 'Win chances', "RIVL's own estimate on each game card"]];
+      const items = [['live', 'Live now', 'A big card when one of your teams is playing'], ['teams', 'My teams', 'Record, the game that matters and the chance to win'], ['players', 'My players', 'Scoring lines, one tap to the profile'], ['injuries', 'Injuries', 'Reports on your teams and players'], ['news', 'News', 'Stories about your teams and players'], ['forecast', 'Win chances', "RIVL's own estimate on each game card"]];
       frame('What do you want to see?', 'Home is yours. Switch off anything you don\'t care about; you can change it later in Settings.',
         `<div class="rows onb-prefs">${items.map(([k, t, b]) => `<button class="row sw" data-act="pref" data-pref="${k}" role="switch" aria-checked="${P[k] !== false}"><span class="t"><b>${esc(t)}</b><span class="wrap">${esc(b)}</span></span><span class="switch"></span></button>`).join('')}</div>`,
         `<button class="btn ghost" data-act="onb-next" data-step="1">Back</button><button class="btn" data-act="onb-next" data-step="3">Continue</button>`);

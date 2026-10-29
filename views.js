@@ -32,7 +32,7 @@
   /* what a return date means: ESPN pencils in the next season's opener for anyone out for the year */
   const retInfo = (L, iso) => { if (!iso) return null; const d = new Date(iso); if (isNaN(d)) return null; const exact = dayUTC(iso); const ss = String(L && L.seasonStart || '2026-10-01').slice(5); const now = new Date(); let next = new Date(`${now.getUTCFullYear()}-${ss}T00:00:00Z`); if (next - now < 30 * 864e5) next = new Date(`${now.getUTCFullYear() + 1}-${ss}T00:00:00Z`); const far = d >= next - 14 * 864e5; return far ? { short: 'no return date this season', long: `Not before next season (ESPN lists ${exact})`, far: true } : { short: `back around ${exact}`, long: exact, far: false }; };
   /* what Home shows: every section on by default */
-  const PREF_KEYS = ['live', 'teams', 'games', 'players', 'injuries', 'news', 'forecast'];
+  const PREF_KEYS = ['live', 'teams', 'players', 'injuries', 'news', 'forecast'];
   const prefs = { all() { const d = {}; PREF_KEYS.forEach(k => d[k] = true); return Object.assign(d, store.get('v5:prefs', {}) || {}); }, get(k) { return this.all()[k] !== false; }, set(k, v) { const a = store.get('v5:prefs', {}) || {}; a[k] = !!v; store.set('v5:prefs', a); } };
   const chev = `<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>`;
   const sec = (title, small, action) => `<div class="sec"><h2>${esc(title)}${small ? `<small>${esc(small)}</small>` : ''}</h2>${action || ''}</div>`;
@@ -172,14 +172,10 @@
         if (f && g.state !== 'post') { const p = home ? f.pHome : 1 - f.pHome; right = `<span class="r"><b>${pct(p)}</b><span>to win</span></span>`; }
         else if (g.state === 'post') right = `<span class="r"><b class="${us.score > them.score ? 'res w' : 'res l'}" style="font-size:22px">${us.score > them.score ? 'W' : 'L'}</b></span>`;
       }
-      return `<a class="row" href="${href.team(lk, t.id)}">${logo(t.logo)}<span class="t"><b>${esc(t.short)}<small>${esc(t.rec)}</small></b><span>${line}</span></span>${right || chev}</a>`;
+      const to = g ? href.game(lk, g.id) : href.team(lk, t.id);
+      return `<div class="row prow teamrow"><a class="go" href="${href.team(lk, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo)}</a><a class="t2" href="${to}"><span class="t"><b>${esc(t.short)}<small>${esc(t.rec)}</small></b><span>${line}</span></span>${right || chev}</a></div>`;
     });
     if (P.teams) parts.push(sec('My teams', '', `<a href="#teams">Edit</a>`) + (rows.length ? `<div class="rows">${rows.join('')}</div>` : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`)));
-
-    // next games for my teams that aren't live: the ticket with the forecast
-    const upcoming = teams.filter(Boolean).map(t => byTeam.get(t.id) || t.next).filter(g => g && g.state !== 'in');
-    const seen = new Set(); const up = upcoming.filter(g => { if (seen.has(g.id)) return false; seen.add(g.id); return true; }).sort((a, b) => (a.state === 'post') - (b.state === 'post') || new Date(a.date) - new Date(b.date));
-    if (up.length && P.games) parts.push(sec('Your games', '', `<a href="#scores">All scores</a>`) + `<div class="games">${up.slice(0, 4).map(g => gameCard(L, g, ctx, true)).join('')}</div>`);
 
     // my players
     const ppgOf = id => { const r = lp && lp.rows.find(x => x.id === String(id)); return r ? `${r.pts.toFixed(1)} ppg` : ''; };
@@ -194,7 +190,8 @@
       if (mine.length) {
         const blocks = teams.filter(Boolean).map(t => {
           const b = inj.byTeam[t.id]; if (!b || !b.list.length) return '';
-          return `<div class="injgrp"><div class="injhd">${logo(t.logo, 's')}<b>${esc(t.short)}</b><span>${b.list.length}</span></div>${b.list.map((x, i) => row(x, i, t, null)).join('')}</div>`;
+          const folded = !!(store.get('v5:injcol', {}) || {})[t.id];
+          return `<div class="injgrp"><button class="injhd" data-act="injcol" data-id="${esc(t.id)}" aria-expanded="${!folded}">${logo(t.logo, 's')}<b>${esc(t.short)}</b><span>${b.list.length}</span>${chev}</button><div class="injbody"${folded ? ' hidden' : ''}>${b.list.map((x, i) => row(x, i, t, null)).join('')}</div></div>`;
         }).filter(Boolean);
         if (blocks.length) parts.push(sec('Injuries', 'your teams') + `<div class="rows">${blocks.join('')}</div>`);
       }
@@ -227,26 +224,29 @@
     const far = Math.abs(new Date(ymd) - new Date(today)) > 4 * 864e5; const center = far ? ymd : today;
     const days = Array.from({ length: 9 }, (_, i) => addDays(center, i - 4));
     const dayBtn = (d, lab) => `<button class="day${d === ymd ? ' on' : ''}" data-act="date" data-ymd="${d}" aria-pressed="${d === ymd}"><em>${esc(lab)}</em><b>${+d.slice(8)}</b></button>`;
-    const strip = `<div class="datesbar"><div class="dates" id="dates">${far ? dayBtn(today, 'Today') + '<span class="gap"></span>' : ''}${days.map(d => dayBtn(d, d === today ? 'Today' : dayLabel(d, { weekday: 'short' }))).join('')}</div><button class="day cal" data-act="calendar" data-ymd="${esc(ymd)}" aria-label="Open the calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><em>${esc(dayLabel(ymd, { month: 'short' }))}</em></button></div>`;
+    const calPill = `<div class="calrow"><button class="chip cal" data-act="calendar" data-ymd="${esc(ymd)}" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>${esc(dayLabel(ymd, { month: 'long', year: 'numeric' }))}<svg class="dn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><span id="phase"></span></div>`;
+    const strip = calPill + `<div class="dates" id="dates">${far ? dayBtn(today, 'Today') + '<span class="gap"></span>' : ''}${days.map(d => dayBtn(d, d === today ? 'Today' : dayLabel(d, { weekday: 'short' }))).join('')}</div>`;
     const head = strip;
     $main.innerHTML = head + skeleton(4, 'card');
     const [games, ctx, meta] = await Promise.all([ymd === today && S.today[lk] && S.today[lk].length ? S.today[lk] : scoreboard(L, ymd).catch(() => null), forecastCtx(L, ymd).catch(() => null), sbMeta(L, ymd)]);
     if (ymd === today && games) S.today[lk] = games;
     const el = $main.querySelector('#dates .on'); if (el) el.scrollIntoView({ inline: 'center', block: 'nearest' });
-    const phase = meta.phase ? `<p class="phase">${esc(L.label)} ${esc(meta.phase)}</p>` : '';
-    if (!games) { $main.innerHTML = head + phase + empty("Couldn't load the scoreboard", '<p style="margin:6px 0 0">The feed didn\'t answer. It usually comes back within a minute.</p>'); return; }
+    const phase = ''; const phaseTag = meta.phase ? `<span class="phase">${esc(meta.phase)}</span>` : '';
+    const setPhase = () => { const el = $main.querySelector('#phase'); if (el) el.innerHTML = phaseTag; };
+    if (!games) { $main.innerHTML = head + phase + empty("Couldn't load the scoreboard", '<p style="margin:6px 0 0">The feed didn\'t answer. It usually comes back within a minute.</p>'); setPhase(); return; }
     if (!games.length) {
       // say when the next games are, and let the strip jump there; the season's calendar comes with the scoreboard
       const next = meta.cal.find(d => d > ymd), last = meta.cal.filter(d => d < ymd).slice(-1)[0];
       const when = next ? (next === addDays(today, 1) ? 'tomorrow' : next === today ? 'today' : `on ${dayLabel(next, { weekday: 'long', month: 'short', day: 'numeric' })}`) : '';
       const body = next ? `<p style="margin:6px 0 0">Next ${esc(L.label)} games are ${esc(when)}.</p>` : meta.cal.length ? `<p style="margin:6px 0 0">The season is over${last ? `; the last games were ${esc(dayLabel(last, { month: 'long', day: 'numeric' }))}` : ''}. Next season shows here once the schedule is posted.</p>` : '';
       $main.innerHTML = head + phase + empty(`No ${L.label} games ${ymd === today ? 'today' : 'on ' + dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, body, next ? `<button class="btn" data-act="date" data-ymd="${esc(next)}">Jump to ${esc(dayLabel(next, { weekday: 'short', month: 'short', day: 'numeric' }))}</button>` : '');
-      return;
+      setPhase(); return;
     }
     const by = st => games.filter(g => g.state === st).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
     const live = by('in'), pre = by('pre'), post = by('post');
     const block = (title, list) => list.length ? sec(title, `${list.length}`) + `<div class="games">${list.map(g => gameCard(L, g, ctx, false, true)).join('')}</div>` : '';
     $main.innerHTML = head + phase + block('Live', live) + block(ymd === today ? 'Upcoming' : 'Scheduled', pre) + block('Final', post);
+    setPhase();
     const el2 = $main.querySelector('#dates .on'); if (el2) el2.scrollIntoView({ inline: 'center', block: 'nearest' });
   }
   /* a month of games at a glance. Your teams' days come from their schedules (one small request each, usually
