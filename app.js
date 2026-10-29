@@ -7,13 +7,13 @@
   /* Loading never blanks the screen. A view's first paint is a skeleton (marked by views.js); when there is real content
      on screen already, that paint is swallowed: the old screen stays, dims a touch, a slim bar runs under the header, and the
      next real paint swaps it out. The skeleton still shows when there is nothing to keep (first open, after an error). */
-  { const proto = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML'); let bar = null, barT = null;
+  { const proto = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML'); let bar = null, barT = null, slowT = null;
     const showBar = () => { if (!bar) { bar = document.createElement('div'); bar.className = 'loadbar'; document.body.appendChild(bar); } clearTimeout(barT); barT = setTimeout(() => { bar.classList.add('on'); $main.setAttribute('aria-busy', 'true'); }, 160); };
     const hideBar = () => { clearTimeout(barT); if (bar) bar.classList.remove('on'); $main.removeAttribute('aria-busy'); };
     V.busy = on => on ? showBar() : hideBar();   // for views that patch themselves in place and have no paint to hang the bar on
     Object.defineProperty($main, 'innerHTML', {
       get() { return proto.get.call($main); },
-      set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { showBar(); return; } proto.set.call($main, s); $main.dataset.real = s.includes('<!--skel-->') ? '0' : '1'; if ($main.dataset.real === '1') { hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; window.scrollTo(0, 0); } } }
+      set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { showBar(); return; } proto.set.call($main, s); $main.dataset.real = s.includes('<!--skel-->') ? '0' : '1'; clearTimeout(slowT); if ($main.dataset.real === '1') { hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; window.scrollTo(0, 0); } } else slowT = setTimeout(() => { if ($main.dataset.real === '0' && !$main.querySelector('.slow')) $main.insertAdjacentHTML('beforeend', '<p class="legend slow">The feed is slow to answer. It usually clears within a minute; pull down to try again.</p>'); }, 7000); }
     }); }
   S.today = S.today || {}; ORDER.forEach(k => { S.today[k] = S.today[k] || []; });
 

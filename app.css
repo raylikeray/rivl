@@ -1198,3 +1198,9 @@ button.thead:active{transform:scale(.985)}
 .why-r b small{display:block;font-size:11px;font-weight:700;color:var(--ink-3);line-height:1.1;margin-top:1px}
 .why-r b i{font-style:normal;color:var(--warn);font-weight:800;margin-left:1px}
 .why-r b.names{white-space:normal;line-height:1.2;font-size:12.5px;overflow-wrap:anywhere}
+/* skeleton rows are not rows: no row padding, border or 100% width (which, with the gutters, pushed the page wider than the screen) */
+.skel.row{width:auto;padding:0;border:0;display:block}
+/* the update notice: a bar above the tab bar, centred by its edges, not by a transform the rise animation would wipe out */
+.upd{left:var(--gut);right:var(--gut-r);transform:none;max-width:460px;margin:0 auto;width:auto;animation:updin .3s both}
+@keyframes updin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.legend.slow{animation:rise .3s both}
