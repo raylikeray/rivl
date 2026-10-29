@@ -1249,3 +1249,7 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   .livebar .dot,.hero .mid .st.on::before,.live::before{animation:none!important;opacity:1}
   .loadbar{animation:none!important;background:var(--acc,var(--ink))}
 }
+/* the forecast row: the bar keeps its width, the words wrap under the call instead of squeezing it to a sliver */
+.game .fc .bar{flex:1 1 40%;min-width:84px}
+.game .fc b{white-space:normal;min-width:0;flex:1 1 auto;line-height:1.25}
+.game .fc b small{display:block;margin-left:0;margin-top:1px}

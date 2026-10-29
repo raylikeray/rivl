@@ -13,7 +13,7 @@
     V.busy = on => on ? showBar() : hideBar();   // for views that patch themselves in place and have no paint to hang the bar on
     Object.defineProperty($main, 'innerHTML', {
       get() { return proto.get.call($main); },
-      set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { showBar(); return; } proto.set.call($main, s); $main.dataset.real = s.includes('<!--skel-->') ? '0' : '1'; clearTimeout(slowT); if ($main.dataset.real === '1') { hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; window.scrollTo(0, 0); } } else slowT = setTimeout(() => { if ($main.dataset.real === '0' && !$main.querySelector('.slow')) $main.insertAdjacentHTML('beforeend', '<p class="legend slow">The feed is slow to answer. It usually clears within a minute; pull down to try again.</p>'); }, 7000); }
+      set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { showBar(); return; } proto.set.call($main, s); $main.dataset.real = s.includes('<!--skel-->') ? '0' : '1'; clearTimeout(slowT); if ($main.dataset.real === '1') { hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; const y = +$main.dataset.y || 0; window.scrollTo(0, y); if (y) requestAnimationFrame(() => window.scrollTo(0, y)); } } else slowT = setTimeout(() => { if ($main.dataset.real === '0' && !$main.querySelector('.slow')) $main.insertAdjacentHTML('beforeend', '<p class="legend slow">The feed is slow to answer. It usually clears within a minute; pull down to try again.</p>'); }, 7000); }
     }); }
   S.today = S.today || {}; ORDER.forEach(k => { S.today[k] = S.today[k] || []; });
 
@@ -52,8 +52,13 @@
 
   /* ---------- render ---------- */
   let seq = 0, current = null;
+  /* where each screen was scrolled to, by screen key: coming back to a list lands where you were, not at the top */
+  const scrollMem = new Map();
   async function render() {
     const r = route(); const my = ++seq; current = r; V.refresh = null; closeSheet();
+    const key = `${r.name}/${r.args.join('/')}`;
+    if (render.key && render.key !== key) scrollMem.set(render.key, window.scrollY);
+    $main.dataset.y = render.key !== key ? String(scrollMem.get(key) || 0) : '';
     const leagueScreen = SCREENS.includes(r.name);
     if (leagueScreen) store.set('v5:screen', r.name);
     if (r.name !== 'scores') store.set('v5:date', todayCT());
@@ -67,7 +72,7 @@
     if (my !== seq) return;
     paintPills(r.lk, leagueScreen);   // live counts may have arrived while the view loaded
     // the rise plays for a new screen; a screen repainting itself (another day on Scores, another conference) keeps still
-    const key = `${r.name}/${r.args.join('/')}`; if (key !== render.key) { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); } else $main.classList.remove('enter'); render.key = key;
+    if (key !== render.key) { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); } else $main.classList.remove('enter'); render.key = key;
     document.dispatchEvent(new CustomEvent('rivl:rendered'));
   }
   window.addEventListener('hashchange', render);

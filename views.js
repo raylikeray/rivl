@@ -388,7 +388,14 @@
       const page = $main.querySelector('#scpage');
       if (page && page.dataset.lk === lk) {
         const hd = page.querySelector('#schead'); const hh = hashOf(head);
-        if (hd.dataset.h !== hh) { const dates = hd.querySelector('#dates'); const same = dates && [...dates.querySelectorAll('.day')].map(b => b.dataset.ymd).join() === (far ? [today, ...days] : days).join(); if (same) { dates.querySelectorAll('.day').forEach(b => { const on = b.dataset.ymd === ymd; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); const cal = hd.querySelector('.chip.cal'); if (cal) cal.dataset.ymd = ymd; } else { hd.innerHTML = head; hd.dataset.h = hh; } }
+        if (hd.dataset.h !== hh) {
+          const dates = hd.querySelector('#dates'); const same = dates && [...dates.querySelectorAll('.day')].map(b => b.dataset.ymd).join() === (far ? [today, ...days] : days).join();
+          if (same) {   // the same window of days: move the highlight, and refresh the small row above it (month, Mine) in place
+            dates.querySelectorAll('.day').forEach(b => { const on = b.dataset.ymd === ymd; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+            const cr = hd.querySelector('.calrow'); if (cr) { const tmp = document.createElement('div'); tmp.innerHTML = calPill; cr.replaceWith(tmp.firstElementChild); }
+          } else hd.innerHTML = head;
+          hd.dataset.h = hh;
+        }
         const bd = page.querySelector('#scbody'); const bh = hashOf(body); if (bd.dataset.h !== bh) { bd.innerHTML = body; bd.dataset.h = bh; }
         if (HW.v5.busy) HW.v5.busy(false);
       } else $main.innerHTML = `<div id="scpage" data-lk="${lk}"><div id="schead" data-h="${hashOf(head)}">${head}</div><div id="scbody">${body}</div></div>`;
@@ -535,7 +542,9 @@
     const grid = G.map(([k, l]) => ({ k, l, v: stat(k) })).filter(x => x.v != null);
     const ring = (segs, center, label, title) => {
       const live = segs.filter(x => x.v > 0); const total = live.reduce((a, x) => a + x.v, 0); const R = 54, C = 2 * Math.PI * R, gap = live.length > 1 ? 17 : 0; let off = 0;
-      const arcs = live.map(x => { const share = x.v / total * C; const len = Math.max(1, share - gap); const a = `<circle cx="70" cy="70" r="${R}" style="stroke:${x.c}" stroke-width="13" stroke-linecap="${len > 6 ? 'round' : 'butt'}" stroke-dasharray="${len.toFixed(1)} ${(C - len).toFixed(1)}" stroke-dashoffset="${(-(off + (gap ? gap / 2 : 0))).toFixed(1)}"/>`; off += share; return a; }).join('');
+      // every slice at least a short dash (a 4% share is a mark, not a hair); the biggest slice gives up the difference
+      const MIN = 12; const shares = live.map(x => x.v / total * C); const lens = shares.map(sh => Math.max(MIN, sh - gap)); const over = lens.reduce((a, b) => a + b, 0) + gap * live.length - C; if (over > 0) { const big = lens.indexOf(Math.max(...lens)); lens[big] = Math.max(MIN, lens[big] - over); }
+      const arcs = live.map((x, i) => { const len = lens[i]; const a = `<circle cx="70" cy="70" r="${R}" style="stroke:${x.c}" stroke-width="13" stroke-linecap="round" stroke-dasharray="${len.toFixed(1)} ${(C - len).toFixed(1)}" stroke-dashoffset="${(-(off + (gap ? gap / 2 : 0))).toFixed(1)}"/>`; off += len + gap; return a; }).join('');
       return `<div class="ring" style="${toneVars}"><svg width="150" height="150" viewBox="0 0 140 140" role="img" aria-label="${esc(title)}"><g fill="none" transform="rotate(-90 70 70)">${arcs}</g><text x="70" y="73" text-anchor="middle" fill="var(--ink)" style="font:800 34px var(--num)">${esc(center)}</text><text x="70" y="91" text-anchor="middle" fill="var(--ink-3)" style="font:700 11px var(--ui);letter-spacing:.06em">${esc(label)}</text></svg><div class="key">${segs.map(x => `<div><i style="background:${x.c}"></i><span>${esc(x.l)}</span><b>${x.v == null ? '—' : x.v.toFixed(1)}</b><em>${total && x.v > 0 ? Math.round(x.v / total * 100) + '%' : ''}</em></div>`).join('')}</div></div>`;
     };
     // three tints of the team colour that read on both grounds (set per theme in CSS from these variables)
