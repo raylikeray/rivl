@@ -705,3 +705,17 @@ body{overscroll-behavior-y:none}
 /* brief chips: a hairline edge, no clipped shadow */
 .bchip{box-shadow:inset 0 0 0 1px var(--line)}
 .brief-row{padding:2px 0 10px}
+/* ---- logo discs with dimension; a team tint and ring where the team is known ---- */
+.logo{background:radial-gradient(120% 120% at 32% 22%,var(--surf-2),var(--surf-3));box-shadow:inset 0 0 0 1px var(--ring),inset 0 1px 0 rgba(255,255,255,.06),0 4px 10px -5px rgba(0,0,0,.7)}
+.logo.tint{background:radial-gradient(120% 120% at 32% 22%,color-mix(in srgb,var(--tc) 14%,var(--surf-2)),color-mix(in srgb,var(--tc) 30%,var(--surf-3)));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tc) 55%,transparent),inset 0 1px 0 rgba(255,255,255,.08),0 4px 10px -5px rgba(0,0,0,.7)}
+.logo img{width:74%;height:74%;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}
+:root[data-theme="light"] .logo{background:radial-gradient(120% 120% at 32% 22%,#fff,#e9ebf0);box-shadow:inset 0 0 0 1px rgba(10,11,14,.08),0 1px 2px rgba(16,24,40,.08),0 4px 10px -5px rgba(16,24,40,.35)}
+:root[data-theme="light"] .logo.tint{background:radial-gradient(120% 120% at 32% 22%,color-mix(in srgb,var(--tc) 8%,#fff),color-mix(in srgb,var(--tc) 20%,#e9ebf0));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tc) 50%,transparent),0 1px 2px rgba(16,24,40,.08),0 4px 10px -5px rgba(16,24,40,.35)}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]) .logo{background:radial-gradient(120% 120% at 32% 22%,#fff,#e9ebf0);box-shadow:inset 0 0 0 1px rgba(10,11,14,.08),0 1px 2px rgba(16,24,40,.08),0 4px 10px -5px rgba(16,24,40,.35)}
+  :root:not([data-theme="dark"]) .logo.tint{background:radial-gradient(120% 120% at 32% 22%,color-mix(in srgb,var(--tc) 8%,#fff),color-mix(in srgb,var(--tc) 20%,#e9ebf0));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tc) 50%,transparent),0 1px 2px rgba(16,24,40,.08),0 4px 10px -5px rgba(16,24,40,.35)}
+}
+.hero .tm .logo,.onb-team .logo,.bchip .logo,.pp .sec.pp-team h2 .logo{background:none;box-shadow:none}
+.hero .tm .logo img,.onb-team .logo img,.bchip .logo img{filter:none}
+.onb-team .logo img{width:84%;height:84%}
+.hero .tm .logo img,.bchip .logo img{width:100%;height:100%}
