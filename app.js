@@ -229,7 +229,7 @@
     const rows = [['Status', `<span class="tag ${cls}">${esc(st)}</span>`], ['Injury', esc(what || '—')], ['Reported', x.date ? esc(new Date(x.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: HW.TZ })) : ''], ['Expected back', ret ? esc(ret.long) : (/out/i.test(st) ? 'No date given' : '')], ['Fantasy', det.fantasyStatus && det.fantasyStatus.description ? esc(det.fantasyStatus.description) : '']].filter(([, v]) => v);
     const note = x.longComment || x.shortComment || '';
     openPanel(`<button class="ib close" data-act="panel-close" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-      <div class="inj-head">${V._.headshot(V._.hsUrl(at), team.color, 64, at.displayName)}<div><h3>${esc(at.displayName || '')}</h3><p>${esc(team.short || '')}${at.position && at.position.abbreviation ? `, ${esc(at.position.abbreviation)}` : ''}</p></div></div>
+      <div class="inj-head">${V._.headshot(V._.hsUrl(at), V._.teamColor(team, L), 64, at.displayName)}<div><h3>${esc(at.displayName || '')}</h3><p>${esc(team.short || '')}${at.position && at.position.abbreviation ? `, ${esc(at.position.abbreviation)}` : ''}</p></div></div>
       <table class="tbl kv"><tbody>${rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</tbody></table>
       ${note ? `<p class="inj-note">${esc(note)}</p>` : ''}
       <div style="display:flex;gap:8px;margin-top:14px">${id ? `<a class="btn" href="#player/${lk}/${esc(id)}" data-act="panel-close">Open profile</a>` : ''}${team.id ? `<a class="btn ghost" href="#team/${lk}/${esc(team.id)}" data-act="panel-close">${esc(team.short || 'Team')}</a>` : ''}</div>`);
@@ -249,7 +249,7 @@
     if (mode !== 'team') { root.removeAttribute('data-accent'); root.style.removeProperty('--acc'); root.style.removeProperty('--acc-ink'); return; }
     const lk = lkOf(store.get('v5:lk', 'nba')); const F = HW.favs.all(); const pick = (F[lk] || [])[0] ? [lk, F[lk][0]] : ORDER.map(k => [k, (F[k] || [])[0]]).find(([, id]) => id);
     if (!pick) { root.removeAttribute('data-accent'); return; }
-    const idx = await V.teamsIndex(LEAGUES[pick[0]]).catch(() => ({})); const t = idx[String(pick[1])]; const c = t && t.color; if (!c) { root.removeAttribute('data-accent'); return; }
+    await V.teamsIndex(LEAGUES[pick[0]]).catch(() => ({})); const c = V._.teamColor({ id: String(pick[1]) }, LEAGUES[pick[0]]); if (!c || c === '#2A2D33' || c === '#55606e') { root.removeAttribute('data-accent'); return; }
     const h = c.replace('#', ''); const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
     root.style.setProperty('--acc', c); root.style.setProperty('--acc-ink', lum > 0.6 ? '#000' : '#fff'); root.setAttribute('data-accent', 'team');
   }
