@@ -123,17 +123,26 @@
   /* every team in the league, keyed by id: colour and logo for discs and rails */
   async function teamsIndex(L) {
     if (teamIdx[L.key]) return teamIdx[L.key];
+    // a copy kept on the device from the last good fetch: colours and logos never depend on tonight's feed
+    const kept = store.get(`v5:teams:${L.key}`, null);
+    if (kept && kept.t && Date.now() - kept.t < 7 * 864e5 && kept.idx && Object.keys(kept.idx).length) { teamIdx[L.key] = kept.idx; if (Date.now() - kept.t > 864e5) refreshTeams(L); return kept.idx; }
+    const idx = await fetchTeams(L);
+    if (idx) { teamIdx[L.key] = idx; store.set(`v5:teams:${L.key}`, { t: Date.now(), idx }); return idx; }
+    if (kept && kept.idx) { teamIdx[L.key] = kept.idx; return kept.idx; }   // stale is better than colourless
+    const out = {};   // nothing at all: names and logos from the standings, colours when the list comes back
+    const st = await standings(L).catch(() => null);
+    if (st && st.byId) Object.values(st.byId).forEach(r => { out[r.id] = { id: r.id, abbr: r.abbr, name: r.name, short: r.short, loc: r.loc, color: '', alt: '', logo: r.logo }; });
+    return out;
+  }
+  async function fetchTeams(L) {
     let d = await jSoft(`${API(L)}/teams?limit=500`, 3600000);
     if (!d) d = await jSoft(`${API(L)}/teams?limit=500`, 0);   // one retry: the feed drops bursts of requests on busy nights
     const list = d && d.sports && d.sports[0] && d.sports[0].leagues && d.sports[0].leagues[0] && d.sports[0].leagues[0].teams || [];
-    const idx = {}; list.forEach(x => { const t = x.team || x; idx[String(t.id)] = { id: String(t.id), abbr: t.abbreviation, name: t.displayName, short: t.shortDisplayName || t.name, loc: t.location, color: hx(t.color), alt: hx(t.alternateColor), logo: t.logos && t.logos[0] && t.logos[0].href }; });
-    if (!list.length) {   // nothing came back: fill from standings so rows still have a name and logo, and try the list again next time
-      const st = await standings(L).catch(() => null);
-      if (st && st.byId) Object.values(st.byId).forEach(r => { idx[r.id] = { id: r.id, abbr: r.abbr, name: r.name, short: r.short, loc: r.loc, color: '', alt: '', logo: r.logo }; });
-      return idx;
-    }
-    return (teamIdx[L.key] = idx);
+    if (!list.length) return null;
+    const idx = {}; list.forEach(x => { const t = x.team || x; idx[String(t.id)] = { id: String(t.id), abbr: t.abbreviation, name: t.displayName, short: t.shortDisplayName || t.name, loc: t.location, color: t.color ? hx(t.color) : '', alt: t.alternateColor ? hx(t.alternateColor) : '', logo: t.logos && t.logos[0] && t.logos[0].href }; });
+    return idx;
   }
+  async function refreshTeams(L) { const idx = await fetchTeams(L).catch(() => null); if (idx) { teamIdx[L.key] = idx; store.set(`v5:teams:${L.key}`, { t: Date.now(), idx }); } }
 
   /* ================= HOME: your teams, your players, nothing else ================= */
   const rankGame = g => (isFav(g) ? 1000 : 0) + (g.tv.national.length ? 100 : 0) + interest(g) / 1000;
@@ -196,7 +205,7 @@
         else if (g.state === 'post') right = `<span class="r"><b class="${us.score > them.score ? 'res w' : 'res l'}" style="font-size:22px">${us.score > them.score ? 'W' : 'L'}</b></span>`;
       }
       const to = g ? href.game(lk, g.id) : href.team(lk, t.id);
-      return `<div class="row prow teamrow"><a class="go" href="${href.team(lk, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, '', t.color)}</a><a class="t2" href="${to}"><span class="t"><b>${esc(t.short)}<small>${esc(t.rec)}</small></b><span>${line}</span></span>${right || chev}</a></div>`;
+      return `<div class="row prow teamrow"><a class="go" href="${href.team(lk, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, '', t.color || teamColor({ id: t.id }, L))}</a><a class="t2" href="${to}"><span class="t"><b>${esc(t.short)}<small>${esc(t.rec)}</small></b><span>${line}</span></span>${right || chev}</a></div>`;
     });
     if (P.teams) parts.push(sec('My teams', '', `<a href="#teams">Edit</a>`) + (rows.length ? `<div class="rows">${rows.join('')}</div>` : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`)));
 
@@ -217,7 +226,7 @@
       const have = new Set(groups.map(g => g.t.id));
       if (fp.length) (inj.teams || []).forEach(tt => { const tid = String(tt.id || ''); if (!tid || have.has(tid)) return; const rows = (tt.injuries || []).map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })).filter(r => r.p); if (!rows.length) return; const ti = tIdx[tid] || {}; groups.push({ t: { id: tid, short: ti.short || tt.displayName || rows[0].p.team || '', logo: ti.logo || '', color: ti.color || rows[0].p.color || '' }, rows, only: true }); });
       const folds = store.get('v5:injcol', {}) || {};
-      const blocks = groups.map(({ t, rows, only }) => `<div class="injgrp"><button class="injhd" data-act="injcol" data-id="${esc(t.id)}" aria-expanded="${!folds[t.id]}">${logo(t.logo, 's', t.color)}<b>${esc(t.short)}</b><span>${only ? 'your players' : rows.length}</span>${chev}</button><div class="injbody"${folds[t.id] ? ' hidden' : ''}>${rows.map(({ x, i, p }) => row(x, i, t, p)).join('')}</div></div>`);
+      const blocks = groups.map(({ t, rows, only }) => `<div class="injgrp"><button class="injhd" data-act="injcol" data-id="${esc(t.id)}" aria-expanded="${!folds[t.id]}">${logo(t.logo, 's', t.color || teamColor({ id: t.id }, L))}<b>${esc(t.short)}</b><span>${only ? 'your players' : rows.length}</span>${chev}</button><div class="injbody"${folds[t.id] ? ' hidden' : ''}>${rows.map(({ x, i, p }) => row(x, i, t, p)).join('')}</div></div>`);
       if (blocks.length) parts.push(sec('Injuries', 'your teams and players') + `<div class="rows">${blocks.join('')}</div>`);
     }
 
