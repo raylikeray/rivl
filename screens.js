@@ -25,9 +25,8 @@
     const ims = (a.images || []).filter(x => x && x.url); const im = (ims.slice().sort((x, y) => Math.abs((x.width / x.height || 16 / 9) - 16 / 9) - Math.abs((y.width / y.height || 16 / 9) - 16 / 9))[0] || {}).url;   // the one shaped closest to 16:9, the thumbnail's shape
     const isVideo = vids.length && (/media|video/i.test(a.type || '') || !a.description);
     const meta = [a.byline, a.published ? ago(a.published) : ''].filter(Boolean).join(', ');
-    const fit = `onload="if(this.naturalWidth&&Math.abs(this.naturalWidth/this.naturalHeight-16/9)<.06)this.classList.add('fill')"`;   // shaped like the box: fill it; anything else is shown whole, never cut
-    if (isVideo) return `<button class="row" data-act="play" data-vid="${esc(String(vids[0].id))}">${thumb ? `<span class="thumb vid">${im ? `<img src="${esc(im)}" alt="" loading="lazy" ${fit} onerror="this.remove()">` : ''}<i></i></span>` : ''}<span class="t"><b class="wrap">${esc(a.headline)}</b><span>${esc(meta || 'Video')}</span></span></button>`;
-    return `<a class="row" href="${id ? `#article/${lk}/${id}` : esc(a.links && a.links.web && a.links.web.href || '#')}">${thumb && im ? `<img class="thumb" src="${esc(im)}" alt="" loading="lazy" ${fit} onerror="this.style.visibility='hidden'">` : ''}<span class="t"><b class="wrap">${esc(a.headline)}</b><span>${esc(meta)}</span></span></a>`;
+    if (isVideo) return `<button class="row" data-act="play" data-vid="${esc(String(vids[0].id))}">${thumb ? `<span class="thumb vid">${im ? `<img src="${esc(im)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<i></i></span>` : ''}<span class="t"><b class="wrap">${esc(a.headline)}</b><span>${esc(meta || 'Video')}</span></span></button>`;
+    return `<a class="row" href="${id ? `#article/${lk}/${id}` : esc(a.links && a.links.web && a.links.web.href || '#')}">${thumb && im ? `<img class="thumb" src="${esc(im)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : ''}<span class="t"><b class="wrap">${esc(a.headline)}</b><span>${esc(meta)}</span></span></a>`;
   }
   V.newsRow = newsRow;
 
