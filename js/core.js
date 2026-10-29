@@ -131,7 +131,7 @@ function parseStandingRow(en, L, grp) {
     logo: (t.logos && t.logos[0] && t.logos[0].href) || logoUrl(L, t.abbreviation),
     w, l, t: ties, pct: dv('winPercent') || (w + l ? (w / (w + l)).toFixed(3).replace(/^0/, '') : ''), gb: dv('gamesBehind'),
     home: dv('Home'), road: dv('Road') || dv('Away'), l10: dv('Last Ten Games'), strk: dv('streak'), conf: dv('vs. Conf.') || dv('vsConf') || dv('vs. Div.'),
-    diff, ppg, opp, seed: val('playoffSeed') || null,
+    diff, ppg, opp, seed: val('playoffSeed') || null, clinch: dv('clincher') || '',
     group: grp.name, groupAbbr: grp.abbr
   };
 }

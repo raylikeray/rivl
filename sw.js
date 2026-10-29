@@ -1,0 +1,58 @@
+/* RIVL service worker.
+   The shell (this app's own files) is cached on install, so the app opens without the network.
+   ESPN's feeds go network-first with a short leash: a fresh answer when there is one, the last good copy
+   when the network is slow, down, or ESPN is throttling (429/5xx). Logos, headshots and fonts are cached
+   on first sight and served from cache after that. */
+const VERSION = 'rivl-v18';
+const SHELL = `${VERSION}-shell`, DATA = `${VERSION}-data`, MEDIA = 'rivl-media';
+const SHELL_FILES = ['./', './index.html', './app.css?v=18', './app.js?v=18', './views.js?v=18', './screens.js?v=18', './config.js?v=18', './js/core.js?v=18', './more.js?v=18', './manifest.webmanifest', './img/mark.svg', './img/icon-192.png', './img/icon-512.png', './img/apple-touch-icon.png'];
+const FEED = /(^|\.)espn\.com$/;
+const MEDIA_HOST = /espncdn\.com$|fonts\.gstatic\.com$|fonts\.googleapis\.com$/;
+const DATA_TIMEOUT = 6000;
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(SHELL).then(c => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil((async () => {
+    const keep = new Set([SHELL, DATA, MEDIA]);
+    for (const k of await caches.keys()) if (!keep.has(k) && k.startsWith('rivl-')) await caches.delete(k);
+    await self.clients.claim();
+    const cs = await self.clients.matchAll({ type: 'window' }); cs.forEach(c => c.postMessage({ type: 'rivl:updated', version: VERSION }));
+  })());
+});
+self.addEventListener('message', e => { if (e.data && e.data.type === 'rivl:skip') self.skipWaiting(); });
+
+const withTimeout = (p, ms) => new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('timeout')), ms); p.then(v => { clearTimeout(t); res(v); }, err => { clearTimeout(t); rej(err); }); });
+
+self.addEventListener('fetch', e => {
+  const req = e.request; if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (url.origin === self.location.origin) {
+    // the app itself: cache first (files are versioned by their query string), the network fills gaps; navigations fall back to the shell
+    if (req.mode === 'navigate') { e.respondWith((async () => { try { const r = await withTimeout(fetch(req), 4000); const c = await caches.open(SHELL); c.put('./index.html', r.clone()); return r; } catch { return (await caches.match('./index.html')) || (await caches.match('./')) || Response.error(); } })()); return; }
+    e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(r => { if (r.ok) caches.open(SHELL).then(c => c.put(req, r.clone())); return r; })));
+    return;
+  }
+  if (FEED.test(url.hostname)) {
+    e.respondWith((async () => {
+      const c = await caches.open(DATA);
+      try {
+        const r = await withTimeout(fetch(req), DATA_TIMEOUT);
+        if (r.ok) { c.put(req, r.clone()); return r; }
+        const hit = await c.match(req); if (hit) return hit;   // throttled or broken upstream: the last good copy
+        return r;
+      } catch {
+        const hit = await c.match(req); if (hit) return hit;
+        return new Response('', { status: 504, statusText: 'offline' });
+      }
+    })());
+    return;
+  }
+  if (MEDIA_HOST.test(url.hostname)) {
+    e.respondWith((async () => {
+      const c = await caches.open(MEDIA); const hit = await c.match(req); if (hit) return hit;
+      try { const r = await fetch(req); if (r.ok || r.type === 'opaque') c.put(req, r.clone()); return r; } catch { return Response.error(); }
+    })());
+  }
+});

@@ -16,7 +16,7 @@
     const h = (location.hash || '#home').slice(1);
     let m;
     if ((m = h.match(/^(player|team|game|article)\/([a-z]+)\/([A-Za-z0-9]+)$/))) return { name: m[1], lk: lkOf(m[2]), args: [lkOf(m[2]), m[3]] };
-    if (LEAGUES[h]) { store.set('v5:lk', h); return { name: store.get('v5:screen', 'home'), lk: h, args: [h] }; }
+    if (LEAGUES[h]) { if (store.get('v5:lk') !== h) { store.set('v5:lk', h); if (V.applyAccent) V.applyAccent(); } return { name: store.get('v5:screen', 'home'), lk: h, args: [h] }; }
     if (h === 'search') return { name: 'search', lk: lkOf(store.get('v5:lk', 'nba')), args: [] };
     if (h === 'settings') return { name: 'settings', lk: lkOf(store.get('v5:lk', 'nba')), args: [] };
     const name = SCREENS.includes(h) ? h : 'home';
@@ -69,6 +69,7 @@
       catch { failed = true; }
     }
     if (!failed) lastOk = Date.now();
+    document.dispatchEvent(new CustomEvent('rivl:polled'));
     if (SCREENS.includes((current || route()).name)) paintPills((current || route()).lk, true);
     if (anyLive && current && (current.name === 'home' || current.name === 'scores')) refreshCards();
     if (V.refresh) { try { await V.refresh(); } catch { } }
@@ -83,7 +84,7 @@
       const scores = el.querySelectorAll('.sc');
       if (el.classList.contains('hero')) { const sc = el.querySelector('.mid .sc'); const st = el.querySelector('.mid .st'); if (sc) { const txt = `${g.away.score ?? ''}–${g.home.score ?? ''}`; if (sc.textContent !== txt) { sc.innerHTML = `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`; sc.classList.remove('bump'); void sc.offsetWidth; sc.classList.add('bump'); } } if (st) st.textContent = g.state === 'in' ? g.detail : g.state === 'post' ? 'Final' : st.textContent; return; }
       if (scores.length === 2) {
-        [g.away.score, g.home.score].forEach((v, i) => { const t = v == null ? '' : String(v); if (scores[i].textContent !== t) { scores[i].textContent = t; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } });
+        [g.away.score, g.home.score].forEach((v, i) => { const t = v == null ? '' : String(v); if (scores[i].textContent !== t) { if (V.tick) V.tick(scores[i], t); else scores[i].textContent = t; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } });
         const sides = el.querySelectorAll('.side'); const has = g.state !== 'pre' && g.away.score != null && g.home.score != null;
         [[g.away, g.home], [g.home, g.away]].forEach(([t, o], i) => { const lead = has && t.score > o.score; sides[i].classList.toggle('lo', has && t.score < o.score); scores[i].classList.toggle('on', lead); scores[i].classList.toggle('won', lead && g.state === 'post'); });
       }
@@ -97,6 +98,8 @@
 
   /* ---------- delegated actions ---------- */
   function toast(msg) { $toast.textContent = msg; $toast.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => $toast.classList.remove('on'), 1800); }
+  V.toast = toast; V.rerender = () => render();
+  V.refreshAll = async () => { try { HW.cache.clear(); } catch { } await render(); poll(); };
   document.addEventListener('click', e => {
     const back = e.target.closest('[data-act="back"]');
     if (back) { if (history.length > 1) { e.preventDefault(); history.back(); } return; }
@@ -131,6 +134,7 @@
     if (a === 'pref') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; V.prefs.set(act.dataset.pref, on); act.setAttribute('aria-checked', String(on)); }
     if (a === 'theme') { e.preventDefault(); store.set('v5:theme', act.dataset.theme); applyTheme(); $main.querySelectorAll('[data-act="theme"]').forEach(b => { const on = b.dataset.theme === act.dataset.theme; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); }
     if (a === 'onb-restart') { e.preventDefault(); onbLk = 'nba'; onbStep(0); }
+    if (a === 'accent') { e.preventDefault(); store.set('v5:accent', act.dataset.accent); applyAccent(); $main.querySelectorAll('[data-act="accent"]').forEach(b => { const on = b.dataset.accent === act.dataset.accent; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); }
     if (a === 'fav') {
       e.preventDefault();
       const on = HW.favs.toggle(act.dataset.lk, act.dataset.id);
@@ -234,6 +238,18 @@
     const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute('content', light ? '#E6E8ED' : '#000000');
   }
   applyTheme(); window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', applyTheme);
+  /* accent: mono chrome, or the colour of the first team you follow in the league you're on */
+  async function applyAccent() {
+    const root = document.documentElement; const mode = store.get('v5:accent', 'mono');
+    if (mode !== 'team') { root.removeAttribute('data-accent'); root.style.removeProperty('--acc'); root.style.removeProperty('--acc-ink'); return; }
+    const lk = lkOf(store.get('v5:lk', 'nba')); const F = HW.favs.all(); const pick = (F[lk] || [])[0] ? [lk, F[lk][0]] : ORDER.map(k => [k, (F[k] || [])[0]]).find(([, id]) => id);
+    if (!pick) { root.removeAttribute('data-accent'); return; }
+    const idx = await V.teamsIndex(LEAGUES[pick[0]]).catch(() => ({})); const t = idx[String(pick[1])]; const c = t && t.color; if (!c) { root.removeAttribute('data-accent'); return; }
+    const h = c.replace('#', ''); const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    root.style.setProperty('--acc', c); root.style.setProperty('--acc-ink', lum > 0.6 ? '#000' : '#fff'); root.setAttribute('data-accent', 'team');
+  }
+  V.applyAccent = applyAccent; applyAccent();
+  document.addEventListener('rivl:fav', () => applyAccent());
 
   /* ---------- first run: pick teams, pick players, choose what Home shows, add to the home screen ---------- */
   let deferredInstall = null;
@@ -279,7 +295,7 @@
       }
     } else if (n === 2) {
       const P = V.prefs.all();
-      const items = [['live', 'Live now', 'A big card when one of your teams is playing'], ['teams', 'My teams', 'Record, the game that matters and the chance to win'], ['players', 'My players', 'Scoring lines, one tap to the profile'], ['injuries', 'Injuries', 'Reports on your teams and players'], ['news', 'News', 'Stories about your teams and players'], ['forecast', 'Win chances', "RIVL's own estimate on each game card"]];
+      const items = [['brief', 'Tonight and last night', "Your teams' games in one line, and last night's results"], ['live', 'Live now', 'A big card when one of your teams is playing'], ['teams', 'My teams', 'Record, the game that matters and the chance to win'], ['players', 'My players', 'Scoring lines, one tap to the profile'], ['injuries', 'Injuries', 'Reports on your teams and players'], ['news', 'News', 'Stories about your teams and players'], ['forecast', 'Win chances', "RIVL's own estimate on each game card"]];
       frame('What do you want to see?', 'Home is yours. Switch off anything you don\'t care about; you can change it later in Settings.',
         `<div class="rows onb-prefs">${items.map(([k, t, b]) => `<button class="row sw" data-act="pref" data-pref="${k}" role="switch" aria-checked="${P[k] !== false}"><span class="t"><b>${esc(t)}</b><span class="wrap">${esc(b)}</span></span><span class="switch"></span></button>`).join('')}</div>`,
         `<button class="btn ghost" data-act="onb-next" data-step="1">Back</button><button class="btn" data-act="onb-next" data-step="3">Continue</button>`);

@@ -631,3 +631,59 @@ button.injhd[aria-expanded="false"] .chev svg{transform:rotate(0)}
 .fstar{display:inline-flex;color:var(--ink);font-style:normal}
 .fstar svg{width:13px;height:13px}
 .injhd span{font-weight:700}
+/* ---- pull to refresh, update notice ---- */
+body{overscroll-behavior-y:none}
+.ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translate(-50%,calc(-60px + var(--p,0) * 70px));width:40px;height:40px;border-radius:50%;background:var(--surf);box-shadow:var(--edge);display:grid;place-items:center;z-index:60;opacity:min(1,var(--p,0));transition:transform .12s,opacity .12s;pointer-events:none}
+.ptr i{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--ink-3);border-top-color:var(--ink);transform:rotate(calc(var(--p,0) * 300deg));transition:transform .08s}
+.ptr.arm i{border-color:var(--ink);border-top-color:var(--ink)}
+.ptr.go{transform:translate(-50%,10px);opacity:1}
+.ptr.go i{animation:spin .7s linear infinite;border-top-color:transparent}
+@keyframes spin{to{transform:rotate(360deg)}}
+.upd{position:fixed;left:50%;bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 14px);transform:translateX(-50%);background:var(--ink);color:var(--bg);border-radius:14px;padding:10px 16px;text-align:left;z-index:70;box-shadow:0 10px 30px -10px rgba(0,0,0,.6);animation:rise .3s both}
+.upd b{display:block;font-size:14px}
+.upd span{display:block;font-size:12.5px;opacity:.75}
+/* ---- the brief: tonight and last night ---- */
+.brief{margin:4px var(--gut-r) 6px var(--gut);padding:12px 0 4px;border-bottom:1px solid var(--line)}
+.brief-h{display:flex;align-items:baseline;gap:10px;padding:0 0 8px}
+.brief-h b{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.brief-h span{font-size:13px;color:var(--ink-3);font-weight:600}
+.brief-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0 8px;margin:0 calc(-1 * var(--gut-r)) 0 calc(-1 * var(--gut));padding-left:var(--gut);padding-right:var(--gut-r)}
+.brief-row::-webkit-scrollbar{display:none}
+.bchip{flex:none;display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 12px 0 8px;border-radius:12px;background:var(--surf);box-shadow:var(--edge);text-decoration:none;color:inherit;font-size:13.5px;font-weight:700;white-space:nowrap}
+.bchip .logo{width:24px;height:24px;background:none}
+.bchip .logo img{width:100%;height:100%}
+.bchip i{font-style:normal;color:var(--ink-3);font-weight:600;font-size:12px}
+.bchip span{color:var(--ink-2);font-weight:600;margin-left:4px}
+.bchip span.on{color:var(--live);font-weight:800}
+.bchip.res b.w{color:var(--win)}.bchip.res b.l{color:var(--loss)}
+.brief-rows{padding:0}
+.brief .row{padding:9px 0}
+/* ---- game page: line score, lead tracker, runs ---- */
+.tbl.ls{margin-top:14px}
+.tbl.ls td.l{display:flex;align-items:center;gap:8px;font-weight:700}
+.tbl.ls th:first-child,.tbl.ls td:first-child{width:92px}
+.tracker{padding:0 var(--gut-r) 0 var(--gut)}
+.tracker svg{width:100%;height:118px;display:block;border-radius:12px;background:var(--surf);box-shadow:var(--edge)}
+.tracker .tk{display:flex;gap:16px;padding:8px 2px 0;font-size:12px;font-weight:700;color:var(--ink-3)}
+.tracker .tk i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.runmark{display:flex;align-items:center;gap:8px;padding:8px 0 6px;font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.runmark::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--tc,var(--ink))}
+.runmark b{font:800 14px var(--num);color:var(--ink)}
+/* standings: the playoff picture under the name */
+.tbl.stand .nm{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
+.tbl.stand .nm small{font-size:11px;font-weight:600;color:var(--ink-3);white-space:nowrap}
+.tbl.stand .tag.cl{font-size:10px;padding:2px 5px;margin-top:1px}
+/* ---- accent: the first team you follow colours the chrome ---- */
+[data-accent="team"] .pill.on,[data-accent="team"] .chip.on,[data-accent="team"] .chip[aria-pressed="true"],[data-accent="team"] .chip[aria-checked="true"],[data-accent="team"] .day.on,[data-accent="team"] .cd.on,[data-accent="team"] .btn:not(.ghost),[data-accent="team"] .onb-team.on i,[data-accent="team"] [aria-checked="true"] .switch{background:var(--acc);color:var(--acc-ink)}
+[data-accent="team"] .day.on em,[data-accent="team"] .cd.on span{color:var(--acc-ink)}
+[data-accent="team"] .cd.on span i{background:var(--acc-ink)}
+[data-accent="team"] [aria-checked="true"] .switch::after{background:var(--acc-ink)}
+[data-accent="team"] .tab.on,[data-accent="team"] .tab.on span{color:var(--acc)}
+[data-accent="team"] .onb-team.on{box-shadow:var(--edge),inset 0 0 0 2px var(--acc)}
+[data-accent="team"] button.row.prow.sel.on{box-shadow:var(--edge),inset 0 0 0 2px var(--acc)}
+[data-accent="team"] .onb-dots i.on,[data-accent="team"] .tbl tr.me td:first-child{background:var(--acc);box-shadow:none}
+[data-accent="team"] .tbl tr.me td:first-child{background:linear-gradient(90deg,var(--surf-2),var(--surf));box-shadow:inset 3px 0 0 var(--acc)}
+[data-accent="team"] .onb-team.on i::after{border-color:var(--acc-ink)}
+/* rings draw in */
+.ring svg{animation:ringin .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes ringin{from{opacity:0;transform:rotate(-14deg) scale(.94)}to{opacity:1;transform:none}}
