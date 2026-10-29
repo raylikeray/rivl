@@ -55,15 +55,19 @@
 
   /* ---------- render ---------- */
   let seq = 0, current = null;
-  /* where each screen was scrolled to, by screen key: coming back to a list lands where you were, not at the top */
+  /* where each screen was scrolled to, by screen key: going BACK to a screen lands where you were; a tab lands where you left it;
+     a link to a player, team, game or story always opens at the top, however far down it you were last time */
   const scrollMem = new Map();
+  let navN = 0;   // each history entry is numbered the first time it is shown; an entry numbered below the one we left is a step back
   async function render() {
     const r = route(); const my = ++seq; current = r; V.refresh = null; closeSheet();
     if (r.name !== 'scores' && V.todayPill) V.todayPill(false);   // the Scores screen's back-to-today pill goes with it
     const key = `${r.name}/${r.args.join('/')}`;
-    if (render.key && render.key !== key) scrollMem.set(render.key, window.scrollY);
-    $main.dataset.y = render.key !== key ? String(scrollMem.get(key) || 0) : '';
+    const st = history.state; const back = !!(st && st.n != null && st.n < navN);
+    if (st && st.n != null) navN = st.n; else { navN += 1; try { history.replaceState({ n: navN }, ''); } catch { } }
     const leagueScreen = SCREENS.includes(r.name);
+    if (render.key && render.key !== key) scrollMem.set(render.key, window.scrollY);
+    $main.dataset.y = render.key !== key ? ((back || leagueScreen) ? String(scrollMem.get(key) || 0) : '0') : '';
     if (leagueScreen) store.set('v5:screen', r.name);
     if (r.name !== 'scores') store.set('v5:date', todayCT());
     document.getElementById('top').hidden = !leagueScreen;
