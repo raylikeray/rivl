@@ -76,7 +76,7 @@
     clearTimeout(pollT);
     const today = todayCT(); const r = current || route();
     poll.n = (poll.n || 0) + 1;
-    const order = [r.lk, ...(poll.n % 4 === 1 ? ORDER.filter(k => k !== r.lk) : [])];   // the other leagues every fourth pass: fewer bursts at the feed
+    const order = [r.lk, ...ORDER.filter(k => k !== r.lk && (poll.n % 4 === 1 || S.today[k].some(isLive)))];   // the other leagues every fourth pass, every pass while one of them has a game on (the live strip shows it)
     let anyLive = ORDER.some(k => k !== r.lk && S.today[k].some(isLive)), failed = false;
     for (const k of order) {
       try { const g = await scoreboard(LEAGUES[k], today, k === r.lk ? 20000 : 120000); S.today[k] = g; if (g.some(isLive)) anyLive = true; }
@@ -120,6 +120,54 @@
       if (g.state === 'post' && el.querySelector('.status .live')) render();   // a game just ended: let the view re-sort it into finals
     });
   }
+  /* ---------- the live strip: every game in play right now, on every screen but Home (which has its own live section)
+     and the game being read. One element, moved into whichever slot the screen offers (under the pills, or under an entity
+     screen's top bar) and patched chip by chip as polls land, so a score ticking over never repaints the screen. ---------- */
+  const $live = document.getElementById('livebar');
+  function liveList() {
+    const r = current || route(); const out = [];
+    const onToday = r.name === 'scores' && (store.get('v5:date', todayCT()) || todayCT()) === todayCT();   // Scores on today already lists this league's live games
+    [r.lk, ...ORDER.filter(k => k !== r.lk)].forEach(k => {
+      if (onToday && k === r.lk) return;
+      const L = LEAGUES[k]; const gs = S.today[k].filter(g => isLive(g) && !(r.name === 'game' && r.lk === k && String(r.args[1]) === g.id));
+      gs.sort((a, b) => (HW.isFav(b) ? 1 : 0) - (HW.isFav(a) ? 1 : 0)).forEach(g => out.push({ g, L }));
+    });
+    return out;
+  }
+  function liveChip(g, L) {
+    const tc = t => V._.teamColor(t, L);
+    const side = (t, o) => { const lead = t.score != null && o.score != null && t.score > o.score; return `<span class="tm"${!tc(t) || /^#(2A2D33|55606e)$/i.test(tc(t)) ? '' : ` style="--tc:${esc(tc(t))}"`}><img src="${esc(t.logo || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><b>${esc(t.abbr)}</b><i class="sc${lead ? ' on' : ''}">${t.score ?? ''}</i></span>`; };
+    return `<a class="lg${HW.isFav(g) ? ' fav' : ''}" href="#game/${L.key}/${esc(g.id)}" data-lid="${L.key}:${esc(g.id)}">${side(g.away, g.home)}${side(g.home, g.away)}<span class="st"><span class="dot"></span>${esc(g.detail)}</span></a>`;
+  }
+  function paintLive() {
+    if (!$live) return;
+    const r = current || route();
+    const show = r && !['home', 'settings', 'search'].includes(r.name) && !document.body.classList.contains('onboarding');
+    const list = show ? liveList() : [];
+    const inner = $live.querySelector('.lb-in');
+    if (!list.length) { if (!$live.hidden) { $live.hidden = true; inner.innerHTML = ''; } return; }
+    const want = list.map(({ g, L }) => `${L.key}:${g.id}`);
+    const have = [...inner.children].map(el => el.dataset.lid);
+    if (want.join() !== have.join()) inner.innerHTML = list.map(({ g, L }) => liveChip(g, L)).join('');
+    else list.forEach(({ g, L }, i) => {   // same games: touch only the numbers and the clock
+      const el = inner.children[i]; const sc = el.querySelectorAll('.sc'); const st = el.querySelector('.st');
+      [[g.away, g.home], [g.home, g.away]].forEach(([t, o], j) => { const txt = String(t.score ?? ''); if (sc[j].textContent !== txt) { sc[j].textContent = txt; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } sc[j].classList.toggle('on', t.score != null && o.score != null && t.score > o.score); });
+      const d = `${esc(g.detail)}`; if (st.innerHTML !== `<span class="dot"></span>${d}`) st.innerHTML = `<span class="dot"></span>${d}`;
+    });
+    if ($live.hidden) $live.hidden = false;
+    if (V.edges) V.edges();
+  }
+  /* the strip lives under the pills; an entity screen's top bar offers a slot of its own and the strip moves there */
+  function placeLive() {
+    if (!$live) return;
+    const slot = $main.querySelector('.lb-slot');
+    const home = slot || document.getElementById('lbhome');
+    if (home && $live.parentNode !== home) home.appendChild($live);
+  }
+  new MutationObserver(() => { if (!document.contains($live)) placeLive(); else if (!$live.closest('.lb-slot') && $main.querySelector('.lb-slot')) placeLive(); }).observe($main, { childList: true, subtree: true });
+  document.addEventListener('rivl:rendered', () => { placeLive(); paintLive(); });
+  document.addEventListener('rivl:polled', paintLive);
+  V.paintLive = paintLive;
   document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
   /* long-pressing a name or a card is not a link to share: no context menu on the app's own controls */
   document.addEventListener('contextmenu', e => { if (!e.target.closest('.reader .body, input, textarea')) e.preventDefault(); });
@@ -160,6 +208,7 @@
       else if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('Link copied')).catch(() => toast(url));
     }
     if (a === 'pref') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; V.prefs.set(act.dataset.pref, on); act.setAttribute('aria-checked', String(on)); }
+    if (a === 'watch') { e.preventDefault(); const id = act.dataset.id; const mine = HW.myServices(); const on = !mine.includes(id); store.set('watch', on ? [...mine, id] : mine.filter(x => x !== id)); act.classList.toggle('on', on); act.setAttribute('aria-pressed', String(on)); if (navigator.vibrate) navigator.vibrate(8); return; }
     if (a === 'theme') { e.preventDefault(); store.set('v5:theme', act.dataset.theme); applyTheme(); $main.querySelectorAll('[data-act="theme"]').forEach(b => { const on = b.dataset.theme === act.dataset.theme; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); }
     if (a === 'onb-restart') { e.preventDefault(); onbLk = 'nba'; onbStep(0); }
     if (a === 'alerts') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; (on ? V.alerts.enable() : V.alerts.disable()).then(() => render()); }

@@ -1114,3 +1114,31 @@ button.thead:active{transform:scale(.985)}
 /* record: three columns */
 .why-h.why3,.why-r.why3{grid-template-columns:1fr 80px 80px 80px}
 .why-h.why3 .wt b{font-size:12.5px}
+/* the live strip: every game in play, one plate each, on every screen but Home; sits under the pills or under a screen's top bar */
+.livebar{padding:0 0 8px}
+.lb-slot:empty{display:none}
+.lb-slot .livebar{padding:0 0 4px}
+.livebar .lb-in{display:flex;gap:8px;padding:2px var(--gut-r) 8px var(--gut);overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;scroll-padding-left:var(--gut);-webkit-mask-image:var(--em,none);mask-image:var(--em,none)}
+.livebar .lb-in::-webkit-scrollbar{display:none}
+.livebar .lg{flex:none;display:inline-flex;align-items:center;gap:9px;height:40px;padding:0 12px 0 9px;border-radius:12px;color:var(--ink);text-decoration:none;scroll-snap-align:start;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),var(--plate-shadow);transition:transform .14s ease}
+.livebar .lg:active{transform:scale(.97)}
+.livebar .lg.fav{box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px color-mix(in srgb,var(--acc,var(--ink)) 45%,var(--plate-line)),var(--plate-shadow)}
+.livebar .tm{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:800;letter-spacing:.01em}
+.livebar .tm img{width:18px;height:18px;object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.livebar .tm b{color:var(--ink-2)}
+.livebar .tm .sc{font-style:normal;font-variant-numeric:tabular-nums;font-size:14.5px;font-weight:800;color:var(--ink-3);min-width:20px;text-align:right}
+.livebar .tm .sc.on{color:var(--ink)}
+.livebar .st{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--ink-3);padding-left:9px;margin-left:-1px;box-shadow:inset 1px 0 0 var(--plate-line);white-space:nowrap;font-variant-numeric:tabular-nums}
+.livebar .dot{width:6px;height:6px;border-radius:50%;background:var(--live);box-shadow:0 0 8px var(--live);animation:blink 1.6s infinite}
+.livebar .lg.bump{animation:lbbump .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes lbbump{30%{transform:translateY(-2px)}}
+/* game page: the announced fives, and the particulars table */
+.fives{display:grid;gap:10px;padding:0 var(--gut-r) 0 var(--gut)}
+.five{border-radius:16px;padding:12px 10px 12px;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),var(--plate-shadow)}
+.five .fh{display:flex;align-items:center;gap:8px;padding:0 4px 10px;font-size:13.5px;font-weight:800}
+.five .fr{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.five .fr a{display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;color:inherit;min-width:0}
+.five .fr b{font-size:11.5px;font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.five .fr span{font-size:10.5px;font-weight:700;color:var(--ink-3);margin-top:-3px}
+.ginfo td:last-child span{display:block;font-size:12.5px;color:var(--ink-3);font-weight:500}
+.chips.wrapchips{flex-wrap:wrap;overflow:visible;gap:8px;padding-bottom:6px;-webkit-mask-image:none;mask-image:none}

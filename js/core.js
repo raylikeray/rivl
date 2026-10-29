@@ -340,8 +340,8 @@ const SERVICES = {
   prime:     { label: 'Prime Video', short: 'Prime', web: 'https://www.amazon.com/primevideo', webBy: { basketball: 'https://www.amazon.com/nba', football: 'https://www.amazon.com/tnf' }, android: 'com.amazon.avod.thirdpartyclient', hosts: ['app.primevideo.com/', 'www.amazon.com/gp/video/storefront'], schemes: ['aiv'], match: /^(Prime Video|Amazon Prime Video|Amazon|Prime)$/i },
   netflix:   { label: 'Netflix', short: 'Netflix', web: 'https://www.netflix.com', android: 'com.netflix.mediaclient', hosts: ['www.netflix.com/'], schemes: ['nflx'], match: /^Netflix$/i },
   appletv:   { label: 'Apple TV', short: 'Apple TV', web: 'https://tv.apple.com', android: 'com.apple.atve.androidtv.appletv', hosts: ['tv.apple.com/'], schemes: ['videos'], match: /^Apple TV\+?$/i },
-  nba:       { label: 'NBA app · League Pass', short: 'NBA app', web: 'https://www.nba.com/watch', android: 'com.nbaimd.gametime.nba2011', hosts: ['www.nba.com/watch', 'www.nba.com/'], schemes: ['gametime'], match: /^(NBA League Pass|NBA ?TV)$/i },
-  wnba:      { label: 'WNBA app · League Pass', short: 'WNBA app', web: 'https://www.wnba.com/watch', match: /^(WNBA League Pass|ION)$/i },
+  nba:       { label: 'NBA app · League Pass', short: 'NBA app', web: 'https://www.nba.com/watch', android: 'com.nbaimd.gametime.nba2011', hosts: ['www.nba.com/watch', 'www.nba.com/'], schemes: ['gametime'], match: /^((NBA )?League Pass|NBA ?TV)$/i },
+  wnba:      { label: 'WNBA app · League Pass', short: 'WNBA app', web: 'https://www.wnba.com/watch', match: /^((WNBA )?League Pass|ION)$/i },
   nfl:       { label: 'NFL+', short: 'NFL+', web: 'https://www.nfl.com/plus/', android: 'com.gotv.nflgamecenter.us.lite', hosts: ['www.nfl.com/plus/', 'www.nfl.com/'], schemes: ['nflmobile', 'nfl'], match: /^(NFL Network|NFLN|NFL\+|NFL RedZone)$/i },
   youtube:   { label: 'YouTube · Sunday Ticket', short: 'YouTube', web: 'https://www.youtube.com', android: 'com.google.android.youtube', hosts: ['www.youtube.com/'], schemes: ['youtube', 'vnd.youtube'], match: /^(YouTube|NFL Sunday Ticket)$/i },
   mlb:       { label: 'MLB.TV', short: 'MLB.TV', web: 'https://www.mlb.com/tv', android: 'com.bamnetworks.mobile.android.gameday.atbat', hosts: ['www.mlb.com/tv', 'www.mlb.com/'], schemes: ['atbat'], match: /^(MLB\.TV|MLB Network|MLBN)$/i },
@@ -375,8 +375,9 @@ function watchFor(g, L) {
   const names = [...(g.tv.national || []), ...(g.tv.local || [])].filter(n => n && !/radio|sirius/i.test(n));
   if (!names.length) return [];
   const out = []; const push = (id, net, web) => { if (!out.some(o => o.id === id)) out.push({ id, net, bundle: !!SERVICES[id].bundle, label: SERVICES[id].label, short: SERVICES[id].short, url: serviceHref(id, L, web), href: serviceHref(id, L, web), launch: IS_ANDROID && !!SERVICES[id].android, mine: myServices().includes(id) }); };
-  myServices().forEach(id => { const s = SERVICES[id]; const net = names.find(n => (s.bundle ? s.channels : s.match).test(n)); if (net) push(id, net); });
-  names.forEach(n => { for (const [id, s] of Object.entries(SERVICES)) { if (s.bundle || !s.match.test(n)) continue; if (id === 'regional') { const r = REGIONAL.find(x => x[0].test(n)); if (r) { if (!out.some(o => o.url === r[2])) out.push({ id: 'regional', net: n, label: r[1], short: r[1], url: r[2], href: r[2], launch: false, mine: false }); } } else push(id, n); break; } });
+  const otherLeague = id => (id === 'nba' && L && L.key !== 'nba') || (id === 'wnba' && L && L.key !== 'wnba');   // "League Pass" means a different app in each league
+  myServices().forEach(id => { if (otherLeague(id)) return; const s = SERVICES[id]; const net = names.find(n => (s.bundle ? s.channels : s.match).test(n)); if (net) push(id, net); });
+  names.forEach(n => { for (const [id, s] of Object.entries(SERVICES)) { if (s.bundle || otherLeague(id) || !s.match.test(n)) continue; if (id === 'regional') { const r = REGIONAL.find(x => x[0].test(n)); if (r) { if (!out.some(o => o.url === r[2])) out.push({ id: 'regional', net: n, label: r[1], short: r[1], url: r[2], href: r[2], launch: false, mine: false }); } } else push(id, n); break; } });
   return out.filter(o => o.href);
 }
 const watchLink = (name, L) => watchFor({ tv: { national: [name], local: [] } }, L)[0] || null;
