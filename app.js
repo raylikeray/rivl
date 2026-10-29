@@ -215,7 +215,7 @@
       e.preventDefault();
       const want = act.dataset.mix;
       $main.querySelectorAll('[data-act="mix"]').forEach(b => { const on = b.dataset.mix === want; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-selected', String(on)); });
-      $main.querySelectorAll('[data-mix-panel]').forEach(p => { p.hidden = p.dataset.mixPanel !== want; });
+      $main.querySelectorAll('[data-mix-panel]').forEach(p => { const on = p.dataset.mixPanel === want; if (on && p.hidden) { p.classList.remove('swap'); void p.offsetWidth; p.classList.add('swap'); } p.hidden = !on; });   // the new panel slides in
     }
     if (a === 'share') {
       e.preventDefault();
@@ -249,7 +249,7 @@
     if (a === 'stab') { e.preventDefault(); store.set('v5:stab:' + (current ? current.lk : 'nba'), act.dataset.tab); render(); }
     if (a === 'play') { e.preventDefault(); openSheet(act.dataset.vid); }
     if (a === 'injury') { e.preventDefault(); openInjury(act.dataset.key); }
-    if (a === 'injcol') { e.preventDefault(); const body = act.nextElementSibling; const open = body.hidden; body.hidden = !open; act.setAttribute('aria-expanded', String(open)); const c = store.get('v5:injcol', {}) || {}; if (open) delete c[act.dataset.id]; else c[act.dataset.id] = true; store.set('v5:injcol', c); }
+    if (a === 'injcol') { e.preventDefault(); const open = act.getAttribute('aria-expanded') !== 'true'; V._.foldToggle(act, open); const c = store.get('v5:injcol', {}) || {}; if (open) delete c[act.dataset.id]; else c[act.dataset.id] = true; store.set('v5:injcol', c); }
     if (a === 'reload') { e.preventDefault(); render(); }
     if (a === 'onb-next') { e.preventDefault(); onbLk = 'nba'; onbStep(+act.dataset.step); }
     if (a === 'onb-lk') { e.preventDefault(); onbLk = act.dataset.lk; onbStep(+(act.dataset.step || 0)); }
@@ -336,9 +336,10 @@
   function applyTheme() {
     const t = store.get('v5:theme', 'system'); const root = document.documentElement;
     if (t === 'dark' || t === 'light') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme');
-    const light = t === 'light' || (t !== 'dark' && window.matchMedia('(prefers-color-scheme: light)').matches);
-    const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute('content', light ? '#E6E8ED' : '#000000');
+    // the status bar takes the top of the wash, so the screen is one surface from its top edge down
+    requestAnimationFrame(() => { const meta = document.querySelector('meta[name="theme-color"]'); if (!meta) return; const probe = document.createElement('i'); probe.style.cssText = 'position:absolute;visibility:hidden;background:var(--wash-top)'; document.body.appendChild(probe); const c = getComputedStyle(probe).backgroundColor; probe.remove(); const m = c.match(/color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)/) || c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/); if (!m) return; const hex = [m[1], m[2], m[3]].map(v => Math.round(+v * (c.startsWith('color') ? 255 : 1))).map(n => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')).join(''); meta.setAttribute('content', '#' + hex); });   // a plain hex: the status bar parser is picky
   }
+  V.applyTheme = applyTheme;
   applyTheme(); window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', applyTheme);
   /* accent: mono chrome, or the colour of the first team you follow in the league you're on */
   /* accents: black and white, the first team's colour, or one of these — the same colour runs the switcher, chips, tab bar, buttons and the header wash */
@@ -347,8 +348,9 @@
   const setAccent = (root, c, kind) => { const h = c.replace('#', ''); const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; root.style.setProperty('--acc', c); root.style.setProperty('--acc-ink', lum > 0.6 ? '#000' : '#fff'); root.setAttribute('data-accent', kind); };
   async function applyAccent() {
     const root = document.documentElement; const mode = store.get('v5:accent', 'mono');
-    if (ACCENTS[mode]) { setAccent(root, ACCENTS[mode][0], mode); return; }
+    if (ACCENTS[mode]) { setAccent(root, ACCENTS[mode][0], mode); applyTheme(); return; }
     root.removeAttribute('data-accent'); root.style.removeProperty('--acc'); root.style.removeProperty('--acc-ink');   // black and white (an old "team" setting lands here too)
+    applyTheme();
   }
   V.applyAccent = applyAccent; applyAccent();
   document.addEventListener('rivl:fav', () => applyAccent());
@@ -373,9 +375,9 @@
       const nn = n === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length;
       frame(n === 0 ? 'Pick your teams' : 'Follow some players', n === 0 ? 'They lead Home and are the only ones you get updates about.' : 'Picked from the rosters of the teams you follow. Search any team to see its roster.',
         n === 0 ? `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div class="search" style="margin:0 0 12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input id="onbq" type="search" placeholder="Search teams" autocomplete="off"></div><div id="onbList" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`
-          : `${leaguePills}<div id="onbPick" class="onb-list"></div>`,
+          : `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div id="onbPick" class="onb-list"></div>`,
         `<button class="btn ghost" data-act="onb-next" data-step="${n + 1}">Skip</button><button class="btn" data-act="onb-next" data-step="${n + 1}" id="onbNext">${nn ? `Continue with ${nn}` : 'Continue'}</button>`);
-      if (n === 1) { await V.playerPicker(document.getElementById('onbPick'), L, { leaders: true, select: true }); return; }
+      if (n === 1) { onbCount(); await V.playerPicker(document.getElementById('onbPick'), L, { leaders: true, select: true }); onbCount(); return; }
       const list = document.getElementById('onbList'); const inp = document.getElementById('onbq');
       if (n === 0) {
         /* every team in the league. Pro leagues are one alphabetical grid; college is the AP Top 25 first, then each
@@ -419,9 +421,19 @@
     $panel.querySelectorAll('.onb-sec').forEach(h => { const grid = h.nextElementSibling; const k = grid ? grid.querySelectorAll('.onb-team.on').length : 0; let em = h.querySelector('em'); if (k && !em) { em = document.createElement('em'); h.appendChild(em); } if (em) { if (k) em.textContent = `${k} picked`; else em.remove(); } });
     $panel.querySelectorAll('.onb-pills .pill').forEach(p => { const k = p.dataset.lk; const c = step === 0 ? (HW.favs.all()[k] || []).length : V.fplayers.all().filter(x => x.lk === k).length; let ct = p.querySelector('.ct'); if (c && !ct) { ct = document.createElement('span'); ct.className = 'ct'; p.appendChild(ct); } if (ct) { if (c) ct.textContent = c; else ct.remove(); } });
     const rail = document.getElementById('onbPicked');
-    if (rail) { const names = {}; $panel.querySelectorAll('.onb-team').forEach(t => { names[`${t.dataset.lk}:${t.dataset.id}`] = { name: t.dataset.name, logo: (t.querySelector('img') || {}).src || '' }; }); const kept = store.get('v5:onbNames', {}) || {}; Object.assign(kept, names); store.set('v5:onbNames', kept);
-      const F = HW.favs.all(); const picks = ORDER.flatMap(k => (F[k] || []).map(id => ({ k, id, ...(kept[`${k}:${id}`] || { name: 'Team', logo: '' }) })));
-      rail.innerHTML = picks.length ? `<div class="onb-picked-h">Picked <span>${picks.length}</span></div><div class="onb-picked-row">${picks.map(p => `<button class="pick" data-act="fav" data-lk="${p.k}" data-id="${esc(p.id)}" data-name="${esc(p.name)}" aria-label="Unfollow ${esc(p.name)}"><span class="logo s"><img src="${esc(p.logo)}" alt="" onerror="this.style.visibility='hidden'"></span><b>${esc(p.name)}</b><i>${esc(LEAGUES[p.k].label)}</i><s></s></button>`).join('')}</div>` : ''; }
+    if (rail) {
+      /* what has been picked, by league: a count for each league (tap one to go there), then this league's picks, wrapping, each with its x */
+      let picks;
+      if (step === 0) {
+        const names = {}; $panel.querySelectorAll('.onb-team').forEach(t => { names[`${t.dataset.lk}:${t.dataset.id}`] = { name: t.dataset.name, logo: (t.querySelector('img') || {}).src || '' }; }); const kept = store.get('v5:onbNames', {}) || {}; Object.assign(kept, names); store.set('v5:onbNames', kept);
+        const F = HW.favs.all(); picks = ORDER.flatMap(k => (F[k] || []).map(id => ({ k, id, ...(kept[`${k}:${id}`] || { name: 'Team', logo: '' }), html: p => `<button class="pick" data-act="fav" data-lk="${p.k}" data-id="${esc(p.id)}" data-name="${esc(p.name)}" aria-label="Unfollow ${esc(p.name)}"><span class="logo s"><img src="${esc(p.logo)}" alt="" onerror="this.style.visibility='hidden'"></span><b>${esc(p.name)}</b><s></s></button>` })));
+      } else {
+        picks = V.fplayers.all().map(pl => ({ k: pl.lk, id: pl.id, name: pl.short || pl.name, html: p => `<button class="pick" data-act="follow-player" data-snap='${esc(JSON.stringify(pl))}' aria-label="Unfollow ${esc(pl.name)}">${V._.headshot(pl.img, pl.color || '', 26, pl.name)}<b>${esc(p.name)}</b>${pl.team ? `<i>${esc(pl.team)}</i>` : ''}<s></s></button>` }));
+      }
+      const lk = lkOf(onbLk); const here = picks.filter(p => p.k === lk);
+      const counts = ORDER.map(k => { const n = picks.filter(p => p.k === k).length; return `<button class="lkc${k === lk ? ' on' : ''}${n ? '' : ' none'}" data-act="onb-lk" data-lk="${k}" data-step="${step}">${esc(LEAGUES[k].label)}<b>${n}</b></button>`; }).join('');
+      rail.innerHTML = picks.length ? `<div class="onb-picked-h">Picked <span>${picks.length}</span><span class="lkcs">${counts}</span></div>${here.length ? `<div class="onb-picked-wrap">${here.map(p => p.html(p)).join('')}</div>` : `<p class="onb-none">None from the ${esc(LEAGUES[lk].label)} yet.</p>`}` : '';
+    }
   };
   $panel.addEventListener('rivl:fav', onbCount); $panel.addEventListener('rivl:follow', onbCount);
 
