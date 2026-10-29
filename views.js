@@ -122,8 +122,12 @@
     const has = g.state !== 'pre' && t.score != null && other.score != null;
     const lo = has && t.score < other.score, lead = has && t.score > other.score;
     const sc = g.state === 'pre' ? '' : `<span class="sc${lead ? ' on' : ''}${lead && g.state === 'post' ? ' won' : ''}">${t.score == null ? '' : t.score}</span>`;
-    return `<div class="side${lo ? ' lo' : ''}" data-tid="${esc(t.id)}" style="${scVars(t, L)}">${logo(t.logo, '', teamColor(t, L))}<span class="nm"><b>${t.rank ? `<i>${t.rank}</i>` : ''}${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></span>${sc}</div>`;
+    // the scoring leader, once the game is on: the scoreboard carries each side's leaders
+    const top = g.state !== 'pre' && !g.off ? topScorer(t) : '';
+    return `<div class="side${lo ? ' lo' : ''}" data-tid="${esc(t.id)}" style="${scVars(t, L)}">${logo(t.logo, '', teamColor(t, L))}<span class="nm"><b>${t.rank ? `<i>${t.rank}</i>` : ''}${esc(t.short || t.name)}</b><span>${esc(recOf(t))}${top ? `<em class="lead">${esc(top)}</em>` : ''}</span></span>${sc}</div>`;
   }
+  /* "Jokic 28 pts" from a side's scoreboard leaders (points first; nothing if the feed has none yet) */
+  const topScorer = t => { const L1 = (t.leaders || []).find(l => /^points$/i.test(l.name || '') || /points/i.test(l.displayName || '')); const a = L1 && L1.leaders && L1.leaders[0]; if (!a || !a.athlete || a.displayValue == null || a.displayValue === '') return ''; const v = parseFloat(a.displayValue); if (!isFinite(v) || v <= 0) return ''; return `${lastName(a.athlete.displayName || a.athlete.shortName || '')} ${Math.round(v)} pts`; };
   function gameCard(L, g, ctx, withForecast = true, timeOnly = false) {
     const f = withForecast && prefs.get('forecast') ? safeF(L, g, ctx) : null;
     return `<a class="game" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}">

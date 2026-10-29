@@ -316,7 +316,7 @@
   async function gameV(lk, id) {
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Game not found'); return; }
     $main.innerHTML = topbar('', '#scores') + skeleton(1, 'card') + skeleton(6, 'row');
-    let ctx = null, tab = 'summary';   // every game opens on Summary
+    let ctx = null, sched, tab = 'summary';   // every game opens on Summary
     const pv = { q: 'all', scoring: false };   // the plays tab's period and scoring-only filters
     const sv = { team: 'both', pid: '' };   // the shots tab's team and player filters
     const paint = async (ttl) => {
@@ -326,6 +326,7 @@
       const ev = { id, competitions: [{ ...hc, venue: d.gameInfo && d.gameInfo.venue, status: hc.status, broadcasts: hc.broadcasts, geoBroadcasts: hc.geoBroadcasts }], date: hc.date, status: hc.status, season: d.header.season, pickcenter: d.pickcenter };   // the summary keeps the market line in pickcenter, not on the competition
       const g = parseEvent(ev, L); if (!g.date || isNaN(new Date(g.date))) g.date = new Date().toISOString();
       if (!ctx) ctx = await forecastCtx(L, ymdOf(g.date)).catch(() => null);
+      if (sched === undefined) sched = HW.sim && (lk === 'nba' || lk === 'wnba') ? await HW.sim.schedule(L, { feed: false }).catch(() => null) : null;
       const f = safeF(L, g, ctx);
       const title = `${esc(g.away.short)} ${g.neutral ? 'vs' : 'at'} ${esc(g.home.short)}`;
       const hero = heroCard(L, g, ctx, { page: true });
@@ -385,6 +386,27 @@
       const ptsOf = (side, id) => { const st = statOf(boxOf(side), 'PTS'); const a = st && (st.s.athletes || []).find(x => String(x.athlete.id) === id); return a && a.stats ? a.stats[st.i] : ''; };
       const floor = g.state === 'in' && lu && lu.on ? sec('On the floor', `as of ${esc(g.detail)}`) + `<div class="fives">${[['away', g.away], ['home', g.home]].map(([side, t]) => `<div class="five" style="--tc:${esc(V._.teamColor(t, L))}"><div class="fh">${logo(t.logo, 's', V._.teamColor(t, L))}<b>${esc(t.short)}</b></div><div class="fr">${lu.on[side].map(id => { const n = lu.names[id] || {}; const pts = ptsOf(t, id); return `<a href="${href.player(lk, id)}">${headshot(n.hs || '', V._.teamColor(t, L), 48, n.name || '')}<b>${esc(n.short || '')}</b><span>${pts !== '' ? `${esc(pts)} pts` : ''}</span></a>`; }).join('')}</div></div>`).join('')}</div>` : '';
       const unitsT = lu && lu.units && lu.units.length ? (() => { const mm = sx => `${Math.floor(sx / 60)}:${String(Math.round(sx % 60)).padStart(2, '0')}`; const table = (side, t) => { const rows = lu.units.filter(u => u.side === side && u.secs >= 60).sort((a, b) => b.secs - a.secs).slice(0, 6); if (!rows.length) return ''; return sec(`${esc(t.short)} units`, 'five-man groups, by minutes') + `<div class="rows units">${rows.map(u => { const onNow = g.state === 'in' && lu.on && u.ids.slice().sort().join() === lu.on[side].slice().sort().join(); return `<div class="row unit${onNow ? ' now' : ''}" style="--tc:${esc(V._.teamColor(t, L))}"><span class="t"><b class="wrap">${u.ids.map(id => esc((lu.names[id] || {}).short || '')).join(' · ')}</b><span>${mm(u.secs)} min${onNow ? ' · on the floor now' : ''}</span></span><span class="pm ${u.pm > 0 ? 'up' : u.pm < 0 ? 'dn' : ''}">${u.pm > 0 ? '+' : u.pm < 0 ? '−' : ''}${Math.abs(u.pm)}</span></div>`; }).join('')}</div>`; }; return table('away', g.away) + table('home', g.home); })() : '';
+      // the season series between the two, from the nightly schedule (pro leagues)
+      let series = '';
+      if (sched && sched.games) {
+        const pair = sched.games.filter(x => x.t === 2 && !x.x && x.id !== String(id) && ((x.h === g.home.id && x.a === g.away.id) || (x.h === g.away.id && x.a === g.home.id)));
+        const played = pair.filter(x => x.st === 'post' && x.hs != null && x.as != null).sort((a, b) => a.d.localeCompare(b.d)); const ahead = pair.filter(x => !(x.st === 'post' && x.hs != null)).sort((a, b) => a.d.localeCompare(b.d));
+        const wins = { [g.home.id]: 0, [g.away.id]: 0 }; played.forEach(x => { wins[x.hs > x.as ? x.h : x.a]++; });
+        const tOf = tid => tid === g.home.id ? g.home : g.away;
+        const lead = wins[g.home.id] === wins[g.away.id] ? (played.length ? `Tied ${wins[g.home.id]}-${wins[g.away.id]}` : '') : `${esc(tOf(wins[g.home.id] > wins[g.away.id] ? g.home.id : g.away.id).short)} lead${played.length > 1 ? '' : 's'} ${Math.max(wins[g.home.id], wins[g.away.id])}-${Math.min(wins[g.home.id], wins[g.away.id])}`;
+        const dOf = x => dayLabel(x.d, { month: 'short', day: 'numeric' });
+        const rows = played.map(x => { const w = tOf(x.hs > x.as ? x.h : x.a), l = tOf(x.hs > x.as ? x.a : x.h); const ws = Math.max(x.hs, x.as), ls = Math.min(x.hs, x.as); return `<a class="row" href="${href.game(lk, x.id)}">${logo(w.logo, 's', V._.teamColor(w, L))}<span class="t"><b>${esc(w.short)} ${ws}, ${esc(l.short)} ${ls}</b><span>${esc(dOf(x))} · at ${esc(tOf(x.h).short)}</span></span>${chev}</a>`; }).join('');
+        const next = ahead.length ? `<p class="legend">${ahead.length === 1 ? 'One more meeting' : `${ahead.length} more meetings`}: ${ahead.slice(0, 3).map(x => `${esc(dOf(x))} at ${esc(tOf(x.h).short)}`).join(', ')}${ahead.length > 3 ? `, and ${ahead.length - 3} more` : ''}.</p>` : '';
+        if (played.length || ahead.length) series = sec('Season series', played.length ? lead : 'First meeting this season') + (rows ? `<div class="rows">${rows}</div>` : '') + next;
+      }
+      // the injury report for both sides, before tip; each row opens the report
+      let report = '';
+      if (g.state === 'pre' && ctx && ctx.inj) {
+        S.injuries = S.injuries || {};
+        const side = t => { const il = ctx.inj.byTeam[t.id] && ctx.inj.byTeam[t.id].list || []; if (!il.length) return ''; const tc = V._.teamColor(t, L); const rows = il.map((x, i) => { const a = x.athlete || {}; const aid = athId(a); const key = `g:${t.id}:${aid}:${x.id || i}`; S.injuries[key] = { x, id: aid, team: { id: t.id, short: t.short, color: tc } }; const stt = x.status || ''; const cls = /out/i.test(stt) ? 'out' : /day|quest|doubt/i.test(stt) ? 'q' : 'ok'; const det = x.details || {}; const ret = retInfo(L, det.returnDate); const why = [det.type || det.detail, ret ? ret.short : ''].filter(Boolean).join(', '); return `<button class="row" data-act="injury" data-key="${esc(key)}">${headshot(hsUrl(a), tc, 44, a.displayName)}<span class="t"><b>${esc(a.displayName || '')}</b><span>${esc(why || (x.shortComment || '').slice(0, 80))}</span></span><span class="tag ${cls}">${esc(statusWord(stt))}</span></button>`; }).join(''); return `<div class="injhd" style="--tc:${esc(tc)}">${logo(t.logo, 's', tc)}<b>${esc(t.short)}</b><span class="n">${il.length}</span></div>${rows}`; };
+        const both = side(g.away) + side(g.home);
+        report = sec('Injury report') + (both ? `<div class="rows">${both}</div>` : `<p class="legend">Nobody listed on either side.</p>`);
+      }
       let body = '';
       if (tab === 'summary') {
         body += lineScore;
@@ -430,7 +452,9 @@
           body += sec(g.state === 'post' ? `Had ${esc(fav.short)} ${pct(p)}` : `Why ${esc(fav.short)} ${pct(p)}`) + grid + `<table class="tbl kv why-kv"><tbody>${lines.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</tbody></table><p class="why-n">${note}</p>`;
         }
         if (ta && th && g.state !== 'pre') { const rows = cmpRows(WANT.slice(0, 6)); if (rows) body += sec('Team stats', '', `<button data-act="gtab" data-tab="stats">All</button>`) + `<div class="cmp">${rows}</div>`; }
+        if (report) body += report;
         if (plays.length && g.state !== 'pre') body += sec(g.state === 'in' ? 'Last plays' : 'Final plays', '', `<button data-act="gtab" data-tab="plays">All plays</button>`) + `<div class="rows plays">${plays.map((p, i) => [p, i]).slice(-5).reverse().map(([p, i]) => playRow(p, i)).join('')}</div>`;
+        if (series) body += series;
         if (g.state !== 'post') { const ws = watchFor(g, L); const list = ws.length ? ws.map(w => `<a class="row" href="${esc(w.href)}" target="_blank" rel="noopener"><span class="t"><b>${esc(w.label || w.short)}</b><span>${esc(w.bundle ? `Through ${w.bundle}` : tvLabel(g) || 'Opens in the app')}</span></span>${chev}</a>`).join('') : (tvLabel(g) ? `<div class="row"><span class="t"><b>${esc(tvLabel(g))}</b><span><a href="#settings/watch">Pick your services</a> to get a direct link here.</span></span></div>` : ''); if (list) body += sec('Where to watch') + `<div class="rows">${list}</div>`; }
         if (clips) body += clips;
         if (gi) body += gi;

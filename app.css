@@ -1204,3 +1204,6 @@ button.thead:active{transform:scale(.985)}
 .upd{left:var(--gut);right:var(--gut-r);transform:none;max-width:460px;margin:0 auto;width:auto;animation:updin .3s both}
 @keyframes updin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .legend.slow{animation:rise .3s both}
+/* the scoring leader on a card's team line */
+.game .nm span em.lead{font-style:normal;color:var(--ink-2);font-weight:600}
+.game .nm span em.lead::before{content:" · ";color:var(--ink-3)}
