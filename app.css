@@ -1106,3 +1106,7 @@ button.thead:active{transform:scale(.985)}
 .pill,.pill.on,[data-accent] .pill.on{box-shadow:none}
 .dates{padding-bottom:6px}
 .chips{padding-bottom:12px}
+
+/* hero team names shrink before they clip; the score gives a little on narrow phones */
+.hero .tm b{font-size:clamp(12.5px,3.9vw,16px);white-space:nowrap}
+.hero .mid .sc{font-size:clamp(44px,13.5vw,58px)}

@@ -12,6 +12,7 @@
   const $main = document.getElementById('main');
   S.news = S.news || {}; S.videos = S.videos || {};
   const hide = `onerror="this.style.visibility='hidden'"`;
+  const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
   const topbar = (title, backHref = '#home', extra = '', card = null, share = true) => `<div class="topbar"><a class="ib" href="${backHref}" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><span class="ttl">${title}</span><div class="sp">${extra}${share === false ? '' : `<button class="ib" data-act="share" data-title="${esc(title.replace(/<[^>]+>/g, ''))}"${card ? ` data-card='${esc(JSON.stringify(card))}'` : ''} aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>`}</div></div>`;
   const chips = (items, on, act, key) => `<div class="chips" role="tablist">${items.map(([k, l]) => `<button class="chip${k === on ? ' on' : ''}" data-act="${act}" data-${key}="${esc(k)}" aria-pressed="${k === on}">${esc(l)}</button>`).join('')}</div>`;
   const standingLine = (r, L) => !r ? '' : L.standingsMode === 'conferences' ? `${r.w}-${r.l}${r.conf ? `, ${r.conf} in the ${confName(r.group, r.groupAbbr)}` : ''}` : `${r.w}-${r.l}, ${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}`;
@@ -55,8 +56,7 @@
         return (conf || groups.length > 1 ? sec(confName(g.name, g.abbr)) : '') + (pi.length ? `<h3 class="bh">Play-in</h3><div class="bracket">${pi.join('')}</div>` : '') + `<h3 class="bh">First round</h3><div class="bracket">${fr.join('')}</div>`;
       };
       const legend = `<p class="legend">If the season ended today. ${playIn ? `Seeds 1–${cut[0]} are in; ${cut[0] + 1} through ${cut[1]} play in for the last two spots.` : `The top ${cut[0]} make the playoffs.`} Your teams are marked.</p>`;
-      $main.innerHTML = chips(items, tab, 'stab', 'tab') + (conf || groups.length > 1 ? groups.map(block).join('') : block({ rows: groups.flatMap(g => g.rows).sort((a, b) => (b.w - b.l) - (a.w - a.l) || (b.pct || 0) - (a.pct || 0) || (b.diff || 0) - (a.diff || 0)), name: L.label })) + legend;
-      const on0 = $main.querySelector('.chip.on'); if (on0) on0.scrollIntoView({ inline: 'center', block: 'nearest' });
+      stPaint(items, tab, (conf || groups.length > 1 ? groups.map(block).join('') : block({ rows: groups.flatMap(g => g.rows).sort((a, b) => (b.w - b.l) - (a.w - a.l) || (b.pct || 0) - (a.pct || 0) || (b.diff || 0) - (a.diff || 0)), name: L.label })) + legend);
       return;
     }
     let rows, title;
@@ -75,8 +75,18 @@
     const tieNote = (r, i) => { if (tab === 'league') return ''; const same = x => x && x.w === r.w && x.l === r.l; for (const c of cuts) { if (i === c - 1 && same(rows[c])) return c === cuts[0] ? `tied for the ${c} seed` : 'tied for the last play-in spot'; } return ''; };
     const trs = rows.map((r, i) => { const gl = [gbLine(r, i), tieNote(r, i)].filter(Boolean).join(' · '); return `<tr class="click${favs.has(lk, r.id) ? ' me' : ''}${cuts.includes(i + 1) ? ' cut' : ''}" data-href="${href.team(lk, r.id)}"><td><span class="tm"><span class="rk">${r.pos}</span>${logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))}<span class="nm"><a href="${href.team(lk, r.id)}">${rk && rk[r.id] ? `<i class="ap">${rk[r.id]}</i>` : ''}${esc(r.short || r.name)}</a>${clinchTag(r)}${gl ? `<small>${esc(gl)}</small>` : ''}</span></span></td>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}</tr>`; }).join('');
     const legend = tab === 'league' ? '' : cuts.length === 2 ? `<p class="legend">Top ${cuts[0]} go straight to the playoffs; ${cuts[0] + 1} through ${cuts[1]} play in. Games back count the ${cuts[0]} seed and the last play-in spot. Your teams are marked.</p>` : cuts.length === 1 ? `<p class="legend">Top ${cuts[0]} make the playoffs. Your teams are marked.</p>` : '<p class="legend">Your teams are marked.</p>';
-    $main.innerHTML = chips(items, tab, 'stab', 'tab') + `<div class="tw"><table class="tbl stand"><thead><tr><th>${esc(title)}</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${trs}</tbody></table></div>` + legend;
-    const on = $main.querySelector('.chip.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
+    stPaint(items, tab, `<div class="tw"><table class="tbl stand"><thead><tr><th>${esc(title)}</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${trs}</tbody></table></div>` + legend);
+  }
+  /* standings: the chips stay put and only toggle; the table below them swaps */
+  function stPaint(items, tab, body) {
+    const page = $main.querySelector('#stpage');
+    if (page && page.dataset.lk === (V.route && V.route() || {}).lk) {
+      const have = [...page.querySelectorAll('#stchips .chip')].map(c => c.dataset.tab).join();
+      if (have !== items.map(([k]) => k).join()) page.querySelector('#stchips').innerHTML = chips(items, tab, 'stab', 'tab');
+      else page.querySelectorAll('#stchips .chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); });
+      page.querySelector('#stbody').innerHTML = body;
+    } else $main.innerHTML = `<div id="stpage" data-lk="${esc((V.route && V.route() || {}).lk || '')}"><div id="stchips">${chips(items, tab, 'stab', 'tab')}</div><div id="stbody">${body}</div></div>`;
+    const on = $main.querySelector('#stchips .chip.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
   }
 
   /* ================= TEAMS ================= */
@@ -272,8 +282,13 @@
       const scrollY = window.scrollY;
       const side = t => ({ short: t.short, abbr: t.abbr, logo: t.logo, color: V._.teamColor(t), score: t.score, rec: t.rec || '' });
       const card = g.state === 'pre' ? null : { kind: 'game', away: side(g.away), home: side(g.home), status: g.state === 'post' ? 'Final' : g.detail, sub: tvLabel(g) || (d.gameInfo && d.gameInfo.venue && d.gameInfo.venue.fullName) || '', date: dayLabel(ymdOf(g.date), { weekday: 'long', month: 'long', day: 'numeric' }), note: f && prefs.get('forecast') ? `RIVL had ${(f.pHome >= .5 ? g.home : g.away).short} ${pct(Math.max(f.pHome, 1 - f.pHome))}` : '', title: `${g.away.short} ${g.away.score ?? ''}, ${g.home.short} ${g.home.score ?? ''}`, text: `${g.away.short} ${g.away.score ?? ''}, ${g.home.short} ${g.home.score ?? ''} · ${g.state === 'post' ? 'Final' : g.detail}`, file: `${g.away.abbr}-${g.home.abbr}-${ymdOf(g.date)}` };
-      $main.innerHTML = topbar(title, '#scores', '', card) + hero + tabs + body;
-      if (ttl) window.scrollTo(0, scrollY);
+      // the page is three parts: the head (bar + hero) changes only when the score does, the chips only toggle, the body swaps
+      const headHtml = topbar(title, '#scores', '', card) + hero, hh = hashOf(headHtml), page = $main.querySelector('#gpage');
+      if (page && page.dataset.gid === String(id)) {
+        const head = page.querySelector('#ghead'); if (head.dataset.h !== hh) { head.innerHTML = headHtml; head.dataset.h = hh; }
+        page.querySelectorAll('#gtabs .chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); });
+        const bodyEl = page.querySelector('#gbody'); if (bodyEl.dataset.h !== hashOf(body) || bodyEl.dataset.tab !== tab) { bodyEl.innerHTML = body; bodyEl.dataset.h = hashOf(body); bodyEl.dataset.tab = tab; }
+      } else $main.innerHTML = `<div id="gpage" data-gid="${esc(String(id))}"><div id="ghead" data-h="${hh}">${headHtml}</div><div id="gtabs">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div>`;
       document.title = `${g.away.short} at ${g.home.short} · RIVL`;
       return g;
     };
