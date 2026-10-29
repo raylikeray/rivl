@@ -1095,3 +1095,14 @@ button.thead .chev{margin-left:auto;color:var(--ink-3);transition:transform .18s
 button.thead .chev svg{width:18px;height:18px;transform:rotate(90deg)}
 button.thead[aria-expanded="false"] .chev svg{transform:rotate(0)}
 button.thead:active{transform:scale(.985)}
+
+/* small controls in scrolling rows carry a tight contact shadow only: a long blur gets clipped by the row and reads as a band */
+.chip,.day,.tag,.sec a,.sec button,.chip.mine{box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),0 1px 1px rgba(0,0,0,.35)}
+:root[data-theme="light"] .chip,:root[data-theme="light"] .day,:root[data-theme="light"] .tag,:root[data-theme="light"] .sec a,:root[data-theme="light"] .sec button{box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),0 1px 1px rgba(16,24,40,.10)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .chip,:root:not([data-theme="dark"]) .day,:root:not([data-theme="dark"]) .tag,:root:not([data-theme="dark"]) .sec a,:root:not([data-theme="dark"]) .sec button{box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),0 1px 1px rgba(16,24,40,.10)} }
+.chip.on,.chip[aria-pressed="true"],.chip[aria-checked="true"],.card .chip.on,.card .chip[aria-pressed="true"],.day.on,.pill.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 1px rgba(0,0,0,.4)}
+:root[data-theme="light"] .chip.on,:root[data-theme="light"] .chip[aria-pressed="true"],:root[data-theme="light"] .chip[aria-checked="true"],:root[data-theme="light"] .day.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 1px 2px rgba(16,24,40,.25)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .chip.on,:root:not([data-theme="dark"]) .chip[aria-pressed="true"],:root:not([data-theme="dark"]) .chip[aria-checked="true"],:root:not([data-theme="dark"]) .day.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 1px 2px rgba(16,24,40,.25)} }
+.pill,.pill.on,[data-accent] .pill.on{box-shadow:none}
+.dates{padding-bottom:6px}
+.chips{padding-bottom:12px}
