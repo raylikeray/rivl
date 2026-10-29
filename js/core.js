@@ -60,6 +60,16 @@ const favs = {
 };
 
 /* ---------- parsing ---------- */
+/* the clock the way an app says it: "Q3 4:12", "1H 12:30", "OT 1:20", "End Q3"; anything else (Halftime, Final, a tip time) passes through */
+const perName = (n, L) => (L.periods === 2 ? (n === 1 ? '1H' : n === 2 ? '2H' : `OT${n - 2 > 1 ? n - 2 : ''}`) : (n <= 4 ? `Q${n}` : `OT${n - 4 > 1 ? n - 4 : ''}`));
+function prettyDetail(d, L) {
+  const s = String(d || '').trim(); let m;
+  if ((m = s.match(/^(\d{1,2}:\d{2}(?:\.\d)?)\s*-\s*(\d+)(?:st|nd|rd|th)$/i))) return `${perName(+m[2], L)} ${m[1]}`;
+  if ((m = s.match(/^(\d{1,2}:\d{2}(?:\.\d)?)\s*-\s*(\d*)OT$/i))) return `OT${m[2] && +m[2] > 1 ? m[2] : ''} ${m[1]}`;
+  if ((m = s.match(/^End of (\d+)(?:st|nd|rd|th)$/i))) return `End ${perName(+m[1], L)}`;
+  if ((m = s.match(/^End of (\d*)OT$/i))) return `End OT${m[1] && +m[1] > 1 ? m[1] : ''}`;
+  return s;
+}
 function parseTeamSide(x, L) {
   const t = x.team || {};
   const sc = x.score && typeof x.score === 'object' ? x.score.displayValue : x.score;
@@ -86,7 +96,7 @@ function parseEvent(e, L) {
   const home = parseTeamSide(comp.find(x => x.homeAway === 'home') || comp[0] || {}, L);
   const away = parseTeamSide(comp.find(x => x.homeAway === 'away') || comp[1] || {}, L);
   return {
-    lk: L.key, id: String(e.id), date: e.date, state: t.state || 'pre', detail: t.shortDetail || t.detail || '', completed: !!t.completed,
+    lk: L.key, id: String(e.id), date: e.date, state: t.state || 'pre', detail: prettyDetail(t.shortDetail || t.detail || '', L), completed: !!t.completed,
     period: st.period || 0, clock: st.displayClock || '', home, away,
     venue: c.venue && c.venue.fullName, city: c.venue && c.venue.address && [c.venue.address.city, c.venue.address.state].filter(Boolean).join(', '),
     tv: tvOf(c), neutral: !!c.neutralSite, confGame: !!c.conferenceCompetition,
