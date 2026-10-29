@@ -135,7 +135,7 @@
   async function gameV(lk, id) {
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Game not found'); return; }
     $main.innerHTML = topbar('', '#scores') + skeleton(1, 'card') + skeleton(6, 'row');
-    let ctx = null;
+    let ctx = null, tab = 'summary';   // every game opens on Summary
     const paint = async (ttl) => {
       const d = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, ttl);
       const hc = d && d.header && d.header.competitions && d.header.competitions[0];
@@ -144,7 +144,6 @@
       const g = parseEvent(ev, L); if (!g.date || isNaN(new Date(g.date))) g.date = new Date().toISOString();
       if (!ctx) ctx = await forecastCtx(L, ymdOf(g.date)).catch(() => null);
       const f = safeF(L, g, ctx);
-      const tab = store.get('v5:gtab', 'summary');
       const title = `${esc(g.away.short)} ${g.neutral ? 'vs' : 'at'} ${esc(g.home.short)}`;
       const hero = heroCard(L, g, ctx, { page: true });
       const tabs = chips([['summary', 'Summary'], ['box', 'Box score'], ['plays', 'Plays'], ['stats', 'Team stats']].filter(([k]) => g.state !== 'pre' || k === 'summary' || k === 'stats'), tab, 'gtab', 'tab');
@@ -202,7 +201,9 @@
     };
     const g = await paint();
     V.refresh = async () => { if (!g || g.state === 'post') return; await paint(15000); };
-    $main.addEventListener('click', e => { const b = e.target.closest('[data-act="gtab"]'); if (!b) return; store.set('v5:gtab', b.dataset.tab); paint(); });
+    if (V._gtabL) $main.removeEventListener('click', V._gtabL);
+    V._gtabL = e => { const b = e.target.closest('[data-act="gtab"]'); if (!b) return; tab = b.dataset.tab; paint(); };
+    $main.addEventListener('click', V._gtabL);
   }
 
   /* ================= ARTICLE READER ================= */

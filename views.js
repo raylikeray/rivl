@@ -227,7 +227,7 @@
     const far = Math.abs(new Date(ymd) - new Date(today)) > 4 * 864e5; const center = far ? ymd : today;
     const days = Array.from({ length: 9 }, (_, i) => addDays(center, i - 4));
     const dayBtn = (d, lab) => `<button class="day${d === ymd ? ' on' : ''}" data-act="date" data-ymd="${d}" aria-pressed="${d === ymd}"><em>${esc(lab)}</em><b>${+d.slice(8)}</b></button>`;
-    const strip = `<div class="dates" id="dates"><button class="day cal" data-act="calendar" data-ymd="${esc(ymd)}" aria-label="Open the calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><em>${esc(dayLabel(ymd, { month: 'short' }))}</em></button>${far ? dayBtn(today, 'Today') + '<span class="gap"></span>' : ''}${days.map(d => dayBtn(d, d === today ? 'Today' : dayLabel(d, { weekday: 'short' }))).join('')}</div>`;
+    const strip = `<div class="datesbar"><div class="dates" id="dates">${far ? dayBtn(today, 'Today') + '<span class="gap"></span>' : ''}${days.map(d => dayBtn(d, d === today ? 'Today' : dayLabel(d, { weekday: 'short' }))).join('')}</div><button class="day cal" data-act="calendar" data-ymd="${esc(ymd)}" aria-label="Open the calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><em>${esc(dayLabel(ymd, { month: 'short' }))}</em></button></div>`;
     const head = strip;
     $main.innerHTML = head + skeleton(4, 'card');
     const [games, ctx, meta] = await Promise.all([ymd === today && S.today[lk] && S.today[lk].length ? S.today[lk] : scoreboard(L, ymd).catch(() => null), forecastCtx(L, ymd).catch(() => null), sbMeta(L, ymd)]);
@@ -249,19 +249,33 @@
     $main.innerHTML = head + phase + block('Live', live) + block(ymd === today ? 'Upcoming' : 'Scheduled', pre) + block('Final', post);
     const el2 = $main.querySelector('#dates .on'); if (el2) el2.scrollIntoView({ inline: 'center', block: 'nearest' });
   }
-  /* a month of games at a glance: how many each day, and whether one of your teams plays. The pros fit in one
-     request; college gets a request per week because a single day can have a hundred games. */
+  /* a month of games at a glance. Your teams' days come from their schedules (one small request each, usually
+     already cached by Home). Game counts come from the league's whole month in one request (a week at a time for
+     college, which can have a hundred games a day) on a longer leash than the usual fetch; if that fails the
+     league's calendar still says which days have games. */
   const monthCache = {};
+  const fetchJson = async (url, ms) => { const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms); try { const r = await fetch(url, { signal: ctl.signal }); return r.ok ? await r.json() : null; } catch { return null; } finally { clearTimeout(t); } };
   async function monthGames(L, ym) {
     const key = `${L.key}:${ym}`; if (monthCache[key] && Date.now() - monthCache[key].t < 1800000) return monthCache[key].v;
     const [y, m] = ym.split('-').map(Number); const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const mine = (favs.all()[L.key] || []).map(String); const mineSet = new Set(mine);
+    const days = {};
+    const mark = (ymd, f) => { if (!ymd || ymd.slice(0, 7) !== ym) return; const d = days[ymd] || (days[ymd] = { n: 0, mine: false, has: false }); f(d); };
+    const dayOf = e => { try { return HW.ymdOf(e.date); } catch { return ''; } };
     const d0 = `${ym}-01`, d1 = `${ym}-${String(last).padStart(2, '0')}`;
     const spans = /^ncaa/.test(L.key) ? Array.from({ length: Math.ceil(last / 7) }, (_, i) => [`${ym}-${String(i * 7 + 1).padStart(2, '0')}`, `${ym}-${String(Math.min(last, i * 7 + 7)).padStart(2, '0')}`]) : [[d0, d1]];
     const params = L.sbParams.replace(/&limit=\d+/, '');
-    const pages = await Promise.all(spans.map(([a, b]) => jSoft(`${API(L)}/scoreboard?dates=${HW.compact(addDays(a, -1))}-${HW.compact(addDays(b, 1))}${params}&limit=1000`, 1800000)));
-    const mine = new Set((favs.all()[L.key] || []).map(String)); const days = {}; let truncated = false;
-    pages.forEach(pg => { const evs = pg && pg.events || []; if (evs.length >= 1000) truncated = true; evs.forEach(e => { let ymd; try { ymd = HW.ymdOf(e.date); } catch { return; } if (!ymd || ymd.slice(0, 7) !== ym) return; const d = days[ymd] || (days[ymd] = { n: 0, mine: false }); d.n++; const comp = e.competitions && e.competitions[0]; if (comp && (comp.competitors || []).some(c => c.team && mine.has(String(c.team.id)))) d.mine = true; }); });
-    const v = { days, truncated }; if (Object.keys(days).length || pages.some(Boolean)) monthCache[key] = { t: Date.now(), v }; return v;
+    const [scheds, pages] = await Promise.all([
+      Promise.all(mine.map(id => jSoft(`${API(L)}/teams/${id}/schedule`, 300000))),
+      Promise.all(spans.map(([a, b]) => fetchJson(`${API(L)}/scoreboard?dates=${HW.compact(addDays(a, -1))}-${HW.compact(addDays(b, 1))}${params}&limit=1000`, 30000)))
+    ]);
+    scheds.forEach(sc => (sc && sc.events || []).forEach(e => mark(dayOf(e), d => { d.mine = true; d.has = true; })));
+    const counted = pages.length > 0 && pages.every(pg => pg && Array.isArray(pg.events)); let truncated = false;
+    pages.forEach(pg => { const evs = pg && pg.events || []; if (evs.length >= 1000) truncated = true; evs.forEach(e => mark(dayOf(e), d => { d.n++; d.has = true; const comp = e.competitions && e.competitions[0]; if (comp && (comp.competitors || []).some(c => c.team && mineSet.has(String(c.team.id)))) d.mine = true; })); });
+    if (!counted) { const meta = await sbMeta(L, todayCT()).catch(() => ({ cal: [] })); (meta.cal || []).forEach(d => mark(d, x => { x.has = true; })); }
+    const v = { days, counted, truncated };
+    if (counted || Object.keys(days).length) monthCache[key] = { t: Date.now(), v };
+    return v;
   }
   /* what else the scoreboard says: the league's game-day calendar and the part of the season it is (regular season, playoffs) */
   async function sbMeta(L, ymd) {
@@ -431,10 +445,12 @@
       bio: (injury ? sec('Injury') + injT : '') + (aboutT || sec('About') + empty('Nothing on file', '<p style="margin:6px 0 0">The feed has no bio for this player yet.</p>')),
       news: (moments + (stories.length ? sec('Stories') + `<div class="rows">${stories.map(n => HW.v5.newsRow(lk, n)).join('')}</div>` : '')) || empty('Nothing recent', '<p style="margin:6px 0 0">No stories or clips on this player in the feed right now.</p>')
     };
-    let ptab = store.get('v5:ptab2', 'summary'); if (!panels[ptab]) ptab = 'summary';
+    const ptab = 'summary';   // every player opens on Summary
     const ptabs = `<div class="chips ptabs" role="tablist" style="padding-top:14px">${[['summary', 'Summary'], ['stats', 'Stats'], ['bio', 'Bio'], ['news', 'News']].map(([k, l]) => `<button class="chip${k === ptab ? ' on' : ''}" data-act="ptab" data-tab="${k}" aria-pressed="${k === ptab}">${l}</button>`).join('')}</div>`;
     $main.innerHTML = `<div class="topbar"><a class="ib" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a>${tm.id ? `<a class="ttl" href="${href.team(lk, tm.id)}">${esc(tm.displayName || '')}</a>` : ''}<div class="sp"><button class="ib" data-act="share" data-title="${esc(a.displayName)}" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></div></div>` + hero + injStrip + ptabs + Object.entries(panels).map(([k, html]) => `<div data-ptab-panel="${k}"${k === ptab ? '' : ' hidden'}>${html}</div>`).join('');
-    $main.addEventListener('click', e => { const b = e.target.closest('[data-act="ptab"]'); if (!b) return; e.preventDefault(); const k = b.dataset.tab; store.set('v5:ptab2', k); $main.querySelectorAll('[data-act="ptab"]').forEach(x => { const on = x.dataset.tab === k; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); }); $main.querySelectorAll('[data-ptab-panel]').forEach(p => { p.hidden = p.dataset.ptabPanel !== k; }); });
+    if (HW.v5._ptabL) $main.removeEventListener('click', HW.v5._ptabL);
+    HW.v5._ptabL = e => { const b = e.target.closest('[data-act="ptab"]'); if (!b) return; e.preventDefault(); const k = b.dataset.tab; $main.querySelectorAll('[data-act="ptab"]').forEach(x => { const on = x.dataset.tab === k; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); }); $main.querySelectorAll('[data-ptab-panel]').forEach(p => { p.hidden = p.dataset.ptabPanel !== k; }); };
+    $main.addEventListener('click', HW.v5._ptabL);
     document.title = `${a.displayName} · RIVL`;
   }
 

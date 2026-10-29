@@ -602,3 +602,9 @@ button.row.prow.sel:active{transform:scale(.985)}
 /* the pointer: a small arrow beside the score that's ahead */
 .game .sc{position:relative;padding-right:13px}
 .game .sc.on::after{content:"";position:absolute;right:0;top:50%;transform:translateY(-50%);border:5px solid transparent;border-left:7px solid currentColor;border-right:0;opacity:.95}
+/* the date strip: days scroll, the calendar button stays put at the right */
+.datesbar{display:flex;align-items:stretch;gap:6px;padding:2px var(--gut-r) 4px var(--gut)}
+.datesbar .dates{flex:1;min-width:0;padding:0}
+.datesbar .day.cal{flex:none;width:56px;background:var(--ink);color:var(--bg)}
+.datesbar .day.cal em{color:inherit;opacity:.75}
+.cd span u{width:5px;height:5px;border-radius:50%;background:var(--ink-3);display:inline-block}
