@@ -6,7 +6,7 @@
 const VERSION = 'rivl-v18';
 const SHELL = `${VERSION}-shell`, DATA = `${VERSION}-data`, MEDIA = 'rivl-media';
 const SHELL_FILES = ['./', './index.html', './app.css?v=18', './app.js?v=18', './views.js?v=18', './screens.js?v=18', './config.js?v=18', './js/core.js?v=18', './more.js?v=18', './manifest.webmanifest', './img/mark.svg', './img/icon-192.png', './img/icon-512.png', './img/apple-touch-icon.png'];
-const FEED = /(^|\.)espn\.com$/;
+const FEED = /(^|\.)espn\.com$|\.workers\.dev$/;
 const MEDIA_HOST = /espncdn\.com$|fonts\.gstatic\.com$|fonts\.googleapis\.com$/;
 const DATA_TIMEOUT = 6000;
 
@@ -55,4 +55,19 @@ self.addEventListener('fetch', e => {
       try { const r = await fetch(req); if (r.ok || r.type === 'opaque') c.put(req, r.clone()); return r; } catch { return Response.error(); }
     })());
   }
+});
+
+/* ---------- push alerts ---------- */
+self.addEventListener('push', e => {
+  let d = {}; try { d = e.data ? e.data.json() : {}; } catch { d = { title: 'RIVL', body: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'RIVL', { body: d.body || '', tag: d.tag || undefined, renotify: !!d.renotify, icon: './img/icon-192.png', badge: './img/icon-192.png', data: { url: d.url || '#home' } }));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const target = new URL('./' + ((e.notification.data && e.notification.data.url) || '#home'), self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
+    const c = cs.find(x => x.url.startsWith(self.registration.scope));
+    if (c) { if ('navigate' in c) return c.navigate(target).then(w => w && w.focus()); return c.focus(); }
+    return self.clients.openWindow(target);
+  }));
 });

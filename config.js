@@ -39,13 +39,19 @@
     { key: 'basketball', label: 'Basketball', leagues: ['nba', 'wnba', 'ncaam', 'ncaaw'] }
   ];
   const ORDER = SPORTS.flatMap(s => s.leagues);
-  // Push server (push/worker.js on Cloudflare). url stays empty until the worker is deployed; the site then falls back to in-app alerts.
-  const PUSH = { url: '', key: 'BDUH0aH26afiBJtMQeD2pB3ktBXjdQ8YBENhlZ-7LuZVrpMoS9_EMhhcYV9ivNXZLG80AuyhT3a7ETH8c8AlJAU' };
-  const ESPN = {
+  // The RIVL worker (worker/worker.js on Cloudflare): ESPN cache proxy, follows sync and push alerts.
+  // WORKER stays empty until it is deployed; the app then talks to ESPN directly and offers no alerts or sync.
+  const WORKER = '';
+  const PUSH = { url: WORKER, key: 'BNkWE-DFMABpLNkt2Juu-p0pxlD02CMiqI_0_AxwVv3_Q2P5UHWTdFqRcrNzfZFd1EZq0F_UDuBG-JxJ44je6Rs' };
+  const ESPN = WORKER ? {
+    site: WORKER + '/espn/site/', v2: WORKER + '/espn/v2/', web: WORKER + '/espn/web/', core: WORKER + '/espn/core/', now: WORKER + '/espn/now/'
+  } : {
     site: 'https://site.api.espn.com/apis/site/v2/sports/',
     v2: 'https://site.api.espn.com/apis/v2/sports/',
-    web: 'https://site.web.api.espn.com/apis/common/v3/sports/'
+    web: 'https://site.web.api.espn.com/apis/common/v3/sports/',
+    core: 'https://sports.core.api.espn.com/v2/',
+    now: 'https://now.core.api.espn.com/v1/'
   };
-  const out = { LEAGUES, SPORTS, ORDER, ESPN, PUSH, TZ: 'America/Chicago', SITE: 'RIVL', DATA: '/tipoff/data/' };
+  const out = { LEAGUES, SPORTS, ORDER, ESPN, PUSH, WORKER, TZ: 'America/Chicago', SITE: 'RIVL', DATA: '/tipoff/data/' };
   if (typeof module !== 'undefined' && module.exports) module.exports = out; else root.HW = Object.assign(root.HW || {}, out);
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -134,6 +134,11 @@
     if (a === 'pref') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; V.prefs.set(act.dataset.pref, on); act.setAttribute('aria-checked', String(on)); }
     if (a === 'theme') { e.preventDefault(); store.set('v5:theme', act.dataset.theme); applyTheme(); $main.querySelectorAll('[data-act="theme"]').forEach(b => { const on = b.dataset.theme === act.dataset.theme; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); }
     if (a === 'onb-restart') { e.preventDefault(); onbLk = 'nba'; onbStep(0); }
+    if (a === 'alerts') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; (on ? V.alerts.enable() : V.alerts.disable()).then(() => render()); }
+    if (a === 'alert-pref') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; V.alerts.setPref(act.dataset.pref, on); act.setAttribute('aria-checked', String(on)); }
+    if (a === 'alert-test') { e.preventDefault(); V.alerts.test(); }
+    if (a === 'sync-up') { e.preventDefault(); V.sync.up().then(code => { toast(`Backed up as ${code}`); render(); }).catch(() => toast("The server didn't answer")); }
+    if (a === 'sync-down') { e.preventDefault(); const inp = document.getElementById('syncCode'); const code = inp && inp.value.trim(); if (!code || code.length !== 6) { toast('Enter the six-character code'); return; } V.sync.down(code).then(() => { toast('Restored'); location.hash = '#home'; location.reload(); }).catch(() => toast('No backup under that code')); }
     if (a === 'accent') { e.preventDefault(); store.set('v5:accent', act.dataset.accent); applyAccent(); $main.querySelectorAll('[data-act="accent"]').forEach(b => { const on = b.dataset.accent === act.dataset.accent; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); }
     if (a === 'fav') {
       e.preventDefault();

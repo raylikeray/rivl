@@ -121,5 +121,41 @@
     if (navigator.share) navigator.share({ title: card.title || 'RIVL', url }).catch(() => { });
   }
   V.shareCard = shareCard; V._draw = { drawGame, drawPlayer };
+
+  /* ---------- alerts: web push through the RIVL worker, for your teams and players ---------- */
+  const WORKER = HW.WORKER || ''; const PUSHKEY = HW.PUSH && HW.PUSH.key || '';
+  const unb64u = str => { str = str.replace(/-/g, '+').replace(/_/g, '/'); while (str.length % 4) str += '='; return Uint8Array.from(atob(str), c => c.charCodeAt(0)); };
+  const post = (path, body) => fetch(WORKER + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+  V.alerts = {
+    available() { return !!WORKER && !!PUSHKEY && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; },
+    on() { return !!store.get('v5:alerts', false); },
+    prefs() { return Object.assign({ pre: true, close: true, final: true, inj: true }, store.get('v5:alertPrefs', {}) || {}); },
+    setPref(k, v) { const a = store.get('v5:alertPrefs', {}) || {}; a[k] = !!v; store.set('v5:alertPrefs', a); this.push(); },
+    async enable() {
+      if (!this.available()) { toast('Alerts need the RIVL server'); return false; }
+      const perm = await Notification.requestPermission(); if (perm !== 'granted') { toast('Notifications are off for RIVL in your phone settings'); return false; }
+      const reg = await navigator.serviceWorker.ready; let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: unb64u(PUSHKEY) });
+      store.set('v5:alerts', true); await this.push(); toast('Alerts on'); return true;
+    },
+    async disable() { store.set('v5:alerts', false); try { const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (sub) await post('/unsubscribe', { endpoint: sub.endpoint }); } catch { } toast('Alerts off'); },
+    async push() {
+      if (!this.on() || !this.available()) return;
+      try { const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (!sub) return; const F = HW.favs.all(); const teams = ORDER.flatMap(k => (F[k] || []).map(id => `${k}:${id}`)); const players = V.fplayers.all().map(p => `${p.lk}:${p.id}`); await post('/subscribe', { sub: sub.toJSON(), teams, players, prefs: this.prefs() }); } catch { }
+    },
+    async test() { try { const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (!sub) { toast('Turn alerts on first'); return; } const r = await post('/test', { endpoint: sub.endpoint }); toast(r.ok ? 'Sent a test alert' : 'The server could not send it'); } catch { toast("The server didn't answer"); } }
+  };
+  let pushT = null; const repush = () => { clearTimeout(pushT); pushT = setTimeout(() => V.alerts.push(), 1500); };
+  document.addEventListener('rivl:fav', repush); document.addEventListener('rivl:follow', repush);
+
+  /* ---------- sync: your follows and settings behind a six-character code ---------- */
+  const KEYS = ['favs', 'v5:players', 'v5:prefs', 'v5:theme', 'v5:accent', 'v5:alertPrefs', 'v5:injcol'];
+  V.sync = {
+    available() { return !!WORKER; },
+    code() { return store.get('v5:syncCode', ''); },
+    data() { const d = {}; KEYS.forEach(k => { const v = store.get(k, null); if (v != null) d[k] = v; }); return d; },
+    async up() { const r = await post('/sync', { code: this.code() || undefined, data: this.data() }); if (!r.ok) throw new Error(r.error || 'failed'); store.set('v5:syncCode', r.code); store.set('v5:syncAt', Date.now()); return r.code; },
+    async down(code) { code = String(code || '').trim().toUpperCase(); const r = await fetch(`${WORKER}/sync?code=${encodeURIComponent(code)}`).then(x => x.json()); if (!r.ok || !r.data) throw new Error(r.error || 'unknown code'); KEYS.forEach(k => { if (r.data[k] != null) store.set(k, r.data[k]); }); store.set('v5:syncCode', code); store.set('v5:onboarded', true); store.set('v5:syncAt', Date.now()); return true; }
+  };
   document.addEventListener('click', e => { const b = e.target.closest('[data-act="share"][data-card]'); if (!b) return; e.preventDefault(); e.stopPropagation(); let card = null; try { card = JSON.parse(b.dataset.card); } catch { } if (card) shareCard(card); }, true);
 })();
