@@ -41,17 +41,19 @@
   const ORDER = SPORTS.flatMap(s => s.leagues);
   // The RIVL worker (worker/worker.js on Cloudflare): ESPN cache proxy, follows sync and push alerts.
   // WORKER stays empty until it is deployed; the app then talks to ESPN directly and offers no alerts or sync.
-  const WORKER = '';
+  const WORKER = 'https://rivl.ray-marshall300.workers.dev';
   const PUSH = { url: WORKER, key: 'BNkWE-DFMABpLNkt2Juu-p0pxlD02CMiqI_0_AxwVv3_Q2P5UHWTdFqRcrNzfZFd1EZq0F_UDuBG-JxJ44je6Rs' };
-  const ESPN = WORKER ? {
-    site: WORKER + '/espn/site/', v2: WORKER + '/espn/v2/', web: WORKER + '/espn/web/', core: WORKER + '/espn/core/', now: WORKER + '/espn/now/'
-  } : {
+  // ESPN's own bases: what the app reads when there is no worker, and what a proxied call falls back to if the worker ever fails
+  const DIRECT = {
     site: 'https://site.api.espn.com/apis/site/v2/sports/',
     v2: 'https://site.api.espn.com/apis/v2/sports/',
     web: 'https://site.web.api.espn.com/apis/common/v3/sports/',
     core: 'https://sports.core.api.espn.com/v2/',
     now: 'https://now.core.api.espn.com/v1/'
   };
-  const out = { LEAGUES, SPORTS, ORDER, ESPN, PUSH, WORKER, TZ: 'America/Chicago', SITE: 'RIVL', DATA: '/tipoff/data/' };
+  const ESPN = WORKER ? {
+    site: WORKER + '/espn/site/', v2: WORKER + '/espn/v2/', web: WORKER + '/espn/web/', core: WORKER + '/espn/core/', now: WORKER + '/espn/now/'
+  } : DIRECT;
+  const out = { LEAGUES, SPORTS, ORDER, ESPN, DIRECT, PUSH, WORKER, TZ: 'America/Chicago', SITE: 'RIVL', DATA: '/tipoff/data/' };
   if (typeof module !== 'undefined' && module.exports) module.exports = out; else root.HW = Object.assign(root.HW || {}, out);
 })(typeof globalThis !== 'undefined' ? globalThis : this);

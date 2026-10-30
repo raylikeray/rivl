@@ -3,6 +3,9 @@
 'use strict';
 const HW = window.HW;
 const { LEAGUES, ORDER, SPORTS, ESPN, TZ } = HW;
+/* the worker is one small service on a free plan: if a proxied call ever fails, the same call is made straight to ESPN instead,
+   so a hiccup at Cloudflare costs a few milliseconds rather than the screen */
+const directOf = url => { if (!HW.WORKER || !HW.DIRECT || !String(url).startsWith(HW.WORKER + '/espn/')) return ''; const k = String(url).slice((HW.WORKER + '/espn/').length); const seg = k.slice(0, k.indexOf('/')); return HW.DIRECT[seg] ? HW.DIRECT[seg] + k.slice(seg.length + 1) : ''; };
 
 /* ---------- small utilities ---------- */
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -32,6 +35,9 @@ async function j(url, ttl = 60000) {
     const v = await r.json();
     cache.set(url, { t: Date.now(), v });
     return v;
+  } catch (err) {
+    const d = directOf(url); if (!d) throw err;   // a proxied call that failed: try ESPN itself once, and keep the answer under the url that was asked for
+    const v = await j(d, ttl); cache.set(url, { t: Date.now(), v }); return v;
   } finally { clearTimeout(to); }
 }
 async function jSoft(url, ttl) { try { return await j(url, ttl); } catch { return null; } }
