@@ -1436,10 +1436,13 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
    MOTION. One ease for everything that moves (a quick start, a long settle), and nothing pops: a screen eases out and the next
    eases in; an overlay slides up under a backdrop that fades, and leaves the same way; a block repainted in place eases in. */
 :root{--ease:cubic-bezier(.2,.8,.2,1)}
-#main.leave{animation:screenout .12s ease-out both}
-@keyframes screenout{from{opacity:1}to{opacity:0}}
-#main.fade{animation:screen .36s var(--ease) both}
+#main.hold{opacity:0}
+#main.fade{animation:screen .3s var(--ease) both}
 @keyframes screen{from{opacity:0}to{opacity:1}}
+.ghost{position:fixed;top:0;bottom:0;z-index:25;pointer-events:none;overflow:hidden}
+.ghost.out{animation:screenout .3s var(--ease) both}
+.ghost *{animation:none!important;transition:none!important}
+@keyframes screenout{from{opacity:1}to{opacity:0}}
 .soft{animation:soft .32s var(--ease) both}
 @keyframes soft{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 .sheet,.panel{will-change:opacity}

@@ -11,13 +11,16 @@
     const showBar = () => { if (!bar) { bar = document.createElement('div'); bar.className = 'loadbar'; document.body.appendChild(bar); } clearTimeout(barT); barT = setTimeout(() => { bar.classList.add('on'); $main.setAttribute('aria-busy', 'true'); }, 160); };
     const hideBar = () => { clearTimeout(barT); if (bar) bar.classList.remove('on'); $main.removeAttribute('aria-busy'); };
     /* real content is on screen: the bar goes, the slow note is off, and a new screen lands at its remembered scroll */
-    const settle = () => { $main.dataset.real = '1'; clearTimeout(slowT); const sl = $main.querySelector('.slow'); if (sl) sl.remove(); hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; const y = +$main.dataset.y || 0; window.scrollTo(0, y); if (y) requestAnimationFrame(() => window.scrollTo(0, y)); } };
+    let pendingSkel = '';
+    const settle = () => { $main.dataset.real = '1'; pendingSkel = ''; clearTimeout(slowT); const sl = $main.querySelector('.slow'); if (sl) sl.remove(); hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; const y = +$main.dataset.y || 0; window.scrollTo(0, y); if (y) requestAnimationFrame(() => window.scrollTo(0, y)); } if (render.onReal) { const f = render.onReal; render.onReal = null; f(); } };
+    /* a slow load: the skeleton that was swallowed while the old screen was kept is painted after all, so the hold never ends in a blank */
+    V.showSkeleton = () => { if (!pendingSkel) return false; const s = pendingSkel; pendingSkel = ''; proto.set.call($main, s); $main.dataset.real = '0'; return true; };
     V.busy = on => on ? showBar() : hideBar();   // for views that patch themselves in place and have no paint to hang the bar on
     V.soft = el => { if (!el || !MOTION()) return; el.classList.remove('soft'); void el.offsetWidth; el.classList.add('soft'); };   // a block repainted in place eases in instead of popping
     V.settled = settle;   // for a view whose first real paint went into a part of the screen (Scores' list, a standings table) rather than the whole
     Object.defineProperty($main, 'innerHTML', {
       get() { return proto.get.call($main); },
-      set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { showBar(); return; } proto.set.call($main, s); clearTimeout(slowT); if (!s.includes('<!--skel-->')) settle(); else { $main.dataset.real = '0'; slowT = setTimeout(() => { if ($main.dataset.real === '0' && !$main.querySelector('.slow')) $main.insertAdjacentHTML('beforeend', '<p class="legend slow">The feed is slow to answer. It usually clears within a minute; pull down to try again.</p>'); }, 7000); } }
+      set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { pendingSkel = s; showBar(); return; } proto.set.call($main, s); clearTimeout(slowT); if (!s.includes('<!--skel-->')) settle(); else { $main.dataset.real = '0'; slowT = setTimeout(() => { if ($main.dataset.real === '0' && !$main.querySelector('.slow')) $main.insertAdjacentHTML('beforeend', '<p class="legend slow">The feed is slow to answer. It usually clears within a minute; pull down to try again.</p>'); }, 7000); } }
     }); }
   S.today = S.today || {}; ORDER.forEach(k => { S.today[k] = S.today[k] || []; });
 
@@ -73,9 +76,18 @@
     // a page that starts at the top goes there now, before its skeleton replaces the old screen — otherwise the old scroll
     // position clamps as the document shrinks and the eye sees two moves instead of one
     const fresh = render.key !== key;
-    if (fresh && render.key && MOTION()) { $main.classList.remove('enter', 'fade'); $main.classList.add('leave'); await new Promise(res => setTimeout(res, 110)); if (my !== seq) return; }   // the old screen eases out first; a newer navigation wins
+    clearTimeout(render.holdT); render.onReal = null;
+    if (fresh && MOTION()) {
+      /* a crossfade, not a blink: a snapshot of the old screen is laid over the page and fades out while the new screen, held
+         invisible until its real content has painted, fades in beneath it. If the content takes longer than a beat, the skeleton
+         is shown instead so the hold never ends in a blank. */
+      if (render.key) ghost();
+      $main.classList.remove('fade', 'enter'); $main.classList.add('hold');
+      const fadeIn = () => { clearTimeout(render.holdT); $main.classList.remove('hold', 'fade', 'enter'); void $main.offsetWidth; $main.classList.add('fade', 'enter'); document.querySelectorAll('.ghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); }); };   // the snapshot lets go only now, so the two cross
+      render.onReal = fadeIn;
+      render.holdT = setTimeout(() => { if (render.onReal === fadeIn && my === seq) { render.onReal = null; V.showSkeleton(); fadeIn(); render.onReal = () => { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); }; } }, 260);
+    }
     if (leagueChanged || ($main.dataset.y === '0' && fresh)) window.scrollTo(0, 0);
-    $main.classList.remove('leave'); if (fresh) { $main.classList.remove('fade'); void $main.offsetWidth; $main.classList.add('fade'); }   // the new screen eases in, skeleton and all; its rows rise once the real paint lands
     render.lk = r.lk;
     if (!['team', 'player', 'game'].includes(r.name) && V._.tint) V._.tint('');   // only a team's, a player's or a game's page wears a team colour
     if (leagueScreen) store.set('v5:screen', r.name);
@@ -91,8 +103,19 @@
     V.settled();   // a view that painted into part of the screen (Scores' list, a standings chip, a refreshed game) made no full paint to clear the bar, the dimming and the slow note, or to land at its scroll
     paintPills(r.lk, leagueScreen);   // live counts may have arrived while the view loaded
     // the rise plays for a new screen; a screen repainting itself (another day on Scores, another conference) keeps still
-    if (key !== render.key) { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); } else $main.classList.remove('enter'); render.key = key;
+    if (key !== render.key) { if (!$main.classList.contains('enter')) { void $main.offsetWidth; $main.classList.add('enter'); } } else $main.classList.remove('enter'); render.key = key;
+    $main.classList.remove('hold'); clearTimeout(render.holdT); render.onReal = null; document.querySelectorAll('.ghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); });   // whatever happened, nothing stays held once the view has returned
     document.dispatchEvent(new CustomEvent('rivl:rendered'));
+  }
+  /* the old screen, as it stood, laid over the page and fading — so the next screen appears through it instead of after a gap */
+  function ghost() {
+    document.querySelectorAll('.ghost').forEach(g => g.remove());
+    const r = $main.getBoundingClientRect(); if (!r.width || !r.height) return;
+    const g = document.createElement('div'); g.className = 'ghost'; g.setAttribute('aria-hidden', 'true');
+    g.style.cssText = `left:${r.left}px;width:${r.width}px`;
+    const c = $main.cloneNode(true); c.removeAttribute('id'); c.className = ''; c.style.cssText = `transform:translateY(${r.top}px)`;
+    g.appendChild(c); document.body.appendChild(g);
+    g.addEventListener('animationend', () => g.remove()); setTimeout(() => g.remove(), 1500);   // it fades once the new screen is ready (fadeIn adds .out); never outstays its welcome
   }
   window.addEventListener('hashchange', render);
 
