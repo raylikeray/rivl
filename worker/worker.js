@@ -101,16 +101,26 @@ async function sync(req, env, h) {
 }
 
 /* ---------- subscriptions ---------- */
+/* The subscribers live in ONE key, read once a minute. The old way — a KV list plus one get per subscriber on every
+   cron tick — spent 1,440 list operations a day against a free-tier cap of 1,000, before any alert had been sent.
+   The index is rewritten only when someone subscribes or unsubscribes, or a push endpoint is found dead; and on the
+   first run after this change it is built once from the old per-subscriber keys. */
+const SUBS = 'subs:all';
 async function loadSubs(env) {
-  const subs = []; let cursor;
-  do { const l = await env.KV.list({ prefix: 'sub:', cursor }); for (const k of l.keys) { const v = await env.KV.get(k.name, 'json'); if (v && v.sub) subs.push({ key: k.name, ...v }); } cursor = l.list_complete ? null : l.cursor; } while (cursor);
-  return subs;
+  let all = null; try { all = await env.KV.get(SUBS, 'json'); } catch { }
+  if (!all) {   // first run: gather the old per-subscriber keys into the index, once
+    all = {}; let cursor;
+    do { const l = await env.KV.list({ prefix: 'sub:', cursor }); for (const k of l.keys) { const v = await env.KV.get(k.name, 'json'); if (v && v.sub) all[k.name] = v; } cursor = l.list_complete ? null : l.cursor; } while (cursor);
+    try { await env.KV.put(SUBS, JSON.stringify(all)); } catch { }
+  }
+  return Object.entries(all).map(([key, v]) => ({ key, ...v }));
 }
+async function saveSub(env, key, v) { const all = (await env.KV.get(SUBS, 'json')) || {}; if (v) all[key] = v; else delete all[key]; await env.KV.put(SUBS, JSON.stringify(all)); }
 async function deliver(env, subs, matchKey, kind, payload, field = 'teams') {
   const targets = subs.filter(s => (s[field] || []).includes(matchKey) && (s.prefs || {})[kind] !== false);
   let n = 0;
   for (const s of targets) {
-    try { const st = await sendPush(env, s.sub, payload); if (st === 404 || st === 410) await env.KV.delete(s.key); else if (st < 300) n++; } catch (e) { console.log('push failed', e.message); }
+    try { const st = await sendPush(env, s.sub, payload); if (st === 404 || st === 410) await saveSub(env, s.key, null); else if (st < 300) n++; } catch (e) { console.log('push failed', e.message); }
   }
   return n;
 }
@@ -172,8 +182,10 @@ async function runLeague(env, lk, subs) {
       const score = `${g.away.abbr} ${as}, ${g.home.abbr} ${hs}`;
       const last = g.period >= L.reg; const [mm] = String(g.clock || '0:00').split(':').map(Number);
       if (last && Math.abs(hs - as) <= 5 && (mm || 0) < 3) await send('close', { title: `Close one: ${score}`, body: `${g.detail} · ${name}`, tag: `game:${gk}`, renotify: true }, `close:${gk}:${g.period}`);
-      const next = { period: g.period, hs, as, live: 1 };
-      if (JSON.stringify(next) !== JSON.stringify(snap)) await env.KV.put('st:' + gk, JSON.stringify(next), { expirationTtl: 172800 });
+      // one write, the first time the game is seen live: that is all the final alert needs to know. The score was being
+      // rewritten every minute of every followed game — a value nothing read back — and that alone could spend the day's
+      // 1,000 writes before the evening games were over.
+      if (!snap.live) await env.KV.put('st:' + gk, JSON.stringify({ live: 1 }), { expirationTtl: 172800 });
     }
     if (g.state === 'post' && g.home.score != null && g.away.score != null) {   // a postponed game is filed as post with no score: nothing to say
       const snap = await env.KV.get('st:' + gk, 'json');
@@ -234,7 +246,7 @@ async function runWire(env, lk, subs) {
     const id = String(a.id); const payload = { title: a.headline, body: String(a.description || '').slice(0, 160), tag: `news:${id}`, url: `#article/${lk}/${id}`, league: lk };
     await once(env, `news:${lk}:${id}`, async () => {
       const done = new Set();   // one alert per phone even when both a team and a player of theirs are in it
-      const each = async (key, field) => { for (const s of subs) { if (done.has(s.key) || !(s[field] || []).includes(key) || (s.prefs || {}).news === false) continue; done.add(s.key); try { const st = await sendPush(env, s.sub, payload); if (st === 404 || st === 410) await env.KV.delete(s.key); } catch (e) { console.log('push failed', e.message); } } };
+      const each = async (key, field) => { for (const s of subs) { if (done.has(s.key) || !(s[field] || []).includes(key) || (s.prefs || {}).news === false) continue; done.add(s.key); try { const st = await sendPush(env, s.sub, payload); if (st === 404 || st === 410) await saveSub(env, s.key, null); } catch (e) { console.log('push failed', e.message); } } };
       for (const id of pIds) await each(`${lk}:${id}`, 'players');
       for (const id of tIds) await each(`${lk}:${id}`, 'teams');
     });
@@ -253,18 +265,18 @@ export default {
       if (!b.sub || !b.sub.endpoint || !b.sub.keys) return json({ error: 'no subscription' }, 400, h);
       const teams = (b.teams || []).filter(t => /^[a-z]+:\d+$/.test(t)).slice(0, 60); const players = (b.players || []).filter(t => /^[a-z]+:\d+$/.test(t)).slice(0, 60);
       const id = await sha(b.sub.endpoint);
-      if (!teams.length && !players.length) { await env.KV.delete('sub:' + id); return json({ ok: true, teams: 0, players: 0 }, 200, h); }
-      await env.KV.put('sub:' + id, JSON.stringify({ sub: b.sub, teams, players, prefs: b.prefs || {}, t: Date.now() }));
+      if (!teams.length && !players.length) { await saveSub(env, 'sub:' + id, null); return json({ ok: true, teams: 0, players: 0 }, 200, h); }
+      await saveSub(env, 'sub:' + id, { sub: b.sub, teams, players, prefs: b.prefs || {}, t: Date.now() });
       return json({ ok: true, teams: teams.length, players: players.length }, 200, h);
     }
     if (url.pathname === '/unsubscribe' && req.method === 'POST') {
       let b; try { b = await req.json(); } catch { return json({ error: 'bad json' }, 400, h); }
-      if (b.endpoint) await env.KV.delete('sub:' + await sha(b.endpoint));
+      if (b.endpoint) await saveSub(env, 'sub:' + await sha(b.endpoint), null);
       return json({ ok: true }, 200, h);
     }
     if (url.pathname === '/test' && req.method === 'POST') {
       let b; try { b = await req.json(); } catch { return json({ error: 'bad json' }, 400, h); }
-      const v = await env.KV.get('sub:' + await sha(b.endpoint || ''), 'json'); if (!v) return json({ error: 'not subscribed' }, 404, h);
+      const v = ((await env.KV.get(SUBS, 'json')) || {})['sub:' + await sha(b.endpoint || '')]; if (!v) return json({ error: 'not subscribed' }, 404, h);
       const st = await sendPush(env, v.sub, { title: 'RIVL alerts are on', body: 'Tip-off, close games, finals, injury changes and breaking news for your teams and players.', tag: 'welcome', url: '#home' });
       return json({ ok: st < 300, status: st }, 200, h);
     }

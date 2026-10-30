@@ -18,15 +18,15 @@ const SLATE = {
             { homeAway: 'away', team: { id: '7', abbreviation: 'DEN' }, score: '' }] }] }] },
   wnba: { events: [] }, ncaam: { events: [] }, ncaaw: { events: [] }
 };
-const counts = { espn: 0, run: {}, plan: 0 };
+const counts = { espn: 0, run: {}, plan: 0, kv: { list: 0, get: 0, put: 0, delete: 0 } };
 const KVmap = new Map();
 const env = {
   SELF_URL: 'https://w.example', CRON_TOKEN: 'x',
-  KV: {
-    async list({ prefix }) { return { keys: [...KVmap.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })), list_complete: true }; },
-    async get(k, t) { const v = KVmap.get(k); return v == null ? null : (t === 'json' ? JSON.parse(v) : v); },
-    async put(k, v) { KVmap.set(k, v); },
-    async delete(k) { KVmap.delete(k); }
+  KV: {   // every operation is counted: the free tier allows 1,000 lists, 1,000 writes and 1,000 deletes a day
+    async list({ prefix }) { counts.kv.list++; return { keys: [...KVmap.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })), list_complete: true }; },
+    async get(k, t) { counts.kv.get++; const v = KVmap.get(k); return v == null ? null : (t === 'json' ? JSON.parse(v) : v); },
+    async put(k, v) { counts.kv.put++; KVmap.set(k, v); },
+    async delete(k) { counts.kv.delete++; KVmap.delete(k); }
   }
 };
 // one subscriber following a team in all four leagues
@@ -53,3 +53,4 @@ console.log('work dispatched       :', counts.run, '= ' + runTotal);
 console.log('ESPN requests for a day with one NBA game:');
 console.log('   plan', counts.plan, '+ games', counts.run.games || 0, '+ injuries', counts.run.injuries || 0, '+ wire', counts.run.wire || 0,
             '=', counts.plan + runTotal);
+console.log('KV operations by the cron loop itself (the /run work is on top):', counts.kv);

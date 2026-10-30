@@ -38,8 +38,16 @@ Alerts are unchanged — every one of them happens inside a window by definition
 (`cp worker.js worker.mjs && node simcheck.mjs`).
 
 ## Free-plan budget
-KV writes happen only when something is sent or changes; the plan is one small write per league per hour — far below the free
-limits for a handful of people.
+The KV free tier is 100,000 reads a day but only **1,000 writes, 1,000 deletes and 1,000 lists**, and the cron fires 1,440
+times a day — so anything the cron does per tick other than a read is over budget on its own. Two earlier versions tripped
+Cloudflare's "nearing the daily cap" mail this way: a `list` of subscribers every minute (1,440 lists), and the live score
+rewritten into KV every minute of every followed game (hundreds of writes for a value nothing read back).
+
+What the worker does now, measured by `simday.mjs` over a simulated day: **1 list** (a one-time migration into the
+`subs:all` index), **~100 writes** (the watch plan, one per league per hour, plus one mark per game seen live and one per
+alert sent), and ~7,000 reads. If that mail arrives again, run `cp worker.js worker.mjs && node simday.mjs` and look at the
+last line before guessing. The app itself never touches KV — the `/espn/*` proxy uses Cloudflare's edge cache — so a KV
+429 stops alerts and Sync, not scores.
 
 ## Endpoints
 - `GET /health` → `{ ok, publicKey }`

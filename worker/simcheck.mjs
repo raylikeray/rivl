@@ -11,7 +11,7 @@ const env = { SELF_URL: 'https://w.example', CRON_TOKEN: 'x', KV: {
   async list({ prefix }) { return { keys: [...KVmap.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })), list_complete: true }; },
   async get(k, t) { const v = KVmap.get(k); return v == null ? null : (t === 'json' ? JSON.parse(v) : v); },
   async put(k, v) { KVmap.set(k, v); }, async delete(k) { KVmap.delete(k); } } };
-const setSubs = teams => KVmap.set('sub:me', JSON.stringify({ sub: { endpoint: 'https://push/x' }, teams, players: [], prefs: {} }));
+const setSubs = teams => KVmap.set('subs:all', JSON.stringify({ 'sub:me': { sub: { endpoint: 'https://push/x' }, teams, players: [], prefs: {} } }));   // the index /subscribe maintains
 setSubs(['nba:25', 'wnba:3', 'ncaam:2', 'ncaaw:4']);
 let fired = [], espn = 0;
 globalThis.fetch = async (u) => {
