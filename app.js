@@ -268,7 +268,7 @@
     if (a === 'stab-odds') { store.set('v5:stab:' + (current ? current.lk : 'nba'), 'odds'); return; }   // the link itself goes to #standings
     if (a === 'watch') { e.preventDefault(); const id = act.dataset.id; const mine = HW.myServices(); const on = !mine.includes(id); store.set('watch', on ? [...mine, id] : mine.filter(x => x !== id)); act.classList.toggle('on', on); act.setAttribute('aria-pressed', String(on)); if (navigator.vibrate) navigator.vibrate(8); return; }
     if (a === 'theme') { e.preventDefault(); store.set('v5:theme', act.dataset.theme); applyTheme(); $main.querySelectorAll('[data-act="theme"]').forEach(b => { const on = b.dataset.theme === act.dataset.theme; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); }
-    if (a === 'onb-restart') { e.preventDefault(); onbLk = 'nba'; onbStep(0); }
+    if (a === 'onb-restart') { e.preventDefault(); onbLk = 'nba'; onbWelcome(); }   // from the welcome, as a new person sees it; picks are kept
     if (a === 'alerts') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; (on ? V.alerts.enable() : V.alerts.disable()).catch(err => { try { store.set('v5:alertsWhy', 'Unexpected: ' + (err && err.message || err)); } catch { } toast('Unexpected: ' + (err && err.message || err)); }).then(() => render()); }
     if (a === 'alert-pref') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; V.alerts.setPref(act.dataset.pref, on); act.setAttribute('aria-checked', String(on)); }
     if (a === 'alert-test') { e.preventDefault(); V.alerts.test(); }
