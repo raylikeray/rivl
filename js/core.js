@@ -393,6 +393,7 @@ const paramsOf = (L, ctx) => { const P = ctx && ctx.params; return { hca: P && P
 const logit = p => Math.log(p / (1 - p)), sigm = z => 1 / (1 + Math.exp(-z));
 const calibrate = (p, c) => { if (!c || !isFinite(c.a) || !isFinite(c.b)) return p; const q = Math.min(.995, Math.max(.005, p)); return sigm(c.a * logit(q) + c.b); };
 const AVG_TOTAL = { nba: 228, wnba: 166, ncaam: 146, ncaaw: 132 };
+const EARLY_GP = 8, EARLY_W = 0.9;   // the line's weight before both teams have this many games; shared with the Record page
 function forecast(L, g, ctx) {
   const H = strength(L, g.home.id, ctx), A = strength(L, g.away.id, ctx);
   const P = paramsOf(L, ctx);
@@ -404,7 +405,11 @@ function forecast(L, g, ctx) {
   /* the market anchor: the closing line is the best single forecast there is, so when a line exists the margin starts
      there and RIVL's own number pulls it (the line may not have moved for a late injury report or a rest edge) */
   const mkt = g.odds && g.odds.spread != null ? -g.odds.spread : null;
-  const w = mkt == null ? 0 : (ctx.params && ctx.params.mkt != null ? ctx.params.mkt : 0.6);
+  /* Early in a season the ratings have seen a handful of games and the line has seen everything, so the line carries more
+     until both sides have eight games behind them (on the 2026 WNBA season and the first NBA weeks, the best weight for those
+     games was 0.9–1.0; over a full season anything from 0.5 to 0.8 scores the same, and 0.6 is kept). */
+  const early = (H.gp || 0) < EARLY_GP || (A.gp || 0) < EARLY_GP;
+  const w = mkt == null ? 0 : early ? EARLY_W : (ctx.params && ctx.params.mkt != null ? ctx.params.mkt : 0.6);
   const margin = mkt == null ? own : w * mkt + (1 - w) * own;
   // a projected score: the market total when there is one, else both teams' scoring, else the league's typical game
   const rH = ctx.cur && ctx.cur.byId && ctx.cur.byId[g.home.id], rA = ctx.cur && ctx.cur.byId && ctx.cur.byId[g.away.id];
@@ -594,5 +599,5 @@ ORDER.forEach(k => S.today[k] = []);
 const allToday = () => ORDER.flatMap(k => S.today[k]);
 
 Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, tipOf, TZLABEL, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, carry, API, API2, WEB, logoUrl, seasonYear, favs,
-  parseEvent, isLive, isDone, finalWord, isFav, isWire, readable, wireTeams, wirePlayers, wikiPage, wikiFacts, wikiPerson, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, seriesForecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
+  EARLY_GP, EARLY_W, parseEvent, isLive, isDone, finalWord, isFav, isWire, readable, wireTeams, wirePlayers, wikiPage, wikiFacts, wikiPerson, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, seriesForecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
 })();
