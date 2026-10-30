@@ -406,8 +406,19 @@ button.row:last-child{border-bottom:0}
 .tbl.stand .tm .rk{width:18px;color:var(--ink-3);font-weight:700;font-size:12.5px;text-align:left;flex:none}
 .tbl.stand .ap{font-style:normal;font-size:11px;font-weight:800;color:var(--ink-3);margin-right:5px}
 .tbl tr.cut td{border-bottom:2px solid var(--line-2)}
-.tbl tr.me td{background:transparent;font-weight:800}
-.tbl tr.me td:first-child{box-shadow:inset 3px 0 0 var(--ink)}
+.tbl tr.me td{background:color-mix(in srgb,var(--ink) 7%,transparent);font-weight:800}
+.tbl tr.me td:first-child{box-shadow:inset 3px 0 0 var(--acc,var(--ink))}
+.tbl.stand tr.me .nm > a::after{content:"★";font-size:11px;margin-left:6px;color:var(--acc,var(--ink));vertical-align:1px}
+.tbl.stand{font-size:15px}
+.tbl.stand th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;padding:10px 8px;color:var(--ink-3)}
+.tbl.stand td{padding:11px 8px;font-weight:600;color:var(--ink-2)}
+.tbl.stand td:first-child{color:var(--ink)}
+.tbl.stand .tm{gap:10px;font-size:15.5px;font-weight:800}
+.tbl.stand .logo.s{width:32px;height:32px}
+.tbl.stand .nm small{font-size:11.5px}
+.tbl.stand td b,.tbl.stand td .pos,.tbl.stand td .neg{font-weight:800}
+.tbl.stand td:nth-child(2),.tbl.stand td:nth-child(3){color:var(--ink);font-weight:800}
+.tbl tr.cut td{border-bottom:2px solid color-mix(in srgb,var(--ink) 26%,transparent)}
 .tbl tr.sub td{font-size:11.5px;font-weight:800;color:var(--ink-3);padding-top:14px;padding-bottom:6px;border-bottom:1px solid var(--line-2)}
 .tbl tr.tot td{border-top:1px solid var(--line-2)}
 .tbl.box td:first-child,.tbl.box th:first-child{position:sticky;left:0;background:var(--bg);z-index:1;max-width:150px;overflow:hidden;text-overflow:ellipsis}
@@ -444,11 +455,11 @@ button.row:last-child{border-bottom:0}
   background:var(--grain),linear-gradient(118deg,var(--a) 0%,var(--ad) 100%);background-blend-mode:soft-light,normal;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 1px rgba(255,255,255,.08),0 16px 34px -20px rgba(0,0,0,.9),0 2px 4px rgba(0,0,0,.35)}
 .pc::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.34),rgba(0,0,0,.08) 46%,transparent 66%);pointer-events:none}
-.pc .wm{position:absolute;right:76px;bottom:-30px;width:150px;height:150px;object-fit:contain;opacity:.12;pointer-events:none;filter:grayscale(1) brightness(3)}
+.pc .wm{position:absolute;right:104px;bottom:-30px;width:150px;height:150px;object-fit:contain;opacity:.12;pointer-events:none;filter:grayscale(1) brightness(3)}
 .pc .jn{position:absolute;right:16px;top:4px;font:800 72px/1 var(--num);font-style:normal;color:rgba(255,255,255,.13);letter-spacing:-.03em;pointer-events:none}
-.pc .shot{position:absolute;right:4px;bottom:0;width:140px;height:140px;pointer-events:none;z-index:1}
-.pc .shot img{width:100%;height:100%;object-fit:contain;object-position:bottom;display:block;filter:drop-shadow(0 10px 12px rgba(0,0,0,.45))}
-.pc .in{position:relative;z-index:2;max-width:calc(100% - 150px);display:flex;flex-direction:column;gap:2px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.pc .shot{position:absolute;right:2px;bottom:0;width:172px;height:125px;pointer-events:none;z-index:1}
+.pc .shot img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;filter:drop-shadow(0 10px 12px rgba(0,0,0,.45))}
+.pc .in{position:relative;z-index:2;max-width:calc(100% - 160px);display:flex;flex-direction:column;gap:2px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .pc em{font-style:normal;font-size:11.5px;font-weight:800;opacity:.92;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pc b{font-size:19px;font-weight:800;line-height:1.1;letter-spacing:-.015em}
 .pc .line{font:800 40px/1 var(--num);margin-top:6px;display:flex;align-items:baseline;gap:6px}
@@ -525,7 +536,6 @@ html{touch-action:manipulation}
 .fc .bar{box-shadow:inset 0 1px 2px rgba(0,0,0,.35)}
 #main.enter>*{animation:rise .26s cubic-bezier(.2,.8,.2,1) both}
 @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.tbl tr.me td{background:transparent;font-weight:800}
 .search:focus-within{box-shadow:var(--edge),inset 0 0 0 1.5px var(--line-2)}
 
 /* injuries grouped by team */
@@ -873,7 +883,7 @@ body{overscroll-behavior-y:none}
 .hero .tm .logo{overflow:visible}
 
 /* headshot discs: lit in the team colour, gloss across the top, the face filling the circle, the colour glowing beneath */
-.hs{background:radial-gradient(130% 110% at 50% -10%,color-mix(in srgb,var(--tc,var(--disc-plain)) 72%,#fff),var(--tc,var(--disc-plain)) 48%,color-mix(in srgb,var(--tc,var(--disc-plain)) 62%,#000) 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 1px 2px rgba(0,0,0,.35),0 0 0 3px color-mix(in srgb,var(--tc,#000) 14%,transparent),0 3px 9px -2px color-mix(in srgb,var(--tc,#000) 50%,transparent)}
+.hs{--hc:var(--tf,var(--tc,var(--disc-plain)));background:radial-gradient(130% 110% at 50% -10%,color-mix(in srgb,var(--hc) 70%,#fff),var(--hc) 48%,color-mix(in srgb,var(--hc) 70%,#000) 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 1px 2px rgba(0,0,0,.35),0 0 0 3px color-mix(in srgb,var(--hc) 16%,transparent),0 3px 9px -2px color-mix(in srgb,var(--hc) 50%,transparent)}
 .hs.plain{--tc:var(--disc-plain)}
 .hs img{transform:scale(1.08) translateY(2%);transform-origin:50% 18%}
 .hs::after{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 0 -10px 16px -10px rgba(0,0,0,.4);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,0) 42%)}
@@ -924,6 +934,13 @@ body{overscroll-behavior-y:none}
 :root[data-tint][data-theme="light"]{--wash:14%}
 @media (prefers-color-scheme:light){ :root[data-tint]:not([data-theme="dark"]){--wash:14%} }
 .app{position:relative;isolation:isolate}
+/* the glass under the status bar: the page scrolls beneath it and blurs, the way the system bars do; it only has height in the
+   home-screen app on a phone with an inset, and is nothing anywhere else */
+.sbg{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);z-index:60;pointer-events:none;
+  -webkit-backdrop-filter:blur(22px) saturate(1.7);backdrop-filter:blur(22px) saturate(1.7);
+  background:color-mix(in srgb,var(--bg) 38%,transparent);transition:box-shadow .25s ease}
+:root.scrolled .sbg{box-shadow:inset 0 -1px 0 color-mix(in srgb,var(--ink) 10%,transparent)}
+@media (prefers-reduced-transparency:reduce){ .sbg{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)} }
 .app::before{content:"";position:absolute;left:0;right:0;top:0;height:560px;pointer-events:none;z-index:-1;
   background:linear-gradient(180deg,
     color-mix(in srgb,var(--wc) var(--wash),transparent) 0%,
@@ -1109,8 +1126,11 @@ button.thead{width:calc(100% - var(--gut) - var(--gut-r));border:0;font:inherit;
 /* ---- audit pass C ---- */
 /* standings: differential coloured, the table scrolls under a sticky team column */
 .tbl td .pos{color:var(--win)} .tbl td .neg{color:var(--loss)}
-.tbl.stand th:first-child,.tbl.stand td:first-child{position:sticky;left:0;z-index:1;background:var(--bg)}
-.tbl.stand tr.me td:first-child{background:transparent}
+/* the standings sit on a plate like Home's cards, so the pinned first column has the same opaque ground as the rest of the table */
+.tw:has(> .tbl.stand){margin:2px var(--pg-r,0px) 10px var(--pg,0px);border-radius:18px;background:var(--surf);box-shadow:var(--edge);-webkit-mask-image:none;mask-image:none}
+.tw:has(> .tbl.stand) .tbl.stand th{border-bottom-color:color-mix(in srgb,var(--ink) 14%,transparent)}
+.tbl.stand th:first-child,.tbl.stand td:first-child{position:sticky;left:0;z-index:1;background:var(--surf)}
+.tbl.stand tr.me td:first-child{background-color:var(--surf);background-image:linear-gradient(color-mix(in srgb,var(--ink) 7%,transparent),color-mix(in srgb,var(--ink) 7%,transparent))}
 .tw{-webkit-mask-image:var(--em,none);mask-image:var(--em,none)}
 /* team page: form pips and record splits */
 .form{display:flex;align-items:center;gap:6px;padding:12px var(--gut-r) 0 var(--gut)}
@@ -1423,11 +1443,16 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   .app>*:not(.hdr){max-width:1160px;margin-left:auto;margin-right:auto}
   .app>#main{max-width:1232px}
   /* the header: wordmark, the league switch, search and settings in one row */
-  .hdr{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;column-gap:28px;max-width:1232px;margin:0 auto;padding:14px var(--gut-r) 6px var(--gut)}
-  .hdr .top{height:56px;padding:0;gap:0;width:auto;min-width:0;grid-column:3;justify-self:end}
+  .hdr{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:28px;max-width:none;margin:0 0 6px;
+    padding:12px max(var(--gut-r),calc((100% - 1232px) / 2 + var(--gut-r))) 10px max(var(--gut),calc((100% - 1232px) / 2 + var(--gut)));
+    -webkit-backdrop-filter:blur(24px) saturate(1.7);backdrop-filter:blur(24px) saturate(1.7);background:color-mix(in srgb,var(--bg) 46%,transparent);
+    box-shadow:inset 0 -1px 0 transparent;transition:box-shadow .25s ease,background .25s ease}
+  :root.scrolled .hdr{box-shadow:inset 0 -1px 0 color-mix(in srgb,var(--ink) 9%,transparent);background:color-mix(in srgb,var(--bg) 62%,transparent)}
+  @media (prefers-reduced-transparency:reduce){ .hdr{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)} }
+  .hdr .top{height:48px;padding:0;gap:0;width:auto;min-width:0;flex:none;order:1}
   .hdr .top .lockup{display:none}
   .hdr .top .sp{margin-left:0}
-  .hdr .pills{width:520px;margin:0;grid-column:2}
+  .hdr .pills{width:520px;margin:0;flex:none;order:0}
   .hdr .top[hidden]{display:none}
   .hdr:has(.top[hidden]){display:none}
   .pill,.pill.on,[data-accent] .pill.on{height:40px;font-size:14.5px}
@@ -1449,7 +1474,6 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   .games{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
   .games:has(> .game:only-child){grid-template-columns:minmax(0,640px)}
   .heroes{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .dates{justify-content:safe center}
   .day{min-width:72px;height:68px}
   .chip{height:36px;font-size:14px;padding:0 16px}
   .chips{gap:8px}
@@ -1468,9 +1492,18 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   .reader h1{font-size:40px}
   .reader img.lead{max-height:520px;object-fit:cover}
   .tbl.stand{max-width:980px}
-  .tw{max-width:980px;margin-left:auto;margin-right:auto}
-  .tbl.stand{margin-left:auto;margin-right:auto}
-  .livebar .lb-in{justify-content:safe center}
+  .tw{max-width:900px;margin-left:var(--gut);margin-right:auto}
+  .tw:has(> .tbl.stand){margin:2px auto 12px var(--gut)}
+  .tbl.stand{max-width:900px;margin:0}
+  .tbl.stand th:first-child,.tbl.stand td:first-child{position:static;padding-left:16px}
+  .tbl.stand th:last-child,.tbl.stand td:last-child{padding-right:16px}
+  .tbl.stand th:not(:first-child),.tbl.stand td:not(:first-child){width:72px}
+  .tbl.stand td{padding:12px 10px;font-size:15.5px}
+  .tbl.stand .tm{font-size:16px}
+  .tbl.stand .logo.s{width:34px;height:34px}
+  .livebar .lb-in{justify-content:flex-start}
+  .calrow{justify-content:flex-start}
+  .dates{justify-content:flex-start}
   .pl{width:104px}
   .pl .hs{width:76px;height:76px}
   /* Home: the games and your teams on the left, injuries and news on the right */
@@ -1478,7 +1511,7 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   .rail,.brief-row,.chips,.media,.onb-picked-row{flex-wrap:wrap;overflow:visible;row-gap:12px;-webkit-mask-image:none;mask-image:none}
   .rail{gap:18px 14px}
   .pl{scroll-snap-align:none}
-  .hcols .hcol.side{position:sticky;top:16px}
+  .hcols .hcol.side{position:sticky;top:84px}
   .hcols:not(:has(.hcol.side > *)){grid-template-columns:minmax(0,880px);justify-content:center}
   /* a team's page on a wide screen: the game, outlook, stats, roster and schedule left; injuries and news at the right */
   .tcols{display:grid;grid-template-columns:minmax(0,1fr) 380px;column-gap:32px;align-items:start}
@@ -1492,7 +1525,7 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   .panel.full .panel-in{max-width:900px}
   .installbar{display:none}
   .heroes:has(> .hero:only-child){grid-template-columns:minmax(0,680px)}
-  .calrow{grid-template-columns:auto auto;justify-content:center;gap:12px}
+  .calrow{grid-template-columns:auto auto;justify-content:flex-start;gap:12px}
   .calrow #phase{display:none}
   .ring svg{width:160px;height:160px}
   .ring .key{max-width:440px}
@@ -1554,13 +1587,13 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   .ehero .sub{font-size:15px}
   .perf{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
   .pc{min-height:160px;padding:18px 20px 16px}
-  .pc .shot{width:170px;height:170px;right:10px}
-  .pc .wm{right:120px;width:190px;height:190px;bottom:-34px}
+  .pc .shot{width:234px;height:170px;right:8px}
+  .pc .wm{right:150px;width:190px;height:190px;bottom:-34px}
   .pc .jn{font-size:96px;right:22px}
-  .pc .in{max-width:calc(100% - 190px)}
+  .pc .in{max-width:calc(100% - 230px)}
   .pc b{font-size:22px}
   .pc .line{font-size:48px}
-  .why{max-width:760px}
+  .why,.tbl.why-kv{max-width:760px}
   .cmp{max-width:760px}
   .cmp>div:not(.cmph){grid-template-columns:56px 1fr 1fr 56px}
   .cmp .lab{font-size:13.5px}
