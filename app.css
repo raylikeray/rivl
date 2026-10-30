@@ -2003,3 +2003,38 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .tgrp .row:active{border-radius:0}
 .tgrp button.row.prow.sel:active{transform:none;background-color:color-mix(in srgb,var(--ink) 7%,transparent)}
 .tgrp button.row.prow.sel.on:active{background-color:color-mix(in srgb,var(--tf,var(--ink)) 30%,transparent)}
+
+/* ===== v109: faces that read, a top bar with depth, and a breaking banner that is one =====
+   1. The faces of the picked on a team band sat overlapping with the first one underneath, and the Spurs' black — deepened
+      for light mode — put a black disc behind a black-haired face. They stand side by side now, and every face disc (the
+      band's and the roster's) takes `--hd`, the team colour lifted until hair reads on it, in light mode.
+   2. The back arrow, the title and the share arrow on a team, player or game page were bare glyphs on the ground. They are
+      glass now: two discs and a capsule, the page's tint showing through.
+   3. The breaking-news card looked like any other card with a red dot. It carries a red band across its top — the word,
+      the pulse and the time on it — and a red cast beneath, so it reads as a bulletin before a word is read. */
+.tgrp > .thead .faces{gap:4px;margin-right:4px}
+.tgrp > .thead .faces i{margin-left:0;width:28px;height:28px;background:radial-gradient(130% 110% at 50% -10%,color-mix(in srgb,var(--hd,var(--tf,var(--ink-3))) 68%,#fff),var(--hd,var(--tf,var(--ink-3))) 52%,color-mix(in srgb,var(--hd,var(--tf,var(--ink-3))) 82%,#000) 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25),0 1px 2px rgba(0,0,0,.3),0 0 0 2px color-mix(in srgb,var(--hd,var(--tf,var(--ink-3))) 28%,transparent)}
+.tgrp > .thead .faces i img{transform:scale(1.18) translateY(6%);transform-origin:50% 20%}
+.tgrp > .thead .faces u{margin-left:6px}
+:root[data-theme="light"] .hs{--hc:var(--hd,var(--tf,var(--tc,var(--disc-plain))))}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .hs{--hc:var(--hd,var(--tf,var(--tc,var(--disc-plain))))} }
+.hs.plain{--hd:var(--disc-plain)}
+/* the top bar: glass discs and a glass capsule */
+.topbar{height:60px;padding:4px var(--gut-r) 4px var(--gut);gap:8px}
+.topbar .ib,.topbar .sp .ib{width:40px;height:40px;border-radius:50%;color:var(--ink);background:color-mix(in srgb,var(--bg) 58%,transparent);-webkit-backdrop-filter:blur(30px) saturate(1.8);backdrop-filter:blur(30px) saturate(1.8);box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.12),0 2px 6px rgba(0,0,0,.28),0 14px 28px -16px rgba(0,0,0,.6)}
+.topbar .ib svg{width:20px;height:20px}
+.topbar .ttl,.topbar .ttl.plain{display:inline-flex;align-items:center;height:40px;padding:0 16px;border-radius:999px;font-size:15px;font-weight:800;letter-spacing:-.01em;color:var(--ink);background:color-mix(in srgb,var(--bg) 58%,transparent);-webkit-backdrop-filter:blur(30px) saturate(1.8);backdrop-filter:blur(30px) saturate(1.8);box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.12),0 2px 6px rgba(0,0,0,.28),0 14px 28px -16px rgba(0,0,0,.6)}
+.topbar .ttl.plain{font-size:16px}
+:root[data-theme="light"] .topbar .ib,:root[data-theme="light"] .topbar .ttl{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px rgba(10,11,14,.09),0 2px 6px -2px rgba(16,24,40,.22),0 14px 28px -16px rgba(16,24,40,.45)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .topbar .ib,:root:not([data-theme="dark"]) .topbar .ttl{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px rgba(10,11,14,.09),0 2px 6px -2px rgba(16,24,40,.22),0 14px 28px -16px rgba(16,24,40,.45)} }
+@media (prefers-reduced-transparency:reduce){ .topbar .ib,.topbar .ttl{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--surf)} }
+/* the breaking banner */
+.wire{padding:0 0 4px;overflow:hidden;box-shadow:var(--edge),0 14px 30px -14px color-mix(in srgb,var(--live) 55%,transparent)}
+.wire .wh{padding:9px 10px 9px 14px;gap:9px;color:#fff;background:linear-gradient(118deg,color-mix(in srgb,var(--live) 100%,#000) 0 58%,color-mix(in srgb,var(--live) 78%,#000) 58% 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(0,0,0,.25)}
+.wire .wh .dot{width:8px;height:8px;background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.28),0 0 10px rgba(255,255,255,.7);animation:blink 1.1s infinite}
+.wire .wh b{color:#fff;font-size:12.5px;letter-spacing:.14em;text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.wire .wh span{color:rgba(255,255,255,.82);font-weight:700}
+.wire .wh .x{color:#fff;margin-right:-4px;background:rgba(0,0,0,.14)}
+.wire .wr{padding:10px 14px 11px}
+.wire .wr b{font-size:16px;line-height:1.28}
+.wire .wr + .wr{border-top:1px solid var(--line)}

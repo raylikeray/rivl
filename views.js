@@ -63,7 +63,10 @@
   const tint = c => { const root = document.documentElement; if (c && !BAD(c)) { root.style.setProperty('--tint', hx(c)); root.setAttribute('data-tint', '1'); } else { root.style.removeProperty('--tint'); root.removeAttribute('data-tint'); } if (HW.v5.applyTheme) HW.v5.applyTheme(); };
   /* a team colour on an element: --tc raw (tints, rings), --tf-d/--tf-l the readable fill for black and white backgrounds — the
      stylesheet maps --tf to the one in use, so a black Spurs bar reads on black and a white one on white */
-  const tcv = c => `--tc:${esc(c)};--tf-d:${esc(V_lift(c))};--tf-l:${esc(V_deep(c))}`;
+  /* the colour behind a face: a team colour lifted until a dark head of hair reads on it — the Spurs' black deepened for light
+     mode put a black disc behind a black-haired face, so a disc never goes below a mid tone whatever the theme */
+  const V_disc = c => { const l = lumOf(c); return l < .12 ? mixTo(c, 255, .58) : l < .28 ? mixTo(c, 255, .34) : c; };
+  const tcv = c => `--tc:${esc(c)};--tf-d:${esc(V_lift(c))};--tf-l:${esc(V_deep(c))};--hd:${esc(V_disc(c))}`;
   /* two teams' colours for one chart or tracker: when the two are near each other (Thunder and Mavericks are both blue), one
      side takes its other colour, whichever of the two alternates stands furthest from the first side's colour */
   const rgbDist = (a, b) => { const x = rgbOf(a), y = rgbOf(b); return x && y ? Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]) : 999; };
