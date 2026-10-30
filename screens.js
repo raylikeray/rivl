@@ -241,7 +241,7 @@
     const last5 = evs.filter(isDone).slice(-5);
     const form = last5.length ? `<div class="form"><span>Last ${last5.length}</span>${last5.map(g => { const us = g.home.id === String(id) ? g.home : g.away, them = us === g.home ? g.away : g.home; const w = us.score > them.score; return `<a class="pip ${w ? 'w' : 'l'}" href="${href.game(lk, g.id)}" title="${esc(`${w ? 'W' : 'L'} ${us.score}-${them.score} ${us === g.home ? 'vs' : 'at'} ${them.short}`)}"><b>${w ? 'W' : 'L'}</b><i>${esc(them.abbr || '')}</i></a>`; }).join('')}</div>` : '';
     const shown = new Set(tiles.map(([, k]) => k));
-    const splits = r ? [['Home', r.home, 'HOME'], ['Road', r.road, 'ROAD'], ['Last 10', r.l10, 'LAST 10'], ['Streak', r.strk, 'STREAK'], [L.standingsMode === 'conferences' ? 'In conference' : 'vs conference', r.conf, 'CONF']].filter(([, x, k]) => x && !shown.has(k)) : [];
+    const splits = r ? [['Home', r.home, 'HOME'], ['Road', r.road, 'ROAD'], ['Last 10', r.l10, 'LAST 10'], ['Streak', r.strk, 'STREAK'], [L.standingsMode === 'conferences' ? 'In conf' : 'vs conf', r.conf, 'CONF']].filter(([, x, k]) => x && !shown.has(k)) : [];
     const splitsHtml = splits.length ? `<div class="stats splits" style="grid-template-columns:repeat(${Math.min(splits.length, 5)},1fr)">${splits.map(([k, x]) => `<div><b>${esc(x)}</b><span>${esc(k.toUpperCase())}</span></div>`).join('')}</div>` : '';
     const nextHtml = form + splitsHtml + (next ? sec(next.state === 'in' ? 'Live now' : 'Next up') + `<div class="games">${gameCard(L, next, ctx)}</div>` : '');
     // roster, by scoring when we have it
@@ -618,9 +618,17 @@
           for (const side of [g.away, g.home]) { const p = boxOf(side); const st0 = p && p.statistics && p.statistics[0]; const a = st0 && (st0.athletes || []).find(x => String(x.athlete.id) === String(focus)); if (!a) continue;
             const labels = st0.labels || [], descs = st0.descriptions || []; const get = l => { const k = labels.indexOf(l); return k >= 0 && a.stats ? a.stats[k] : ''; }; const tc = V._.teamColor(side, L);
             const big = [['PTS', 'Points'], ['REB', 'Rebounds'], ['AST', 'Assists']].map(([k, n]) => `<div><b>${esc(get(k) || '0')}</b><span>${n}</span></div>`).join('');
-            const rest = a.stats && a.stats.length ? labels.map((l, i) => ['PTS', 'REB', 'AST'].includes(l) ? '' : `<span><b>${esc(a.stats[i])}</b>${esc(descs[i] || l)}</span>`).filter(Boolean).join('') : '';
+            /* the rest as a key–value list in two columns — shooting, minutes and plus/minus down the left, rebounds, defence
+               and fouls down the right — labels on the left of each column, values right-aligned, a percentage beside each
+               made-attempted line. The feed's own labels ("Field Goals Made/Attempted") were too long to scan. */
+            const NAME = { MIN: 'Minutes', FG: 'Field goals', '3PT': 'Threes', FT: 'Free throws', OREB: 'Off. rebounds', DREB: 'Def. rebounds', STL: 'Steals', BLK: 'Blocks', TO: 'Turnovers', PF: 'Fouls', '+/-': 'Plus/minus' };
+            const LEFT = ['FG', '3PT', 'FT', 'MIN', '+/-'], RIGHT = ['OREB', 'DREB', 'STL', 'BLK', 'TO', 'PF'];
+            const pctOf = v => { const m = /^(\d+)-(\d+)$/.exec(String(v || '').trim()); return m && +m[2] > 0 ? `<em>${Math.round(100 * m[1] / m[2])}%</em>` : ''; };
+            const kv = l => { const v = get(l); if (v === '' || v == null) return ''; return `<div class="kv"><span>${esc(NAME[l] || descs[labels.indexOf(l)] || l)}</span><b>${esc(v)}${/^(FG|3PT|FT)$/.test(l) ? pctOf(v) : ''}</b></div>`; };
+            const extra = labels.filter(l => !['PTS', 'REB', 'AST'].includes(l) && !LEFT.includes(l) && !RIGHT.includes(l));
+            const rest = a.stats && a.stats.length ? `<div class="col">${LEFT.map(kv).join('')}</div><div class="col">${RIGHT.concat(extra).map(kv).join('')}</div>` : '';
             const pos = a.athlete.position && (a.athlete.position.abbreviation || a.athlete.position.name) || '';
-            lead = `<div class="pfocus" style="${tcv(tc)}"><a class="who" href="${href.player(lk, a.athlete.id)}">${headshot(hsUrl(a.athlete), tc, 56, a.athlete.displayName)}<span class="t"><b>${esc(a.athlete.displayName || a.athlete.shortName || '')}</b><span>${esc([side.short, pos, a.athlete.jersey ? `No. ${a.athlete.jersey}` : ''].filter(Boolean).join(' · '))}${a.starter ? ' · Started' : ''}</span></span>${chev}</a>${a.didNotPlay || !a.stats || !a.stats.length ? `<p class="legend">${esc(a.reason || 'Did not play')}</p>` : `<div class="stats three">${big}</div><div class="pline">${rest}</div>`}</div>`;
+            lead = `<div class="pfocus" style="${tcv(tc)}"><a class="who" href="${href.player(lk, a.athlete.id)}">${headshot(hsUrl(a.athlete), tc, 56, a.athlete.displayName)}<span class="t"><b>${esc(a.athlete.displayName || a.athlete.shortName || '')}</b><span>${esc([side.short, pos, a.athlete.jersey ? `No. ${a.athlete.jersey}` : ''].filter(Boolean).join(' · '))}${a.starter ? ' · Started' : ''}</span></span>${chev}</a>${a.didNotPlay || !a.stats || !a.stats.length ? `<p class="legend">${esc(a.reason || 'Did not play')}</p>` : `<div class="stats three">${big}</div><div class="pdet">${rest}</div>`}</div>`;
             break; }
         }
         body = lead + ((table(g.away) + table(g.home)) || empty('No box score yet')) + unitsT;

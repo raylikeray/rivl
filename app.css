@@ -2174,7 +2174,6 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .stats.four{grid-template-columns:repeat(4,1fr)}
 @media (max-width:360px){.stats{grid-template-columns:repeat(3,1fr)}}
 .stats > div,.pfocus .stats > div,.stats.tsg > div{background:var(--surf-2);background-image:none;border-radius:14px;padding:13px 6px 11px;text-align:center;min-width:0;box-shadow:inset 0 0 0 1px var(--plate-line),0 1px 2px rgba(0,0,0,.08),0 6px 14px -10px rgba(0,0,0,.35)}
-.stats > div + div,.pfocus .stats > div + div{box-shadow:inset 0 0 0 1px var(--plate-line),0 1px 2px rgba(0,0,0,.08),0 6px 14px -10px rgba(0,0,0,.35)}
 .stats b,.pfocus .stats b{display:block;font:800 28px/1 var(--num);letter-spacing:-.005em;color:var(--ink);white-space:nowrap}
 .stats span,.pfocus .stats span{display:block;font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);margin-top:5px}
 .stats.splits{padding-top:8px;border-top:0}
@@ -2182,5 +2181,23 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .stats.tsg > div{position:relative;padding-bottom:22px}
 .stats.tsg > div .rk{position:absolute;left:0;right:0;bottom:7px;text-align:center}
 .pfocus .stats,.pfocus .stats.three{grid-template-columns:repeat(3,1fr);margin:0;padding:10px 0 0;gap:8px}
-.pfocus .stats > div{padding:15px 6px 13px;background:color-mix(in srgb,var(--tf,var(--ink)) 7%,var(--surf-2));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tf,var(--ink)) 22%,var(--plate-line)),0 1px 2px rgba(0,0,0,.08),0 6px 14px -10px rgba(0,0,0,.35)}
+.pfocus .stats > div{padding:15px 6px 13px}   /* v118: the same tile as everywhere else — no team tint, no tinted ring */
 .pfocus .stats b{font-size:33px}
+/* ===== v118: every stat tile is the one on the Season outlook =====
+   The outlook and team-stats tiles are the clean ones; the box-score trio had a team-tinted fill and, through a leftover
+   divider rule, a different ring on its first tile; and a label wider than its tile ("VS CONFERENCE") ran out of it. One
+   tile now: the numeral and the label centred as a column, labels short and clipped if they must be. */
+.stats > div,.pfocus .stats > div,.stats.tsg > div{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.stats b,.pfocus .stats b{text-align:center}
+.stats span,.pfocus .stats span{max-width:100%;padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;letter-spacing:.06em}
+.stats.tsg > div .rk{position:static;margin-top:3px}
+.stats.tsg > div{padding-bottom:11px}
+/* the box-score detail: two columns of label–value rows under the trio */
+.pdet{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-top:12px}
+.pdet .col{min-width:0}
+.pdet .kv{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;font-weight:600;color:var(--ink-2);min-width:0}
+.pdet .kv:last-child{border-bottom:0}
+.pdet .kv span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pdet .kv b{font:800 16.5px/1 var(--num);color:var(--ink);white-space:nowrap;flex:none}
+.pdet .kv b em{font:700 11px/1 var(--ui);font-style:normal;color:var(--ink-3);margin-left:5px}
+@media (max-width:359px){.pdet{grid-template-columns:1fr}}
