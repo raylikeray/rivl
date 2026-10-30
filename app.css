@@ -2158,3 +2158,10 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .tabs,:root:not([data-theme="light"]) .todayfab{background:rgba(26,28,33,.86);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.14),0 2px 8px rgba(0,0,0,.5),0 20px 48px -18px rgba(0,0,0,.95)} }
 }
 .todayfab svg{color:var(--acc,var(--ink))}
+/* ===== v114: the switch's knob stays inside its well =====
+   The knob's shadow fell 14px past the bottom of the track and the light-mode accent knob still wore a three-stop gloss.
+   Flat knob in both themes, a short shadow that ends within the track's 4px padding, and the track clips at its edge. */
+.pills{overflow:hidden}
+.pills::before,[data-accent] .pills::before,:root[data-theme="light"] .pills::before,:root[data-theme="light"][data-accent] .pills::before{background:var(--acc,#FFFFFF);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.28),0 2px 5px -2px rgba(0,0,0,.35)}
+:root[data-theme="light"] .pills::before{background:var(--acc,#15171B)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .pills::before,:root:not([data-theme="dark"])[data-accent] .pills::before{background:var(--acc,#15171B);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.28),0 2px 5px -2px rgba(0,0,0,.35)} }
