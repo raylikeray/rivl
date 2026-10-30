@@ -190,7 +190,9 @@ table,.num{font-variant-numeric:tabular-nums}
 .rail{display:flex;gap:14px;padding:4px var(--gut-r) 6px var(--gut);overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity}
 .rail::-webkit-scrollbar{display:none}
 .pl{flex:none;width:88px;text-align:center;color:inherit;text-decoration:none;scroll-snap-align:start}
-.pl .hs{width:64px;height:64px;margin:0 auto 8px;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--tf,var(--surf-3))}
+.pl .hs{width:64px;height:64px;margin:0 auto 8px}   /* the disc's material is set further down, by the second `.pl .hs` rule */
+.pl .hs::before{content:"";position:absolute;inset:0;border-radius:50%;z-index:3;pointer-events:none;
+  background:radial-gradient(70% 55% at 30% 4%,rgba(255,255,255,.3),rgba(255,255,255,0) 68%)}
 .pl b{display:block;font-size:13px;line-height:1.2;font-weight:700;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .pl span{display:block;font-size:12px;color:var(--ink-3);margin-top:2px}
 
@@ -585,7 +587,11 @@ html{touch-action:manipulation}
 .onb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 0 0;position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--bg) 30%);margin-top:auto}
 /* Back on the left, the tally in the middle, the step button on the right; the gap holds the left slot open on the first step */
 .onb-foot .onb-gap{flex:none;width:0}
-.onb-foot .onb-cnt{flex:1;min-width:0;text-align:center;font-size:13px;font-weight:650;color:var(--ink-3);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* the bar is 58% glass, which is fine under two solid pills but not under bare text — the list scrolling beneath showed
+   straight through the tally. It gets a quiet opaque chip of its own so it reads whatever is passing behind. */
+.onb-foot .onb-cnt{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;justify-content:center;height:30px;padding:0 12px;border-radius:999px;
+  background:var(--surf-2);box-shadow:inset 0 0 0 1px var(--plate-line);
+  font-size:12.5px;font-weight:700;color:var(--ink-2);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .onb-foot .onb-cnt:empty{display:none}
 .onb-foot .btn{flex:none}
 .onb-install{display:flex;gap:14px;align-items:flex-start;background:var(--surf);border-radius:16px;padding:16px;margin:4px 0 16px}
@@ -657,8 +663,14 @@ button.row.prow.sel{border-radius:14px;padding:10px 10px;margin:0 0 6px;border-b
 button.row.prow.sel .t{text-align:left}
 button.row.prow.sel .star{display:grid;place-items:center;width:40px;height:40px;color:var(--ink-3);margin-right:0}
 button.row.prow.sel .star svg{width:22px;height:22px}
-button.row.prow.sel.on{box-shadow:var(--edge),inset 0 0 0 2px var(--ink)}
-button.row.prow.sel.on .star{color:var(--ink)}
+/* A followed player used to be one white outline, identical whatever team he plays for, and thin enough to miss. It is now
+   marked in his own team colour: a solid rail down the left edge, a faint wash of the same hue across the row, a hairline
+   ring, and the star filled to match. The saturated part is only the rail, so a leaders list of mixed teams reads as a
+   column of marks rather than a fence of coloured boxes. */
+button.row.prow.sel.on{background:linear-gradient(180deg,color-mix(in srgb,var(--tf) 13%,var(--surf-2)),color-mix(in srgb,var(--tf) 8%,var(--surf)));
+  box-shadow:var(--edge),inset 0 0 0 1px color-mix(in srgb,var(--tf) 46%,transparent),inset 5px 0 0 var(--tf)}
+button.row.prow.sel.on .star{color:var(--tf)}
+button.row.prow.sel.on .t b{color:var(--ink)}
 button.row.prow.sel:active{transform:scale(.985)}
 .onb .pp .rows{padding:0}
 /* season phase under the date strip */
@@ -798,7 +810,7 @@ body{overscroll-behavior-y:none}
 [data-accent] [aria-checked="true"] .switch::after{background:var(--acc-ink)}
 [data-accent] .tab.on,[data-accent] .tab.on span{color:var(--acc)}
 [data-accent] .onb-team.on{box-shadow:var(--edge),inset 0 0 0 2px var(--acc)}
-[data-accent] button.row.prow.sel.on{box-shadow:var(--edge),inset 0 0 0 2px var(--acc)}
+/* a followed player is marked in his own team's colour, accent or no accent — see the rule by `button.row.prow.sel.on` */
 [data-accent] .onb-dots i.on,[data-accent] .tbl tr.me td:first-child{background:var(--acc);box-shadow:none}
 [data-accent] .tbl tr.me td:first-child{background:transparent;box-shadow:inset 3px 0 0 var(--acc)}
 [data-accent] .onb-team.on i::after{border-color:var(--acc-ink)}
@@ -912,7 +924,12 @@ body{overscroll-behavior-y:none}
 .hs i{background:linear-gradient(160deg,rgba(255,255,255,.2),rgba(0,0,0,.18))}
 :root[data-theme="light"] .hs{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 1px 2px rgba(16,24,40,.18),0 4px 10px -4px rgba(16,24,40,.35)}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .hs{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 1px 2px rgba(16,24,40,.18),0 4px 10px -4px rgba(16,24,40,.35)} }
-.pl .hs{box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 0 0 2px var(--bg),0 0 0 4px var(--tf,var(--disc-plain)),0 4px 12px -2px color-mix(in srgb,var(--tf,#000) 45%,transparent)}
+/* My players read flat because the disc's only shadow was a glow in the team's own colour — on a light page a 45%-alpha tint
+   casts almost nothing, so the discs sat on the surface instead of above it. A neutral ambient shadow now grounds them, the
+   rim light is brighter, and `.pl .hs::before` lays a gloss across the top. */
+.pl .hs{box-shadow:inset 0 0 0 1px rgba(255,255,255,.24),0 0 0 2px var(--bg),0 0 0 4px var(--tf,var(--disc-plain)),0 4px 12px -2px color-mix(in srgb,var(--tf,#000) 45%,transparent),0 14px 26px -14px rgba(0,0,0,.6)}
+:root[data-theme="light"] .pl .hs{box-shadow:inset 0 0 0 1px rgba(255,255,255,.5),0 0 0 2px var(--bg),0 0 0 4px var(--tf,var(--disc-plain)),0 3px 8px -2px color-mix(in srgb,var(--tf,#000) 40%,transparent),0 12px 22px -10px rgba(16,24,40,.5)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .pl .hs{box-shadow:inset 0 0 0 1px rgba(255,255,255,.5),0 0 0 2px var(--bg),0 0 0 4px var(--tf,var(--disc-plain)),0 3px 8px -2px color-mix(in srgb,var(--tf,#000) 40%,transparent),0 12px 22px -10px rgba(16,24,40,.5)} }
 
 /* ---- motion: things arrive, press, and fill ---- */
 @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -1729,9 +1746,17 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .pfocus .who .t{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
 .pfocus .who .t b{font-size:18px;font-weight:800;letter-spacing:-.01em}
 .pfocus .who .t span{font-size:13px;color:var(--ink-2);font-weight:600}
-.pfocus .stats{padding:6px 0 0}
-.pfocus .stats.three{grid-template-columns:repeat(3,1fr)}
-.pfocus .stats div{background:var(--surf);box-shadow:inset 0 0 0 1px var(--plate-line)}
+.pfocus .stats{padding:8px 0 0}
+/* Points, rebounds, assists are the line everyone reads first, so they are a raised trio: real plate material, bigger
+   numerals, a label set small and quiet, and the faintest wash of the team's colour tying them to the card's rail. The
+   numbers stay in ink — every stat the same, no colour per stat — and the chips underneath stay flat, which is what makes
+   the trio the thing the eye lands on. */
+.pfocus .stats.three{grid-template-columns:repeat(3,1fr);gap:8px}
+.pfocus .stats div{padding:14px 6px 12px;
+  background:var(--grain),linear-gradient(180deg,color-mix(in srgb,var(--tf) 10%,var(--surf-2)),color-mix(in srgb,var(--tf) 4%,var(--surf)));background-blend-mode:soft-light,normal;
+  box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px color-mix(in srgb,var(--tf) 20%,var(--plate-line)),0 1px 1px rgba(0,0,0,.26),0 10px 20px -12px rgba(0,0,0,.55)}
+.pfocus .stats b{font-size:31px;letter-spacing:-.01em}
+.pfocus .stats span{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-top:6px}
 .pline{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .pline span{display:inline-flex;align-items:baseline;gap:5px;height:28px;padding:0 10px;border-radius:999px;background:var(--surf);box-shadow:inset 0 0 0 1px var(--plate-line);font-size:11.5px;font-weight:700;color:var(--ink-3);align-items:center;white-space:nowrap}
 .pline span b{font:800 13.5px/1 var(--num);color:var(--ink)}
