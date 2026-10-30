@@ -1817,17 +1817,7 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 }
 
 
-/* the team bands in a player list (the Players tab, setup): flush with the rows, the team's own colour as the ground so one team
-   ends and the next begins at a glance, the logo large, room below before the first player */
-.pp > button.thead,.onb .pp button.thead,.pp .rows button.thead{width:100%;margin:14px 0 8px;padding:10px 12px 10px 12px;gap:12px;border-radius:14px;
-  background:var(--grain),linear-gradient(90deg,color-mix(in srgb,var(--tf,var(--ink-3)) 30%,var(--surf)) 0%,color-mix(in srgb,var(--tf,var(--ink-3)) 10%,var(--surf)) 100%);background-blend-mode:soft-light,normal;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px color-mix(in srgb,var(--tf,var(--ink-3)) 36%,transparent),inset 4px 0 0 var(--tf,var(--ink-3)),var(--plate-shadow)}
-:root[data-theme="light"] .pp > button.thead,:root[data-theme="light"] .onb .pp button.thead,:root[data-theme="light"] .pp .rows button.thead{background:var(--grain),linear-gradient(90deg,color-mix(in srgb,var(--tf,var(--ink-3)) 18%,#fff) 0%,color-mix(in srgb,var(--tf,var(--ink-3)) 6%,#fff) 100%);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px color-mix(in srgb,var(--tf,var(--ink-3)) 28%,transparent),inset 4px 0 0 var(--tf,var(--ink-3)),var(--plate-shadow)}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .pp > button.thead,:root:not([data-theme="dark"]) .onb .pp button.thead,:root:not([data-theme="dark"]) .pp .rows button.thead{background:var(--grain),linear-gradient(90deg,color-mix(in srgb,var(--tf,var(--ink-3)) 18%,#fff) 0%,color-mix(in srgb,var(--tf,var(--ink-3)) 6%,#fff) 100%);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px color-mix(in srgb,var(--tf,var(--ink-3)) 28%,transparent),inset 4px 0 0 var(--tf,var(--ink-3)),var(--plate-shadow)} }
-.pp button.thead .bar{display:none}
-.pp button.thead .logo{width:36px;height:36px}
-.pp button.thead b{font-size:16px;letter-spacing:-.01em}
-.pp button.thead:first-child{margin-top:4px}
+/* (v106) the team bands in a player list now live inside their team card — see `.tgrp` at the end of this file */
 
 /* a setting that could not be turned on says why, in place */
 .legend.warn{color:var(--ink);background:color-mix(in srgb,var(--loss) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--loss) 38%,transparent);border-radius:12px;padding:10px 12px;margin-top:10px;line-height:1.45}
@@ -1923,3 +1913,62 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .fades{-webkit-mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.28) calc(var(--fl,0px) * .3),rgba(0,0,0,.72) calc(var(--fl,0px) * .62),#000 var(--fl,0px),#000 calc(100% - var(--fr,0px)),rgba(0,0,0,.72) calc(100% - var(--fr,0px) * .62),rgba(0,0,0,.28) calc(100% - var(--fr,0px) * .3),transparent 100%);
   mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.28) calc(var(--fl,0px) * .3),rgba(0,0,0,.72) calc(var(--fl,0px) * .62),#000 var(--fl,0px),#000 calc(100% - var(--fr,0px)),rgba(0,0,0,.72) calc(100% - var(--fr,0px) * .62),rgba(0,0,0,.28) calc(100% - var(--fr,0px) * .3),transparent 100%)}
 .tw:has(> .tbl.stand).fades{-webkit-mask-image:none;mask-image:none}
+
+/* ===== v106: the player picker as team cards, and one press for the whole app =====
+   1. The picker was a stack of pills: the team header a plate, and every player under it another plate of the same material,
+      radius and shadow, so the header read as one more row. Now each team is one card — a band across the top in the team's
+      colour, with the crest on its disc, the count and the picked tally, that folds the roster — and the roster is a column
+      of hairline rows inside that same plate. A picked row takes a wash of the team's colour and the star fills in it, popping
+      as it turns on. The Following and Leaders lists sit in the same plate without a band. */
+.tgrp{margin:12px var(--gut-r) 0 var(--gut);border-radius:16px;overflow:hidden;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:var(--edge);isolation:isolate}
+.tgrp + .tgrp{margin-top:12px}
+.tgrp.plain{margin-top:0}
+.onb .pp .tgrp{margin-left:0;margin-right:0}
+.tgrp > .thead,.onb .pp .tgrp > button.thead{width:100%;margin:0;padding:11px 14px 11px 12px;border-radius:0;gap:11px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--tf,var(--ink-3)) 30%,var(--surf-2)),color-mix(in srgb,var(--tf,var(--ink-3)) 16%,var(--surf)));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+.tgrp > .thead .logo{width:36px;height:36px;border-radius:50%;overflow:hidden;background:radial-gradient(120% 120% at 30% 18%,var(--disc),var(--disc-lo));box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.1),0 2px 6px -2px rgba(0,0,0,.45)}
+.tgrp > .thead .logo img{width:68%;height:68%;object-fit:contain;filter:none}
+.tgrp > .thead b{font-size:16px;letter-spacing:-.01em}
+.tgrp > .thead .bar{display:none}
+.tgrp > .thead span.n,.tgrp > .thead em.pk{background:color-mix(in srgb,var(--ink) 9%,transparent);box-shadow:none}
+.tgrp > .thead em.pk{color:var(--ink)}
+.tgrp > .thead .chev{color:var(--ink-2)}
+.tgrp .fold > .rows,.onb .pp .tgrp .fold > .rows,.tgrp > .rows,.onb .pp .tgrp > .rows{padding:0;margin:0}
+.tgrp .fold > .rows{border-top:1px solid var(--line)}
+.tgrp .row,.tgrp .row.prow,.tgrp button.row.prow.sel{width:100%;margin:0;padding:10px 12px;border-radius:0;border-bottom:1px solid var(--line);background:none;box-shadow:none;align-items:center}
+.tgrp .row:last-child,.tgrp button.row.prow.sel:last-child{border-bottom:0}
+.tgrp .row.prow .star{margin-right:-8px}
+.tgrp .row .t{text-align:left}
+.tgrp .rows.ordering .row{padding-left:12px}
+/* a picked row: the wash of its team's colour, a flat colour so it can fade in and out, and the star in the same */
+.tgrp button.row.prow.sel.on{background:color-mix(in srgb,var(--tf,var(--ink)) 13%,transparent);box-shadow:none}
+.tgrp button.row.prow.sel.on .star,.row .star.on{color:var(--tf,var(--ink))}
+.tgrp button.row.prow.sel.on .t b{color:var(--ink)}
+.star.pop svg{animation:popcheck .36s var(--ease)}
+.star svg{transition:transform .3s var(--ease)}
+.tgrp > .thead .chev svg,.onb-sec .chev svg,button.injhd .chev svg{transition:transform .32s var(--ease)}
+/* 2. One press for everything that can be pressed: in fast, out slow. A press used to snap — the same short ease in both
+      directions, and on some controls (the league pills) no ease at all, so the thumb got a jolt. Now every pressable goes
+      down in 60ms and comes back up over 300ms on the app's curve, and the ones that change state (chips, tabs, stars,
+      picked rows) cross-fade their colour on the same curve. Rows highlight rather than shrink. */
+.bchip,.game,.btn,.pl,.row.prow .go,.cd,.injhd,.thead,.hero,.pc,.onb-team,.onb-sec,.todayfab,.ehero .tchip,.star,.ord .mv,.cmph .tm,.hero.page .tm{transition:transform .3s var(--ease),box-shadow .3s var(--ease),background .3s var(--ease),color .3s var(--ease),filter .3s var(--ease)}
+.chip,.day{transition:transform .3s var(--ease),box-shadow .3s var(--ease),background .24s var(--ease),color .24s var(--ease)}
+.tab{transition:transform .3s var(--ease),color .24s var(--ease)}
+.tab svg{transition:transform .3s var(--ease)}
+.pill{transition:color .16s ease,transform .3s var(--ease)}
+.pill.on{transition:color .16s ease .22s,transform .3s var(--ease)}
+.row{transition:background-color .3s var(--ease)}
+.bchip:active,.game:active,.btn:active,.pl:active,.row.prow .go:active,.cd:active,.injhd:active,.thead:active,.hero:active,.pc:active,.onb-team:active,.onb-sec:active,.todayfab:active,.ehero .tchip:active,.star:active,.chip:active,.day:active,.tab:active,.pill:active,.row:active,.ord .mv:active,.cmph .tm:active,.hero.page .tm:active{transition-duration:.06s;transition-timing-function:ease-out}
+.thead:active{transform:scale(.99)}
+.tgrp > .thead:active{transform:none;filter:brightness(1.08)}
+.star:active{transform:scale(.86)}
+.row .star:active{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.row:active{background-color:color-mix(in srgb,var(--ink) 7%,transparent)}
+.tgrp .row:active{border-radius:0}
+.tgrp button.row.prow.sel:active{transform:none;background-color:color-mix(in srgb,var(--ink) 7%,transparent)}
+.tgrp button.row.prow.sel.on:active{background-color:color-mix(in srgb,var(--tf,var(--ink)) 20%,transparent)}
+:root[data-theme="light"] .tgrp > .thead{box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .tgrp > .thead{box-shadow:inset 0 1px 0 rgba(255,255,255,.7)} }
+/* on a wide screen a roster runs in two columns inside its card; the last row of each column has no hairline under it */
+@media (min-width:1040px){ .tgrp .row:nth-last-child(-n+2),.tgrp button.row.prow.sel:nth-last-child(-n+2){border-bottom:0} }
