@@ -339,10 +339,25 @@
     if (t === 'dark' || t === 'light') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme');
     // the status bar takes the top of the wash, so the screen is one surface from its top edge down; once the wash has scrolled
     // away it takes the plain ground, the way a translucent bar would show what is behind it
-    requestAnimationFrame(() => { statusBar.top = cssColor('var(--wash-top)'); statusBar.plain = cssColor('var(--bg)'); statusBar(); });
+    requestAnimationFrame(() => { statusBar.acc = cssColor('var(--wc)'); statusBar.bg = cssColor('var(--bg)'); statusBar.wash = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--wash')) / 100 || .2; statusBar(); });
   }
   const cssColor = v => { const probe = document.createElement('i'); probe.style.cssText = 'position:absolute;visibility:hidden;background:' + v; document.body.appendChild(probe); const c = getComputedStyle(probe).backgroundColor; probe.remove(); const m = c.match(/color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)/) || c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/); if (!m) return ''; return '#' + [m[1], m[2], m[3]].map(x => Math.round(+x * (c.startsWith('color') ? 255 : 1))).map(n => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')).join(''); };   // a plain hex: the status bar parser is picky
-  function statusBar() { const meta = document.querySelector('meta[name="theme-color"]'); if (!meta) return; const want = statusBar.top; if (want && meta.getAttribute('content') !== want) meta.setAttribute('content', want); document.documentElement.classList.toggle('scrolled', window.scrollY > 8); }
+  /* the colour behind the status bar follows the wash as the page scrolls: the same stops the stylesheet draws, read at the
+     scroll offset, so the bar fades with the page instead of snapping. In the home-screen app the bar is transparent and the
+     glass strip shows the real page; this is for Safari's own chrome. */
+  const STOPS = [[0, 1], [.14, .72], [.30, .46], [.50, .24], [.74, .09], [1, 0]];
+  const hexRGB = h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16));
+  function statusBar() {
+    const y = window.scrollY; const root = document.documentElement;
+    const on = root.classList.contains('scrolled'); root.classList.toggle('scrolled', y > (on ? 12 : 40));
+    const meta = document.querySelector('meta[name="theme-color"]'); if (!meta || !statusBar.acc || !statusBar.bg) return;
+    const t = Math.min(1, y / 560); let a = 0;
+    for (let i = 1; i < STOPS.length; i++) { const [t0, a0] = STOPS[i - 1], [t1, a1] = STOPS[i]; if (t <= t1) { a = a0 + (a1 - a0) * (t - t0) / (t1 - t0); break; } }
+    a *= (t <= .5 ? 1 : 1 - (t - .5) / .5) * statusBar.wash;
+    const A = hexRGB(statusBar.acc), B = hexRGB(statusBar.bg);
+    const want = '#' + A.map((v, i) => Math.round(B[i] + (v - B[i]) * a).toString(16).padStart(2, '0')).join('');
+    if (meta.getAttribute('content') !== want) meta.setAttribute('content', want);
+  }
   let sbT = 0; window.addEventListener('scroll', () => { if (sbT) return; sbT = setTimeout(() => { sbT = 0; statusBar(); }, 120); }, { passive: true });
   V.applyTheme = applyTheme;
   applyTheme(); window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', applyTheme);
