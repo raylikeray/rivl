@@ -2087,3 +2087,14 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .tgrp > .thead .faces u{color:var(--tgi,var(--ti,#fff))}
 .tgrp > .thead .chev{color:color-mix(in srgb,var(--tgi,var(--ti,#fff)) 85%,transparent)}
 .tgrp > .thead:active{filter:brightness(1.06)}
+/* ===== v112: the league switch's knob =====
+   The track is a grid of equal columns and the knob is a quarter of the track, slid by its index — but `1fr` lets a column
+   grow to fit its content, and in setup, where every league carries a count, "NCAA W 22" is wider than "NBA 27", so the
+   last two columns grew, the knob's quarter no longer matched them and it hung off the end of the track. The columns are
+   now fixed at equal widths (`minmax(0,1fr)`) and the labels and counts are set so the widest fits a quarter of a 360px
+   screen; the knob's arithmetic holds again. */
+.pills{grid-template-columns:repeat(var(--n,4),minmax(0,1fr))}
+.pill,.pill.on,[data-accent] .pill.on{min-width:0;padding:0 2px;gap:4px}
+.pill > span:first-child{white-space:nowrap}
+.onb-pills .pill{font-size:clamp(11.5px,3.4vw,14px);letter-spacing:-.015em}
+.onb .pill .ct{min-width:17px;height:17px;line-height:17px;padding:0 4px;font-size:10.5px}
