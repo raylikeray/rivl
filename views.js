@@ -155,7 +155,7 @@
     const f = prefs.get('forecast') && !g.tbd ? safeF(L, g, ctx) : null;
     const a = teamColor(g.away, L), b = teamColor(g.home, L);
     const fav = f ? (f.pHome >= .5 ? g.home : g.away) : null; const p = f ? Math.max(f.pHome, 1 - f.pHome) : 0;
-    const favC = fav ? V_lift(scoreColor(L, fav)) : '#fff';   // the bar wears the favourite's colour, lifted so it reads on the dark strip
+    const favC = fav ? V_lift(teamColor(fav, L)) : '#fff';   // the bar wears the favourite's own colour — the one its panel above is painted in — lifted so it reads on the dark strip
     const tm = t => t.tbd ? `<div class="tm"><span class="logo tbd"></span><b>TBD</b><span>${esc(noteWord(g))}</span></div>` : page ? `<a class="tm" href="${href.team(L.key, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></a>` : `<div class="tm">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></div>`;
     const inner = `<div class="in">
       <div class="vs">${tm(g.away)}<div class="mid"><span class="st${g.state === 'in' ? ' on' : ''}">${esc(g.state === 'in' ? g.detail : g.state === 'post' ? finalWord(g) : tipOf(g))}</span><div class="sc">${g.off ? '' : `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`}</div><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>${tm(g.home)}</div>
@@ -356,8 +356,12 @@
         const tNames = teams.flatMap(t => [t.name, t.short, t.loc]).filter(n => n && n.length > 3);
         const pNames = fp.map(p => p.name).filter(n => n && n.length > 3);
         const named = a => { const txt = `${a.headline || ''} ${a.description || ''}`; return pNames.some(n => txt.includes(n)) || tNames.some(n => txt.includes(n)); };
-        const arts = news.articles ? news.articles.filter(a => a.headline && (tagged(a) || named(a))).slice(0, 6) : [];
-        if (arts.length) secs.news = sec('News', 'your teams and players') + `<div class="rows">${arts.map(a => HW.v5.newsRow(lk, a)).join('')}</div>`; else delete secs.news;
+        // yours first; when the feed has little or nothing on your teams and players, the league's own stories fill the column
+        const all = (news.articles || []).filter(a => a.headline);
+        const mineA = all.filter(a => tagged(a) || named(a)).slice(0, 6);
+        const rest = mineA.length < 3 ? all.filter(a => !mineA.includes(a)).slice(0, 6 - mineA.length) : [];
+        const arts = mineA.concat(rest);
+        if (arts.length) secs.news = sec('News', mineA.length && !rest.length ? 'your teams and players' : mineA.length ? 'yours first, then the league' : 'around the league') + `<div class="rows">${arts.map(a => HW.v5.newsRow(lk, a)).join('')}</div>`; else delete secs.news;
       } else delete secs.news;
     };
 

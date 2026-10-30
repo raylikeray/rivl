@@ -483,9 +483,15 @@
         if (starters) body += starters;
         if (floor) body += floor;
         const tp = g.state !== 'pre' ? [topFor(g.away), topFor(g.home)] : [null, null];
-        const pcard = (ath, color, num, unit, label, sub) => { const c = V._.V_deep(color || '#2A2D33'); const img = hsUrl(ath); return `<a class="pc" href="${href.player(lk, ath.id)}" style="--a:${esc(c)}"><div class="shot">${img ? V._.imgSized(img, 256, 256) : ''}</div><div class="in"><b>${esc(ath.shortName || ath.displayName)}</b>${sub ? `<em>${esc(sub)}</em>` : ''}<span class="line">${esc(num)}${unit ? `<u>${esc(unit)}</u>` : ''}</span>${label ? `<small>${esc(label)}</small>` : ''}</div></a>`; };
-        if (tp[0] || tp[1]) body += sec(g.state === 'post' ? 'Top performers' : 'Leading the way') + `<div class="perf">${tp.map((x, i) => x ? pcard(x.a, V._.teamColor(i ? g.home : g.away), x.pts, 'pts', `${x.reb} reb · ${x.ast} ast`, (i ? g.home : g.away).short) : '<div></div>').join('')}</div>`;
-        else if (d.leaders && d.leaders.length) { const items = []; d.leaders.forEach(t => (t.leaders || []).slice(0, 1).forEach(cat => { const Ld = cat.leaders && cat.leaders[0]; if (Ld) items.push({ team: t.team, cat, Ld }); })); if (items.length) body += sec('Season leaders') + `<div class="perf">${items.map(({ team, cat, Ld }) => pcard(Ld.athlete, hx(team.color), (Ld.displayValue || '').split(' ')[0], '', cat.displayName.toLowerCase(), team.shortDisplayName || team.abbreviation || '')).join('')}</div>`; }
+        /* a player card: the team's colour as the ground, its logo as a watermark, the headshot crisp at the right, the jersey number
+           and position from the feed (shown only when the feed carries them), and the line in big figures */
+        const pcard = (ath, T, num, unit, label) => {
+          const c = V._.teamColor(T, L); const img = hsUrl(ath); const pos = ath.position && (ath.position.abbreviation || ath.position.name) || '';
+          const meta = [T.short || T.abbr, ath.jersey ? `#${ath.jersey}` : '', pos].filter(Boolean).join(' · ');
+          return `<a class="pc" href="${href.player(lk, ath.id)}" style="--a:${esc(V._.V_lift(c))};--ad:${esc(V._.V_deep(c))}">${T.logo ? `<img class="wm" src="${esc(T.logo)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${ath.jersey ? `<i class="jn">${esc(ath.jersey)}</i>` : ''}<div class="shot">${img ? V._.imgSized(img, 512, 512) : ''}</div><div class="in"><em>${esc(meta)}</em><b>${esc(ath.shortName || ath.displayName)}</b><span class="line">${esc(num)}${unit ? `<u>${esc(unit)}</u>` : ''}</span>${label ? `<small>${esc(label)}</small>` : ''}</div></a>`; };
+        const sideOf = team => String(team && team.id) === g.home.id ? g.home : String(team && team.id) === g.away.id ? g.away : (team && team.abbreviation === g.home.abbr ? g.home : g.away);
+        if (tp[0] || tp[1]) body += sec(g.state === 'post' ? 'Top performers' : 'Leading the way') + `<div class="perf">${tp.map((x, i) => x ? pcard(x.a, i ? g.home : g.away, x.pts, 'pts', `${x.reb} reb · ${x.ast} ast`) : '<div></div>').join('')}</div>`;
+        else if (d.leaders && d.leaders.length) { const items = []; d.leaders.forEach(t => (t.leaders || []).slice(0, 1).forEach(cat => { const Ld = cat.leaders && cat.leaders[0]; if (Ld) items.push({ team: t.team, cat, Ld }); })); if (items.length) body += sec('Season leaders') + `<div class="perf">${items.map(({ team, cat, Ld }) => pcard(Ld.athlete, sideOf(team), (Ld.displayValue || '').split(' ')[0], '', cat.displayName.toLowerCase())).join('')}</div>`; }
         body += tracker;
         if (f && prefs.get('forecast')) {
           const fav = f.pHome >= .5 ? g.home : g.away; const p = Math.max(f.pHome, 1 - f.pHome);
