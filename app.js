@@ -83,7 +83,7 @@
          is shown instead so the hold never ends in a blank. */
       if (render.key) ghost();
       $main.classList.remove('fade', 'enter'); $main.classList.add('hold');
-      const fadeIn = () => { clearTimeout(render.holdT); $main.classList.remove('hold', 'fade', 'enter'); void $main.offsetWidth; $main.classList.add('fade', 'enter'); document.querySelectorAll('.ghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); }); };   // the snapshot lets go only now, so the two cross
+      const fadeIn = () => { clearTimeout(render.holdT); $main.classList.remove('hold', 'fade', 'enter'); void $main.offsetWidth; $main.classList.add('fade', 'enter'); document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); }); };   // the snapshot lets go only now, so the two cross
       render.onReal = fadeIn;
       render.holdT = setTimeout(() => { if (render.onReal === fadeIn && my === seq) { render.onReal = null; V.showSkeleton(); fadeIn(); render.onReal = () => { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); }; } }, 260);
     }
@@ -104,14 +104,16 @@
     paintPills(r.lk, leagueScreen);   // live counts may have arrived while the view loaded
     // the rise plays for a new screen; a screen repainting itself (another day on Scores, another conference) keeps still
     if (key !== render.key) { if (!$main.classList.contains('enter')) { void $main.offsetWidth; $main.classList.add('enter'); } } else $main.classList.remove('enter'); render.key = key;
-    $main.classList.remove('hold'); clearTimeout(render.holdT); render.onReal = null; document.querySelectorAll('.ghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); });   // whatever happened, nothing stays held once the view has returned
+    $main.classList.remove('hold'); clearTimeout(render.holdT); render.onReal = null; document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); });   // whatever happened, nothing stays held once the view has returned
     document.dispatchEvent(new CustomEvent('rivl:rendered'));
   }
-  /* the old screen, as it stood, laid over the page and fading — so the next screen appears through it instead of after a gap */
+  /* the old screen, as it stood, laid over the page and fading. NOTE the class is `xghost`, never `ghost`:
+     `.btn.ghost` is the secondary-button style, and a bare `.ghost` rule captured every one of them (v86 regression —
+     they turned position:fixed and pointer-events:none, and this function deleted them). Keep the names apart. — so the next screen appears through it instead of after a gap */
   function ghost() {
-    document.querySelectorAll('.ghost').forEach(g => g.remove());
+    document.querySelectorAll('.xghost').forEach(g => g.remove());
     const r = $main.getBoundingClientRect(); if (!r.width || !r.height) return;
-    const g = document.createElement('div'); g.className = 'ghost'; g.setAttribute('aria-hidden', 'true');
+    const g = document.createElement('div'); g.className = 'xghost'; g.setAttribute('aria-hidden', 'true');
     g.style.cssText = `left:${r.left}px;width:${r.width}px`;
     const c = $main.cloneNode(true); c.removeAttribute('id'); c.className = ''; c.style.cssText = `transform:translateY(${r.top}px)`;
     g.appendChild(c); document.body.appendChild(g);
@@ -466,7 +468,9 @@
       frame(n === 0 ? 'Pick your teams' : 'Follow some players', n === 0 ? 'They lead Home and are the only ones you get updates about.' : 'Picked from the rosters of the teams you follow. Search any team to see its roster.',
         n === 0 ? `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div class="search" style="margin:0 0 12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input id="onbq" type="search" placeholder="Search teams" autocomplete="off"></div><div id="onbList" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`
           : `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div id="onbPick" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`,
-        `<button class="btn ghost" data-act="onb-next" data-step="${n + 1}">Skip</button><button class="btn" data-act="onb-next" data-step="${n + 1}" id="onbNext">${nn ? `Continue with ${nn}` : 'Continue'}</button>`);
+        /* the button names where it goes. "Continue" next to a row of leagues read as "continue to the next league", which it
+           never was — the switch changes league, the button changes step. Back exists from the second step on. */
+        `${n ? `<button class="btn ghost" data-act="onb-next" data-step="${n - 1}">Back</button>` : '<span class="onb-gap"></span>'}<span class="onb-cnt" id="onbCnt">${onbTally(n, nn)}</span><button class="btn" data-act="onb-next" data-step="${n + 1}" id="onbNext">${n ? 'Next: your Home' : 'Next: players'}</button>`);
       if (n === 1) { onbCount(); await V.playerPicker(document.getElementById('onbPick'), L, { leaders: true, select: true }); onbCount(); return; }
       const list = document.getElementById('onbList'); const inp = document.getElementById('onbq');
       if (n === 0) {
@@ -494,19 +498,23 @@
       const items = [['brief', 'Tonight and last night', "Your teams' games in one line, and last night's results"], ['live', 'Live now', 'A big card when one of your teams is playing'], ['teams', 'My teams', 'Record, the game that matters and the chance to win'], ['players', 'My players', 'Scoring lines, one tap to the profile'], ['injuries', 'Injuries', 'Reports on your teams and players'], ['news', 'News', 'Stories about your teams and players'], ['forecast', 'Win chances', "RIVL's own estimate on each game card"]];
       frame('What do you want to see?', 'Home is yours. Switch off anything you don\'t care about; you can change it later in Settings.',
         `<div class="rows onb-prefs">${items.map(([k, t, b]) => `<button class="row sw" data-act="pref" data-pref="${k}" role="switch" aria-checked="${P[k] !== false}"><span class="t"><b>${esc(t)}</b><span class="wrap">${esc(b)}</span></span><span class="switch"></span></button>`).join('')}</div>`,
-        `<button class="btn ghost" data-act="onb-next" data-step="1">Back</button><button class="btn" data-act="onb-next" data-step="3">Continue</button>`);
+        `<button class="btn ghost" data-act="onb-next" data-step="1">Back</button><span class="onb-gap"></span><button class="btn" data-act="onb-next" data-step="3">${standalone() ? 'Finish' : 'Next: install'}</button>`);
     } else {
       const done = standalone();
       frame(done ? "You're set" : 'Put RIVL on your home screen', done ? 'RIVL is on your home screen. Your teams and players are waiting on Home.' : 'It opens full screen like an app, with no browser bar, and your teams load first.',
         done ? '' : `<div class="onb-install"><img src="img/icon-192.png" alt="" width="64" height="64"><div>${deferredInstall ? `<button class="btn" data-act="install" id="installBtn">Install RIVL</button>` : isIOS ? `<b>In Safari</b><ol><li>Tap the Share button</li><li>Choose <b>Add to Home Screen</b></li><li>Tap <b>Add</b></li></ol>` : `<b>In your browser menu</b><p style="margin:4px 0 0">Choose <b>Add to Home screen</b> (or <b>Install app</b>).</p>`}</div></div>`,
-        `<button class="btn ghost" data-act="onb-next" data-step="2">Back</button><button class="btn" data-act="onb-done">${done ? 'Open Home' : 'Done'}</button>`);
+        `<button class="btn ghost" data-act="onb-next" data-step="2">Back</button><span class="onb-gap"></span><button class="btn" data-act="onb-done">${done ? 'Open Home' : 'Done'}</button>`);
     }
   }
   V.onbStep = onbStep;
-  /* the Continue button counts what has been picked so far; a team in the Top 25 and in its conference is one tile drawn twice, so every tile re-syncs */
+  /* how many are picked so far, across every league — it sits between Back and the step button, so the button itself can say
+     where it goes instead of carrying a number that looked like it belonged to the league switch */
+  const onbTally = (step, n) => n ? `${n} ${step === 0 ? 'team' : 'player'}${n === 1 ? '' : 's'}` : '';
+  /* a team in the Top 25 and in its conference is one tile drawn twice, so every tile re-syncs */
   const onbCount = () => { const b = document.getElementById('onbNext'); if (!b || $panel.hidden) return;
     $panel.querySelectorAll('.onb-team').forEach(t => { const on = HW.favs.has(t.dataset.lk, t.dataset.id); t.classList.toggle('on', on); t.setAttribute('aria-pressed', String(on)); });
-    const step = +(b.dataset.step || 1) - 1; const nn = step === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length; b.textContent = nn ? `Continue with ${nn}` : 'Continue';
+    const step = +(b.dataset.step || 1) - 1; const nn = step === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length;
+    const cnt = document.getElementById('onbCnt'); if (cnt) cnt.textContent = onbTally(step, nn);
     // each section says how many of its tiles are picked; the league pills carry their counts; the rail shows every pick
     $panel.querySelectorAll('.onb-sec').forEach(h => { const grid = h.nextElementSibling; const k = grid ? grid.querySelectorAll('.onb-team.on').length : 0; let em = h.querySelector('em'); if (k && !em) { em = document.createElement('em'); h.appendChild(em); } if (em) { if (k) em.textContent = `${k} picked`; else em.remove(); } });
     $panel.querySelectorAll('.onb-pills .pill').forEach(p => { const k = p.dataset.lk; const c = step === 0 ? (HW.favs.all()[k] || []).length : V.fplayers.all().filter(x => x.lk === k).length; let ct = p.querySelector('.ct'); if (c && !ct) { ct = document.createElement('span'); ct.className = 'ct'; p.appendChild(ct); } if (ct) { if (c) ct.textContent = c; else ct.remove(); } });
@@ -525,8 +533,25 @@
       } else {
         picks = V.fplayers.all().map(pl => ({ k: pl.lk, id: pl.id, name: pl.short || pl.name, html: p => `<button class="pick" data-act="follow-player" data-snap='${esc(JSON.stringify(pl))}' aria-label="Unfollow ${esc(pl.name)}">${V._.headshot(pl.img, pl.color || '', 26, pl.name)}<b>${esc(p.name)}</b>${pl.team ? `<i>${esc(pl.team)}</i>` : ''}<s></s></button>` }));
       }
+      /* patched in place, never rebuilt: re-writing the row's innerHTML on every tap threw away each <img> and made the
+         logos already on screen blink and jump as they decoded again — and it reset the row's scroll position. Chips that
+         are still picked are moved, not recreated; only a new one is built and only a dropped one is removed. */
       const lk = lkOf(onbLk); const here = picks.filter(p => p.k === lk);
-      rail.innerHTML = here.length ? `<div class="onb-picked-row">${here.map(p => p.html(p)).join('')}</div>` : '';
+      if (!here.length) { if (rail.firstChild) rail.textContent = ''; }
+      else {
+        let row = rail.querySelector('.onb-picked-row');
+        if (!row) { rail.textContent = ''; row = document.createElement('div'); row.className = 'onb-picked-row'; rail.appendChild(row); }
+        const have = new Map(); row.querySelectorAll('.pick').forEach(el => have.set(el.dataset.key, el));
+        const want = new Set(); let prev = null;
+        here.forEach(p => {
+          const key = `${p.k}:${p.id}`; want.add(key);
+          let el = have.get(key);
+          if (!el) { const t = document.createElement('template'); t.innerHTML = p.html(p).trim(); el = t.content.firstElementChild; if (!el) return; el.dataset.key = key; }
+          if (prev ? prev.nextElementSibling !== el : row.firstElementChild !== el) { if (prev) prev.after(el); else row.prepend(el); }
+          prev = el;
+        });
+        have.forEach((el, key) => { if (!want.has(key)) el.remove(); });
+      }
     }
   };
   $panel.addEventListener('rivl:fav', onbCount); $panel.addEventListener('rivl:follow', onbCount);

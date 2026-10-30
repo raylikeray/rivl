@@ -582,7 +582,12 @@ html{touch-action:manipulation}
 .onb-team.on{box-shadow:inset 0 0 0 2px var(--ink)}
 .onb-team.on i{background:var(--ink);box-shadow:none}
 .onb-team.on i::after{content:"";position:absolute;left:6px;top:3px;width:4px;height:8px;border:solid var(--bg);border-width:0 2px 2px 0;transform:rotate(45deg)}
-.onb-foot{display:flex;justify-content:space-between;gap:10px;padding:16px 0 0;position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--bg) 30%);margin-top:auto}
+.onb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 0 0;position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--bg) 30%);margin-top:auto}
+/* Back on the left, the tally in the middle, the step button on the right; the gap holds the left slot open on the first step */
+.onb-foot .onb-gap{flex:none;width:0}
+.onb-foot .onb-cnt{flex:1;min-width:0;text-align:center;font-size:13px;font-weight:650;color:var(--ink-3);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.onb-foot .onb-cnt:empty{display:none}
+.onb-foot .btn{flex:none}
 .onb-install{display:flex;gap:14px;align-items:flex-start;background:var(--surf);border-radius:16px;padding:16px;margin:4px 0 16px}
 .onb-install img{border-radius:14px;flex:none}
 .onb-install ol{margin:6px 0 0;padding-left:18px;color:var(--ink-2);line-height:1.6}
@@ -1439,9 +1444,9 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 #main.hold{opacity:0}
 #main.fade{animation:screen .3s var(--ease) both}
 @keyframes screen{from{opacity:0}to{opacity:1}}
-.ghost{position:fixed;top:0;bottom:0;z-index:25;pointer-events:none;overflow:hidden}
-.ghost.out{animation:screenout .3s var(--ease) both}
-.ghost *{animation:none!important;transition:none!important}
+.xghost{position:fixed;top:0;bottom:0;z-index:25;pointer-events:none;overflow:hidden}
+.xghost.out{animation:screenout .3s var(--ease) both}
+.xghost *{animation:none!important;transition:none!important}
 @keyframes screenout{from{opacity:1}to{opacity:0}}
 .soft{animation:soft .32s var(--ease) both}
 @keyframes soft{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
