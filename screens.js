@@ -722,7 +722,7 @@
         walk(n);
         if (!ALLOW.has(n.tagName)) { if (WRAPS.has(n.tagName)) n.replaceWith(doc.createElement('br'), ...n.childNodes, doc.createElement('br')); else n.replaceWith(...n.childNodes); return; }   // a block wrapper's edges are paragraph edges; tidy turns the breaks into paragraphs
         [...n.attributes].forEach(a => { if (!((n.tagName === 'A' && a.name === 'href') || (n.tagName === 'IMG' && a.name === 'src'))) n.removeAttribute(a.name); });
-        if (n.tagName === 'A') { const u = n.getAttribute('href') || ''; const here = inApp(u, idxs); if (here) n.setAttribute('href', here); else if (!/^https?:/i.test(u)) n.replaceWith(...n.childNodes); else { n.setAttribute('target', '_blank'); n.setAttribute('rel', 'noopener'); } }
+        if (n.tagName === 'A') { const u = n.getAttribute('href') || ''; const here = inApp(u, idxs); if (here) n.setAttribute('href', here); else n.replaceWith(...n.childNodes); }   // a link goes somewhere in RIVL — a player, a team, a game, another story — or it is plain text; nothing leads out
         if (n.tagName === 'IMG') { const u = n.getAttribute('src') || ''; if (!/^https:/i.test(u)) n.remove(); else { n.setAttribute('loading', 'lazy'); n.setAttribute('alt', ''); } }
       });
     };
@@ -779,7 +779,7 @@
     const full = await jSoft(api, 3600000);
     const h = full && (full.headlines && full.headlines[0] || full.article || full);
     const a = h && h.headline ? h : cached;
-    if (!a) { $main.innerHTML = topbar('Story', '#home') + empty("Couldn't load this story", `<p style="margin:6px 0 0">The feed didn't answer.</p>`, `<a class="btn" href="${esc(webOf(cached))}" target="_blank" rel="noopener">Open on ESPN</a>`); return; }
+    if (!a) { $main.innerHTML = topbar('Story', '#home') + empty("Couldn't load this story", `<p style="margin:6px 0 0">The feed didn't answer. <a href="#" data-act="reload">Try again</a>.</p>`); return; }
     // team links in ESPN stories use the abbreviation, so load the index for any league the story links to
     const raw = h && h.story || '';
     const idxs = {}; await Promise.all([...new Set([...raw.matchAll(/espn\.com\/(nba|wnba|mens-college-basketball|womens-college-basketball)\/team\/_\/name\//gi)].map(x => LG[x[1].toLowerCase()]))].map(async k => { idxs[k] = await teamsIndex(LEAGUES[k]).catch(() => ({})); }));
@@ -789,7 +789,7 @@
     const premium = !story || (h && h.premium);
     const bodyHtml = story ? `<div class="body">${story}</div>` : `<p class="dek">${esc(a.description || cached && cached.description || '')}</p>`;
     // the whole story is here, so nothing points back to ESPN; only a paywalled or summary-only piece gets a way out
-    const tail = premium ? `<div class="empty" style="margin-top:18px"><b>${story ? 'This is an ESPN+ story' : 'Full story is on ESPN'}</b><p style="margin:6px 0 0">${story ? 'The rest is behind their paywall.' : 'ESPN only shares the summary for this one.'}</p><a class="btn" style="margin-top:12px" href="${esc(webOf(a))}" target="_blank" rel="noopener">Continue on ESPN</a></div>` : '';
+    const tail = premium ? `<div class="empty" style="margin-top:18px"><b>That's all the feed shares of this one</b><p style="margin:6px 0 0">The rest is behind a paywall.</p></div>` : '';
     $main.innerHTML = topbar('Story', '#home', '') + head(a) + bodyHtml + '</article>' + clips + tail;
     document.title = `${a.headline} · RIVL`;
   }

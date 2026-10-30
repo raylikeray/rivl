@@ -537,7 +537,7 @@ const SERVICES = {
   directv:   { label: 'DirecTV Stream', short: 'DirecTV', web: 'https://stream.directv.com', android: 'com.att.tv', hosts: ['stream.directv.com/'], schemes: ['dtvstream'], bundle: true, channels: any(NAT.espnFam, NAT.cable, NAT.bcast, /^(CBS|ION|The CW|CW)$/i, NAT.regional) },
   // networks' own apps and streamers
   abc:       { label: 'ABC', short: 'ABC', web: 'https://abc.com/watch-live', android: 'com.disney.datg.videoplatforms.android.abc', hosts: ['abc.com/watch-live', 'abc.com/'], schemes: ['abc'], match: /^ABC$/i },
-  espn:      { label: 'ESPN app', short: 'ESPN', web: 'https://www.espn.com/watch', android: 'com.espn.score_center', hosts: ['www.espn.com/watch', 'www.espn.com/'], schemes: ['sportscenter'], match: any(NAT.espnFam, /^(ESPN\+|SECN\+|ACCN\+|Big 12 Now|ABC)$/i) },
+  // no ESPN app here: a game on ESPN still says so in its TV line (that is where it airs), but RIVL never points anyone to ESPN to watch it
   peacock:   { label: 'Peacock', short: 'Peacock', web: 'https://www.peacocktv.com/sports', android: 'com.peacocktv.peacockandroid', hosts: ['www.peacocktv.com/sports', 'www.peacocktv.com/'], schemes: ['peacock'], match: /^(Peacock|NBC|USA( Network)?)$/i },
   nbc:       { label: 'NBC', short: 'NBC', web: 'https://www.nbc.com/live', android: 'com.nbcuni.nbc', hosts: ['www.nbc.com/live', 'www.nbc.com/'], schemes: ['nbc'], match: /^NBC$/i },
   fox:       { label: 'FOX Sports', short: 'FOX', web: 'https://www.foxsports.com/live', android: 'com.foxsports.android', hosts: ['www.foxsports.com/live', 'www.foxsports.com/'], schemes: ['foxsports'], match: /^(FOX|FS1|FS2|FOX Sports ?[12]?|FOX Deportes|FOX One|BTN|Big Ten Network)$/i },
