@@ -60,13 +60,13 @@
   const scoreColor = (L, t) => { const alt = teamAlt(t, L); return alt && SIG_ALT[L.key] && SIG_ALT[L.key][t.abbr] ? alt : teamColor(t, L); };
   /* a page that belongs to a team or a player takes that team's colour: the wash at the top, the status bar and a faint tint of the
      ground all follow it, so the page reads as theirs; league screens clear it and go back to the accent */
-  const tint = c => { const root = document.documentElement; if (c && !BAD(c)) { root.style.setProperty('--tint', hx(c)); root.setAttribute('data-tint', '1'); } else { root.style.removeProperty('--tint'); root.removeAttribute('data-tint'); } if (HW.v5.applyTheme) HW.v5.applyTheme(); };
+  const tint = c => { const root = document.documentElement; if (c && !BAD(c)) { root.style.setProperty('--tint', hx(c)); root.style.setProperty('--tint-ink', lumOf(hx(c)) > .6 ? '#0A0B0E' : '#FFFFFF'); root.setAttribute('data-tint', '1'); } else { root.style.removeProperty('--tint'); root.style.removeProperty('--tint-ink'); root.removeAttribute('data-tint'); } if (HW.v5.applyTheme) HW.v5.applyTheme(); };   // --tint-ink: what reads on the tint (a gold or a silver wants dark text)
   /* a team colour on an element: --tc raw (tints, rings), --tf-d/--tf-l the readable fill for black and white backgrounds — the
      stylesheet maps --tf to the one in use, so a black Spurs bar reads on black and a white one on white */
   /* the colour behind a face: a team colour lifted until a dark head of hair reads on it — the Spurs' black deepened for light
      mode put a black disc behind a black-haired face, so a disc never goes below a mid tone whatever the theme */
   const V_disc = c => { const l = lumOf(c); return l < .12 ? mixTo(c, 255, .58) : l < .28 ? mixTo(c, 255, .34) : c; };
-  const tcv = c => `--tc:${esc(c)};--tf-d:${esc(V_lift(c))};--tf-l:${esc(V_deep(c))};--hd:${esc(V_disc(c))}`;
+  const tcv = c => `--tc:${esc(c)};--tf-d:${esc(V_lift(c))};--tf-l:${esc(V_deep(c))};--hd:${esc(V_disc(c))};--ti:${lumOf(c) > .6 ? '#0A0B0E' : '#FFFFFF'}`;   // --ti: what reads on the raw colour itself
   /* two teams' colours for one chart or tracker: when the two are near each other (Thunder and Mavericks are both blue), one
      side takes its other colour, whichever of the two alternates stands furthest from the first side's colour */
   const rgbDist = (a, b) => { const x = rgbOf(a), y = rgbOf(b); return x && y ? Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]) : 999; };
@@ -825,7 +825,7 @@
     return `<div class="row prow"><a class="go" href="${href.player(p.lk, p.id)}" aria-label="${esc(p.name)}">${rk}${headshot(p.img, pc, 46, p.name)}</a><a class="t" href="${href.player(p.lk, p.id)}"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></a>${right}<button class="star${on ? ' on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(p.name)}">${on ? starSvg : starLine}</button></div>`;
   }
   /* the band's second line and the faces of the picked: the players a person chose stay visible when the roster is folded */
-  const bandLine = (n, picked) => `${n} player${n === 1 ? '' : 's'}${picked ? ` · <em>${picked} picked</em>` : ''}`;
+  const bandLine = (n, picked) => picked ? `<em>${picked} of ${n} picked</em>` : `${n} player${n === 1 ? '' : 's'}`;
   const faces = picked => { const show = picked.slice(0, 3); return show.length ? `<span class="faces" aria-hidden="true">${show.map(p => `<i>${p.img ? imgSized(p.img, 80, 58, '', "this.remove()") : ''}</i>`).join('')}${picked.length > 3 ? `<u>+${picked.length - 3}</u>` : ''}</span>` : ''; };
   const lastName = n => { const w = String(n || '').replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/i, '').trim().split(/\s+/); return w[w.length - 1] || ''; };
   async function playerPicker(el, L, { following = false, leaders = true, select = false } = {}) {
@@ -864,7 +864,7 @@
         const picked = rows.filter(p => fset.has(p.id)).length;
         /* one card per team: the band at the top carries the team's colour and folds the roster, the roster is a column of
            hairline rows inside the same plate — a header over its contents, not a stack of look-alike pills */
-        parts.push(`<section class="tgrp" style="${tcv(teamColor(s.team, L))}"><button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}">${imgSized(s.team.logo, 96, 96, 'class="wm" aria-hidden="true"', 'this.remove()')}${logo(s.team.logo, 's')}<span class="tt"><b>${esc(s.team.short)}</b><small>${bandLine(rows.length, picked)}</small></span>${faces(rows.filter(p => fset.has(p.id)))}${chev}</button>${foldWrap(`<div class="rows">${rows.map(p => rowOf(p, s)).join('')}</div>`, folded)}</section>`);
+        parts.push(`<section class="tgrp" style="${tcv(teamColor(s.team, L))}"><button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}">${logo(s.team.logo, 's')}<span class="tt"><b>${esc(s.team.short)}</b><small>${bandLine(rows.length, picked)}</small></span>${faces(rows.filter(p => fset.has(p.id)))}${chev}</button>${foldWrap(`<div class="rows">${rows.map(p => rowOf(p, s)).join('')}</div>`, folded)}</section>`);
       });
       if (lp && leaders) {
         // league leaders, per game, by category; a search keeps the whole list and filters it by name
