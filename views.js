@@ -287,7 +287,7 @@
         const mineLast = last.filter(g => isDone(g) && isFav(g));
         if (mineLast.length || lines.length) {
           const res = mineLast.map(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = us.score > them.score; return `<a class="bchip res" href="${href.game(lk, g.id)}">${logo(us.logo, 's', teamColor(us, L))}<b class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</b><span>${us.score}–${them.score} ${us === g.home ? 'vs' : 'at'} ${esc(them.abbr || them.short)}</span></a>`; });
-          const rows = lines.map(x => `<a class="row" href="${href.game(lk, x.g.id)}">${headshot(x.p.img, x.us ? teamColor(x.us, L) : playerColor(x.p, L), 44, x.p.name)}<span class="t"><b>${esc(x.p.short || x.p.name)}</b><span>${x.dnp ? esc(x.dnp) : `${esc(x.pts)} pts, ${esc(x.reb)} reb, ${esc(x.ast)} ast in a ${x.won ? 'win' : 'loss'} ${x.us === x.g.home ? 'vs' : 'at'} ${esc(x.them.short)}`}</span></span>${x.dnp ? '' : `<span class="r"><b>${esc(x.pts)}</b><span>pts</span></span>`}</a>`);
+          const rows = lines.map(x => `<a class="row" href="${href.game(lk, x.g.id)}/p/${esc(String(x.p.id))}">${headshot(x.p.img, x.us ? teamColor(x.us, L) : playerColor(x.p, L), 44, x.p.name)}<span class="t"><b>${esc(x.p.short || x.p.name)}</b><span>${x.dnp ? esc(x.dnp) : `${esc(x.pts)} pts, ${esc(x.reb)} reb, ${esc(x.ast)} ast in a ${x.won ? 'win' : 'loss'} ${x.us === x.g.home ? 'vs' : 'at'} ${esc(x.them.short)}`}</span></span>${x.dnp ? '' : `<span class="r"><b>${esc(x.pts)}</b><span>pts</span></span>`}</a>`);
           secs.last = `<div class="brief"><div class="brief-h"><b>Last night</b><span>${esc(dayLabel(yday, { weekday: 'long' }))}</span></div>${res.length ? `<div class="brief-row">${res.join('')}</div>` : ''}${rows.length ? `<div class="rows brief-rows">${rows.join('')}</div>` : ''}</div>`;
         } else delete secs.last;
       }
@@ -552,7 +552,7 @@
     const cur = cat && cat.statistics && cat.statistics.length ? cat.statistics[cat.statistics.length - 1] : null;   // the latest season on record
     const following = fplayers.has(lk, id);
     const injury = a.injuries && a.injuries.find(x => x && !x.$ref && x.status) || null;
-    const subLine = `${tm.id ? `<a href="${href.team(lk, tm.id)}">${esc(tm.shortDisplayName || tm.name || tm.displayName)}</a> ` : ''}${esc((a.position && a.position.displayName || '').toLowerCase())}${a.jersey ? `, No. ${esc(a.jersey)}` : ''}`;
+    const subLine = [a.position && a.position.displayName, a.jersey ? `No. ${a.jersey}` : ''].filter(Boolean).map(esc).join(' · ');
     const country = a.citizenship || (a.birthPlace && a.birthPlace.country && !/^(USA|United States)$/i.test(a.birthPlace.country) ? a.birthPlace.country : '');
     const hometown = a.birthPlace ? [a.birthPlace.city, a.birthPlace.state || (country ? '' : a.birthPlace.country)].filter(Boolean).join(', ') : '';
     const classWord = college && a.experience && (a.experience.displayValue || ({ 1: 'Freshman', 2: 'Sophomore', 3: 'Junior', 4: 'Senior' })[a.experience.years]) || '';
@@ -563,9 +563,9 @@
     const tlogo = teamLogo || tm.logo || '';
     const hero = `<div class="ehero" style="--a:${esc(color)}">
       ${tlogo ? `<img class="tlg" src="${esc(tlogo)}" alt="" ${hide}>` : ''}<div class="wm">${esc(a.jersey || '')}</div>
-      <div class="in"><div class="sub">${subLine}</div><h1>${esc(a.firstName || '')}<br>${esc(a.lastName || a.displayName)}</h1>
+      <div class="in">${tm.id ? `<a class="tchip" href="${href.team(lk, tm.id)}">${tlogo ? `<img src="${esc(tlogo)}" alt="" ${hide}>` : ''}<b>${esc(tm.shortDisplayName || tm.name || tm.displayName)}</b></a>` : ''}${subLine ? `<div class="sub">${subLine}</div>` : ''}<h1>${esc(a.firstName || '')}<br>${esc(a.lastName || a.displayName)}</h1>
         <div class="facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div>
-        <div class="acts"><button class="${following ? 'on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${following}">${following ? starSvg : starLine}${following ? 'Following' : 'Follow'}</button>${tm.id ? `<a href="${href.team(lk, tm.id)}">${esc(tm.shortDisplayName || tm.name || 'Team')}</a>` : ''}</div>
+        <div class="acts"><button class="${following ? 'on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${following}">${following ? starSvg : starLine}${following ? 'Following' : 'Follow'}</button></div>
       </div>
       <div class="shot">${a.headshot && a.headshot.href ? `<img src="${esc(a.headshot.href)}" alt="" ${hide}>` : ''}</div>
     </div>`;
