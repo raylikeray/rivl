@@ -48,6 +48,11 @@
   const rgbOf = c => { const s = String(c || ''); const m = s.match(/^rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/); if (m) return [+m[1], +m[2], +m[3]]; const h = s.replace('#', ''); return h.length >= 6 ? [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)) : null; };   // hex or an rgb() a lift produced
   const lumOf = c => { const v = rgbOf(c); return v ? (0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]) / 255 : .5; };
   const mixTo = (c, to, k) => { const v = rgbOf(c); if (!v) return c; const m = x => Math.round(x + (to - x) * k); return `rgb(${m(v[0])},${m(v[1])},${m(v[2])})`; };
+  /* a colour for a number on the page: the team's hue at full saturation, lifted or deepened only as far as it must be to read.
+     The old lift mixed toward white and came out pastel; this keeps the colour. */
+  const hslOf = ([r, g, b]) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b); const l = (mx + mn) / 2; if (mx === mn) return [0, 0, l]; const d = mx - mn; const sat = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); let h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [h / 6, sat, l]; };
+  const rgbFromHsl = ([h, sat, l]) => { const f = (p, q, t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q; if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p; }; if (!sat) { const v = Math.round(l * 255); return `rgb(${v},${v},${v})`; } const q = l < .5 ? l * (1 + sat) : l + sat - l * sat, pp = 2 * l - q; return `rgb(${Math.round(f(pp, q, h + 1 / 3) * 255)},${Math.round(f(pp, q, h) * 255)},${Math.round(f(pp, q, h - 1 / 3) * 255)})`; };
+  const V_vivid = (c, onDark = true) => { const v = rgbOf(c); if (!v) return c; let [h, sat, l] = hslOf(v); if (sat < .12) return onDark ? '#FFFFFF' : '#0A0B0E'; sat = Math.max(sat, .78); l = onDark ? Math.min(Math.max(l, .56), .66) : Math.min(Math.max(l, .30), .40); return rgbFromHsl([h, sat, l]); };
   const V_lift = c => { const l = lumOf(c); return l > 0.45 ? c : mixTo(c, 255, l < 0.15 ? 0.6 : 0.4); };
   const V_deep = c => { const l = lumOf(c); return l < 0.5 ? c : mixTo(c, 0, l > 0.75 ? 0.5 : 0.32); };
   /* teams whose signature colour is their secondary: their score takes that one so the Lakers read gold, not Jazz purple */
@@ -70,7 +75,7 @@
   };
   /* the hero's second panel: the team's other colour, left as it is unless it is close to white */
   const V_panel = c => { const l = lumOf(c); return l > .84 ? mixTo(c, 0, .42) : c; };
-  const scVars = (t, L) => { const c = L ? scoreColor(L, t) : teamColor(t); return `${tcv(c)};--tcd:${esc(V_lift(c))};--tcl:${esc(V_deep(c))}`; };
+  const scVars = (t, L) => { const c = L ? scoreColor(L, t) : teamColor(t); return `${tcv(c)};--tcd:${esc(V_vivid(c, true))};--tcl:${esc(V_vivid(c, false))}`; };
   const href = { player: (lk, id) => `#player/${lk}/${id}`, team: (lk, id) => `#team/${lk}/${id}`, game: (lk, id) => `#game/${lk}/${id}` };
   const hide = `onerror="this.style.visibility='hidden'"`;
   /* ESPN's art at the size it is drawn: the CDN's combiner scales a logo or headshot on the fly, so a 46px disc doesn't
@@ -806,7 +811,7 @@
         const rows = q ? s.rows.filter(p => `${p.name} ${s.team.name} ${s.team.abbr}`.toLowerCase().includes(q)) : s.rows; if (!rows.length) return;
         const folded = !q && !!(store.get('v5:ppcol', {}) || {})[s.key];   // a search always opens every team
         const picked = rows.filter(p => fset.has(p.id)).length;
-        parts.push(`<button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}" style="${tcv(teamColor(s.team, L))}"><i class="bar"></i>${logo(s.team.logo, 's')}<b>${esc(s.team.short)}</b><span class="n">${rows.length}</span>${picked ? `<em class="pk">${picked} picked</em>` : ''}${chev}</button>${foldWrap(`<div class="rows">${rows.map(p => rowOf(p, s)).join('')}</div>`, folded)}`);
+        parts.push(`<button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}" style="${tcv(teamColor(s.team, L))}">${logo(s.team.logo, 's')}<b>${esc(s.team.short)}</b><span class="n">${rows.length}</span>${picked ? `<em class="pk">${picked} picked</em>` : ''}${chev}</button>${foldWrap(`<div class="rows">${rows.map(p => rowOf(p, s)).join('')}</div>`, folded)}`);
       });
       if (lp && leaders) {
         // league leaders, per game, by category; a search keeps the whole list and filters it by name
@@ -851,5 +856,5 @@
   }
 
   HW.v5 = Object.assign(HW.v5 || {}, { home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, tint, V_lift, V_deep, V_panel, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
+    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

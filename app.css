@@ -120,10 +120,9 @@ table,.num{font-variant-numeric:tabular-nums}
 .game .sc{font:800 36px/1 var(--num);letter-spacing:.01em;min-width:44px;text-align:right}
 .game .side.lo .nm b,.game .side.lo .sc{color:var(--ink-3)}
 .game .sc{color:var(--ink-3)}
-.game .sc.on{color:var(--ink)}
-.game .sc.on::after{border-left-color:var(--tcd)}
-:root[data-theme="light"] .game .sc.on::after{border-left-color:var(--tcl)}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .game .sc.on::after{border-left-color:var(--tcl)} }
+.game .sc.on{color:var(--tcd,var(--ink))}
+:root[data-theme="light"] .game .sc.on{color:var(--tcl,var(--ink))}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .game .sc.on{color:var(--tcl,var(--ink))} }
 .game .status{display:flex;align-items:center;gap:10px;padding:2px 16px 4px;font-size:13px;font-weight:700;color:var(--ink-2);min-width:0}
 .game .status>span:first-child{white-space:nowrap}
 .game .status .ln{flex:1;height:1px;background:var(--line);min-width:12px}
@@ -363,11 +362,13 @@ table,.num{font-variant-numeric:tabular-nums}
 .fold.closed>*{visibility:hidden;transition:visibility 0s .32s}
 .fold.opening > .rows > .row,.fold.opening > .injbody > .row{animation:rise .32s cubic-bezier(.2,.8,.2,1) both}
 .fold.opening > * > .row:nth-child(2){animation-delay:.03s}.fold.opening > * > .row:nth-child(3){animation-delay:.06s}.fold.opening > * > .row:nth-child(4){animation-delay:.09s}
-.todayfab{position:fixed;left:50%;bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 14px);transform:translate(-50%,10px);display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 16px 0 13px;border-radius:999px;background:var(--ink);color:var(--bg);font:700 13.5px/1 var(--ui);white-space:nowrap;z-index:70;opacity:0;pointer-events:none;transition:opacity .2s,transform .22s cubic-bezier(.2,.8,.2,1);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 10px 24px -10px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.3)}
+.todayfab{position:fixed;left:50%;bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 14px);transform:translate(-50%,10px);display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 17px 0 14px;border-radius:999px;background:color-mix(in srgb,var(--bg) 52%,transparent);-webkit-backdrop-filter:blur(40px) saturate(1.9);backdrop-filter:blur(40px) saturate(1.9);color:var(--ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.12),0 2px 8px rgba(0,0,0,.4),0 18px 40px -16px rgba(0,0,0,.9);font:800 13.5px/1 var(--ui);white-space:nowrap;z-index:70;opacity:0;pointer-events:none;transition:opacity .2s,transform .22s cubic-bezier(.2,.8,.2,1);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 10px 24px -10px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.3)}
 .todayfab.in{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .todayfab:active{transform:translate(-50%,0) scale(.96)}
 .todayfab svg{width:16px;height:16px}
-[data-accent] .todayfab{background:var(--acc);color:#fff}
+:root[data-theme="light"] .todayfab{background:color-mix(in srgb,#fff 60%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 0 0 1px rgba(10,11,14,.10),0 2px 8px -2px rgba(16,24,40,.22),0 18px 40px -18px rgba(16,24,40,.5)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .todayfab{background:color-mix(in srgb,#fff 60%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 0 0 1px rgba(10,11,14,.10),0 2px 8px -2px rgba(16,24,40,.22),0 18px 40px -18px rgba(16,24,40,.5)} }
+[data-accent] .todayfab svg{color:var(--acc)}
 .toast{position:fixed;left:50%;bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 14px);transform:translate(-50%,8px);background:var(--ink);color:var(--bg);font:700 13px/1 var(--ui);padding:12px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:80;white-space:nowrap}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 
@@ -703,7 +704,7 @@ button.row.prow.sel:active{transform:scale(.985)}
 .clip b{font-size:14px}
 /* the pointer: a small arrow beside the score that's ahead */
 .game .sc{position:relative;padding-right:13px}
-.game .sc.on::after{content:"";position:absolute;right:0;top:50%;transform:translateY(-50%);border:5px solid transparent;border-left:7px solid var(--tcd,currentColor);border-right:0;opacity:.95}
+.game .sc.on::after{content:"";position:absolute;right:0;top:50%;transform:translateY(-50%);border:5px solid transparent;border-right:7px solid currentColor;border-left:0;opacity:.95}
 /* the date strip: days scroll, the calendar button stays put at the right */
 .datesbar{display:flex;align-items:stretch;gap:6px;padding:2px var(--gut-r) 4px var(--gut)}
 .datesbar .dates{flex:1;min-width:0;padding:0}
@@ -1216,12 +1217,15 @@ button.thead{width:calc(100% - var(--gut) - var(--gut-r));border:0;font:inherit;
 .onb .pill .ct{background:var(--surf-3);color:var(--ink-2)}
 .onb .pill.on .ct{background:rgba(255,255,255,.25);color:inherit}
 /* the footer: a solid band that covers the list, with a soft fade above it and the safe area below */
-.onb-foot{position:sticky;bottom:calc(-18px - env(safe-area-inset-bottom,0px));margin:auto calc(-1 * var(--gut-r)) calc(-18px - env(safe-area-inset-bottom,0px)) calc(-1 * var(--gut));padding:12px var(--gut-r) calc(14px + env(safe-area-inset-bottom,0px)) var(--gut);background:var(--bg)}
-.onb-foot::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:32px;background:linear-gradient(180deg,transparent,var(--bg));pointer-events:none}
+.onb-foot{position:sticky;z-index:5;bottom:calc(-18px - env(safe-area-inset-bottom,0px));margin:auto calc(-1 * var(--gut-r)) calc(-18px - env(safe-area-inset-bottom,0px)) calc(-1 * var(--gut));padding:12px var(--gut-r) calc(14px + env(safe-area-inset-bottom,0px)) var(--gut);
+  background:color-mix(in srgb,var(--bg) 58%,transparent);-webkit-backdrop-filter:blur(30px) saturate(1.8);backdrop-filter:blur(30px) saturate(1.8);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--ink) 9%,transparent)}
+.onb-foot::before{display:none}
+.onb-body{display:contents}
 .onb-list{padding-bottom:8px}
 /* what's picked so far: one rail across every league, each chip removes on tap */
-.onb-picked{margin:-4px 0 10px}
+.onb-picked{margin:-2px calc(-1 * var(--gut-r)) 10px calc(-1 * var(--gut))}
 .onb-picked:empty{display:none}
+.onb-picked .onb-picked-row{padding:4px var(--gut-r) 8px var(--gut);margin:0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 var(--gut),#000 calc(100% - var(--gut-r)),transparent);mask-image:linear-gradient(90deg,transparent,#000 var(--gut),#000 calc(100% - var(--gut-r)),transparent)}
 .onb-picked-h{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding:0 0 8px}
 .onb-picked-h span{margin-left:6px;font-weight:700;letter-spacing:0;text-transform:none}
 .onb-picked-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 6px;margin:0 -2px}
@@ -1713,3 +1717,16 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   .vhero{min-height:340px;border-radius:22px}
   .vhero h1{font-size:56px}
 }
+
+
+/* the team bands in a player list (the Players tab, setup): flush with the rows, the team's own colour as the ground so one team
+   ends and the next begins at a glance, the logo large, room below before the first player */
+.pp > button.thead,.onb .pp button.thead,.pp .rows button.thead{width:100%;margin:14px 0 8px;padding:10px 12px 10px 12px;gap:12px;border-radius:14px;
+  background:var(--grain),linear-gradient(90deg,color-mix(in srgb,var(--tf,var(--ink-3)) 30%,var(--surf)) 0%,color-mix(in srgb,var(--tf,var(--ink-3)) 10%,var(--surf)) 100%);background-blend-mode:soft-light,normal;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px color-mix(in srgb,var(--tf,var(--ink-3)) 36%,transparent),inset 4px 0 0 var(--tf,var(--ink-3)),var(--plate-shadow)}
+:root[data-theme="light"] .pp > button.thead,:root[data-theme="light"] .onb .pp button.thead,:root[data-theme="light"] .pp .rows button.thead{background:var(--grain),linear-gradient(90deg,color-mix(in srgb,var(--tf,var(--ink-3)) 18%,#fff) 0%,color-mix(in srgb,var(--tf,var(--ink-3)) 6%,#fff) 100%);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px color-mix(in srgb,var(--tf,var(--ink-3)) 28%,transparent),inset 4px 0 0 var(--tf,var(--ink-3)),var(--plate-shadow)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .pp > button.thead,:root:not([data-theme="dark"]) .onb .pp button.thead,:root:not([data-theme="dark"]) .pp .rows button.thead{background:var(--grain),linear-gradient(90deg,color-mix(in srgb,var(--tf,var(--ink-3)) 18%,#fff) 0%,color-mix(in srgb,var(--tf,var(--ink-3)) 6%,#fff) 100%);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px color-mix(in srgb,var(--tf,var(--ink-3)) 28%,transparent),inset 4px 0 0 var(--tf,var(--ink-3)),var(--plate-shadow)} }
+.pp button.thead .bar{display:none}
+.pp button.thead .logo{width:36px;height:36px}
+.pp button.thead b{font-size:16px;letter-spacing:-.01em}
+.pp button.thead:first-child{margin-top:4px}

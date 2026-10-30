@@ -408,12 +408,22 @@
     const dots = `<div class="onb-dots">${Array.from({ length: STEPS }, (_, i) => `<i class="${i === n ? 'on' : ''}"></i>`).join('')}</div>`;
     const countFor = k => n === 1 ? V.fplayers.all().filter(p => p.lk === k).length : (HW.favs.all()[k] || []).length;
     const leaguePills = `<div class="pills onb-pills" style="--n:${ORDER.length};--i:${Math.max(0, ORDER.indexOf(lk))}">${ORDER.map(k => `<button class="pill${k === lk ? ' on' : ''}" data-act="onb-lk" data-lk="${k}" data-step="${n}"><span>${esc(LEAGUES[k].label)}</span>${countFor(k) ? `<span class="ct">${countFor(k)}</span>` : ''}</button>`).join('')}</div>`;
-    const frame = (title, body, inner, foot) => openPanel(`<div class="onb"><div class="onb-logo">${onbMark}</div>${dots}<h2>${title}</h2><p>${body}</p>${inner}<div class="onb-foot">${foot}</div></div>`, { full: true });
+    const frame = (title, body, inner, foot) => {
+      /* a league change on the pick steps swaps the list in place: the switch moves at once and the old list stays until the new
+         one is ready, so a tap never shows a blank step or a frozen knob */
+      const cur = !$panel.hidden && $panel.querySelector('.onb');
+      if (cur && cur.dataset.step === String(n) && (n === 0 || n === 1)) {
+        const pills = cur.querySelector('.onb-pills'); if (pills) { pills.style.setProperty('--i', Math.max(0, ORDER.indexOf(lk))); pills.querySelectorAll('.pill').forEach(p => p.classList.toggle('on', p.dataset.lk === lk)); }
+        const host = cur.querySelector('.onb-body'); if (host) { const keep = host.querySelector('.onb-pills'); host.innerHTML = inner; const fresh = host.querySelector('.onb-pills'); if (keep && fresh) fresh.replaceWith(keep); }   // the same switch stays, so its knob slides
+        return;
+      }
+      openPanel(`<div class="onb" data-step="${n}"><div class="onb-logo">${onbMark}</div>${dots}<h2>${title}</h2><p>${body}</p><div class="onb-body">${inner}</div><div class="onb-foot">${foot}</div></div>`, { full: true });
+    };
     if (n === 0 || n === 1) {
       const nn = n === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length;
       frame(n === 0 ? 'Pick your teams' : 'Follow some players', n === 0 ? 'They lead Home and are the only ones you get updates about.' : 'Picked from the rosters of the teams you follow. Search any team to see its roster.',
         n === 0 ? `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div class="search" style="margin:0 0 12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input id="onbq" type="search" placeholder="Search teams" autocomplete="off"></div><div id="onbList" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`
-          : `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div id="onbPick" class="onb-list"></div>`,
+          : `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div id="onbPick" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`,
         `<button class="btn ghost" data-act="onb-next" data-step="${n + 1}">Skip</button><button class="btn" data-act="onb-next" data-step="${n + 1}" id="onbNext">${nn ? `Continue with ${nn}` : 'Continue'}</button>`);
       if (n === 1) { onbCount(); await V.playerPicker(document.getElementById('onbPick'), L, { leaders: true, select: true }); onbCount(); return; }
       const list = document.getElementById('onbList'); const inp = document.getElementById('onbq');
@@ -464,13 +474,17 @@
       let picks;
       if (step === 0) {
         const names = {}; $panel.querySelectorAll('.onb-team').forEach(t => { names[`${t.dataset.lk}:${t.dataset.id}`] = { name: t.dataset.name, logo: (t.querySelector('img') || {}).src || '' }; }); const kept = store.get('v5:onbNames', {}) || {}; Object.assign(kept, names); store.set('v5:onbNames', kept);
-        const F = HW.favs.all(); picks = ORDER.flatMap(k => (F[k] || []).map(id => ({ k, id, ...(kept[`${k}:${id}`] || { name: 'Team', logo: '' }), html: p => `<button class="pick" data-act="fav" data-lk="${p.k}" data-id="${esc(p.id)}" data-name="${esc(p.name)}" aria-label="Unfollow ${esc(p.name)}"><span class="logo s"><img src="${esc(p.logo)}" alt="" onerror="this.style.visibility='hidden'"></span><b>${esc(p.name)}</b><s></s></button>` })));
+        const F = HW.favs.all();
+        // a pick made elsewhere (another device, an earlier session) has no tile on this screen yet: its name and logo come from the league's index
+        const tried = onbCount.tried || (onbCount.tried = new Set());
+        const unknown = ORDER.filter(k => !tried.has(k) && (F[k] || []).some(id => !kept[`${k}:${id}`]));
+        if (unknown.length) { unknown.forEach(k => tried.add(k)); Promise.all(unknown.map(k => V.teamsIndex(LEAGUES[k]).then(idx => { (F[k] || []).forEach(id => { const t = idx[id]; if (t && !kept[`${k}:${id}`]) kept[`${k}:${id}`] = { name: t.short || t.name || 'Team', logo: t.logo || '' }; }); }).catch(() => { }))).then(() => { store.set('v5:onbNames', kept); onbCount(); }); }   // each league is looked up once
+        picks = ORDER.flatMap(k => (F[k] || []).map(id => ({ k, id, ...(kept[`${k}:${id}`] || { name: 'Team', logo: '' }), html: p => `<button class="pick" data-act="fav" data-lk="${p.k}" data-id="${esc(p.id)}" data-name="${esc(p.name)}" aria-label="Unfollow ${esc(p.name)}"><span class="logo s"><img src="${esc(p.logo)}" alt="" onerror="this.style.visibility='hidden'"></span><b>${esc(p.name)}</b><s></s></button>` })));
       } else {
         picks = V.fplayers.all().map(pl => ({ k: pl.lk, id: pl.id, name: pl.short || pl.name, html: p => `<button class="pick" data-act="follow-player" data-snap='${esc(JSON.stringify(pl))}' aria-label="Unfollow ${esc(pl.name)}">${V._.headshot(pl.img, pl.color || '', 26, pl.name)}<b>${esc(p.name)}</b>${pl.team ? `<i>${esc(pl.team)}</i>` : ''}<s></s></button>` }));
       }
       const lk = lkOf(onbLk); const here = picks.filter(p => p.k === lk);
-      const counts = ORDER.map(k => { const n = picks.filter(p => p.k === k).length; return `<button class="lkc${k === lk ? ' on' : ''}${n ? '' : ' none'}" data-act="onb-lk" data-lk="${k}" data-step="${step}">${esc(LEAGUES[k].label)}<b>${n}</b></button>`; }).join('');
-      rail.innerHTML = picks.length ? `<div class="onb-picked-h">Picked <span>${picks.length}</span><span class="lkcs">${counts}</span></div>${here.length ? `<div class="onb-picked-wrap">${here.map(p => p.html(p)).join('')}</div>` : `<p class="onb-none">None from the ${esc(LEAGUES[lk].label)} yet.</p>`}` : '';
+      rail.innerHTML = here.length ? `<div class="onb-picked-row">${here.map(p => p.html(p)).join('')}</div>` : '';
     }
   };
   $panel.addEventListener('rivl:fav', onbCount); $panel.addEventListener('rivl:follow', onbCount);
