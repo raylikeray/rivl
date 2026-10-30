@@ -147,6 +147,24 @@
   /* one team's line on a card: the side that is ahead (leading live, or the winner) gets its score in the team colour */
   /* 'NBA Cup - Semifinals' → 'NBA Cup Semifinals': the feed's note on a game whose teams aren't set */
   const noteWord = g => String(g.note || '').replace(/\s+-\s+/g, ' ').trim();
+  /* The playoff line, everywhere a game appears: "WNBA Finals · Game 7 · Series tied 3-3". The round and game come from
+     the event's own headline, the standing from the feed's series summary, verbatim — so it reads "GS leads series 3-2"
+     exactly as ESPN writes it, and afterwards "GS wins series 4-3". Nothing is shown for a game that has no series. */
+  const seriesParts = g => {
+    const s = g.series; const n = noteWord(g);
+    if (!s && !/game\s*\d|finals|semifinal|round|playoff/i.test(n)) return [];
+    const head = n ? n.replace(/\s+Game\s+(\d+)/i, ' · Game $1') : [s && s.title, s && s.game ? `Game ${s.game}` : ''].filter(Boolean).join(' · ');
+    return [head, s && s.summary].filter(Boolean);
+  };
+  const seriesLine = g => seriesParts(g).join(' · ');
+  // the same, fit for a chip: "Finals G7", "Semis G3"
+  const seriesShort = g => {
+    const s = g.series; const n = noteWord(g); if (!s && !n) return '';
+    const round = (s && s.title) || n.replace(/\s*·?\s*Game\s*\d+.*$/i, '');
+    const r = round.replace(/^(NBA|WNBA|NCAA)\s+/i, '').replace(/Semifinals?/i, 'Semis').replace(/Quarterfinals?/i, 'Quarters').replace(/First Round/i, 'Rd 1').replace(/Conference /i, '');
+    const gm = (s && s.game) || +((n.match(/game\s*(\d+)/i) || [])[1] || 0);
+    return [r, gm ? `G${gm}` : ''].filter(Boolean).join(' ');
+  };
   function side(L, g, t, other) {
     if (t.tbd) return `<div class="side tbd"><span class="logo tbd"></span><span class="nm"><b>To be decided</b><span>${esc(noteWord(g))}</span></span></div>`;
     const has = g.state !== 'pre' && t.score != null && other.score != null;
@@ -161,7 +179,9 @@
   function gameCard(L, g, ctx, withForecast = true, timeOnly = false) {
     if (g.tbd) return `<a class="game tbd" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}"><div class="side tbd"><span class="logo tbd"></span><span class="nm"><b>Teams to be decided</b><span>${esc(noteWord(g) || 'Matchup not set yet')}</span></span></div><div class="status">${statusLine(L, g, timeOnly)}<span class="ln"></span><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div></a>`;
     const f = withForecast && prefs.get('forecast') && !g.tbd ? safeF(L, g, ctx) : null;
-    return `<a class="game" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}">
+    const ps = seriesLine(g);
+    return `<a class="game${ps ? ' po' : ''}" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}">
+      ${ps ? `<div class="pstrip">${esc(ps)}</div>` : ''}
       ${side(L, g, g.away, g.home)}
       <div class="status">${statusLine(L, g, timeOnly)}<span class="ln"></span><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>
       ${side(L, g, g.home, g.away)}
@@ -175,7 +195,7 @@
     const favC = fav ? V_lift(teamColor(fav, L)) : '#fff';   // the bar wears the favourite's own colour — the one its panel above is painted in — lifted so it reads on the dark strip
     const tm = t => t.tbd ? `<div class="tm"><span class="logo tbd"></span><b>TBD</b><span>${esc(noteWord(g))}</span></div>` : page ? `<a class="tm" href="${href.team(L.key, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></a>` : `<div class="tm">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></div>`;
     const inner = `<div class="in">
-      <div class="vs">${tm(g.away)}<div class="mid"><span class="st${g.state === 'in' ? ' on' : ''}">${esc(g.state === 'in' ? g.detail : g.state === 'post' ? finalWord(g) : tipOf(g))}</span><div class="sc">${g.off ? '' : `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`}</div><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>${tm(g.home)}</div>
+      <div class="vs">${tm(g.away)}<div class="mid"><span class="st${g.state === 'in' ? ' on' : ''}">${esc(g.state === 'in' ? g.detail : g.state === 'post' ? finalWord(g) : tipOf(g))}</span>${seriesParts(g).length ? `<span class="ps">${seriesParts(g).map(x => `<span>${esc(x)}</span>`).join('')}</span>` : ''}<div class="sc">${g.off ? '' : `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`}</div><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>${tm(g.home)}</div>
       ${f && !g.off ? `<div class="fc${f.pHome >= .5 ? ' home' : ''}"><div class="bar"><i style="width:${(p * 100).toFixed(1)}%;background:${esc(favC)}"></i></div><b>${g.state === 'post' ? 'Had ' : ''}${esc(fav.short)} ${pct(p)}${g.state === 'pre' && f.proj ? `<small>${esc(g.away.abbr)} ${f.proj.away}–${f.proj.home} ${esc(g.home.abbr)}</small>` : ''}</b></div>` : ''}
     </div>`;
     return page ? `<div class="hero page" data-gid="${esc(g.id)}" style="--a:${esc(a)};--b:${esc(b)}">${inner}</div>`
@@ -273,7 +293,7 @@
     const S0 = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null };
     const favTeam = t => mine.includes(String(t.id));
     const teamOf = p => { const k = String(p.team || '').toLowerCase(); return t => (p.teamId && String(t.id) === String(p.teamId)) || (k && [t.abbr, t.short, t.name].some(x => String(x || '').toLowerCase() === k)); };
-    const chipOf = g => { const sc = g.off ? `<span>${esc(g.off)}</span>` : g.state === 'pre' ? `<span>${esc(tipOf(g))}</span>` : g.state === 'in' ? `<span class="on">${g.away.score}–${g.home.score} · ${esc(g.detail)}</span>` : `<span>${g.away.score}–${g.home.score} · ${esc(finalWord(g))}</span>`; return `<a class="bchip" href="${href.game(lk, g.id)}">${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b>${sc}</a>`; };
+    const chipOf = g => { const sc = g.off ? `<span>${esc(g.off)}</span>` : g.state === 'pre' ? `<span>${esc(tipOf(g))}</span>` : g.state === 'in' ? `<span class="on">${g.away.score}–${g.home.score} · ${esc(g.detail)}</span>` : `<span>${g.away.score}–${g.home.score} · ${esc(finalWord(g))}</span>`; return `<a class="bchip" href="${href.game(lk, g.id)}">${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b>${sc}${seriesShort(g) ? `<em class="po">${esc(seriesShort(g))}</em>` : ''}</a>`; };
     const dayWord = (ymd, long) => { const rd = relDay(ymd); return rd === 'Tomorrow' || rd === 'Tonight' ? rd : dayLabel(ymd, { weekday: long ? 'long' : 'short' }); };
     const nextChip = g => `<a class="bchip next" href="${href.game(lk, g.id)}"><em>${esc(dayWord(HW.ymdOf(g.date)))}</em>${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b><span>${esc(tipOf(g))}</span></a>`;
     const basicTeam = id => { const t = S0.tIdx[id]; const r = S0.st && S0.st.byId && S0.st.byId[id]; if (!t && !r) return null; return { id, abbr: t ? t.abbr : r.abbr, name: t ? t.name : r.name, short: t ? t.short : r.short, loc: t ? t.loc : r.loc, color: teamColor({ id, color: t && t.color }, L), logo: (t && t.logo) || (r && r.logo) || '', rec: r ? `${r.w}-${r.l}` : '', standing: r && L.standingsMode !== 'conferences' ? `${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}` : '', row: r || null, next: null, last: null }; };
@@ -864,5 +884,5 @@
   }
 
   HW.v5 = Object.assign(HW.v5 || {}, { home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
+    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

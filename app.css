@@ -1884,3 +1884,15 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
    rest blended 7% over transparent, and the two rounded a level apart — a hairline seam where the team column ended */
 .tbl.stand tr.me td{background:color-mix(in srgb,var(--ink) 7%,var(--surf))}
 .tbl.stand tr.me td:first-child{background-color:color-mix(in srgb,var(--ink) 7%,var(--surf));background-image:none}
+
+/* ===== v100: the playoff line =====
+   A series game says what it is wherever it appears. On the score card a slim band across the top — "WNBA Finals · Game 7 ·
+   Series tied 3-3"; in the hero a line under the status pill; on Home's chips a short form, "Finals G7". The words are the
+   feed's own: the round and game from the event's headline, the standing from its series summary. */
+.game .pstrip{padding:7px 16px 6px;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);
+  background:color-mix(in srgb,var(--ink) 6%,transparent);box-shadow:inset 0 -1px 0 var(--plate-line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* two short lines, held to the width of the score so the middle column cannot grow and squeeze the teams beside it */
+.hero .mid .ps{display:block;margin:-4px auto 8px;max-width:168px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.9);text-shadow:0 1px 2px rgba(0,0,0,.45);line-height:1.3}
+.hero .mid .ps span{display:block;white-space:normal;text-wrap:balance}
+.hero .mid .ps span + span{color:rgba(255,255,255,.72);font-weight:700;letter-spacing:.04em}
+.bchip em.po{font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);padding:2px 7px;border-radius:999px;background:color-mix(in srgb,var(--ink) 8%,transparent);margin-left:4px;white-space:nowrap}

@@ -222,10 +222,23 @@ function parseEvent(e, L) {
     venue: c.venue && c.venue.fullName, city: c.venue && c.venue.address && [c.venue.address.city, c.venue.address.state].filter(Boolean).join(', '),
     tv: tvOf(c), neutral: !!c.neutralSite, confGame: !!c.conferenceCompetition,
     note: (c.notes && c.notes[0] && c.notes[0].headline) || (e.season && e.season.slug === 'post-season' ? 'Postseason' : ''),
+    series: seriesOf(c, home, away),
     headline: c.headlines && c.headlines[0] && (c.headlines[0].shortLinkText || c.headlines[0].description) || '',
     sit: situationOf(c, L, t.state),
     odds: oddsOf(c.odds || e.pickcenter || [], home, away)
   };
+}
+/* A playoff series, as the feed states it: the round ("WNBA Finals"), its standing in ESPN's own words ("Series tied 3-3",
+   "GS leads series 3-2", "GS wins series 4-3"), each side's wins, and which game this is. The game number is read from the
+   event's headline ("WNBA Finals - Game 7"); only when that is missing is it taken as the games already won plus one. */
+function seriesOf(c, home, away) {
+  const s = c && c.series; if (!s || !(s.type || s.title || s.summary)) return null;
+  const wins = t => { const x = (s.competitors || []).find(k => String(k.id) === String(t.id)); return x && x.wins != null ? +x.wins || 0 : null; };
+  const hw = wins(home), aw = wins(away);
+  const note = (c.notes && c.notes[0] && c.notes[0].headline) || '';
+  const gm = (note.match(/game\s*(\d+)/i) || [])[1];
+  const game = gm ? +gm : (hw != null && aw != null ? hw + aw + (s.completed ? 0 : 1) : 0);
+  return { title: s.title || '', summary: s.summary || '', done: !!s.completed, total: +s.totalCompetitions || 0, hw, aw, game };
 }
 /* the market's line, from the home side: spread (negative when the home team is favoured), total, moneylines */
 function oddsOf(list, home, away) {

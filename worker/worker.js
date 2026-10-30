@@ -69,7 +69,10 @@ function parseGame(e) {
   const top = x => { const L1 = (x.leaders || []).find(l => /^points$/i.test(l.name || '')); const a = L1 && L1.leaders && L1.leaders[0]; const v = a && parseFloat(a.displayValue); if (!a || !a.athlete || !isFinite(v) || v <= 0) return ''; const nm = String(a.athlete.shortName || a.athlete.displayName || ''); return `${nm} ${Math.round(v)} pts`; };
   const side = x => { const tm = x.team || {}; return { id: String(tm.id), abbr: tm.abbreviation || '', short: tm.shortDisplayName || tm.name || '', score: x.score != null && x.score !== '' ? +x.score : null, top: top(x) }; };
   const comp = c.competitors || [];
-  return { id: String(e.id), date: e.date, state: t.state || 'pre', detail: t.shortDetail || '', period: st.period || 0, clock: st.displayClock || '', home: side(comp.find(x => x.homeAway === 'home') || comp[0] || {}), away: side(comp.find(x => x.homeAway === 'away') || comp[1] || {}), tv: (c.broadcasts || []).flatMap(b => b.names || []).slice(0, 2).join(' · ') };
+  // the playoff line for the alert: the event's own headline ("WNBA Finals - Game 7") and the series standing, verbatim
+  const note = String((c.notes && c.notes[0] && c.notes[0].headline) || '').replace(/\s+-\s+/g, ', ').trim();
+  const series = c.series && c.series.summary ? String(c.series.summary) : '';
+  return { id: String(e.id), date: e.date, note, series, state: t.state || 'pre', detail: t.shortDetail || '', period: st.period || 0, clock: st.displayClock || '', home: side(comp.find(x => x.homeAway === 'home') || comp[0] || {}), away: side(comp.find(x => x.homeAway === 'away') || comp[1] || {}), tv: (c.broadcasts || []).flatMap(b => b.names || []).slice(0, 2).join(' · ') };
 }
 async function getJson(u) { const r = await fetch(u, { headers: { 'user-agent': 'rivl-worker' }, cf: { cacheTtl: 20 } }); if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); }
 
@@ -172,10 +175,10 @@ async function runLeague(env, lk, subs) {
   for (const g of games) {
     const mineH = teams.has(g.home.id), mineA = teams.has(g.away.id); if (!mineH && !mineA) continue;
     const both = [mineH ? `${lk}:${g.home.id}` : null, mineA ? `${lk}:${g.away.id}` : null].filter(Boolean);
-    const gk = `${lk}:${g.id}`; const url = `#game/${lk}/${g.id}`; const name = `${g.away.short} at ${g.home.short}`;
+    const gk = `${lk}:${g.id}`; const url = `#game/${lk}/${g.id}`; const name = `${g.away.short} at ${g.home.short}${g.note ? ` — ${g.note}` : ''}`;
     const send = (kind, payload, dedupe) => once(env, dedupe, async () => { for (const tk of both) await deliver(env, subs, tk, kind, { ...payload, url, league: lk }); });
     const mins = (new Date(g.date) - now) / 60000;
-    if (g.state === 'pre' && mins > 0 && mins <= 20) await send('pre', { title: `${name} ${L.verb} in ${Math.round(mins)} min`, body: `${tipCT(g.date)}${g.tv ? ' · ' + g.tv : ''}`, tag: `pre:${gk}` }, `pre:${gk}`);
+    if (g.state === 'pre' && mins > 0 && mins <= 20) await send('pre', { title: `${name} ${L.verb} in ${Math.round(mins)} min`, body: `${tipCT(g.date)}${g.tv ? ' · ' + g.tv : ''}${g.series ? ' · ' + g.series : ''}`, tag: `pre:${gk}` }, `pre:${gk}`);
     if (g.state === 'in') {
       const snap = await env.KV.get('st:' + gk, 'json') || {};
       const hs = g.home.score || 0, as = g.away.score || 0;
