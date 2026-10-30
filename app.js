@@ -460,13 +460,13 @@
   /* The first thing a new person sees: not a wall of thirty teams but the mark, what RIVL is in two lines, and what the
      next three steps do. Then the picks. */
   function onbWelcome() {
-    /* The pitch first, then the setup ahead of you as three numbered steps — the cards are the steps, so nothing reads as a
-       feature list that ought to be tappable. One button starts step 1. */
-    const steps = [
-      ['Pick your teams', 'NBA, WNBA and college, men and women. They lead Home and are all you hear about.'],
-      ['Follow your players', 'From your teams’ rosters, or search anyone. Their lines land on Home every night.'],
-      ['Make Home yours', 'Choose what Home shows — then add RIVL to your home screen.']];
-    openPanel(`<div class="onb welcome"><div class="onb-logo big">${onbMark}</div><h2>Your teams.<br>Nothing else.</h2><p>Live scores, RIVL’s own call on every game, and the news on the players you care about — no ads, no noise. Set it up in three steps.</p><div class="onb-feats steps">${steps.map(([t, b], i) => `<div class="feat"><i class="n">${i + 1}</i><div><b>${t}</b><span>${b}</span></div></div>`).join('')}</div><div class="onb-foot"><span class="onb-gap"></span><button class="btn" data-act="onb-next" data-step="0">Start with step 1${arrow}</button></div></div>`, { full: true });
+    /* An editorial opener, not a template: the line set huge in the scoreboard face, flush left over a half-court drawn in
+       the accent that runs off the right edge, one sentence, the three steps as a single line, one button. */
+    const court = `<svg class="court" viewBox="0 0 400 400" aria-hidden="true" fill="none" stroke="currentColor"><circle cx="200" cy="200" r="58"/><circle cx="200" cy="200" r="18"/><path d="M200 0V400"/><path d="M340 40H400M340 360H400"/><path d="M400 70A150 130 0 0 0 400 330"/><rect x="330" y="140" width="70" height="120"/><path d="M330 200A34 34 0 0 1 330 200.1"/><circle cx="330" cy="200" r="34"/></svg>`;
+    openPanel(`<div class="onb welcome"><div class="wcourt">${court}</div><div class="onb-logo">${onbMark}</div><h2 class="wl"><span>Your</span><span>teams.</span><span class="a">Nothing</span><span class="a">else.</span></h2><p class="wsub">Live scores, a call on every game, and the news on the players you follow. No ads, no noise.</p><ol class="wsteps"><li><i>1</i>Teams</li><li><i>2</i>Players</li><li><i>3</i>Home</li></ol><div class="onb-foot"><button class="btn" data-act="onb-next" data-step="0">Pick your teams${arrow}</button></div></div>`, { full: true });
+    /* the headline fills the width whatever face is in use: measured once the fonts are in, scaled to the widest line */
+    const fit = () => { const h = $panel.querySelector('h2.wl'); if (!h) return; h.style.fontSize = ''; const w = h.clientWidth; const widest = Math.max(...[...h.children].map(x => x.scrollWidth)); const cur = parseFloat(getComputedStyle(h).fontSize); if (widest > 0) h.style.fontSize = Math.min(150, Math.floor(cur * w / widest * 0.98)) + 'px'; };
+    fit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
   }
   async function onbStep(n) {
     const lk = lkOf(onbLk); const L = LEAGUES[lk];
