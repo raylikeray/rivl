@@ -2294,3 +2294,16 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 @media (prefers-reduced-motion:reduce){.onb.slide-f > *,.onb.slide-b > *,.onb.slide-f > .onb-body > *,.onb.slide-b > .onb-body > *{animation:none}.onb-prog .pd u{transition:none}}
 /* the first heading sits where the logo used to */
 .onb:not(.welcome) > h2:first-child{margin-top:18px}
+/* ===== v124: the top bar's discs are solid =====
+   The back and share discs and the title pill were frosted glass. On iPhone the blur reaches past the screen's edge,
+   samples nothing there, and the disc nearest the edge came out lit on one half and shaded on the other. They are
+   solid now, in the team's colour or the page's, with a short shadow only. */
+.topbar .ib,.topbar .sp .ib,.topbar .ttl,.topbar .ttl.plain{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--surf)}
+:root[data-tint] .topbar .ib,:root[data-tint] .topbar .sp .ib,:root[data-tint] .topbar .ttl,:root[data-tint] .topbar .ttl.plain{background:color-mix(in srgb,var(--tint) 82%,var(--bg));box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 1px rgba(255,255,255,.1),0 1px 3px rgba(0,0,0,.2)}
+:root[data-tint] .topbar .ib:active,:root[data-tint] .topbar .sp .ib:active{background:color-mix(in srgb,var(--tint) 95%,var(--bg))}
+.topbar .ib,.topbar .sp .ib,.topbar .ttl,.topbar .ttl.plain,:root[data-theme="light"] .topbar .ib,:root[data-theme="light"] .topbar .ttl{box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 1px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.18)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .topbar .ib,:root:not([data-theme="dark"]) .topbar .ttl{box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 1px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.18)} }
+/* the live-scores strip is a free scroll: it stops where your finger lets go, with no snapping a chip into place, and a
+   sideways swipe on it stays in the strip instead of reaching the page */
+.livebar .lb-in{scroll-snap-type:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.livebar .lg{scroll-snap-align:none}

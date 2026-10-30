@@ -87,7 +87,14 @@
       render.onReal = fadeIn;
       render.holdT = setTimeout(() => { if (render.onReal === fadeIn && my === seq) { render.onReal = null; V.showSkeleton(); fadeIn(); render.onReal = () => { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); }; } }, 260);
     }
-    if (leagueChanged || ($main.dataset.y === '0' && fresh)) window.scrollTo(0, 0);
+    if (leagueChanged) {
+      /* A league switch is a new screen, not the old one refreshed: the old league never stays on screen while the new one
+         loads (its skeleton paints instead), and a scroll still coasting from a flick is stopped before the jump to the top,
+         so iOS cannot carry the page on down or bounce it back after the new league lands. */
+      $main.dataset.real = '0';
+      const de = document.documentElement; de.style.overflow = 'hidden'; window.scrollTo(0, 0); void de.offsetHeight;
+      requestAnimationFrame(() => { de.style.overflow = ''; window.scrollTo(0, 0); });
+    } else if ($main.dataset.y === '0' && fresh) window.scrollTo(0, 0);
     render.lk = r.lk;
     if (!['team', 'player', 'game'].includes(r.name) && V._.tint) V._.tint('');   // only a team's, a player's or a game's page wears a team colour
     if (leagueScreen) store.set('v5:screen', r.name);
@@ -202,7 +209,7 @@
     if (!list.length) { if (!$live.hidden) { $live.hidden = true; inner.innerHTML = ''; } return; }
     const want = list.map(({ g, L }) => `${L.key}:${g.id}`);
     const have = [...inner.children].map(el => el.dataset.lid);
-    if (want.join() !== have.join()) inner.innerHTML = list.map(({ g, L }) => liveChip(g, L)).join('');
+    if (want.join() !== have.join()) { const x = inner.scrollLeft; inner.innerHTML = list.map(({ g, L }) => liveChip(g, L)).join(''); inner.scrollLeft = x; }   // a game starting or ending rebuilds the strip; where you had scrolled it stays put
     else list.forEach(({ g, L }, i) => {   // same games: touch only the numbers and the clock
       const el = inner.children[i]; const sc = el.querySelectorAll('.sc'); const st = el.querySelector('.st');
       [[g.away, g.home], [g.home, g.away]].forEach(([t, o], j) => { const txt = String(t.score ?? ''); if (sc[j].textContent !== txt) { sc[j].textContent = txt; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } sc[j].classList.toggle('on', t.score != null && o.score != null && t.score > o.score); });
