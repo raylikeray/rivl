@@ -2307,3 +2307,10 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
    sideways swipe on it stays in the strip instead of reaching the page */
 .livebar .lb-in{scroll-snap-type:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
 .livebar .lg{scroll-snap-align:none}
+/* ===== v125: the game clock reads at a glance =====
+   The quarter and clock sat in a see-through dark tag, so the team colour and the black seam ran through it and it sank
+   into whichever side it was on. It is now a solid white pill above everything on the card, dark type, figures that do
+   not jump as the clock runs, and the live dot. White holds against every team colour. */
+.hero .mid .st{position:relative;z-index:3;height:28px;padding:0 12px;gap:7px;border-radius:999px;background:#FFFFFF;color:#0A0B0E;font-size:13.5px;font-weight:800;letter-spacing:.01em;font-variant-numeric:tabular-nums;
+  box-shadow:inset 0 -1px 0 rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.3),0 4px 12px -4px rgba(0,0,0,.45)}
+.hero .mid .st.on::before{width:7px;height:7px;background:#E5252A;box-shadow:0 0 0 2px rgba(229,37,42,.18)}
