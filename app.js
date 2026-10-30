@@ -482,11 +482,15 @@
         const byShort = (a, b) => (a.short || a.name || '').localeCompare(b.short || b.name || '');
         const tile = (id, rank) => { const t = idx[id] || {}; const r = st && st.byId && st.byId[id]; return { id, short: t.short || (r && r.short) || t.name || (r && r.name) || '', name: t.name || (r && r.name) || '', abbr: t.abbr || (r && r.abbr) || '', logo: t.logo || (r && r.logo) || '', rec: r ? `${r.w}-${r.l}` : '', rank: rank || 0 }; };
         const seen = new Set(); const groups = [];
+        /* ESPN's college standings put some schools in more than one group — a conference and a division of it — so a team
+           could be drawn twice. Each conference keeps only the first claim on a team, and no group repeats one internally.
+           The ranked group is deliberately a second home for its teams; the note inside it says so. */
+        const once = rows => { const got = new Set(); return rows.filter(r => r && r.id && !got.has(r.id) && got.add(r.id)); };
         if (L.standingsMode === 'conferences' && st && st.groups.length) {
-          if (R && R.ranks && R.ranks.length) groups.push({ name: R.name || 'Top 25', rows: R.ranks.map(x => tile(String(x.team.id), x.rank)) });
-          st.groups.slice().sort((a, b) => V._.confName(a.name, a.abbr).localeCompare(V._.confName(b.name, b.abbr))).forEach(g => { const rows = g.rows.map(r => { seen.add(r.id); return tile(r.id); }).sort(byShort); if (rows.length) groups.push({ name: V._.confName(g.name, g.abbr), rows }); });
-          const rest = Object.keys(idx).filter(id => !seen.has(id)).map(id => tile(id)).sort(byShort); if (rest.length) groups.push({ name: 'Other', rows: rest });
-        } else groups.push({ name: '', rows: Object.keys(idx).map(id => tile(id)).sort(byShort) });
+          if (R && R.ranks && R.ranks.length) groups.push({ name: R.name || 'Top 25', note: 'Also listed under their conference.', rows: once(R.ranks.map(x => tile(String(x.team.id), x.rank))) });
+          st.groups.slice().sort((a, b) => V._.confName(a.name, a.abbr).localeCompare(V._.confName(b.name, b.abbr))).forEach(g => { const rows = once(g.rows.filter(r => !seen.has(r.id)).map(r => { seen.add(r.id); return tile(r.id); })).sort(byShort); if (rows.length) groups.push({ name: V._.confName(g.name, g.abbr), rows }); });
+          const rest = once(Object.keys(idx).filter(id => !seen.has(id)).map(id => tile(id))).sort(byShort); if (rest.length) groups.push({ name: 'Other', rows: rest });
+        } else groups.push({ name: '', rows: once(Object.keys(idx).map(id => tile(id))).sort(byShort) });
         /* 360 college teams in one wall is not a list anyone can use, so each conference is a full-width bar that folds its
            own grid. The ranked group leads and stays open; the conferences start closed, so the whole league fits on a screen
            and you open the one you want. A search opens every section that still has a match, without disturbing the saved
@@ -498,10 +502,14 @@
           const html = groups.map((g, gi) => {
             const rows = g.rows.filter(tm => !q || `${tm.name} ${tm.short} ${tm.abbr} ${g.name}`.toLowerCase().includes(q));
             if (!rows.length) return '';
-            const grid = `<div class="onb-grid">${rows.map(tm => { const on = HW.favs.has(lk, tm.id); return `<button class="onb-team${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tm.id)}" data-name="${esc(tm.short)}" aria-pressed="${on}"><span class="logo">${V._.imgSized(tm.logo || '', 128, 128)}</span><b>${esc(tm.short)}</b><span>${tm.rank ? `<em>No. ${tm.rank}</em>` : ''}${esc(tm.rec)}</span><i></i></button>`; }).join('')}</div>`;
+            /* eager, at low priority: a crest inside a closed fold would otherwise not be fetched until the fold opened,
+               so every conference popped in blank and then filled. They load quietly up front, the service worker keeps
+               them, and the section is already drawn when you open it — with or without a signal the second time. */
+            const grid = `<div class="onb-grid">${rows.map(tm => { const on = HW.favs.has(lk, tm.id); return `<button class="onb-team${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tm.id)}" data-name="${esc(tm.short)}" aria-pressed="${on}"><span class="logo">${V._.imgSized(tm.logo || '', 128, 128, 'loading="eager" fetchpriority="low" decoding="async"')}</span><b>${esc(tm.short)}</b><span>${tm.rank ? `<em>No. ${tm.rank}</em>` : ''}${esc(tm.rec)}</span><i></i></button>`; }).join('')}</div>`;
+            const body = g.note ? `<p class="onb-note">${esc(g.note)}</p>${grid}` : grid;
             if (!g.name) return grid;
             const open = q ? true : secOpen(g.name, gi === 0);
-            return `<button class="onb-sec" data-act="onbsec" data-sec="${esc(secKey(g.name))}" aria-expanded="${open}"><b>${esc(g.name)}</b><span>${rows.length}</span>${V._.chev}</button><div class="fold${open ? '' : ' closed'}">${grid}</div>`;
+            return `<button class="onb-sec" data-act="onbsec" data-sec="${esc(secKey(g.name))}" aria-expanded="${open}"><b>${esc(g.name)}</b><span>${rows.length}</span>${V._.chev}</button><div class="fold${open ? '' : ' closed'}"><div>${body}</div></div>`;
           }).join('');
           list.innerHTML = html || `<div class="empty"><b>No team matches</b><p style="margin:6px 0 0">Try the school, the nickname or the conference.</p></div>`;
           onbCount();

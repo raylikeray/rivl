@@ -659,6 +659,7 @@ html{touch-action:manipulation}
 .onb-sec em + .chev{margin-left:6px}
 .onb-sec:active{transform:scale(.993)}
 .fold + .onb-sec,.onb-grid + .onb-sec{margin-top:18px}
+.onb-note{margin:0 0 10px;font-size:12.5px;font-weight:600;color:var(--ink-3);line-height:1.35}
 .onb-team span em{font-style:normal;font-weight:800;color:var(--ink);margin-right:5px}
 /* player picker: a roster per followed team */
 .onb .pp .search{margin-left:0;margin-right:0}
@@ -855,7 +856,11 @@ body{overscroll-behavior-y:none}
   --plate-line:rgba(255,255,255,.12); --plate-hi:rgba(255,255,255,.11);
   --plate-shadow:0 1px 0 rgba(0,0,0,.7),0 2px 4px rgba(0,0,0,.4),0 10px 22px -12px rgba(0,0,0,.9);
   --well:#0B0C0F; --well-shadow:inset 0 1px 3px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.08);
-  --disc:#262A31; --disc-lo:#111317; --disc-plain:#3A3F47;
+  /* The logo disc stays light in dark mode. ESPN's default logo art is drawn to sit on white, so on a dark disc a team
+     whose mark is black or navy — Temple, Cincinnati, California, Iowa — had nothing to read against, and worse on a dim
+     screen. A light disc is legible for every team in every league without touching the artwork. --disc-plain is the
+     headshot fallback, not a logo, so it stays dark. */
+  --disc:#F4F6FA; --disc-lo:#D9DEE8; --disc-plain:#3A3F47;
   --grain:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='96'%20height='96'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='.95'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='96'%20height='96'%20filter='url(%23n)'%20opacity='.5'/%3E%3C/svg%3E");
 }
 :root[data-theme="light"]{
@@ -904,7 +909,8 @@ body{overscroll-behavior-y:none}
 .bchip span.on{color:var(--live);font-weight:800}
 
 /* ---- discs ---- */
-.logo{position:relative;background:radial-gradient(120% 120% at 30% 18%,var(--disc),var(--disc-lo));box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.08),inset 0 -7px 10px -7px rgba(0,0,0,.65),0 1px 2px rgba(0,0,0,.5),0 4px 10px -3px rgba(0,0,0,.8)}
+/* the disc is light in both themes now, so its own shading is light-on-light; the dark page keeps a deeper cast shadow */
+.logo{position:relative;background:radial-gradient(120% 120% at 30% 18%,var(--disc),var(--disc-lo));box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.1),inset 0 -7px 10px -7px rgba(16,24,40,.16),0 1px 2px rgba(0,0,0,.5),0 5px 12px -4px rgba(0,0,0,.75)}
 .logo::before{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(70% 46% at 50% 6%,rgba(255,255,255,.20),rgba(255,255,255,0) 72%);pointer-events:none}
 .logo img{position:relative;z-index:1;width:78%;height:78%;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
 .logo.tint{background:radial-gradient(120% 120% at 30% 18%,color-mix(in srgb,var(--tc) 36%,var(--disc)),color-mix(in srgb,var(--tc) 56%,var(--disc-lo)));box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 1px color-mix(in srgb,var(--tc) 75%,rgba(255,255,255,.35)),inset 0 -7px 10px -7px rgba(0,0,0,.5),0 1px 2px rgba(0,0,0,.5),0 0 0 3px color-mix(in srgb,var(--tc) 16%,transparent),0 3px 9px -2px color-mix(in srgb,var(--tc) 55%,transparent)}
@@ -924,6 +930,10 @@ body{overscroll-behavior-y:none}
 .hero .tm .logo img,.onb-team .logo img{filter:none}
 .onb-team .logo img{width:84%;height:84%}
 .hero .tm .logo img{width:100%;height:100%}
+/* The picker and the roster bands strip the disc so a logo sits straight on the tile. That reads on a light tile, which is
+   what the art is drawn for; on a dark tile a black or navy mark vanishes. In dark mode they get a light disc back. */
+:root[data-theme="dark"] .onb-team .logo,:root[data-theme="dark"] .pp .sec.pp-team h2 .logo{background:radial-gradient(120% 120% at 30% 18%,var(--disc),var(--disc-lo));box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.12),0 2px 7px -2px rgba(0,0,0,.7)}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .onb-team .logo,:root:not([data-theme="light"]) .pp .sec.pp-team h2 .logo{background:radial-gradient(120% 120% at 30% 18%,var(--disc),var(--disc-lo));box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.12),0 2px 7px -2px rgba(0,0,0,.7)} }
 .hero .tm .logo{overflow:visible}
 
 /* headshot discs: lit in the team colour, gloss across the top, the face filling the circle, the colour glowing beneath */
