@@ -2201,46 +2201,96 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .pdet .kv b{font:800 16.5px/1 var(--num);color:var(--ink);white-space:nowrap;flex:none}
 .pdet .kv b em{font:700 11px/1 var(--ui);font-style:normal;color:var(--ink-3);margin-left:5px}
 @media (max-width:359px){.pdet{grid-template-columns:1fr}}
-/* ===== v122: setup in black and white, with the progress in the footer =====
-   The welcome is the app icon (a raised black tile with the white R, the same object as the home-screen icon), "Welcome
-   to RIVL", one line on what it is, and the steps as a list with the first one outlined. Every setup screen ends in the
-   same floating bar: Back, the progress (a dot per step, the current one long, "Step 2 of 4") and the button. No accent
-   anywhere in setup; the only colour is the teams you pick. */
-.onb.welcome{text-align:left;align-items:stretch;justify-content:flex-start}
-.onb-icon{flex:none;align-self:flex-start;width:64px;height:64px;margin:10px 0 0;border-radius:17px;display:grid;place-items:center;color:#fff;
-  background:linear-gradient(180deg,#24272D,#0A0B0E 70%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -1px 0 rgba(0,0,0,.6),0 1px 1px rgba(16,24,40,.2),0 3px 6px -2px rgba(16,24,40,.28),0 12px 22px -12px rgba(16,24,40,.5)}
-.onb-icon svg{width:27px;height:auto;filter:drop-shadow(0 1px 0 rgba(0,0,0,.45))}
-:root[data-theme="dark"] .onb-icon{background:linear-gradient(180deg,#2E3138,#17191E 70%);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 1px rgba(255,255,255,.08),0 2px 4px rgba(0,0,0,.6),0 14px 26px -12px rgba(0,0,0,.9)}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .onb-icon{background:linear-gradient(180deg,#2E3138,#17191E 70%);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 1px rgba(255,255,255,.08),0 2px 4px rgba(0,0,0,.6),0 14px 26px -12px rgba(0,0,0,.9)} }
-.onb.welcome h2{margin:22px 0 0;font-size:32px;line-height:1.06;letter-spacing:-.025em}
-.onb.welcome > p{margin:8px 0 0;font-size:16px;max-width:32ch}
-.wrows{list-style:none;margin:24px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
-.wrows li{display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;background:var(--surf);box-shadow:var(--edge)}
-.wrows li.on{box-shadow:var(--edge),inset 0 0 0 2px var(--ink)}
-.wrows i{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:800 18px/1 var(--num);font-style:normal;background:var(--surf-3);color:var(--ink-2)}
-.wrows li.on i{background:var(--ink);color:var(--bg)}
-.wrows b{display:block;font-size:15.5px;color:var(--ink)}
-.wrows span span{display:block;font-size:13px;color:var(--ink-3);margin-top:1px}
-/* the footer: a floating bar, not a band */
-.onb-foot,.onb.welcome .onb-foot{bottom:10px;padding-bottom:calc(4px + env(safe-area-inset-bottom,0px));background:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;border-top:0;padding-top:14px;margin-top:auto}
-.onb-bar{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:7px;border-radius:999px;background:color-mix(in srgb,var(--surf) 88%,transparent);
-  -webkit-backdrop-filter:blur(24px) saturate(1.6);backdrop-filter:blur(24px) saturate(1.6);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 0 0 1px var(--plate-line),0 2px 6px -2px rgba(16,24,40,.18),0 14px 30px -16px rgba(16,24,40,.45)}
-:root[data-theme="dark"] .onb-bar{background:color-mix(in srgb,#1A1C21 90%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1px rgba(255,255,255,.1),0 2px 8px rgba(0,0,0,.5),0 18px 40px -16px rgba(0,0,0,.95)}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .onb-bar{background:color-mix(in srgb,#1A1C21 90%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1px rgba(255,255,255,.1),0 2px 8px rgba(0,0,0,.5),0 18px 40px -16px rgba(0,0,0,.95)} }
-.onb-bar .btn.ghost.ico,.onb-foot .onb-bar .btn.ghost.ico,:root[data-theme="light"] .onb-foot .onb-bar .btn.ghost.ico{flex:none;width:46px;height:46px;padding:0;border-radius:50%;background:var(--surf-3);color:var(--ink);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
-.onb-bar .btn:not(.ghost),[data-accent] .onb-bar .btn:not(.ghost){flex:none;margin-left:auto;height:46px;padding:0 18px;border-radius:999px;font-size:15.5px;font-weight:800;background:var(--ink);color:var(--bg);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 1px 2px rgba(0,0,0,.2)}
-.onb-prog{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:6px;padding-left:8px}
-.onb-bar .btn.ghost.ico + .onb-prog{padding-left:2px}
-.onb-prog .pd{display:flex;align-items:center;gap:5px}
-.onb-prog i{width:8px;height:8px;border-radius:4px;background:var(--line-2,var(--surf-3));transition:width .3s var(--ease),background .3s var(--ease)}
-.onb-prog i.d{background:var(--ink)}
-.onb-prog i.on{width:22px;background:var(--ink)}
+/* ===== v123: the welcome as a lit stage, and one bar for all of setup =====
+   The lockup large and centred, lifted off a ground that is lit behind it rather than flat black; one line on what RIVL
+   is; the steps as a stack of raised cards with the first one forward; and the floating bar at the foot. The bar is the
+   same object on every setup screen: a track with a knob that slides to the step you are on, Back, and the step button.
+   No accent anywhere in setup, and none in the logo; the only colour is the teams you pick. */
+.mark .r,[data-accent] .mark .r{fill:currentColor}
+/* the ground: a soft light high behind the lockup, a faint floor light under the bar, and a black that is not quite black */
+.panel.full:has(.onb.welcome){background:
+  radial-gradient(72% 40% at 50% 10%,rgba(255,255,255,.2),transparent 70%),
+  radial-gradient(90% 22% at 50% 102%,rgba(255,255,255,.06),transparent 70%),
+  linear-gradient(180deg,#121419,#07080A 58%,#0B0C10)}
+:root[data-theme="light"] .panel.full:has(.onb.welcome){background:
+  radial-gradient(72% 40% at 50% 10%,rgba(255,255,255,.95),transparent 70%),
+  radial-gradient(90% 22% at 50% 102%,rgba(255,255,255,.6),transparent 70%),
+  linear-gradient(180deg,#EEF0F3,#E3E5EA 58%,#E6E8ED)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .panel.full:has(.onb.welcome){background:
+  radial-gradient(72% 40% at 50% 10%,rgba(255,255,255,.95),transparent 70%),
+  radial-gradient(90% 22% at 50% 102%,rgba(255,255,255,.6),transparent 70%),
+  linear-gradient(180deg,#EEF0F3,#E3E5EA 58%,#E6E8ED)} }
+.panel.full:has(.onb.welcome) .panel-in{background:none}
+.onb.welcome{text-align:center;align-items:center;justify-content:flex-start}
+.wstage{display:flex;flex-direction:column;align-items:center;margin-top:min(7vh,56px)}
+/* the lockup: the letters carry a top sheen already; here they also cast a short, dark shadow and a long, soft one */
+.onb.welcome .onb-logo{height:auto;margin:0;color:var(--ink)}
+.onb.welcome .onb-logo svg{height:clamp(64px,20vw,84px);width:auto;filter:drop-shadow(0 2px 0 rgba(0,0,0,.55)) drop-shadow(0 12px 18px rgba(0,0,0,.55)) drop-shadow(0 28px 44px rgba(0,0,0,.5))}
+:root[data-theme="light"] .onb.welcome .onb-logo svg{filter:drop-shadow(0 1px 0 rgba(255,255,255,.85)) drop-shadow(0 10px 16px rgba(16,24,40,.28)) drop-shadow(0 26px 40px rgba(16,24,40,.22))}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .onb.welcome .onb-logo svg{filter:drop-shadow(0 1px 0 rgba(255,255,255,.85)) drop-shadow(0 10px 16px rgba(16,24,40,.28)) drop-shadow(0 26px 40px rgba(16,24,40,.22))} }
+.onb.welcome h2{margin:30px 0 0;font-size:clamp(28px,8.6vw,34px);line-height:1.06;letter-spacing:-.03em}
+.onb.welcome .wstage > p{margin:10px 0 0;max-width:30ch;font-size:16.5px;line-height:1.45;color:var(--ink-2)}
+/* the steps: centred in whatever height is left between the stage and the bar, so no screen ends in a void */
+.wset{width:100%;margin:auto 0;padding:28px 0 20px}
+.wlab{margin:0 0 12px;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.wrows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;text-align:left}
+.wrows li{display:flex;align-items:center;gap:14px;padding:15px 16px;border-radius:18px;
+  background:linear-gradient(180deg,#1F2228,#15171B);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 1px rgba(255,255,255,.06),0 1px 1px rgba(0,0,0,.5),0 12px 26px -12px rgba(0,0,0,.9)}
+.wrows li.on{background:linear-gradient(180deg,#2B2F36,#1C1F25);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 0 0 1px rgba(255,255,255,.1),0 2px 3px rgba(0,0,0,.5),0 18px 36px -12px rgba(0,0,0,.95)}
+.wrows i{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font:800 19px/1 var(--num);font-style:normal;color:var(--ink-2);
+  background:linear-gradient(180deg,#32363D,#23262C);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.4),0 2px 4px rgba(0,0,0,.45)}
+.wrows li.on i{color:#0A0B0E;background:linear-gradient(180deg,#FFFFFF,#D9DCE2);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.16),0 2px 6px rgba(0,0,0,.6)}
+.wrows b{display:block;font-size:15.5px;letter-spacing:-.01em;color:var(--ink)}
+.wrows span span{display:block;font-size:13px;color:var(--ink-3);margin-top:2px}
+:root[data-theme="light"] .wrows li{background:linear-gradient(180deg,#FFFFFF,#F7F8FA);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.07),0 1px 1px rgba(16,24,40,.06),0 10px 22px -12px rgba(16,24,40,.35)}
+:root[data-theme="light"] .wrows li.on{background:#FFFFFF;box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.1),0 2px 3px rgba(16,24,40,.08),0 16px 32px -12px rgba(16,24,40,.45)}
+:root[data-theme="light"] .wrows i{color:var(--ink-2);background:linear-gradient(180deg,#F1F2F5,#E0E3E9);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(10,11,14,.08),0 1px 2px rgba(16,24,40,.12)}
+:root[data-theme="light"] .wrows li.on i{color:#fff;background:linear-gradient(180deg,#2A2D34,#0A0B0E);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 2px 6px rgba(16,24,40,.35)}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]) .wrows li{background:linear-gradient(180deg,#FFFFFF,#F7F8FA);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.07),0 1px 1px rgba(16,24,40,.06),0 10px 22px -12px rgba(16,24,40,.35)}
+  :root:not([data-theme="dark"]) .wrows li.on{background:#FFFFFF;box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.1),0 2px 3px rgba(16,24,40,.08),0 16px 32px -12px rgba(16,24,40,.45)}
+  :root:not([data-theme="dark"]) .wrows i{color:var(--ink-2);background:linear-gradient(180deg,#F1F2F5,#E0E3E9);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(10,11,14,.08),0 1px 2px rgba(16,24,40,.12)}
+  :root:not([data-theme="dark"]) .wrows li.on i{color:#fff;background:linear-gradient(180deg,#2A2D34,#0A0B0E);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 2px 6px rgba(16,24,40,.35)}
+}
+/* the bar: one floating plate, lit along its top edge, standing off the ground */
+.onb-foot,.onb.welcome .onb-foot{width:calc(100% + var(--gut) + var(--gut-r));bottom:10px;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;border-top:0;padding-top:14px;padding-bottom:calc(4px + env(safe-area-inset-bottom,0px));margin-top:0}
+.onb:not(.welcome) .onb-foot{margin-top:auto}
+.onb-bar{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:7px;border-radius:999px;
+  background:linear-gradient(180deg,rgba(36,39,45,.94),rgba(24,26,31,.94));-webkit-backdrop-filter:blur(24px) saturate(1.6);backdrop-filter:blur(24px) saturate(1.6);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.09),0 2px 6px rgba(0,0,0,.5),0 20px 40px -14px rgba(0,0,0,.95)}
+:root[data-theme="light"] .onb-bar{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(247,248,250,.92));box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.08),0 1px 2px rgba(16,24,40,.1),0 8px 20px -8px rgba(16,24,40,.3),0 24px 48px -22px rgba(16,24,40,.5)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .onb-bar{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(247,248,250,.92));box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.08),0 1px 2px rgba(16,24,40,.1),0 8px 20px -8px rgba(16,24,40,.3),0 24px 48px -22px rgba(16,24,40,.5)} }
+.onb-slot{flex:none;width:46px;height:46px}
+.onb-bar .btn.ghost.ico,.onb-foot .onb-bar .btn.ghost.ico,:root[data-theme="light"] .onb-foot .onb-bar .btn.ghost.ico{flex:none;width:46px;height:46px;padding:0;border-radius:50%;color:var(--ink);-webkit-backdrop-filter:none;backdrop-filter:none;
+  background:linear-gradient(180deg,#363A41,#272A30);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.4),0 2px 4px rgba(0,0,0,.45)}
+:root[data-theme="light"] .onb-foot .onb-bar .btn.ghost.ico{background:linear-gradient(180deg,#F4F5F8,#E3E6EC);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(10,11,14,.08),0 1px 2px rgba(16,24,40,.14)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .onb-foot .onb-bar .btn.ghost.ico{background:linear-gradient(180deg,#F4F5F8,#E3E6EC);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(10,11,14,.08),0 1px 2px rgba(16,24,40,.14)} }
+.onb-bar .btn.ghost.ico.pop{animation:barpop .36s var(--ease) both}
+@keyframes barpop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+.onb-bar .btn:not(.ghost),[data-accent] .onb-bar .btn:not(.ghost){flex:none;margin-left:auto;height:46px;padding:0 18px;border-radius:999px;font-size:15.5px;font-weight:800;color:#0A0B0E;
+  background:linear-gradient(180deg,#FFFFFF,#DFE2E8);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.6)}
+:root[data-theme="light"] .onb-bar .btn:not(.ghost){color:#fff;background:linear-gradient(180deg,#2A2D34,#0A0B0E);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 2px 6px rgba(16,24,40,.35)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .onb-bar .btn:not(.ghost){color:#fff;background:linear-gradient(180deg,#2A2D34,#0A0B0E);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 2px 6px rgba(16,24,40,.35)} }
+/* the track: a slot per step with a dot in each, and the knob that slides along it */
+.onb-prog{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding-left:4px}
+.onb-prog .pd{position:relative;display:flex;gap:4px;height:8px}
+.onb-prog .pd i{position:relative;width:20px;height:8px}
+.onb-prog .pd i::before{content:"";position:absolute;left:6px;top:0;width:8px;height:8px;border-radius:4px;background:color-mix(in srgb,var(--ink) 18%,transparent);transition:background .3s var(--ease)}
+.onb-prog .pd i.d::before{background:color-mix(in srgb,var(--ink) 55%,transparent)}
+.onb-prog .pd u{position:absolute;left:0;top:0;width:20px;height:8px;border-radius:4px;background:var(--ink);transform:translateX(calc(var(--i,0) * 24px));
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 10%,transparent),0 1px 3px rgba(0,0,0,.4);transition:transform .5s var(--ease),opacity .3s var(--ease),scale .4s var(--ease)}
+.onb-prog.pre .pd u{opacity:0;scale:.4}
 .onb-prog .ps{font-size:12px;font-weight:800;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media (max-width:359px){.onb-prog .ps{display:none}.onb-prog .pd{gap:4px}.onb-prog i{width:6px;height:6px}.onb-prog i.on{width:16px}.onb-bar .btn:not(.ghost){padding:0 14px}}
+.onb-prog .ps.swap{animation:pswap .4s var(--ease) both}
+@keyframes pswap{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (max-width:359px){.onb-prog .ps{display:none}.onb-prog .pd i,.onb-prog .pd u{width:16px}.onb-prog .pd i::before{left:4px}.onb-prog .pd u{transform:translateX(calc(var(--i,0) * 20px))}.onb-bar .btn:not(.ghost){padding:0 14px}}
+/* each screen comes in from the side it was reached from */
+.onb.slide-f > :not(.onb-foot),.onb.slide-f > .onb-body > *{animation:onbf .38s var(--ease) both}
+.onb.slide-b > :not(.onb-foot),.onb.slide-b > .onb-body > *{animation:onbb .38s var(--ease) both}
+@keyframes onbf{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes onbb{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.onb.slide-f > *,.onb.slide-b > *,.onb.slide-f > .onb-body > *,.onb.slide-b > .onb-body > *{animation:none}.onb-prog .pd u{transition:none}}
 /* the first heading sits where the logo used to */
 .onb:not(.welcome) > h2:first-child{margin-top:18px}
-/* the logo is black and white everywhere: the R no longer takes the accent */
-.mark .r,[data-accent] .mark .r{fill:currentColor}

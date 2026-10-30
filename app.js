@@ -454,22 +454,52 @@
   async function install() { if (deferredInstall) { deferredInstall.prompt(); const r = await deferredInstall.userChoice.catch(() => null); deferredInstall = null; if (r && r.outcome === 'accepted') { toast('Installed'); const b = document.getElementById('installBar'); if (b) b.remove(); } } else toast(isIOS ? 'Tap Share, then Add to Home Screen' : 'Use your browser menu: Add to Home screen'); }
   function needsOnboarding() { return !store.get('v5:onboarded', false); }
   let onbLk = 'nba';   // the league shown in setup; it never changes the league the app is on
-  const onbR = `<svg viewBox="0 0 100 123.41" aria-hidden="true"><path fill="currentColor" d="M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0Z"/></svg>`;
   const arrow = `<svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
   const backBtn = attrs => `<button class="btn ghost ico" ${attrs} aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></button>`;
   /* The first thing a new person sees: not a wall of thirty teams but the mark, what RIVL is in two lines, and what the
      next three steps do. Then the picks. */
-  /* Where you are in setup, in the footer next to the button on every screen: a dot per step (done and current in ink, the
-     current one long, the rest grey) and "Step 2 of 4". The home-screen step only counts when there is one to do. */
+  /* the lockup, the same one as the top bar's, drawn large on the welcome */
+  const onbMark = `<svg class="mark" viewBox="0 0 250 123.41" aria-hidden="true"><defs><linearGradient id="rivlMarkOnb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".40"/><stop offset=".05" stop-color="#fff" stop-opacity=".38"/><stop offset=".10" stop-color="#fff" stop-opacity=".10"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><path class="r" d="M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0Z"/><path class="w" d="M108 0H132V123.41H108ZM140 0H164.5L168.0 96L171.5 0H196L192 123.41H144ZM204 0H228V99.41H250V123.41H204Z"/><g class="sheen" fill="url(#rivlMarkOnb)"><path d="M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0ZM108 0H132V123.41H108ZM140 0H164.5L168.0 96L171.5 0H196L192 123.41H144ZM204 0H228V99.41H250V123.41H204Z"/></g></svg>`;
+  /* Where you are in setup, in the footer bar on every screen: a slot per step, a knob that slides to the one you are on,
+     the ones behind it filled, and "Step 2 of 4". On the welcome the knob is not out yet: the track is empty and reads
+     "4 steps"; it appears on the first step and slides from there. The home-screen step only counts when there is one. */
   const onbSteps = () => standalone() ? ['Teams', 'Players', 'Home'] : ['Teams', 'Players', 'Home', 'Install'];
-  const onbProg = cur => { const t = onbSteps().length; const k = Math.min(cur, t - 1); const done = cur >= t;
-    return `<span class="onb-prog" role="img" aria-label="${done ? 'Setup done' : `Step ${k + 1} of ${t}`}"><span class="pd">${Array.from({ length: t }, (_, i) => `<i class="${done || i < k ? 'd' : i === k ? 'on' : ''}"></i>`).join('')}</span><span class="ps">${done ? 'All set' : `Step ${k + 1} of ${t}`}</span></span>`; };
-  /* The first thing a new person sees: the app icon, its name, what it is in one line, and the steps ahead as a list, with
-     the progress bar already in the footer where it stays for the rest of setup. Black and white; the only colour in setup
-     is the teams you pick. */
+  const onbProg = cur => { const t = onbSteps().length; const k = Math.max(0, Math.min(cur, t - 1)); const pre = cur < 0; const label = pre ? `${t} steps` : `Step ${k + 1} of ${t}`;
+    return `<span class="onb-prog${pre ? ' pre' : ''}" style="--i:${k};--n:${t}" role="img" aria-label="${label}"><span class="pd">${Array.from({ length: t }, (_, i) => `<i class="${!pre && i < k ? 'd' : ''}"></i>`).join('')}<u></u></span><span class="ps">${label}</span></span>`; };
+  const onbSlot = `<span class="onb-slot" aria-hidden="true"></span>`;
+  /* One bar for the whole of setup. Each screen is drawn fresh, but the bar from the screen before is kept and patched: the
+     knob's position changes as a style, so it slides; the label crossfades; Back appears or goes; the step button is
+     swapped. The new screen's content slides in from the side it came from. */
+  let onbAt = -1;
+  function onbOpen(html, n) {
+    const was = !$panel.hidden && $panel.querySelector('.onb'); const kept = was ? was.querySelector('.onb-bar') : null; const dir = was ? (n > onbAt ? 'f' : 'b') : '';
+    openPanel(html, { full: true });
+    const root = $panel.querySelector('.onb');
+    if (kept) {
+      const fresh = root.querySelector('.onb-bar'); fresh.replaceWith(kept);
+      void kept.offsetWidth;   // a node put back in the page has no style to move from: lay it out as it was, then change it, so the knob slides rather than lands
+      const np = fresh.querySelector('.onb-prog'), op = kept.querySelector('.onb-prog');
+      const od = op.querySelectorAll('.pd i'), nd = np.querySelectorAll('.pd i');
+      if (od.length !== nd.length) op.replaceWith(np);
+      else {
+        op.style.setProperty('--i', np.style.getPropertyValue('--i')); op.classList.toggle('pre', np.classList.contains('pre')); op.setAttribute('aria-label', np.getAttribute('aria-label'));
+        od.forEach((d, i) => { d.className = nd[i].className; });
+        const ol = op.querySelector('.ps'), nl = np.querySelector('.ps').textContent;
+        if (ol.textContent !== nl) { ol.classList.remove('swap'); void ol.offsetWidth; ol.textContent = nl; ol.classList.add('swap'); }
+      }
+      const ob = kept.firstElementChild, nb = fresh.firstElementChild;
+      if (ob.tagName !== nb.tagName) { ob.replaceWith(nb); nb.classList.add('pop'); } else if (nb.tagName === 'BUTTON') { ob.dataset.act = nb.dataset.act; if (nb.dataset.step) ob.dataset.step = nb.dataset.step; else delete ob.dataset.step; }
+      kept.lastElementChild.replaceWith(fresh.lastElementChild);
+    }
+    if (dir) { root.classList.add(`slide-${dir}`); root.addEventListener('animationend', () => root.classList.remove('slide-f', 'slide-b'), { once: true }); }
+    onbAt = n;
+  }
+  /* The first thing a new person sees: the lockup large and lifted on a lit ground, what RIVL is in a line, the steps ahead
+     as a stack of raised cards with the first one forward, and the bar that stays for the rest of setup. Black and white;
+     the only colour in setup is the teams you pick. */
   function onbWelcome() {
     const rows = [['Pick your teams', 'NBA, WNBA and college'], ['Follow players', 'From your teams or anyone'], ['Set up Home', 'Choose what you see first'], ['Add to your home screen', 'Opens full screen, like an app']].slice(0, onbSteps().length);
-    openPanel(`<div class="onb welcome"><span class="onb-icon">${onbR}</span><h2>Welcome to RIVL</h2><p>Scores, stats and news for the teams and players you follow.</p><ol class="wrows">${rows.map(([t, b], i) => `<li class="${i ? '' : 'on'}"><i>${i + 1}</i><span><b>${t}</b><span>${b}</span></span></li>`).join('')}</ol><div class="onb-foot"><div class="onb-bar">${onbProg(0)}<button class="btn" data-act="onb-next" data-step="0">Start${arrow}</button></div></div></div>`, { full: true });
+    onbOpen(`<div class="onb welcome"><div class="wstage"><div class="onb-logo">${onbMark}</div><h2>Your teams.<br>Nothing else.</h2><p>Scores, stats and news for the teams and players you follow.</p></div><div class="wset"><p class="wlab">Set up in ${rows.length === 3 ? 'three' : 'four'} steps</p><ol class="wrows">${rows.map(([t, b], i) => `<li class="${i ? '' : 'on'}"><i>${i + 1}</i><span><b>${t}</b><span>${b}</span></span></li>`).join('')}</ol></div><div class="onb-foot"><div class="onb-bar">${onbSlot}${onbProg(-1)}<button class="btn" data-act="onb-next" data-step="0">Start${arrow}</button></div></div></div>`, -1);
   }
   async function onbStep(n) {
     const lk = lkOf(onbLk); const L = LEAGUES[lk];
@@ -487,7 +517,7 @@
       /* Setup is a full-screen panel, so the warning bar on Home is behind it — and setup is exactly where someone in a
          private window is about to pick thirty teams that will not be kept. It has to be said here. */
       const noSave = store.broken() ? `<p class="legend warn">This browser isn't saving anything. Private browsing blocks it. Whatever you pick here will be gone when you close the tab.</p>` : '';
-      openPanel(`<div class="onb" data-step="${n}"><h2>${title}</h2><p>${body}</p>${noSave}<div class="onb-body">${inner}</div><div class="onb-foot"><div class="onb-bar">${foot}</div></div></div>`, { full: true });
+      onbOpen(`<div class="onb" data-step="${n}"><h2>${title}</h2><p>${body}</p>${noSave}<div class="onb-body">${inner}</div><div class="onb-foot"><div class="onb-bar">${foot}</div></div></div>`, n);
     };
     if (n === 0 || n === 1) {
       const nn = n === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length;
