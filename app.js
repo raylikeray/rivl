@@ -453,24 +453,26 @@
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
   async function install() { if (deferredInstall) { deferredInstall.prompt(); const r = await deferredInstall.userChoice.catch(() => null); deferredInstall = null; if (r && r.outcome === 'accepted') { toast('Installed'); const b = document.getElementById('installBar'); if (b) b.remove(); } } else toast(isIOS ? 'Tap Share, then Add to Home Screen' : 'Use your browser menu: Add to Home screen'); }
   function needsOnboarding() { return !store.get('v5:onboarded', false); }
-  const STEPS = 4; let onbLk = 'nba';   // the league shown in setup; it never changes the league the app is on
-  const onbMark = `<svg class="mark" viewBox="0 0 250 123.41" aria-hidden="true"><defs><linearGradient id="rivlMarkOnb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".40"/><stop offset=".05" stop-color="#fff" stop-opacity=".38"/><stop offset=".10" stop-color="#fff" stop-opacity=".10"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><path class="r" d="M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0Z"/><path class="w" d="M108 0H132V123.41H108ZM140 0H164.5L168.0 96L171.5 0H196L192 123.41H144ZM204 0H228V99.41H250V123.41H204Z"/><g class="sheen" fill="url(#rivlMarkOnb)"><path d="M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0ZM108 0H132V123.41H108ZM140 0H164.5L168.0 96L171.5 0H196L192 123.41H144ZM204 0H228V99.41H250V123.41H204Z"/></g></svg>`;
+  let onbLk = 'nba';   // the league shown in setup; it never changes the league the app is on
+  const onbR = `<svg viewBox="0 0 100 123.41" aria-hidden="true"><path fill="currentColor" d="M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0Z"/></svg>`;
   const arrow = `<svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
   const backBtn = attrs => `<button class="btn ghost ico" ${attrs} aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></button>`;
   /* The first thing a new person sees: not a wall of thirty teams but the mark, what RIVL is in two lines, and what the
      next three steps do. Then the picks. */
+  /* Where you are in setup, in the footer next to the button on every screen: a dot per step (done and current in ink, the
+     current one long, the rest grey) and "Step 2 of 4". The home-screen step only counts when there is one to do. */
+  const onbSteps = () => standalone() ? ['Teams', 'Players', 'Home'] : ['Teams', 'Players', 'Home', 'Install'];
+  const onbProg = cur => { const t = onbSteps().length; const k = Math.min(cur, t - 1); const done = cur >= t;
+    return `<span class="onb-prog" role="img" aria-label="${done ? 'Setup done' : `Step ${k + 1} of ${t}`}"><span class="pd">${Array.from({ length: t }, (_, i) => `<i class="${done || i < k ? 'd' : i === k ? 'on' : ''}"></i>`).join('')}</span><span class="ps">${done ? 'All set' : `Step ${k + 1} of ${t}`}</span></span>`; };
+  /* The first thing a new person sees: the app icon, its name, what it is in one line, and the steps ahead as a list, with
+     the progress bar already in the footer where it stays for the rest of setup. Black and white; the only colour in setup
+     is the teams you pick. */
   function onbWelcome() {
-    /* An editorial opener, not a template: the line set huge in the scoreboard face, flush left over a half-court drawn in
-       the accent that runs off the right edge, one sentence, the three steps as a single line, one button. */
-    const court = `<svg class="court" viewBox="0 0 400 400" aria-hidden="true" fill="none" stroke="currentColor"><circle cx="200" cy="200" r="58"/><circle cx="200" cy="200" r="18"/><path d="M200 0V400"/><path d="M340 40H400M340 360H400"/><path d="M400 70A150 130 0 0 0 400 330"/><rect x="330" y="140" width="70" height="120"/><path d="M330 200A34 34 0 0 1 330 200.1"/><circle cx="330" cy="200" r="34"/></svg>`;
-    openPanel(`<div class="onb welcome"><div class="wcourt">${court}</div><div class="onb-logo">${onbMark}</div><h2 class="wl"><span>Your</span><span>teams.</span><span class="a">Nothing</span><span class="a">else.</span></h2><p class="wsub">Live scores, a call on every game, and the news on the players you follow. No ads, no noise.</p><ol class="wsteps"><li><i>1</i>Teams</li><li><i>2</i>Players</li><li><i>3</i>Home</li></ol><div class="onb-foot"><button class="btn" data-act="onb-next" data-step="0">Pick your teams${arrow}</button></div></div>`, { full: true });
-    /* the headline fills the width whatever face is in use: measured once the fonts are in, scaled to the widest line */
-    const fit = () => { const h = $panel.querySelector('h2.wl'); if (!h) return; h.style.fontSize = ''; const w = h.clientWidth; const widest = Math.max(...[...h.children].map(x => x.scrollWidth)); const cur = parseFloat(getComputedStyle(h).fontSize); if (widest > 0) h.style.fontSize = Math.min(150, Math.floor(cur * w / widest * 0.98)) + 'px'; };
-    fit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+    const rows = [['Pick your teams', 'NBA, WNBA and college'], ['Follow players', 'From your teams or anyone'], ['Set up Home', 'Choose what you see first'], ['Add to your home screen', 'Opens full screen, like an app']].slice(0, onbSteps().length);
+    openPanel(`<div class="onb welcome"><span class="onb-icon">${onbR}</span><h2>Welcome to RIVL</h2><p>Scores, stats and news for the teams and players you follow.</p><ol class="wrows">${rows.map(([t, b], i) => `<li class="${i ? '' : 'on'}"><i>${i + 1}</i><span><b>${t}</b><span>${b}</span></span></li>`).join('')}</ol><div class="onb-foot"><div class="onb-bar">${onbProg(0)}<button class="btn" data-act="onb-next" data-step="0">Start${arrow}</button></div></div></div>`, { full: true });
   }
   async function onbStep(n) {
     const lk = lkOf(onbLk); const L = LEAGUES[lk];
-    const dots = `<div class="onb-dots">${Array.from({ length: STEPS }, (_, i) => `<i class="${i === n ? 'on' : ''}"></i>`).join('')}</div>`;
     const countFor = k => n === 1 ? V.fplayers.all().filter(p => p.lk === k).length : (HW.favs.all()[k] || []).length;
     const leaguePills = `<div class="pills onb-pills" style="--n:${ORDER.length};--i:${Math.max(0, ORDER.indexOf(lk))}">${ORDER.map(k => `<button class="pill${k === lk ? ' on' : ''}" data-act="onb-lk" data-lk="${k}" data-step="${n}"><span>${esc(LEAGUES[k].label)}</span>${countFor(k) ? `<span class="ct">${countFor(k)}</span>` : ''}</button>`).join('')}</div>`;
     const frame = (title, body, inner, foot) => {
@@ -484,17 +486,17 @@
       }
       /* Setup is a full-screen panel, so the warning bar on Home is behind it — and setup is exactly where someone in a
          private window is about to pick thirty teams that will not be kept. It has to be said here. */
-      const noSave = store.broken() ? `<p class="legend warn">This browser isn't saving anything — private browsing blocks it. Whatever you pick here will be gone when you close the tab.</p>` : '';
-      openPanel(`<div class="onb" data-step="${n}"><div class="onb-logo">${onbMark}</div>${dots}<h2>${title}</h2><p>${body}</p>${noSave}<div class="onb-body">${inner}</div><div class="onb-foot">${foot}</div></div>`, { full: true });
+      const noSave = store.broken() ? `<p class="legend warn">This browser isn't saving anything. Private browsing blocks it. Whatever you pick here will be gone when you close the tab.</p>` : '';
+      openPanel(`<div class="onb" data-step="${n}"><h2>${title}</h2><p>${body}</p>${noSave}<div class="onb-body">${inner}</div><div class="onb-foot"><div class="onb-bar">${foot}</div></div></div>`, { full: true });
     };
     if (n === 0 || n === 1) {
       const nn = n === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length;
-      frame(n === 0 ? 'Pick your teams' : 'Follow some players', n === 0 ? 'Switch leagues above — your picks are kept for each. Your teams lead Home and are the only ones you get updates about.' : 'Switch leagues above. These are the rosters of the teams you picked; search any team to see its roster.',
+      frame(n === 0 ? 'Pick your teams' : 'Follow some players', n === 0 ? 'Switch leagues above. Your picks are kept for each. Your teams lead Home and are the only ones you get updates about.' : 'Switch leagues above. These are the rosters of the teams you picked; search any team to see its roster.',
         n === 0 ? `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div class="search" style="margin:0 0 12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input id="onbq" type="search" placeholder="Search teams" autocomplete="off"></div><div id="onbList" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`
           : `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div id="onbPick" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`,
         /* the button names where it goes. "Continue" next to a row of leagues read as "continue to the next league", which it
            never was — the switch changes league, the button changes step. Back exists from the second step on. */
-        `${backBtn(n ? `data-act="onb-next" data-step="${n - 1}"` : 'data-act="onb-welcome"')}<button class="btn" data-act="onb-next" data-step="${n + 1}" id="onbNext">${n ? 'Next: your Home' : 'Next: players'}${arrow}</button>`);
+        `${backBtn(n ? `data-act="onb-next" data-step="${n - 1}"` : 'data-act="onb-welcome"')}${onbProg(n)}<button class="btn" data-act="onb-next" data-step="${n + 1}" id="onbNext">${n ? 'Next: Home' : 'Next: players'}${arrow}</button>`);
       if (n === 1) { onbCount(); await V.playerPicker(document.getElementById('onbPick'), L, { leaders: true, select: true }); onbCount(); return; }
       const list = document.getElementById('onbList'); const inp = document.getElementById('onbq');
       if (n === 0) {
@@ -543,18 +545,18 @@
       const items = [['brief', 'Tonight and last night', "Your teams' games in one line, and last night's results"], ['live', 'Live now', 'A big card when one of your teams is playing'], ['teams', 'My teams', 'Record, the game that matters and the chance to win'], ['players', 'My players', 'Scoring lines, one tap to the profile'], ['injuries', 'Injuries', 'Reports on your teams and players'], ['news', 'News', 'Stories about your teams and players'], ['forecast', 'Win chances', "RIVL's own estimate on each game card"]];
       frame('What do you want to see?', 'Home is yours. Switch off anything you don\'t care about; you can change it later in Settings.',
         `<div class="rows onb-prefs">${items.map(([k, t, b]) => `<button class="row sw" data-act="pref" data-pref="${k}" role="switch" aria-checked="${P[k] !== false}"><span class="t"><b>${esc(t)}</b><span class="wrap">${esc(b)}</span></span><span class="switch"></span></button>`).join('')}</div>`,
-        `${backBtn('data-act="onb-next" data-step="1"')}<button class="btn" data-act="onb-next" data-step="3">${standalone() ? 'Finish' : 'Next: install'}${arrow}</button>`);
+        `${backBtn('data-act="onb-next" data-step="1"')}${onbProg(2)}<button class="btn" data-act="onb-next" data-step="3">${standalone() ? 'Finish' : 'Next: install'}${arrow}</button>`);
     } else {
       /* The home-screen app starts with its own storage, so what was picked in the browser is not in it. RIVL carries the
          picks over in a cookie, which is the one thing iOS copies as the app is created — but only if cookies are allowed.
          When they are not, say so here rather than let someone install and find an empty app. */
       const carryNote = () => HW.carry.works()
-        ? `<p class="legend" style="padding-left:0;padding-right:0">Your teams and players come with you — the app starts with them already chosen.</p>`
+        ? `<p class="legend" style="padding-left:0;padding-right:0">Your teams and players come with you. The app starts with them already chosen.</p>`
         : `<p class="legend warn">This browser is blocking cookies, so your picks can't be carried into the home-screen app automatically. Before you add it, open <b>Settings → Sync</b> and back up to a code, then restore it in the app.</p>`;
       const done = standalone();
       frame(done ? "You're set" : 'Put RIVL on your home screen', done ? 'RIVL is on your home screen. Your teams and players are waiting on Home.' : 'It opens full screen like an app, with no browser bar, and your teams load first.',
         done ? '' : `<div class="onb-install"><img src="img/icon-192.png" alt="" width="64" height="64"><div>${deferredInstall ? `<button class="btn" data-act="install" id="installBtn">Install RIVL</button>` : isIOS ? `<b>In Safari</b><ol><li>Tap the Share button</li><li>Choose <b>Add to Home Screen</b></li><li>Tap <b>Add</b></li></ol>` : `<b>In your browser menu</b><p style="margin:4px 0 0">Choose <b>Add to Home screen</b> (or <b>Install app</b>).</p>`}</div></div>${carryNote()}`,
-        `${backBtn('data-act="onb-next" data-step="2"')}<button class="btn" data-act="onb-done">${done ? 'Open Home' : 'Done'}${arrow}</button>`);
+        `${backBtn('data-act="onb-next" data-step="2"')}${onbProg(3)}<button class="btn" data-act="onb-done">${done ? 'Open Home' : 'Done'}${arrow}</button>`);
     }
   }
   V.onbStep = onbStep; V.onbWelcome = onbWelcome;
@@ -639,7 +641,7 @@
   document.addEventListener('rivl:rendered', () => {
     if (!store.broken() || document.getElementById('noSaveBar')) return;
     const bar = document.createElement('div'); bar.id = 'noSaveBar'; bar.className = 'installbar nosave';
-    bar.innerHTML = `<div><b>This browser isn't saving anything</b><span>Private browsing blocks it. Your teams and players will be gone when you close the tab — open RIVL in a normal window to keep them.</span></div>`;
+    bar.innerHTML = `<div><b>This browser isn't saving anything</b><span>Private browsing blocks it. Your teams and players will be gone when you close the tab. Open RIVL in a normal window to keep them.</span></div>`;
     $main.prepend(bar);
   });
   /* install bar on Home while the app isn't on the home screen yet */
