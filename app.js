@@ -68,6 +68,7 @@
     const leagueScreen = SCREENS.includes(r.name);
     if (render.key && render.key !== key) scrollMem.set(render.key, window.scrollY);
     $main.dataset.y = render.key !== key ? ((back || leagueScreen) ? String(scrollMem.get(key) || 0) : '0') : '';
+    if (!['team', 'player', 'game'].includes(r.name) && V._.tint) V._.tint('');   // only a team's, a player's or a game's page wears a team colour
     if (leagueScreen) store.set('v5:screen', r.name);
     if (r.name !== 'scores') store.set('v5:date', todayCT());
     document.getElementById('top').hidden = !leagueScreen;
@@ -336,9 +337,13 @@
   function applyTheme() {
     const t = store.get('v5:theme', 'system'); const root = document.documentElement;
     if (t === 'dark' || t === 'light') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme');
-    // the status bar takes the top of the wash, so the screen is one surface from its top edge down
-    requestAnimationFrame(() => { const meta = document.querySelector('meta[name="theme-color"]'); if (!meta) return; const probe = document.createElement('i'); probe.style.cssText = 'position:absolute;visibility:hidden;background:var(--wash-top)'; document.body.appendChild(probe); const c = getComputedStyle(probe).backgroundColor; probe.remove(); const m = c.match(/color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)/) || c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/); if (!m) return; const hex = [m[1], m[2], m[3]].map(v => Math.round(+v * (c.startsWith('color') ? 255 : 1))).map(n => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')).join(''); meta.setAttribute('content', '#' + hex); });   // a plain hex: the status bar parser is picky
+    // the status bar takes the top of the wash, so the screen is one surface from its top edge down; once the wash has scrolled
+    // away it takes the plain ground, the way a translucent bar would show what is behind it
+    requestAnimationFrame(() => { statusBar.top = cssColor('var(--wash-top)'); statusBar.plain = cssColor('var(--bg)'); statusBar(); });
   }
+  const cssColor = v => { const probe = document.createElement('i'); probe.style.cssText = 'position:absolute;visibility:hidden;background:' + v; document.body.appendChild(probe); const c = getComputedStyle(probe).backgroundColor; probe.remove(); const m = c.match(/color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)/) || c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/); if (!m) return ''; return '#' + [m[1], m[2], m[3]].map(x => Math.round(+x * (c.startsWith('color') ? 255 : 1))).map(n => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')).join(''); };   // a plain hex: the status bar parser is picky
+  function statusBar() { const meta = document.querySelector('meta[name="theme-color"]'); if (!meta) return; const want = (window.scrollY > 72 ? statusBar.plain : statusBar.top) || statusBar.top; if (want && meta.getAttribute('content') !== want) meta.setAttribute('content', want); }
+  let sbT = 0; window.addEventListener('scroll', () => { if (sbT) return; sbT = setTimeout(() => { sbT = 0; statusBar(); }, 120); }, { passive: true });
   V.applyTheme = applyTheme;
   applyTheme(); window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', applyTheme);
   /* accent: mono chrome, or the colour of the first team you follow in the league you're on */
