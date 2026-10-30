@@ -222,7 +222,7 @@
   document.addEventListener('contextmenu', e => { if (!e.target.closest('.reader .body, input, textarea')) e.preventDefault(); });
 
   /* ---------- delegated actions ---------- */
-  function toast(msg) { $toast.textContent = msg; $toast.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => $toast.classList.remove('on'), 1800); }
+  function toast(msg) { $toast.textContent = msg; $toast.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => $toast.classList.remove('on'), Math.min(9000, 1800 + String(msg).length * 55)); }   // a sentence needs longer on screen than a word
   V.toast = toast; V.rerender = () => render(); V.route = () => current;
   V.refreshAll = async () => { try { HW.cache.clear(); } catch { } await render(); poll(); };
   document.addEventListener('click', e => {
@@ -262,7 +262,7 @@
     if (a === 'watch') { e.preventDefault(); const id = act.dataset.id; const mine = HW.myServices(); const on = !mine.includes(id); store.set('watch', on ? [...mine, id] : mine.filter(x => x !== id)); act.classList.toggle('on', on); act.setAttribute('aria-pressed', String(on)); if (navigator.vibrate) navigator.vibrate(8); return; }
     if (a === 'theme') { e.preventDefault(); store.set('v5:theme', act.dataset.theme); applyTheme(); $main.querySelectorAll('[data-act="theme"]').forEach(b => { const on = b.dataset.theme === act.dataset.theme; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); }
     if (a === 'onb-restart') { e.preventDefault(); onbLk = 'nba'; onbStep(0); }
-    if (a === 'alerts') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; (on ? V.alerts.enable() : V.alerts.disable()).then(() => render()); }
+    if (a === 'alerts') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; (on ? V.alerts.enable() : V.alerts.disable()).catch(err => { try { store.set('v5:alertsWhy', 'Unexpected: ' + (err && err.message || err)); } catch { } toast('Unexpected: ' + (err && err.message || err)); }).then(() => render()); }
     if (a === 'alert-pref') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; V.alerts.setPref(act.dataset.pref, on); act.setAttribute('aria-checked', String(on)); }
     if (a === 'alert-test') { e.preventDefault(); V.alerts.test(); }
     if (a === 'sync-up') { e.preventDefault(); V.sync.up().then(code => { toast(`Backed up as ${code}`); render(); }).catch(() => toast("The server didn't answer")); }

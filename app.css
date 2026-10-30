@@ -1759,3 +1759,6 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .pp button.thead .logo{width:36px;height:36px}
 .pp button.thead b{font-size:16px;letter-spacing:-.01em}
 .pp button.thead:first-child{margin-top:4px}
+
+/* a setting that could not be turned on says why, in place */
+.legend.warn{color:var(--ink);background:color-mix(in srgb,var(--loss) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--loss) 38%,transparent);border-radius:12px;padding:10px 12px;margin-top:10px;line-height:1.45}
