@@ -25,7 +25,7 @@
     HW.scoreboard = async (L, ...a) => { const g = await sb(L, ...a); learnGames(L, g); return g; };
     HW.parseEvent = (e, L) => { const g = pe(e, L); if (g) { learn(L, g.home); learn(L, g.away); } return g; }; }
   const { LEAGUES, ORDER, esc, j, jSoft, todayCT, addDays, dayLabel, relDay, tip, tipOf, dateShort, ago, pct, ordinal, hx, store, API, WEB, finalWord, isDone,
-    favs, parseEvent, isLive, isFav, interest, scoreboard, standings, injuries, forecast, forecastCtx, leaguePlayers, S } = HW;
+    favs, parseEvent, isLive, isFav, interest, scoreboard, standings, injuries, forecast, seriesForecast, forecastCtx, leaguePlayers, S } = HW;
   const $main = document.getElementById('main');
 
   /* ---------- small helpers ---------- */
@@ -152,14 +152,18 @@
      exactly as ESPN writes it, and afterwards "GS wins series 4-3". Nothing is shown for a game that has no series. */
   const seriesParts = g => {
     const s = g.series; const n = noteWord(g);
-    if (!s && !/game\s*\d|finals|semifinal|round|playoff/i.test(n)) return [];
+    if (!s && !/game\s*\d|final|semi|quarter|round|playoff|tournament|championship|cup|play-in/i.test(n)) return [];
     const head = n ? n.replace(/\s+Game\s+(\d+)/i, ' · Game $1') : [s && s.title, s && s.game ? `Game ${s.game}` : ''].filter(Boolean).join(' · ');
     return [head, s && s.summary].filter(Boolean);
   };
   const seriesLine = g => seriesParts(g).join(' · ');
+  /* RIVL's pick for the series, when Win chances are on and the series is still open: "Valkyries 56% to take the series".
+     Built from the game model — this game as forecast, the rest from team strength at the buildings the format sends them to. */
+  const seriesPick = (L, g, f, ctx) => { try { if (!prefs.get('forecast') || !f || !ctx) return null; const sf = seriesForecast(L, g, f, ctx); if (!sf) return null; const home = sf.pHome >= .5; return { team: home ? g.home : g.away, p: home ? sf.pHome : 1 - sf.pHome, sf }; } catch { return null; } };
+  const seriesPickText = pk => pk ? `${pk.team.short} ${pct(pk.p)} to take the series` : '';
   // the same, fit for a chip: "Finals G7", "Semis G3"
   const seriesShort = g => {
-    const s = g.series; const n = noteWord(g); if (!s && !n) return '';
+    const s = g.series; const n = noteWord(g); if (!s && !n) return ''; if (!s && !/game\s*\d|final|semi|quarter|round|playoff|tournament|championship|cup|play-in/i.test(n)) return '';
     const round = (s && s.title) || n.replace(/\s*·?\s*Game\s*\d+.*$/i, '');
     const r = round.replace(/^(NBA|WNBA|NCAA)\s+/i, '').replace(/Semifinals?/i, 'Semis').replace(/Quarterfinals?/i, 'Quarters').replace(/First Round/i, 'Rd 1').replace(/Conference /i, '');
     const gm = (s && s.game) || +((n.match(/game\s*(\d+)/i) || [])[1] || 0);
@@ -179,9 +183,10 @@
   function gameCard(L, g, ctx, withForecast = true, timeOnly = false) {
     if (g.tbd) return `<a class="game tbd" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}"><div class="side tbd"><span class="logo tbd"></span><span class="nm"><b>Teams to be decided</b><span>${esc(noteWord(g) || 'Matchup not set yet')}</span></span></div><div class="status">${statusLine(L, g, timeOnly)}<span class="ln"></span><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div></a>`;
     const f = withForecast && prefs.get('forecast') && !g.tbd ? safeF(L, g, ctx) : null;
-    const ps = seriesLine(g);
+    // the band's series pick stands even where the per-game row is off (Scores), so it computes its own forecast when needed
+    const ps = seriesLine(g); const pk = ps && prefs.get('forecast') && !g.tbd ? seriesPickText(seriesPick(L, g, f || safeF(L, g, ctx), ctx)) : '';
     return `<a class="game${ps ? ' po' : ''}" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}">
-      ${ps ? `<div class="pstrip">${esc(ps)}</div>` : ''}
+      ${ps ? `<div class="pstrip"><span>${esc(ps)}</span>${pk ? `<b>${esc(pk)}</b>` : ''}</div>` : ''}
       ${side(L, g, g.away, g.home)}
       <div class="status">${statusLine(L, g, timeOnly)}<span class="ln"></span><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>
       ${side(L, g, g.home, g.away)}
@@ -195,7 +200,7 @@
     const favC = fav ? V_lift(teamColor(fav, L)) : '#fff';   // the bar wears the favourite's own colour — the one its panel above is painted in — lifted so it reads on the dark strip
     const tm = t => t.tbd ? `<div class="tm"><span class="logo tbd"></span><b>TBD</b><span>${esc(noteWord(g))}</span></div>` : page ? `<a class="tm" href="${href.team(L.key, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></a>` : `<div class="tm">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></div>`;
     const inner = `<div class="in">
-      <div class="vs">${tm(g.away)}<div class="mid"><span class="st${g.state === 'in' ? ' on' : ''}">${esc(g.state === 'in' ? g.detail : g.state === 'post' ? finalWord(g) : tipOf(g))}</span>${seriesParts(g).length ? `<span class="ps">${seriesParts(g).map(x => `<span>${esc(x)}</span>`).join('')}</span>` : ''}<div class="sc">${g.off ? '' : `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`}</div><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>${tm(g.home)}</div>
+      <div class="vs">${tm(g.away)}<div class="mid"><span class="st${g.state === 'in' ? ' on' : ''}">${esc(g.state === 'in' ? g.detail : g.state === 'post' ? finalWord(g) : tipOf(g))}</span>${seriesParts(g).length ? `<span class="ps">${seriesParts(g).map(x => `<span>${esc(x)}</span>`).join('')}${seriesPickText(seriesPick(L, g, f, ctx)) ? `<b>${esc(seriesPickText(seriesPick(L, g, f, ctx)))}</b>` : ''}</span>` : ''}<div class="sc">${g.off ? '' : `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`}</div><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>${tm(g.home)}</div>
       ${f && !g.off ? `<div class="fc${f.pHome >= .5 ? ' home' : ''}"><div class="bar"><i style="width:${(p * 100).toFixed(1)}%;background:${esc(favC)}"></i></div><b>${g.state === 'post' ? 'Had ' : ''}${esc(fav.short)} ${pct(p)}${g.state === 'pre' && f.proj ? `<small>${esc(g.away.abbr)} ${f.proj.away}–${f.proj.home} ${esc(g.home.abbr)}</small>` : ''}</b></div>` : ''}
     </div>`;
     return page ? `<div class="hero page" data-gid="${esc(g.id)}" style="--a:${esc(a)};--b:${esc(b)}">${inner}</div>`
@@ -884,5 +889,5 @@
   }
 
   HW.v5 = Object.assign(HW.v5 || {}, { home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
+    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

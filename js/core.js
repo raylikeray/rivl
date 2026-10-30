@@ -420,6 +420,31 @@ function forecast(L, g, ctx) {
   }   // finals keep the pregame estimate so cards can show hit/miss
   return { pHome: p, margin, own, mkt, w, total, proj, odds: g.odds || null, live, H, A, hca, restH, restA, soH, soA, source: H.source === 'elo' && A.source === 'elo' ? 'elo' : 'margin' };
 }
+/* Who wins the series. This game takes the game forecast as it stands — market line, live score and all. The games after it
+   are rated from team strength alone, played at whichever building the format sends them to: 2-2-1-1-1 for a best-of-seven,
+   2-2-1 for a best-of-five, 1-1-1 for a best-of-three — the NBA's and the WNBA's formats, which is where series exist.
+   Which team is the higher seed is read off this game: under the format, the team hosting game N. At 3-3 the series rides
+   on one game and the two forecasts are the same number, as they should be. */
+function seriesForecast(L, g, f, ctx) {
+  const s = g.series; if (!s || s.done || !f || s.hw == null || s.aw == null) return null;
+  const total = s.total || 7, need = Math.ceil(total / 2);
+  if (s.hw >= need || s.aw >= need) return null;
+  const fmt = total >= 7 ? 'AABBABA' : total >= 5 ? 'AABBA' : 'ABA';
+  const n = Math.min(Math.max(s.game || (s.hw + s.aw + 1), 1), total);
+  const P = paramsOf(L, ctx); const hostIsA = fmt[n - 1] === 'A';
+  const m0 = f.margin - f.hca - (f.restH - f.restA);                      // tonight's blended margin (market and ratings), with court and rest taken out: the gap the rest of the series is played on
+  const cal = m => calibrate(Phi(m / P.sd), P.calib);
+  const atHome = cal(m0 + P.hca), away = cal(m0 - P.hca);                   // this game's home team, at home and on the road
+  const memo = new Map();
+  const rec = (wh, wa, i) => {
+    if (wh >= need) return 1; if (wa >= need) return 0; if (i >= total) return wh > wa ? 1 : 0;
+    const k = wh + ',' + wa + ',' + i; if (memo.has(k)) return memo.get(k);
+    const p = i === n - 1 ? f.pHome : ((fmt[i] === 'A') === hostIsA ? atHome : away);
+    const v = p * rec(wh + 1, wa, i + 1) + (1 - p) * rec(wh, wa + 1, i + 1);
+    memo.set(k, v); return v;
+  };
+  return { pHome: rec(s.hw, s.aw, n - 1), need, total, game: n, atHome, away };
+}
 /* share of the game still to be played, by sport */
 function fracLeft(L, g) {
   const per = g.period || 1;
@@ -569,5 +594,5 @@ ORDER.forEach(k => S.today[k] = []);
 const allToday = () => ORDER.flatMap(k => S.today[k]);
 
 Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, tipOf, TZLABEL, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, carry, API, API2, WEB, logoUrl, seasonYear, favs,
-  parseEvent, isLive, isDone, finalWord, isFav, isWire, readable, wireTeams, wirePlayers, wikiPage, wikiFacts, wikiPerson, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
+  parseEvent, isLive, isDone, finalWord, isFav, isWire, readable, wireTeams, wirePlayers, wikiPage, wikiFacts, wikiPerson, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, seriesForecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
 })();

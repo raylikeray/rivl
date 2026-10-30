@@ -455,6 +455,10 @@
       if (!hc) { $main.innerHTML = topbar('Game', '#scores') + empty("Couldn't load this game", '<p style="margin:6px 0 0">The feed didn\'t answer. Pull down to try again.</p>'); return null; }
       const ev = { id, competitions: [{ ...hc, venue: d.gameInfo && d.gameInfo.venue, status: hc.status, broadcasts: hc.broadcasts, geoBroadcasts: hc.geoBroadcasts }], date: hc.date, status: hc.status, season: d.header.season, pickcenter: d.pickcenter };   // the summary keeps the market line in pickcenter, not on the competition
       const g = parseEvent(ev, L); if (!g.date || isNaN(new Date(g.date))) g.date = new Date().toISOString();
+      /* the series and the headline ("WNBA Finals - Game 7") are on the day's scoreboard for certain; the summary's header
+         may or may not carry them. When this page's own feed lacks them, take them from the scoreboard entry for the
+         same game — the same feed, the same facts, never a guess */
+      if (!g.series && !g.note) { try { const d = await HW.scoreboard(L, ymdOf(g.date), 60000); const sb = (d || []).find(x => x.id === g.id); if (sb) { if (sb.series) g.series = sb.series; if (sb.note) g.note = sb.note; } } catch { } }
       if (!ctx) ctx = await forecastCtx(L, ymdOf(g.date)).catch(() => null);
       if (sched === undefined) sched = HW.sim && (lk === 'nba' || lk === 'wnba') ? await HW.sim.schedule(L, { feed: false }).catch(() => null) : null;
       const f = safeF(L, g, ctx);
