@@ -13,6 +13,7 @@
     /* real content is on screen: the bar goes, the slow note is off, and a new screen lands at its remembered scroll */
     const settle = () => { $main.dataset.real = '1'; clearTimeout(slowT); const sl = $main.querySelector('.slow'); if (sl) sl.remove(); hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; const y = +$main.dataset.y || 0; window.scrollTo(0, y); if (y) requestAnimationFrame(() => window.scrollTo(0, y)); } };
     V.busy = on => on ? showBar() : hideBar();   // for views that patch themselves in place and have no paint to hang the bar on
+    V.soft = el => { if (!el || !MOTION()) return; el.classList.remove('soft'); void el.offsetWidth; el.classList.add('soft'); };   // a block repainted in place eases in instead of popping
     V.settled = settle;   // for a view whose first real paint went into a part of the screen (Scores' list, a standings table) rather than the whole
     Object.defineProperty($main, 'innerHTML', {
       get() { return proto.get.call($main); },
@@ -71,7 +72,10 @@
     $main.dataset.y = render.key !== key ? ((back || (leagueScreen && !leagueChanged)) ? String(scrollMem.get(key) || 0) : '0') : '';
     // a page that starts at the top goes there now, before its skeleton replaces the old screen — otherwise the old scroll
     // position clamps as the document shrinks and the eye sees two moves instead of one
-    if (leagueChanged || ($main.dataset.y === '0' && render.key !== key)) window.scrollTo(0, 0);
+    const fresh = render.key !== key;
+    if (fresh && render.key && MOTION()) { $main.classList.remove('enter', 'fade'); $main.classList.add('leave'); await new Promise(res => setTimeout(res, 110)); if (my !== seq) return; }   // the old screen eases out first; a newer navigation wins
+    if (leagueChanged || ($main.dataset.y === '0' && fresh)) window.scrollTo(0, 0);
+    $main.classList.remove('leave'); if (fresh) { $main.classList.remove('fade'); void $main.offsetWidth; $main.classList.add('fade'); }   // the new screen eases in, skeleton and all; its rows rise once the real paint lands
     render.lk = r.lk;
     if (!['team', 'player', 'game'].includes(r.name) && V._.tint) V._.tint('');   // only a team's, a player's or a game's page wears a team colour
     if (leagueScreen) store.set('v5:screen', r.name);
@@ -274,7 +278,12 @@
 
   /* ---------- video sheet: ESPN's own clip files, played here; the ESPN page is the fallback ---------- */
   const $sheet = document.getElementById('sheet');
-  function closeSheet() { if (!$sheet || $sheet.hidden) return; const v = $sheet.querySelector('video'); if (v) { v.pause(); v.removeAttribute('src'); v.innerHTML = ''; v.load(); } $sheet.hidden = true; document.body.classList.remove('noscroll'); }
+  /* an overlay opens by sliding up under a backdrop that fades in, and closes the same way in reverse — the hidden flag only flips
+     once the exit has played, so nothing pops */
+  const MOTION = () => !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const show = el => { el.classList.remove('out'); el.hidden = false; void el.offsetWidth; el.classList.add('in'); };
+  const hide = (el, after) => { if (el.hidden) return; if (!MOTION()) { el.hidden = true; el.classList.remove('in', 'out'); if (after) after(); return; } el.classList.remove('in'); el.classList.add('out'); const done = () => { el.removeEventListener('animationend', done); el.hidden = true; el.classList.remove('out'); if (after) after(); }; el.addEventListener('animationend', done); setTimeout(done, 320); };
+  function closeSheet() { if (!$sheet || $sheet.hidden) return; const v = $sheet.querySelector('video'); if (v) { v.pause(); v.removeAttribute('src'); v.innerHTML = ''; v.load(); } hide($sheet); document.body.classList.remove('noscroll'); }
   function openSheet(vid) {
     const v = S.videos && S.videos[vid]; if (!v) { toast('That clip is not available'); return; }
     const L = v.links || {}; const src = L.source || {}; const web = L.web && L.web.href || (L.mobile && L.mobile.href) || '';
@@ -292,15 +301,15 @@
     el.poster = v.thumbnail || (v.posterImages && v.posterImages.default && v.posterImages.default.href) || '';
     el.onerror = null; const lastSrc = el.querySelector('source:last-child'); if (lastSrc) lastSrc.addEventListener('error', () => { fb.hidden = false; }, { once: true });
     if (!uniq.length) fb.hidden = false;
-    $sheet.hidden = false; document.body.classList.add('noscroll'); el.load(); const p = el.play(); if (p && p.catch) p.catch(() => { });
+    show($sheet); document.body.classList.add('noscroll'); el.load(); const p = el.play(); if (p && p.catch) p.catch(() => { });
   }
   $sheet.addEventListener('click', e => { if (e.target === $sheet || e.target.closest('[data-act="close"]')) closeSheet(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
 
   /* ---------- panel: a sheet for anything that isn't a video (injury notes, first-run setup) ---------- */
   const $panel = document.getElementById('panel');
-  function openPanel(html, { full = false } = {}) { $panel.querySelector('.panel-in').innerHTML = html; $panel.classList.toggle('full', full); $panel.hidden = false; document.body.classList.add('noscroll'); $panel.querySelector('.panel-in').scrollTop = 0; }
-  function closePanel() { if ($panel.hidden) return; $panel.hidden = true; $panel.classList.remove('full'); document.body.classList.remove('noscroll'); }
+  function openPanel(html, { full = false } = {}) { $panel.querySelector('.panel-in').innerHTML = html; $panel.classList.toggle('full', full); if ($panel.hidden) show($panel); document.body.classList.add('noscroll'); $panel.querySelector('.panel-in').scrollTop = 0; }
+  function closePanel() { if ($panel.hidden) return; hide($panel, () => $panel.classList.remove('full')); document.body.classList.remove('noscroll'); }
   $panel.addEventListener('click', e => { if (e.target === $panel && !$panel.classList.contains('full')) closePanel(); });
 
   /* the month at a glance: games each day, a mark on the days your teams play; tap a day to go there */

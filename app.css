@@ -1244,7 +1244,7 @@ button.thead{width:calc(100% - var(--gut) - var(--gut-r));border:0;font:inherit;
 .onb-none{margin:0 0 8px;font-size:13px;color:var(--ink-3)}
 .pick .hs{width:26px;height:26px;flex:none}
 .pick .hs span{font-size:10px}
-.pick{flex:none;display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 10px 0 6px;border-radius:12px;border:0;font:inherit;color:inherit;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),var(--plate-shadow);transition:transform .14s ease}
+.pick{flex:none;display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 10px 0 6px;border-radius:12px;border:0;font:inherit;color:inherit;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),0 1px 1px rgba(0,0,0,.3),0 4px 10px -7px rgba(0,0,0,.45);transition:transform .14s ease}
 .pick:active{transform:scale(.96)}
 .pick .logo{width:26px;height:26px;background:none;box-shadow:none}
 .pick .logo::before,.pick .logo::after{display:none}
@@ -1286,9 +1286,9 @@ button.thead[aria-expanded="false"] .chev svg{transform:rotate(0)}
 button.thead:active{transform:scale(.985)}
 
 /* small controls in scrolling rows carry a tight contact shadow only: a long blur gets clipped by the row and reads as a band */
-.chip,.card .chip,.day,.tag,.sec a,.sec button,.chip.mine{box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),0 1px 1px rgba(0,0,0,.3),0 4px 10px -7px rgba(0,0,0,.45)}
-:root[data-theme="light"] .chip,:root[data-theme="light"] .card .chip,:root[data-theme="light"] .day,:root[data-theme="light"] .tag,:root[data-theme="light"] .sec a,:root[data-theme="light"] .sec button{box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),0 1px 1px rgba(16,24,40,.08),0 4px 10px -7px rgba(16,24,40,.28)}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .chip,:root:not([data-theme="dark"]) .card .chip,:root:not([data-theme="dark"]) .day,:root:not([data-theme="dark"]) .tag,:root:not([data-theme="dark"]) .sec a,:root:not([data-theme="dark"]) .sec button{box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),0 1px 1px rgba(16,24,40,.08),0 4px 10px -7px rgba(16,24,40,.28)} }
+.chip,.card .chip,.day,.tag,.sec a,.sec button,.chip.mine,.bchip,.livebar .lg,.pick{box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),0 1px 1px rgba(0,0,0,.3),0 4px 10px -7px rgba(0,0,0,.45)}
+:root[data-theme="light"] .chip,:root[data-theme="light"] .card .chip,:root[data-theme="light"] .bchip,:root[data-theme="light"] .livebar .lg,:root[data-theme="light"] .pick,:root[data-theme="light"] .day,:root[data-theme="light"] .tag,:root[data-theme="light"] .sec a,:root[data-theme="light"] .sec button{box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),0 1px 1px rgba(16,24,40,.08),0 4px 10px -7px rgba(16,24,40,.28)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .chip,:root:not([data-theme="dark"]) .card .chip,:root:not([data-theme="dark"]) .bchip,:root:not([data-theme="dark"]) .livebar .lg,:root:not([data-theme="dark"]) .pick,:root:not([data-theme="dark"]) .day,:root:not([data-theme="dark"]) .tag,:root:not([data-theme="dark"]) .sec a,:root:not([data-theme="dark"]) .sec button{box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),0 1px 1px rgba(16,24,40,.08),0 4px 10px -7px rgba(16,24,40,.28)} }
 .chip.on,.chip[aria-pressed="true"],.chip[aria-checked="true"],.card .chip.on,.card .chip[aria-pressed="true"],.day.on,.pill.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 1px rgba(0,0,0,.4)}
 :root[data-theme="light"] .chip.on,:root[data-theme="light"] .chip[aria-pressed="true"],:root[data-theme="light"] .chip[aria-checked="true"],:root[data-theme="light"] .day.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 1px 2px rgba(16,24,40,.25)}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .chip.on,:root:not([data-theme="dark"]) .chip[aria-pressed="true"],:root:not([data-theme="dark"]) .chip[aria-checked="true"],:root:not([data-theme="dark"]) .day.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 1px 2px rgba(16,24,40,.25)} }
@@ -1309,9 +1309,9 @@ button.thead:active{transform:scale(.985)}
 .lb-slot .livebar{padding:0 0 4px}
 .livebar .lb-in{display:flex;gap:8px;padding:2px var(--gut-r) 8px var(--gut);overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;scroll-padding-left:var(--gut);-webkit-mask-image:var(--em,none);mask-image:var(--em,none)}
 .livebar .lb-in::-webkit-scrollbar{display:none}
-.livebar .lg{flex:none;display:inline-flex;align-items:center;gap:9px;height:40px;padding:0 12px 0 9px;border-radius:12px;color:var(--ink);text-decoration:none;scroll-snap-align:start;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),var(--plate-shadow);transition:transform .14s ease}
+.livebar .lg{flex:none;display:inline-flex;align-items:center;gap:9px;height:40px;padding:0 12px 0 9px;border-radius:12px;color:var(--ink);text-decoration:none;scroll-snap-align:start;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),0 1px 1px rgba(0,0,0,.3),0 4px 10px -7px rgba(0,0,0,.45);transition:transform .14s ease}
 .livebar .lg:active{transform:scale(.97)}
-.livebar .lg.fav{box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px color-mix(in srgb,var(--acc,var(--ink)) 45%,var(--plate-line)),var(--plate-shadow)}
+.livebar .lg.fav{box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px color-mix(in srgb,var(--acc,var(--ink)) 45%,var(--plate-line)),0 1px 1px rgba(0,0,0,.3),0 4px 10px -7px rgba(0,0,0,.45)}
 .livebar .tm{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:800;letter-spacing:.01em}
 .livebar .tm img{width:18px;height:18px;object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
 .livebar .tm b{color:var(--ink-2)}
@@ -1432,6 +1432,32 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .why-h.why-n4 .wt b{font-size:12px}
 .why-r.why-n4 b{font-size:13px}
 .chips a.chip{text-decoration:none}
+/* ====================================================================================================
+   MOTION. One ease for everything that moves (a quick start, a long settle), and nothing pops: a screen eases out and the next
+   eases in; an overlay slides up under a backdrop that fades, and leaves the same way; a block repainted in place eases in. */
+:root{--ease:cubic-bezier(.2,.8,.2,1)}
+#main.leave{animation:screenout .12s ease-out both}
+@keyframes screenout{from{opacity:1}to{opacity:0}}
+#main.fade{animation:screen .36s var(--ease) both}
+@keyframes screen{from{opacity:0}to{opacity:1}}
+.soft{animation:soft .32s var(--ease) both}
+@keyframes soft{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.sheet,.panel{will-change:opacity}
+.sheet.in,.panel.in{animation:veil .32s var(--ease) both}
+.sheet.out,.panel.out{animation:veil .22s var(--ease) reverse both}
+@keyframes veil{from{background-color:transparent}to{background-color:rgba(0,0,0,.72)}}
+.panel.full.in,.panel.full.out{animation-name:veilfull}
+@keyframes veilfull{from{opacity:0}to{opacity:1}}
+.sheet.in .sheet-in,.panel.in .panel-in{animation:lift .38s var(--ease) both}
+.sheet.out .sheet-in,.panel.out .panel-in{animation:drop .22s var(--ease) both}
+@keyframes lift{from{transform:translateY(28px);opacity:.6}to{transform:none;opacity:1}}
+@keyframes drop{from{transform:none;opacity:1}to{transform:translateY(24px);opacity:0}}
+.panel.full.in .panel-in{animation:liftfull .38s var(--ease) both}
+.panel.full.out .panel-in{animation:dropfull .22s var(--ease) both}
+@keyframes liftfull{from{transform:translateY(14px) scale(.985);opacity:0}to{transform:none;opacity:1}}
+@keyframes dropfull{from{transform:none;opacity:1}to{transform:translateY(10px) scale(.99);opacity:0}}
+.tab,.pill,.chip,.day,.btn,.row,.game,.bchip,.pl,.cd,.pc,.hs,.logo,.ib,.off,.pick{transition-timing-function:var(--ease)}
+
 /* reduced motion: nothing rises, blinks, bumps, spins or slides; state changes still show, instantly */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
