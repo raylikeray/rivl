@@ -210,23 +210,27 @@ table,.num{font-variant-numeric:tabular-nums}
 .topbar .ib{color:var(--ink)}
 .topbar .ttl{font-size:15px;font-weight:700;color:var(--ink-2);text-decoration:none;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topbar .sp{margin-left:auto;display:flex}
-.ehero{position:relative;margin:0 var(--gut-r) 0 var(--gut);border-radius:18px;overflow:hidden;color:#fff;
-  background:linear-gradient(118deg,var(--a) 0 57%,rgba(0,0,0,.55) 57% 58.1%,var(--a2,color-mix(in srgb,var(--a) 62%,#000)) 58.1% 100%);min-height:270px}
+.ehero{position:relative;margin:0 var(--gut-r) 0 var(--gut);border-radius:20px;overflow:hidden;color:#fff;min-height:276px;
+  background:
+    radial-gradient(58% 78% at 80% 62%,color-mix(in srgb,var(--a2,var(--a)) 55%,#fff) 0%,transparent 70%),
+    linear-gradient(118deg,var(--a) 0 54%,var(--a2,color-mix(in srgb,var(--a) 62%,#000)) 62% 100%)}
+.ehero::before{content:"";position:absolute;inset:0;background:var(--grain);opacity:.6;mix-blend-mode:soft-light;pointer-events:none}
 .ehero .tchip{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 13px 0 5px;border-radius:999px;background:rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.26),inset 0 0 0 1px rgba(255,255,255,.1);color:#fff;text-decoration:none;font-size:13px;font-weight:800;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);letter-spacing:-.01em}
 .ehero .tchip img{width:24px;height:24px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
 .ehero .tchip:active{transform:scale(.97)}
 .ehero .tchip + .sub{margin-top:10px}
-.ehero .wm{position:absolute;right:10px;top:-22px;font:800 230px/1 var(--num);color:rgba(255,255,255,.09);letter-spacing:-.02em;pointer-events:none;user-select:none}
+.ehero .wm{position:absolute;right:10px;top:-22px;font:800 230px/1 var(--num);color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.22);letter-spacing:-.02em;pointer-events:none;user-select:none}
 .ehero .shot{position:absolute;right:-6px;bottom:0;width:206px;height:206px;display:block;pointer-events:none}
 .ehero .tlg{display:none;position:absolute;right:36%;top:50%;width:260px;height:260px;object-fit:contain;transform:translateY(-50%);opacity:.14;filter:grayscale(1) brightness(3);pointer-events:none}
-.ehero .shot img{width:100%;height:100%;object-fit:contain;object-position:bottom;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
+.ehero .shot::before{content:"";position:absolute;left:14%;right:10%;bottom:-6px;height:26px;border-radius:50%;background:radial-gradient(50% 50% at 50% 50%,rgba(0,0,0,.55),transparent 70%);filter:blur(4px)}
+.ehero .shot img{position:relative;width:100%;height:100%;object-fit:contain;object-position:bottom;display:block;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45))}
 .ehero .tlogo{position:absolute;right:16px;top:16px;width:96px;height:96px;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
-.ehero .in{position:relative;z-index:1;padding:16px 18px 18px;max-width:64%}
+.ehero .in{position:relative;z-index:1;padding:16px 18px 18px;max-width:60%}
 .ehero .sub{font-size:11.5px;font-weight:800;opacity:.85;letter-spacing:.08em;text-transform:uppercase}
 .ehero .sub a{text-decoration:none}
-.ehero h1{font:800 44px/0.92 var(--num);letter-spacing:.005em;text-transform:uppercase;margin-top:6px;text-wrap:balance}
+.ehero h1{font:800 46px/0.92 var(--num);letter-spacing:.005em;text-transform:uppercase;margin-top:6px;text-wrap:balance;text-shadow:0 2px 0 rgba(0,0,0,.18),0 8px 24px rgba(0,0,0,.25)}
 .ehero .facts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;font-size:12.5px}
-.ehero .facts span{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;background:rgba(0,0,0,.26);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.08);font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.ehero .facts span{display:inline-flex;align-items:center;height:27px;padding:0 11px;border-radius:999px;background:rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.08),0 2px 6px -2px rgba(0,0,0,.35);font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-shadow:0 1px 1px rgba(0,0,0,.25)}
 .ehero .acts{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
 .ehero .acts button,.ehero .acts a{height:38px;padding:0 16px;border-radius:999px;font-size:13.5px;font-weight:800;background:rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.26),inset 0 0 0 1px rgba(255,255,255,.1);color:#fff;display:inline-flex;align-items:center;gap:7px;text-decoration:none;white-space:nowrap;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .ehero .acts .on{background:#fff;color:var(--a)}
@@ -458,7 +462,7 @@ button.row:last-child{border-bottom:0}
 /* a player card in the hero's own language: the team's colour split by the seam, the photo large at the right, the name set
    like the hero's, the figure big, the rest as glass chips */
 .pc{position:relative;overflow:hidden;min-height:150px;border-radius:20px;padding:16px 16px 14px;display:flex;flex-direction:column;justify-content:flex-end;color:#fff;text-decoration:none;isolation:isolate;
-  background:var(--grain),linear-gradient(118deg,var(--a) 0 55%,rgba(0,0,0,.55) 55% 56.2%,var(--ad) 56.2% 100%);background-blend-mode:soft-light,normal;
+  background:var(--grain),linear-gradient(118deg,var(--a) 0 50%,var(--ad) 60% 100%);background-blend-mode:soft-light,normal;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.26),inset 0 0 0 1px rgba(255,255,255,.07),0 18px 40px -22px rgba(0,0,0,.95),0 2px 4px rgba(0,0,0,.3)}
 .pc::before{content:"";position:absolute;inset:0;background:radial-gradient(110% 70% at 30% -10%,rgba(255,255,255,.14),transparent 55%),linear-gradient(90deg,rgba(0,0,0,.30),rgba(0,0,0,.06) 44%,transparent 60%);pointer-events:none}
 .pc .shot{position:absolute;right:0;bottom:0;width:196px;height:142px;pointer-events:none;z-index:1}
@@ -811,8 +815,9 @@ body{overscroll-behavior-y:none}
    sink in. On true black a dark shadow is invisible, so dark depth comes from edges, light and coloured glow.
    ==================================================================================================== */
 :root{
-  --edge:inset 0 1px 0 rgba(255,255,255,.10),inset 0 0 0 1px rgba(255,255,255,.08),0 1px 0 rgba(0,0,0,.7),0 10px 22px -12px rgba(0,0,0,.85);
-  --plate:linear-gradient(180deg,#262A31 0%,#191B20 100%); --plate-2:linear-gradient(180deg,#1C1F24 0%,#131519 100%);
+  --edge:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.07),0 1px 0 rgba(0,0,0,.8),0 6px 14px -8px rgba(0,0,0,.7),0 26px 48px -26px rgba(0,0,0,.95);
+  --plate:radial-gradient(120% 70% at 18% -4%,rgba(255,255,255,.09),transparent 55%),linear-gradient(180deg,#2A2E36 0%,#1B1E24 100%);
+  --plate-2:radial-gradient(120% 70% at 18% -4%,rgba(255,255,255,.075),transparent 55%),linear-gradient(180deg,#22262C 0%,#15181C 60%,#121418 100%);
   --plate-line:rgba(255,255,255,.12); --plate-hi:rgba(255,255,255,.11);
   --plate-shadow:0 1px 0 rgba(0,0,0,.7),0 2px 4px rgba(0,0,0,.4),0 10px 22px -12px rgba(0,0,0,.9);
   --well:#0B0C0F; --well-shadow:inset 0 1px 3px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.08);
@@ -820,8 +825,8 @@ body{overscroll-behavior-y:none}
   --grain:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='96'%20height='96'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='.95'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='96'%20height='96'%20filter='url(%23n)'%20opacity='.5'/%3E%3C/svg%3E");
 }
 :root[data-theme="light"]{
-  --edge:inset 0 1px 0 rgba(255,255,255,1),inset 0 0 0 1px rgba(10,11,14,.09),0 1px 1px rgba(16,24,40,.06),0 2px 5px -1px rgba(16,24,40,.10),0 10px 18px -12px rgba(16,24,40,.26);
-  --plate:linear-gradient(180deg,#FFFFFF 0%,#F3F4F7 100%); --plate-2:linear-gradient(180deg,#FFFFFF 0%,#F7F8FA 100%);
+  --edge:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.08),0 1px 1px rgba(16,24,40,.05),0 4px 10px -4px rgba(16,24,40,.10),0 20px 36px -22px rgba(16,24,40,.38);
+  --plate:linear-gradient(180deg,#FFFFFF 0%,#F2F3F6 100%); --plate-2:linear-gradient(180deg,#FFFFFF 0%,#F6F7F9 100%);
   --plate-line:rgba(10,11,14,.10); --plate-hi:rgba(255,255,255,1);
   --plate-shadow:0 1px 1px rgba(16,24,40,.06),0 2px 5px -1px rgba(16,24,40,.12),0 10px 18px -12px rgba(16,24,40,.28);
   --well:#FFFFFF; --well-shadow:inset 0 1px 2px rgba(16,24,40,.10),inset 0 0 0 1px rgba(10,11,14,.10);
@@ -829,8 +834,8 @@ body{overscroll-behavior-y:none}
   --grain:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='96'%20height='96'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='.95'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='96'%20height='96'%20filter='url(%23n)'%20opacity='.32'/%3E%3C/svg%3E");
 }
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){
-  --edge:inset 0 1px 0 rgba(255,255,255,1),inset 0 0 0 1px rgba(10,11,14,.09),0 1px 1px rgba(16,24,40,.06),0 2px 5px -1px rgba(16,24,40,.10),0 10px 18px -12px rgba(16,24,40,.26);
-  --plate:linear-gradient(180deg,#FFFFFF 0%,#F3F4F7 100%); --plate-2:linear-gradient(180deg,#FFFFFF 0%,#F7F8FA 100%);
+  --edge:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.08),0 1px 1px rgba(16,24,40,.05),0 4px 10px -4px rgba(16,24,40,.10),0 20px 36px -22px rgba(16,24,40,.38);
+  --plate:linear-gradient(180deg,#FFFFFF 0%,#F2F3F6 100%); --plate-2:linear-gradient(180deg,#FFFFFF 0%,#F6F7F9 100%);
   --plate-line:rgba(10,11,14,.10); --plate-hi:rgba(255,255,255,1);
   --plate-shadow:0 1px 1px rgba(16,24,40,.06),0 2px 5px -1px rgba(16,24,40,.12),0 10px 18px -12px rgba(16,24,40,.28);
   --well:#FFFFFF; --well-shadow:inset 0 1px 2px rgba(16,24,40,.10),inset 0 0 0 1px rgba(10,11,14,.10);
@@ -942,7 +947,10 @@ body{overscroll-behavior-y:none}
 /* the glass under the status bar: the page scrolls beneath it and blurs, the way the system bars do; it only has height in the
    home-screen app on a phone with an inset, and is nothing anywhere else */
 .sbg{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);z-index:60;pointer-events:none;
-  -webkit-backdrop-filter:blur(24px) saturate(1.8);backdrop-filter:blur(24px) saturate(1.8);background:transparent}
+  -webkit-backdrop-filter:blur(30px) saturate(1.9);backdrop-filter:blur(30px) saturate(1.9);background:color-mix(in srgb,var(--bg) 22%,transparent);
+  box-shadow:inset 0 -1px 0 rgba(255,255,255,.07)}
+:root[data-theme="light"] .sbg{box-shadow:inset 0 -1px 0 rgba(10,11,14,.06)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .sbg{box-shadow:inset 0 -1px 0 rgba(10,11,14,.06)} }
 @media (prefers-reduced-transparency:reduce){ .sbg{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)} }
 .app::before{content:"";position:absolute;left:0;right:0;top:0;height:560px;pointer-events:none;z-index:-1;
   background:linear-gradient(180deg,
@@ -1032,26 +1040,30 @@ button.injhd{margin:8px 0 2px;padding:8px 10px 8px 10px;border-radius:12px;gap:1
 .plays .row.play.score::before{background:var(--tf,var(--ink-3))}
 .plays .row.play.score .t b{font-weight:700}
 .plays .row .tag.pts{min-width:30px;text-align:center}
-.pchips{padding:12px 0 10px}
+.pchips{padding:12px var(--gut-r) 10px var(--gut)}
 .chip.tog{margin-left:auto}
 .tbl.box tr.dnp td{color:var(--ink-3)}
 
 /* the playoff picture: matchups as plates, seeds first, your teams marked */
 .bh{margin:14px var(--gut-r) 8px var(--gut);font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
 .bracket{display:grid;gap:10px;padding:0 var(--gut-r) 0 var(--gut)}
-.mu{position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:10px 12px;border-radius:14px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge)}
-.bt.me i{border-radius:999px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-size:11.5px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 1px 1px rgba(0,0,0,.3)}
+.mu{position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:6px 8px;padding:14px 12px 12px;border-radius:18px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge)}
+.mu > em{align-self:center;padding-top:14px}
+.bt.me i{background:var(--acc,var(--ink));color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 1px 1px rgba(0,0,0,.3)}
+[data-accent="mono"] .bt.me i,:root:not([data-accent]) .bt.me i{background:var(--ink);color:var(--bg)}
 [data-accent] .bt.me i{background:var(--acc);color:#fff}
 .bt.me .tx b{color:var(--ink)}
 .mu em{font-style:normal;font-size:11px;font-weight:800;color:var(--ink-3)}
 .mu small{grid-column:1/-1;font-size:11.5px;color:var(--ink-3);padding-top:2px}
-.bt{display:flex;align-items:center;gap:8px;min-width:0;color:inherit;text-decoration:none}
-.bt.r{flex-direction:row-reverse;text-align:right}
-.bt i{font:800 13px/1 var(--num);color:var(--ink-3);width:20px;height:20px;flex:none;display:grid;place-items:center;font-style:normal}
-.bt .logo{width:28px;height:28px;flex:none}
-.bt .tx{min-width:0;display:block}
-.bt .tx b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;color:inherit;text-decoration:none;text-align:center;padding-top:6px}
+.bt.r{flex-direction:column;text-align:center}
+.bt i{position:absolute;top:0;left:6px;font:800 12px/1 var(--num);color:var(--ink-2);min-width:22px;height:22px;padding:0 6px;border-radius:999px;display:grid;place-items:center;font-style:normal;background:var(--surf-3);box-shadow:inset 0 0 0 1px var(--plate-line)}
+.bt.r i{left:auto;right:6px}
+.bt .logo{width:48px;height:48px;flex:none}
+.bt .tx{min-width:0;display:block;max-width:100%}
+.bt .tx b{display:block;font-size:14.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bt .tx span{display:block;font-size:12px;color:var(--ink-3);margin-top:1px}
+.mu small{text-align:center;padding-top:8px;border-top:1px solid var(--line);margin-top:4px}
 .bt.tbd .tx b{color:var(--ink-3);font-weight:700;white-space:normal;font-size:13px}
 @media (min-width:600px){.bracket{grid-template-columns:1fr 1fr}}
 
@@ -1561,16 +1573,12 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .brief-row{padding-bottom:10px}
 .hsec .rows{padding-bottom:2px}
 .hsec .rail{padding-bottom:8px;padding-top:0}
-/* your players: rows, the same shape as your teams above them, so the card is full across and each man's next game sits at his right */
-.hsec[data-sec="players"] .rail{display:grid;grid-template-columns:minmax(0,1fr);gap:0;overflow:visible;padding-top:0;padding-bottom:6px;scroll-snap-type:none}
-.hsec[data-sec="players"] .pl{width:auto;display:grid;grid-template-columns:48px minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:14px;align-items:center;text-align:left;padding:9px 0;border-bottom:1px solid var(--line);scroll-snap-align:none}
-.hsec[data-sec="players"] .pl:last-child{border-bottom:0}
-.hsec[data-sec="players"] .pl .hs{width:48px!important;height:48px!important;font-size:16px!important;margin:0;grid-row:1/3;grid-column:1;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 1px 2px rgba(0,0,0,.35),0 0 0 2px color-mix(in srgb,var(--tf,#000) 22%,transparent)}
-.hsec[data-sec="players"] .pl b{grid-column:2;grid-row:1;font-size:16px;line-height:1.2;-webkit-line-clamp:1;letter-spacing:-.01em}
-.hsec[data-sec="players"] .pl span{grid-column:2;grid-row:2;font-size:13px;margin-top:1px}
-.hsec[data-sec="players"] .pl em.nx{grid-column:3;grid-row:1/3;margin:0;text-align:right;font-size:13px;white-space:normal;max-width:150px}
-.hsec[data-sec="players"] .pl em.nx small{text-align:right}
-.hsec[data-sec="players"] .pl:only-child{border-bottom:0}
+/* your players: a strip of discs you scroll through on the phone — tight, so it costs little height */
+.hsec[data-sec="players"] .sec{padding-top:14px;padding-bottom:6px}
+.hsec[data-sec="players"]{padding-bottom:2px}
+.hsec[data-sec="players"] .rail{gap:8px;padding-bottom:8px}
+.hsec[data-sec="players"] .pl{width:90px}
+.hsec[data-sec="players"] .pl .hs{width:60px!important;height:60px!important;font-size:20px!important;margin-bottom:6px}
 .hsec .row:last-child{border-bottom:0}
 .hsec .brief .row:last-child{border-bottom:0}
 .hsec[data-sec="news"] .rows .row:last-child{border-bottom:0}
@@ -1581,9 +1589,13 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   .brief-rows,.hsec[data-sec="teams"] .rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));column-gap:28px}
   .brief-rows .row,.hsec[data-sec="teams"] .rows .row{min-width:0}
   /* your players as rows, three across, instead of a strip of discs left in a wide card */
-  .hsec[data-sec="players"] .rail{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));column-gap:28px;padding-bottom:10px}
-  .hsec[data-sec="players"] .pl{grid-template-columns:52px minmax(0,1fr) auto;padding:8px 0}
-  .hsec[data-sec="players"] .pl .hs{width:52px!important;height:52px!important;font-size:17px!important}
+  /* on a wide screen your players are rows, two across, so the card uses its width */
+  .hsec[data-sec="players"] .rail{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0 28px;overflow:visible;padding-bottom:10px;scroll-snap-type:none;-webkit-mask-image:none;mask-image:none}
+  .hsec[data-sec="players"] .pl{width:auto;display:grid;grid-template-columns:52px minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:14px;align-items:center;text-align:left;padding:8px 0;border-bottom:1px solid var(--line);scroll-snap-align:none}
+  .hsec[data-sec="players"] .pl .hs{width:52px!important;height:52px!important;font-size:17px!important;margin:0;grid-row:1/3;grid-column:1}
+  .hsec[data-sec="players"] .pl b{grid-column:2;grid-row:1;font-size:15.5px;line-height:1.2;-webkit-line-clamp:1;letter-spacing:-.01em}
+  .hsec[data-sec="players"] .pl span{grid-column:2;grid-row:2;font-size:13px;margin-top:1px}
+  .hsec[data-sec="players"] .pl em.nx{grid-column:3;grid-row:1/3;margin:0;text-align:right;font-size:13px;white-space:normal;max-width:150px}
   .hsec[data-sec="players"] .pl:last-child,.hsec[data-sec="players"] .pl:nth-last-child(2):nth-child(odd){border-bottom:0}
   .ehero h1.long{font-size:52px}
   .ehero h1.xlong{font-size:44px}
@@ -1612,20 +1624,24 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 @media (max-width:1039px){
   .hdr{display:contents}
   .pills{position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:35;transition:background .3s ease,box-shadow .3s ease,transform .3s ease}
-  :root.scrolled .pills{background:color-mix(in srgb,var(--surf) 44%,transparent);
-    -webkit-backdrop-filter:blur(28px) saturate(1.9);backdrop-filter:blur(28px) saturate(1.9);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 1px rgba(255,255,255,.08),0 12px 34px -14px rgba(0,0,0,.85),0 2px 6px rgba(0,0,0,.3)}
-  :root.scrolled[data-theme="light"] .pills{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px rgba(10,11,14,.08),0 12px 30px -16px rgba(16,24,40,.45),0 2px 6px -2px rgba(16,24,40,.2)}
-  @media (prefers-color-scheme:light){ :root.scrolled:not([data-theme="dark"]) .pills{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px rgba(10,11,14,.08),0 12px 30px -16px rgba(16,24,40,.45),0 2px 6px -2px rgba(16,24,40,.2)} }
-  :root.scrolled .pill:not(.on){color:var(--ink)}
+    /* stuck, the switch keeps its solid plate (its labels have to read over anything) and only its shadow deepens */
+  :root.scrolled .pills{box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.07),inset 0 -1px 0 rgba(0,0,0,.6),0 16px 36px -14px rgba(0,0,0,.95),0 2px 6px rgba(0,0,0,.45)}
+  :root.scrolled[data-theme="light"] .pills{box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.08),0 14px 30px -14px rgba(16,24,40,.5),0 2px 6px -2px rgba(16,24,40,.22)}
+  @media (prefers-color-scheme:light){ :root.scrolled:not([data-theme="dark"]) .pills{box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.08),0 14px 30px -14px rgba(16,24,40,.5),0 2px 6px -2px rgba(16,24,40,.22)} }
   .tabs{left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);max-width:560px;margin:0 auto;border-radius:999px;padding:5px;border-top:0;
-    background:color-mix(in srgb,var(--surf) 48%,transparent);background-blend-mode:normal;
-    -webkit-backdrop-filter:blur(30px) saturate(1.9);backdrop-filter:blur(30px) saturate(1.9);
+    background:color-mix(in srgb,var(--surf) 82%,transparent);background-blend-mode:normal;
+    -webkit-backdrop-filter:blur(34px) saturate(1.8);backdrop-filter:blur(34px) saturate(1.8);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.07),0 16px 40px -16px rgba(0,0,0,.85),0 2px 8px rgba(0,0,0,.35)}
+  :root[data-theme="light"] .tabs{background:color-mix(in srgb,#fff 84%,transparent)}
+  @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .tabs{background:color-mix(in srgb,#fff 84%,transparent)} }
+  .tab{color:var(--ink-2)}
+  .tab span{text-shadow:0 1px 1px rgba(0,0,0,.25)}
+  :root[data-theme="light"] .tab span{text-shadow:none}
+  @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .tab span{text-shadow:none} }
   :root[data-theme="light"] .tabs{box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 0 0 1px rgba(10,11,14,.08),0 16px 36px -18px rgba(16,24,40,.5),0 2px 8px -2px rgba(16,24,40,.22)}
   @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .tabs{box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 0 0 1px rgba(10,11,14,.08),0 16px 36px -18px rgba(16,24,40,.5),0 2px 8px -2px rgba(16,24,40,.22)} }
   .tab{height:54px;border-radius:999px;gap:3px;font-size:10.5px;transition:background .2s ease,color .15s ease,transform .12s ease}
-  .tab.on{background:color-mix(in srgb,var(--ink) 11%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.06)}
+  .tab.on{color:var(--ink);background:color-mix(in srgb,var(--ink) 13%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.07)}
   .tab:active{transform:scale(.94)}
   .todayfab{bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 26px)}
   .toast,.upd{bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 26px)}
@@ -1637,7 +1653,7 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 /* game info: a plate of rows; the venue and the officials open to what the feed says about them */
 .giplate{margin:0 var(--gut-r) 0 var(--gut);border-radius:18px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge);padding:2px 14px;--gut:0px;--gut-r:0px}
 .giplate .row{padding:12px 0}
-.giplate .row .t b{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.giplate .row .t > b{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
 .giplate .row .t > span{font-size:15.5px;font-weight:700;color:var(--ink);margin-top:3px;white-space:normal}
 .giplate button.row{width:100%;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
 .giplate button.row .chev{transition:transform .18s}
@@ -1667,3 +1683,30 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .pline span b{font:800 13.5px/1 var(--num);color:var(--ink)}
 .tbl.box tr.hl td{background:color-mix(in srgb,var(--tf,var(--ink)) 12%,transparent);font-weight:800}
 .tbl.box tr.hl td:first-child{box-shadow:inset 3px 0 0 var(--tf,var(--ink));background-color:var(--page);background-image:linear-gradient(color-mix(in srgb,var(--tf,var(--ink)) 12%,transparent),color-mix(in srgb,var(--tf,var(--ink)) 12%,transparent))}
+
+
+/* the venue: its photo as the ground when the feed has one, the name over it; otherwise the home team's colour */
+.vhero{position:relative;margin:0 var(--gut-r) 14px var(--gut);min-height:250px;border-radius:20px;overflow:hidden;color:#fff;display:flex;align-items:flex-end;
+  background:var(--grain),linear-gradient(118deg,var(--a,#2A2D33) 0 57%,rgba(0,0,0,.6) 57% 58.1%,color-mix(in srgb,var(--a,#2A2D33) 62%,#000) 58.1% 100%);background-blend-mode:soft-light,normal;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 18px 40px -22px rgba(0,0,0,.95)}
+.vhero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.vhero.pic::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.18) 40%,rgba(0,0,0,.78) 100%);pointer-events:none}
+.vhero .in{position:relative;z-index:1;padding:18px 18px 18px}
+.vhero .sub{font-size:11.5px;font-weight:800;opacity:.85;letter-spacing:.08em;text-transform:uppercase}
+.vhero h1{font:800 38px/.95 var(--num);text-transform:uppercase;margin-top:4px;text-shadow:0 2px 0 rgba(0,0,0,.25),0 10px 30px rgba(0,0,0,.45);text-wrap:balance}
+.vhero .facts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;font-size:12.5px}
+.vhero .facts span{display:inline-flex;align-items:center;height:27px;padding:0 11px;border-radius:999px;background:rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.08);font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.giplate .row .t > span small{display:block;font-size:13px;font-weight:600;color:var(--ink-3);margin-top:2px}
+.giplate a.row{text-decoration:none;color:inherit}
+.offs{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;white-space:normal}
+.giplate .row .t > span:has(.offs){overflow:visible;white-space:normal}
+.off{display:inline-flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 12px;border-radius:12px;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),var(--plate-shadow);border:0;font:inherit;color:inherit;text-align:left;cursor:pointer;transition:transform .14s ease}
+.off:active{transform:scale(.97)}
+.off b{font-size:14px;font-weight:700;color:var(--ink)}
+.off em{font-style:normal;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase}
+.tbl.kv td .mut{color:var(--ink-3);font-weight:500}
+@media (min-width:1040px){
+  .vhero{min-height:340px;border-radius:22px}
+  .vhero h1{font-size:56px}
+  .ehero .wm{-webkit-text-stroke-width:3px}
+}

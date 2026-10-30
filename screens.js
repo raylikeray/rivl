@@ -210,6 +210,7 @@
     const t0 = (roster && roster.team) || (sched && sched.team);
     if (!t0) { $main.innerHTML = topbar('Team') + empty("Couldn't load this team", '<p style="margin:6px 0 0">The feed didn\'t answer. Pull down to try again.</p>'); return; }
     learn(L, { id: String(id), ...t0 }); const color = teamColor({ id: String(id), abbr: t0.abbreviation, color: t0.color }, L); V._.tint(color);
+    const alt0 = V._.teamAlt({ id: String(id), abbr: t0.abbreviation, alt: t0.alternateColor }, L); const a2 = alt0 && alt0.toLowerCase() !== String(color).toLowerCase() ? V._.V_panel(alt0) : '';
     const lg = t0.logo || (t0.logos && t0.logos[0] && t0.logos[0].href) || HW.logoUrl(L, t0.abbreviation);
     const r = st && st.byId[String(id)];
     const rank = R && (R.ranks.find(x => x.team.id === String(id)) || {}).rank;
@@ -218,7 +219,7 @@
     const next = evs.find(g => g.state !== 'post');
     const ctx = next ? await forecastCtx(L, ymdOf(next.date)).catch(() => null) : null;
     const facts = [r ? `${r.w}-${r.l}` : (t0.recordSummary || ''), rank ? `Ranked No. ${rank}` : '', r && L.standingsMode !== 'conferences' ? `${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}` : (t0.standingSummary || ''), r && r.strk ? (/^W/.test(r.strk) ? `Won ${r.strk.slice(1)} straight` : `Lost ${r.strk.slice(1)} straight`) : ''].filter(Boolean);
-    const hero = `<div class="ehero team" style="--a:${esc(color)}"><div class="wm">${esc(t0.abbreviation || '')}</div>${V._.imgSized(lg, 256, 256, 'class="biglogo"')}
+    const hero = `<div class="ehero team" style="--a:${esc(color)}${a2 ? `;--a2:${esc(a2)}` : ''}"><div class="wm">${esc(t0.abbreviation || '')}</div>${V._.imgSized(lg, 256, 256, 'class="biglogo"')}
       <div class="in"><div class="sub">${esc(r && r.group && L.standingsMode === 'conferences' ? r.group : (t0.standingSummary && /Division/.test(t0.standingSummary) ? '' : L.label))}</div><h1 class="${(() => { const w = Math.max(...`${t0.location || ''} ${t0.name || t0.displayName || ''}`.split(/\s+/).map(x => x.length)); return w > 10 ? 'xlong' : w > 7 ? 'long' : ''; })()}">${esc(t0.location || '')}<br>${esc(t0.name || t0.displayName)}</h1>
         <div class="facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div>
         <div class="acts"><button class="${on ? 'on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(id)}" data-name="${esc(t0.shortDisplayName || t0.name)}" aria-pressed="${on}">${on ? starSvg : starLine}${on ? 'Following' : 'Follow'}</button></div>
@@ -255,7 +256,7 @@
     const college = /^ncaa/.test(lk);
     const tn = [t0.displayName, t0.location, t0.shortDisplayName, college ? '' : t0.name].filter(n => n && n.length > 3);
     const about = a => taggedTeam(a, id) || tn.some(n => `${a.headline || ''} ${a.description || ''}`.includes(n));
-    const arts = news && news.articles ? news.articles.filter(a => a.headline && (about(a) || (!college && !cats(a).length))).slice(0, 6) : [];
+    const arts = news && news.articles ? news.articles.filter(a => HW.readable(a) && (about(a) || (!college && !cats(a).length))).slice(0, 6) : [];
     const newsHtml = arts.length ? sec('News') + `<div class="rows">${arts.map(a => newsRow(lk, a)).join('')}</div>` : '';
     // the season outlook: playoff odds and a projected record when the simulation is cheap to have (nightly schedule, or already run today)
     const simOk = HW.sim && (L.playoffLine || []).length && (lk === 'nba' || lk === 'wnba') && r;
@@ -285,6 +286,30 @@
   }
 
   V.outlookFill = outlookFill;
+
+  /* ================= VENUE =================
+     Everything the game's summary carries about the building: its photo, where it is, how many it holds, whether it is indoors,
+     who plays there — and the game it was opened from. */
+  async function venueV(lk, gid) {
+    const L = LEAGUES[lk]; if (!L || !gid) { $main.innerHTML = empty('Venue not found'); return; }
+    $main.innerHTML = topbar('', `#game/${lk}/${gid}`) + skeleton(1, 'card') + skeleton(3, 'row');
+    const d = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(gid)}`, 3600000);
+    const ven = d && d.gameInfo && d.gameInfo.venue; const hc = d && d.header && d.header.competitions && d.header.competitions[0];
+    if (!ven || !hc) { $main.innerHTML = topbar('Venue', `#game/${lk}/${gid}`) + empty("Nothing on this venue", '<p style="margin:6px 0 0">The feed carries no details for it.</p>'); return; }
+    const g = parseEvent({ id: gid, competitions: [{ ...hc, venue: ven, status: hc.status }], date: hc.date, status: hc.status }, L);
+    const im = (ven.images || []).filter(x => x && x.href).sort((x, y) => (y.width || 0) - (x.width || 0))[0];
+    const where = ven.address ? [ven.address.city, ven.address.state, ven.address.country && !/^(USA|United States)$/i.test(ven.address.country) ? ven.address.country : ''].filter(Boolean).join(', ') : '';
+    const facts = [where, ven.capacity ? `Capacity ${(+ven.capacity).toLocaleString()}` : '', ven.indoor === true ? 'Indoor' : ven.indoor === false ? 'Outdoor' : ''].filter(Boolean);
+    const homeT = !g.neutral && g.home && g.home.id ? g.home : null; const hc0 = homeT ? V._.teamColor(homeT, L) : '';
+    const hero = `<div class="vhero${im ? ' pic' : ''}" style="${homeT ? `--a:${esc(hc0)}` : ''}">${im ? `<img src="${esc(im.href)}" alt="${esc(im.alt || ven.fullName || '')}" onerror="this.parentNode.classList.remove('pic');this.remove()">` : ''}<div class="in"><div class="sub">Venue</div><h1>${esc(ven.fullName || '')}</h1><div class="facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div></div></div>`;
+    const when = g.date ? dayLabel(ymdOf(g.date), { weekday: 'long', month: 'long', day: 'numeric' }) : '';
+    const rows = [
+      homeT ? `<a class="row" href="${href.team(lk, homeT.id)}">${logo(homeT.logo, '', hc0)}<span class="t"><b>Home of the ${esc(homeT.short || homeT.name)}</b><span>${esc(homeT.name || '')}</span></span>${chev}</a>` : '',
+      `<a class="row" href="${href.game(lk, gid)}"><span class="t"><b>${esc(g.away.short)} ${g.neutral ? 'vs' : 'at'} ${esc(g.home.short)}</b><span>${esc([when, g.state === 'pre' ? tipOf(g) : g.state === 'in' ? g.detail : finalWord(g)].filter(Boolean).join(' · '))}</span></span>${chev}</a>`
+    ].filter(Boolean).join('');
+    $main.innerHTML = topbar(esc(ven.fullName || 'Venue'), `#game/${lk}/${gid}`) + hero + `<div class="rows">${rows}</div>`;
+    document.title = `${ven.fullName || 'Venue'} · RIVL`;
+  }
 
   /* ================= GAME ================= */
   const WANT = ['fieldGoalPct', 'threePointFieldGoalPct', 'freeThrowPct', 'totalRebounds', 'assists', 'turnovers', 'steals', 'blocks', 'pointsInPaint', 'fastBreakPoints', 'largestLead'];
@@ -430,7 +455,7 @@
       if (wpAll.length > 4 && g.state !== 'pre') {
         const W = 320, Hh = 110, pad = 4; const n = wpAll.length; const X = i => pad + i / (n - 1) * (W - pad * 2); const Y = p => pad + (1 - p) * (Hh - pad * 2);
         const pts = wpAll.map((x, i) => `${X(i).toFixed(1)},${Y(x.homeWinPercentage).toFixed(1)}`);
-        const mid = Y(.5); const ch = V._.teamColor(g.home), ca = V._.teamColor(g.away);
+        const mid = Y(.5); const [ca, ch] = V._.pairColors(L, g.away, g.home);
         const lastP = wpAll[n - 1].homeWinPercentage; const lead = lastP >= .5 ? g.home : g.away;
         tracker = sec('Lead tracker', g.state === 'in' ? `${esc(lead.short)} ${Math.round(Math.max(lastP, 1 - lastP) * 100)}% right now` : `ESPN's win probability through the game`) + `<div class="tracker"><svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none" role="img" aria-label="Win probability through the game"><defs><clipPath id="ct"><rect x="0" y="0" width="${W}" height="${mid}"/></clipPath><clipPath id="cb"><rect x="0" y="${mid}" width="${W}" height="${Hh - mid}"/></clipPath></defs><line x1="0" y1="${mid}" x2="${W}" y2="${mid}" stroke="var(--line-2)" stroke-dasharray="3 4"/><polygon points="${pad},${mid} ${pts.join(' ')} ${X(n - 1).toFixed(1)},${mid}" fill="${ch}" opacity=".28" clip-path="url(#ct)"/><polygon points="${pad},${mid} ${pts.join(' ')} ${X(n - 1).toFixed(1)},${mid}" fill="${ca}" opacity=".28" clip-path="url(#cb)"/><polyline points="${pts.join(' ')}" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${X(n - 1).toFixed(1)}" cy="${Y(lastP).toFixed(1)}" r="3.5" fill="var(--ink)"/></svg><div class="tk"><span><i style="background:${ch}"></i>${esc(g.home.abbr)} ahead</span><span><i style="background:${ca}"></i>${esc(g.away.abbr)} ahead</span></div></div>`;
       }
@@ -445,13 +470,14 @@
       // the game's particulars: where, who's officiating, how many came, when it tips
       const giRows = [];   // [label, line, detail?] — a row with a detail opens on a tap
       const ven = d.gameInfo && d.gameInfo.venue;
-      if (ven) { const where = ven.address ? [ven.address.city, ven.address.state].filter(Boolean).join(', ') : ''; const det = [where ? `<b>${esc(where)}</b>` : '', ven.capacity ? `Capacity ${(+ven.capacity).toLocaleString()}` : '', ven.indoor === true ? 'Indoor' : ven.indoor === false ? 'Outdoor' : ''].filter(Boolean); giRows.push(['Venue', esc(ven.fullName || ''), det.length ? `<p>${det.join(' · ')}</p>` : '']); }
+      if (ven) { const where = ven.address ? [ven.address.city, ven.address.state].filter(Boolean).join(', ') : ''; giRows.push(['Venue', `${esc(ven.fullName || '')}${where ? `<small>${esc(where)}</small>` : ''}`, '', `#venue/${lk}/${esc(String(id))}`]); }
       if (g.state === 'pre' && g.date) giRows.push(['Tip-off', `${esc(dayLabel(ymdOf(g.date), { weekday: 'long', month: 'long', day: 'numeric' }))}<span>${esc(tipOf(g))}</span>`]);
       if (tvLabel(g)) giRows.push(['TV', esc(tvLabel(g))]);
       const offs = (d.gameInfo && d.gameInfo.officials || []).filter(o => o.fullName || o.displayName).sort((a, b) => (a.order || 0) - (b.order || 0));
-      if (offs.length) giRows.push([offs.length > 1 ? 'Officials' : 'Official', offs.map(o => esc(o.fullName || o.displayName)).join(', '), `<div class="offs">${offs.map(o => `<span><b>${esc(o.fullName || o.displayName)}</b>${o.position && (o.position.displayName || o.position.name) ? `<em>${esc(o.position.displayName || o.position.name)}</em>` : ''}</span>`).join('')}</div>`]);
+      S.officials = S.officials || {};
+      if (offs.length) { const crew = offs.map((o, i) => { const key = `${id}:${i}`; S.officials[key] = { o, crew: offs, g: { id, away: g.away, home: g.home, date: g.date, neutral: g.neutral }, lk }; return `<button class="off" data-act="official" data-key="${esc(key)}"><b>${esc(o.fullName || o.displayName)}</b>${o.position && (o.position.displayName || o.position.name) ? `<em>${esc(o.position.displayName || o.position.name)}</em>` : ''}</button>`; }).join(''); giRows.push([offs.length > 1 ? 'Officials' : 'Official', `<span class="offs">${crew}</span>`]); }
       if (d.gameInfo && d.gameInfo.attendance) giRows.push(['Attendance', d.gameInfo.attendance.toLocaleString()]);
-      const gi = giRows.length ? sec('Game info') + `<div class="giplate"><div class="rows">${giRows.map(([k, v, det]) => det ? `<div class="girow"><button class="row" data-act="gifold" aria-expanded="false"><span class="t"><b>${k}</b><span>${v}</span></span>${chev}</button><div class="fold closed"><div class="gidet">${det}</div></div></div>` : `<div class="row"><span class="t"><b>${k}</b><span>${v}</span></span></div>`).join('')}</div></div>` : '';
+      const gi = giRows.length ? sec('Game info') + `<div class="giplate"><div class="rows">${giRows.map(([k, v, det, link]) => link ? `<a class="row" href="${link}"><span class="t"><b>${k}</b><span>${v}</span></span>${chev}</a>` : `<div class="row"><span class="t"><b>${k}</b><span>${v}</span></span></div>`).join('')}</div></div>` : '';
       // who's on the floor now (live), and every five-man unit's minutes and margin
       const lu = g.state !== 'pre' && plays.length ? lineupsOf(d, g, L) : null;
       const ptsOf = (side, id) => { const st = statOf(boxOf(side), 'PTS'); const a = st && (st.s.athletes || []).find(x => String(x.athlete.id) === id); return a && a.stats ? a.stats[st.i] : ''; };
@@ -583,7 +609,7 @@
         const playerChips = players.length > 1 ? `<div class="chips pchips">${[['', 'Everyone'], ...players.map(e => [e.k, `${V.lastName(e.name)} ${e.m}-${e.n}`])].map(([k, l]) => `<button class="chip${who === k ? ' on' : ''}" data-act="sv-pid" data-pid="${esc(k)}" aria-pressed="${who === k}">${esc(l)}</button>`).join('')}</div>` : '';
         const legend = `<div class="clegend">${(pick === 'both' ? [['a', g.away], ['h', g.home]] : [[pick === 'home' ? 'h' : 'a', teamOf({ side: pick })]]).map(([k, t]) => `<span><i style="background:var(--c${k})"></i>${esc(t.abbr)} made</span><span><i class="miss" style="border-color:var(--c${k})"></i>missed</span>`).join('')}</div>`;
         const sides = pick === 'both' ? [{ head: g.away.abbr, filter: s => s.side === 'away' }, { head: g.home.abbr, filter: s => s.side === 'home' }] : [{ head: who ? V.lastName(byP.get(who).name) : teamOf({ side: pick }).abbr }];
-        const cv = [['a', g.away], ['h', g.home]].map(([k, t]) => { const c = V._.scoreColor(L, t); return `--c${k}-d:${esc(V._.lift(c))};--c${k}-l:${esc(V._.deep(c))}`; }).join(';');
+        const pair = V._.pairColors(L, g.away, g.home); const cv = [['a', pair[0]], ['h', pair[1]]].map(([k, c]) => `--c${k}-d:${esc(V._.lift(c))};--c${k}-l:${esc(V._.deep(c))}`).join(';');
         body = teamChips + playerChips + `<div class="chart" style="${cv}">${courtSvg(L, list, { colorOf: s => s.side === 'home' ? 'var(--ch)' : 'var(--ca)' })}${legend}</div>` + sec('By zone', `${list.length} shot${list.length === 1 ? '' : 's'}${g.state === 'in' ? ' so far' : ''}`) + zoneRows(list, sides) + `<p class="legend">Every field-goal attempt, where it was taken from. Free throws aren't on the chart.</p>`;
       } else if (tab === 'stats') {
         const rows = ta && th ? cmpRows(flat(ta).map(x => x.name).filter(n => get(th, n))) : '';
@@ -882,5 +908,5 @@
       `<p class="legend">Brier score is the squared error of the chance given to the home team, averaged: 0 is perfect, 0.25 is a coin flip, lower is better. The market's chance is read off the closing line on the same curve the model uses. ${anyBlend ? 'Blend is what the game pages show: the line pulled by RIVL\'s own pregame margin, scored from the same two numbers. ' : ''}ESPN's is their published pregame number. Every call is the one made before tip-off and never revised. The injury adjustment isn't scored: the lists aren't kept game by game.</p>`;
   }
 
-  Object.assign(V, { record: recordV, standings: standingsV, teams: teamsV, team: teamV, game: gameV, article: articleV, search: searchV, settings: settingsV });
+  Object.assign(V, { record: recordV, standings: standingsV, teams: teamsV, team: teamV, game: gameV, venue: venueV, article: articleV, search: searchV, settings: settingsV });
 })();

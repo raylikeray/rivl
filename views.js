@@ -59,6 +59,17 @@
   /* a team colour on an element: --tc raw (tints, rings), --tf-d/--tf-l the readable fill for black and white backgrounds — the
      stylesheet maps --tf to the one in use, so a black Spurs bar reads on black and a white one on white */
   const tcv = c => `--tc:${esc(c)};--tf-d:${esc(V_lift(c))};--tf-l:${esc(V_deep(c))}`;
+  /* two teams' colours for one chart or tracker: when the two are near each other (Thunder and Mavericks are both blue), one
+     side takes its other colour, whichever of the two alternates stands furthest from the first side's colour */
+  const rgbDist = (a, b) => { const x = rgbOf(a), y = rgbOf(b); return x && y ? Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]) : 999; };
+  const pairColors = (L, away, home) => {
+    let ca = scoreColor(L, away), ch = scoreColor(L, home);
+    if (rgbDist(ca, ch) >= 92) return [ca, ch];
+    const options = [[ca, teamAlt(home, L)], [teamAlt(away, L), ch]].filter(([x, y]) => x && y && !BAD(x) && !BAD(y)).map(([x, y]) => [x, y, rgbDist(x, y)]).sort((x, y) => y[2] - x[2]);
+    return options.length && options[0][2] > rgbDist(ca, ch) ? [options[0][0], options[0][1]] : [ca, ch];
+  };
+  /* the hero's second panel: the team's other colour, left as it is unless it is close to white */
+  const V_panel = c => { const l = lumOf(c); return l > .84 ? mixTo(c, 0, .42) : c; };
   const scVars = (t, L) => { const c = L ? scoreColor(L, t) : teamColor(t); return `${tcv(c)};--tcd:${esc(V_lift(c))};--tcl:${esc(V_deep(c))}`; };
   const href = { player: (lk, id) => `#player/${lk}/${id}`, team: (lk, id) => `#team/${lk}/${id}`, game: (lk, id) => `#game/${lk}/${id}` };
   const hide = `onerror="this.style.visibility='hidden'"`;
@@ -346,7 +357,7 @@
       // the wire: ESPN's news posts about your teams and players from the last eight hours, newest first, until dismissed
       if (P.wire && news && news.articles) {
         const seen = new Set(store.get('v5:wire:seen', []) || []); const cutoff = Date.now() - 8 * 3600000;
-        const items = news.articles.filter(a => a.headline && HW.isWire(a) && tagged(a) && !seen.has(String(a.id)) && a.published && new Date(a.published) > cutoff).sort((a, b) => new Date(b.published) - new Date(a.published)).slice(0, 3);
+        const items = news.articles.filter(a => HW.readable(a) && HW.isWire(a) && tagged(a) && !seen.has(String(a.id)) && a.published && new Date(a.published) > cutoff).sort((a, b) => new Date(b.published) - new Date(a.published)).slice(0, 3);
         if (items.length) {
           const who = a => { const t = HW.wireTeams(a).map(id => (S0.tIdx[id] || {}).short).filter(Boolean); const p = (a.categories || []).filter(c => c.type === 'athlete' && pIds.has(String(c.athleteId || (c.athlete && c.athlete.id) || ''))).map(c => c.description).filter(Boolean); return [...new Set([...p, ...t])].slice(0, 2).join(' · '); };
           secs.wire = `<div class="wire"><div class="wh"><i class="dot"></i><b>Breaking</b><span>${esc(ago(items[0].published))}</span><button class="x" data-act="wire-x" data-ids="${esc(items.map(a => a.id).join(','))}" aria-label="Dismiss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>${items.map(a => { (S.news = S.news || {})[String(a.id)] = a; return `<a class="wr" href="#article/${lk}/${esc(String(a.id))}"><b>${esc(a.headline)}</b><span>${esc([who(a), items.length > 1 ? ago(a.published) : ''].filter(Boolean).join(' · '))}</span></a>`; }).join('')}</div>`;
@@ -357,7 +368,7 @@
         const pNames = fp.map(p => p.name).filter(n => n && n.length > 3);
         const named = a => { const txt = `${a.headline || ''} ${a.description || ''}`; return pNames.some(n => txt.includes(n)) || tNames.some(n => txt.includes(n)); };
         // yours first; when the feed has little or nothing on your teams and players, the league's own stories fill the column
-        const all = (news.articles || []).filter(a => a.headline);
+        const all = (news.articles || []).filter(HW.readable);
         const mineA = all.filter(a => tagged(a) || named(a)).slice(0, 6);
         const rest = mineA.length < 3 ? all.filter(a => !mineA.includes(a)).slice(0, 6 - mineA.length) : [];
         const arts = mineA.concat(rest);
@@ -561,7 +572,8 @@
     const facts = [a.displayHeight, a.displayWeight, college ? classWord : (a.age ? `Age ${a.age}` : ''), country, !college && a.college && a.college.name, hometown].filter(Boolean);
     const snap = { lk, id: String(id), name: a.displayName, short: a.shortName || a.displayName, img: a.headshot && a.headshot.href, team: tm.abbreviation || '', teamId: tm.id ? String(tm.id) : '', color: BAD(color) ? '' : color };
     const tlogo = teamLogo || tm.logo || '';
-    const hero = `<div class="ehero" style="--a:${esc(color)}">
+    const a2 = alt && !BAD(alt) && alt.toLowerCase() !== String(color).toLowerCase() ? V_panel(alt) : '';   // the second panel in the team's other colour when it has one
+    const hero = `<div class="ehero" style="--a:${esc(color)}${a2 ? `;--a2:${esc(a2)}` : ''}">
       ${tlogo ? `<img class="tlg" src="${esc(tlogo)}" alt="" ${hide}>` : ''}<div class="wm">${esc(a.jersey || '')}</div>
       <div class="in">${tm.id ? `<a class="tchip" href="${href.team(lk, tm.id)}">${tlogo ? `<img src="${esc(tlogo)}" alt="" ${hide}>` : ''}<b>${esc(tm.shortDisplayName || tm.name || tm.displayName)}</b></a>` : ''}${subLine ? `<div class="sub">${subLine}</div>` : ''}<h1>${esc(a.firstName || '')}<br>${esc(a.lastName || a.displayName)}</h1>
         <div class="facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div>
@@ -637,7 +649,7 @@
     // latest stories and clips
     const items = ov && ov.news ? ov.news.filter(n => n.headline) : [];
     const isClip = n => (n.video || n.videos || []).length && (/media|video/i.test(n.type || '') || !n.description);
-    const clips = items.filter(isClip).slice(0, 10), stories = items.filter(n => !isClip(n)).slice(0, 6);
+    const clips = items.filter(isClip).slice(0, 10), stories = items.filter(n => !isClip(n) && HW.readable(n)).slice(0, 6);
     clips.forEach(n => (n.video || n.videos || []).forEach(v => { if (v && v.id != null) S.videos[String(v.id)] = v; }));
     const moments = clips.length ? sec('Top moments') + `<div class="media">${clips.map(n => { const v = (n.video || n.videos)[0]; const im = (n.images && n.images[0] && n.images[0].url) || v.thumbnail; return `<button class="clip" data-act="play" data-vid="${esc(String(v.id))}"><div class="th">${im ? `<img src="${esc(im)}" alt="" loading="lazy">` : ''}<i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12-7.5z"/></svg></i>${v.duration ? `<em>${Math.floor(v.duration / 60)}:${String(v.duration % 60).padStart(2, '0')}</em>` : ''}</div><b>${esc(n.headline)}</b><span>${esc(n.published ? ago(n.published) : '')}</span></button>`; }).join('')}</div>` : '';
     const latest = moments + (stories.length ? sec('Stories') + `<div class="rows">${stories.map(n => HW.v5.newsRow(lk, n)).join('')}</div>` : '');
@@ -840,5 +852,5 @@
   }
 
   HW.v5 = Object.assign(HW.v5 || {}, { home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, tint, V_lift, V_deep, dragOrder, orderTools, foldToggle, learn, statusWord, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
+    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, tint, V_lift, V_deep, V_panel, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

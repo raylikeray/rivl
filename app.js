@@ -29,7 +29,7 @@
   function route() {
     const h = (location.hash || '#home').slice(1);
     let m;
-    if ((m = h.match(/^(player|team|game|article)\/([a-z]+)\/([A-Za-z0-9]+)(?:\/p\/(\d+))?$/))) return { name: m[1], lk: lkOf(m[2]), args: m[4] ? [lkOf(m[2]), m[3], m[4]] : [lkOf(m[2]), m[3]] };   // a game can open on one player: #game/nba/401/p/1966
+    if ((m = h.match(/^(player|team|game|article|venue)\/([a-z]+)\/([A-Za-z0-9]+)(?:\/p\/(\d+))?$/))) return { name: m[1], lk: lkOf(m[2]), args: m[4] ? [lkOf(m[2]), m[3], m[4]] : [lkOf(m[2]), m[3]] };   // a game can open on one player: #game/nba/401/p/1966
     if (LEAGUES[h]) { if (store.get('v5:lk') !== h) { store.set('v5:lk', h); if (V.applyAccent) V.applyAccent(); } return { name: store.get('v5:screen', 'home'), lk: h, args: [h] }; }
     if (h === 'search') return { name: 'search', lk: lkOf(store.get('v5:lk', 'nba')), args: [] };
     let rm; if ((rm = h.match(/^record(?:\/([a-z]+))?$/))) { const k = rm[1] && LEAGUES[rm[1]] ? rm[1] : lkOf(store.get('v5:lk', 'nba')); return { name: 'record', lk: k, args: [k] }; }
@@ -67,7 +67,10 @@
     if (st && st.n != null) navN = st.n; else { navN += 1; try { history.replaceState({ n: navN }, ''); } catch { } }
     const leagueScreen = SCREENS.includes(r.name);
     if (render.key && render.key !== key) scrollMem.set(render.key, window.scrollY);
-    $main.dataset.y = render.key !== key ? ((back || leagueScreen) ? String(scrollMem.get(key) || 0) : '0') : '';
+    const leagueChanged = leagueScreen && render.lk && render.lk !== r.lk;   // a tap on the league switch starts the new league at the top
+    $main.dataset.y = render.key !== key ? ((back || (leagueScreen && !leagueChanged)) ? String(scrollMem.get(key) || 0) : '0') : '';
+    if (leagueChanged) window.scrollTo(0, 0);
+    render.lk = r.lk;
     if (!['team', 'player', 'game'].includes(r.name) && V._.tint) V._.tint('');   // only a team's, a player's or a game's page wears a team colour
     if (leagueScreen) store.set('v5:screen', r.name);
     if (r.name !== 'scores') store.set('v5:date', todayCT());
@@ -250,6 +253,7 @@
     if (a === 'stab') { e.preventDefault(); store.set('v5:stab:' + (current ? current.lk : 'nba'), act.dataset.tab); render(); }
     if (a === 'play') { e.preventDefault(); openSheet(act.dataset.vid); }
     if (a === 'injury') { e.preventDefault(); openInjury(act.dataset.key); }
+    if (a === 'official') { e.preventDefault(); openOfficial(act.dataset.key); }
     if (a === 'gifold') { e.preventDefault(); V._.foldToggle(act, act.getAttribute('aria-expanded') !== 'true'); return; }
     if (a === 'injcol') { e.preventDefault(); const open = act.getAttribute('aria-expanded') !== 'true'; V._.foldToggle(act, open); const c = store.get('v5:injcol', {}) || {}; if (open) delete c[act.dataset.id]; else c[act.dataset.id] = true; store.set('v5:injcol', c); }
     if (a === 'reload') { e.preventDefault(); render(); }
@@ -317,6 +321,17 @@
     $panel.querySelector('.panel-in').innerHTML = html(r ? r.days : {}, r ? (r.truncated ? 'counts are partial on the busiest days' : '') : "the feed didn't answer", !!(r && r.counted));
   }
 
+  /* an official: the feed names the crew and each one's role, and that is what is shown — no photo or record exists in it */
+  function openOfficial(key) {
+    const rec = S.officials && S.officials[key]; if (!rec) return;
+    const { o, crew, g, lk } = rec; const name = o.fullName || o.displayName || ''; const role = o.position && (o.position.displayName || o.position.name) || 'Official';
+    const when = g.date ? new Date(g.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: HW.TZ }) : '';
+    const others = crew.filter(x => x !== o);
+    openPanel(`<button class="ib close" data-act="panel-close" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <div class="inj-head"><span class="hs noimg plain" style="width:64px;height:64px;font-size:22px"><i>${esc(V._.initials(name))}</i></span><div><h3>${esc(name)}</h3><p>${esc(role)}</p></div></div>
+      <table class="tbl kv"><tbody><tr><td>Role</td><td>${esc(role)}</td></tr><tr><td>This game</td><td>${esc(g.away.short)} ${g.neutral ? 'vs' : 'at'} ${esc(g.home.short)}${when ? `<span class="mut"> · ${esc(when)}</span>` : ''}</td></tr>${others.length ? `<tr><td>Crew</td><td>${others.map(x => `${esc(x.fullName || x.displayName)}${x.position && (x.position.displayName || x.position.name) ? ` <span class="mut">${esc(x.position.displayName || x.position.name)}</span>` : ''}`).join('<br>')}</td></tr>` : ''}</tbody></table>
+      <div style="display:flex;gap:8px;margin-top:14px"><a class="btn" href="#game/${lk}/${esc(String(g.id))}" data-act="panel-close">Back to the game</a></div>`);
+  }
   function openInjury(key) {
     const rec = S.injuries && S.injuries[key]; if (!rec) return;
     const { x, team } = rec; const at = x.athlete || {}; const det = x.details || {}; const st = x.status || '';
