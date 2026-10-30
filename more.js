@@ -80,8 +80,16 @@
   document.addEventListener('rivl:rendered', fitLogos); setTimeout(fitLogos, 1200);
 
   /* ---------- strips fade at the edge that still has more to show ---------- */
-  const STRIPS = '.dates,.brief-row,.chips,.rail,.media,.tw,.onb-picked-row';
-  const edge = el => { const more = el.scrollWidth - el.clientWidth > 4; const l = more && el.scrollLeft > 4, r = more && el.scrollLeft < el.scrollWidth - el.clientWidth - 4; const v = l && r ? 'lr' : l ? 'l' : r ? 'r' : ''; if (el.dataset.edge !== v) { if (v) el.dataset.edge = v; else delete el.dataset.edge; } };
+  const STRIPS = '.dates,.brief-row,.chips,.rail,.media,.tw,.onb-picked-row,.livebar .lb-in';
+  /* the fade on each side grows with the scroll — 0 at the end of travel, full 48px once there is that much behind it —
+     so the haze eases in instead of switching on at the first few pixels */
+  const FADE = 48;
+  const edge = el => {
+    const max = el.scrollWidth - el.clientWidth; const more = max > 4;
+    const fl = more ? Math.round(Math.min(FADE, Math.max(0, el.scrollLeft))) : 0, fr = more ? Math.round(Math.min(FADE, Math.max(0, max - el.scrollLeft))) : 0;
+    const v = fl + '|' + fr; if (el.dataset.edge === v) return; el.dataset.edge = v;
+    el.style.setProperty('--fl', fl + 'px'); el.style.setProperty('--fr', fr + 'px'); el.classList.toggle('fades', fl > 0 || fr > 0);
+  };
   const edges = () => document.querySelectorAll(STRIPS).forEach(edge);
   V.edges = edges;
   document.addEventListener('scroll', e => { const t = e.target; if (t && t.nodeType === 1 && t.matches && t.matches(STRIPS)) edge(t); }, true);
