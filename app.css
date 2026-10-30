@@ -2165,22 +2165,21 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .pills::before,[data-accent] .pills::before,:root[data-theme="light"] .pills::before,:root[data-theme="light"][data-accent] .pills::before{background:var(--acc,#FFFFFF);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.28),0 2px 5px -2px rgba(0,0,0,.35)}
 :root[data-theme="light"] .pills::before{background:var(--acc,#15171B)}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .pills::before,:root:not([data-theme="dark"])[data-accent] .pills::before{background:var(--acc,#15171B);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.28),0 2px 5px -2px rgba(0,0,0,.35)} }
-/* ===== v115: stat strips, not stat tiles =====
-   Points · rebounds · assists on a box-score card, and the team page's PPG · OPP · NET · LAST 10, were each a bevelled plate
-   of their own — three or four little raised boxes in a row, which read as old. The numbers are the content; the boxes were
-   not. A set of stats is now one sunken tray: a recessed strip a shade below its ground with an inset shadow, the stats
-   standing in it as typographic groups — a big condensed numeral, a small quiet label — parted by hairlines, no boxes.
-   The tray is the "sunk into the screen" counterpart of the raised cards around it. */
-.stats,.stats.four,.stats.splits,.stats.tsg,.stats.outl{gap:0;margin:14px var(--gut-r) 0 var(--gut);padding:12px 2px 11px;border-radius:16px;background:color-mix(in srgb,var(--ink) 4%,var(--well));box-shadow:var(--well-shadow)}
-.stats.splits{margin-top:10px}
-.stats > div,.pfocus .stats > div,.stats.tsg > div{background:none;box-shadow:none;border-radius:0;padding:4px 4px 3px;min-width:0}
-.stats > div + div,.pfocus .stats > div + div{box-shadow:-1px 0 0 var(--line)}
-.stats b,.pfocus .stats b{font:800 28px/1 var(--num);letter-spacing:-.005em;color:var(--ink)}
-.stats span,.pfocus .stats span{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);margin-top:5px}
-.stats.splits b{font-size:21px}
-.stats.tsg > div{position:relative;padding-bottom:22px}
-.pfocus .stats,.pfocus .stats.three{margin:10px 0 0;padding:12px 2px 11px;gap:0}
-.pfocus .stats b{font-size:34px}
-.pfocus .stats > div{padding:4px 4px 3px}
-:root[data-theme="dark"] .stats,:root[data-theme="dark"] .pfocus .stats{background:color-mix(in srgb,#000 55%,var(--surf))}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .stats,:root:not([data-theme="light"]) .pfocus .stats{background:color-mix(in srgb,#000 55%,var(--surf))} }
+/* ===== v116: stats as a line of figures — no tray, no tiles, no dividers =====
+   v115's sunken tray was a box inside a box: grey in light (reads disabled), black in dark (reads as a dead screen), cells
+   parted by hairlines (reads as a table), centred (tile thinking) — on a card where everything else is left-aligned text.
+   A set of stats is now just the figures: large condensed numerals set flush left under the name, each with its small
+   label beneath, spaced by air. Size carries the hierarchy; nothing frames them. Same on the team page. */
+.stats,.stats.four,.stats.splits,.stats.tsg,.stats.outl{display:flex;flex-wrap:wrap;gap:6px 26px;margin:14px var(--gut-r) 0 var(--gut);padding:0;border-radius:0;background:none;box-shadow:none}
+.stats > div,.pfocus .stats > div,.stats.tsg > div{flex:0 1 auto;min-width:0;background:none;box-shadow:none;border-radius:0;padding:0;text-align:left}
+.stats > div + div,.pfocus .stats > div + div{box-shadow:none}
+.stats b,.pfocus .stats b{display:block;font:800 32px/1 var(--num);letter-spacing:-.005em;color:var(--ink);white-space:nowrap}
+.stats span,.pfocus .stats span{display:block;font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);margin-top:4px}
+.stats.splits{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.stats.splits b{font-size:22px}
+.stats.tsg > div{position:relative;padding-bottom:18px}
+.stats.tsg > div .rk{position:absolute;left:0;right:auto;bottom:0;text-align:left}
+.pfocus .stats,.pfocus .stats.three{margin:12px 0 2px;padding:0;gap:6px 30px}
+.pfocus .stats b{font-size:42px}
+.pfocus .stats > div{padding:0}
+@media (max-width:360px){.stats{gap:6px 18px}}
