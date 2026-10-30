@@ -54,6 +54,10 @@
   const ESPN = WORKER ? {
     site: WORKER + '/espn/site/', v2: WORKER + '/espn/v2/', web: WORKER + '/espn/web/', core: WORKER + '/espn/core/', now: WORKER + '/espn/now/'
   } : DIRECT;
-  const out = { LEAGUES, SPORTS, ORDER, ESPN, DIRECT, PUSH, WORKER, TZ: 'America/Chicago', SITE: 'RIVL', DATA: '/tipoff/data/' };
+  /* Tip times are the time on the viewer's own clock, not Central for everyone. Within the United States this changes only
+     the clock face — every game starts and ends inside one calendar day in every US zone, so which day a game belongs to
+     does not move. Central is the fallback when the device will not say. */
+  const TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Chicago'; } catch (e) { return 'America/Chicago'; } })();
+  const out = { LEAGUES, SPORTS, ORDER, ESPN, DIRECT, PUSH, WORKER, TZ, SITE: 'RIVL', DATA: '/tipoff/data/' };
   if (typeof module !== 'undefined' && module.exports) module.exports = out; else root.HW = Object.assign(root.HW || {}, out);
 })(typeof globalThis !== 'undefined' ? globalThis : this);

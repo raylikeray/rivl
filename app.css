@@ -59,6 +59,16 @@ table,.num{font-variant-numeric:tabular-nums}
 .top{display:flex;align-items:center;height:56px;padding:0 var(--gut-r) 0 var(--gut);gap:10px}
 .lockup{height:30px;color:var(--ink);display:block}
 .lockup svg{height:30px;width:auto}
+/* The wordmark, with depth: the letters carry the ink, a sheen layer lays a light-to-dark bevel down their faces, and a
+   cast shadow lifts the whole lockup off the page. The R takes the accent the person chose; with no accent it stays ink,
+   so a monochrome app stays monochrome. One rule serves every place the mark appears. */
+.mark{overflow:visible}
+.mark .r{fill:var(--acc,currentColor)}
+.mark .w{fill:currentColor}
+.mark .sheen{pointer-events:none}
+.lockup .mark,.onb-logo .mark{filter:drop-shadow(0 1px 1px rgba(0,0,0,.45)) drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+:root[data-theme="light"] .lockup .mark,:root[data-theme="light"] .onb-logo .mark{filter:drop-shadow(0 1px 0 rgba(255,255,255,.75)) drop-shadow(0 2px 3px rgba(16,24,40,.32)) drop-shadow(0 8px 14px rgba(16,24,40,.18))}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .lockup .mark,:root:not([data-theme="dark"]) .onb-logo .mark{filter:drop-shadow(0 1px 0 rgba(255,255,255,.75)) drop-shadow(0 2px 3px rgba(16,24,40,.32)) drop-shadow(0 8px 14px rgba(16,24,40,.18))} }
 .top .sp{margin-left:auto;display:flex;align-items:center;gap:2px}
 .ib{width:44px;height:44px;display:grid;place-items:center;color:var(--ink-2);border-radius:50%;text-decoration:none}
 .ib:hover{color:var(--ink)}

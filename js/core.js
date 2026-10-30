@@ -90,7 +90,7 @@ const wikiPerson = async (name, words) => {
 
 const ymdFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
 const hourFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: 'numeric', hour12: false });
-/* the basketball "day" runs until 4 AM Central, so a late West Coast tip stays on tonight's slate */
+/* the basketball "day" runs until 4 AM on the viewer's clock, so a late West Coast tip stays on tonight's slate */
 function todayCT() { const now = new Date(); const h = +hourFmt.format(now) % 24; const d = ymdFmt.format(now); return h < 4 ? addDays(d, -1) : d; }
 function addDays(ymd, n) { const [y, m, d] = ymd.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); }
 const compact = ymd => ymd.replace(/-/g, '');
@@ -99,8 +99,16 @@ const ymdOf = iso => ymdFmt.format(new Date(iso));
 function dayLabel(ymd, opts = { weekday: 'long', month: 'short', day: 'numeric' }) { const [y, m, d] = ymd.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString('en-US', { ...opts, timeZone: 'UTC' }); }
 function relDay(ymd) { const t = todayCT(); if (ymd === t) return 'Tonight'; if (ymd === addDays(t, 1)) return 'Tomorrow'; if (ymd === addDays(t, -1)) return 'Last night'; return dayLabel(ymd); }
 const tip = iso => new Date(iso).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' });
+/* The zone the times are in, named: "CT", "ET", "GMT+1". shortGeneric drops the standard/daylight split, which is how a
+   schedule is normally written — CT all year, not CST in winter and CDT in summer. A zone that only resolves to a numeric
+   offset is left unnamed rather than printing "GMT-6" after every tip. */
+const TZLABEL = (() => {
+  const part = style => { try { return (new Intl.DateTimeFormat('en-US', { timeZone: TZ, timeZoneName: style }).formatToParts(new Date()).find(p => p.type === 'timeZoneName') || {}).value || ''; } catch (e) { return ''; } };
+  const v = part('shortGeneric') || part('short') || '';
+  return /^(GMT|UTC)?[+-]/.test(v) ? '' : v;
+})();
 /* a game's tip, or 'Time TBD' when the feed says the time isn't set (timeValid false — a Cup knockout, a playoff game not yet scheduled) */
-const tipOf = g => g && g.timeValid === false ? 'Time TBD' : tip(g.date);
+const tipOf = g => g && g.timeValid === false ? 'Time TBD' : TZLABEL ? `${tip(g.date)} ${TZLABEL}` : tip(g.date);
 const dateShort = iso => new Date(iso).toLocaleDateString('en-US', { timeZone: TZ, month: 'short', day: 'numeric' });
 const timeCT = (d = new Date()) => d.toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit', second: '2-digit' });
 function ago(iso) { const s = (Date.now() - new Date(iso)) / 1000; if (s < 3600) return Math.max(1, Math.round(s / 60)) + 'm ago'; if (s < 86400) return Math.round(s / 3600) + 'h ago'; return dateShort(iso); }
@@ -501,6 +509,6 @@ const S = { today: {}, todayYmd: null, lastOk: 0, err: false, timer: null, route
 ORDER.forEach(k => S.today[k] = []);
 const allToday = () => ORDER.flatMap(k => S.today[k]);
 
-Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, tipOf, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, API, API2, WEB, logoUrl, seasonYear, favs,
+Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, tipOf, TZLABEL, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, API, API2, WEB, logoUrl, seasonYear, favs,
   parseEvent, isLive, isDone, finalWord, isFav, isWire, readable, wireTeams, wirePlayers, wikiPage, wikiFacts, wikiPerson, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
 })();
