@@ -2057,13 +2057,13 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .onb-team span{font-size:12px;font-weight:600;color:var(--ink-3)}
 .onb-team span em{color:var(--ink)}
 .onb-team i{right:9px;top:9px;width:20px;height:20px;box-shadow:none;background:none;opacity:0;transform:scale(.5);transition:opacity .2s var(--ease),transform .3s var(--ease),background .2s var(--ease)}
-.onb-team.on,[data-accent] .onb-team.on{color:var(--ti,#fff);background:linear-gradient(118deg,var(--tc,var(--acc,var(--ink))) 0 58%,color-mix(in srgb,var(--tc,var(--acc,var(--ink))) 76%,#000) 58% 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 12px 26px -14px color-mix(in srgb,var(--tc,var(--acc,var(--ink))) 80%,transparent),0 2px 4px rgba(0,0,0,.18)}
-:root[data-theme="dark"] .onb-team.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 1px rgba(255,255,255,.12),0 12px 26px -14px color-mix(in srgb,var(--tc,var(--acc,var(--ink))) 80%,transparent)}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .onb-team.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 1px rgba(255,255,255,.12),0 12px 26px -14px color-mix(in srgb,var(--tc,var(--acc,var(--ink))) 80%,transparent)} }
-.onb-team.on b{color:var(--ti,#fff)}
-.onb-team.on span{color:color-mix(in srgb,var(--ti,#fff) 78%,transparent)}
-.onb-team.on span em{color:var(--ti,#fff)}
+.onb-team.on,[data-accent] .onb-team.on{color:var(--tgi,var(--ti,#fff));background:linear-gradient(118deg,var(--tg,var(--tc,var(--acc,var(--ink)))) 0 58%,color-mix(in srgb,var(--tg,var(--tc,var(--acc,var(--ink)))) 76%,#000) 58% 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 12px 26px -14px color-mix(in srgb,var(--tg,var(--tc,var(--acc,var(--ink)))) 80%,transparent),0 2px 4px rgba(0,0,0,.18)}
+:root[data-theme="dark"] .onb-team.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 1px rgba(255,255,255,.12),0 12px 26px -14px color-mix(in srgb,var(--tg,var(--tc,var(--acc,var(--ink)))) 80%,transparent)}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .onb-team.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 1px rgba(255,255,255,.12),0 12px 26px -14px color-mix(in srgb,var(--tg,var(--tc,var(--acc,var(--ink)))) 80%,transparent)} }
+.onb-team.on b{color:var(--tgi,var(--ti,#fff))}
+.onb-team.on span{color:color-mix(in srgb,var(--tgi,var(--ti,#fff)) 78%,transparent)}
+.onb-team.on span em{color:var(--tgi,var(--ti,#fff))}
 .onb-team.on .logo,:root[data-theme="dark"] .onb-team.on .logo,:root[data-theme="light"] .onb-team.on .logo{background:#fff;box-shadow:0 3px 10px -3px rgba(0,0,0,.45)}
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .onb-team.on .logo{background:#fff;box-shadow:0 3px 10px -3px rgba(0,0,0,.45)} }
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .onb-team.on .logo{background:#fff;box-shadow:0 3px 10px -3px rgba(0,0,0,.45)} }
@@ -2075,15 +2075,15 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
       read as a logo cut off, and the wash, with a white line along its top, read as old. The band is now the team's colour
       outright, the same language as a chosen tile and the heroes: the real colour with the diagonal shade, the name in white
       (ink on a gold), the crest on a white badge, the faces of the picked on white discs, "8 of 17 picked". No line. */
-.tgrp > .thead,.onb .pp .tgrp > button.thead{position:relative;width:100%;margin:0;padding:10px 14px 10px 12px;min-height:62px;border-radius:0;gap:12px;color:var(--ti,#fff);
-  background:var(--grain),linear-gradient(118deg,var(--tc,var(--ink-3)) 0 58%,color-mix(in srgb,var(--tc,var(--ink-3)) 76%,#000) 58% 100%);background-blend-mode:soft-light,normal;box-shadow:none}
-.tgrp > .thead .tt b{color:var(--ti,#fff)}
-.tgrp > .thead .tt small{color:color-mix(in srgb,var(--ti,#fff) 80%,transparent)}
-.tgrp > .thead .tt small em{color:var(--ti,#fff)}
+.tgrp > .thead,.onb .pp .tgrp > button.thead{position:relative;width:100%;margin:0;padding:10px 14px 10px 12px;min-height:62px;border-radius:0;gap:12px;color:var(--tgi,var(--ti,#fff));
+  background:var(--grain),linear-gradient(118deg,var(--tg,var(--tc,var(--ink-3))) 0 58%,color-mix(in srgb,var(--tg,var(--tc,var(--ink-3))) 76%,#000) 58% 100%);background-blend-mode:soft-light,normal;box-shadow:none}
+.tgrp > .thead .tt b{color:var(--tgi,var(--ti,#fff))}
+.tgrp > .thead .tt small{color:color-mix(in srgb,var(--tgi,var(--ti,#fff)) 80%,transparent)}
+.tgrp > .thead .tt small em{color:var(--tgi,var(--ti,#fff))}
 .tgrp > .thead .logo,:root[data-theme="light"] .tgrp > .thead .logo,:root[data-theme="dark"] .tgrp > .thead .logo{width:40px;height:40px;background:#fff;box-shadow:0 3px 10px -3px rgba(0,0,0,.45)}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .tgrp > .thead .logo{background:#fff;box-shadow:0 3px 10px -3px rgba(0,0,0,.45)} }
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .tgrp > .thead .logo{background:#fff;box-shadow:0 3px 10px -3px rgba(0,0,0,.45)} }
 .tgrp > .thead .faces i{background:#fff;box-shadow:0 2px 6px -2px rgba(0,0,0,.45)}
-.tgrp > .thead .faces u{color:var(--ti,#fff)}
-.tgrp > .thead .chev{color:color-mix(in srgb,var(--ti,#fff) 85%,transparent)}
+.tgrp > .thead .faces u{color:var(--tgi,var(--ti,#fff))}
+.tgrp > .thead .chev{color:color-mix(in srgb,var(--tgi,var(--ti,#fff)) 85%,transparent)}
 .tgrp > .thead:active{filter:brightness(1.06)}

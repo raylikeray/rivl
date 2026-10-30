@@ -66,7 +66,12 @@
   /* the colour behind a face: a team colour lifted until a dark head of hair reads on it — the Spurs' black deepened for light
      mode put a black disc behind a black-haired face, so a disc never goes below a mid tone whatever the theme */
   const V_disc = c => { const l = lumOf(c); return l < .12 ? mixTo(c, 255, .58) : l < .28 ? mixTo(c, 255, .34) : c; };
-  const tcv = c => `--tc:${esc(c)};--tf-d:${esc(V_lift(c))};--tf-l:${esc(V_deep(c))};--hd:${esc(V_disc(c))};--ti:${lumOf(c) > .6 ? '#0A0B0E' : '#FFFFFF'}`;   // --ti: what reads on the raw colour itself
+  /* the ground a team's colour paints (a chosen tile, a picker band): the colour itself, except that a near-black colour
+     (Spurs, Nets) paints a flat black bar with no diagonal and nothing to set it off from a dark page — so a black team's
+     ground is its second colour when that reads (the Spurs' silver), else a charcoal the diagonal can still shade */
+  const V_ground = (c, alt) => { if (lumOf(c) >= .08) return c; const a = alt && !BAD(alt) ? hx(alt) : ''; const la = a ? lumOf(a) : -1; return la >= .22 && la <= .9 ? a : mixTo(c, 255, .2); };
+  const inkOn = c => lumOf(c) > .6 ? '#0A0B0E' : '#FFFFFF';
+  const tcv = (c, alt = '') => { const g = V_ground(c, alt); return `--tc:${esc(c)};--tf-d:${esc(V_lift(c))};--tf-l:${esc(V_deep(c))};--hd:${esc(V_disc(c))};--ti:${inkOn(c)};--tg:${esc(g)};--tgi:${inkOn(g)}`; };   // --ti: what reads on the raw colour; --tg/--tgi: the ground and what reads on it
   /* two teams' colours for one chart or tracker: when the two are near each other (Thunder and Mavericks are both blue), one
      side takes its other colour, whichever of the two alternates stands furthest from the first side's colour */
   const rgbDist = (a, b) => { const x = rgbOf(a), y = rgbOf(b); return x && y ? Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]) : 999; };
@@ -762,7 +767,7 @@
     const d = await jSoft(`${API(L)}/teams/${id}/roster`, 900000); if (!d || !d.athletes) return null;
     const t = d.team || {}, tt = idx[id] || {};
     learn(L, { id, ...t }); const abbr = t.abbreviation || tt.abbr || ''; const color = teamColor({ id, abbr, color: t.color || tt.color || '' }, L);
-    const team = { id, short: t.shortDisplayName || tt.short || t.name || '', name: t.displayName || tt.name || '', color, abbr, logo: tt.logo || (t.logos && t.logos[0] && t.logos[0].href) || '' };
+    const team = { id, short: t.shortDisplayName || tt.short || t.name || '', name: t.displayName || tt.name || '', color, alt: t.alternateColor ? hx(t.alternateColor) : (tt.alt || ''), abbr, logo: tt.logo || (t.logos && t.logos[0] && t.logos[0].href) || '' };
     const players = (d.athletes || []).flatMap(a => a.items ? a.items : [a]).filter(a => a && a.id).map(a => ({ lk: L.key, id: String(a.id), name: a.displayName, short: a.shortName || a.displayName, img: hsUrl(a), team: abbr, teamId: id, color, pos: a.position && a.position.abbreviation || '', jersey: a.jersey || '' }));
     return { team, players };
   }
@@ -864,7 +869,7 @@
         const picked = rows.filter(p => fset.has(p.id)).length;
         /* one card per team: the band at the top carries the team's colour and folds the roster, the roster is a column of
            hairline rows inside the same plate — a header over its contents, not a stack of look-alike pills */
-        parts.push(`<section class="tgrp" style="${tcv(teamColor(s.team, L))}"><button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}">${logo(s.team.logo, 's')}<span class="tt"><b>${esc(s.team.short)}</b><small>${bandLine(rows.length, picked)}</small></span>${faces(rows.filter(p => fset.has(p.id)))}${chev}</button>${foldWrap(`<div class="rows">${rows.map(p => rowOf(p, s)).join('')}</div>`, folded)}</section>`);
+        parts.push(`<section class="tgrp" style="${tcv(teamColor(s.team, L), teamAlt(s.team, L))}"><button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}">${logo(s.team.logo, 's')}<span class="tt"><b>${esc(s.team.short)}</b><small>${bandLine(rows.length, picked)}</small></span>${faces(rows.filter(p => fset.has(p.id)))}${chev}</button>${foldWrap(`<div class="rows">${rows.map(p => rowOf(p, s)).join('')}</div>`, folded)}</section>`);
       });
       if (lp && leaders) {
         // league leaders, per game, by category; a search keeps the whole list and filters it by name

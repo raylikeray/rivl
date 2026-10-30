@@ -488,7 +488,7 @@
            conference A to Z with its teams alphabetical, because 360 tiles in one wall is not a list anyone can use. */
         const [idx, st, R] = await Promise.all([V.teamsIndex(L), HW.standings(L).catch(() => null), HW.rankings(L).catch(() => null)]);
         const byShort = (a, b) => (a.short || a.name || '').localeCompare(b.short || b.name || '');
-        const tile = (id, rank) => { const t = idx[id] || {}; const r = st && st.byId && st.byId[id]; return { id, short: t.short || (r && r.short) || t.name || (r && r.name) || '', name: t.name || (r && r.name) || '', abbr: t.abbr || (r && r.abbr) || '', logo: t.logo || (r && r.logo) || '', color: V._.teamColor({ id, abbr: t.abbr || (r && r.abbr) || '' }, L) || '', rec: r ? `${r.w}-${r.l}` : '', rank: rank || 0 }; };
+        const tile = (id, rank) => { const t = idx[id] || {}; const r = st && st.byId && st.byId[id]; return { id, short: t.short || (r && r.short) || t.name || (r && r.name) || '', name: t.name || (r && r.name) || '', abbr: t.abbr || (r && r.abbr) || '', logo: t.logo || (r && r.logo) || '', color: V._.teamColor({ id, abbr: t.abbr || (r && r.abbr) || '' }, L) || '', alt: V._.teamAlt({ id, abbr: t.abbr || (r && r.abbr) || '', alt: t.alt || '' }, L) || '', rec: r ? `${r.w}-${r.l}` : '', rank: rank || 0 }; };
         const seen = new Set(); const groups = [];
         /* ESPN's college standings put some schools in more than one group — a conference and a division of it — so a team
            could be drawn twice. Each conference keeps only the first claim on a team, and no group repeats one internally.
@@ -513,7 +513,7 @@
             /* eager, at low priority: a crest inside a closed fold would otherwise not be fetched until the fold opened,
                so every conference popped in blank and then filled. They load quietly up front, the service worker keeps
                them, and the section is already drawn when you open it — with or without a signal the second time. */
-            const grid = `<div class="onb-grid">${rows.map(tm => { const on = HW.favs.has(lk, tm.id); return `<button class="onb-team${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tm.id)}" data-name="${esc(tm.short)}" aria-pressed="${on}"${tm.color ? ` style="${V._.tcv(tm.color)}"` : ''}><span class="logo">${V._.imgSized(tm.logo || '', 128, 128, 'loading="eager" fetchpriority="low" decoding="async"')}</span><b>${esc(tm.short)}</b><span>${tm.rank ? `<em>No. ${tm.rank}</em>` : ''}${esc(tm.rec)}</span><i></i></button>`; }).join('')}</div>`;
+            const grid = `<div class="onb-grid">${rows.map(tm => { const on = HW.favs.has(lk, tm.id); return `<button class="onb-team${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tm.id)}" data-name="${esc(tm.short)}" aria-pressed="${on}"${tm.color ? ` style="${V._.tcv(tm.color, tm.alt)}"` : ''}><span class="logo">${V._.imgSized(tm.logo || '', 128, 128, 'loading="eager" fetchpriority="low" decoding="async"')}</span><b>${esc(tm.short)}</b><span>${tm.rank ? `<em>No. ${tm.rank}</em>` : ''}${esc(tm.rec)}</span><i></i></button>`; }).join('')}</div>`;
             const body = g.note ? `<p class="onb-note">${esc(g.note)}</p>${grid}` : grid;
             if (!g.name) return grid;
             const open = q ? true : secOpen(g.name, gi === 0);
