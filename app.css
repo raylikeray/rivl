@@ -630,9 +630,19 @@ html{touch-action:manipulation}
 .injstrip.ok{box-shadow:var(--edge),inset 3px 0 0 var(--win)}
 .onb-install{box-shadow:var(--edge)}
 /* setup grid: conference headings for college */
-.onb-sec{display:flex;align-items:baseline;gap:8px;padding:18px 0 8px;font-size:15px;font-weight:800;letter-spacing:-.01em}
-.onb-sec span{color:var(--ink-3);font-weight:700;font-size:13px}
-.onb-grid + .onb-sec{padding-top:22px}
+/* a conference bar: full width, taps to fold its own grid away */
+.onb-sec{display:flex;align-items:center;gap:9px;width:100%;margin:14px 0 10px;padding:0 14px;height:48px;border:0;border-radius:14px;
+  font:inherit;font-size:15px;font-weight:800;letter-spacing:-.01em;color:inherit;text-align:left;cursor:pointer;
+  background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;
+  box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),0 1px 1px rgba(0,0,0,.3),0 6px 14px -9px rgba(0,0,0,.5)}
+.onb-sec b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.onb-sec span{flex:none;color:var(--ink-3);font-weight:700;font-size:13px}
+.onb-sec .chev{margin-left:auto;flex:none;color:var(--ink-3);display:flex}
+.onb-sec .chev svg{width:18px;height:18px;transition:transform .18s var(--ease)}
+.onb-sec[aria-expanded="true"] .chev svg{transform:rotate(90deg)}
+.onb-sec em + .chev{margin-left:6px}
+.onb-sec:active{transform:scale(.993)}
+.fold + .onb-sec,.onb-grid + .onb-sec{margin-top:18px}
 .onb-team span em{font-style:normal;font-weight:800;color:var(--ink);margin-right:5px}
 /* player picker: a roster per followed team */
 .onb .pp .search{margin-left:0;margin-right:0}
@@ -1183,8 +1193,10 @@ button.thead{width:calc(100% - var(--gut) - var(--gut-r));border:0;font:inherit;
 .row .t .tvt{flex:0 1 auto;max-width:100%}
 /* ---- the league track on black: a visible capsule ---- */
 /* the league switch in the dark: a raised plate with a top light and a soft drop, the knob a lifted button, not a trough with a rim */
-.pills{background:color-mix(in srgb,var(--bg) 58%,transparent);-webkit-backdrop-filter:blur(40px) saturate(1.8);backdrop-filter:blur(40px) saturate(1.8);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 1px rgba(255,255,255,.11),0 1px 2px rgba(0,0,0,.4),0 16px 36px -18px rgba(0,0,0,.8)}
+/* On true black there is nothing behind the glass to blur and a black shadow casts nothing, so the track has to carry its own
+   light: a thin lift over the blur and a rim bright enough to draw the whole shape. Without it the switch dissolves into the page. */
+.pills{background:linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,.038) 58%,rgba(255,255,255,.055)),color-mix(in srgb,var(--bg) 58%,transparent);-webkit-backdrop-filter:blur(40px) saturate(1.8);backdrop-filter:blur(40px) saturate(1.8);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.17),0 1px 2px rgba(0,0,0,.5),0 16px 36px -18px rgba(0,0,0,.9)}
 .pill{text-shadow:0 1px 2px rgba(0,0,0,.45)}
 @media (prefers-reduced-transparency:reduce){ .pills{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--surf)} }
 .pills::before{background:linear-gradient(180deg,#FFFFFF,#E4E7ED);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(0,0,0,.08),0 1px 1px rgba(0,0,0,.5),0 8px 18px -8px rgba(0,0,0,.9)}

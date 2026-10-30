@@ -287,6 +287,8 @@
     if (a === 'official') { e.preventDefault(); openOfficial(act.dataset.key); }
     if (a === 'gifold') { e.preventDefault(); V._.foldToggle(act, act.getAttribute('aria-expanded') !== 'true'); return; }
     if (a === 'injcol') { e.preventDefault(); const open = act.getAttribute('aria-expanded') !== 'true'; V._.foldToggle(act, open); const c = store.get('v5:injcol', {}) || {}; if (open) delete c[act.dataset.id]; else c[act.dataset.id] = true; store.set('v5:injcol', c); }
+    // a conference bar in setup: fold it, and remember which ones this device leaves open
+    if (a === 'onbsec') { e.preventDefault(); const open = act.getAttribute('aria-expanded') !== 'true'; V._.foldToggle(act, open); const s = store.get('v5:onbsec', {}) || {}; s[act.dataset.sec] = open ? 1 : 0; store.set('v5:onbsec', s); return; }
     if (a === 'reload') { e.preventDefault(); render(); }
     if (a === 'onb-next') { e.preventDefault(); onbLk = 'nba'; onbStep(+act.dataset.step); }
     if (a === 'onb-lk') { e.preventDefault(); onbLk = act.dataset.lk; onbStep(+(act.dataset.step || 0)); }
@@ -485,9 +487,22 @@
           st.groups.slice().sort((a, b) => V._.confName(a.name, a.abbr).localeCompare(V._.confName(b.name, b.abbr))).forEach(g => { const rows = g.rows.map(r => { seen.add(r.id); return tile(r.id); }).sort(byShort); if (rows.length) groups.push({ name: V._.confName(g.name, g.abbr), rows }); });
           const rest = Object.keys(idx).filter(id => !seen.has(id)).map(id => tile(id)).sort(byShort); if (rest.length) groups.push({ name: 'Other', rows: rest });
         } else groups.push({ name: '', rows: Object.keys(idx).map(id => tile(id)).sort(byShort) });
+        /* 360 college teams in one wall is not a list anyone can use, so each conference is a full-width bar that folds its
+           own grid. The ranked group leads and stays open; the conferences start closed, so the whole league fits on a screen
+           and you open the one you want. A search opens every section that still has a match, without disturbing the saved
+           state. Pro leagues are one unnamed alphabetical group of thirty — nothing to section, so nothing folds. */
+        const secKey = name => `${lk}:${name}`;
+        const secOpen = (name, first) => { const s = store.get('v5:onbsec', {}) || {}; const v = s[secKey(name)]; return v === undefined ? first : !!v; };
         const paint = () => {
           const q = inp.value.trim().toLowerCase();
-          const html = groups.map(g => { const rows = g.rows.filter(tm => !q || `${tm.name} ${tm.short} ${tm.abbr} ${g.name}`.toLowerCase().includes(q)); if (!rows.length) return ''; return `${g.name ? `<div class="onb-sec"><b>${esc(g.name)}</b><span>${rows.length}</span></div>` : ''}<div class="onb-grid">${rows.map(tm => { const on = HW.favs.has(lk, tm.id); return `<button class="onb-team${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tm.id)}" data-name="${esc(tm.short)}" aria-pressed="${on}"><span class="logo">${V._.imgSized(tm.logo || '', 128, 128)}</span><b>${esc(tm.short)}</b><span>${tm.rank ? `<em>No. ${tm.rank}</em>` : ''}${esc(tm.rec)}</span><i></i></button>`; }).join('')}</div>`; }).join('');
+          const html = groups.map((g, gi) => {
+            const rows = g.rows.filter(tm => !q || `${tm.name} ${tm.short} ${tm.abbr} ${g.name}`.toLowerCase().includes(q));
+            if (!rows.length) return '';
+            const grid = `<div class="onb-grid">${rows.map(tm => { const on = HW.favs.has(lk, tm.id); return `<button class="onb-team${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tm.id)}" data-name="${esc(tm.short)}" aria-pressed="${on}"><span class="logo">${V._.imgSized(tm.logo || '', 128, 128)}</span><b>${esc(tm.short)}</b><span>${tm.rank ? `<em>No. ${tm.rank}</em>` : ''}${esc(tm.rec)}</span><i></i></button>`; }).join('')}</div>`;
+            if (!g.name) return grid;
+            const open = q ? true : secOpen(g.name, gi === 0);
+            return `<button class="onb-sec" data-act="onbsec" data-sec="${esc(secKey(g.name))}" aria-expanded="${open}"><b>${esc(g.name)}</b><span>${rows.length}</span>${V._.chev}</button><div class="fold${open ? '' : ' closed'}">${grid}</div>`;
+          }).join('');
           list.innerHTML = html || `<div class="empty"><b>No team matches</b><p style="margin:6px 0 0">Try the school, the nickname or the conference.</p></div>`;
           onbCount();
         };
@@ -516,7 +531,8 @@
     const step = +(b.dataset.step || 1) - 1; const nn = step === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length;
     const cnt = document.getElementById('onbCnt'); if (cnt) cnt.textContent = onbTally(step, nn);
     // each section says how many of its tiles are picked; the league pills carry their counts; the rail shows every pick
-    $panel.querySelectorAll('.onb-sec').forEach(h => { const grid = h.nextElementSibling; const k = grid ? grid.querySelectorAll('.onb-team.on').length : 0; let em = h.querySelector('em'); if (k && !em) { em = document.createElement('em'); h.appendChild(em); } if (em) { if (k) em.textContent = `${k} picked`; else em.remove(); } });
+    // the bar carries its own tally, so a folded conference still says how many of its teams you follow
+    $panel.querySelectorAll('.onb-sec').forEach(h => { const n = h.nextElementSibling; const grid = n ? (n.classList.contains('onb-grid') ? n : n.querySelector('.onb-grid')) : null; const k = grid ? grid.querySelectorAll('.onb-team.on').length : 0; let em = h.querySelector('em'); if (k && !em) { em = document.createElement('em'); const ch = h.querySelector('.chev'); if (ch) ch.before(em); else h.appendChild(em); } if (em) { if (k) em.textContent = `${k} picked`; else em.remove(); } });
     $panel.querySelectorAll('.onb-pills .pill').forEach(p => { const k = p.dataset.lk; const c = step === 0 ? (HW.favs.all()[k] || []).length : V.fplayers.all().filter(x => x.lk === k).length; let ct = p.querySelector('.ct'); if (c && !ct) { ct = document.createElement('span'); ct.className = 'ct'; p.appendChild(ct); } if (ct) { if (c) ct.textContent = c; else ct.remove(); } });
     const rail = document.getElementById('onbPicked');
     if (rail) {
