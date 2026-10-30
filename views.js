@@ -572,8 +572,7 @@
     const facts = [a.displayHeight, a.displayWeight, college ? classWord : (a.age ? `Age ${a.age}` : ''), country, !college && a.college && a.college.name, hometown].filter(Boolean);
     const snap = { lk, id: String(id), name: a.displayName, short: a.shortName || a.displayName, img: a.headshot && a.headshot.href, team: tm.abbreviation || '', teamId: tm.id ? String(tm.id) : '', color: BAD(color) ? '' : color };
     const tlogo = teamLogo || tm.logo || '';
-    const a2 = alt && !BAD(alt) && alt.toLowerCase() !== String(color).toLowerCase() ? V_panel(alt) : '';   // the second panel in the team's other colour when it has one
-    const hero = `<div class="ehero" style="--a:${esc(color)}${a2 ? `;--a2:${esc(a2)}` : ''}">
+    const hero = `<div class="ehero" style="--a:${esc(color)}">
       ${tlogo ? `<img class="tlg" src="${esc(tlogo)}" alt="" ${hide}>` : ''}<div class="wm">${esc(a.jersey || '')}</div>
       <div class="in">${tm.id ? `<a class="tchip" href="${href.team(lk, tm.id)}">${tlogo ? `<img src="${esc(tlogo)}" alt="" ${hide}>` : ''}<b>${esc(tm.shortDisplayName || tm.name || tm.displayName)}</b></a>` : ''}${subLine ? `<div class="sub">${subLine}</div>` : ''}<h1>${esc(a.firstName || '')}<br>${esc(a.lastName || a.displayName)}</h1>
         <div class="facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div>

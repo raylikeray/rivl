@@ -210,7 +210,6 @@
     const t0 = (roster && roster.team) || (sched && sched.team);
     if (!t0) { $main.innerHTML = topbar('Team') + empty("Couldn't load this team", '<p style="margin:6px 0 0">The feed didn\'t answer. Pull down to try again.</p>'); return; }
     learn(L, { id: String(id), ...t0 }); const color = teamColor({ id: String(id), abbr: t0.abbreviation, color: t0.color }, L); V._.tint(color);
-    const alt0 = V._.teamAlt({ id: String(id), abbr: t0.abbreviation, alt: t0.alternateColor }, L); const a2 = alt0 && alt0.toLowerCase() !== String(color).toLowerCase() ? V._.V_panel(alt0) : '';
     const lg = t0.logo || (t0.logos && t0.logos[0] && t0.logos[0].href) || HW.logoUrl(L, t0.abbreviation);
     const r = st && st.byId[String(id)];
     const rank = R && (R.ranks.find(x => x.team.id === String(id)) || {}).rank;
@@ -219,7 +218,7 @@
     const next = evs.find(g => g.state !== 'post');
     const ctx = next ? await forecastCtx(L, ymdOf(next.date)).catch(() => null) : null;
     const facts = [r ? `${r.w}-${r.l}` : (t0.recordSummary || ''), rank ? `Ranked No. ${rank}` : '', r && L.standingsMode !== 'conferences' ? `${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}` : (t0.standingSummary || ''), r && r.strk ? (/^W/.test(r.strk) ? `Won ${r.strk.slice(1)} straight` : `Lost ${r.strk.slice(1)} straight`) : ''].filter(Boolean);
-    const hero = `<div class="ehero team" style="--a:${esc(color)}${a2 ? `;--a2:${esc(a2)}` : ''}"><div class="wm">${esc(t0.abbreviation || '')}</div>${V._.imgSized(lg, 256, 256, 'class="biglogo"')}
+    const hero = `<div class="ehero team" style="--a:${esc(color)}"><div class="wm">${esc(t0.abbreviation || '')}</div>${V._.imgSized(lg, 256, 256, 'class="biglogo"')}
       <div class="in"><div class="sub">${esc(r && r.group && L.standingsMode === 'conferences' ? r.group : (t0.standingSummary && /Division/.test(t0.standingSummary) ? '' : L.label))}</div><h1 class="${(() => { const w = Math.max(...`${t0.location || ''} ${t0.name || t0.displayName || ''}`.split(/\s+/).map(x => x.length)); return w > 10 ? 'xlong' : w > 7 ? 'long' : ''; })()}">${esc(t0.location || '')}<br>${esc(t0.name || t0.displayName)}</h1>
         <div class="facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div>
         <div class="acts"><button class="${on ? 'on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(id)}" data-name="${esc(t0.shortDisplayName || t0.name)}" aria-pressed="${on}">${on ? starSvg : starLine}${on ? 'Following' : 'Follow'}</button></div>
