@@ -91,7 +91,10 @@
     render.lk = r.lk;
     if (!['team', 'player', 'game'].includes(r.name) && V._.tint) V._.tint('');   // only a team's, a player's or a game's page wears a team colour
     if (leagueScreen) store.set('v5:screen', r.name);
-    if (r.name !== 'scores') store.set('v5:date', todayCT());
+    /* The Scores date goes back to today when you move to another tab — Home, Standings, Teams, Players — so a day you
+       looked at last week is not waiting the next time you open Scores. It does NOT reset when you drill into a game, a
+       team or a player from a score card: those are children of the day you were on, and coming back lands on that day. */
+    if (leagueScreen && r.name !== 'scores') store.set('v5:date', todayCT());
     document.getElementById('top').hidden = !leagueScreen;
     paintPills(r.lk, leagueScreen);
     paintTabs(leagueScreen ? r.name : (r.name === 'player' ? 'players' : r.name === 'team' ? 'teams' : r.name === 'game' ? 'scores' : r.name === 'article' ? 'home' : ''));
