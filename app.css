@@ -1894,10 +1894,10 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .game .pstrip > span{min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .game .pstrip > b{flex:none;letter-spacing:.02em;text-transform:none;font-size:12px;color:var(--ink)}
 
-/* the series line on the game page: one quiet strip under the hero, the facts on the left and RIVL's pick on the right */
-.sline{display:flex;align-items:center;gap:10px;margin:-6px var(--gut-r) 12px var(--gut);padding:9px 14px;border-radius:12px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge);font-size:12px}
-.sline > span{min-width:0;flex:1;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sline > b{flex:none;font-weight:800;color:var(--ink)}
-/* on a phone the facts come first and whole; the pick takes the next line rather than cutting them short */
-@media (max-width:600px){ .sline{flex-wrap:wrap;gap:3px 10px} .sline > span{flex:1 1 auto;overflow:visible;text-overflow:clip;white-space:normal} .sline > b{flex:0 1 auto;margin-left:auto} }
+/* the series caption under the game hero: centred, no plate, the facts in small caps and the pick (when it adds something)
+   beneath them in the same measure */
+.sline{margin:10px var(--gut-r) 4px var(--gut);text-align:center;font-size:12px;line-height:1.4}
+.sline > span{display:block;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2);text-wrap:balance}
+.sline > b{display:block;margin-top:2px;font-weight:700;color:var(--ink-2)}
+.sline > b::before{content:"";display:block;width:28px;height:1px;margin:7px auto 7px;background:var(--line-2)}
 .bchip em.po{font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);padding:2px 7px;border-radius:999px;background:color-mix(in srgb,var(--ink) 8%,transparent);margin-left:4px;white-space:nowrap}
