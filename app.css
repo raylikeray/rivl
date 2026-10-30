@@ -1914,45 +1914,80 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.28) calc(var(--fl,0px) * .3),rgba(0,0,0,.72) calc(var(--fl,0px) * .62),#000 var(--fl,0px),#000 calc(100% - var(--fr,0px)),rgba(0,0,0,.72) calc(100% - var(--fr,0px) * .62),rgba(0,0,0,.28) calc(100% - var(--fr,0px) * .3),transparent 100%)}
 .tw:has(> .tbl.stand).fades{-webkit-mask-image:none;mask-image:none}
 
-/* ===== v106: the player picker as team cards, and one press for the whole app =====
+/* ===== v106–v107: the player picker as team cards, and one press for the whole app =====
    1. The picker was a stack of pills: the team header a plate, and every player under it another plate of the same material,
-      radius and shadow, so the header read as one more row. Now each team is one card — a band across the top in the team's
-      colour, with the crest on its disc, the count and the picked tally, that folds the roster — and the roster is a column
-      of hairline rows inside that same plate. A picked row takes a wash of the team's colour and the star fills in it, popping
-      as it turns on. The Following and Leaders lists sit in the same plate without a band. */
-.tgrp{margin:12px var(--gut-r) 0 var(--gut);border-radius:16px;overflow:hidden;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:var(--edge);isolation:isolate}
+      radius and shadow, so the header read as one more row. Now each team is one card. The band across the top is the team's:
+      its colour as the ground, the crest on a disc, the name with "17 players · 4 picked" under it, the faces of the picked
+      at the right so a folded card still shows who was chosen, and a faint crest watermark. The roster is a column of
+      hairline rows inside the same plate. A picked row takes a wash of the team's colour and its star becomes a solid disc
+      in that colour with a white star — readable on black at any brightness, which a tinted glyph alone was not.
+   2. The fold is measured, not guessed: everything under a folding card used to be repainted on every frame of the slide,
+      and the card's textured plate re-blended at each new height. The plate texture now sits on the band and the roster
+      block, whose sizes never change; the list is marked `folding` from the press, which lifts the cards onto their own
+      layers before the slide starts; and the roster fades in as one block instead of seventeen rows rising one by one. */
+.tgrp{margin:12px var(--gut-r) 0 var(--gut);border-radius:18px;overflow:hidden;background:var(--plate);box-shadow:var(--edge);isolation:isolate;position:relative}
 .tgrp + .tgrp{margin-top:12px}
 .tgrp.plain{margin-top:0}
 .onb .pp .tgrp{margin-left:0;margin-right:0}
-.tgrp > .thead,.onb .pp .tgrp > button.thead{width:100%;margin:0;padding:11px 14px 11px 12px;border-radius:0;gap:11px;
-  background:linear-gradient(180deg,color-mix(in srgb,var(--tf,var(--ink-3)) 30%,var(--surf-2)),color-mix(in srgb,var(--tf,var(--ink-3)) 16%,var(--surf)));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
-.tgrp > .thead .logo{width:36px;height:36px;border-radius:50%;overflow:hidden;background:radial-gradient(120% 120% at 30% 18%,var(--disc),var(--disc-lo));box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.1),0 2px 6px -2px rgba(0,0,0,.45)}
+.mv{will-change:transform}   /* set by foldPrime for the slide's duration: the clipped block and everything under it */
+.tgrp,.tgrp .row{contain:layout}
+.tgrp .row{animation:none}
+.rows > .tgrp:nth-child(-n+6),.pp-list > .tgrp:nth-child(-n+6){animation:rise .42s cubic-bezier(.2,.8,.2,1) both}
+/* the band */
+.tgrp > .thead,.onb .pp .tgrp > button.thead{position:relative;overflow:hidden;width:100%;margin:0;padding:10px 14px 10px 12px;min-height:62px;border-radius:0;gap:12px;
+  background:var(--grain),linear-gradient(180deg,color-mix(in srgb,var(--tf,var(--ink-3)) 44%,var(--surf-2)),color-mix(in srgb,var(--tf,var(--ink-3)) 26%,var(--surf)));background-blend-mode:soft-light,normal;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.tgrp > .thead > *{position:relative;z-index:1}
+.tgrp > .thead img.wm{position:absolute;z-index:0;right:-22px;top:-30px;width:124px;height:124px;object-fit:contain;opacity:.09;filter:saturate(0) brightness(10);transform:rotate(-10deg);pointer-events:none;-webkit-mask-image:linear-gradient(90deg,transparent,#000 45%);mask-image:linear-gradient(90deg,transparent,#000 45%)}
+.tgrp > .thead .logo{width:40px;height:40px;border-radius:50%;overflow:hidden;background:radial-gradient(120% 120% at 30% 18%,var(--disc),var(--disc-lo));box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(10,11,14,.1),0 2px 6px -2px rgba(0,0,0,.5)}
 .tgrp > .thead .logo img{width:68%;height:68%;object-fit:contain;filter:none}
-.tgrp > .thead b{font-size:16px;letter-spacing:-.01em}
-.tgrp > .thead .bar{display:none}
-.tgrp > .thead span.n,.tgrp > .thead em.pk{background:color-mix(in srgb,var(--ink) 9%,transparent);box-shadow:none}
-.tgrp > .thead em.pk{color:var(--ink)}
-.tgrp > .thead .chev{color:var(--ink-2)}
+.tgrp > .thead .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left}
+.tgrp > .thead .tt b{font-size:17px;letter-spacing:-.01em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tgrp > .thead .tt small{font-size:12px;font-weight:700;color:var(--ink-2);letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tgrp > .thead .tt small em{font-style:normal;color:var(--ink)}
+.tgrp > .thead .bar,.tgrp > .thead span.n,.tgrp > .thead em.pk{display:none}
+.tgrp > .thead .faces{display:flex;align-items:center;flex:none;margin-right:2px}
+.tgrp > .thead .faces i{display:block;width:26px;height:26px;border-radius:50%;overflow:hidden;background:radial-gradient(130% 110% at 50% -10%,color-mix(in srgb,var(--tf,var(--ink-3)) 68%,#fff),var(--tf,var(--ink-3)) 52%,color-mix(in srgb,var(--tf,var(--ink-3)) 82%,#000) 100%);box-shadow:0 0 0 2px color-mix(in srgb,var(--tf,var(--ink-3)) 30%,var(--surf));margin-left:-7px}
+.tgrp > .thead .faces i:first-child{margin-left:0}
+.tgrp > .thead .faces i img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;transform:scale(1.1) translateY(3%)}
+.tgrp > .thead .faces u{text-decoration:none;font-size:11px;font-weight:800;color:var(--ink);margin-left:5px}
+.tgrp > .thead .chev{color:var(--ink-2);margin-left:0}
+.tgrp > .thead .chev svg,.onb-sec .chev svg,button.injhd .chev svg{transition:transform .32s var(--ease)}
+.tgrp > .thead:active{transform:none;filter:brightness(1.08)}
+/* the roster */
 .tgrp .fold > .rows,.onb .pp .tgrp .fold > .rows,.tgrp > .rows,.onb .pp .tgrp > .rows{padding:0;margin:0}
-.tgrp .fold > .rows{border-top:1px solid var(--line)}
+.tgrp .fold > .rows{border-top:1px solid var(--line);background:var(--grain);background-blend-mode:soft-light}
+.fold.opening > .rows{animation:settle .3s var(--ease) both}
+.fold.opening > .rows > .row,.fold.opening > .injbody > .row{animation:none}
+@keyframes settle{from{opacity:.35}to{opacity:1}}
 .tgrp .row,.tgrp .row.prow,.tgrp button.row.prow.sel{width:100%;margin:0;padding:10px 12px;border-radius:0;border-bottom:1px solid var(--line);background:none;box-shadow:none;align-items:center}
 .tgrp .row:last-child,.tgrp button.row.prow.sel:last-child{border-bottom:0}
-.tgrp .row.prow .star{margin-right:-8px}
+.tgrp .row.prow .star{margin-right:-6px}
 .tgrp .row .t{text-align:left}
 .tgrp .rows.ordering .row{padding-left:12px}
-/* a picked row: the wash of its team's colour, a flat colour so it can fade in and out, and the star in the same */
-.tgrp button.row.prow.sel.on{background:color-mix(in srgb,var(--tf,var(--ink)) 13%,transparent);box-shadow:none}
-.tgrp button.row.prow.sel.on .star,.row .star.on{color:var(--tf,var(--ink))}
+/* the star: an outline at rest, a solid disc in the team's colour with a white star once picked */
+.row .star,button.row.prow.sel .star{position:relative;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--ink-3);background:none;box-shadow:none}
+.row .star::before,button.row.prow.sel .star::before{content:"";position:absolute;left:5px;top:5px;width:30px;height:30px;border-radius:50%;background:var(--tf,var(--ink));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 8px -2px color-mix(in srgb,var(--tf,var(--ink)) 70%,transparent);transform:scale(.4);opacity:0;transition:transform .3s var(--ease),opacity .2s var(--ease)}
+.row .star svg,button.row.prow.sel .star svg{position:relative;z-index:1;width:22px;height:22px;transition:transform .3s var(--ease)}
+.row .star.on,button.row.prow.sel.on .star{color:#fff}
+.row .star.on::before,button.row.prow.sel.on .star::before{transform:none;opacity:1}
+.row .star.on svg,button.row.prow.sel.on .star svg{width:16px;height:16px}
+.star.pop::before{animation:popcheck .36s var(--ease)}
+.tgrp button.row.prow.sel.on{background:color-mix(in srgb,var(--tf,var(--ink)) 22%,transparent);box-shadow:none}
 .tgrp button.row.prow.sel.on .t b{color:var(--ink)}
-.star.pop svg{animation:popcheck .36s var(--ease)}
-.star svg{transition:transform .3s var(--ease)}
-.tgrp > .thead .chev svg,.onb-sec .chev svg,button.injhd .chev svg{transition:transform .32s var(--ease)}
-/* 2. One press for everything that can be pressed: in fast, out slow. A press used to snap — the same short ease in both
+:root[data-theme="light"] .tgrp button.row.prow.sel.on{background:color-mix(in srgb,var(--tf,var(--ink)) 13%,transparent)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .tgrp button.row.prow.sel.on{background:color-mix(in srgb,var(--tf,var(--ink)) 13%,transparent)} }
+:root[data-theme="light"] .tgrp > .thead{background:var(--grain),linear-gradient(180deg,color-mix(in srgb,var(--tf,var(--ink-3)) 30%,#fff),color-mix(in srgb,var(--tf,var(--ink-3)) 14%,#F7F8FA));background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 #fff}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .tgrp > .thead{background:var(--grain),linear-gradient(180deg,color-mix(in srgb,var(--tf,var(--ink-3)) 30%,#fff),color-mix(in srgb,var(--tf,var(--ink-3)) 14%,#F7F8FA));background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 #fff} }
+:root[data-theme="light"] .tgrp > .thead img.wm{filter:saturate(0) brightness(0);opacity:.06}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .tgrp > .thead img.wm{filter:saturate(0) brightness(0);opacity:.06} }
+/* on a wide screen a roster runs in two columns inside its card; the last row of each column has no hairline under it */
+@media (min-width:1040px){ .tgrp .row:nth-last-child(-n+2),.tgrp button.row.prow.sel:nth-last-child(-n+2){border-bottom:0} }
+/* 3. One press for everything that can be pressed: in fast, out slow. A press used to snap — the same short ease in both
       directions, and on some controls (the league pills) no ease at all, so the thumb got a jolt. Now every pressable goes
       down in 60ms and comes back up over 300ms on the app's curve, and the ones that change state (chips, tabs, stars,
       picked rows) cross-fade their colour on the same curve. Rows highlight rather than shrink. */
-.bchip,.game,.btn,.pl,.row.prow .go,.cd,.injhd,.thead,.hero,.pc,.onb-team,.onb-sec,.todayfab,.ehero .tchip,.star,.ord .mv,.cmph .tm,.hero.page .tm{transition:transform .3s var(--ease),box-shadow .3s var(--ease),background .3s var(--ease),color .3s var(--ease),filter .3s var(--ease)}
+.bchip,.game,.btn,.pl,.row.prow .go,.cd,.injhd,.thead,.hero,.pc,.onb-team,.onb-sec,.todayfab,.ehero .tchip,.star,.ord .mv,.cmph .tm,.hero.page .tm{transition:transform .3s var(--ease),box-shadow .3s var(--ease),background .3s var(--ease),color .3s var(--ease),filter .3s var(--ease),width .3s var(--ease),height .3s var(--ease)}
 .chip,.day{transition:transform .3s var(--ease),box-shadow .3s var(--ease),background .24s var(--ease),color .24s var(--ease)}
 .tab{transition:transform .3s var(--ease),color .24s var(--ease)}
 .tab svg{transition:transform .3s var(--ease)}
@@ -1961,14 +1996,10 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .row{transition:background-color .3s var(--ease)}
 .bchip:active,.game:active,.btn:active,.pl:active,.row.prow .go:active,.cd:active,.injhd:active,.thead:active,.hero:active,.pc:active,.onb-team:active,.onb-sec:active,.todayfab:active,.ehero .tchip:active,.star:active,.chip:active,.day:active,.tab:active,.pill:active,.row:active,.ord .mv:active,.cmph .tm:active,.hero.page .tm:active{transition-duration:.06s;transition-timing-function:ease-out}
 .thead:active{transform:scale(.99)}
-.tgrp > .thead:active{transform:none;filter:brightness(1.08)}
 .star:active{transform:scale(.86)}
 .row .star:active{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.row .star.on:active{background:var(--tf,var(--ink))}
 .row:active{background-color:color-mix(in srgb,var(--ink) 7%,transparent)}
 .tgrp .row:active{border-radius:0}
 .tgrp button.row.prow.sel:active{transform:none;background-color:color-mix(in srgb,var(--ink) 7%,transparent)}
-.tgrp button.row.prow.sel.on:active{background-color:color-mix(in srgb,var(--tf,var(--ink)) 20%,transparent)}
-:root[data-theme="light"] .tgrp > .thead{box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .tgrp > .thead{box-shadow:inset 0 1px 0 rgba(255,255,255,.7)} }
-/* on a wide screen a roster runs in two columns inside its card; the last row of each column has no hairline under it */
-@media (min-width:1040px){ .tgrp .row:nth-last-child(-n+2),.tgrp button.row.prow.sel:nth-last-child(-n+2){border-bottom:0} }
+.tgrp button.row.prow.sel.on:active{background-color:color-mix(in srgb,var(--tf,var(--ink)) 30%,transparent)}

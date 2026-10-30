@@ -770,8 +770,21 @@
   const orderTools = `<span class="ord"><button class="mv" data-mv="up" aria-label="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 6-6 6 6"/></svg></button><button class="mv" data-mv="down" aria-label="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 10 6 6 6-6"/></svg></button><span class="grip" aria-label="Drag to reorder">${gripSvg}</span></span>`;
   /* a head that folds its body: the body is wrapped in a track that eases from 1fr to 0fr, so closing is as smooth as opening */
   const foldWrap = (bodyHtml, closed) => `<div class="fold${closed ? ' closed' : ''}">${bodyHtml}</div>`;
+  /* Folding a roster moves everything under it. Left to itself the browser repaints every card below on every frame of the
+     slide, and the textured plate of the folding card is re-blended at every new height — the hitch Ray saw. So the
+     list is marked `folding` from the moment the band is pressed: that promotes the cards to their own layers before the
+     slide starts, and the slide then only moves layers. The mark comes off once the fold has settled. */
+  let foldPrimeT = null, primed = [];
+  function foldPrime(head, settle = 900) {
+    const fold = head.nextElementSibling; const card = head.closest('.tgrp, .injgrp') || head;
+    const marks = []; const rows = fold && fold.firstElementChild; if (rows) marks.push(rows);   // the block being clipped
+    for (let n = card.nextElementSibling; n; n = n.nextElementSibling) marks.push(n);              // everything that slides
+    primed.forEach(e => e.classList.remove('mv')); primed = marks; marks.forEach(e => e.classList.add('mv'));
+    clearTimeout(foldPrimeT); foldPrimeT = setTimeout(() => { primed.forEach(e => e.classList.remove('mv')); primed = []; }, settle);
+  }
   function foldToggle(head, open) {
     const fold = head.nextElementSibling; if (!fold || !fold.classList.contains('fold')) return;
+    foldPrime(head, 450);
     head.setAttribute('aria-expanded', String(open)); fold.classList.toggle('closed', !open);
     if (open) { fold.classList.add('opening'); setTimeout(() => fold.classList.remove('opening'), 500); fold.querySelectorAll('img[loading="lazy"]').forEach(i => { i.loading = 'eager'; }); }
   }
@@ -808,6 +821,9 @@
     if (order) return `<div class="row prow ordrow" data-oid="${esc(p.id)}"><span class="go">${headshot(p.img, pc, 46, p.name)}</span><span class="t"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></span>${orderTools}</div>`;
     return `<div class="row prow"><a class="go" href="${href.player(p.lk, p.id)}" aria-label="${esc(p.name)}">${rk}${headshot(p.img, pc, 46, p.name)}</a><a class="t" href="${href.player(p.lk, p.id)}"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></a>${right}<button class="star${on ? ' on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(p.name)}">${on ? starSvg : starLine}</button></div>`;
   }
+  /* the band's second line and the faces of the picked: the players a person chose stay visible when the roster is folded */
+  const bandLine = (n, picked) => `${n} player${n === 1 ? '' : 's'}${picked ? ` · <em>${picked} picked</em>` : ''}`;
+  const faces = picked => { const show = picked.slice(0, 3); return show.length ? `<span class="faces" aria-hidden="true">${show.map(p => `<i>${p.img ? imgSized(p.img, 80, 58, '', "this.remove()") : ''}</i>`).join('')}${picked.length > 3 ? `<u>+${picked.length - 3}</u>` : ''}</span>` : ''; };
   const lastName = n => { const w = String(n || '').replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/i, '').trim().split(/\s+/); return w[w.length - 1] || ''; };
   async function playerPicker(el, L, { following = false, leaders = true, select = false } = {}) {
     const lk = L.key, pro = !/^ncaa/.test(lk);
@@ -845,7 +861,7 @@
         const picked = rows.filter(p => fset.has(p.id)).length;
         /* one card per team: the band at the top carries the team's colour and folds the roster, the roster is a column of
            hairline rows inside the same plate — a header over its contents, not a stack of look-alike pills */
-        parts.push(`<section class="tgrp" style="${tcv(teamColor(s.team, L))}"><button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}">${logo(s.team.logo, 's')}<b>${esc(s.team.short)}</b><span class="n">${rows.length}</span>${picked ? `<em class="pk">${picked} picked</em>` : ''}${chev}</button>${foldWrap(`<div class="rows">${rows.map(p => rowOf(p, s)).join('')}</div>`, folded)}</section>`);
+        parts.push(`<section class="tgrp" style="${tcv(teamColor(s.team, L))}"><button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}">${imgSized(s.team.logo, 96, 96, 'class="wm" aria-hidden="true"', 'this.remove()')}${logo(s.team.logo, 's')}<span class="tt"><b>${esc(s.team.short)}</b><small>${bandLine(rows.length, picked)}</small></span>${faces(rows.filter(p => fset.has(p.id)))}${chev}</button>${foldWrap(`<div class="rows">${rows.map(p => rowOf(p, s)).join('')}</div>`, folded)}</section>`);
       });
       if (lp && leaders) {
         // league leaders, per game, by category; a search keeps the whole list and filters it by name
@@ -868,6 +884,7 @@
     };
     paint();
     let t = null; inp.addEventListener('input', () => { clearTimeout(t); t = setTimeout(paint, 120); });
+    el.addEventListener('pointerdown', e => { const b = e.target.closest('[data-pp="fold"]'); if (b) foldPrime(b); }, { passive: true });
     el.addEventListener('click', async e => {
       const b = e.target.closest('[data-pp]'); if (!b) return; e.preventDefault();
       if (b.dataset.pp === 'top') { paint.topOpen = true; paint('leaders'); }
@@ -881,7 +898,7 @@
       else if (b.dataset.pp === 'browse') { b.querySelector('.t span').textContent = 'Loading…'; const r = await rosterOf(L, b.dataset.id, idx).catch(() => null); if (r) { sections.push({ key: r.team.id, team: r.team, rows: r.players.slice().sort(byLine), open: true }); inp.value = ''; } paint(); }
     });
     const sync = (e) => { if (!el.isConnected) { document.removeEventListener('rivl:follow', sync); return; } if (e && e.detail && e.detail.reorder) return;
-      const fs = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('.thead.pp-team').forEach(h => { const body = h.nextElementSibling; const n = body ? [...body.querySelectorAll('[data-act="follow-player"]')].filter(b => { try { return fs.has(JSON.parse(b.dataset.snap).id); } catch { return false; } }).length : 0; let em = h.querySelector('em.pk'); if (n && !em) { em = document.createElement('em'); em.className = 'pk'; h.insertBefore(em, h.querySelector('.chev')); } if (em) { if (n) em.textContent = `${n} picked`; else em.remove(); } }); const fset = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('[data-act="follow-player"]').forEach(b => { let id = ''; try { id = JSON.parse(b.dataset.snap).id; } catch { } const on = fset.has(String(id)), was = b.classList.contains('on'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); const st = b.classList.contains('star') ? b : b.querySelector('.star'); if (st) { st.classList.toggle('on', on); st.innerHTML = on ? starSvg : starLine; if (on && !was) { st.classList.add('pop'); setTimeout(() => st.classList.remove('pop'), 450); } } }); if (following && !inp.value) paint(); };
+      const fs = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('.thead.pp-team').forEach(h => { const body = h.nextElementSibling; const all = body ? [...body.querySelectorAll('[data-act="follow-player"]')] : []; const picked = all.map(b => { try { return JSON.parse(b.dataset.snap); } catch { return null; } }).filter(x => x && fs.has(String(x.id))); const sm = h.querySelector('.tt small'); if (sm) sm.innerHTML = bandLine(all.length, picked.length); const old = h.querySelector('.faces'); const fresh = faces(picked); if (old) old.remove(); if (fresh) h.querySelector('.chev').insertAdjacentHTML('beforebegin', fresh); }); const fset = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('[data-act="follow-player"]').forEach(b => { let id = ''; try { id = JSON.parse(b.dataset.snap).id; } catch { } const on = fset.has(String(id)), was = b.classList.contains('on'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); const st = b.classList.contains('star') ? b : b.querySelector('.star'); if (st) { st.classList.toggle('on', on); st.innerHTML = on ? starSvg : starLine; if (on && !was) { st.classList.add('pop'); setTimeout(() => st.classList.remove('pop'), 450); } } }); if (following && !inp.value) paint(); };
     document.addEventListener('rivl:follow', sync);
   }
   async function players(lk) {
