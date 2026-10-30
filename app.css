@@ -858,12 +858,14 @@ body{overscroll-behavior-y:none}
    sink in. On true black a dark shadow is invisible, so dark depth comes from edges, light and coloured glow.
    ==================================================================================================== */
 :root{
-  --edge:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.07),0 1px 0 rgba(0,0,0,.8),0 6px 14px -8px rgba(0,0,0,.7),0 26px 48px -26px rgba(0,0,0,.95);
-  --plate:radial-gradient(120% 70% at 18% -4%,rgba(255,255,255,.09),transparent 55%),linear-gradient(180deg,#2A2E36 0%,#1B1E24 100%);
-  --plate-2:radial-gradient(120% 70% at 18% -4%,rgba(255,255,255,.075),transparent 55%),linear-gradient(180deg,#22262C 0%,#15181C 60%,#121418 100%);
-  --plate-line:rgba(255,255,255,.12); --plate-hi:rgba(255,255,255,.11);
+  /* v113: the dark plates lost their gloss. A 15-level vertical gradient, a 9% radial sheen and a 14% light along the top
+     edge read as 2007; dark depth now comes from a near-flat tone a step above the ground, a 7% hairline, and the shadow. */
+  --edge:inset 0 1px 0 rgba(255,255,255,.07),inset 0 0 0 1px rgba(255,255,255,.07),0 1px 0 rgba(0,0,0,.8),0 6px 14px -8px rgba(0,0,0,.7),0 26px 48px -26px rgba(0,0,0,.95);
+  --plate:radial-gradient(120% 70% at 18% -4%,rgba(255,255,255,.035),transparent 55%),linear-gradient(180deg,#202329 0%,#1A1C21 100%);
+  --plate-2:radial-gradient(120% 70% at 18% -4%,rgba(255,255,255,.03),transparent 55%),linear-gradient(180deg,#1B1D22 0%,#16181C 100%);
+  --plate-line:rgba(255,255,255,.09); --plate-hi:rgba(255,255,255,.07);
   --plate-shadow:0 1px 0 rgba(0,0,0,.7),0 2px 4px rgba(0,0,0,.4),0 10px 22px -12px rgba(0,0,0,.9);
-  --well:#0B0C0F; --well-shadow:inset 0 1px 3px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.08);
+  --well:#0B0C0F; --well-shadow:inset 0 2px 6px rgba(0,0,0,.8),inset 0 0 0 1px rgba(255,255,255,.07);
   /* The logo disc stays light in dark mode. ESPN's default logo art is drawn to sit on white, so on a dark disc a team
      whose mark is black or navy — Temple, Cincinnati, California, Iowa — had nothing to read against, and worse on a dim
      screen. A light disc is legible for every team in every league without touching the artwork. --disc-plain is the
@@ -876,7 +878,7 @@ body{overscroll-behavior-y:none}
   --plate:linear-gradient(180deg,#FFFFFF 0%,#F2F3F6 100%); --plate-2:linear-gradient(180deg,#FFFFFF 0%,#F6F7F9 100%);
   --plate-line:rgba(10,11,14,.10); --plate-hi:rgba(255,255,255,1);
   --plate-shadow:0 1px 1px rgba(16,24,40,.06),0 2px 5px -1px rgba(16,24,40,.12),0 10px 18px -12px rgba(16,24,40,.28);
-  --well:#FFFFFF; --well-shadow:inset 0 1px 2px rgba(16,24,40,.10),inset 0 0 0 1px rgba(10,11,14,.10);
+  --well:#FFFFFF; --well-shadow:inset 0 2px 5px rgba(16,24,40,.13),inset 0 0 0 1px rgba(10,11,14,.10);
   --disc:#FFFFFF; --disc-lo:#E1E4EA; --disc-plain:#C9CED8;
   --grain:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='96'%20height='96'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='.95'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='96'%20height='96'%20filter='url(%23n)'%20opacity='.32'/%3E%3C/svg%3E");
 }
@@ -885,7 +887,7 @@ body{overscroll-behavior-y:none}
   --plate:linear-gradient(180deg,#FFFFFF 0%,#F2F3F6 100%); --plate-2:linear-gradient(180deg,#FFFFFF 0%,#F6F7F9 100%);
   --plate-line:rgba(10,11,14,.10); --plate-hi:rgba(255,255,255,1);
   --plate-shadow:0 1px 1px rgba(16,24,40,.06),0 2px 5px -1px rgba(16,24,40,.12),0 10px 18px -12px rgba(16,24,40,.28);
-  --well:#FFFFFF; --well-shadow:inset 0 1px 2px rgba(16,24,40,.10),inset 0 0 0 1px rgba(10,11,14,.10);
+  --well:#FFFFFF; --well-shadow:inset 0 2px 5px rgba(16,24,40,.13),inset 0 0 0 1px rgba(10,11,14,.10);
   --disc:#FFFFFF; --disc-lo:#E1E4EA; --disc-plain:#C9CED8;
   --grain:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='96'%20height='96'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='.95'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='96'%20height='96'%20filter='url(%23n)'%20opacity='.32'/%3E%3C/svg%3E");
 }}
@@ -948,7 +950,7 @@ body{overscroll-behavior-y:none}
 .hs{--hc:var(--tf,var(--tc,var(--disc-plain)));background:radial-gradient(130% 110% at 50% -10%,color-mix(in srgb,var(--hc) 68%,#fff),var(--hc) 52%,color-mix(in srgb,var(--hc) 82%,#000) 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 1px 2px rgba(0,0,0,.35),0 0 0 3px color-mix(in srgb,var(--hc) 16%,transparent),0 3px 9px -2px color-mix(in srgb,var(--hc) 50%,transparent)}
 .hs.plain{--tc:var(--disc-plain)}
 .hs img{transform:scale(1.08) translateY(2%);transform-origin:50% 18%}
-.hs::after{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 0 -10px 16px -10px rgba(0,0,0,.4);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,0) 42%)}
+.hs::after{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 0 -10px 16px -10px rgba(0,0,0,.4);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,0) 42%)}
 .hs i{background:linear-gradient(160deg,rgba(255,255,255,.2),rgba(0,0,0,.18))}
 :root[data-theme="light"] .hs{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 1px 2px rgba(16,24,40,.18),0 4px 10px -4px rgba(16,24,40,.35)}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .hs{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 1px 2px rgba(16,24,40,.18),0 4px 10px -4px rgba(16,24,40,.35)} }
@@ -1239,8 +1241,8 @@ button.thead{width:calc(100% - var(--gut) - var(--gut-r));border:0;font:inherit;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.17),0 1px 2px rgba(0,0,0,.5),0 16px 36px -18px rgba(0,0,0,.9)}
 .pill{text-shadow:0 1px 2px rgba(0,0,0,.45)}
 @media (prefers-reduced-transparency:reduce){ .pills{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--surf)} }
-.pills::before{background:linear-gradient(180deg,#FFFFFF,#E4E7ED);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(0,0,0,.08),0 1px 1px rgba(0,0,0,.5),0 8px 18px -8px rgba(0,0,0,.9)}
-[data-accent] .pills::before{background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 82%,#fff),var(--acc) 55%,color-mix(in srgb,var(--acc) 84%,#000));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(0,0,0,.25),0 1px 1px rgba(0,0,0,.5),0 8px 18px -8px rgba(0,0,0,.9)}
+.pills::before{background:#FFFFFF;box-shadow:inset 0 -1px 0 rgba(0,0,0,.06),0 1px 1px rgba(0,0,0,.5),0 8px 18px -8px rgba(0,0,0,.9)}
+[data-accent] .pills::before{background:var(--acc);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 1px 1px rgba(0,0,0,.5),0 8px 18px -8px color-mix(in srgb,var(--acc) 70%,#000)}
 .pill{color:var(--ink-2);text-shadow:0 1px 0 rgba(0,0,0,.5)}
 .pill.on{color:#0B0C10;text-shadow:none}
 [data-accent] .pill.on{color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.25)}
@@ -1929,7 +1931,7 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .tgrp + .tgrp{margin-top:12px}
 .tgrp.plain{margin-top:0}
 .onb .pp .tgrp{margin-left:0;margin-right:0}
-.mv{will-change:transform}   /* set by foldPrime for the slide's duration: the clipped block and everything under it */
+/* (v113) no layer promotion during a fold — see foldToggle */
 .tgrp,.tgrp .row{contain:layout}
 .tgrp .row{animation:none}
 .rows > .tgrp:nth-child(-n+6),.pp-list > .tgrp:nth-child(-n+6){animation:rise .42s cubic-bezier(.2,.8,.2,1) both}
@@ -1951,7 +1953,7 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .tgrp > .thead:active{transform:none;filter:brightness(1.08)}
 /* the roster */
 .tgrp .fold > .rows,.onb .pp .tgrp .fold > .rows,.tgrp > .rows,.onb .pp .tgrp > .rows{padding:0;margin:0}
-.tgrp .fold > .rows{border-top:1px solid var(--line);background:var(--grain);background-blend-mode:soft-light}
+.tgrp .fold > .rows{border-top:0;background:none}
 .fold.opening > .rows{animation:settle .3s var(--ease) both}
 .fold.opening > .rows > .row,.fold.opening > .injbody > .row{animation:none}
 @keyframes settle{from{opacity:.35}to{opacity:1}}
@@ -2076,7 +2078,7 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
       outright, the same language as a chosen tile and the heroes: the real colour with the diagonal shade, the name in white
       (ink on a gold), the crest on a white badge, the faces of the picked on white discs, "8 of 17 picked". No line. */
 .tgrp > .thead,.onb .pp .tgrp > button.thead{position:relative;width:100%;margin:0;padding:10px 14px 10px 12px;min-height:62px;border-radius:0;gap:12px;color:var(--tgi,var(--ti,#fff));
-  background:var(--grain),linear-gradient(118deg,var(--tg,var(--tc,var(--ink-3))) 0 58%,color-mix(in srgb,var(--tg,var(--tc,var(--ink-3))) 76%,#000) 58% 100%);background-blend-mode:soft-light,normal;box-shadow:none}
+  background:linear-gradient(118deg,var(--tg,var(--tc,var(--ink-3))) 0 58%,color-mix(in srgb,var(--tg,var(--tc,var(--ink-3))) 76%,#000) 58% 100%);box-shadow:none}
 .tgrp > .thead .tt b{color:var(--tgi,var(--ti,#fff))}
 .tgrp > .thead .tt small{color:color-mix(in srgb,var(--tgi,var(--ti,#fff)) 80%,transparent)}
 .tgrp > .thead .tt small em{color:var(--tgi,var(--ti,#fff))}
@@ -2098,3 +2100,61 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .pill > span:first-child{white-space:nowrap}
 .onb-pills .pill{font-size:clamp(11.5px,3.4vw,14px);letter-spacing:-.015em}
 .onb .pill .ct{min-width:17px;height:17px;line-height:17px;padding:0 4px;font-size:10.5px}
+
+/* ===== v113: the picker's faces, the Players page's stars, the setup footer and welcome, sunken notes, the raised caption,
+   and the dark mode retune (its tokens are up in the :root blocks) ===== */
+/* 1. The card itself: no inset light or ring along its edges (they read as a white border as the roster folded) */
+.tgrp{box-shadow:0 1px 0 rgba(0,0,0,.5),0 12px 26px -18px rgba(0,0,0,.95)}
+:root[data-theme="light"] .tgrp{box-shadow:0 1px 2px rgba(16,24,40,.08),0 10px 22px -16px rgba(16,24,40,.42)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .tgrp{box-shadow:0 1px 2px rgba(16,24,40,.08),0 10px 22px -16px rgba(16,24,40,.42)} }
+/* 2. Badges with depth: the crest disc and the faces of the picked come off the band — a light top, a shaded foot, a ring
+      and a drop — and a face with no photo shows the player's initials, never an empty disc */
+.tgrp > .thead .logo,:root[data-theme="light"] .tgrp > .thead .logo,:root[data-theme="dark"] .tgrp > .thead .logo,.onb-team.on .logo,:root[data-theme="dark"] .onb-team.on .logo,:root[data-theme="light"] .onb-team.on .logo{background:radial-gradient(120% 120% at 30% 18%,#FFFFFF,#E3E7EE);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(10,11,14,.08),inset 0 0 0 1px rgba(10,11,14,.08),0 3px 8px -2px rgba(0,0,0,.5)}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .tgrp > .thead .logo,:root:not([data-theme="light"]) .onb-team.on .logo{background:radial-gradient(120% 120% at 30% 18%,#FFFFFF,#E3E7EE);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(10,11,14,.08),inset 0 0 0 1px rgba(10,11,14,.08),0 3px 8px -2px rgba(0,0,0,.5)} }
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .tgrp > .thead .logo,:root:not([data-theme="dark"]) .onb-team.on .logo{background:radial-gradient(120% 120% at 30% 18%,#FFFFFF,#E3E7EE);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(10,11,14,.08),inset 0 0 0 1px rgba(10,11,14,.08),0 3px 8px -2px rgba(0,0,0,.5)} }
+.tgrp > .thead .faces i{position:relative;background:radial-gradient(120% 120% at 30% 18%,#FFFFFF,#E3E7EE);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(10,11,14,.08),inset 0 0 0 1px rgba(10,11,14,.08),0 3px 8px -2px rgba(0,0,0,.5)}
+.tgrp > .thead .faces i b{position:absolute;inset:0;display:grid;place-items:center;font:800 10px/1 var(--ui);letter-spacing:.02em;color:var(--tg,var(--tc,#0A0B0E))}
+.tgrp > .thead .faces i img{position:relative;z-index:1}
+/* 3. The setup footer: a back disc and one step button that says where it goes; the tally is gone (the switch above carries
+      the counts) */
+.onb-foot{justify-content:space-between;gap:12px}
+.onb-foot .onb-cnt{display:none}
+.onb-foot .btn{height:50px;padding:0 20px 0 24px;border-radius:999px;font-size:16px;font-weight:800;letter-spacing:-.01em;gap:10px;background:var(--acc,var(--ink));color:var(--acc-ink,var(--bg));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(0,0,0,.18),0 2px 6px rgba(0,0,0,.22),0 14px 28px -14px color-mix(in srgb,var(--acc,var(--ink)) 80%,transparent)}
+.onb-foot .btn .arr{width:20px;height:20px;margin-right:-4px}
+.onb-foot .btn.ghost.ico{width:50px;padding:0;background:color-mix(in srgb,var(--bg) 58%,transparent);color:var(--ink);-webkit-backdrop-filter:blur(30px) saturate(1.8);backdrop-filter:blur(30px) saturate(1.8);box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.12),0 2px 6px rgba(0,0,0,.28),0 14px 28px -16px rgba(0,0,0,.6)}
+.onb-foot .btn.ghost.ico svg{width:22px;height:22px}
+:root[data-theme="light"] .onb-foot .btn.ghost.ico{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px rgba(10,11,14,.09),0 2px 6px -2px rgba(16,24,40,.22),0 14px 28px -16px rgba(16,24,40,.45)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .onb-foot .btn.ghost.ico{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px rgba(10,11,14,.09),0 2px 6px -2px rgba(16,24,40,.22),0 14px 28px -16px rgba(16,24,40,.45)} }
+/* 4. The welcome */
+.onb.welcome{justify-content:center;min-height:calc(100vh - 40px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+.onb-logo.big{height:52px;margin:10vh 0 26px}
+.onb-logo.big svg{height:52px}
+.onb.welcome h2{font-size:34px;letter-spacing:-.025em;line-height:1.05}
+.onb.welcome > p{font-size:17px;line-height:1.45;color:var(--ink-2);max-width:34ch;margin:10px 0 24px}
+.onb-feats{display:flex;flex-direction:column;gap:10px;margin:0 0 auto}
+.feat{display:flex;align-items:center;gap:14px;padding:14px 14px;border-radius:16px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge)}
+.feat i{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--acc-ink,var(--bg));background:var(--acc,var(--ink));box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 6px -2px rgba(0,0,0,.5)}
+.feat i svg{width:20px;height:20px}
+.feat b{display:block;font-size:15.5px;letter-spacing:-.01em}
+.feat span{display:block;font-size:13px;color:var(--ink-2);line-height:1.4;margin-top:2px}
+.onb.welcome .onb-foot{padding-top:24px}
+/* 5. Sunken: the stale-season note sits in a well like the search field, with a lead line and a calendar */
+.legend.lastyear{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;background:var(--well);box-shadow:var(--well-shadow);border-radius:14px;color:var(--ink-2)}
+.legend.lastyear > svg{flex:none;width:20px;height:20px;color:var(--ink-3);margin-top:1px}
+.legend.lastyear b{display:block;font-size:13.5px;font-weight:800;color:var(--ink);margin:0 0 2px}
+.legend.lastyear span{display:block;font-size:12.5px;line-height:1.45}
+.legend.lastyear em{font-style:normal;font-weight:800;color:var(--ink)}
+/* 6. The caption under a hero (the series line) is raised off the ground, not a pill: a light along its top edge and a
+      shadow under it, set a step darker and bolder */
+.sline > span,.sline > b{color:var(--ink);text-shadow:0 1px 0 rgba(0,0,0,.6),0 2px 4px rgba(0,0,0,.55),0 -1px 0 rgba(255,255,255,.08)}
+.sline > span{font-size:12px;letter-spacing:.1em}
+:root[data-theme="light"] .sline > span,:root[data-theme="light"] .sline > b{color:#1B1F27;text-shadow:0 1px 0 rgba(255,255,255,.95),0 2px 4px rgba(16,24,40,.22)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .sline > span,:root:not([data-theme="dark"]) .sline > b{color:#1B1F27;text-shadow:0 1px 0 rgba(255,255,255,.95),0 2px 4px rgba(16,24,40,.22)} }
+/* 7. Dark mode: the floating tab bar and the Today pill had nothing behind them on black and vanished; they now carry a
+      visible fill, a ring and a lift, and the active tab reads in the accent */
+@media (max-width:1039px){
+  :root[data-theme="dark"] .tabs,:root[data-theme="dark"] .todayfab{background:rgba(26,28,33,.86);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.14),0 2px 8px rgba(0,0,0,.5),0 20px 48px -18px rgba(0,0,0,.95)}
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .tabs,:root:not([data-theme="light"]) .todayfab{background:rgba(26,28,33,.86);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.14),0 2px 8px rgba(0,0,0,.5),0 20px 48px -18px rgba(0,0,0,.95)} }
+}
+.todayfab svg{color:var(--acc,var(--ink))}

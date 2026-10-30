@@ -71,6 +71,29 @@
      ground is its second colour when that reads (the Spurs' silver), else a charcoal the diagonal can still shade */
   const V_ground = (c, alt) => { if (lumOf(c) >= .08) return c; const a = alt && !BAD(alt) ? hx(alt) : ''; const la = a ? lumOf(a) : -1; return la >= .22 && la <= .9 ? a : mixTo(c, 255, .2); };
   const inkOn = c => lumOf(c) > .6 ? '#0A0B0E' : '#FFFFFF';
+  /* One colour per team that reads apart from every other team's, for the places where many teams sit together — the
+     picker's bands, the setup tiles. Half the NBA is navy and a third is red, so the feed's primaries alone gave the Knicks,
+     76ers, Pistons, Clippers and Pacers one blue. Teams are taken in a fixed order (by id, so the result never depends on
+     which teams a person follows) and each takes the first of its own colours that stands at least `D` from every colour
+     already taken: the primary, a deeper cut of it, a lighter cut, then the second colour. A team's page keeps its real
+     colour. Computed once per league. */
+  const palettes = {};
+  const distinctPalette = (L, idx) => {
+    if (palettes[L.key]) return palettes[L.key];
+    const D = 46, taken = [], out = {};
+    const ids = Object.keys(idx).sort((a, b) => +a - +b || a.localeCompare(b));
+    ids.forEach(id => {
+      const t = idx[id]; const c = teamColor(t, L); if (BAD(c)) return;
+      const alt = t.alt && !BAD(t.alt) ? hx(t.alt) : '';
+      // the team's own hue first in a deeper and a lighter cut, its second colour only after — a lighter Thunder blue keeps
+      // the Thunder blue; their orange would not
+      const cands = [V_ground(c, alt), mixTo(c, 0, .32), mixTo(c, 255, .3)]; if (alt && lumOf(alt) >= .1 && lumOf(alt) <= .9) cands.push(alt);
+      const dist = x => taken.length ? Math.min(...taken.map(y => rgbDist(x, y))) : 999;
+      let pick = cands.find(x => dist(x) >= D); if (!pick) pick = cands.slice().sort((a, b) => dist(b) - dist(a))[0];
+      taken.push(pick); out[id] = pick;
+    });
+    return palettes[L.key] = out;
+  };
   const tcv = (c, alt = '') => { const g = V_ground(c, alt); return `--tc:${esc(c)};--tf-d:${esc(V_lift(c))};--tf-l:${esc(V_deep(c))};--hd:${esc(V_disc(c))};--ti:${inkOn(c)};--tg:${esc(g)};--tgi:${inkOn(g)}`; };   // --ti: what reads on the raw colour; --tg/--tgi: the ground and what reads on it
   /* two teams' colours for one chart or tracker: when the two are near each other (Thunder and Mavericks are both blue), one
      side takes its other colour, whichever of the two alternates stands furthest from the first side's colour */
@@ -782,17 +805,12 @@
      slide, and the textured plate of the folding card is re-blended at every new height — the hitch Ray saw. So the
      list is marked `folding` from the moment the band is pressed: that promotes the cards to their own layers before the
      slide starts, and the slide then only moves layers. The mark comes off once the fold has settled. */
-  let foldPrimeT = null, primed = [];
-  function foldPrime(head, settle = 900) {
-    const fold = head.nextElementSibling; const card = head.closest('.tgrp, .injgrp') || head;
-    const marks = []; const rows = fold && fold.firstElementChild; if (rows) marks.push(rows);   // the block being clipped
-    for (let n = card.nextElementSibling; n; n = n.nextElementSibling) marks.push(n);              // everything that slides
-    primed.forEach(e => e.classList.remove('mv')); primed = marks; marks.forEach(e => e.classList.add('mv'));
-    clearTimeout(foldPrimeT); foldPrimeT = setTimeout(() => { primed.forEach(e => e.classList.remove('mv')); primed = []; }, settle);
-  }
+  /* v113: no layer promotion for the slide after all. Lifting every card below onto its own layer measured well in software
+     rendering, but on the phone the GPU had to raster those layers as the slide began and the tiles it hadn't finished showed
+     as the page's white — the flash Ray saw. The slide now stays on the ordinary paint path and the paint is kept cheap
+     instead: no grain on anything that moves (the bands, the roster block), layout contained to each card. */
   function foldToggle(head, open) {
     const fold = head.nextElementSibling; if (!fold || !fold.classList.contains('fold')) return;
-    foldPrime(head, 450);
     head.setAttribute('aria-expanded', String(open)); fold.classList.toggle('closed', !open);
     if (open) { fold.classList.add('opening'); setTimeout(() => fold.classList.remove('opening'), 500); fold.querySelectorAll('img[loading="lazy"]').forEach(i => { i.loading = 'eager'; }); }
   }
@@ -827,18 +845,18 @@
     // the row carries the player's team colour so a followed row can be marked in it rather than in one white outline for everyone
     if (select) return `<button class="row prow sel${on ? ' on' : ''}" style="${tcv(pc)}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${on}">${rk}${headshot(p.img, pc, 46, p.name)}<span class="t"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></span>${right}${star}</button>`;
     if (order) return `<div class="row prow ordrow" data-oid="${esc(p.id)}"><span class="go">${headshot(p.img, pc, 46, p.name)}</span><span class="t"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></span>${orderTools}</div>`;
-    return `<div class="row prow"><a class="go" href="${href.player(p.lk, p.id)}" aria-label="${esc(p.name)}">${rk}${headshot(p.img, pc, 46, p.name)}</a><a class="t" href="${href.player(p.lk, p.id)}"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></a>${right}<button class="star${on ? ' on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(p.name)}">${on ? starSvg : starLine}</button></div>`;
+    return `<div class="row prow" style="${tcv(pc)}"><a class="go" href="${href.player(p.lk, p.id)}" aria-label="${esc(p.name)}">${rk}${headshot(p.img, pc, 46, p.name)}</a><a class="t" href="${href.player(p.lk, p.id)}"><b>${esc(p.name)}</b><span>${esc(sub || '')}</span></a>${right}<button class="star${on ? ' on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(p.name)}">${on ? starSvg : starLine}</button></div>`;
   }
   /* the band's second line and the faces of the picked: the players a person chose stay visible when the roster is folded */
   const bandLine = (n, picked) => picked ? `<em>${picked} of ${n} picked</em>` : `${n} player${n === 1 ? '' : 's'}`;
-  const faces = picked => { const show = picked.slice(0, 3); return show.length ? `<span class="faces" aria-hidden="true">${show.map(p => `<i>${p.img ? imgSized(p.img, 80, 58, '', "this.remove()") : ''}</i>`).join('')}${picked.length > 3 ? `<u>+${picked.length - 3}</u>` : ''}</span>` : ''; };
+  const faces = picked => { const show = picked.slice(0, 3); return show.length ? `<span class="faces" aria-hidden="true">${show.map(p => `<i><b>${esc(initials(p.short || p.name))}</b>${p.img ? imgSized(p.img, 80, 58, '', "this.remove()") : ''}</i>`).join('')}${picked.length > 3 ? `<u>+${picked.length - 3}</u>` : ''}</span>` : ''; };
   const lastName = n => { const w = String(n || '').replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/i, '').trim().split(/\s+/); return w[w.length - 1] || ''; };
   async function playerPicker(el, L, { following = false, leaders = true, select = false } = {}) {
     const lk = L.key, pro = !/^ncaa/.test(lk);
     el.classList.add('pp');
     el.innerHTML = `<div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input type="search" placeholder="Search players or teams" autocomplete="off" aria-label="Search players"></div><div class="pp-list">${skeleton(6, 'row')}</div>`;
     const inp = el.querySelector('input'), list = el.querySelector('.pp-list');
-    const idx = await teamsIndex(L);
+    const idx = await teamsIndex(L); const pal = distinctPalette(L, idx);
     const mine = favs.all()[lk] || [];
     const [lp, rosters] = await Promise.all([leaders ? leaguePlayers(L).catch(() => null) : null, Promise.all(mine.map(id => rosterOf(L, id, idx).catch(() => null)))]);
     if (lp) fplayers.all().filter(p => p.lk === lk).forEach(p => { const r = lp.rows.find(x => x.id === p.id); if (r) { const c = teamColor({ id: r.teamId, abbr: r.team }, L); fplayers.update(lk, p.id, { name: r.name, short: r.short, img: r.img, team: r.team, teamId: r.teamId, color: BAD(c) ? null : c }); } });   // follows catch up with trades and new photos
@@ -857,7 +875,7 @@
          season tips off that feed is still serving the last completed one. So a college list in October is last season's,
          and a player drafted in June is still listed with the school he left. Say so once, at the top, rather than letting
          old averages read as this season's. The season name is the feed's own. */
-      if (!q && lp && lp.stale && lp.label) parts.push(`<p class="legend lastyear">These are <b>${esc(lp.label)}</b> numbers — the new season hasn't started, so the feed is still on last season. Anyone drafted or transferred since is listed with the team he played for then.</p>`);
+      if (!q && lp && lp.stale && lp.label) parts.push(`<div class="legend lastyear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><div><b>Last season's numbers</b><span>The new season hasn't started, so these are <em>${esc(lp.label)}</em> averages. Anyone drafted or transferred since is listed with the team they played for then.</span></div></div>`);
       if (q) {
         const teams = Object.values(idx).filter(t => `${t.name} ${t.short} ${t.abbr}`.toLowerCase().includes(q) && !sections.some(s => s.key === t.id)).sort((a, b) => (a.short || '').localeCompare(b.short || '')).slice(0, 5);
         if (teams.length) parts.push(sec('Teams', 'tap to see the roster') + `<div class="tgrp plain"><div class="rows">${teams.map(t => `<button class="row" data-pp="browse" data-id="${esc(t.id)}">${logo(t.logo)}<span class="t"><b>${esc(t.name)}</b><span>Show the roster</span></span>${chev}</button>`).join('')}</div></div>`);
@@ -869,7 +887,7 @@
         const picked = rows.filter(p => fset.has(p.id)).length;
         /* one card per team: the band at the top carries the team's colour and folds the roster, the roster is a column of
            hairline rows inside the same plate — a header over its contents, not a stack of look-alike pills */
-        parts.push(`<section class="tgrp" style="${tcv(teamColor(s.team, L), teamAlt(s.team, L))}"><button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}">${logo(s.team.logo, 's')}<span class="tt"><b>${esc(s.team.short)}</b><small>${bandLine(rows.length, picked)}</small></span>${faces(rows.filter(p => fset.has(p.id)))}${chev}</button>${foldWrap(`<div class="rows">${rows.map(p => rowOf(p, s)).join('')}</div>`, folded)}</section>`);
+        parts.push(`<section class="tgrp" style="${tcv(pal[s.key] || teamColor(s.team, L), teamAlt(s.team, L))}"><button class="thead pp-team" data-pp="fold" data-id="${esc(s.key)}" aria-expanded="${!folded}">${logo(s.team.logo, 's')}<span class="tt"><b>${esc(s.team.short)}</b><small>${bandLine(rows.length, picked)}</small></span>${faces(rows.filter(p => fset.has(p.id)))}${chev}</button>${foldWrap(`<div class="rows">${rows.map(p => rowOf(p, s)).join('')}</div>`, folded)}</section>`);
       });
       if (lp && leaders) {
         // league leaders, per game, by category; a search keeps the whole list and filters it by name
@@ -892,7 +910,6 @@
     };
     paint();
     let t = null; inp.addEventListener('input', () => { clearTimeout(t); t = setTimeout(paint, 120); });
-    el.addEventListener('pointerdown', e => { const b = e.target.closest('[data-pp="fold"]'); if (b) foldPrime(b); }, { passive: true });
     el.addEventListener('click', async e => {
       const b = e.target.closest('[data-pp]'); if (!b) return; e.preventDefault();
       if (b.dataset.pp === 'top') { paint.topOpen = true; paint('leaders'); }
@@ -916,5 +933,5 @@
   }
 
   HW.v5 = Object.assign(HW.v5 || {}, { home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
+    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

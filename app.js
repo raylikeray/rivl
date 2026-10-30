@@ -296,6 +296,7 @@
     if (a === 'onbsec') { e.preventDefault(); const open = act.getAttribute('aria-expanded') !== 'true'; V._.foldToggle(act, open); const s = store.get('v5:onbsec', {}) || {}; s[act.dataset.sec] = open ? 1 : 0; store.set('v5:onbsec', s); return; }
     if (a === 'reload') { e.preventDefault(); render(); }
     if (a === 'onb-next') { e.preventDefault(); onbLk = 'nba'; onbStep(+act.dataset.step); }
+    if (a === 'onb-welcome') { e.preventDefault(); onbWelcome(); }
     if (a === 'onb-lk') { e.preventDefault(); onbLk = act.dataset.lk; onbStep(+(act.dataset.step || 0)); }
     if (a === 'onb-done') { e.preventDefault(); store.set('v5:onboarded', true); store.set('v5:lk', 'nba'); store.set('v5:screen', 'home'); closePanel(); if (location.hash !== '#home') location.hash = '#home'; else render(); }
     if (a === 'install') { e.preventDefault(); install(); }
@@ -454,6 +455,17 @@
   function needsOnboarding() { return !store.get('v5:onboarded', false); }
   const STEPS = 4; let onbLk = 'nba';   // the league shown in setup; it never changes the league the app is on
   const onbMark = `<svg class="mark" viewBox="0 0 250 123.41" aria-hidden="true"><defs><linearGradient id="rivlMarkOnb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".40"/><stop offset=".05" stop-color="#fff" stop-opacity=".38"/><stop offset=".10" stop-color="#fff" stop-opacity=".10"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><path class="r" d="M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0Z"/><path class="w" d="M108 0H132V123.41H108ZM140 0H164.5L168.0 96L171.5 0H196L192 123.41H144ZM204 0H228V99.41H250V123.41H204Z"/><g class="sheen" fill="url(#rivlMarkOnb)"><path d="M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0ZM108 0H132V123.41H108ZM140 0H164.5L168.0 96L171.5 0H196L192 123.41H144ZM204 0H228V99.41H250V123.41H204Z"/></g></svg>`;
+  const arrow = `<svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+  const backBtn = attrs => `<button class="btn ghost ico" ${attrs} aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></button>`;
+  /* The first thing a new person sees: not a wall of thirty teams but the mark, what RIVL is in two lines, and what the
+     next three steps do. Then the picks. */
+  function onbWelcome() {
+    const rows = [
+      ['<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', 'Live, with a call on every game', "Scores as they happen and RIVL's own win chance, scored against the result."],
+      ['<path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="8" r="4"/>', 'Your players, every night', 'Their lines on Home, and a tap to the full profile.'],
+      ['<path d="M4 6h16M4 12h10M4 18h7"/>', 'Only what you follow', 'Breaking news, injuries and stories for your teams and players — nothing else.']];
+    openPanel(`<div class="onb welcome"><div class="onb-logo big">${onbMark}</div><h2>Welcome to RIVL</h2><p>Basketball, built around the teams and players you follow. Three quick steps and Home is yours.</p><div class="onb-feats">${rows.map(([ic, t, b]) => `<div class="feat"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg></i><div><b>${t}</b><span>${b}</span></div></div>`).join('')}</div><div class="onb-foot"><span class="onb-gap"></span><button class="btn" data-act="onb-next" data-step="0">Pick your teams${arrow}</button></div></div>`, { full: true });
+  }
   async function onbStep(n) {
     const lk = lkOf(onbLk); const L = LEAGUES[lk];
     const dots = `<div class="onb-dots">${Array.from({ length: STEPS }, (_, i) => `<i class="${i === n ? 'on' : ''}"></i>`).join('')}</div>`;
@@ -475,20 +487,20 @@
     };
     if (n === 0 || n === 1) {
       const nn = n === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length;
-      frame(n === 0 ? 'Pick your teams' : 'Follow some players', n === 0 ? 'They lead Home and are the only ones you get updates about.' : 'Picked from the rosters of the teams you follow. Search any team to see its roster.',
+      frame(n === 0 ? 'Pick your teams' : 'Follow some players', n === 0 ? 'Switch leagues above — your picks are kept for each. Your teams lead Home and are the only ones you get updates about.' : 'Switch leagues above. These are the rosters of the teams you picked; search any team to see its roster.',
         n === 0 ? `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div class="search" style="margin:0 0 12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input id="onbq" type="search" placeholder="Search teams" autocomplete="off"></div><div id="onbList" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`
           : `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div id="onbPick" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`,
         /* the button names where it goes. "Continue" next to a row of leagues read as "continue to the next league", which it
            never was — the switch changes league, the button changes step. Back exists from the second step on. */
-        `${n ? `<button class="btn ghost" data-act="onb-next" data-step="${n - 1}">Back</button>` : '<span class="onb-gap"></span>'}<span class="onb-cnt" id="onbCnt">${onbTally(n, nn)}</span><button class="btn" data-act="onb-next" data-step="${n + 1}" id="onbNext">${n ? 'Next: your Home' : 'Next: players'}</button>`);
+        `${backBtn(n ? `data-act="onb-next" data-step="${n - 1}"` : 'data-act="onb-welcome"')}<button class="btn" data-act="onb-next" data-step="${n + 1}" id="onbNext">${n ? 'Next: your Home' : 'Next: players'}${arrow}</button>`);
       if (n === 1) { onbCount(); await V.playerPicker(document.getElementById('onbPick'), L, { leaders: true, select: true }); onbCount(); return; }
       const list = document.getElementById('onbList'); const inp = document.getElementById('onbq');
       if (n === 0) {
         /* every team in the league. Pro leagues are one alphabetical grid; college is the AP Top 25 first, then each
            conference A to Z with its teams alphabetical, because 360 tiles in one wall is not a list anyone can use. */
-        const [idx, st, R] = await Promise.all([V.teamsIndex(L), HW.standings(L).catch(() => null), HW.rankings(L).catch(() => null)]);
+        const [idx, st, R] = await Promise.all([V.teamsIndex(L), HW.standings(L).catch(() => null), HW.rankings(L).catch(() => null)]); const pal = V._.distinctPalette(L, idx);
         const byShort = (a, b) => (a.short || a.name || '').localeCompare(b.short || b.name || '');
-        const tile = (id, rank) => { const t = idx[id] || {}; const r = st && st.byId && st.byId[id]; return { id, short: t.short || (r && r.short) || t.name || (r && r.name) || '', name: t.name || (r && r.name) || '', abbr: t.abbr || (r && r.abbr) || '', logo: t.logo || (r && r.logo) || '', color: V._.teamColor({ id, abbr: t.abbr || (r && r.abbr) || '' }, L) || '', alt: V._.teamAlt({ id, abbr: t.abbr || (r && r.abbr) || '', alt: t.alt || '' }, L) || '', rec: r ? `${r.w}-${r.l}` : '', rank: rank || 0 }; };
+        const tile = (id, rank) => { const t = idx[id] || {}; const r = st && st.byId && st.byId[id]; return { id, short: t.short || (r && r.short) || t.name || (r && r.name) || '', name: t.name || (r && r.name) || '', abbr: t.abbr || (r && r.abbr) || '', logo: t.logo || (r && r.logo) || '', color: pal[id] || V._.teamColor({ id, abbr: t.abbr || (r && r.abbr) || '' }, L) || '', alt: V._.teamAlt({ id, abbr: t.abbr || (r && r.abbr) || '', alt: t.alt || '' }, L) || '', rec: r ? `${r.w}-${r.l}` : '', rank: rank || 0 }; };
         const seen = new Set(); const groups = [];
         /* ESPN's college standings put some schools in more than one group — a conference and a division of it — so a team
            could be drawn twice. Each conference keeps only the first claim on a team, and no group repeats one internally.
@@ -529,7 +541,7 @@
       const items = [['brief', 'Tonight and last night', "Your teams' games in one line, and last night's results"], ['live', 'Live now', 'A big card when one of your teams is playing'], ['teams', 'My teams', 'Record, the game that matters and the chance to win'], ['players', 'My players', 'Scoring lines, one tap to the profile'], ['injuries', 'Injuries', 'Reports on your teams and players'], ['news', 'News', 'Stories about your teams and players'], ['forecast', 'Win chances', "RIVL's own estimate on each game card"]];
       frame('What do you want to see?', 'Home is yours. Switch off anything you don\'t care about; you can change it later in Settings.',
         `<div class="rows onb-prefs">${items.map(([k, t, b]) => `<button class="row sw" data-act="pref" data-pref="${k}" role="switch" aria-checked="${P[k] !== false}"><span class="t"><b>${esc(t)}</b><span class="wrap">${esc(b)}</span></span><span class="switch"></span></button>`).join('')}</div>`,
-        `<button class="btn ghost" data-act="onb-next" data-step="1">Back</button><span class="onb-gap"></span><button class="btn" data-act="onb-next" data-step="3">${standalone() ? 'Finish' : 'Next: install'}</button>`);
+        `${backBtn('data-act="onb-next" data-step="1"')}<button class="btn" data-act="onb-next" data-step="3">${standalone() ? 'Finish' : 'Next: install'}${arrow}</button>`);
     } else {
       /* The home-screen app starts with its own storage, so what was picked in the browser is not in it. RIVL carries the
          picks over in a cookie, which is the one thing iOS copies as the app is created — but only if cookies are allowed.
@@ -540,10 +552,10 @@
       const done = standalone();
       frame(done ? "You're set" : 'Put RIVL on your home screen', done ? 'RIVL is on your home screen. Your teams and players are waiting on Home.' : 'It opens full screen like an app, with no browser bar, and your teams load first.',
         done ? '' : `<div class="onb-install"><img src="img/icon-192.png" alt="" width="64" height="64"><div>${deferredInstall ? `<button class="btn" data-act="install" id="installBtn">Install RIVL</button>` : isIOS ? `<b>In Safari</b><ol><li>Tap the Share button</li><li>Choose <b>Add to Home Screen</b></li><li>Tap <b>Add</b></li></ol>` : `<b>In your browser menu</b><p style="margin:4px 0 0">Choose <b>Add to Home screen</b> (or <b>Install app</b>).</p>`}</div></div>${carryNote()}`,
-        `<button class="btn ghost" data-act="onb-next" data-step="2">Back</button><span class="onb-gap"></span><button class="btn" data-act="onb-done">${done ? 'Open Home' : 'Done'}</button>`);
+        `${backBtn('data-act="onb-next" data-step="2"')}<button class="btn" data-act="onb-done">${done ? 'Open Home' : 'Done'}${arrow}</button>`);
     }
   }
-  V.onbStep = onbStep;
+  V.onbStep = onbStep; V.onbWelcome = onbWelcome;
   /* how many are picked so far, across every league — it sits between Back and the step button, so the button itself can say
      where it goes instead of carrying a number that looked like it belonged to the league switch */
   const onbTally = (step, n) => n ? `${n} ${step === 0 ? 'team' : 'player'}${n === 1 ? '' : 's'}` : '';
@@ -551,7 +563,7 @@
   const onbCount = () => { const b = document.getElementById('onbNext'); if (!b || $panel.hidden) return;
     $panel.querySelectorAll('.onb-team').forEach(t => { const on = HW.favs.has(t.dataset.lk, t.dataset.id); t.classList.toggle('on', on); t.setAttribute('aria-pressed', String(on)); });
     const step = +(b.dataset.step || 1) - 1; const nn = step === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length;
-    const cnt = document.getElementById('onbCnt'); if (cnt) cnt.textContent = onbTally(step, nn);
+    const cnt = document.getElementById('onbCnt'); if (cnt) cnt.textContent = onbTally(step, nn);   // (no longer drawn; the switch above carries the counts)
     // each section says how many of its tiles are picked; the league pills carry their counts; the rail shows every pick
     // the bar carries its own tally, so a folded conference still says how many of its teams you follow
     $panel.querySelectorAll('.onb-sec').forEach(h => { const n = h.nextElementSibling; const grid = n ? (n.classList.contains('onb-grid') ? n : n.querySelector('.onb-grid')) : null; const k = grid ? grid.querySelectorAll('.onb-team.on').length : 0; let em = h.querySelector('em'); if (k && !em) { em = document.createElement('em'); const ch = h.querySelector('.chev'); if (ch) ch.before(em); else h.appendChild(em); } if (em) { if (k) em.textContent = `${k} picked`; else em.remove(); } });
@@ -615,7 +627,7 @@
   document.addEventListener('rivl:follow', () => HW.carry.save());
   render().then(() => {
     poll();
-    if (needsOnboarding()) onbStep(0);
+    if (needsOnboarding()) onbWelcome();
     else if (carried) toast('Picked up the teams and players you chose in your browser');
   });
   /* A browser that will not keep anything — private browsing blocks the write, and iOS throws on it. Say so on every
