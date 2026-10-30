@@ -356,15 +356,25 @@
   }
 
   /* an official: the feed names the crew and each one's role, and that is what is shown — no photo or record exists in it */
-  function openOfficial(key) {
+  async function openOfficial(key) {
     const rec = S.officials && S.officials[key]; if (!rec) return;
     const { o, crew, g, lk } = rec; const name = o.fullName || o.displayName || ''; const role = o.position && (o.position.displayName || o.position.name) || 'Official';
     const when = g.date ? new Date(g.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: HW.TZ }) : '';
     const others = crew.filter(x => x !== o);
     openPanel(`<button class="ib close" data-act="panel-close" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-      <div class="inj-head"><span class="hs noimg plain" style="width:64px;height:64px;font-size:22px"><i>${esc(V._.initials(name))}</i></span><div><h3>${esc(name)}</h3><p>${esc(role)}</p></div></div>
+      <div class="inj-head" id="offHead"><span class="hs noimg plain" style="width:64px;height:64px;font-size:22px"><i>${esc(V._.initials(name))}</i></span><div><h3>${esc(name)}</h3><p>${esc(role)}</p></div></div>
       <table class="tbl kv"><tbody><tr><td>Role</td><td>${esc(role)}</td></tr><tr><td>This game</td><td>${esc(g.away.short)} ${g.neutral ? 'vs' : 'at'} ${esc(g.home.short)}${when ? `<span class="mut"> · ${esc(when)}</span>` : ''}</td></tr>${others.length ? `<tr><td>Crew</td><td>${others.map(x => `${esc(x.fullName || x.displayName)}${x.position && (x.position.displayName || x.position.name) ? ` <span class="mut">${esc(x.position.displayName || x.position.name)}</span>` : ''}`).join('<br>')}</td></tr>` : ''}</tbody></table>
+      <div id="offWiki"></div>
       <div style="display:flex;gap:8px;margin-top:14px"><a class="btn" href="#game/${lk}/${esc(String(g.id))}" data-act="panel-close">Back to the game</a></div>`);
+    /* the leagues publish officials' names and nothing else, so anything more has to come from an article plainly about this
+       official. Most have none — then the panel simply stays as it is rather than showing a guess. */
+    const sport = LEAGUES[lk] && /ncaa/.test(lk) ? 'college basketball referee' : 'basketball referee NBA WNBA';
+    const pg = await HW.wikiPerson(name, sport).catch(() => null);
+    if (!pg || $panel.hidden) return;
+    const head = document.getElementById('offHead'); const box = document.getElementById('offWiki');
+    if (!head || !box) return;
+    if (pg.img) { const d = head.querySelector('.hs'); if (d) d.outerHTML = `<span class="hs" style="width:64px;height:64px"><img src="${esc(pg.img)}" alt="" onerror="this.remove()"></span>`; }
+    if (pg.extract) box.innerHTML = `<div class="vabout" style="margin-top:12px"><p>${esc(pg.extract.split(/(?<=\.)\s+/).slice(0, 3).join(' '))}</p><a class="src" href="${esc(pg.url)}" target="_blank" rel="noopener">Wikipedia<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></a></div>`;
   }
   function openInjury(key) {
     const rec = S.injuries && S.injuries[key]; if (!rec) return;

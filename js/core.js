@@ -42,6 +42,50 @@ async function j(url, ttl = 60000) {
 }
 async function jSoft(url, ttl) { try { return await j(url, ttl); } catch { return null; } }
 
+/* ---------- Wikipedia ----------
+   ESPN's feeds name a venue and the officials and stop there. Wikipedia carries the rest — a photo, when it was built, how many
+   it holds — under a free licence and with CORS open, so the app reads it directly. Nothing here guesses: a page is used only
+   when it is the thing we asked for, and whatever is missing is simply not shown. Every fact keeps a link back to its article. */
+const WIKI = 'https://en.wikipedia.org/w/api.php';
+const wikiPage = async (title, ttl = 7 * 86400000) => {
+  const q = `${WIKI}?action=query&format=json&origin=*&redirects=1&prop=pageimages|extracts|pageprops&piprop=original|thumbnail&pithumbsize=1024&exintro=1&explaintext=1&titles=${encodeURIComponent(title)}`;
+  const d = await jSoft(q, ttl); const pages = d && d.query && d.query.pages;
+  if (!pages) return null;
+  const pg = Object.values(pages)[0];
+  if (!pg || pg.missing !== undefined || !pg.title) return null;
+  return { title: pg.title, extract: pg.extract || '', img: (pg.original && pg.original.source) || (pg.thumbnail && pg.thumbnail.source) || '',
+    id: pg.pageprops && pg.pageprops.wikibase_item || '', url: `https://en.wikipedia.org/wiki/${encodeURIComponent(pg.title.replace(/ /g, '_'))}` };
+};
+/* the numbers worth having exactly, from Wikidata rather than read out of prose: capacity, when it opened, who it is named for */
+const wikiFacts = async id => {
+  if (!id) return {};
+  const d = await jSoft(`https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&origin=*&props=claims&ids=${encodeURIComponent(id)}`, 30 * 86400000);
+  const cl = d && d.entities && d.entities[id] && d.entities[id].claims; if (!cl) return {};
+  const first = p => { const c = cl[p] && cl[p].find(x => x.mainsnak && x.mainsnak.datavalue); return c ? c.mainsnak.datavalue.value : null; };
+  const out = {};
+  const cap = first('P1083'); if (cap && cap.amount) out.capacity = Math.round(Math.abs(+cap.amount));
+  const op = first('P571'); if (op && op.time) { const m = /^\+(\d{4})/.exec(op.time); if (m) out.opened = +m[1]; }
+  return out;
+};
+/* a person: only when the article is plainly about the official we asked about, never a famous namesake */
+const wikiPerson = async (name, words) => {
+  const d = await jSoft(`${WIKI}?action=query&format=json&origin=*&list=search&srlimit=5&srsearch=${encodeURIComponent(name + ' ' + words)}`, 7 * 86400000);
+  const hits = d && d.query && d.query.search || [];
+  const want = String(name).toLowerCase();
+  for (const h of hits) {
+    const t = String(h.title || '');
+    if (!t.toLowerCase().startsWith(want.split(' ')[0].toLowerCase())) continue;          // the article is about someone of this name
+    const bare = t.replace(/\s*\(.*\)$/, '').toLowerCase();
+    if (bare !== want) continue;                                                          // ...the same name, not a longer one
+    const pg = await wikiPage(t); if (!pg) continue;
+    const head = (pg.extract || '').slice(0, 400).toLowerCase();
+    if (!/referee|official|umpire/.test(head)) continue;                                  // ...and plainly an official, not a namesake
+    return pg;
+  }
+  return null;
+};
+
+
 const ymdFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
 const hourFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: 'numeric', hour12: false });
 /* the basketball "day" runs until 4 AM Central, so a late West Coast tip stays on tonight's slate */
@@ -456,5 +500,5 @@ ORDER.forEach(k => S.today[k] = []);
 const allToday = () => ORDER.flatMap(k => S.today[k]);
 
 Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, tipOf, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, API, API2, WEB, logoUrl, seasonYear, favs,
-  parseEvent, isLive, isDone, finalWord, isFav, isWire, readable, wireTeams, wirePlayers, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
+  parseEvent, isLive, isDone, finalWord, isFav, isWire, readable, wireTeams, wirePlayers, wikiPage, wikiFacts, wikiPerson, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
 })();

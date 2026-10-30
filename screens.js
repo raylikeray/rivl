@@ -301,9 +301,14 @@
     const ven = d && d.gameInfo && d.gameInfo.venue; const hc = d && d.header && d.header.competitions && d.header.competitions[0];
     if (!ven || !hc) { $main.innerHTML = topbar('Venue', `#game/${lk}/${gid}`) + empty("Nothing on this venue", '<p style="margin:6px 0 0">The feed carries no details for it.</p>'); return; }
     const g = parseEvent({ id: gid, competitions: [{ ...hc, venue: ven, status: hc.status }], date: hc.date, status: hc.status }, L);
-    const im = (ven.images || []).filter(x => x && x.href).sort((x, y) => (y.width || 0) - (x.width || 0))[0];
+    const im0 = (ven.images || []).filter(x => x && x.href).sort((x, y) => (y.width || 0) - (x.width || 0))[0];
     const where = ven.address ? [ven.address.city, ven.address.state, ven.address.country && !/^(USA|United States)$/i.test(ven.address.country) ? ven.address.country : ''].filter(Boolean).join(', ') : '';
-    const facts = [where, ven.capacity ? `Capacity ${(+ven.capacity).toLocaleString()}` : '', ven.indoor === true ? 'Indoor' : ven.indoor === false ? 'Outdoor' : ''].filter(Boolean);
+    // ESPN names the building; Wikipedia has the photo and the detail. The city is part of the search so one arena is not mistaken for another of the same name.
+    const wp = ven.fullName ? await HW.wikiPage(ven.fullName).catch(() => null) : null;
+    const wf = wp && wp.id ? await HW.wikiFacts(wp.id).catch(() => ({})) : {};
+    const im = im0 ? { href: im0.href, alt: im0.alt || '' } : (wp && wp.img ? { href: wp.img, alt: wp.title } : null);
+    const cap = ven.capacity || wf.capacity || 0;
+    const facts = [where, cap ? `Holds ${(+cap).toLocaleString()}` : '', wf.opened ? `Opened ${wf.opened}` : '', ven.indoor === true ? 'Indoor' : ven.indoor === false ? 'Outdoor' : ''].filter(Boolean);
     const homeT = !g.neutral && g.home && g.home.id ? g.home : null; const hc0 = homeT ? V._.teamColor(homeT, L) : '';
     const hero = `<div class="vhero${im ? ' pic' : ''}" style="${homeT ? `--a:${esc(hc0)}` : ''}">${im ? `<img src="${esc(im.href)}" alt="${esc(im.alt || ven.fullName || '')}" onerror="this.parentNode.classList.remove('pic');this.remove()">` : ''}<div class="in"><div class="sub">Venue</div><h1>${esc(ven.fullName || '')}</h1><div class="facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div></div></div>`;
     const when = g.date ? dayLabel(ymdOf(g.date), { weekday: 'long', month: 'long', day: 'numeric' }) : '';
@@ -311,7 +316,8 @@
       homeT ? `<a class="row" href="${href.team(lk, homeT.id)}">${logo(homeT.logo, '', hc0)}<span class="t"><b>Home of the ${esc(homeT.short || homeT.name)}</b><span>${esc(homeT.name || '')}</span></span>${chev}</a>` : '',
       `<a class="row" href="${href.game(lk, gid)}"><span class="t"><b>${esc(g.away.short)} ${g.neutral ? 'vs' : 'at'} ${esc(g.home.short)}</b><span>${esc([when, g.state === 'pre' ? tipOf(g) : g.state === 'in' ? g.detail : finalWord(g)].filter(Boolean).join(' · '))}</span></span>${chev}</a>`
     ].filter(Boolean).join('');
-    $main.innerHTML = topbar(esc(ven.fullName || 'Venue'), `#game/${lk}/${gid}`) + hero + `<div class="rows">${rows}</div>`;
+    const about = wp && wp.extract ? sec('About') + `<div class="vabout"><p>${esc(wp.extract.split(/(?<=\.)\s+/).slice(0, 4).join(' '))}</p><a class="src" href="${esc(wp.url)}" target="_blank" rel="noopener">Wikipedia<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></a></div>` : '';
+    $main.innerHTML = topbar(esc(ven.fullName || 'Venue'), `#game/${lk}/${gid}`) + hero + `<div class="rows">${rows}</div>` + about;
     document.title = `${ven.fullName || 'Venue'} · RIVL`;
   }
 

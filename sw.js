@@ -3,12 +3,12 @@
    ESPN's feeds go network-first with a short leash: a fresh answer when there is one, the last good copy
    when the network is slow, down, or ESPN is throttling (429/5xx). Logos, headshots and fonts are cached
    on first sight and served from cache after that. */
-const VERSION = 'rivl-v86';
+const VERSION = 'rivl-v87';
 const SHELL = `${VERSION}-shell`, DATA = 'rivl-data', MEDIA = 'rivl-media';   // feed copies and media outlive a version: the app reads the feed copies for a warm start
 const Q = `?v=${VERSION.replace(/^rivl-v/, '')}`;   // the same stamp index.html puts on its assets
 const SHELL_FILES = ['./', './index.html', ...['./app.css', './app.js', './views.js', './screens.js', './config.js', './js/core.js', './js/sim.js', './more.js'].map(f => f + Q), './manifest.webmanifest', './img/mark.svg', './img/badge-96.png', './img/icon-192.png', './img/icon-512.png', './img/apple-touch-icon.png'];
-const FEED = /(^|\.)espn\.com$|\.workers\.dev$/;
-const MEDIA_HOST = /espncdn\.com$|fonts\.gstatic\.com$|fonts\.googleapis\.com$/;
+const FEED = /(^|\.)espn\.com$|\.workers\.dev$|(^|\.)wikipedia\.org$|(^|\.)wikidata\.org$/;   // the venue and official lookups answer from the last copy when the network is slow
+const MEDIA_HOST = /espncdn\.com$|upload\.wikimedia\.org$|fonts\.gstatic\.com$|fonts\.googleapis\.com$/;   // arena and official photos are kept like any other picture
 const DATA_TIMEOUT = 6000;
 
 self.addEventListener('install', e => {

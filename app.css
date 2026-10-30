@@ -1701,10 +1701,6 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .gidet{padding:0 0 14px 2px;font-size:14px;color:var(--ink-2);line-height:1.5}
 .gidet p{margin:0}
 .gidet b{color:var(--ink);font-weight:700}
-.offs{display:flex;flex-wrap:wrap;gap:8px}
-.offs span{display:inline-flex;flex-direction:column;gap:1px;padding:8px 12px;border-radius:12px;background:var(--surf);box-shadow:inset 0 0 0 1px var(--plate-line)}
-.offs b{font-size:14px;font-weight:700;color:var(--ink)}
-.offs em{font-style:normal;font-size:11.5px;font-weight:700;color:var(--ink-3);letter-spacing:.03em;text-transform:uppercase}
 .injrep .injgrp + .injgrp{margin-top:10px}
 /* the box score opened on one player: his whole line up top, his row lit in the table */
 .pfocus{margin:0 var(--gut-r) 14px var(--gut);border-radius:18px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge),inset 4px 0 0 var(--tf,var(--ink-3));padding:4px 14px 14px;--gut:0px;--gut-r:0px}
@@ -1735,8 +1731,10 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .vhero .facts span{display:inline-flex;align-items:center;height:27px;padding:0 11px;border-radius:999px;background:rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.08);font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .giplate .row .t > span small{display:block;font-size:13px;font-weight:600;color:var(--ink-3);margin-top:2px}
 .giplate a.row{text-decoration:none;color:inherit}
-.offs{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;white-space:normal}
-.giplate .row .t > span:has(.offs){overflow:visible;white-space:normal}
+/* the crew: a wrapping row of chips. `.row .t span` sets a one-line clipped block for ordinary rows, so these have to be
+   specific enough to beat it — otherwise the chips stack into one block and the row ends in an ellipsis. */
+.giplate .row .t > span:has(.offs),.giplate .row .t .offs{overflow:visible;text-overflow:clip;white-space:normal}
+.giplate .row .t .offs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .off{display:inline-flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 12px;border-radius:12px;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),var(--plate-shadow);border:0;font:inherit;color:inherit;text-align:left;cursor:pointer;transition:transform .14s ease}
 .off:active{transform:scale(.97)}
 .off b{font-size:14px;font-weight:700;color:var(--ink)}
@@ -1762,3 +1760,11 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 
 /* a setting that could not be turned on says why, in place */
 .legend.warn{color:var(--ink);background:color-mix(in srgb,var(--loss) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--loss) 38%,transparent);border-radius:12px;padding:10px 12px;margin-top:10px;line-height:1.45}
+
+/* a fact that came from Wikipedia says so, and links back — the licence asks for it and it is how you check the detail */
+.vabout{margin:0 var(--gut-r) 0 var(--gut);padding:14px 16px;border-radius:18px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge)}
+.vabout p{margin:0;font-size:15px;line-height:1.55;color:var(--ink-2)}
+.vabout .src{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:12.5px;font-weight:800;color:var(--ink-3);text-decoration:none;letter-spacing:.02em}
+.vabout .src svg{width:13px;height:13px}
+.panel-in .vabout{margin-left:0;margin-right:0}
+.inj-head .hs img{width:100%;height:100%;object-fit:cover;border-radius:50%}
