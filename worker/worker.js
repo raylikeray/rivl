@@ -119,6 +119,39 @@ async function once(env, k, fn) { if (await env.KV.get(sentKey(k))) return false
 const ordinal = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 > 10 && n % 100 < 14) ? 0 : n % 10 < 4 ? n % 10 : 0]);
 
 /* ---------- the minute check for one league: tip-off, close game, final ---------- */
+/* ---------- when there is anything to watch ----------
+   The cron fires every minute, but on a night none of your teams play there is nothing to see. Once an hour each league works
+   out its windows — from twenty-five minutes before a followed team's tip until the game should be well over — and keeps them
+   in KV. Outside those windows the cron stays still. A quiet day costs a couple of dozen requests instead of several thousand,
+   and the alerts themselves are unchanged: every one of them happens inside a window by definition.
+   The plan carries the team list it was built from, so following a new team rebuilds it rather than waiting out the hour. */
+const PLAN_TTL = 3600000;        // re-read hourly, so a postponement or a moved tip is picked up
+const PRE_MS = 25 * 60000;       // the tip-off alert goes out twenty minutes before; start watching a little before that
+const RUN_MS = 3.5 * 3600000;    // a game, overtime, and the final box score settling
+async function watchWindows(env, lk, teamIds) {
+  const L = LEAGUES[lk]; const ymd = todayCT(); const key = `plan:${lk}:${ymd}`;
+  const sig = [...teamIds].sort().join(',');
+  let plan = null; try { plan = await env.KV.get(key, 'json'); } catch { }
+  if (plan && plan.sig === sig && Date.now() - plan.at < PLAN_TTL) return plan;
+  let win, on;
+  try {
+    const d = await getJson(`${API(L)}/scoreboard?dates=${ymd.replace(/-/g, '')}${L.sb}`);
+    const games = (d.events || []).map(parseGame);
+    on = games.length > 0;   // the league is playing today at all: its news is worth reading often
+    win = games
+      .filter(g => teamIds.has(g.home.id) || teamIds.has(g.away.id))
+      .map(g => { const t = Date.parse(g.date); return isFinite(t) ? [t - PRE_MS, t + RUN_MS] : null; })
+      .filter(Boolean);
+  } catch (e) {
+    console.log(lk, 'plan', e.message);
+    return { win: [[Date.now() - 1, Date.now() + PLAN_TTL]], on: true };   // the slate could not be read: keep watching rather than go quiet
+  }
+  plan = { at: Date.now(), sig, win, on };
+  try { await env.KV.put(key, JSON.stringify(plan), { expirationTtl: 36 * 3600 }); } catch { }
+  return plan;
+}
+const hourCT = () => +new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: 'numeric', hour12: false }).format(new Date()) % 24;
+
 async function runLeague(env, lk, subs) {
   const L = LEAGUES[lk]; if (!L) return;
   const teams = new Set(subs.flatMap(s => (s.teams || []).filter(t => t.startsWith(lk + ':')).map(t => t.slice(lk.length + 1))));
@@ -249,9 +282,20 @@ export default {
     const subs = await loadSubs(env);
     const leagues = [...new Set(subs.flatMap(s => [...(s.teams || []), ...(s.players || [])].map(t => t.split(':')[0])))].filter(lk => LEAGUES[lk]);
     const H = { headers: { 'x-rivl-cron': env.CRON_TOKEN || 'rivl' } };
-    const calls = leagues.map(lk => fetch(`${self}/run?lk=${lk}&what=games`, H).catch(() => null));
-    if (minute % 15 === 3) leagues.forEach(lk => calls.push(fetch(`${self}/run?lk=${lk}&what=injuries`, H).catch(() => null)));
-    if (minute % 5 === 1) leagues.forEach(lk => calls.push(fetch(`${self}/run?lk=${lk}&what=wire`, H).catch(() => null)));   // the wire every five minutes
+    const now = Date.now(); const awake = (() => { const h = hourCT(); return h >= 7 || h < 1; })();
+    const calls = [];
+    await Promise.all(leagues.map(async lk => {
+      const teamIds = new Set(subs.flatMap(s => (s.teams || []).filter(t => t.startsWith(lk + ':')).map(t => t.slice(lk.length + 1))));
+      const { win, on } = await watchWindows(env, lk, teamIds);
+      const playing = win.some(([a, b]) => now >= a && now <= b);
+      const nearby = win.some(([a, b]) => now >= a - 6 * 3600000 && now <= b);   // injury reports land hours before a tip
+      // breaking news: every five minutes while the league is playing and you are awake, every half hour otherwise — a league
+      // out of season, or the small hours, does not need to be asked twelve times an hour
+      const wireDue = (on && awake) ? minute % 5 === 1 : minute % 30 === 1;
+      if (playing) calls.push(fetch(`${self}/run?lk=${lk}&what=games`, H).catch(() => null));
+      if (nearby && minute % 15 === 3) calls.push(fetch(`${self}/run?lk=${lk}&what=injuries`, H).catch(() => null));
+      if (wireDue) calls.push(fetch(`${self}/run?lk=${lk}&what=wire`, H).catch(() => null));
+    }));
     ctx.waitUntil(Promise.all(calls));
   }
 };

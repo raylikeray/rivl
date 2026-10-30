@@ -21,8 +21,25 @@ One Cloudflare Worker (free plan), no dependencies. It does three things:
 5. **Cron.** Worker → Settings → Triggers → Cron Triggers → Add → `* * * * *` (every minute).
 6. **Tell the app.** Put the worker URL into `config.js` → `WORKER`. From then on the app reads ESPN through the proxy, Settings gains Alerts and Sync, and alerts work with RIVL closed (iPhone: from the home-screen app).
 
+## What the cron actually asks ESPN
+The cron fires every minute, but it only works when there is something to see. Once an hour each league builds a plan from one
+scoreboard read: the windows when a followed team is playing (from 25 minutes before tip, through the game), and whether the
+league has any games today at all. Then:
+
+- **games** — only inside a window. A night your teams are off costs nothing.
+- **injuries** — every 15 minutes, but only from six hours before a followed tip until the game ends.
+- **breaking news** — every 5 minutes while the league is playing today and it is between 7am and 1am Central; every 30 minutes
+  otherwise, so a league out of season is not asked twelve times an hour.
+
+A day with one NBA game, following teams in all four leagues: **about 740 requests**, against roughly 7,300 before this.
+Alerts are unchanged — every one of them happens inside a window by definition.
+
+`simday.mjs` counts a whole simulated day through the real `scheduled()`; `simcheck.mjs` asserts the alerts still land
+(`cp worker.js worker.mjs && node simcheck.mjs`).
+
 ## Free-plan budget
-Every minute the cron fans out one request per league that has subscribers. Injuries are checked every 15 minutes. KV writes happen only when something is sent or changes — far below the free limits for a handful of people.
+KV writes happen only when something is sent or changes; the plan is one small write per league per hour — far below the free
+limits for a handful of people.
 
 ## Endpoints
 - `GET /health` → `{ ok, publicKey }`
