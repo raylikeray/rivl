@@ -909,24 +909,31 @@ body{overscroll-behavior-y:none}
 /* the wash at the top of the screen: one surface from the very top edge (the status bar takes the same tint, see applyTheme)
    down through the header — an even band that fades out, with the accent pooling at the top left. It lives on the app, not the
    header, so it reaches the top edge of the screen behind the status bar instead of starting under it. */
-:root{--wash:22%;--wash-top:color-mix(in srgb,var(--acc,#fff) 9%,var(--bg))}
-:root[data-theme="light"]{--wash:15%;--wash-top:color-mix(in srgb,var(--acc,#1d2633) 7%,var(--bg))}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){--wash:15%;--wash-top:color-mix(in srgb,var(--acc,#1d2633) 7%,var(--bg))} }
+/* one colour, one long fall: the accent at the very top edge easing out to nothing over the first screen. No band, no pool
+   with an edge — every stop is on the same line, the element is masked so its own bottom edge never shows, and the grain
+   in ::after breaks the gradient into something that reads as material instead of steps. --wash-top is the colour at the
+   top edge, so the status bar can take the same one. */
+:root{--wash:20%;--wc:var(--acc,#fff);--wash-top:color-mix(in srgb,var(--wc) var(--wash),var(--bg))}
+:root[data-theme="light"]{--wash:14%;--wc:var(--acc,#1d2633)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){--wash:14%;--wc:var(--acc,#1d2633)} }
+:root[data-tint]{--wc:var(--tint);--wash:24%}
+:root[data-tint][data-theme="light"]{--wash:14%}
+@media (prefers-color-scheme:light){ :root[data-tint]:not([data-theme="dark"]){--wash:14%} }
 .app{position:relative;isolation:isolate}
-:root{--wc:var(--acc,#fff)}
-:root[data-theme="light"]{--wc:var(--acc,#1d2633)}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){--wc:var(--acc,#1d2633)} }
-:root[data-tint]{--wc:var(--tint);--wash-top:color-mix(in srgb,var(--tint) 12%,var(--bg))}
-:root[data-tint][data-theme="light"]{--wash-top:color-mix(in srgb,var(--tint) 9%,var(--bg))}
-@media (prefers-color-scheme:light){ :root[data-tint]:not([data-theme="dark"]){--wash-top:color-mix(in srgb,var(--tint) 9%,var(--bg))} }
-.app::before{content:"";position:absolute;left:0;right:0;top:0;height:340px;pointer-events:none;z-index:-1;
-  background:radial-gradient(70% 60% at 18% 22%,color-mix(in srgb,var(--wc) var(--wash),transparent),transparent 70%),linear-gradient(180deg,var(--wash-top) 0 36px,transparent 86%)}
+.app::before{content:"";position:absolute;left:0;right:0;top:0;height:560px;pointer-events:none;z-index:-1;
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--wc) var(--wash),transparent) 0%,
+    color-mix(in srgb,var(--wc) calc(var(--wash) * .72),transparent) 14%,
+    color-mix(in srgb,var(--wc) calc(var(--wash) * .46),transparent) 30%,
+    color-mix(in srgb,var(--wc) calc(var(--wash) * .24),transparent) 50%,
+    color-mix(in srgb,var(--wc) calc(var(--wash) * .09),transparent) 74%,
+    transparent 100%);
+  -webkit-mask-image:linear-gradient(180deg,#000 50%,transparent 100%);mask-image:linear-gradient(180deg,#000 50%,transparent 100%)}
 /* a team's page: the whole ground takes a breath of the team's colour, so it reads as theirs; the hero stays the loud thing */
 :root[data-tint] body{background:color-mix(in srgb,var(--tint) 6%,var(--bg))}
 :root[data-tint][data-theme="light"] body{background:color-mix(in srgb,var(--tint) 5%,var(--bg))}
 @media (prefers-color-scheme:light){ :root[data-tint]:not([data-theme="dark"]) body{background:color-mix(in srgb,var(--tint) 5%,var(--bg))} }
-:root[data-tint] .app::before{--wash:26%}
-.app::after{content:"";position:absolute;left:0;right:0;top:0;height:300px;pointer-events:none;z-index:-1;background:var(--grain);opacity:.5;mix-blend-mode:soft-light;-webkit-mask-image:linear-gradient(180deg,#000,transparent);mask-image:linear-gradient(180deg,#000,transparent)}
+.app::after{content:"";position:absolute;left:0;right:0;top:0;height:560px;pointer-events:none;z-index:-1;background:var(--grain);opacity:.6;mix-blend-mode:soft-light;-webkit-mask-image:linear-gradient(180deg,#000 20%,transparent);mask-image:linear-gradient(180deg,#000 20%,transparent)}
 .top .sp{gap:8px}
 .top .ib{width:40px;height:40px;background:var(--grain),var(--plate);background-blend-mode:soft-light,normal;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line),var(--plate-shadow);color:var(--ink);transition:transform .14s ease}
 .top .ib svg{width:20px;height:20px}
@@ -1412,11 +1419,11 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   .app>*:not(.hdr){max-width:1160px;margin-left:auto;margin-right:auto}
   .app>#main{max-width:1232px}
   /* the header: wordmark, the league switch, search and settings in one row */
-  .hdr{display:flex;align-items:center;gap:28px;max-width:1232px;margin:0 auto;padding:14px var(--gut-r) 6px var(--gut)}
-  .hdr .top{flex:none;height:56px;padding:0;gap:0;width:auto;min-width:0;order:1}
+  .hdr{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;column-gap:28px;max-width:1232px;margin:0 auto;padding:14px var(--gut-r) 6px var(--gut)}
+  .hdr .top{height:56px;padding:0;gap:0;width:auto;min-width:0;grid-column:3;justify-self:end}
   .hdr .top .lockup{display:none}
   .hdr .top .sp{margin-left:0}
-  .hdr .pills{flex:none;width:520px;margin:0 auto;order:0}
+  .hdr .pills{width:520px;margin:0;grid-column:2}
   .hdr .top[hidden]{display:none}
   .hdr:has(.top[hidden]){display:none}
   .pill,.pill.on,[data-accent] .pill.on{height:40px;font-size:14.5px}
@@ -1457,7 +1464,9 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   .reader h1{font-size:40px}
   .reader img.lead{max-height:520px;object-fit:cover}
   .tbl.stand{max-width:980px}
-  .tw{max-width:980px}
+  .tw{max-width:980px;margin-left:auto;margin-right:auto}
+  .tbl.stand{margin-left:auto;margin-right:auto}
+  .livebar .lb-in{justify-content:safe center}
   .pl{width:104px}
   .pl .hs{width:76px;height:76px}
   /* Home: the games and your teams on the left, injuries and news on the right */
@@ -1547,5 +1556,4 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
   .cmp .lab{font-size:13.5px}
   .tbl tr.me td{font-weight:800}
   /* the league switch sits over the main column on Home, not over the page as a whole */
-  .app:has(.hcols) .hdr .pills{margin:0 0 0 calc((100% - 432px - 520px) / 2)}
 }
