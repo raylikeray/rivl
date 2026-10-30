@@ -460,11 +460,13 @@
   /* The first thing a new person sees: not a wall of thirty teams but the mark, what RIVL is in two lines, and what the
      next three steps do. Then the picks. */
   function onbWelcome() {
-    const rows = [
-      ['<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', 'Live, with a call on every game', "Scores as they happen and RIVL's own win chance, scored against the result."],
-      ['<path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="8" r="4"/>', 'Your players, every night', 'Their lines on Home, and a tap to the full profile.'],
-      ['<path d="M4 6h16M4 12h10M4 18h7"/>', 'Only what you follow', 'Breaking news, injuries and stories for your teams and players — nothing else.']];
-    openPanel(`<div class="onb welcome"><div class="onb-logo big">${onbMark}</div><h2>Welcome to RIVL</h2><p>Basketball, built around the teams and players you follow. Three quick steps and Home is yours.</p><div class="onb-feats">${rows.map(([ic, t, b]) => `<div class="feat"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg></i><div><b>${t}</b><span>${b}</span></div></div>`).join('')}</div><div class="onb-foot"><span class="onb-gap"></span><button class="btn" data-act="onb-next" data-step="0">Pick your teams${arrow}</button></div></div>`, { full: true });
+    /* The pitch first, then the setup ahead of you as three numbered steps — the cards are the steps, so nothing reads as a
+       feature list that ought to be tappable. One button starts step 1. */
+    const steps = [
+      ['Pick your teams', 'NBA, WNBA and college, men and women. They lead Home and are all you hear about.'],
+      ['Follow your players', 'From your teams’ rosters, or search anyone. Their lines land on Home every night.'],
+      ['Make Home yours', 'Choose what Home shows — then add RIVL to your home screen.']];
+    openPanel(`<div class="onb welcome"><div class="onb-logo big">${onbMark}</div><h2>Your teams.<br>Nothing else.</h2><p>Live scores, RIVL’s own call on every game, and the news on the players you care about — no ads, no noise. Set it up in three steps.</p><div class="onb-feats steps">${steps.map(([t, b], i) => `<div class="feat"><i class="n">${i + 1}</i><div><b>${t}</b><span>${b}</span></div></div>`).join('')}</div><div class="onb-foot"><span class="onb-gap"></span><button class="btn" data-act="onb-next" data-step="0">Start with step 1${arrow}</button></div></div>`, { full: true });
   }
   async function onbStep(n) {
     const lk = lkOf(onbLk); const L = LEAGUES[lk];
