@@ -121,7 +121,45 @@ const hx = c => c ? (c.startsWith('#') ? c : '#' + c) : '#55606e';
 function darkOf(a, b) { const A = hx(a), B = hx(b); const d = lum(A) <= lum(B) ? A : B; return lum(d) > 0.22 ? '#1d2633' : d; }
 function erf(x) { const s = Math.sign(x); x = Math.abs(x); const t = 1 / (1 + 0.3275911 * x); const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return s * y; }
 const Phi = z => 0.5 * (1 + erf(z / Math.SQRT2));
-const store = { get(k, d) { try { const v = localStorage.getItem('hw:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem('hw:' + k, JSON.stringify(v)); } catch { } } };
+/* Writes used to fail in silence. In iOS private browsing localStorage.setItem throws, so a person could pick thirty teams,
+   watch every one of them light up, and lose the lot on reload with nothing ever having said a word. A failed write now
+   raises a flag the app can show. */
+let storeBroken = false;
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('hw:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('hw:' + k, JSON.stringify(v)); return true; } catch (e) { storeBroken = true; return false; } },
+  broken() { return storeBroken; },
+  // write, read back, remove: the only honest way to know this browser will keep anything
+  check() { try { const t = 'hw:__probe'; localStorage.setItem(t, '1'); const ok = localStorage.getItem(t) === '1'; localStorage.removeItem(t); if (!ok) storeBroken = true; return ok; } catch (e) { storeBroken = true; return false; } }
+};
+
+/* iOS gives a Home Screen web app its own storage, kept apart from Safari's: nothing chosen in the browser is in it when
+   the app first opens. Cookies are the one thing iOS copies across as the app is created, so a compact copy of the picks
+   rides over in one — teams by id, players by id with a name to show until the feed refreshes them. Under 4KB or it is
+   dropped by the browser, so the payload sheds the names, then the players, before it would overflow. */
+const CARRY = 'rivl_picks';
+const ckGet = n => { try { const m = String(document.cookie || '').match(new RegExp('(?:^|; )' + n + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : ''; } catch (e) { return ''; } };
+const ckSet = (n, v, days) => { try { document.cookie = `${n}=${encodeURIComponent(v)};path=/;max-age=${Math.round(days * 86400)};SameSite=Lax${location.protocol === 'https:' ? ';Secure' : ''}`; return true; } catch (e) { return false; } };
+const carry = {
+  save() {
+    try {
+      const f = store.get('favs', null); if (!f) return false;
+      const p = store.get('v5:players', []) || [];
+      const o = { v: 1, f, p: p.map(x => [x.lk, String(x.id), x.short || x.name || '', x.team || '']) };
+      // measure what the browser actually stores: JSON punctuation roughly doubles under percent-encoding
+      const room = s => encodeURIComponent(s).length + CARRY.length + 24 < 3800;
+      // shed the least useful part first, so a long list keeps its names as far as it can: team, then name, then the players
+      const shed = [a => [a[0], a[1], a[2]], a => [a[0], a[1]]];
+      let s = JSON.stringify(o);
+      for (let i = 0; i < shed.length && !room(s); i++) { o.p = o.p.map(shed[i]); s = JSON.stringify(o); }
+      if (!room(s)) { o.p = []; s = JSON.stringify(o); }
+      if (!room(s)) return false;                                                             // teams alone cannot reach this
+      return ckSet(CARRY, s, 400);
+    } catch (e) { return false; }
+  },
+  read() { const raw = ckGet(CARRY); if (!raw) return null; try { const o = JSON.parse(raw); return o && o.v === 1 && o.f ? o : null; } catch (e) { return null; } },
+  works() { try { const t = 'rivl_ck'; ckSet(t, '1', 1); const ok = ckGet(t) === '1'; ckSet(t, '', -1); return ok; } catch (e) { return false; } }
+};
 const API = L => ESPN.site + L.path, API2 = L => ESPN.v2 + L.path, WEB = L => ESPN.web + L.path;
 const logoUrl = (L, abbr) => `https://a.espncdn.com/i/teamlogos/${L.logo}/500/${String(abbr || '').toLowerCase()}.png`;
 const sportOf = L => SPORTS.find(s => s.leagues.includes(L.key)) || SPORTS[0];
@@ -517,6 +555,6 @@ const S = { today: {}, todayYmd: null, lastOk: 0, err: false, timer: null, route
 ORDER.forEach(k => S.today[k] = []);
 const allToday = () => ORDER.flatMap(k => S.today[k]);
 
-Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, tipOf, TZLABEL, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, API, API2, WEB, logoUrl, seasonYear, favs,
+Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, tipOf, TZLABEL, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, carry, API, API2, WEB, logoUrl, seasonYear, favs,
   parseEvent, isLive, isDone, finalWord, isFav, isWire, readable, wireTeams, wirePlayers, wikiPage, wikiFacts, wikiPerson, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
 })();

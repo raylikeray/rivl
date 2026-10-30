@@ -463,7 +463,10 @@
         const host = cur.querySelector('.onb-body'); if (host) { const keep = host.querySelector('.onb-pills'); host.innerHTML = inner; const fresh = host.querySelector('.onb-pills'); if (keep && fresh) fresh.replaceWith(keep); }   // the same switch stays, so its knob slides
         return;
       }
-      openPanel(`<div class="onb" data-step="${n}"><div class="onb-logo">${onbMark}</div>${dots}<h2>${title}</h2><p>${body}</p><div class="onb-body">${inner}</div><div class="onb-foot">${foot}</div></div>`, { full: true });
+      /* Setup is a full-screen panel, so the warning bar on Home is behind it — and setup is exactly where someone in a
+         private window is about to pick thirty teams that will not be kept. It has to be said here. */
+      const noSave = store.broken() ? `<p class="legend warn">This browser isn't saving anything — private browsing blocks it. Whatever you pick here will be gone when you close the tab.</p>` : '';
+      openPanel(`<div class="onb" data-step="${n}"><div class="onb-logo">${onbMark}</div>${dots}<h2>${title}</h2><p>${body}</p>${noSave}<div class="onb-body">${inner}</div><div class="onb-foot">${foot}</div></div>`, { full: true });
     };
     if (n === 0 || n === 1) {
       const nn = n === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length;
@@ -523,9 +526,15 @@
         `<div class="rows onb-prefs">${items.map(([k, t, b]) => `<button class="row sw" data-act="pref" data-pref="${k}" role="switch" aria-checked="${P[k] !== false}"><span class="t"><b>${esc(t)}</b><span class="wrap">${esc(b)}</span></span><span class="switch"></span></button>`).join('')}</div>`,
         `<button class="btn ghost" data-act="onb-next" data-step="1">Back</button><span class="onb-gap"></span><button class="btn" data-act="onb-next" data-step="3">${standalone() ? 'Finish' : 'Next: install'}</button>`);
     } else {
+      /* The home-screen app starts with its own storage, so what was picked in the browser is not in it. RIVL carries the
+         picks over in a cookie, which is the one thing iOS copies as the app is created — but only if cookies are allowed.
+         When they are not, say so here rather than let someone install and find an empty app. */
+      const carryNote = () => HW.carry.works()
+        ? `<p class="legend" style="padding-left:0;padding-right:0">Your teams and players come with you — the app starts with them already chosen.</p>`
+        : `<p class="legend warn">This browser is blocking cookies, so your picks can't be carried into the home-screen app automatically. Before you add it, open <b>Settings → Sync</b> and back up to a code, then restore it in the app.</p>`;
       const done = standalone();
       frame(done ? "You're set" : 'Put RIVL on your home screen', done ? 'RIVL is on your home screen. Your teams and players are waiting on Home.' : 'It opens full screen like an app, with no browser bar, and your teams load first.',
-        done ? '' : `<div class="onb-install"><img src="img/icon-192.png" alt="" width="64" height="64"><div>${deferredInstall ? `<button class="btn" data-act="install" id="installBtn">Install RIVL</button>` : isIOS ? `<b>In Safari</b><ol><li>Tap the Share button</li><li>Choose <b>Add to Home Screen</b></li><li>Tap <b>Add</b></li></ol>` : `<b>In your browser menu</b><p style="margin:4px 0 0">Choose <b>Add to Home screen</b> (or <b>Install app</b>).</p>`}</div></div>`,
+        done ? '' : `<div class="onb-install"><img src="img/icon-192.png" alt="" width="64" height="64"><div>${deferredInstall ? `<button class="btn" data-act="install" id="installBtn">Install RIVL</button>` : isIOS ? `<b>In Safari</b><ol><li>Tap the Share button</li><li>Choose <b>Add to Home Screen</b></li><li>Tap <b>Add</b></li></ol>` : `<b>In your browser menu</b><p style="margin:4px 0 0">Choose <b>Add to Home screen</b> (or <b>Install app</b>).</p>`}</div></div>${carryNote()}`,
         `<button class="btn ghost" data-act="onb-next" data-step="2">Back</button><span class="onb-gap"></span><button class="btn" data-act="onb-done">${done ? 'Open Home' : 'Done'}</button>`);
     }
   }
@@ -581,7 +590,39 @@
   $panel.addEventListener('rivl:fav', onbCount); $panel.addEventListener('rivl:follow', onbCount);
 
   /* ---------- boot ---------- */
-  render().then(() => { poll(); if (needsOnboarding()) onbStep(0); });
+  /* First launch of a Home Screen app on iOS: the storage is a fresh jar — nothing picked in Safari is in it — but the
+     cookies were copied across as the app was created. If nothing is saved here yet and that cookie holds picks, take them
+     over rather than make someone choose thirty teams a second time. Names ride along so the list reads properly at once;
+     photos and colours refill from the feed. */
+  function carryIn() {
+    if (store.get('favs', null) || store.get('v5:onboarded', false)) return false;
+    const c = HW.carry.read(); if (!c) return false;
+    if (!Object.values(c.f || {}).some(a => a && a.length)) return false;
+    if (!store.set('favs', c.f)) return false;
+    if (c.p && c.p.length) store.set('v5:players', c.p.map(a => ({ lk: a[0], id: String(a[1]), name: a[2] || '', short: a[2] || '', team: a[3] || '', teamId: '', img: '', color: '' })));
+    store.set('v5:onboarded', true);
+    return true;
+  }
+  const carried = carryIn();
+  // keep the cookie level with the picks, so it is ready whenever the app is added to the home screen
+  HW.carry.save();
+  document.addEventListener('rivl:fav', () => HW.carry.save());
+  document.addEventListener('rivl:follow', () => HW.carry.save());
+  render().then(() => {
+    poll();
+    if (needsOnboarding()) onbStep(0);
+    else if (carried) toast('Picked up the teams and players you chose in your browser');
+  });
+  /* A browser that will not keep anything — private browsing blocks the write, and iOS throws on it. Say so on every
+     screen and before anything is picked, because the alternative is someone choosing thirty teams, watching them all
+     light up, and finding the lot gone when they come back. The probe is a real write and read, not a guess. */
+  store.check();
+  document.addEventListener('rivl:rendered', () => {
+    if (!store.broken() || document.getElementById('noSaveBar')) return;
+    const bar = document.createElement('div'); bar.id = 'noSaveBar'; bar.className = 'installbar nosave';
+    bar.innerHTML = `<div><b>This browser isn't saving anything</b><span>Private browsing blocks it. Your teams and players will be gone when you close the tab — open RIVL in a normal window to keep them.</span></div>`;
+    $main.prepend(bar);
+  });
   /* install bar on Home while the app isn't on the home screen yet */
   const origRender = render;
   document.addEventListener('rivl:rendered', () => {
