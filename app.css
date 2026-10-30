@@ -1705,7 +1705,10 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 
 
 /* game info: a plate of rows; the venue and the officials open to what the feed says about them */
-.giplate{margin:0 var(--gut-r) 0 var(--gut);border-radius:18px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge);padding:2px 14px;--gut:0px;--gut-r:0px}
+/* the gutter reset belongs to the rows INSIDE the card, not the card: declared on the card itself it also zeroed the card's
+   own margin, so the plate ran to both edges of the screen instead of floating like everything else */
+.giplate{margin:0 var(--gut-r) 0 var(--gut);border-radius:18px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge);padding:2px 14px}
+.giplate > *{--gut:0px;--gut-r:0px}
 .giplate .row{padding:12px 0}
 .giplate .row .t > b{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
 .giplate .row .t > span{font-size:15.5px;font-weight:700;color:var(--ink);margin-top:3px;white-space:normal}
@@ -1720,7 +1723,8 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .gidet b{color:var(--ink);font-weight:700}
 .injrep .injgrp + .injgrp{margin-top:10px}
 /* the box score opened on one player: his whole line up top, his row lit in the table */
-.pfocus{margin:0 var(--gut-r) 14px var(--gut);border-radius:18px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge),inset 4px 0 0 var(--tf,var(--ink-3));padding:4px 14px 14px;--gut:0px;--gut-r:0px}
+.pfocus{margin:0 var(--gut-r) 14px var(--gut);border-radius:18px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge),inset 4px 0 0 var(--tf,var(--ink-3));padding:4px 14px 14px}
+.pfocus > *{--gut:0px;--gut-r:0px}
 .pfocus .who{display:flex;align-items:center;gap:12px;padding:10px 0 8px;text-decoration:none;color:inherit}
 .pfocus .who .t{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
 .pfocus .who .t b{font-size:18px;font-weight:800;letter-spacing:-.01em}
@@ -1739,8 +1743,10 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .vhero{position:relative;margin:0 var(--gut-r) 14px var(--gut);min-height:250px;border-radius:20px;overflow:hidden;color:#fff;display:flex;align-items:flex-end;
   background:var(--grain),linear-gradient(118deg,var(--a,#2A2D33) 0 57%,rgba(0,0,0,.6) 57% 58.1%,color-mix(in srgb,var(--a,#2A2D33) 62%,#000) 58.1% 100%);background-blend-mode:soft-light,normal;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 18px 40px -22px rgba(0,0,0,.95)}
-.vhero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.vhero.pic::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.18) 40%,rgba(0,0,0,.78) 100%);pointer-events:none}
+/* the photo is held back until it has decoded, so it arrives whole instead of painting in bands down the hero */
+.vhero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .4s var(--ease)}
+.vhero.ready img{opacity:1}
+.vhero.pic.ready::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.18) 40%,rgba(0,0,0,.78) 100%);pointer-events:none}
 .vhero .in{position:relative;z-index:1;padding:18px 18px 18px}
 .vhero .sub{font-size:11.5px;font-weight:800;opacity:.85;letter-spacing:.08em;text-transform:uppercase}
 .vhero h1{font:800 38px/.95 var(--num);text-transform:uppercase;margin-top:4px;text-shadow:0 2px 0 rgba(0,0,0,.25),0 10px 30px rgba(0,0,0,.45);text-wrap:balance}

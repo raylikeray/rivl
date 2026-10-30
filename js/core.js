@@ -53,7 +53,9 @@ const wikiPage = async (title, ttl = 7 * 86400000) => {
   if (!pages) return null;
   const pg = Object.values(pages)[0];
   if (!pg || pg.missing !== undefined || !pg.title) return null;
-  return { title: pg.title, extract: pg.extract || '', img: (pg.original && pg.original.source) || (pg.thumbnail && pg.thumbnail.source) || '',
+  // the 1024px thumbnail, NOT `original` — originals on Commons run to 4000px and several megabytes, which is what made the
+  // arena photo arrive band by band down the screen. The thumbnail is already wider than any phone shows it.
+  return { title: pg.title, extract: pg.extract || '', img: (pg.thumbnail && pg.thumbnail.source) || (pg.original && pg.original.source) || '',
     id: pg.pageprops && pg.pageprops.wikibase_item || '', url: `https://en.wikipedia.org/wiki/${encodeURIComponent(pg.title.replace(/ /g, '_'))}` };
 };
 /* the numbers worth having exactly, from Wikidata rather than read out of prose: capacity, when it opened, who it is named for */

@@ -303,22 +303,44 @@
     const g = parseEvent({ id: gid, competitions: [{ ...hc, venue: ven, status: hc.status }], date: hc.date, status: hc.status }, L);
     const im0 = (ven.images || []).filter(x => x && x.href).sort((x, y) => (y.width || 0) - (x.width || 0))[0];
     const where = ven.address ? [ven.address.city, ven.address.state, ven.address.country && !/^(USA|United States)$/i.test(ven.address.country) ? ven.address.country : ''].filter(Boolean).join(', ') : '';
-    // ESPN names the building; Wikipedia has the photo and the detail. The city is part of the search so one arena is not mistaken for another of the same name.
-    const wp = ven.fullName ? await HW.wikiPage(ven.fullName).catch(() => null) : null;
-    const wf = wp && wp.id ? await HW.wikiFacts(wp.id).catch(() => ({})) : {};
-    const im = im0 ? { href: im0.href, alt: im0.alt || '' } : (wp && wp.img ? { href: wp.img, alt: wp.title } : null);
-    const cap = ven.capacity || wf.capacity || 0;
-    const facts = [where, cap ? `Holds ${(+cap).toLocaleString()}` : '', wf.opened ? `Opened ${wf.opened}` : '', ven.indoor === true ? 'Indoor' : ven.indoor === false ? 'Outdoor' : ''].filter(Boolean);
     const homeT = !g.neutral && g.home && g.home.id ? g.home : null; const hc0 = homeT ? V._.teamColor(homeT, L) : '';
-    const hero = `<div class="vhero${im ? ' pic' : ''}" style="${homeT ? `--a:${esc(hc0)}` : ''}">${im ? `<img src="${esc(im.href)}" alt="${esc(im.alt || ven.fullName || '')}" onerror="this.parentNode.classList.remove('pic');this.remove()">` : ''}<div class="in"><div class="sub">Venue</div><h1>${esc(ven.fullName || '')}</h1><div class="facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div></div></div>`;
+    const factsOf = (cap, opened) => [where, cap ? `Holds ${(+cap).toLocaleString()}` : '', opened ? `Opened ${opened}` : '', ven.indoor === true ? 'Indoor' : ven.indoor === false ? 'Outdoor' : ''].filter(Boolean);
+    const factsHtml = f => f.map(x => `<span>${esc(x)}</span>`).join('');
+    const im0h = im0 ? { href: im0.href, alt: im0.alt || '' } : null;
+    const hero = `<div class="vhero${im0h ? ' pic' : ''}" data-gid="${esc(String(gid))}" style="${homeT ? `--a:${esc(hc0)}` : ''}">${im0h ? `<img src="${esc(im0h.href)}" alt="${esc(im0h.alt || ven.fullName || '')}" onerror="this.parentNode.classList.remove('pic');this.remove()">` : ''}<div class="in"><div class="sub">Venue</div><h1>${esc(ven.fullName || '')}</h1><div class="facts">${factsHtml(factsOf(ven.capacity, 0))}</div></div></div>`;
     const when = g.date ? dayLabel(ymdOf(g.date), { weekday: 'long', month: 'long', day: 'numeric' }) : '';
     const rows = [
       homeT ? `<a class="row" href="${href.team(lk, homeT.id)}">${logo(homeT.logo, '', hc0)}<span class="t"><b>Home of the ${esc(homeT.short || homeT.name)}</b><span>${esc(homeT.name || '')}</span></span>${chev}</a>` : '',
       `<a class="row" href="${href.game(lk, gid)}"><span class="t"><b>${esc(g.away.short)} ${g.neutral ? 'vs' : 'at'} ${esc(g.home.short)}</b><span>${esc([when, g.state === 'pre' ? tipOf(g) : g.state === 'in' ? g.detail : finalWord(g)].filter(Boolean).join(' · '))}</span></span>${chev}</a>`
     ].filter(Boolean).join('');
-    const about = wp && wp.extract ? sec('About') + `<div class="vabout"><p>${esc(wp.extract.split(/(?<=\.)\s+/).slice(0, 4).join(' '))}</p><a class="src" href="${esc(wp.url)}" target="_blank" rel="noopener">Wikipedia<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></a></div>` : '';
-    $main.innerHTML = topbar(esc(ven.fullName || 'Venue'), `#game/${lk}/${gid}`) + hero + `<div class="rows">${rows}</div>` + about;
+    /* The screen goes up on ESPN's data alone. Waiting for Wikipedia's article and then Wikidata's claims before painting
+       anything meant three round trips of skeleton; they now arrive into a finished page. */
+    $main.innerHTML = topbar(esc(ven.fullName || 'Venue'), `#game/${lk}/${gid}`) + hero + `<div class="rows">${rows}</div>`;
     document.title = `${ven.fullName || 'Venue'} · RIVL`;
+    vheroShow($main.querySelector('.vhero img'));
+    if (!ven.fullName) return;
+    // ESPN names the building; Wikipedia has the photo and the detail
+    const wp = await HW.wikiPage(ven.fullName).catch(() => null);
+    const live = () => { const h = $main.querySelector('.vhero'); return h && h.dataset.gid === String(gid) ? h : null; };   // still the same venue on screen
+    if (!wp || !live()) return;
+    const wf = wp.id ? await HW.wikiFacts(wp.id).catch(() => ({})) : {};
+    const host = live(); if (!host) return;
+    const fe = host.querySelector('.facts'); const facts = factsOf(ven.capacity || wf.capacity || 0, wf.opened);
+    if (fe) { const html = factsHtml(facts); if (fe.innerHTML !== html) fe.innerHTML = html; }
+    if (!im0h && wp.img) {
+      const img = document.createElement('img'); img.alt = wp.title || ven.fullName || '';
+      img.onerror = () => { host.classList.remove('pic'); img.remove(); };
+      host.classList.add('pic'); host.insertBefore(img, host.firstChild); img.src = wp.img; vheroShow(img);
+    }
+    if (wp.extract && !$main.querySelector('.vabout')) $main.insertAdjacentHTML('beforeend', sec('About') + `<div class="vabout"><p>${esc(wp.extract.split(/(?<=\.)\s+/).slice(0, 4).join(' '))}</p><a class="src" href="${esc(wp.url)}" target="_blank" rel="noopener">Wikipedia<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></a></div>`);
+  }
+  /* A photo appears whole or not at all. Left to itself a baseline JPEG paints in bands down the screen as it streams, which
+     is what Ray saw; the hero holds its team-colour gradient until the image has decoded, then the two cross. */
+  function vheroShow(img) {
+    if (!img) return;
+    const on = () => { const h = img.parentNode; if (h) h.classList.add('ready'); };
+    const fall = () => { if (img.complete && img.naturalWidth) on(); else img.addEventListener('load', on, { once: true }); };
+    if (img.decode) img.decode().then(on, fall); else fall();
   }
 
   /* ================= GAME ================= */
