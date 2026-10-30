@@ -425,8 +425,16 @@ async function leaguePlayers(L, season) {
       gp: v.gamesPlayed || 0, min: v.avgMinutes || 0, pts, reb: v.avgRebounds || 0, ast: v.avgAssists || 0, stl: v.avgSteals || 0, blk: v.avgBlocks || 0, tov: v.avgTurnovers || 0,
       fg: v.fieldGoalPct || 0, tp: v.threePointFieldGoalPct || 0, ft: v.freeThrowPct || 0, tpm: v.avgThreePointFieldGoalsMade || 0, ts: (fga + 0.44 * fta) > 0 ? pts / (2 * (fga + 0.44 * fta)) * 100 : 0 });
   }));
-  const label = (first.requestedSeason && (first.requestedSeason.displayName || first.requestedSeason.year)) || (first.currentSeason && first.currentSeason.displayName) || '';
-  const v = { rows, label }; lpMem[key] = { t: Date.now(), v };
+  /* Which season these numbers actually describe. Before a season tips off the feed keeps serving the last completed one,
+     so a college list in October is last year's — a player drafted in June is still listed with his old school and his old
+     average. The feed says which season it is; `stale` is true when that is not the season now under way, and the screens
+     say so instead of passing old numbers off as current. The year comes from the feed, never from a guess: when it is
+     missing, `stale` stays false and nothing is claimed. */
+  const rs = (first.requestedSeason && first.requestedSeason.year ? first.requestedSeason : first.currentSeason) || {};
+  const year = +(rs.year || 0) || 0;
+  const label = rs.displayName || (year ? String(year) : '') || '';
+  const stale = year > 0 && year < seasonYear();
+  const v = { rows, label, year, stale }; lpMem[key] = { t: Date.now(), v };
   if (!L.key.startsWith('ncaa')) { try { store.set(key, { t: Date.now(), v }); } catch { } }   // the college lists are too big to keep
   return v;
 }

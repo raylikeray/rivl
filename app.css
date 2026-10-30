@@ -1828,6 +1828,11 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 
 /* a setting that could not be turned on says why, in place */
 .legend.warn{color:var(--ink);background:color-mix(in srgb,var(--loss) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--loss) 38%,transparent);border-radius:12px;padding:10px 12px;margin-top:10px;line-height:1.45}
+/* "these numbers are last season's" is information, not a fault, so it gets a quiet plate rather than the red of a
+   warning. NOT named `.stale`: that class is already the freshness strip, and it is display:flex with a dot, which
+   broke this paragraph into columns. Check an existing name before taking one. */
+.legend.lastyear{display:block;color:var(--ink-2);background:color-mix(in srgb,var(--ink) 6%,transparent);box-shadow:inset 0 0 0 1px var(--plate-line);border-radius:12px;margin:2px var(--gut-r) 14px var(--gut);padding:11px 13px;line-height:1.45}
+.legend.lastyear b{color:var(--ink);font-weight:800}
 
 /* a fact that came from Wikipedia says so, and links back — the licence asks for it and it is how you check the detail */
 .vabout{margin:0 var(--gut-r) 0 var(--gut);padding:14px 16px;border-radius:18px;background:var(--grain),var(--plate-2);background-blend-mode:soft-light,normal;box-shadow:var(--edge)}

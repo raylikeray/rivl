@@ -804,6 +804,11 @@
       const fset = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id));
       const rowOf = (p, s) => playerRow(p, { sub: [posWord(p.pos), p.jersey ? `No. ${p.jersey}` : '', line(p)].filter(Boolean).join(', '), on: fset.has(p.id), select });
       const parts = [];
+      /* Every per-game number on this screen — the roster lines as well as the leaders — comes from one feed, and before a
+         season tips off that feed is still serving the last completed one. So a college list in October is last season's,
+         and a player drafted in June is still listed with the school he left. Say so once, at the top, rather than letting
+         old averages read as this season's. The season name is the feed's own. */
+      if (!q && lp && lp.stale && lp.label) parts.push(`<p class="legend lastyear">These are <b>${esc(lp.label)}</b> numbers — the new season hasn't started, so the feed is still on last season. Anyone drafted or transferred since is listed with the team he played for then.</p>`);
       if (q) {
         const teams = Object.values(idx).filter(t => `${t.name} ${t.short} ${t.abbr}`.toLowerCase().includes(q) && !sections.some(s => s.key === t.id)).sort((a, b) => (a.short || '').localeCompare(b.short || '')).slice(0, 5);
         if (teams.length) parts.push(sec('Teams', 'tap to see the roster') + `<div class="rows">${teams.map(t => `<button class="row" data-pp="browse" data-id="${esc(t.id)}">${logo(t.logo)}<span class="t"><b>${esc(t.name)}</b><span>Show the roster</span></span>${chev}</button>`).join('')}</div>`);
@@ -823,7 +828,8 @@
         const top = lp.rows.filter(p => !have.has(p.id) && p.gp >= 3 && (!q || `${p.name} ${p.team}`.toLowerCase().includes(q))).sort((a, b) => (b[cat] || 0) - (a[cat] || 0) || b.pts - a.pts);
         const cut = q || paint.topOpen ? Math.min(top.length, 100) : Math.min(top.length, 15);
         const chips = q ? '' : `<div class="chips lchips">${CATS.map(([k, l]) => `<button class="chip${k === cat ? ' on' : ''}" data-pp="lcat" data-cat="${k}" aria-pressed="${k === cat}">${l}</button>`).join('')}</div>`;
-        if (top.length) parts.push(`<div class="leaders">` + sec(q ? 'Around the league' : 'Leaders', q ? '' : 'per game, three games or more', cut < top.length ? `<button data-pp="top">More</button>` : '') + chips + `<div class="rows">${top.slice(0, cut).map((p, i) => { const t = idx[p.teamId] || {}; const v = p[cat] || 0; return playerRow({ ...p, lk, color: t.color || '', teamId: p.teamId, team: t.short || p.team }, { sub: [t.short || p.team, posWord(p.pos).toLowerCase()].filter(Boolean).join(', '), on: fset.has(p.id), select, right: `<span class="r"><b>${v.toFixed(1)}</b><span>${unit}</span></span>`, rank: q ? 0 : i + 1 }); }).join('')}</div></div>`);
+        // the subtitle names the season when it is not the one under way, so the list never reads as this year's form
+        if (top.length) parts.push(`<div class="leaders">` + sec(q ? 'Around the league' : 'Leaders', q ? '' : (lp.stale && lp.label ? `${esc(lp.label)}, per game` : 'per game, three games or more'), cut < top.length ? `<button data-pp="top">More</button>` : '') + chips + `<div class="rows">${top.slice(0, cut).map((p, i) => { const t = idx[p.teamId] || {}; const v = p[cat] || 0; return playerRow({ ...p, lk, color: t.color || '', teamId: p.teamId, team: t.short || p.team }, { sub: [t.short || p.team, posWord(p.pos).toLowerCase()].filter(Boolean).join(', '), on: fset.has(p.id), select, right: `<span class="r"><b>${v.toFixed(1)}</b><span>${unit}</span></span>`, rank: q ? 0 : i + 1 }); }).join('')}</div></div>`);
       }
       if (!parts.length) parts.push(q ? empty('No one matches', '<p style="margin:6px 0 0">Try a last name, or a team to see its whole roster.</p>')
         : mine.length ? empty("Couldn't load your teams' rosters", '<p style="margin:6px 0 0">The feed didn\'t answer. Search a team to try again.</p>')
