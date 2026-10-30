@@ -152,7 +152,7 @@
      exactly as ESPN writes it, and afterwards "GS wins series 4-3". Nothing is shown for a game that has no series. */
   const seriesParts = g => {
     const s = g.series; const n = noteWord(g);
-    if (!s && !/game\s*\d|final|semi|quarter|round|playoff|tournament|championship|cup|play-in/i.test(n)) return [];
+    if (!s && !/game\s*\d|final|semi|quarter|round|playoff|tournament|championship|play-in/i.test(n)) return [];
     const head = n ? n.replace(/\s+Game\s+(\d+)/i, ' · Game $1') : [s && s.title, s && s.game ? `Game ${s.game}` : ''].filter(Boolean).join(' · ');
     return [head, s && s.summary].filter(Boolean);
   };
@@ -163,7 +163,7 @@
   const seriesPickText = pk => pk ? `${pk.team.short} ${pct(pk.p)} to take the series` : '';
   // the same, fit for a chip: "Finals G7", "Semis G3"
   const seriesShort = g => {
-    const s = g.series; const n = noteWord(g); if (!s && !n) return ''; if (!s && !/game\s*\d|final|semi|quarter|round|playoff|tournament|championship|cup|play-in/i.test(n)) return '';
+    const s = g.series; const n = noteWord(g); if (!s && !n) return ''; if (!s && !/game\s*\d|final|semi|quarter|round|playoff|tournament|championship|play-in/i.test(n)) return '';
     const round = (s && s.title) || n.replace(/\s*·?\s*Game\s*\d+.*$/i, '');
     const r = round.replace(/^(NBA|WNBA|NCAA)\s+/i, '').replace(/Semifinals?/i, 'Semis').replace(/Quarterfinals?/i, 'Quarters').replace(/First Round/i, 'Rd 1').replace(/Conference /i, '');
     const gm = (s && s.game) || +((n.match(/game\s*(\d+)/i) || [])[1] || 0);
@@ -200,7 +200,7 @@
     const favC = fav ? V_lift(teamColor(fav, L)) : '#fff';   // the bar wears the favourite's own colour — the one its panel above is painted in — lifted so it reads on the dark strip
     const tm = t => t.tbd ? `<div class="tm"><span class="logo tbd"></span><b>TBD</b><span>${esc(noteWord(g))}</span></div>` : page ? `<a class="tm" href="${href.team(L.key, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></a>` : `<div class="tm">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></div>`;
     const inner = `<div class="in">
-      <div class="vs">${tm(g.away)}<div class="mid"><span class="st${g.state === 'in' ? ' on' : ''}">${esc(g.state === 'in' ? g.detail : g.state === 'post' ? finalWord(g) : tipOf(g))}</span>${seriesParts(g).length ? `<span class="ps">${seriesParts(g).map(x => `<span>${esc(x)}</span>`).join('')}${seriesPickText(seriesPick(L, g, f, ctx)) ? `<b>${esc(seriesPickText(seriesPick(L, g, f, ctx)))}</b>` : ''}</span>` : ''}<div class="sc">${g.off ? '' : `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`}</div><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>${tm(g.home)}</div>
+      <div class="vs">${tm(g.away)}<div class="mid"><span class="st${g.state === 'in' ? ' on' : ''}">${esc(g.state === 'in' ? g.detail : g.state === 'post' ? finalWord(g) : tipOf(g))}</span><div class="sc">${g.off ? '' : `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`}</div><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>${tm(g.home)}</div>
       ${f && !g.off ? `<div class="fc${f.pHome >= .5 ? ' home' : ''}"><div class="bar"><i style="width:${(p * 100).toFixed(1)}%;background:${esc(favC)}"></i></div><b>${g.state === 'post' ? 'Had ' : ''}${esc(fav.short)} ${pct(p)}${g.state === 'pre' && f.proj ? `<small>${esc(g.away.abbr)} ${f.proj.away}–${f.proj.home} ${esc(g.home.abbr)}</small>` : ''}</b></div>` : ''}
     </div>`;
     return page ? `<div class="hero page" data-gid="${esc(g.id)}" style="--a:${esc(a)};--b:${esc(b)}">${inner}</div>`

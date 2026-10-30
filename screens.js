@@ -464,7 +464,10 @@
       const f = safeF(L, g, ctx);
       const title = g.tbd ? esc(String(g.note || '').replace(/\s+-\s+/g, ' ') || 'Teams to be decided') : `${esc(g.away.short)} ${g.neutral ? 'vs' : 'at'} ${esc(g.home.short)}`;
       if (!g.tbd) V._.tint(V._.scoreColor(L, f && f.pHome < .5 ? g.away : g.home));   // the page leans the favourite's way, the home side's when there is no call
-      const hero = heroCard(L, g, ctx, { page: true });
+      /* the series, as one quiet line under the hero rather than three in its middle column, which has room for the time and
+         the score and nothing else (three lines there pushed "Valkyries" into an ellipsis) */
+      const spick = V._.seriesPickText(V._.seriesPick(L, g, ctx ? V._.safeF(L, g, ctx) : null, ctx));
+      const hero = heroCard(L, g, ctx, { page: true }) + (V._.seriesLine(g) ? `<div class="sline"><span>${esc(V._.seriesLine(g))}</span>${spick ? `<b>${esc(spick)}</b>` : ''}</div>` : '');
       const shots = g.state === 'pre' ? [] : shotsOf(d.plays, g); const shotsOk = shots.length > 0 && shotsTrusted(shots);
       const tabList = [['summary', 'Summary'], ['box', 'Box score'], ['plays', 'Plays'], ['shots', 'Shots'], ['stats', 'Team stats']].filter(([k]) => (g.state !== 'pre' || k === 'summary' || k === 'stats') && (k !== 'shots' || shotsOk));
       if (!tabList.some(([k]) => k === tab)) tab = 'summary';
