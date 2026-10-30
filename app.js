@@ -69,7 +69,9 @@
     if (render.key && render.key !== key) scrollMem.set(render.key, window.scrollY);
     const leagueChanged = leagueScreen && render.lk && render.lk !== r.lk;   // a tap on the league switch starts the new league at the top
     $main.dataset.y = render.key !== key ? ((back || (leagueScreen && !leagueChanged)) ? String(scrollMem.get(key) || 0) : '0') : '';
-    if (leagueChanged) window.scrollTo(0, 0);
+    // a page that starts at the top goes there now, before its skeleton replaces the old screen — otherwise the old scroll
+    // position clamps as the document shrinks and the eye sees two moves instead of one
+    if (leagueChanged || ($main.dataset.y === '0' && render.key !== key)) window.scrollTo(0, 0);
     render.lk = r.lk;
     if (!['team', 'player', 'game'].includes(r.name) && V._.tint) V._.tint('');   // only a team's, a player's or a game's page wears a team colour
     if (leagueScreen) store.set('v5:screen', r.name);
