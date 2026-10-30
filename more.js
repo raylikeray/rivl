@@ -176,10 +176,10 @@
       if (!WORKER || !PUSHKEY) return fail('Alerts need the RIVL server');
       if (!('serviceWorker' in navigator)) return fail('This browser has no service worker');
       if (!('PushManager' in window) || !('Notification' in window)) return fail(V.standalone && V.standalone() ? 'This browser cannot do push' : 'Add RIVL to your home screen first, then turn alerts on from there');
-      if (Notification.permission === 'denied') return fail('Notifications are blocked for RIVL. iPhone Settings → Notifications → RIVL → Allow, then come back.');
+      if (Notification.permission === 'denied') return fail('Notifications are blocked for RIVL. Allow them for RIVL in your phone\'s settings, then come back.');
       let perm;
       try { perm = await Notification.requestPermission(); } catch (e) { return fail('The permission prompt failed: ' + (e && e.message || e)); }
-      if (perm !== 'granted') return fail(perm === 'denied' ? 'You chose Don\'t Allow. iPhone Settings → Notifications → RIVL to change it.' : 'No answer to the permission prompt — tap the switch again');
+      if (perm !== 'granted') return fail(perm === 'denied' ? 'You turned the prompt down. Allow notifications for RIVL in your phone\'s settings to change it.' : 'No answer to the permission prompt — tap the switch again');
       let sub;
       try {
         const reg = await navigator.serviceWorker.ready;
