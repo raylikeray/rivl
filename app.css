@@ -1849,3 +1849,38 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .vabout .src svg{width:13px;height:13px}
 .panel-in .vabout{margin-left:0;margin-right:0}
 .inj-head .hs img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+
+/* ===== v98: the standings plate, cleaned up =====
+   Three defects on the phone and one ask.
+   1. A pale line ran along the top of the plate from the W column rightward and stopped at the team column: the plate's
+      inset top highlight showed everywhere except where the pinned first column's opaque background painted over it.
+      The rim now lives on an overlay above every cell, so it is one continuous edge.
+   2. The last column was cut mid-glyph under the rounded corner, and once a tiebreak note widened the pinned team column
+      to the full screen the scrolling cells slid under it. The note now wraps inside a capped column, the name
+      truncates, and (in screens.js) the phone shows four columns that fit, so nothing scrolls sideways.
+   3. The plate is flat surface + one ambient shadow; nothing embossed.
+   4. Every row is railed in its own team's colour, so teams tell apart at a glance; a followed team keeps its wash and ★. */
+.tw:has(> .tbl.stand){position:relative;background:var(--surf);box-shadow:0 1px 2px rgba(0,0,0,.28),0 14px 30px -18px rgba(0,0,0,.7)}
+.tw:has(> .tbl.stand)::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:4;box-shadow:inset 0 1px 0 var(--plate-hi),inset 0 0 0 1px var(--plate-line)}
+:root[data-theme="light"] .tw:has(> .tbl.stand){box-shadow:0 1px 2px rgba(16,24,40,.12),0 12px 28px -16px rgba(16,24,40,.3)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .tw:has(> .tbl.stand){box-shadow:0 1px 2px rgba(16,24,40,.12),0 12px 28px -16px rgba(16,24,40,.3)} }
+.tbl.stand thead th{background:color-mix(in srgb,var(--ink) 4%,var(--surf));padding:11px 8px 10px}
+.tbl.stand th:first-child,.tbl.stand td:first-child{background:var(--surf)}
+.tbl.stand thead th:first-child{background:color-mix(in srgb,var(--ink) 4%,var(--surf))}
+/* the team column: the name on one line that truncates, the note beneath it wrapping; the stat columns hug their numbers */
+.tbl.stand td:first-child{white-space:normal;max-width:0;width:100%}
+.tbl.stand th:not(:first-child),.tbl.stand td:not(:first-child){width:1%;padding-left:7px;padding-right:7px}
+.tbl.stand th:last-child,.tbl.stand td:last-child{padding-right:14px}
+.tbl.stand .tm{display:flex;align-items:center;min-width:0;width:100%}
+.tbl.stand .nm{display:flex;flex-direction:column;min-width:0;flex:1}
+.tbl.stand .nm > a{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbl.stand .nm small{white-space:normal;line-height:1.3;margin-top:1px}
+/* the rail: each row in its team's colour; the first cell carries it so it sits flush to the plate's edge */
+.tbl.stand tr td:first-child{box-shadow:inset 4px 0 0 var(--tf,var(--line-2))}
+.tbl.stand tr.me td:first-child,[data-accent] .tbl.stand tr.me td:first-child{box-shadow:inset 4px 0 0 var(--tf,var(--acc,var(--ink)))}
+.tbl.stand td{padding-top:12px;padding-bottom:12px}
+@media (max-width:1039px){ .tbl.stand .tm{font-size:15px;gap:9px} .tbl.stand .logo.s{width:30px;height:30px} .tbl.stand td:first-child{padding-left:14px} }
+/* the followed row's wash, one opaque colour in every cell: the pinned cell used to layer 7% ink over the surface while the
+   rest blended 7% over transparent, and the two rounded a level apart — a hairline seam where the team column ended */
+.tbl.stand tr.me td{background:color-mix(in srgb,var(--ink) 7%,var(--surf))}
+.tbl.stand tr.me td:first-child{background-color:color-mix(in srgb,var(--ink) 7%,var(--surf));background-image:none}
