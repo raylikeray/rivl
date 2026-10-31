@@ -28,8 +28,12 @@
   const ptr = document.createElement('div'); ptr.className = 'ptr'; ptr.innerHTML = '<i></i>'; document.body.appendChild(ptr);
   let y0 = 0, pulling = false, armed = false;
   const reset = () => { ptr.classList.remove('arm', 'go'); ptr.style.removeProperty('--p'); armed = false; };
-  window.addEventListener('touchstart', e => { pulling = window.scrollY <= 0 && !document.body.classList.contains('noscroll') && e.touches.length === 1; y0 = pulling ? e.touches[0].clientY : 0; }, { passive: true });
-  window.addEventListener('touchmove', e => { if (!pulling) return; const dy = e.touches[0].clientY - y0; if (dy <= 0 || window.scrollY > 0) { reset(); return; } const d = Math.min(dy, 130); ptr.style.setProperty('--p', (d / 90).toFixed(2)); armed = d > 84; ptr.classList.toggle('arm', armed); }, { passive: true });
+  /* at the top means at the top of whatever the finger is scrolling: the window, or a box that scrolls on its own (the game page) */
+  let box = null;
+  const scrollerOf = el => { for (let n = el; n && n !== document.body; n = n.parentElement) { if (n.scrollHeight > n.clientHeight + 1) { const oy = getComputedStyle(n).overflowY; if (oy === 'auto' || oy === 'scroll') return n; } } return null; };
+  const atTop = () => window.scrollY <= 0 && (!box || box.scrollTop <= 0);
+  window.addEventListener('touchstart', e => { box = scrollerOf(e.target); pulling = atTop() && !document.body.classList.contains('noscroll') && e.touches.length === 1; y0 = pulling ? e.touches[0].clientY : 0; }, { passive: true });
+  window.addEventListener('touchmove', e => { if (!pulling) return; const dy = e.touches[0].clientY - y0; if (dy <= 0 || !atTop()) { pulling = false; reset(); return; } const d = Math.min(dy, 130); ptr.style.setProperty('--p', (d / 90).toFixed(2)); armed = d > 84; ptr.classList.toggle('arm', armed); }, { passive: true });
   window.addEventListener('touchend', async () => { if (!pulling) return; pulling = false; if (!armed) { reset(); return; } ptr.classList.add('go'); buzz(10); try { await V.refreshAll(); } finally { setTimeout(reset, 250); } }, { passive: true });
 
   /* ---------- haptics: a tick when something is followed or switched ---------- */
