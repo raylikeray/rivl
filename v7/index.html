@@ -1405,6 +1405,47 @@ h3.wrdh{font-size:17px}
 .nrow>span{flex:1;min-width:0}
 .nrow>span>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .wrdhero{width:100%;border-radius:16px;margin:4px 0 14px}
+/* settings */
+.stop{display:flex;align-items:center;justify-content:space-between;height:56px;padding-top:env(safe-area-inset-top,0px);box-sizing:content-box}
+.stop b{font-size:17px;font-weight:700}.stop>span{width:34px}
+.scard{display:flex;align-items:center;gap:14px;padding:16px;border-radius:20px;background:var(--L1);border:1px solid var(--line);color:inherit;margin-top:6px}
+.scard>span:not(.meav){flex:1;min-width:0}.scard b{display:block;font-size:19px;font-weight:700}.scard em{display:block;font-style:normal;font-size:13px;color:var(--t3);margin-top:3px}
+.meav.big{width:56px;height:56px;font-size:24px;flex:none}
+.si{flex:none;width:34px;height:34px;border-radius:10px;background:var(--L2);display:grid;place-items:center}
+.si svg{width:18px;height:18px;fill:none;stroke:var(--t1);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.si.big{width:56px;height:56px;border-radius:999px}
+.srow3{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line);color:inherit}
+.srow3:first-child{border-top:0}.srow3>span{flex:1;min-width:0}
+.srow3 b{display:block;font-size:15.5px;font-weight:600}.srow3 em{display:block;font-style:normal;font-size:12.5px;color:var(--t3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbtn{flex:none;padding:8px 14px;border-radius:999px;background:var(--t1);color:var(--L0);font:inherit;font-size:13px;font-weight:700;border:0}
+.sbtn.rm{background:var(--L2);color:var(--t2)}
+/* explore sections */
+.exgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.extile{position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:132px;padding:14px;border-radius:20px;overflow:hidden;color:#fff;isolation:isolate;
+  background:radial-gradient(120% 120% at 0% 0%,var(--c1),var(--c2) 75%)}
+.extile::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(60% 50% at 85% 10%,rgba(255,255,255,.22),transparent 70%);animation:sa 18s ease-in-out infinite}
+.extile .ei{position:absolute;top:14px;left:14px;width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.18);display:grid;place-items:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.extile .ei svg{width:19px;height:19px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.extile b{font-size:17px;font-weight:700;letter-spacing:-.01em;color:#fff}
+.extile span{font-size:12.5px;color:rgba(255,255,255,.8);margin-top:3px;line-height:1.3}
+/* recruits */
+.ychips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:12px -16px 0;padding:0 16px}
+.ychips::-webkit-scrollbar{display:none}
+.ychips button{flex:none;padding:9px 14px;border-radius:999px;background:var(--L1);border:1px solid var(--line);font:inherit;font-size:13.5px;font-weight:600;color:var(--t2)}
+.ychips button[aria-pressed=true]{background:var(--t1);color:var(--L0);border-color:transparent}
+#recb{margin-top:12px}
+.rcblock{--pc:#3A0CA3;margin-top:8px}
+.rcrow{width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);font:inherit;color:inherit}
+.rcrow .rk{width:26px;font-weight:700;color:var(--t2);font-variant-numeric:tabular-nums}
+.rmono{flex:none;width:40px;height:40px;border-radius:999px;display:grid;place-items:center;background:var(--L2);font-size:14px;font-weight:700;color:var(--t2)}
+.rmono.big{width:52px;height:52px;font-size:18px}
+.cchip{flex:none;display:inline-flex;align-items:center;gap:6px;max-width:42%;padding:6px 10px;border-radius:999px;background:var(--L2);font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cchip .cr{width:18px;height:18px}
+.cchip.und{color:var(--t3)}
+.lnk{background:none;border:0;padding:0;font:inherit;color:var(--t2);text-decoration:underline}
+.ijwho>span.rmono{flex:none}
+.xclr[hidden]{display:none}
+.fl{font-size:12.5px;font-weight:600;color:var(--t3)}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -1599,6 +1640,7 @@ function applyDemo(){
   if(DEMO==='m'){ FOLLOW=FOLLOW_MANY; ENABLED=['nba','wnba','ncaam','ncaaw']; MYPLAYERS=MYP_BASE.concat(MYP_EXTRA); }
   else { FOLLOW=FOLLOW_BASE; ENABLED=['nba','ncaam']; MYPLAYERS=MYP_BASE.slice(); }
   if(LG!=='all' && ENABLED.indexOf(LG)<0) LG='all';
+  if(typeof applyPrefs==='function') applyPrefs();
 }
 var NEXTG = {duke:'Tue vs UConn · 6:00 PM', ku:'Wed vs Kentucky', gonz:'Sat vs Arizona', phi:'Tomorrow at Chicago',
   okc:'Tomorrow vs Warriors', bos:'Mon at Miami', uconn:'Tue at Duke',
@@ -2356,16 +2398,7 @@ function viewExplore(){
     +'<label class="xbox">'+svg(IC.search)+'<input id="xq" type="search" autocomplete="off" autocapitalize="off" placeholder="Players, teams, stats, anything" value="'+esc(XQ)+'">'
     +'<button class="xclr" data-act="xclear" aria-label="Clear"'+(XQ?'':' hidden')+'>'+svg('<path d="M6 6l12 12M18 6 6 18"/>')+'</button></label>'
     +'<div id="xres">'+xresults(XQ)+'</div><div id="xweb"></div>'
-    +'<div id="xbrowse"'+(XQ?' hidden':'')+'>'
-      +'<div class="sechd"><h2 class="sec">Try asking</h2></div><div class="xtry">'+TRY.map(function(t){return '<button data-try="'+esc(t)+'">'+esc(t)+'</button>';}).join('')+'</div>'
-      +'<div class="sechd"><h2 class="sec">Injuries</h2><span class="more">Your leagues</span></div>'+'<div class="gut" style="padding:0">'+injList(INJ,true)+'</div>'
-      +'<div class="sechd"><h2 class="sec">More to explore</h2></div>'
-      +'<div class="xgrid">'
-        +'<button class="xtile" data-try="Luka vs Curry"><b>Compare</b><span>Any two players or teams, across leagues</span></button>'
-        +'<a class="xtile" href="#standings" data-sub-go="leaders"><b>Leaders</b><span>Points, rebounds, assists</span></a>'
-        +'<div class="xtile soon"><b>Trades and signings</b><span>Next in the build</span></div>'
-        +'<div class="xtile soon"><b>Top recruits</b><span>Next in the build</span></div>'
-      +'</div>'
+    +'<div id="xbrowse"'+(XQ?' hidden':'')+'>'+exploreHome()
     +'</div></div>';
 }
 function runSearch(v){
@@ -2769,9 +2802,9 @@ function jersey(name, num, k, w){
     +'<span class="mbc">'+crest(k,Math.round(w*0.26),true)+'</span></span>';
 }
 function avatar(onColor){
-  if(!ME || !ME.name) return '<a class="disc'+(onColor?' g':'')+' me0" href="#me" aria-label="Your profile">'+svg('<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>')+'</a>';
+  if(!ME || !ME.name) return '<a class="disc'+(onColor?' g':'')+' me0" href="#settings" aria-label="Settings">'+svg('<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>')+'</a>';
   var t=T[meTeam()];
-  return '<a class="meav" href="#me" aria-label="Your profile" style="--pc:'+cardTone(t.c)+'"><span>'+esc(ME.name.charAt(0).toUpperCase())+'</span></a>';
+  return '<a class="meav" href="#settings" aria-label="Settings" style="--pc:'+cardTone(t.c)+'"><span>'+esc(ME.name.charAt(0).toUpperCase())+'</span></a>';
 }
 function greet(){
   if(!ME || !ME.name) return '';
@@ -2954,6 +2987,192 @@ function playerBody(who, p, tab){
         return '<div class="prow"><span>'+r[0]+'</span><b class="num">'+r[1]+'</b></div>'; }).join('')+'</div></div>';
   }
   return out+'<div style="height:120px"></div>';
+}
+
+/* ============================================================
+   SETTINGS: you, your leagues, teams, players, alerts, display
+   Everything is saved on this phone only.
+   ============================================================ */
+var PREFS=(function(){ try{ return JSON.parse(localStorage.getItem('rivl.prefs')||'null'); }catch(e){ return null; } })();
+function savePrefs(){ PREFS={en:ENABLED.slice(), follow:FOLLOW.slice(), players:MYPLAYERS.map(function(p){return p.n;}), alerts:(PREFS&&PREFS.alerts)||{start:true,close:true,final:true,inj:true}};
+  try{ localStorage.setItem('rivl.prefs',JSON.stringify(PREFS)); }catch(e){} }
+function applyPrefs(){
+  if(!PREFS || DEMO==='m') return;
+  if(PREFS.en&&PREFS.en.length) ENABLED=PREFS.en.slice();
+  if(PREFS.follow) FOLLOW=PREFS.follow.filter(function(k){return T[k];});
+  if(PREFS.players){ var pool=MYP_BASE.concat(MYP_EXTRA);
+    MYPLAYERS=PREFS.players.map(function(n){ var m=pool.filter(function(x){return x.n===n;})[0]; if(m) return m;
+      var pp=null; try{ pp=personOf(n); }catch(e){} return pp?{id:pp.id,n:pp.n,t:pp.t,ln:''}:null; }).filter(Boolean); }
+  if(LG!=='all' && ENABLED.indexOf(LG)<0) LG='all';
+}
+var STAB='';
+function setHdr(title){ return '<div class="stop gut"><a class="disc" href="'+(title==='Settings'?'javascript:history.back()':'#settings')+'" aria-label="Back">'+svg(IC.back)+'</a><b>'+esc(title)+'</b><span></span></div>'; }
+function setRow(href,icon,label,sub){ return '<a class="srow3 pressable" href="'+href+'"><i class="si">'+svg(icon)+'</i><span><b>'+esc(label)+'</b>'+(sub?'<em>'+esc(sub)+'</em>':'')+'</span><i class="chev">›</i></a>'; }
+var SI={me:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>', lg:'<path d="M4 6h16M4 12h16M4 18h16"/>', team:IC.star,
+  pl:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.6-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2 .7 3.2 2.6 3.5 5.5"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>', eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>'};
+function viewSettings(sub){
+  STAB=sub||'';
+  if(STAB==='leagues') return setHdr('Leagues')+'<div class="gut"><p class="legend">Only these leagues show anywhere in RIVL.</p><div class="gp">'
+    +LORDER.map(function(L){ var on=ENABLED.indexOf(L)>-1; return '<button class="prow metog" data-lgtog="'+L+'" aria-pressed="'+on+'"><span>'+esc(LNAME[L])+'</span><i class="tog"></i></button>'; }).join('')
+    +'</div><div class="gp" style="margin-top:12px"><div class="prow"><span style="color:var(--t3)">Baseball, football and soccer</span><b style="font-size:13px;color:var(--t3)">Coming later</b></div></div></div>';
+  if(STAB==='teams'){
+    var others=Object.keys(T).filter(function(k){ return FOLLOW.indexOf(k)<0 && ENABLED.indexOf(leagueOf(k))>-1; });
+    return setHdr('Teams')+'<div class="gut"><div class="sechd tight"><h2 class="sec">Following</h2><span class="more">'+FOLLOW.length+'</span></div><div class="gp">'
+      +FOLLOW.map(function(k){ return '<div class="frow">'+crest(k,30,true)+'<span class="nm"><b>'+esc(T[k].full)+'</b><small>'+esc(LNAME[leagueOf(k)])+'</small></span><button class="sbtn rm" data-unf="'+k+'">Remove</button></div>'; }).join('')+'</div>'
+      +'<div class="sechd"><h2 class="sec">Add a team</h2></div><div class="gp">'
+      +others.map(function(k){ return '<div class="frow">'+crest(k,30,true)+'<span class="nm"><b>'+esc(T[k].full)+'</b><small>'+esc(LNAME[leagueOf(k)])+'</small></span><button class="sbtn" data-fol="'+k+'">Follow</button></div>'; }).join('')+'</div></div>';
+  }
+  if(STAB==='players'){
+    var mine=MYPLAYERS.map(function(p){return p.n;});
+    var more=PEOPLE.filter(function(p){ return mine.indexOf(p.n)<0; });
+    return setHdr('Players')+'<div class="gut"><div class="sechd tight"><h2 class="sec">Following</h2><span class="more">'+MYPLAYERS.length+'</span></div><div class="gp">'
+      +MYPLAYERS.map(function(p){ return '<div class="frow"><span class="fface">'+shot(p.id,p.n,cardTone(T[p.t].c),36)+'</span><span class="nm"><b>'+esc(p.n)+'</b><small>'+esc(T[p.t].full)+'</small></span><button class="sbtn rm" data-unp="'+esc(p.n)+'">Remove</button></div>'; }).join('')+'</div>'
+      +'<div class="sechd"><h2 class="sec">Add a player</h2></div><div class="gp">'
+      +more.map(function(p){ return '<div class="frow"><span class="fface">'+shot(p.id,p.n,cardTone(T[p.t].c),36)+'</span><span class="nm"><b>'+esc(p.n)+'</b><small>'+esc(T[p.t].full)+'</small></span><button class="sbtn" data-fop="'+esc(p.k)+'">Follow</button></div>'; }).join('')+'</div>'
+      +'<p class="legend">Search any player in Explore and tap Follow on their page.</p></div>';
+  }
+  if(STAB==='alerts'){ var A=(PREFS&&PREFS.alerts)||{start:true,close:true,final:true,inj:true};
+    return setHdr('Notifications')+'<div class="gut"><p class="legend">For your teams and players. These turn on when RIVL can send notifications.</p><div class="gp">'
+      +[['start','Game starting'],['close','Close game, last 5 minutes'],['final','Final score'],['inj','Injury updates']].map(function(x){
+        return '<button class="prow metog" data-al="'+x[0]+'" aria-pressed="'+!!A[x[0]]+'"><span>'+x[1]+'</span><i class="tog"></i></button>'; }).join('')+'</div></div>'; }
+  if(STAB==='display') return setHdr('Display')+'<div class="gut"><div class="gp">'
+    +'<button class="prow metog" data-act="me-hide" aria-pressed="'+!!(ME&&ME.hide)+'"><span>Hide scores until I tap</span><i class="tog"></i></button>'
+    +'<div class="prow"><span>Appearance</span><b style="font-size:13px;color:var(--t3)">Follows your phone</b></div></div></div>';
+  if(STAB==='about') return setHdr('About RIVL')+'<div class="gut"><p class="ijp" style="margin-top:6px">Nothing for sale. No ads. Only the leagues you chose. Every fact comes from a named source, and RIVL never guesses.</p>'
+    +'<div class="sechd"><h2 class="sec">Sources</h2></div><div class="gp">'
+    +[['Wikipedia','Articles and recruiting rosters · CC BY-SA 4.0'],['Wikidata','Facts like family, awards, teams · CC0'],['ESPN','Headlines, logos and headshots'],['RIVL sample data','Stats in this mockup are samples and labeled']].map(function(x){
+      return '<div class="prow ab"><span>'+x[0]+'</span><b style="font-weight:500;color:var(--t3)">'+x[1]+'</b></div>'; }).join('')+'</div>'
+    +'<div class="sechd"><h2 class="sec">Young athletes</h2></div><p class="ijp">High school recruits show basketball only: rankings, school, team and college choice. RIVL does not look up their personal lives.</p></div>';
+  var t=ME&&ME.name?T[meTeam()]:null;
+  return setHdr('Settings')+'<div class="gut">'
+    +'<a class="scard pressable" href="#me">'+(ME&&ME.name?'<span class="meav big" style="--pc:'+cardTone(t.c)+'"><span>'+esc(ME.name.charAt(0).toUpperCase())+'</span></span>':'<i class="si big">'+svg(SI.me)+'</i>')
+      +'<span><b>'+(ME&&ME.name?esc(ME.name):'Make it yours')+'</b><em>'+(ME&&ME.name?'Favorite: '+esc(t.full):'Add your name and favorite team')+'</em></span><i class="chev">›</i></a>'
+    +'<div class="sechd"><h2 class="sec">Following</h2></div><div class="gp">'
+      +setRow('#settings/leagues',SI.lg,'Leagues',ENABLED.map(function(L){return LNAME[L];}).join(', '))
+      +setRow('#settings/teams',SI.team,'Teams',FOLLOW.length+' teams')
+      +setRow('#settings/players',SI.pl,'Players',MYPLAYERS.length+' players')+'</div>'
+    +'<div class="sechd"><h2 class="sec">App</h2></div><div class="gp">'
+      +setRow('#settings/alerts',SI.bell,'Notifications','')
+      +setRow('#settings/display',SI.eye,'Display','')
+      +setRow('#settings/about',SI.info,'About and sources','')+'</div><div style="height:120px"></div></div>';
+}
+function settingsClick(e){
+  var x;
+  if((x=e.target.closest('[data-lgtog]'))){ var L=x.getAttribute('data-lgtog'), i=ENABLED.indexOf(L);
+    if(i>-1){ if(ENABLED.length===1) return true; ENABLED.splice(i,1); } else { ENABLED.push(L); ENABLED.sort(function(a,b){return LORDER.indexOf(a)-LORDER.indexOf(b);}); }
+    savePrefs(); keepScroll(); return true; }
+  if((x=e.target.closest('[data-unf]'))){ FOLLOW=FOLLOW.filter(function(k){return k!==x.getAttribute('data-unf');}); savePrefs(); keepScroll(); return true; }
+  if((x=e.target.closest('[data-fol]'))){ FOLLOW=FOLLOW.concat([x.getAttribute('data-fol')]); savePrefs(); keepScroll(); return true; }
+  if((x=e.target.closest('[data-unp]'))){ MYPLAYERS=MYPLAYERS.filter(function(p){return p.n!==x.getAttribute('data-unp');}); savePrefs(); keepScroll(); return true; }
+  if((x=e.target.closest('[data-fop]'))){ var pp=PEOPLE.filter(function(p){return p.k===x.getAttribute('data-fop');})[0]; if(pp){ MYPLAYERS=MYPLAYERS.concat([{id:pp.id,n:pp.n,t:pp.t,ln:''}]); savePrefs(); keepScroll(); } return true; }
+  if((x=e.target.closest('[data-al]'))){ savePrefs(); PREFS.alerts[x.getAttribute('data-al')]=!PREFS.alerts[x.getAttribute('data-al')];
+    try{ localStorage.setItem('rivl.prefs',JSON.stringify(PREFS)); }catch(err){} x.setAttribute('aria-pressed',String(!!PREFS.alerts[x.getAttribute('data-al')])); return true; }
+  return false;
+}
+
+/* ============================================================
+   TOP RECRUITS
+   Read live from Wikipedia's all-star game rosters (McDonald's
+   All-American, boys and girls). Each row shows the ESPN 100 rank
+   as Wikipedia publishes it, plus position, size, hometown, high
+   school and college choice. Free, sourced, and nothing copied from
+   a paid service. Basketball only: these are high school athletes.
+   ============================================================ */
+var REC={g:'boys', y:null, data:{}};
+function recYears(){ var y=TODAY.getFullYear(); return [y+1,y,y-1]; }
+function recTitle(g,y){ return y+' McDonald\'s All-American '+(g==='boys'?'Boys':'Girls')+' Game'; }
+function recFetch(g,y){
+  var key=g+y; if(REC.data[key]) return Promise.resolve(REC.data[key]);
+  return jget(WAPI+'action=parse&prop=text&redirects=1&page='+encodeURIComponent(recTitle(g,y))).then(function(d){
+    if(d.error) return (REC.data[key]={missing:true});
+    var doc=new DOMParser().parseFromString(d.parse.text['*'],'text/html'), out=[];
+    [].slice.call(doc.querySelectorAll('table.wikitable')).forEach(function(tb){
+      var rows=[].slice.call(tb.querySelectorAll('tr')); if(!rows.length) return;
+      var hd=[].slice.call(rows[0].querySelectorAll('th')).map(function(h){ return h.textContent.trim().toLowerCase(); });
+      var ix=function(re){ for(var i=0;i<hd.length;i++) if(re.test(hd[i])) return i; return -1; };
+      var cN=ix(/name/), cR=ix(/rank|espn/), cH=ix(/height|ht/), cW=ix(/weight|wt/), cP=ix(/pos/), cT=ix(/hometown|home/), cS=ix(/high school|school/), cC=ix(/college|commit|choice/);
+      if(cN<0||cC<0) return;
+      rows.slice(1).forEach(function(r){ var td=[].slice.call(r.querySelectorAll('td,th')); if(td.length<hd.length-1) return;
+        var cell=function(i){ return i>-1&&td[i]?td[i].textContent.replace(/\[\d+\]/g,'').replace(/\^/g,'').trim():''; };
+        var a=td[cN]&&td[cN].querySelector('a[href^="/wiki/"]');
+        var n=cell(cN); if(!n) return;
+        out.push({n:n, rank:parseInt(cell(cR),10)||null, ht:cell(cH).replace(/[−–]/g,'-'), wt:cell(cW), pos:cell(cP), home:cell(cT), hs:cell(cS), col:cell(cC),
+          wiki:a?decodeURIComponent(a.getAttribute('href').slice(6)).replace(/_/g,' '):'', red:a&&/new/.test(a.className)}); });
+    });
+    out.sort(function(a,b){ return (a.rank||999)-(b.rank||999); });
+    return (REC.data[key]={list:out, title:d.parse.title});
+  });
+}
+function colKey(name){ var n=norm(name); if(!n||n==='undecided') return null;
+  var hit=null; Object.keys(T).forEach(function(k){ if(hit) return; var t=T[k]; if(norm(t.full)===n||norm(t.name)===n) hit=k; });
+  if(hit && REC.g==='girls' && T[hit+'w']) hit=hit+'w'; if(hit && REC.g==='boys' && /w$/.test(hit) && T[hit.slice(0,-1)]) hit=hit.slice(0,-1);
+  return hit; }
+function colChip(c){ var k=colKey(c);
+  if(!c) return ''; if(norm(c)==='undecided') return '<span class="cchip und">Undecided</span>';
+  return '<span class="cchip"'+(k?' data-team="'+k+'"':'')+'>'+(k?crest(k,18,true):'')+esc(c)+'</span>'; }
+function viewRecruits(){
+  var ys=recYears(); if(!REC.y) REC.y=ys[1];
+  return '<div class="stop gut"><a class="disc" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><b>Top recruits</b><span></span></div>'
+    +'<div class="gut"><div class="seg2" style="margin-top:4px">'+[['boys','Boys'],['girls','Girls']].map(function(x){ return '<button data-recg="'+x[0]+'" aria-pressed="'+(REC.g===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div>'
+    +'<div class="ychips">'+ys.map(function(y){ return '<button data-recy="'+y+'" aria-pressed="'+(REC.y===y)+'">Class of '+y+'</button>'; }).join('')+'</div>'
+    +'<div id="recb"><div class="wcard wload"><span class="wk">Loading rosters</span><i></i><i></i><i></i></div></div></div>';
+}
+function recLoad(){
+  var b=document.getElementById('recb'); if(!b) return; var g=REC.g, y=REC.y;
+  recFetch(g,y).then(function(R){ if(REC.g!==g||REC.y!==y) return;
+    if(R.missing||!R.list.length){ b.innerHTML='<div class="empty"><b>Class of '+y+' isn\'t out yet</b><p>The McDonald\'s All-American rosters for each class are announced in late January of their senior year. Pick an earlier class to browse.</p></div>'; return; }
+    var L=R.list, top=L[0];
+    b.innerHTML='<p class="legend">'+L.length+' McDonald\'s All-Americans, ordered by ESPN 100 rank. From Wikipedia.</p>'
+      +'<div class="ldblock rcblock"><div class="ldhd"><b>'+(g==='boys'?'Boys':'Girls')+' · Class of '+y+'</b><span>ESPN 100 rank</span></div>'
+      +L.map(function(r,i){ return '<button class="ldrow rcrow pressable" data-rec="'+i+'"><span class="rk">'+(r.rank||'-')+'</span><span class="rmono">'+esc(initials(r.n))+'</span>'
+        +'<span class="t"><b>'+esc(r.n)+'</b><span>'+esc([r.pos,r.ht].filter(Boolean).join(' · ')+(r.hs?' · '+r.hs:''))+'</span></span>'+colChip(r.col)+'</button>'; }).join('')+'</div>'
+      +'<p class="xnote">Source: <button class="lnk" data-wiki="'+esc(R.title)+'">'+esc(R.title)+'</button> on Wikipedia (CC BY-SA 4.0). Ranks as published there, from ESPN.</p>';
+  }).catch(function(){ b.innerHTML='<div class="empty"><b>Can\'t reach the source</b><p>Check your connection and try again.</p></div>'; });
+}
+function recSheet(i){
+  var R=REC.data[REC.g+REC.y], r=R&&R.list[i]; if(!r) return;
+  var k=colKey(r.col);
+  openSheet('<div class="grab"></div><div class="ijs">'
+    +'<div class="ijwho" style="cursor:default"><span class="rmono big">'+esc(initials(r.n))+'</span><span><b>'+esc(r.n)+'</b><em>Class of '+REC.y+' · '+(REC.g==='boys'?'Boys':'Girls')+'</em></span></div>'
+    +'<div class="ijgrid">'+[['ESPN 100',r.rank?'#'+r.rank:'-'],['Position',r.pos||'-'],['Height',r.ht||'-'],['Weight',r.wt?r.wt+' lb':'-'],['High school',r.hs||'-'],['Hometown',r.home||'-']].map(function(x){
+      return '<div><span>'+x[0]+'</span><b>'+esc(String(x[1]))+'</b></div>'; }).join('')+'</div>'
+    +'<div class="fgrp" style="margin-top:16px"><span class="fl">College choice</span><div class="fvals">'+(k?'<a class="fchip pressable" href="#team/'+k+'" data-act="sheet-close">'+crest(k,18,true)+esc(r.col)+'<i>›</i></a>':'<span class="fchip">'+esc(r.col||'Undecided')+'</span>')+'</div></div>'
+    +(r.wiki&&!r.red?'<button class="ijmore pressable" data-wiki="'+esc(r.wiki)+'">Read more<span>Their Wikipedia article</span></button>':'')
+    +'<p class="xnote">From the '+esc(R.title)+' roster on Wikipedia. Offers, visits, stats and highlights need a source we can use for free; see About and sources.</p></div>','bottom');
+}
+
+/* ============================================================
+   EXPLORE HOME: search on top, sections to browse below
+   ============================================================ */
+function exTile(href,act,icon,title,sub,c1,c2){
+  return '<a class="extile pressable" href="'+href+'"'+(act?' '+act:'')+' style="--c1:'+c1+';--c2:'+c2+'"><i class="ei">'+svg(icon)+'</i><b>'+esc(title)+'</b><span>'+esc(sub)+'</span></a>';
+}
+function exploreHome(){
+  return '<div class="exgrid">'
+    +exTile('#recruits','', '<path d="M12 2l3 6 6.5.9-4.7 4.6 1.1 6.5L12 17l-5.9 3 1.1-6.5L2.5 8.9 9 8z"/>','Top recruits','High school stars, boys and girls','#7B2CBF','#3A0CA3')
+    +exTile('#news','', SI.lg,'News','Latest from ESPN, your leagues','#1D4ED8','#0B2A6F')
+    +exTile('#standings','data-sub-go="leaders"', IC.trophy,'Leaders','Points, rebounds, assists','#C2410C','#7C2D12')
+    +exTile('#explore','data-try="Luka vs Curry"', '<path d="M8 4v16M16 4v16M4 8h4M16 16h4"/>','Compare','Any two players or teams','#0F766E','#134E4A')
+    +exTile('#injuries','', '<path d="M12 5v14M5 12h14"/>','Injuries','Who is out and until when','#B91C1C','#7F1D1D')
+    +exTile('#standings','data-sub-go="table"', IC.trophy,'Standings','Every table and bracket','#4D7C0F','#1A2E05')
+    +'</div>';
+}
+function viewInjuries(){
+  return '<div class="stop gut"><a class="disc" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><b>Injuries</b><span></span></div>'
+    +'<div class="gut">'+injList(INJ.filter(function(p){return ENABLED.indexOf(leagueOf(p.t))>-1;}),true)+'<p class="xnote">Sample report in this mockup. In the app this is the official league injury report.</p></div>';
+}
+function viewNews(){
+  setTimeout(function(){
+    var b=document.getElementById('newsb'); if(!b) return;
+    Promise.all(ENABLED.map(function(L){ var Lk=ESPNL[L];
+      return (NEWSC[Lk]?Promise.resolve(NEWSC[Lk]):jget('https://site.api.espn.com/apis/site/v2/sports/basketball/'+Lk+'/news?limit=30').then(function(d){ return (NEWSC[Lk]=d.articles||[]); })).catch(function(){ return []; });
+    })).then(function(all){ var items=[].concat.apply([],all).sort(function(a,b){ return new Date(b.published)-new Date(a.published); }).slice(0,30);
+      b.innerHTML=items.length?newsBlock(items).replace('Latest from ESPN','Latest from ESPN · your leagues'):'<div class="empty"><b>Can\'t reach ESPN right now</b><p>Try again in a moment.</p></div>'; });
+  },30);
+  return '<div class="stop gut"><a class="disc" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><b>News</b><span></span></div>'
+    +'<div class="gut" id="newsb"><div class="wcard wload"><span class="wk">Loading headlines</span><i></i><i></i><i></i></div></div>';
 }
 
 /* ---------- in-app sheets: stories, highlights, the calendar ---------- */
@@ -3293,6 +3512,7 @@ function paintBar(){
 window.paintBar=paintBar;
 window.addEventListener('scroll',paintBar,{passive:true});
 function render(){
+  var shx=document.getElementById('sheet'); if(shx && !shx.hidden){ shx.classList.remove('on'); shx.hidden=true; shx.innerHTML=''; document.body.style.overflow=''; }
   var parts=(location.hash||'#following').slice(1).split('/'), main=document.getElementById('main'), r=parts[0]||'following';
   if(r==='following' && parts[1]){ DEMO=parts[1]==='m'?'m':+parts[1]; applyDemo(); }
   if(r==='game'){ main.innerHTML=viewGame(parts[1]); renderTabs(''); }
@@ -3301,6 +3521,10 @@ function render(){
     if(parts[2]==='injury'){ setTimeout(function(){ var el=document.getElementById('injury'), gt=document.getElementById('gtop'), tw=document.getElementById('gtw');
       if(el) window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-(gt?gt.offsetHeight:0)-(tw?tw.offsetHeight:0)-12,behavior:'smooth'}); },380); } }
   else if(r==='me'){ main.innerHTML=viewMe(); renderTabs(''); }
+  else if(r==='settings'){ main.innerHTML=viewSettings(parts[1]); renderTabs(''); }
+  else if(r==='recruits'){ main.innerHTML=viewRecruits(); renderTabs('explore'); setTimeout(recLoad,10); }
+  else if(r==='news'){ main.innerHTML=viewNews(); renderTabs('explore'); }
+  else if(r==='injuries'){ main.innerHTML=viewInjuries(); renderTabs('explore'); }
   else if(r==='scores'){ main.innerHTML=viewScores(); renderTabs('scores'); }
   else if(r==='standings'){ main.innerHTML=viewStandings(); renderTabs('standings'); }
   else if(r==='explore'){ main.innerHTML=viewExplore(); renderTabs('explore'); }
@@ -3383,6 +3607,10 @@ document.addEventListener('click',function(e){
   /* a team's logo or name anywhere opens the team, even inside a game card */
   var bsc=e.target.closest('.gpage .gsc>.sc');
   if(bsc){ e.preventDefault(); var all=[].slice.call(bsc.parentNode.querySelectorAll(':scope>.sc')); pulse(all.indexOf(bsc)===0?'away':'home'); return; }
+  if(location.hash.indexOf('#settings')===0 && settingsClick(e)) return;
+  var rg=e.target.closest('[data-recg]'); if(rg){ REC.g=rg.getAttribute('data-recg'); keepScroll(); setTimeout(recLoad,10); return; }
+  var ry=e.target.closest('[data-recy]'); if(ry){ REC.y=+ry.getAttribute('data-recy'); keepScroll(); setTimeout(recLoad,10); return; }
+  var rc=e.target.closest('[data-rec]'); if(rc && !e.target.closest('[data-team]')){ recSheet(+rc.getAttribute('data-rec')); return; }
   var tm=e.target.closest('[data-team]');
   if(tm && !e.target.closest('.mepick,.gtop .csc,#csc')){ e.preventDefault(); e.stopPropagation();
     var lv=document.getElementById('live'); if(lv && !lv.hidden){ closeLive(); }
