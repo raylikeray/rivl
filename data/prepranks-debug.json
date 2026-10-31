@@ -5,52 +5,147 @@
   "sample": [
    {
     "n": "Lewis Uvwo",
-    "rank": null,
+    "rank": 1,
     "slug": "/basketball/recruits/lewis-uvwo-2027",
-    "ctx": "C · '27 · 6'11\" · 225 <a style=\"font-size:13px;color:var"
+    "pos": "C",
+    "ht": "6'11\"",
+    "wt": "225",
+    "home": "Fort Lauderdale, FL",
+    "hs": "Prolific Prep",
+    "tier": "ELITE",
+    "score": 100,
+    "cons": 7,
+    "posRank": "1",
+    "status": "Uncommitted",
+    "top": [
+     "Kentucky",
+     "Baylor"
+    ],
+    "svc": {
+     "247": {
+      "rank": null,
+      "rating": 98
+     },
+     "ON3": {
+      "rank": 10,
+      "rating": 97
+     },
+     "ESPN": {
+      "rank": null,
+      "rating": 94
+     }
+    },
+    "img": "https://on3static.com/uploads/assets/595/635/635595.png"
    },
    {
     "n": "CJ Rosser",
-    "rank": null,
+    "rank": 2,
     "slug": "/basketball/recruits/c-j-rosser-2027",
-    "ctx": "PF · '27 · 6'10\" · 200 <a style=\"font-size:13px;color:va"
-   },
-   {
-    "n": "Marcus Spears Jr.",
-    "rank": null,
-    "slug": "/basketball/recruits/marcus-spears-jr-2027",
-    "ctx": "PF · '27 · 6'9\" · 210 <a style=\"font-size:13px;color:var"
+    "pos": "PF",
+    "ht": "6'10\"",
+    "wt": "200",
+    "home": "Rocky Mount, NC",
+    "hs": "Southeastern Prep",
+    "tier": "ELITE",
+    "score": 100,
+    "cons": 2,
+    "posRank": "1",
+    "status": "Uncommitted",
+    "top": [
+     "North Carolina",
+     "NC State"
+    ],
+    "svc": {
+     "247": {
+      "rank": null,
+      "rating": 98
+     },
+     "ON3": {
+      "rank": 1,
+      "rating": 98
+     },
+     "ESPN": {
+      "rank": null,
+      "rating": 95
+     }
+    },
+    "img": "https://on3static.com/uploads/assets/498/590/590498.jpeg"
    }
   ]
  },
- "row": "<!DOCTYPE html><html lang=\"en\" data-pr-palette=\"oxford\" data-pr-paper=\"neutral\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/595/635/635595.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/498/590/590498.jpeg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/340/670/670340.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/932/669/669932.jpg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/328/479/479328.jpeg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/20/665/665020.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/238/266/266238.jpeg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/263/527/527263.jpg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/604/684/684604.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/598/684/684598.png\"/><link rel=\"stylesheet\" href=\"/_next/static/css/23b2f756f790df4f.css?dpl=dpl_J4WeMMiYczcenshwkNGiWr8RBNPP\" data-precedence=\"next\"/><link rel=\"stylesheet\" href=\"/_next/static/css/3ea452bd0d61ec66.css?dpl=dpl_J4WeMMiYczcenshwkNGiWr8RBNPP\" data-precedence=\"next\"/><link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/chunks/webpack-854d96730cd6ded4.js?dpl=dpl_J4WeMMiYczcenshwkNGiWr8RBNPP\"/><script src=\"/_next/static/chunks/4bd1b696-f785427dddbba9fb.js?dpl=dpl_J4WeMMiYczcenshwkNGiWr8RBNPP\" async=\"\"></script><script src=\"/_next/static/chunks/1255-f8e5c09d8fabd30a.js?dpl=dpl_J4WeMMiYczcenshwkNGiWr8RBNPP\" async=\"\"></script><script src=\"/_next/static/chunks/main-app-5eb0d9c55a395822.js?dpl=dpl_J4WeMMiYczcenshwkNGiWr8RBNPP\" async=\"\"></script><script src=\"/_next/static/chunks/2619-3c9e02e22d10480a.js?dpl=dpl_J4WeMMiYczcenshwkNGiWr8RBNPP\" async=\"\"></script><script src=\"/_next/static/chunks/8143-436077fa986be44f.js?dpl=dpl_J4WeMMiYczcenshwkNGiWr8RBNPP\" async=\"\"></script><script src=\"/_next/static/chunks/app/layout-9d557c7b4939fdb5.js?dpl=dpl_J4WeMMiYczcenshwkNGiWr8RBNPP\" async=\"\"></script><script src=\"/_next/static/chunks/2821-b2db4c7ebd33f896.js?dpl=dpl_J4WeMMiYczcenshwkNGiWr8RBNPP\" async=\"\"></script><script src=\"/_next/static/chunks/app/basketball/recruits/year/%5Byear%5D/page-b504728c1ea97a10.js?dpl=dpl_J4WeMMiYczcenshwkNGiWr8RBNPP\" async=\"\"></script><link rel=\"preload\" href=\"https://www.googletagmanager.com/gtag/js?id=G-PYY6S7NBP4\" as=\"script\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/810/664/664810.jpg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/620/684/684620.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/262/686/686262.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/587/349/349587.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/149/457/457149.PNG\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/251/670/670251.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/435/431/431435.png\"/><link rel=\"preload\" as=\"image\" href=\"/images/recruits/jordan-page-2027.jpg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/799/714/714799.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/66/555/555066.jpeg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/899/664/664899.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/697/684/684697.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/585/349/349585.jpg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/2/579/579002.jpeg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/13/665/665013.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/615/684/684615.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/280/403/403280.jpeg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/584/349/349584.jpg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/209/420/420209.jpg\"/><link rel=\"preload\" as=\"image\" href=\"/images/recruits/navorro-bowman-jr-2027.jpg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/323/467/467323.jpg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/550/796/796550.jpg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/596/395/395596.jpeg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/59/665/665059.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/883/661/661883.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/878/664/664878.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/913/681/681913.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/987/403/403987.jpeg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/923/467/467923.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/218/420/420218.jpg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/639/467/467639.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/642/349/349642.jpeg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/992/512/512992.jpeg\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/940/681/681940.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/895/667/6",
- "rowText": "<link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/895/667/6",
  "boys2028": {
   "bytes": 597591,
   "count": 50,
   "sample": [
    {
     "n": "Yann Kamagate",
-    "rank": null,
+    "rank": 1,
     "slug": "/basketball/recruits/yann-kamagate-2028",
-    "ctx": "C · '28 · 7'0\" · 230 <a style=\"font-size:13px;color:var("
+    "pos": "C",
+    "ht": "7'0\"",
+    "wt": "230",
+    "home": "La Canada Flintridge, CA",
+    "hs": "St. Francis",
+    "tier": "ELITE",
+    "score": 96.7,
+    "cons": 1,
+    "posRank": "1",
+    "status": "Uncommitted",
+    "top": [
+     "USC",
+     "UCLA"
+    ],
+    "svc": {
+     "247": {
+      "rank": null,
+      "rating": 98
+     },
+     "ON3": {
+      "rank": 2,
+      "rating": 97
+     },
+     "ESPN": {
+      "rank": null,
+      "rating": 94
+     }
+    },
+    "img": "https://on3static.com/uploads/assets/675/666/666675.png"
    },
    {
     "n": "Xavier Young",
-    "rank": null,
+    "rank": 2,
     "slug": "/basketball/recruits/xavier-young-2028",
-    "ctx": "C · '28 · 6'10\" · 210 <a style=\"font-size:13px;color:var"
-   },
-   {
-    "n": "Bamba Touray",
-    "rank": null,
-    "slug": "/basketball/recruits/bamba-touray-2028",
-    "ctx": "C · '28 · 7'0\" · 210 <a style=\"font-size:13px;color:var("
+    "pos": "C",
+    "ht": "6'10\"",
+    "wt": "210",
+    "home": "Dallas, TX",
+    "hs": "Oak Cliff Faith Family Academy",
+    "tier": "ELITE",
+    "score": 95.7,
+    "cons": 10,
+    "posRank": "4",
+    "status": "Uncommitted",
+    "top": [
+     "LSU",
+     "Tennessee"
+    ],
+    "svc": {
+     "247": {
+      "rank": null,
+      "rating": 97
+     },
+     "ON3": {
+      "rank": 14,
+      "rating": 94
+     },
+     "ESPN": {
+      "rank": null,
+      "rating": 92
+     }
+    },
+    "img": "https://on3static.com/uploads/assets/666/684/684666.png"
    }
   ]
- },
- "boys2029": {
-  "error": "Error: https://prepranks.com/basketball/recruits/year/2029 404"
  },
  "girls2027": {
   "bytes": 613560,
@@ -58,21 +153,68 @@
   "sample": [
    {
     "n": "Jordyn Palmer",
-    "rank": null,
+    "rank": 1,
     "slug": "/womens-basketball/recruits/jordyn-palmer-2027",
-    "ctx": "SF · '27 · 6'1\" <a style=\"font-size:13px;color:var(--pr-ink);text-decoration:none;"
+    "pos": "SF",
+    "ht": "6'1\"",
+    "wt": null,
+    "home": "Norristown, PA",
+    "hs": "Westtown School",
+    "tier": "ELITE",
+    "score": 98.3,
+    "cons": 5,
+    "posRank": "2",
+    "status": "Uncommitted",
+    "top": [
+     "Rutgers",
+     "St. John's"
+    ],
+    "svc": {
+     "247": {
+      "rank": null,
+      "rating": 97
+     },
+     "ON3": {
+      "rank": 9,
+      "rating": 98
+     },
+     "ESPN": {
+      "rank": null,
+      "rating": null
+     }
+    },
+    "img": "https://on3static.com/uploads/assets/66/363/363066.png"
    },
    {
     "n": "GG Banks",
-    "rank": null,
+    "rank": 2,
     "slug": "/womens-basketball/recruits/jezelle-gg-banks-2027",
-    "ctx": "CG · '27 · 5'9\" <a style=\"font-size:13px;color:var(--pr-ink);text-decoration:none;"
-   },
-   {
-    "n": "Nation Williams",
-    "rank": null,
-    "slug": "/womens-basketball/recruits/nation-williams-2027",
-    "ctx": "PF · '27 · 6'2\" <a style=\"font-size:13px;color:var(--pr-ink);text-decoration:none;"
+    "pos": "CG",
+    "ht": "5'9\"",
+    "wt": null,
+    "home": "Wilmington, DE",
+    "hs": "The St. James Academy",
+    "tier": "ELITE",
+    "score": 97.3,
+    "cons": 4,
+    "posRank": "1",
+    "status": null,
+    "top": [],
+    "svc": {
+     "247": {
+      "rank": null,
+      "rating": 97
+     },
+     "ON3": {
+      "rank": 3,
+      "rating": 98
+     },
+     "ESPN": {
+      "rank": null,
+      "rating": null
+     }
+    },
+    "img": "https://on3static.com/uploads/assets/577/320/320577.jpeg"
    }
   ]
  },
@@ -82,26 +224,65 @@
   "sample": [
    {
     "n": "Sydney Douglas",
-    "rank": null,
+    "rank": 1,
     "slug": "/womens-basketball/recruits/sydney-douglas-2028",
-    "ctx": "PF · '28 · 6'6\" <a style=\"font-size:13px;color:var(--pr-ink);text-decoration:none;"
+    "pos": "PF",
+    "ht": "6'6\"",
+    "wt": null,
+    "home": "Corona, CA",
+    "hs": "Centennial",
+    "tier": null,
+    "score": 89.5,
+    "cons": 2,
+    "posRank": "1",
+    "status": "Uncommitted",
+    "top": [
+     "UCLA",
+     "USC"
+    ],
+    "svc": {
+     "ON3": {
+      "rank": 3,
+      "rating": 99
+     },
+     "ESPN": {
+      "rank": null,
+      "rating": null
+     }
+    },
+    "img": "https://on3static.com/uploads/assets/920/514/514920.png"
    },
    {
     "n": "Ella Peper",
-    "rank": null,
+    "rank": 2,
     "slug": "/womens-basketball/recruits/ella-peper-2028",
-    "ctx": "SF · '28 · 6'4\" <a style=\"font-size:13px;color:var(--pr-ink);text-decoration:none;"
-   },
-   {
-    "n": "Nyajuacni Riak",
-    "rank": null,
-    "slug": "/womens-basketball/recruits/nyajuacni-riak-2028",
-    "ctx": "SF · '28 · 6'2\" <a style=\"font-size:13px;color:var(--pr-ink);text-decoration:none;"
+    "pos": "SF",
+    "ht": "6'4\"",
+    "wt": null,
+    "home": "Brookline, MA",
+    "hs": "Dexter School",
+    "tier": null,
+    "score": 86.5,
+    "cons": 4,
+    "posRank": "1",
+    "status": "Uncommitted",
+    "top": [
+     "Boston College",
+     "Rutgers"
+    ],
+    "svc": {
+     "ON3": {
+      "rank": 4,
+      "rating": 99
+     },
+     "ESPN": {
+      "rank": null,
+      "rating": null
+     }
+    },
+    "img": "https://on3static.com/uploads/assets/926/514/514926.png"
    }
   ]
- },
- "girls2029": {
-  "error": "Error: https://prepranks.com/womens-basketball/recruits/year/2029 404"
  },
  "detailText": "Lewis Uvwo - C - Class of 2027 Basketball Recruit | PrepRanks P Prep Ranks Sports Data Editorial Site Games ← Men's Basketball · Recruits · Class of 2027 MEN'S BASKETBALL · CA · CLASS OF 2027 Lewis Uvwo . POSITION C CLASS i 2027 HT / WT 6'11\" · 225.00 lbs HOMETOWN i Fort Lauderdale, FL SCHOOL Prolific Prep ELITE MVI +90.0 RISK 0 REGION CA PR SCORE 100.0 / 100 # 1 National Consensus # 7 · C # 1 ○ Uncommitted Top schools: Kentucky · Baylor Composite Score Breakdown i 100.0 / 100 (capped) 48.4 19.0 10.0 9.3 10.0 SVC Service Average i 48.4 / 50 REAL Recruiting Reality i 19.0 / 25 MOM Rank Momentum i 10.0 / 20 SCAR Position Scarcity i 9.3 / 10 STAB Cross-Service Stability i 4.0 / 5 ELIT Elite Recognition i 10.0 / 10 The PrepRanks Score adds six parts: service average (up to 50), recruiting reality (25), momentum (20), position scarcity (10), stability (5) and elite recognition (10). The parts can total up to 120, and the score is capped at 100. Why this score Built from four services, weighted by signal quality. No single board drives the rank. We combine ON3, 247, Rivals, and ESPN, then add offers, momentum, scarcity, cross-service agreement, and elite recognition. Proprietary signals PrepRanks Intelligence Market Value Index i 90.0 / 100 Recruiting demand from offers, predictions, geographic reach, and program quality. Commitment Risk i 0.0 / 100 Flip likelihood from prediction mismatches, program pressure, and timing. Height Advantage i 50.0 / 100 Height percentile at C. 6'11\" measured against position peers. NBA Draft Probability i 85.0 / 100 Model estimate of NBA draft outcome given PR score, position, and HS-to-pro base rate. Big Man Scarcity i 85.0 / 100 Premium for true centers and high-end forwards in a guard-dominant cycle. Position Versatility i 40.0 / 100 Multi-position flexibility in modern positionless basketball. Cross-service consensus i How the services see Uvwo Service ratings i ON3 # 10 97.00 247 — 98.00 ESPN — 94.00 Same school · Class of 2027 Related recruits # 95 · C Charlie Cohn PR 77.7 View profile → # 126 · SG Braxton Keathley PR 71.2 View profile → # 23 · PG Michai White PR 84.7 View profile → # 6 · SF Bruce Branch III PR 97.4 View profile → Editorial coverage Recent articles No tagged articles yet. When the PrepRanks editorial team covers Lewis , the pieces will surface here. P Prep Ranks Rankings for high school football and basketball recruits. © 2026 PrepRanks · All rights reserved Editorial Corrections Contact Write for PrepRanks Data Methodology FAQ Rankings Geography Sports Football Men's Basketball Women's Basketball Games Rankings combine ON3, 247Sports, Rivals and ESPN. PrepRanks is not affiliated with any of them. About Methodology"
 }
