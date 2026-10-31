@@ -91,7 +91,8 @@ function detail(html, base) {
     posRank: m(/Consensus # \d+ · \S+ # (\d+)/),
     status,
     top: (m(/Top schools: (.+?) Composite/) || '').split(' · ').map(x => x.trim()).filter(Boolean),
-    svc, img: src
+    svc, img: src,
+    _st: status ? undefined : (t.match(/National Consensus[\s\S]{0,220}/) || [''])[0]
   };
 }
 const result = { updated: new Date().toISOString(), source: 'PrepRanks', url: 'https://prepranks.com', boys: {}, girls: {} };
@@ -119,6 +120,8 @@ for (const [g, sport] of Object.entries(SPORTS)) {
   }
 }
 try { const s1 = (result.boys[2027] || [])[0]; if (s1) { const h = await get('https://prepranks.com' + s1.slug); debug.detailText = clean(h.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ')).slice(0, 6000); } } catch (e) { debug.detailErr = String(e); }
+debug.noStatus = [];
+for (const g of ['boys', 'girls']) for (const y of Object.keys(result[g])) result[g][y].forEach(r => { if (r._st && debug.noStatus.length < 12) debug.noStatus.push(r.n + ' :: ' + r._st); delete r._st; });
 writeFileSync('data/recruits.json', JSON.stringify(result));
 writeFileSync('data/prepranks-debug.json', JSON.stringify(debug, null, 1));
 console.log(JSON.stringify(debug, null, 1).slice(0, 4000));
