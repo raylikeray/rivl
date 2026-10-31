@@ -1458,6 +1458,7 @@ h3.wrdh{font-size:17px}
 .svcg em{display:block;font-style:normal;font-size:11.5px;color:var(--t3)}
 .fchip.flip{background:rgba(232,180,60,.18);color:#F0C766}
 html[data-theme=light] .fchip.flip{background:#FBE2A0;color:#573A00}
+.nltabs{margin-top:0}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -3193,27 +3194,32 @@ function exTile(href,act,icon,title,sub,c1,c2){
 }
 function exploreHome(){
   return '<div class="exgrid">'
-    +exTile('#recruits','class="wide"', '<path d="M12 2l3 6 6.5.9-4.7 4.6 1.1 6.5L12 17l-5.9 3 1.1-6.5L2.5 8.9 9 8z"/>','Top recruits','The best high school players, boys and girls, by class','#7B2CBF','#3A0CA3')
-    +exTile('#news','', SI.lg,'News','Latest from ESPN, your leagues','#1D4ED8','#0B2A6F')
+    +exTile('#news','', SI.lg,'News','Headlines by league','#1D4ED8','#0B2A6F')
     +exTile('#standings','data-sub-go="leaders"', IC.trophy,'Leaders','Points, rebounds, assists','#C2410C','#7C2D12')
-    +exTile('#explore','data-try="Luka vs Curry"', '<path d="M8 4v16M16 4v16M4 8h4M16 16h4"/>','Compare','Any two players or teams','#0F766E','#134E4A')
     +exTile('#injuries','', '<path d="M12 5v14M5 12h14"/>','Injuries','Who is out and until when','#B91C1C','#7F1D1D')
+    +exTile('#recruits','', '<path d="M12 2l3 6 6.5.9-4.7 4.6 1.1 6.5L12 17l-5.9 3 1.1-6.5L2.5 8.9 9 8z"/>','Top recruits','High school, boys and girls','#7B2CBF','#3A0CA3')
     +'</div>';
 }
 function viewInjuries(){
   return '<div class="stop gut"><a class="disc" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><b>Injuries</b><span></span></div>'
     +'<div class="gut">'+injList(INJ.filter(function(p){return ENABLED.indexOf(leagueOf(p.t))>-1;}),true)+'<p class="xnote">Sample report in this mockup. In the app this is the official league injury report.</p></div>';
 }
+var NEWSL=null;
 function viewNews(){
+  if(!NEWSL || ENABLED.indexOf(NEWSL)<0) NEWSL=ENABLED[0];
+  var L=NEWSL, Lk=ESPNL[L];
   setTimeout(function(){
     var b=document.getElementById('newsb'); if(!b) return;
-    Promise.all(ENABLED.map(function(L){ var Lk=ESPNL[L];
-      return (NEWSC[Lk]?Promise.resolve(NEWSC[Lk]):jget('https://site.api.espn.com/apis/site/v2/sports/basketball/'+Lk+'/news?limit=30').then(function(d){ return (NEWSC[Lk]=d.articles||[]); })).catch(function(){ return []; });
-    })).then(function(all){ var items=[].concat.apply([],all).sort(function(a,b){ return new Date(b.published)-new Date(a.published); }).slice(0,30);
-      b.innerHTML=items.length?newsBlock(items).replace('Latest from ESPN','Latest from ESPN · your leagues'):'<div class="empty"><b>Can\'t reach ESPN right now</b><p>Try again in a moment.</p></div>'; });
+    (NEWSC[Lk]?Promise.resolve(NEWSC[Lk]):jget('https://site.api.espn.com/apis/site/v2/sports/basketball/'+Lk+'/news?limit=40').then(function(d){ return (NEWSC[Lk]=d.articles||[]); }))
+    .then(function(items){ if(NEWSL!==L) return;
+      items=items.slice().sort(function(a,b){ return new Date(b.published)-new Date(a.published); });
+      b.innerHTML=items.length?newsBlock(items).replace('Latest from ESPN','Latest from ESPN · '+LNAME[L]):'<div class="empty"><b>No '+esc(LNAME[L])+' headlines right now</b><p>Check back later.</p></div>'; })
+    .catch(function(){ b.innerHTML='<div class="empty"><b>Can\'t reach ESPN right now</b><p>Try again in a moment.</p></div>'; });
   },30);
+  var full={nba:'NBA',wnba:'WNBA',ncaam:'College men',ncaaw:'College women'};
   return '<div class="stop gut"><a class="disc" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><b>News</b><span></span></div>'
-    +'<div class="gut" id="newsb"><div class="wcard wload"><span class="wk">Loading headlines</span><i></i><i></i><i></i></div></div>';
+    +'<div class="ltabs gut nltabs">'+ENABLED.map(function(x){ return '<button data-newsl="'+x+'" aria-pressed="'+(x===L)+'">'+esc(full[x])+'</button>'; }).join('')+'</div>'
+    +'<div class="gut" id="newsb" style="margin-top:12px"><div class="wcard wload"><span class="wk">Loading headlines</span><i></i><i></i><i></i></div></div>';
 }
 
 /* ---------- in-app sheets: stories, highlights, the calendar ---------- */
@@ -3649,6 +3655,7 @@ document.addEventListener('click',function(e){
   var bsc=e.target.closest('.gpage .gsc>.sc');
   if(bsc){ e.preventDefault(); var all=[].slice.call(bsc.parentNode.querySelectorAll(':scope>.sc')); pulse(all.indexOf(bsc)===0?'away':'home'); return; }
   if(location.hash.indexOf('#settings')===0 && settingsClick(e)) return;
+  var nl=e.target.closest('[data-newsl]'); if(nl){ NEWSL=nl.getAttribute('data-newsl'); keepScroll(); return; }
   var rg=e.target.closest('[data-recg]'); if(rg){ REC.g=rg.getAttribute('data-recg'); keepScroll(); setTimeout(recLoad,10); return; }
   var ry=e.target.closest('[data-recy]'); if(ry){ REC.y=+ry.getAttribute('data-recy'); keepScroll(); setTimeout(recLoad,10); return; }
   var rc=e.target.closest('[data-rec]'); if(rc && !e.target.closest('[data-team]')){ recSheet(+rc.getAttribute('data-rec')); return; }
