@@ -1230,6 +1230,43 @@ html[data-theme=light] .phero{--pfade:color-mix(in srgb,var(--pc) 35%,#000)}
 .mebadge .mbc{position:absolute;right:8%;bottom:8%;width:30%;height:30%;border-radius:999px;background:rgba(10,12,16,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:grid;place-items:center;overflow:visible}
 .mejs{margin-top:14px}
 .mename{margin-top:18px}
+/* ---- two teams: lead takes space, baskets flash ---- */
+.ghero:not(.solo) .w{background:linear-gradient(101deg,color-mix(in srgb,var(--aw) 42%,#04050a) 0%,#06070c var(--split,50%),color-mix(in srgb,var(--ha) 42%,#04050a) 100%);transition:background 1.2s}
+.w>i:nth-child(1),.w>i:nth-child(3){scale:var(--sa,1);transition:scale 1.4s cubic-bezier(.2,.8,.2,1)}
+.w>i:nth-child(2),.w>i:nth-child(4){scale:var(--sh,1);transition:scale 1.4s cubic-bezier(.2,.8,.2,1)}
+.pz{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0}
+.pz.pa{background:radial-gradient(70% 90% at 18% 45%,color-mix(in srgb,var(--aw) 85%,#fff),transparent 70%)}
+.pz.ph{background:radial-gradient(70% 90% at 82% 45%,color-mix(in srgb,var(--ha) 85%,#fff),transparent 70%)}
+.pz.go{animation:pz 1.5s cubic-bezier(.2,.7,.2,1)}
+@keyframes pz{0%{opacity:0;transform:scale(.85)}22%{opacity:.85;transform:scale(1.05)}100%{opacity:0;transform:scale(1.25)}}
+.gsc>.sc{cursor:pointer}
+/* ---- one team: tones of its colour, second colour as light or a glow ---- */
+.ghero.solo .w{background:radial-gradient(110% 85% at 50% 30%,color-mix(in srgb,var(--tc) 88%,#fff),var(--tc) 42%,color-mix(in srgb,var(--tc) 40%,#030406) 100%)}
+.ghero.solo .w::before,.ghero.solo .w::after{display:none}
+.ghero.solo .w>i{scale:1}
+.ghero.solo .w>i:nth-child(1){background:color-mix(in srgb,var(--tc) 70%,#fff);width:80%;height:220%;left:-30%;top:-60%;opacity:.55;animation:sa 28s ease-in-out infinite}
+.ghero.solo .w>i:nth-child(2){background:color-mix(in srgb,var(--tc) 45%,#000);width:90%;height:240%;right:-35%;top:-50%;opacity:.7;animation:sb2 32s ease-in-out infinite}
+.ghero.solo .w>i:nth-child(3),.ghero.solo .w>i:nth-child(4){display:none}
+@keyframes sa{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(40%,8%,0)}}
+@keyframes sb2{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(-35%,-6%,0)}}
+.sb{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.phero .sb{z-index:0}
+/* light: slow diagonal sheen, like light across a satin jersey */
+.sheen .sb::before{content:"";position:absolute;top:-30%;bottom:-30%;left:-60%;right:-60%;
+  background:repeating-linear-gradient(118deg,transparent 0 96px,rgba(255,255,255,.13) 132px,rgba(255,255,255,.2) 146px,rgba(255,255,255,.13) 160px,transparent 196px,transparent 270px);
+  filter:blur(9px);animation:sh 18s linear infinite;will-change:transform}
+.sheen .sb::after{content:"";position:absolute;top:-30%;bottom:-30%;left:-60%;right:-60%;
+  background:repeating-linear-gradient(118deg,transparent 0 160px,rgba(255,255,255,.08) 200px,transparent 240px,transparent 420px);
+  filter:blur(16px);animation:sh2 29s linear infinite reverse;will-change:transform}
+@keyframes sh{to{transform:translate3d(305.8px,0,0)}}
+@keyframes sh2{to{transform:translate3d(475.7px,0,0)}}
+/* colour: one soft glow of the second colour drifting in the lower corner */
+.accent .sb::before{content:"";position:absolute;width:75%;height:120%;right:-22%;bottom:-55%;border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--t2) 80%,transparent),transparent);filter:blur(24px);opacity:.55;animation:ac 20s ease-in-out infinite;will-change:transform}
+.accent .sb::after{content:"";position:absolute;width:45%;height:70%;left:-14%;top:-30%;border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--t2) 60%,transparent),transparent);filter:blur(28px);opacity:.25;animation:ac2 26s ease-in-out infinite;will-change:transform}
+@keyframes ac{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-18%,-10%,0) scale(1.15)}}
+@keyframes ac2{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(14%,10%,0)}}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -1653,7 +1690,7 @@ function viewFollowing(){
     var pc=pairColors(hero.a,hero.h);
     /* same motion as the game page: the colour stays pinned and keeps moving,
        the big score hazes out, the compact score hazes in. Nothing drops down. */
-    var cv='--ha:'+pc.home+';--aw:'+pc.away, aL=hero.as>hero.hs, hL=hero.hs>hero.as;
+    var cv='--ha:'+pc.home+';--aw:'+pc.away+leadVars(hero.as,hero.hs), aL=hero.as>hero.hs, hL=hero.hs>hero.as;
     top='<div class="gtop ftop" id="gtop" style="'+cv+'"><span class="fmk">'+MARK+'</span>'
         +'<div class="ctr"><a class="csc" id="csc" href="#game">'+crest(hero.a,24,true)+'<b class="num'+(aL?'':' tr')+'">'+hero.as+'</b>'
           +'<span class="ck">'+stp(hero.clock,true,'flat sm')+'</span><b class="num'+(hL?'':' tr')+'">'+hero.hs+'</b>'+crest(hero.h,24,true)+'</a></div>'
@@ -1760,7 +1797,7 @@ function liveSheet(){
       +'<button class="disc" data-act="live-close" aria-label="Close">'+svg('<path d="M6 6l12 12M18 6 6 18"/>')+'</button></div>'
     +'<div class="gut lgrid">'+ls.map(function(g){
       var pc=pairColors(g.a,g.h), A=T[g.a], H=T[g.h], aUp=g.as>g.hs, hUp=g.hs>g.as, wv=g.wp.k===g.a?g.wp.v:100-g.wp.v;
-      return '<a class="lcard" href="#game" data-act="live-close" style="--ha:'+pc.home+';--aw:'+pc.away+'">'
+      return '<a class="lcard" href="#game" data-act="live-close" style="--ha:'+pc.home+';--aw:'+pc.away+leadVars(g.as,g.hs)+'">'
         +'<span class="w"><i></i><i></i><i></i><i></i></span><span class="dots"></span><span class="veil"></span><span class="in">'
         +'<span class="lt">'+stp(g.clock,true,'sm')+'<span>'+(isMine(g)?'★ Following':esc(LNAME[g.L]))+'</span></span>'
         +'<span class="lrow"><span class="s" data-team="'+g.a+'">'+crest(g.a,42,true)+'<b>'+esc(A.ab)+'</b></span>'
@@ -2165,18 +2202,38 @@ function rosterOf(k){
   MYPLAYERS.forEach(function(m){ if(m.t===k && !seen[m.n]){ seen[m.n]=1; out.push({n:m.n,p:personOf(m.n),id:m.id,pos:'',j:''}); } });
   return out;
 }
-function heroFor(color, inner){
-  var dk='color-mix(in srgb,'+color+' 55%,#000)';
-  return '<section class="ghero" style="--ha:'+dk+';--aw:'+color+'">'
-    +'<span class="w"><i></i><i></i><i></i><i></i></span><span class="dots"></span><span class="veil"></span>'
+function heroFor(color, inner, k){
+  var dk='color-mix(in srgb,'+color+' 55%,#000)', L=k?soloLayer(k):{cls:'',vars:'',html:''};
+  return '<section class="ghero'+(k?' solo'+L.cls:'')+'" style="--ha:'+dk+';--aw:'+color+';--tc:'+color+L.vars+'">'
+    +'<span class="w"><i></i><i></i><i></i><i></i></span>'+L.html+'<span class="veil"></span>'
     +'<div class="in gut"><div class="gnav"><a class="disc g" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><span style="flex:1"></span>'
     +'<span class="disc g" aria-label="Follow">'+svg(IC.star)+'</span></div>'+inner+'</div></section>';
+}
+
+/* ---------- colour that means something ----------
+   Two teams: the side that is ahead gets more of the screen, and a basket
+   flashes the scorer's colour forward. One team: its own colour in tones,
+   with its second colour moving through as light (white, silver) or as a
+   small glow (a real colour like orange or gold). */
+var SOLO2={bos:'#ffffff',uk:'#ffffff',duke:'#ffffff',uconn:'#ffffff',uconnw:'#ffffff',unc:'#ffffff',gs:'#FFC72C'};
+function leadVars(as,hs){
+  if(as==null||hs==null) return '';
+  var sh=Math.max(.3,Math.min(.7,.5+(as-hs)/40));
+  return ';--split:'+Math.round(sh*100)+'%;--sa:'+(.82+sh*.5).toFixed(2)+';--sh:'+(.82+(1-sh)*.5).toFixed(2);
+}
+function soloKind(k){ var t=T[k], sec=SOLO2[k]||t.alt||'#ffffff', h=hsl(sec); return {sec:sec, light:(h[2]>.8||h[1]<.12)}; }
+function soloLayer(k){ var s=soloKind(k);
+  return {cls:s.light?' sheen':' accent', vars:';--t2:'+s.sec, html:'<span class="sb"></span>'}; }
+function pulse(side){
+  var h=document.querySelector('.ghero:not(.solo)'); if(!h) return;
+  var z=h.querySelector('.pz'); if(!z){ z=document.createElement('span'); z.className='pz'; h.insertBefore(z,h.querySelector('.veil')); }
+  z.className='pz '+(side==='away'?'pa':'ph'); void z.offsetWidth; z.classList.add('go');
 }
 var TTAB='overview';
 function viewTeam(k, tab){
   var t=T[k]; if(!t) return viewFollowing();
   TTAB=tab||'overview';
-  var hero=heroFor(t.c,'<div class="phd">'+crest(k,72,true)+'<div><em>'+esc(LNAME[leagueOf(k)])+'</em><h1>'+esc(t.full)+'</h1><p>'+esc(standLine(k))+'</p></div></div>');
+  var hero=heroFor(t.c,'<div class="phd">'+crest(k,72,true)+'<div><em>'+esc(LNAME[leagueOf(k)])+'</em><h1>'+esc(t.full)+'</h1><p>'+esc(standLine(k))+'</p></div></div>', k);
   var tabs=[['overview','Overview'],['schedule','Schedule'],['roster','Roster'],['stats','Stats']];
   return hero+'<div class="sheet"><div class="gut"><div class="gtabs ptabs">'+tabs.map(function(x){ return '<button data-ttab="'+x[0]+'" aria-pressed="'+(TTAB===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div></div>'
     +'<div id="tbody">'+teamBody(k,TTAB)+'</div></div>';
@@ -2432,7 +2489,8 @@ function viewPlayer(key){
   var top='<div class="gtop" id="gtop"><a class="disc g" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a>'
     +'<div class="ctr"><div class="csc pcsc" id="csc">'+shot(who.id,who.n,c,36)+'<span><b>'+esc(who.n)+'</b><em>'+crest(who.t,14,true)+esc(t.full)+'</em></span></div></div>'
     +'<span class="disc g" aria-label="Alerts">'+bell+'</span></div>';
-  var hero='<section class="phero'+(face?'':' noface')+'" style="--pc:'+c+'">'+wmImg(who.t,'pwm')+face+'<span class="psil">'+SIL+'</span>'
+  var SL=soloLayer(who.t);
+  var hero='<section class="phero'+(face?'':' noface')+SL.cls+'" style="--pc:'+c+SL.vars+'">'+SL.html+wmImg(who.t,'pwm')+face+'<span class="psil">'+SIL+'</span>'
     +'<div class="pid gut" id="gfade"><a href="#team/'+who.t+'" class="pcr">'+crest(who.t,46,true)+'</a><h1>'+esc(who.n)+'</h1>'
       +'<p class="pmeta">'+esc([t.full, who.pos, (who.j!==''&&who.j!=null)?'#'+who.j:''].filter(Boolean).join(' · '))+'</p>'
       +'<button class="pfollow pressable">'+svg('<path d="M12 5v14M5 12h14"/>')+'Follow player</button></div></section>';
@@ -2654,7 +2712,7 @@ function fgLine(list){
 
 function viewGame(tab){
   tab = tab||'sum';
-  var h=T[LIVE.home], a=T[LIVE.away], pc=pairColors(LIVE.away,LIVE.home), cvars='--ha:'+pc.home+';--aw:'+pc.away;
+  var h=T[LIVE.home], a=T[LIVE.away], pc=pairColors(LIVE.away,LIVE.home), cvars='--ha:'+pc.home+';--aw:'+pc.away+leadVars(LIVE.as,LIVE.hs);
   var tabs=[['sum','Summary'],['box','Box score'],['play','Plays'],['shot','Shots']];
   var OTHERS=[{a:'phi',h:'mia',as:74,hs:79,live:'3rd 2:15'},{cur:1},{a:'okc',h:'den',as:118,hs:110},{a:'bos',h:'nyk',t:'7:00 PM'},{a:'dal',h:'okc',t:'8:00 PM'}];
   /* the other games: one-line glass pills between Back and Share, fading out at both edges */
@@ -2891,6 +2949,8 @@ function keepScroll(){ var y=window.scrollY; render(); window.scrollTo(0,y); pai
 
 document.addEventListener('click',function(e){
   /* a team's logo or name anywhere opens the team, even inside a game card */
+  var bsc=e.target.closest('.gpage .gsc>.sc');
+  if(bsc){ e.preventDefault(); var all=[].slice.call(bsc.parentNode.querySelectorAll(':scope>.sc')); pulse(all.indexOf(bsc)===0?'away':'home'); return; }
   var tm=e.target.closest('[data-team]');
   if(tm && !e.target.closest('.mepick,.gtop .csc,#csc')){ e.preventDefault(); e.stopPropagation();
     var lv=document.getElementById('live'); if(lv && !lv.hidden){ closeLive(); }
