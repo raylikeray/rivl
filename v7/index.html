@@ -977,10 +977,6 @@ button.xpage{width:100%;text-align:left}
 .gtop{position:fixed;top:0;left:50%;transform:translateX(-50%);width:min(460px,100%);z-index:34;
   display:flex;align-items:center;gap:8px;height:calc(52px + env(safe-area-inset-top,0px));
   padding:env(safe-area-inset-top,0px) 12px 0;--mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
-.gtop .bg{position:absolute;inset:0;z-index:-1;opacity:0;overflow:hidden}
-.gtop .bg .w,.gtw .cn .w{position:absolute;inset:0;background:linear-gradient(90deg,var(--aw) 0%,var(--mid) 50%,var(--ha) 100%)}
-.gtop .bg .dots,.gtw .cn .dots{position:absolute;inset:0;background-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,.26) 1.1px,transparent 1.2px);background-size:5px 5px;mix-blend-mode:multiply}
-.gtop .bg::after,.gtw .cn::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.14)}
 .gtop .disc{background:rgba(0,0,0,.26);border-color:rgba(255,255,255,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);flex:none}
 .gtop .disc svg{stroke:#fff}
 .gtop .ctr{position:relative;flex:1;min-width:0;height:40px}
@@ -1160,6 +1156,32 @@ span.dots{display:none!important}
 .fcap{padding-top:6px}
 .fcap .ltabs{position:static;background:transparent}
 .ghero .sband{display:none!important}
+/* cover in the bar: exact copy of the hero, plus the two wedges under it */
+.gtop .bg{position:absolute;left:0;right:0;top:0;height:calc(100% + 22px);z-index:-1;opacity:1!important;overflow:hidden;pointer-events:none;
+  -webkit-mask:linear-gradient(#000,#000) left top/100% calc(100% - 22px) no-repeat,radial-gradient(circle at 100% 100%,transparent 21.5px,#000 22px) left bottom/22px 22px no-repeat,radial-gradient(circle at 0 100%,transparent 21.5px,#000 22px) right bottom/22px 22px no-repeat;
+          mask:linear-gradient(#000,#000) left top/100% calc(100% - 22px) no-repeat,radial-gradient(circle at 100% 100%,transparent 21.5px,#000 22px) left bottom/22px 22px no-repeat,radial-gradient(circle at 0 100%,transparent 21.5px,#000 22px) right bottom/22px 22px no-repeat}
+.gcov,.pcov{position:absolute;overflow:hidden;isolation:isolate;z-index:0}
+.pcov::after{display:none}
+.gsheet>#gbody{clip-path:none!important}
+/* player hero: Messi layout. Photo runs to the bottom, name and Follow sit on it */
+.phero{height:calc(560px + env(safe-area-inset-top,0px))}
+.phero .pwm{top:calc(96px + env(safe-area-inset-top,0px));width:330px;height:330px}
+.phero .pface{width:610px;bottom:0;filter:none;image-rendering:auto}
+.phero::after{height:46%;background:linear-gradient(transparent,rgba(0,0,0,.18) 40%,var(--pfade) 100%)}
+.phero{--pfade:var(--L0)}
+html[data-theme=light] .phero{--pfade:color-mix(in srgb,var(--pc) 35%,#000)}
+.pid{bottom:40px}
+.pid h1{color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.35)}
+.pmeta{color:rgba(255,255,255,.86)}
+.pfollow{color:#fff;background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.28)}
+.pfollow svg{stroke:#fff}
+.psil{bottom:0}
+.pcsc{justify-content:flex-start!important;gap:10px!important;padding-left:4px}
+.pcsc .hs{box-shadow:0 0 0 2px rgba(255,255,255,.5)}
+.pcsc>span:last-child{display:flex;flex-direction:column;min-width:0;text-align:left}
+.pcsc b{font-size:15.5px;max-width:220px}
+.pcsc em{display:flex;align-items:center;gap:5px;font-style:normal;font-size:12px;color:rgba(255,255,255,.85);white-space:nowrap}
+.pcsc em .cr{width:14px;height:14px}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -2362,7 +2384,7 @@ function viewPlayer(key){
   PTAB='overview';
   var bell=svg('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>');
   var top='<div class="gtop" id="gtop"><a class="disc g" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a>'
-    +'<div class="ctr"><div class="csc pcsc" id="csc">'+crest(who.t,26,true)+'<b>'+esc(who.n)+'</b></div></div>'
+    +'<div class="ctr"><div class="csc pcsc" id="csc">'+shot(who.id,who.n,c,36)+'<span><b>'+esc(who.n)+'</b><em>'+crest(who.t,14,true)+esc(t.full)+'</em></span></div></div>'
     +'<span class="disc g" aria-label="Alerts">'+bell+'</span></div>';
   var hero='<section class="phero'+(face?'':' noface')+'" style="--pc:'+c+'">'+wmImg(who.t,'pwm')+face+'<span class="psil">'+SIL+'</span>'
     +'<div class="pid gut" id="gfade"><a href="#team/'+who.t+'" class="pcr">'+crest(who.t,46,true)+'</a><h1>'+esc(who.n)+'</h1>'
@@ -2598,7 +2620,7 @@ function viewGame(tab){
   var aL=LIVE.as>LIVE.hs, hL=LIVE.hs>LIVE.as;
   /* one fixed bar. At the top it carries the other games; as you scroll, the big
      score fades away and the compact score fades in where the games were. */
-  var top='<div class="gtop" id="gtop" style="'+cvars+'"><span class="bg"><span class="w"></span><span class="dots"></span></span>'
+  var top='<div class="gtop" id="gtop" style="'+cvars+'">'
       +'<a class="disc g" href="#following" aria-label="Back">'+svg(IC.back)+'</a>'
       +'<div class="ctr"><div class="gstrip" id="gstrip">'+strip+'</div>'
         +'<div class="csc" id="csc">'+crest(LIVE.away,26,true)+'<b class="num'+(aL?'':' tr')+'">'+LIVE.as+'</b>'
@@ -2785,19 +2807,32 @@ function bindMini(){
   var gt=document.getElementById('gtop');
   if(gt){
     var hero0=document.querySelector('.ghero,.phero'), fade=document.getElementById('gfade'), st=document.getElementById('gstrip'),
-        cs=document.getElementById('csc'), tw=document.getElementById('gtw'), bg=gt.querySelector('.bg');
-    var ticking=false;
+        cs=document.getElementById('csc');
+    /* The bar and the two corner wedges under it hold an exact, in-step copy of the
+       hero's moving colour. The hero is pinned at the top, so the copy lines up
+       pixel for pixel: whatever scrolls underneath is hidden, nothing pops in,
+       and no per-frame clipping is needed. */
+    var bg=gt.querySelector('.bg'); if(!bg){ bg=document.createElement('span'); bg.className='bg'; gt.insertBefore(bg,gt.firstChild); }
+    function cover(){
+      var r=hero0.getBoundingClientRect(), g=gt.getBoundingClientRect();
+      var cv=document.createElement('div');
+      cv.className=hero0.classList.contains('phero')?'phero pcov':'ghero gcov';
+      cv.setAttribute('style',(hero0.getAttribute('style')||'')+';position:absolute;left:'+(r.left-g.left)+'px;top:0;width:'+r.width+'px;height:'+r.height+'px');
+      var w=hero0.querySelector('.w'), v=hero0.querySelector('.veil');
+      cv.innerHTML=(w?w.outerHTML:'')+(v?v.outerHTML:'');
+      bg.innerHTML=''; bg.appendChild(cv);
+      var o=hero0.querySelectorAll('.w>i'), c=cv.querySelectorAll('.w>i');
+      for(var i=0;i<c.length;i++){ try{ var A=c[i].getAnimations()[0], B=o[i].getAnimations()[0]; if(A&&B) A.currentTime=B.currentTime; }catch(e){} }
+    }
+    cover(); window.onresize=cover;
+    var ticking=false, last={};
+    function set(el,k,v){ if(el && last[el.id+k]!==v){ el.style[k]=v; last[el.id+k]=v; } }
     miniHandler=function(){ if(ticking) return; ticking=true; requestAnimationFrame(function(){ ticking=false;
       var bar=gt.offsetHeight, span=Math.max(80, hero0.offsetHeight-bar-22), p=Math.min(1,Math.max(0,window.scrollY/span));
-      /* big score: fades and drifts up during the first 60% of the scroll */
-      var f=Math.min(1,p/0.6); fade.style.opacity=String(1-f); fade.style.transform='translateY('+(-18*f)+'px) scale('+(1-0.06*f)+')';
-      /* games strip leaves early; compact score arrives late */
-      var so=Math.max(0,1-p/0.35); if(st){ st.style.opacity=String(so); st.style.pointerEvents=so<.2?'none':''; }
-      var c=Math.min(1,Math.max(0,(p-0.45)/0.4)); cs.style.opacity=String(c); cs.style.transform='translateY('+(8*(1-c))+'px)'; cs.style.pointerEvents=c>.5?'':'none';
-      /* nothing scrolls above the tabs: the body is trimmed at the tabs' bottom edge,
-         so the bar and the rounded corners only ever show the moving colour */
-      var gb=document.getElementById('gbody'), cut=tw.getBoundingClientRect().bottom-gb.getBoundingClientRect().top;
-      gb.style.clipPath = cut>0 ? 'inset('+Math.ceil(cut)+'px 0 0 0)' : '';
+      var f=Math.min(1,p/0.6);
+      set(fade,'opacity',(1-f).toFixed(3)); set(fade,'transform','translateY('+(-18*f).toFixed(1)+'px) scale('+(1-0.06*f).toFixed(3)+')');
+      var so=Math.max(0,1-p/0.35); set(st,'opacity',so.toFixed(3)); set(st,'pointerEvents',so<.2?'none':'');
+      var c=Math.min(1,Math.max(0,(p-0.45)/0.4)); set(cs,'opacity',c.toFixed(3)); set(cs,'transform','translateY('+(8*(1-c)).toFixed(1)+'px)'); set(cs,'pointerEvents',c>.5?'':'none');
     }); };
     window.addEventListener('scroll',miniHandler,{passive:true}); miniHandler(); return;
   }
