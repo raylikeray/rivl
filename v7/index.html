@@ -790,6 +790,31 @@ html[data-theme=light] .tsw button[aria-pressed=true]{background:#fff}
 .ldr .t span{display:block;font-size:12px;color:var(--t3);margin-top:1px}
 .ldr .v{font-size:22px;font-weight:600}
 
+
+/* league row — underlined text tabs */
+.ltabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:11;display:flex;gap:24px;overflow-x:auto;scrollbar-width:none;
+  margin-top:10px;background:color-mix(in srgb,var(--L0) 97%,transparent);
+  backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);
+  border-bottom:1px solid var(--line);
+  padding-left:max(var(--gut),env(safe-area-inset-left,0px));padding-right:max(var(--gut),env(safe-area-inset-right,0px))}
+.ltabs::-webkit-scrollbar{display:none}
+.ltabs button{flex:none;position:relative;padding:13px 0 12px;font-size:16px;font-weight:500;color:var(--t3);white-space:nowrap;
+  transition:color .3s var(--ease)}
+.ltabs button[aria-pressed=true]{color:var(--t1);font-weight:700}
+.ltabs button[aria-pressed=true]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:999px;background:var(--t1)}
+.sheet .ltabs{top:calc(52px + env(safe-area-inset-top,0px))}
+
+/* scores — written-out days, a quick way back to today, the calendar */
+.dctl{display:flex;align-items:center;gap:8px;align-self:flex-end}
+.calbtn{width:40px;height:40px;padding:0;justify-content:center}
+.todaybtn{padding:9px 15px;border-radius:999px;background:var(--t1);color:var(--L0);font-size:13.5px;font-weight:700}
+.dwrow{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-top:12px;
+  padding-left:max(var(--gut),env(safe-area-inset-left,0px));padding-right:max(var(--gut),env(safe-area-inset-right,0px))}
+.dwrow::-webkit-scrollbar{display:none}
+.dw{flex:none;padding:8px 14px;border-radius:12px;font-size:15px;font-weight:500;color:var(--t3);white-space:nowrap;
+  transition:background .3s var(--ease),color .3s var(--ease)}
+.dw.on{background:var(--L2);color:var(--t1);font-weight:700}
+
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -1149,11 +1174,13 @@ function topIcons(onColor){
 var MARK='<span class="mark">R<i>I</i>V<i>L</i></span>';
 /* the same chips, the same look, on every tab — only when you follow more than one league */
 function leagueChips(){
+  /* underlined text tabs — the same language as the game page's tabs.
+     Pinned under the status bar as you scroll. No row with one league. */
   if(ENABLED.length<2) return '';
   var ls=LORDER.filter(function(L){return ENABLED.indexOf(L)>-1;});
-  return '<div class="fchips">'+[['all','All']].concat(ls.map(function(L){return [L,LNAME[L]];})).map(function(c){
+  return '<nav class="ltabs" id="ltabs">'+[['all','All']].concat(ls.map(function(L){return [L,LNAME[L]];})).map(function(c){
     return '<button data-lg="'+c[0]+'" aria-pressed="'+(LG===c[0])+'">'+c[1]+'</button>';
-  }).join('')+'</div>';
+  }).join('')+'</nav>';
 }
 function injRow(p, withTeam){
   var t=T[p.t];
@@ -1252,14 +1279,18 @@ function viewFollowing(){
 var SCORES={date:TODAY};
 function hasMine(d){ return genDay(d).some(function(g){ return enabledG(g) && isMine(g); }); }
 function hasAny(d){ return genDay(d).some(enabledG); }
-function dayStrip(){
+var WDFULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+function dayWord(d){
+  var n=Math.round((d-TODAY)/864e5);
+  if(n===0) return 'Today'; if(n===-1) return 'Yesterday'; if(n===1) return 'Tomorrow';
+  if(Math.abs(n)<=6) return WDFULL[d.getDay()];
+  return WD[d.getDay()]+', '+MON[d.getMonth()].slice(0,3)+' '+d.getDate();
+}
+function dateRow(){
   var sel=SCORES.date, out='';
-  for(var i=-10;i<=10;i++){
-    var d=addDays(sel,i), on=i===0, td=sameDay(d,TODAY);
-    out+='<button class="dy'+(on?' on':'')+(td?' td':'')+(hasAny(d)?'':' none')+'" data-date="'+dkey(d)+'">'
-      +'<span>'+(td?'Today':WD[d.getDay()])+'</span><b class="num">'+d.getDate()+'</b>'+(hasMine(d)?'<i></i>':'<i class="x"></i>')+'</button>';
-  }
-  return '<div class="days2" id="days2">'+out+'</div>';
+  for(var i=-7;i<=7;i++){ var d=addDays(sel,i);
+    out+='<button class="dw'+(i===0?' on':'')+'" data-date="'+dkey(d)+'">'+esc(dayWord(d))+'</button>'; }
+  return '<div class="dwrow" id="dwrow">'+out+'</div>';
 }
 function viewScores(){
   var sel=SCORES.date;
@@ -1272,9 +1303,10 @@ function viewScores(){
     if(g.length) groups.push([LNAME[L],g]);
   });
   var out='<header class="hdr gut">'+MARK+topIcons(false)+'</header>'
-    +'<div class="gut ptrow"><h1 class="ptitle">Scores</h1>'
-    +'<button class="calbtn pressable" data-act="cal">'+svg(IC.cal)+'<span>'+MON[sel.getMonth()].slice(0,3)+' '+sel.getFullYear()+'</span></button></div>'
-    +leagueChips()+dayStrip();
+    +'<div class="gut ptrow"><h1 class="ptitle">Scores</h1><span class="dctl">'
+      +(sameDay(sel,TODAY)?'':'<button class="todaybtn pressable" data-date="'+dkey(TODAY)+'">Today</button>')
+      +'<button class="calbtn pressable" data-act="cal" aria-label="Pick a date">'+svg(IC.cal)+'</button></span></div>'
+    +leagueChips()+dateRow();
   if(!groups.length){
     var lbl = LG==='all' ? 'in your leagues' : 'in '+LNAME[LG];
     out+='<div class="gut"><div class="empty"><b>No games '+lbl+'</b><p>'+esc(longDate(sel))+'. Pick another day or open the calendar.</p></div></div>';
@@ -1284,7 +1316,7 @@ function viewScores(){
         +'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>'+gamePlate(g[1])+'</div>';
     }).join('');
   }
-  return out+'<p class="gut legend">Only the leagues you picked at setup appear. A dot under a day means one of your teams plays.</p>';
+  return out+'<p class="gut legend">Only the leagues you picked at setup appear.</p>';
 }
 /* the calendar: a bottom sheet, any day of the season */
 var CAL=null;
@@ -1745,8 +1777,10 @@ function afterPaint(){
     hv.style.setProperty('--sbc',heroTint);
     if(!hv.querySelector('.sband')){ var sb=document.createElement('span'); sb.className='sband'; hv.insertBefore(sb,hv.firstChild); }
   } else heroTint=null;
-  var ds=document.getElementById('days2');
-  if(ds){ var on=ds.querySelector('.on'); if(on) ds.scrollLeft=on.offsetLeft-ds.clientWidth/2+on.offsetWidth/2; }
+  [['dwrow','.on'],['ltabs','[aria-pressed=true]']].forEach(function(r){
+    var el=document.getElementById(r[0]); if(!el) return; var on=el.querySelector(r[1]);
+    if(on && (r[0]==='dwrow' || on.offsetLeft+on.offsetWidth>el.clientWidth-10)) el.scrollLeft=on.offsetLeft-el.clientWidth/2+on.offsetWidth/2;
+  });
   paintBar();
 }
 /* switching Summary / Box score / Plays / Shots — or a filter inside one —
