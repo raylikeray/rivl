@@ -1267,6 +1267,25 @@ html[data-theme=light] .phero{--pfade:color-mix(in srgb,var(--pc) 35%,#000)}
   background:radial-gradient(closest-side,color-mix(in srgb,var(--t2) 60%,transparent),transparent);filter:blur(28px);opacity:.25;animation:ac2 26s ease-in-out infinite;will-change:transform}
 @keyframes ac{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-18%,-10%,0) scale(1.15)}}
 @keyframes ac2{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(14%,10%,0)}}
+/* accent glow: higher up so it is never hidden under the sheet, and it travels */
+.accent .sb::before{width:70%;height:110%;right:-24%;bottom:auto;top:10%;opacity:.78;animation:ac 16s ease-in-out infinite}
+.accent .sb::after{width:50%;height:80%;left:-18%;top:-34%;opacity:.32;animation:ac2 21s ease-in-out infinite}
+@keyframes ac{0%,100%{transform:translate3d(0,0,0) scale(1)}33%{transform:translate3d(-26%,-22%,0) scale(1.2)}66%{transform:translate3d(-8%,14%,0) scale(.9)}}
+@keyframes ac2{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(30%,18%,0) scale(1.15)}}
+/* player hero: the colour moves behind the player too */
+.phero .w{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.phero .w>i{scale:1}
+.phero .w>i:nth-child(1){background:color-mix(in srgb,var(--tc) 55%,#fff);width:90%;height:70%;left:-30%;top:-10%;opacity:.55;animation:sa 24s ease-in-out infinite}
+.phero .w>i:nth-child(2){background:color-mix(in srgb,var(--tc) 45%,#000);width:95%;height:75%;right:-40%;top:20%;opacity:.6;animation:sb2 28s ease-in-out infinite}
+.phero .sb{z-index:0}
+.phero .pwm{z-index:0}
+/* depth: the player and the crest sit above the colour */
+.phero .pface{filter:drop-shadow(0 24px 34px rgba(0,0,0,.38)) drop-shadow(0 4px 8px rgba(0,0,0,.18))}
+.mcard .mface,.ldtop .mface{filter:drop-shadow(10px 14px 18px rgba(0,0,0,.35))}
+.phd .cr img,.pid .pcr .cr img{filter:drop-shadow(0 3px 4px rgba(0,0,0,.3)) drop-shadow(0 14px 22px rgba(0,0,0,.4))}
+.phd .cr,.pid .pcr .cr{animation:lift 7s ease-in-out infinite}
+@keyframes lift{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-4px,0)}}
+@media(prefers-reduced-motion:reduce){.phd .cr,.pid .pcr .cr{animation:none}}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -2490,7 +2509,7 @@ function viewPlayer(key){
     +'<div class="ctr"><div class="csc pcsc" id="csc">'+shot(who.id,who.n,c,36)+'<span><b>'+esc(who.n)+'</b><em>'+crest(who.t,14,true)+esc(t.full)+'</em></span></div></div>'
     +'<span class="disc g" aria-label="Alerts">'+bell+'</span></div>';
   var SL=soloLayer(who.t);
-  var hero='<section class="phero'+(face?'':' noface')+SL.cls+'" style="--pc:'+c+SL.vars+'">'+SL.html+wmImg(who.t,'pwm')+face+'<span class="psil">'+SIL+'</span>'
+  var hero='<section class="phero'+(face?'':' noface')+SL.cls+'" style="--pc:'+c+';--tc:'+c+SL.vars+'"><span class="w"><i></i><i></i></span>'+SL.html+wmImg(who.t,'pwm')+face+'<span class="psil">'+SIL+'</span>'
     +'<div class="pid gut" id="gfade"><a href="#team/'+who.t+'" class="pcr">'+crest(who.t,46,true)+'</a><h1>'+esc(who.n)+'</h1>'
       +'<p class="pmeta">'+esc([t.full, who.pos, (who.j!==''&&who.j!=null)?'#'+who.j:''].filter(Boolean).join(' · '))+'</p>'
       +'<button class="pfollow pressable">'+svg('<path d="M12 5v14M5 12h14"/>')+'Follow player</button></div></section>';
@@ -2922,12 +2941,14 @@ function bindMini(){
       var cv=document.createElement('div');
       cv.className=hero0.classList.contains('phero')?'phero pcov':'ghero gcov';
       cv.setAttribute('style',(hero0.getAttribute('style')||'')+';position:absolute;left:'+(r.left-g.left)+'px;top:0;width:'+r.width+'px;height:'+r.height+'px');
-      var w=hero0.querySelector('.w'), v=hero0.querySelector('.veil');
-      cv.innerHTML=(w?w.outerHTML:'')+(v?v.outerHTML:'');
+      var w=hero0.querySelector('.w'), sb=hero0.querySelector('.sb'), v=hero0.querySelector('.veil');
+      cv.innerHTML=(w?w.outerHTML:'')+(sb?sb.outerHTML:'')+(v?v.outerHTML:'');
+      cv.className+=(hero0.classList.contains('sheen')?' sheen':'')+(hero0.classList.contains('accent')?' accent':'')+(hero0.classList.contains('solo')?' solo':'');
       bg.innerHTML=''; bg.appendChild(cv);
       try{ var ow=hero0.querySelector('.w'), cw=cv.querySelector('.w');
-        if(ow&&cw){ var oa=ow.getAnimations({subtree:true}), ca=cw.getAnimations({subtree:true});
-          for(var i=0;i<ca.length&&i<oa.length;i++) ca[i].currentTime=oa[i].currentTime; } }catch(e){}
+        [['.w','.w'],['.sb','.sb']].forEach(function(q){ var A=hero0.querySelector(q[0]), B=cv.querySelector(q[1]); if(!A||!B) return;
+          var oa=A.getAnimations({subtree:true}), ca=B.getAnimations({subtree:true});
+          for(var i=0;i<ca.length&&i<oa.length;i++) ca[i].currentTime=oa[i].currentTime; }); }catch(e){}
     }
     cover(); window.onresize=cover;
     var ticking=false, last={};
