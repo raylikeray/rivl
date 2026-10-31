@@ -815,6 +815,24 @@ html[data-theme=light] .tsw button[aria-pressed=true]{background:#fff}
   transition:background .3s var(--ease),color .3s var(--ease)}
 .dw.on{background:var(--L2);color:var(--t1);font-weight:700}
 
+
+/* shots: the player picker — everyone visible, pick several */
+.ppick{margin-top:14px;display:grid;gap:14px}
+.pgh{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.pgh .cr{width:18px;height:18px;background:transparent}
+.pgh .cr img{width:100%;height:100%}
+.pgh b{font-size:12.5px;font-weight:700;color:var(--t2)}
+.pgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.pgrid button{display:flex;align-items:center;gap:6px;min-width:0;padding:8px 9px;border-radius:12px;
+  background:var(--L1);border:1px solid var(--line);text-align:left;transition:background .25s var(--ease),border-color .25s var(--ease)}
+.pgrid .dot{width:7px;height:7px;border-radius:999px;flex:none;background:var(--pc);opacity:.35;transition:opacity .25s var(--ease)}
+.pgrid b{flex:1;min-width:0;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pgrid span{font-size:11px;color:var(--t3);font-weight:600}
+.pgrid button[aria-pressed=true]{background:color-mix(in srgb,var(--pc) 22%,var(--L1));border-color:color-mix(in srgb,var(--pc) 70%,transparent)}
+.pgrid button[aria-pressed=true] .dot{opacity:1}
+.pclear{justify-self:start;font-size:12.5px;font-weight:600;color:var(--t3);padding:2px 0}
+.shsum.multi{flex-direction:column;align-items:flex-start;gap:4px}
+
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -1535,7 +1553,7 @@ var GINJ=[{id:0,n:'Gabe Vincent',t:'lal',st:'out',w:'Left ankle sprain · out to
 
 /* game-page filters: which team's box score, which team's plays,
    and whose shots — a team, or one player */
-var GF={box:'home', pteam:'all', pkey:'key', steam:'all', sp:null, sq:0};
+var GF={box:'home', pteam:'all', pkey:'key', steam:'all', sps:[], sq:0};
 function teamSwitch(field, withAll){
   var opts=(withAll?[['all','Both']]:[]).concat([['away',LIVE.away],['home',LIVE.home]]);
   return '<div class="tsw">'+opts.map(function(o){
@@ -1573,7 +1591,8 @@ function genShots(){
 function shotFilter(){
   if(!SHOTS) SHOTS=genShots();
   return SHOTS.filter(function(s){
-    return (GF.steam==='all'||s.side===GF.steam) && (!GF.sp||s.pl===GF.sp) && (!GF.sq||s.q===GF.sq);
+    var byP = GF.sps.length ? GF.sps.indexOf(s.side+'|'+s.pl)>-1 : (GF.steam==='all'||s.side===GF.steam);
+    return byP && (!GF.sq||s.q===GF.sq);
   });
 }
 function shotsSvg(list, pc){
@@ -1582,7 +1601,9 @@ function shotsSvg(list, pc){
     var col=s.side==='away'?pc.away:pc.home, d=1.25;
     out += s.made
       ? '<circle cx="'+s.x.toFixed(1)+'" cy="'+s.y.toFixed(1)+'" r="1.5" fill="'+col+'" stroke="rgba(18,10,2,.7)" stroke-width=".35"/>'
-      : '<path d="M'+(s.x-d).toFixed(2)+' '+(s.y-d).toFixed(2)+'l'+(d*2)+' '+(d*2)+'M'+(s.x+d).toFixed(2)+' '+(s.y-d).toFixed(2)+'l-'+(d*2)+' '+(d*2)+'" stroke="'+col+'" stroke-width=".42" stroke-linecap="round" fill="none"/>';
+      : (function(){ var path='M'+(s.x-d).toFixed(2)+' '+(s.y-d).toFixed(2)+'l'+(d*2)+' '+(d*2)+'M'+(s.x+d).toFixed(2)+' '+(s.y-d).toFixed(2)+'l-'+(d*2)+' '+(d*2);
+          return '<path d="'+path+'" stroke="rgba(28,14,2,.62)" stroke-width=".95" stroke-linecap="round" fill="none"/>'
+            +'<path d="'+path+'" stroke="'+col+'" stroke-width=".52" stroke-linecap="round" fill="none"/>'; })();
   });
   return '<svg viewBox="0 0 100 56" preserveAspectRatio="none">'
     +'<g stroke="'+ink+'" fill="none" stroke-width=".6"><rect x="1.5" y="1.5" width="97" height="53"/>'
@@ -1697,23 +1718,31 @@ function gameBody(tab,pc){
   }
   if(tab==='shot'){
     var list=shotFilter();
-    var players='';
-    if(GF.steam!=='all'){
-      var tk=LIVE[GF.steam];
-      players='<div class="pchips">'+roster(tk).filter(function(p){return mk(p.s[1])[1]>0;}).map(function(p){
-        var on=GF.sp===p.n;
-        return '<button data-gf="sp:'+(on?'':esc(p.n))+'" aria-pressed="'+on+'">'+shot(p.id,p.n,T[tk].c,28)+'<b>'+esc(p.n)+'</b><span class="num">'+esc(p.s[1])+'</span></button>';
-      }).join('')+'</div>';
-    }
+    var sides = GF.steam==='all' ? ['away','home'] : [GF.steam];
+    /* every player who has taken a shot, all visible at once, grouped by
+       team; tap as many as you like — across teams too (Dončić vs Curry) */
+    var picker='<div class="gut ppick">'+sides.map(function(side){
+      var tk=LIVE[side], col=side==='away'?pc.away:pc.home;
+      return '<div class="pgrp"><div class="pgh">'+crest(tk,18,true)+'<b>'+esc(T[tk].name)+'</b></div><div class="pgrid">'
+        +roster(tk).filter(function(p){return mk(p.s[1])[1]>0;}).map(function(p){
+          var key=side+'|'+p.n, on=GF.sps.indexOf(key)>-1;
+          return '<button data-pick="'+esc(key)+'" aria-pressed="'+on+'" style="--pc:'+col+'">'
+            +'<i class="dot"></i><b>'+esc(p.n)+'</b></button>';
+        }).join('')+'</div></div>';
+    }).join('')
+    +(GF.sps.length?'<button class="pclear" data-pick="">Clear players</button>':'')+'</div>';
     var qs=[[0,'All'],[1,'1st'],[2,'2nd'],[3,'3rd'],[4,'4th']];
-    var who = GF.sp ? esc(GF.sp) : GF.steam==='all' ? '' : esc(T[LIVE[GF.steam]].ab);
-    var summary = GF.steam==='all'
-      ? '<span style="color:'+pc.away+'">'+esc(a.ab)+' '+fgLine(list.filter(function(s){return s.side==='away';}))+'</span>'
-        +'<span style="color:'+pc.home+'">'+esc(h.ab)+' '+fgLine(list.filter(function(s){return s.side==='home';}))+'</span>'
-      : '<span>'+who+' · '+fgLine(list)+'</span>';
-    body='<div class="gut" style="padding-top:16px">'+teamSwitch('steam',true)+'</div>'+players
+    var summary;
+    if(GF.sps.length){
+      summary=GF.sps.map(function(k){ var side=k.split('|')[0], n=k.split('|').slice(1).join('|');
+        return '<span style="color:'+(side==='away'?pc.away:pc.home)+'">'+esc(n)+' · '+fgLine(list.filter(function(s){return s.side+'|'+s.pl===k;}))+'</span>';
+      }).join('');
+    } else {
+      summary=sides.map(function(side){ return '<span style="color:'+(side==='away'?pc.away:pc.home)+'">'+esc(T[LIVE[side]].ab)+' · '+fgLine(list.filter(function(s){return s.side===side;}))+'</span>'; }).join('');
+    }
+    body='<div class="gut" style="padding-top:16px">'+teamSwitch('steam',true)+'</div>'+picker
       +'<div class="gut"><div class="ctl">'+qs.map(function(q){ return '<button data-gf="sq:'+q[0]+'" aria-pressed="'+(GF.sq===q[0])+'">'+q[1]+'</button>'; }).join('')+'</div></div>'
-      +'<div class="gut shsum">'+summary+'</div>'
+      +'<div class="gut shsum'+(GF.sps.length>1||GF.steam==='all'?' multi':'')+'">'+summary+'</div>'
       +'<div class="gut"><div class="court">'+shotsSvg(list,pc)+'<img class="mid" src="'+logoUrl(LIVE.home)+'" alt="" onerror="this.remove()"></div></div>'
       +'<div class="lg" style="padding-top:14px"><span><i style="background:var(--t2)"></i>Made</span><span><b style="font-size:13px;line-height:1;font-weight:400">✕</b> Missed</span></div>';
   }
@@ -1826,12 +1855,16 @@ document.addEventListener('click',function(e){
     CAL = dn===0 ? new Date(TODAY.getFullYear(),TODAY.getMonth(),1) : new Date(CAL.getFullYear(),CAL.getMonth()+dn,1);
     if(dn===0){ SCORES.date=TODAY; }
     document.querySelector('#sheet .panel').innerHTML=calHtml(); return; }
+  var pk=e.target.closest('[data-pick]');
+  if(pk){ var k2=pk.getAttribute('data-pick');
+    if(!k2) GF.sps=[]; else { var ix=GF.sps.indexOf(k2); if(ix>-1) GF.sps.splice(ix,1); else GF.sps.push(k2); }
+    swapBody(curTab(), false); return; }
   var gf=e.target.closest('[data-gf]');
   if(gf){ var kv=gf.getAttribute('data-gf').split(':'), key=kv[0], val=kv.slice(1).join(':');
     if(key==='sq') val=+val;
-    if(key==='sp') val=val||null;
+
     GF[key]=val;
-    if(key==='steam') GF.sp=null;
+    if(key==='steam' && val!=='all') GF.sps=GF.sps.filter(function(k){ return k.split('|')[0]===val; });
     swapBody(curTab(), false); return; }
   var t=e.target.closest('[data-tab]'); if(t){ swapBody(t.getAttribute('data-tab'), true); return; }
   var n=e.target.closest('[data-nav]'); if(n){ var nv=n.getAttribute('data-nav'); location.hash='#'+(nv==='following'?'following/'+DEMO:nv); return; }
