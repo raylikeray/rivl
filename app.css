@@ -2583,3 +2583,7 @@ html.gxon body::before{display:none}
 .gxpage .tbl.box th,.gxpage .tbl.box td{width:52px;min-width:52px;max-width:52px;overflow:hidden;text-overflow:clip}
 .gxpage .tbl.box th:first-child,.gxpage .tbl.box td:first-child{width:128px;min-width:128px;max-width:128px;text-overflow:ellipsis}
 .gxpage .tbl.box td[colspan]{max-width:none;width:auto}
+
+/* hero crests as v7: the regular art, a soft lift */
+.gxlg img{filter:drop-shadow(0 1px 1.2px rgba(0,0,0,.28)) drop-shadow(0 4px 12px rgba(0,0,0,.4))!important}
+.gxp em{font-size:11px}

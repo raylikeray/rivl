@@ -383,15 +383,23 @@
   const LOBES = '<span class="w"><i></i><i></i><i></i><i></i></span><span class="veil"></span>';
   function gxColors(L, g) { const [ca, ch] = V._.pairColors(L, g.away, g.home); return { ca, ch, la: V._.lift(ca), lh: V._.lift(ch) }; }
   function gxLead(g) { const a = +g.away.score, h = +g.home.score; if (!isFinite(a) || !isFinite(h) || g.state === 'pre') return ''; const sh = Math.max(.3, Math.min(.7, .5 + (a - h) / 40)); return `;--split:${Math.round(sh * 100)}%;--sa:${(.82 + sh * .5).toFixed(2)};--sh:${(.82 + (1 - sh) * .5).toFixed(2)}`; }
-  function gxClock(g) { return g.state === 'in' ? `<span class="gxst on"><i></i>${esc(g.detail || 'Live')}</span>` : g.state === 'post' ? `<span class="gxst">${esc(finalWord(g))}</span>` : `<span class="gxst">${esc(tipOf(g))}</span>`; }
+  /* the clock as v7 wrote it: "4th 6:12", "2nd 0:45", "Halftime", "End of 3rd", "OT 2:11" (college: "2nd half 6:12") */
+  function gxDet(g, L) {
+    const per = +g.period || 0, d = String(g.detail || ''), st = String(g.status || ''); if (!per) return d || 'Live';
+    if (/HALFTIME/.test(st) || /^half/i.test(d)) return 'Halftime';
+    const reg = L && L.periods === 2 ? 2 : 4; const ord = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`;
+    const name = per <= reg ? (reg === 2 ? `${ord(per)} half` : ord(per)) : (per - reg > 1 ? `${per - reg}OT` : 'OT');
+    if (/END_PERIOD/.test(st) || /^end/i.test(d)) return `End of ${name}`;
+    const clk = String(g.clock || '').trim(); return clk && !/^0{1,2}(?::00)?(?:\.0)?$/.test(clk) ? `${name} ${clk}` : name;
+  }
+  function gxClock(g, L) { return g.state === 'in' ? `<span class="gxst on"><i></i>${esc(gxDet(g, L))}</span>` : g.state === 'post' ? `<span class="gxst">${esc(finalWord(g))}</span>` : `<span class="gxst">${esc(tipOf(g))}</span>`; }
   /* the crest on its own, no disc: ESPN's dark-mode art first (it reads on colour), the plain art if a team has none */
   const gxL = src => `<span class="logo s">${src ? V._.imgSized(src, 96, 96, 'loading="eager" decoding="sync"') : ''}</span>`;
   const gxCr = (src, cls = '') => `<span class="gxcr${cls ? ' ' + cls : ''}">${src ? V._.imgSized(src, 96, 96) : ''}</span>`;
   function gxLogo(src) {
-    if (!src) return '<span class="gxlg"></span>';
-    const dk = /\/500\//.test(src) ? src.replace('/500/', '/500-dark/') : src;
-    return `<span class="gxlg"><img src="${esc(dk)}" alt="" onerror="if(this.src!=='${esc(src)}'){this.src='${esc(src)}'}else{this.style.visibility='hidden'}"></span>`;
+    return `<span class="gxlg">${src ? V._.imgSized(src, 256, 256, 'loading="eager" decoding="sync"') : ''}</span>`;
   }
+
   /* the whole court, the way v7 drew it: wood floor, the visitors' shots at the left basket, the home team's at the right,
      makes as dots, misses as crosses, the home crest at centre court. Feet throughout (94 by 50). */
   function gxCourt(L, list, ca, ch, homeLogo) {
@@ -419,7 +427,7 @@
     let bar = '';
     if (f && !g.off) { const c = gxColors(L, g); const pa = Math.round((1 - f.pHome) * 100); bar = `<div class="gxwp"><div class="bar"><i style="width:${pa}%;background:${esc(c.la)}"></i><i style="width:${100 - pa}%;background:${esc(c.lh)}"></i></div><div class="cap"><span>${esc(g.away.abbr)} ${pa}%</span><span>${g.state === 'post' ? 'Pregame prediction' : 'Prediction'}</span><span>${esc(g.home.abbr)} ${100 - pa}%</span></div></div>`; }
     return `<p class="gxleague">${esc([L.label, venue].filter(Boolean).join(' · '))}</p>
-      <div class="gxsc3">${sc(g.away, aL)}<span class="gxmid">${gxClock(g)}</span>${sc(g.home, hL)}${side(g.away)}<span></span>${side(g.home)}</div>${bar}`;
+      <div class="gxsc3">${sc(g.away, aL)}<span class="gxmid">${gxClock(g, L)}</span>${sc(g.home, hL)}${side(g.away)}<span></span>${side(g.home)}</div>${bar}`;
   }
   /* the day's other games, as small glass pills between Back and Share; this game is the lit one */
   function gxStrip(L, g, day) {
@@ -427,14 +435,14 @@
     return list.map(x => {
       if (String(x.id) === String(g.id)) return `<span class="gxp cur">${logo(x.away.logo, 's')}<i>@</i>${logo(x.home.logo, 's')}</span>`;
       const sc = x.away.score != null && x.home.score != null && x.state !== 'pre';
-      const mid = x.state === 'in' ? `<b class="num">${x.away.score}–${x.home.score}</b><em class="lv">${esc(x.detail || 'Live')}</em>` : sc ? `<b class="num">${x.away.score}–${x.home.score}</b><em>${esc(finalWord(x))}</em>` : `<em>${esc(tipOf(x))}</em>`;
+      const mid = x.state === 'in' ? `<b class="num">${x.away.score}–${x.home.score}</b><em class="lv">${esc(gxDet(x, L))}</em>` : sc ? `<b class="num">${x.away.score}–${x.home.score}</b><em>${esc(finalWord(x))}</em>` : `<em>${esc(tipOf(x))}</em>`;
       return `<a class="gxp" href="${href.game(L.key, x.id)}">${logo(x.away.logo, 's')}<span>${mid}</span>${logo(x.home.logo, 's')}</a>`;
     }).join('');
   }
   function gxBar(L, g, title, card, strip) {
     const pre = g.state === 'pre' || g.away.score == null;
     const mini = pre ? `<span class="gxmn">${logo(g.away.logo, 's')}<b>${esc(g.away.abbr)}</b><i>at</i><b>${esc(g.home.abbr)}</b>${logo(g.home.logo, 's')}</span>`
-      : `<span class="gxmn">${logo(g.away.logo, 's')}<b class="num${+g.away.score >= +g.home.score ? '' : ' tr'}">${g.away.score}</b>${gxClock(g)}<b class="num${+g.home.score >= +g.away.score ? '' : ' tr'}">${g.home.score}</b>${logo(g.home.logo, 's')}</span>`;
+      : `<span class="gxmn">${logo(g.away.logo, 's')}<b class="num${+g.away.score >= +g.home.score ? '' : ' tr'}">${g.away.score}</b>${gxClock(g, L)}<b class="num${+g.home.score >= +g.away.score ? '' : ' tr'}">${g.home.score}</b>${logo(g.home.logo, 's')}</span>`;
     const back = `<a class="gxib" href="#scores" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a>`;
     const share = `<button class="gxib" data-act="share" data-title="${esc(title.replace(/<[^>]+>/g, ''))}"${card ? ` data-card='${esc(JSON.stringify(card))}'` : ''} aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>`;
     return `${back}<div class="gxmid2">${strip ? `<div class="gxstrip" id="gxstrip">${strip}</div>` : ''}<div class="gxctr" id="gxmini">${mini}</div></div>${share}`;
