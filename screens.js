@@ -588,10 +588,12 @@
     $main.innerHTML = topbar('', '#scores') + skeleton(1, 'card') + skeleton(6, 'row');
     const mem = (() => { try { return JSON.parse(sessionStorage.getItem('gx:' + id) || 'null') || {}; } catch { return {}; } })();
     let ctx = null, sched, tab = focus ? 'box' : (mem.tab || 'summary');   // every game opens on Summary — or on the box score, led by one player, when opened from his line
-    const pv = { q: 'all', scoring: true, n: 30 };   // the plays tab's period and scoring-only filters
-    const sv = { team: 'both', pid: '', q: 0 };   // the shots tab's team and player filters
-    const bv = { col: '', dir: 'desc', side: 'home' };   // the box score's sort column and which team is open
-    const pf = { pid: '' };   // the plays tab's player filter
+    const pv = Object.assign({ q: 'all', scoring: true, n: 30 }, mem.pv || {});   // the plays tab's period and scoring-only filters
+    const sv = Object.assign({ team: 'both', pid: '', q: 0 }, mem.sv || {});   // the shots tab's team and player filters
+    const bv = Object.assign({ col: '', dir: 'desc', side: 'home' }, mem.bv || {});   // the box score's sort column and which team is open
+    const pf = Object.assign({ pid: '' }, mem.pf || {});
+    /* everything you chose on this game, kept for this visit: a refresh lands exactly where you were */
+    const save = () => { try { const box = document.getElementById('gxscroll'); sessionStorage.setItem('gx:' + id, JSON.stringify({ tab, pv, sv, bv, pf, y: box ? Math.round(box.scrollTop) : (mem.y || 0) })); } catch { } };   // the plays tab's player filter
     const paint = async (ttl) => {
       const d = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, ttl);
       const hc = d && d.header && d.header.competitions && d.header.competitions[0];
@@ -861,7 +863,7 @@
           let pan = bodyEl.querySelector(`:scope > [data-p="${tab}"]`);
           if (!pan) { pan = document.createElement('div'); pan.dataset.p = tab; bodyEl.appendChild(pan); }
           if (pan.dataset.h !== bhh) { if (pan.firstChild) gxPatch(pan, body); else pan.innerHTML = body; pan.dataset.h = bhh; }
-          if (tabChanged) { bodyEl.querySelectorAll(':scope > [data-p]').forEach(x => { x.hidden = x !== pan; }); bodyEl.dataset.tab = tab; gxPin(); try { sessionStorage.setItem('gx:' + id, JSON.stringify({ tab, y: Math.round(document.getElementById('gxscroll').scrollTop) })); } catch { } }
+          if (tabChanged) { bodyEl.querySelectorAll(':scope > [data-p]').forEach(x => { x.hidden = x !== pan; }); bodyEl.dataset.tab = tab; gxPin(); }
           gxFit(); if (gxScroll.run) gxScroll.run();
         } else {
           $main.innerHTML = `<div id="gpage" class="gxpage${f && !g.off ? '' : ' nowp'}" data-gid="${esc(String(id))}">`
@@ -870,7 +872,7 @@
             + `<div class="gxscroll" id="gxscroll"><div class="gxspace"></div><div class="gxsheet"><div id="gtabs" class="gxtabw" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}"><div data-p="${tab}" data-h="${hashOf(body)}">${body}</div></div></div></div></div>`;
           gxFit(); gxScroll(); if (gxScroll.run) gxScroll.run();
           { const box = document.getElementById('gxscroll'); if (mem.y && !focus) { box.scrollTop = mem.y; requestAnimationFrame(() => { box.scrollTop = mem.y; if (gxScroll.run) gxScroll.run(); }); }
-            let tm = 0; box.addEventListener('scroll', () => { clearTimeout(tm); tm = setTimeout(() => { try { sessionStorage.setItem('gx:' + id, JSON.stringify({ tab, y: Math.round(box.scrollTop) })); } catch { } }, 150); }, { passive: true }); }
+            let tm = 0; box.addEventListener('scroll', () => { clearTimeout(tm); tm = setTimeout(save, 150); }, { passive: true }); }
           requestAnimationFrame(() => { gxFit(); const st = document.getElementById('gxstrip'), cur = st && st.querySelector('.cur'); if (cur) st.scrollLeft = cur.offsetLeft - (st.clientWidth - cur.offsetWidth) / 2; });
         }
         /* a basket lands: the scorer's colour flashes forward */
@@ -892,7 +894,7 @@
     const g = await paint();
     V.refresh = async () => { if (!g || g.state === 'post') return; await paint(15000); };
     if (V._gtabL) $main.removeEventListener('click', V._gtabL);
-    V._gtabL = e => { const b = e.target.closest('[data-act="gtab"],[data-act="pq"],[data-act="pscoring"],[data-act="sv-team"],[data-act="sv-pid"],[data-act="sv-q"],[data-act="bsort"],[data-act="pf"],[data-act="bside"],[data-act="pmore"]'); if (!b) return; const a = b.dataset.act; if (a !== 'pmore') pv.n = 30; if (a === 'pmore') pv.n += 40; else if (a === 'bside') bv.side = b.dataset.team; else if (a === 'gtab') tab = b.dataset.tab; else if (a === 'pq') pv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'pscoring') pv.scoring = b.dataset.v != null ? b.dataset.v === '1' : !pv.scoring; else if (a === 'sv-team') { sv.team = b.dataset.team; sv.pid = ''; } else if (a === 'sv-pid') sv.pid = b.dataset.pid; else if (a === 'sv-q') sv.q = +b.dataset.q || 0; else if (a === 'bsort') { const c = b.dataset.col; if (bv.col === c) { if (bv.dir === 'desc') bv.dir = 'asc'; else { bv.col = ''; bv.dir = 'desc'; } } else { bv.col = c; bv.dir = 'desc'; } } else if (a === 'pf') pf.pid = b.dataset.pid === pf.pid ? '' : b.dataset.pid; paint(); };
+    V._gtabL = e => { const b = e.target.closest('[data-act="gtab"],[data-act="pq"],[data-act="pscoring"],[data-act="sv-team"],[data-act="sv-pid"],[data-act="sv-q"],[data-act="bsort"],[data-act="pf"],[data-act="bside"],[data-act="pmore"]'); if (!b) return; const a = b.dataset.act; if (a === 'pq' || a === 'pscoring' || a === 'pf') pv.n = 30; if (a === 'pmore') pv.n += 40; else if (a === 'bside') bv.side = b.dataset.team; else if (a === 'gtab') tab = b.dataset.tab; else if (a === 'pq') pv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'pscoring') pv.scoring = b.dataset.v != null ? b.dataset.v === '1' : !pv.scoring; else if (a === 'sv-team') { sv.team = b.dataset.team; sv.pid = ''; } else if (a === 'sv-pid') sv.pid = b.dataset.pid; else if (a === 'sv-q') sv.q = +b.dataset.q || 0; else if (a === 'bsort') { const c = b.dataset.col; if (bv.col === c) { if (bv.dir === 'desc') bv.dir = 'asc'; else { bv.col = ''; bv.dir = 'desc'; } } else { bv.col = c; bv.dir = 'desc'; } } else if (a === 'pf') pf.pid = b.dataset.pid === pf.pid ? '' : b.dataset.pid; save(); paint(); };
     $main.addEventListener('click', V._gtabL);
   }
 

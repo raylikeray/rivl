@@ -2587,3 +2587,10 @@ html.gxon body::before{display:none}
 /* hero crests as v7: the regular art, a soft lift */
 .gxlg img{filter:drop-shadow(0 1px 1.2px rgba(0,0,0,.28)) drop-shadow(0 4px 12px rgba(0,0,0,.4))!important}
 .gxp em{font-size:11px}
+
+/* the game page holds still: no rise-in on the page, its rows, cards or crests; only the colour, the live dot and the basket flash move */
+#main.enter>.gxpage,#main.fade>.gxpage{animation:none!important}
+.gxpage .gxsheet *,.gxpage .gxbar *,.gxpage .gxin *{animation:none!important}
+.gxpage .gxst.on i{animation:gxp 2s cubic-bezier(.2,.8,.2,1) infinite!important}
+#main.fade:has(>.gxpage){animation:none!important}
+#main.hold:has(>.gxpage){opacity:1!important}
