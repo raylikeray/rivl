@@ -1390,6 +1390,21 @@ html[data-theme=light] .tag.dtd{background:#D3E2FF;color:#123E8A}
 .wrdh{font-size:20px;font-weight:700;margin:24px 0 8px;clear:both}
 h3.wrdh{font-size:17px}
 #wrdb p{font-size:16px;line-height:1.6;color:var(--t2);margin:0 0 12px}
+/* facts and news */
+.fcard .fgrp{margin-top:12px}
+.fcard .fl{display:block;font-size:12.5px;font-weight:600;color:var(--t3);margin-bottom:6px}
+.fvals{display:flex;flex-wrap:wrap;gap:8px}
+.fchip{display:inline-flex;align-items:center;gap:6px;padding:9px 13px;border-radius:999px;background:var(--L2);font:inherit;font-size:15px;font-weight:600;color:var(--t1);border:0}
+.fchip em{font-style:normal;font-size:12.5px;font-weight:500;color:var(--t3)}
+.fchip i{font-style:normal;color:var(--t3)}
+.fcard.flat{padding:14px 16px}
+#xfact:not(:empty)+#xwiki .wcard,#xwiki:not(:empty)+#xnews .wmore{margin-top:12px}
+#xfact .wcard{margin-bottom:12px}
+.nrow{display:flex;gap:12px;align-items:flex-start}
+.nrow img{flex:none;width:72px;height:54px;border-radius:10px;object-fit:cover}
+.nrow>span{flex:1;min-width:0}
+.nrow>span>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wrdhero{width:100%;border-radius:16px;margin:4px 0 14px}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -2391,18 +2406,20 @@ function wantsWeb(q){
 }
 function webLater(v){
   clearTimeout(WEBT); var box=document.getElementById('xweb');
-  answer(v); /* sets LASTKIND for this text */
+  var ah=answer(v); /* sets LASTKIND for this text */
+  if(/doesn&#39;t have that|doesn't have that|not on the injury report/.test(ah)) LASTKIND='generic';
   if(!wantsWeb(v)){ if(box) box.innerHTML=''; return; }
-  if(box) box.innerHTML='<div class="wcard wload"><span class="wk">Looking it up</span><i></i><i></i><i></i></div>';
+  if(box) box.innerHTML='<div id="xfact"></div><div id="xwiki"><div class="wcard wload"><span class="wk">Looking it up</span><i></i><i></i><i></i></div></div><div id="xnews"></div>';
   WEBT=setTimeout(function(){ webAsk(v); },450);
 }
 function jget(url){ return fetch(url).then(function(r){ if(!r.ok) throw 0; return r.json(); }); }
 var WAPI='https://en.wikipedia.org/w/api.php?format=json&origin=*&';
-function webAsk(v){
+function webAsk(v){ sourcesAsk(v); }
+function wikiAsk(v){
   var my=++WEBN, W=webTerms(v), query=(W.ent?W.ent+' ':'')+W.terms.join(' ');
   if(!W.ent && !W.terms.length) query=v;
   var key=query.toLowerCase();
-  var done=function(html){ if(my!==WEBN) return; var box=document.getElementById('xweb'); if(box) box.innerHTML=html; };
+  var done=function(html){ if(my!==WEBN) return; var box=document.getElementById('xwiki'); if(box) box.innerHTML=html; };
   if(WEBC[key]){ done(WEBC[key]); return; }
   jget(WAPI+'action=query&list=search&srlimit=5&srprop=snippet&srsearch='+encodeURIComponent(query))
   .then(function(d){
@@ -2459,6 +2476,112 @@ function bestPara(text, terms){
   var html=esc(txt); stems.forEach(function(st){ html=html.replace(new RegExp('(\\b'+st.replace(/[^a-z0-9]/g,'')+'[a-z]*)','gi'),'<b>$1</b>'); });
   return {sec:best.sec, html:html};
 }
+
+/* ============================================================
+   TRUSTED SOURCES, in order
+   1. RIVL's own data (stats, schedules, profiles).
+   2. Wikidata: exact facts (spouse, children, parents, siblings, partner,
+      schools, awards, nickname, teams) with their dates.
+   3. Wikipedia: the paragraph that answers the question.
+   4. ESPN: the latest headlines about the player or team.
+   Each answer names its source. Nothing is generated or guessed.
+   ============================================================ */
+var WD='https://www.wikidata.org/w/api.php?format=json&origin=*&';
+var FACTS=[
+  {re:/\b(son|sons|daughter|daughters|kid|kids|child|children)\b/, p:['P40','P1971'], t:'Children'},
+  {re:/\b(wife|husband|married|spouse)\b/, p:['P26'], t:'Spouse'},
+  {re:/\b(dating|girlfriend|boyfriend|partner|engaged|fiance|fiancee|relationship)\b/, p:['P451','P26'], t:'Partner'},
+  {re:/\b(father|dad)\b/, p:['P22'], t:'Father'},
+  {re:/\b(mother|mom)\b/, p:['P25'], t:'Mother'},
+  {re:/\b(parents?)\b/, p:['P22','P25'], t:'Parents'},
+  {re:/\b(brother|brothers|sister|sisters|sibling|siblings)\b/, p:['P3373'], t:'Siblings'},
+  {re:/\b(family|related|relatives?|cousin|uncle|aunt)\b/, p:['P26','P40','P22','P25','P3373','P1038'], t:'Family'},
+  {re:/\b(nickname|called|known as)\b/, p:['P1449'], t:'Nickname'},
+  {re:/\b(awards?|honou?rs|accolades|mvp|all star|all-star)\b/, p:['P166'], t:'Awards'},
+  {re:/\b(teams|played for|career)\b/, p:['P54'], t:'Teams'},
+  {re:/\b(birthplace|born where|where was .* born|place of birth)\b/, p:['P19'], t:'Born in'},
+  {re:/\b(instagram|twitter|social)\b/, p:['P2003','P2002'], t:'Social'}
+];
+var PLBL={P40:'Children',P1971:'Number of children',P26:'Spouse',P451:'Partner',P22:'Father',P25:'Mother',P3373:'Siblings',P1038:'Relatives',P1449:'Nickname',P166:'Awards',P54:'Teams',P19:'Born in',P2003:'Instagram',P2002:'X (Twitter)'};
+function wantFacts(q){ var n=' '+norm(q)+' ', ps=[], t=null; FACTS.forEach(function(f){ if(f.re.test(n)){ f.p.forEach(function(x){ if(ps.indexOf(x)<0) ps.push(x); }); t=t||f.t; } }); return ps.length?{ps:ps,t:t}:null; }
+function entTitle(W){ return W.f.ps.length ? W.f.ps[0].n : (W.f.ts.length ? W.ent : ''); }
+function sourcesAsk(v){
+  var my=WEBN+1, W=webTerms(v), want=wantFacts(v), title=entTitle(W);
+  wikiAsk(v);
+  var fbox=function(h){ if(my!==WEBN) return; var b=document.getElementById('xfact'); if(b) b.innerHTML=h; };
+  var nbox=function(h){ if(my!==WEBN) return; var b=document.getElementById('xnews'); if(b) b.innerHTML=h; };
+  if(want && title) wdFacts(title, want.ps).then(function(r){ fbox(r?factCard(r, want.t):''); }).catch(function(){ fbox(''); });
+  if(W.f.ps.length || W.f.ts.length) espnNews(W.f).then(function(items){ nbox(items.length?newsBlock(items):''); }).catch(function(){ nbox(''); });
+}
+/* Wikipedia title -> Wikidata item -> the asked-for claims, with readable names and dates */
+function wdFacts(title, props){
+  return jget(WAPI+'action=query&prop=pageprops&ppprop=wikibase_item&redirects=1&titles='+encodeURIComponent(title)).then(function(x){
+    var pg=x.query.pages[Object.keys(x.query.pages)[0]], q=pg.pageprops&&pg.pageprops.wikibase_item; if(!q) return null;
+    return jget(WD+'action=wbgetentities&props=claims|labels&languages=en&ids='+q).then(function(d){
+      var cl=d.entities[q].claims||{}, rows=[], ids=[];
+      props.forEach(function(P){ (cl[P]||[]).forEach(function(c){
+        var dv=c.mainsnak&&c.mainsnak.datavalue; if(!dv) return;
+        var v=dv.value, row={p:P};
+        if(dv.type==='wikibase-entityid'){ row.id=v.id; ids.push(v.id); }
+        else if(dv.type==='quantity') row.text=String(+v.amount);
+        else if(dv.type==='monolingualtext') row.text=v.text;
+        else if(dv.type==='string') row.text=v;
+        else if(dv.type==='time') row.text=v.time.slice(1,11);
+        var qf=c.qualifiers||{}, yr=function(k){ var t=qf[k]&&qf[k][0].datavalue; return t?t.value.time.slice(1,5):''; };
+        var a=yr('P580'), b=yr('P582'); if(a||b) row.when=(a||'?')+(b?'–'+b:(P==='P26'||P==='P451'?'':'–'));
+        if(P==='P166'){ var pt=yr('P585'); if(pt) row.when=pt; }
+        rows.push(row); }); });
+      if(!rows.length) return {name:title, rows:[], q:q};
+      if(!ids.length) return {name:title, rows:rows, q:q};
+      var uniq=ids.filter(function(x,i){ return ids.indexOf(x)===i; }).slice(0,50);
+      return jget(WD+'action=wbgetentities&props=labels|sitelinks&sitefilter=enwiki&languages=en&ids='+uniq.join('|')).then(function(e){
+        rows.forEach(function(r){ if(r.id){ var en=e.entities[r.id]; r.text=en&&en.labels&&en.labels.en?en.labels.en.value:r.id; r.wiki=en&&en.sitelinks&&en.sitelinks.enwiki?en.sitelinks.enwiki.title:''; } });
+        return {name:title, rows:rows, q:q};
+      });
+    });
+  });
+}
+function factCard(r, topic){
+  if(!r.rows.length) return '<div class="wcard fcard"><span class="wk">'+svg('<path d="M4 6h16M4 12h16M4 18h10"/>')+'Wikidata</span>'
+    +'<p class="wans dim">No public record lists '+esc(topic.toLowerCase())+' for '+esc(r.name)+'. RIVL won\'t guess.</p></div>';
+  var groups={}; r.rows.forEach(function(x){ (groups[x.p]=groups[x.p]||[]).push(x); });
+  return '<div class="wcard fcard"><span class="wk">'+svg('<path d="M4 6h16M4 12h16M4 18h10"/>')+'Wikidata · '+esc(r.name)+'</span>'
+    +Object.keys(groups).map(function(P){ return '<div class="fgrp"><span class="fl">'+esc(PLBL[P]||P)+'</span><div class="fvals">'+groups[P].map(function(x){
+        var lab=esc(x.text)+(x.when?' <em>'+esc(x.when)+'</em>':'');
+        return x.wiki ? '<button class="fchip pressable" data-wiki="'+esc(x.wiki)+'">'+lab+'<i>›</i></button>' : '<span class="fchip">'+lab+'</span>'; }).join('')+'</div></div>'; }).join('')
+    +'<p class="xnote">From Wikidata, the open database behind Wikipedia. Data under CC0.</p></div>';
+}
+/* ESPN headlines that mention the player or team */
+var ESPNL={nba:'nba',wnba:'wnba',ncaam:'mens-college-basketball',ncaaw:'womens-college-basketball'}, NEWSC={};
+function espnNews(f){
+  var k=f.ps.length?f.ps[0].t:f.ts[0], L=ESPNL[leagueOf(k)]||'nba';
+  var keys=f.ps.length ? [norm(f.ps[0].n).split(' ').slice(-1)[0]] : [norm(T[k].name), norm(T[k].full)];
+  var get = NEWSC[L] ? Promise.resolve(NEWSC[L]) : jget('https://site.api.espn.com/apis/site/v2/sports/basketball/'+L+'/news?limit=50').then(function(d){ NEWSC[L]=d.articles||[]; return NEWSC[L]; });
+  return get.then(function(arts){ return arts.filter(function(a){ var t=norm((a.headline||'')+' '+(a.description||'')); return keys.some(function(x){ return x && t.indexOf(x)>-1; }); }).slice(0,4); });
+}
+function ago(iso){ var m=Math.round((Date.now()-new Date(iso))/60000); if(isNaN(m)) return ''; if(m<60) return m+'m ago'; if(m<1440) return Math.round(m/60)+'h ago'; return Math.round(m/1440)+'d ago'; }
+var ESPNA=[];
+function newsBlock(items){
+  return '<div class="wmore"><span class="wk">'+svg('<path d="M4 5h12v14H6a2 2 0 0 1-2-2z"/><path d="M16 9h4v8a2 2 0 0 1-2 2"/>')+'Latest from ESPN</span>'+items.map(function(a){ var i=ESPNA.push(a)-1;
+    return '<button class="wrow nrow pressable" data-espn="'+i+'">'+(a.images&&a.images[0]?'<img src="'+esc(a.images[0].url)+'" alt="" loading="lazy">':'')
+      +'<span><b>'+esc(a.headline)+'</b><span>'+esc(ago(a.published))+(a.description?' · '+esc(a.description):'')+'</span></span></button>'; }).join('')+'</div>';
+}
+function openEspn(a){
+  var link=a.links&&a.links.web&&a.links.web.href;
+  openSheet('<div class="wrd"><div class="wrdbar"><button class="disc" data-act="sheet-close" aria-label="Close">'+svg('<path d="M6 6l12 12M18 6 6 18"/>')+'</button><span>ESPN · '+esc(ago(a.published))+'</span></div><div class="gut" id="wrdb">'
+    +'<h1 class="wrdt">'+esc(a.headline)+'</h1>'+(a.images&&a.images[0]?'<img class="wrdhero" src="'+esc(a.images[0].url)+'" alt="">':'')
+    +'<p>'+esc(a.description||'')+'</p>'+(a.byline?'<p class="xnote">By '+esc(a.byline)+'</p>':'')
+    +(link?'<p class="xnote">ESPN shares the headline and summary. The full story is on '+esc(link.replace(/^https?:\/\//,'').split('/')[0])+'.</p>':'')+'</div></div>','full');
+}
+/* the player's Bio pulls family straight from Wikidata */
+function bioFamily(name){
+  var el=document.getElementById('bfam'); if(!el) return;
+  wdFacts(name,['P26','P451','P40','P1971','P22','P25','P3373','P1038']).then(function(r){
+    if(!r||!r.rows.length){ el.innerHTML=''; return; }
+    el.innerHTML='<div class="gut sechd"><h2 class="sec">Family</h2><span class="ptag">Wikidata</span></div><div class="gut">'+factCard(r,'family').replace('wcard fcard','wcard fcard flat')+'</div>';
+  }).catch(function(){ el.innerHTML=''; });
+}
+
 /* the article, inside the app */
 function openWiki(title, sec){
   openSheet('<div class="wrd"><div class="wrdbar"><button class="disc" data-act="sheet-close" aria-label="Close">'+svg('<path d="M6 6l12 12M18 6 6 18"/>')+'</button><span>Wikipedia</span></div><div class="gut" id="wrdb"><p class="legend">Loading…</p></div></div>','full');
@@ -2817,7 +2940,9 @@ function playerBody(who, p, tab){
       +B.career.map(function(c){ return '<div class="prow"><span class="yr">'+esc(c[0])+'</span><b>'+esc(c[1])+'</b></div>'; }).join('')+'</div></div>';
     if(B.honors) out+='<div class="gut sechd"><h2 class="sec">Honors</h2></div><div class="gut"><div class="gp hon">'+B.honors.map(function(h){ return '<div class="prow"><span>'+esc(h)+'</span></div>'; }).join('')+'</div></div>';
     var fam=(B.family||[]).slice(); if(p.spouse && !fam.some(function(f){return f.indexOf(p.spouse)>-1;})) fam.push('Married '+p.spouse+' in '+p.wed);
+    out+='<div id="bfam">';
     if(fam.length) out+='<div class="gut sechd"><h2 class="sec">Family</h2></div><div class="gut"><div class="gp hon">'+fam.map(function(h){ return '<div class="prow"><span>'+esc(h)+'</span></div>'; }).join('')+'</div></div>';
+    out+='</div>';
     var notes=[p.note,B.note].filter(Boolean);
     if(notes.length) out+='<div class="gut">'+notes.map(function(n){ return '<p class="xnote">'+esc(n)+'</p>'; }).join('')+'</div>';
   }
@@ -3297,9 +3422,10 @@ document.addEventListener('click',function(e){
   if(ptb){ PTAB=ptb.getAttribute('data-ptab'); var key=decodeURIComponent(location.hash.split('/')[1]||''), pp=personOf(key);
     var who=pp||{n:key,t:(MYPLAYERS.filter(function(x){return x.n===key;})[0]||{}).t};
     if(!who.t){ Object.keys(BOXES).forEach(function(k){ roster(k).forEach(function(r){ if(r.n===key) who={n:r.n,t:k,pos:r.p,j:r.j,id:r.id}; }); }); }
-    document.getElementById('pbody').innerHTML=playerBody(who,pp,PTAB);
+    document.getElementById('pbody').innerHTML=playerBody(who,pp,PTAB); if(PTAB==='bio') bioFamily(who.n);
     document.querySelectorAll('.ptabs2 [data-ptab]').forEach(function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-ptab')===PTAB)); });
     var tw2=document.getElementById('gtw'), gt2=document.getElementById('gtop'); if(tw2&&gt2){ var y2=tw2.getBoundingClientRect().top+window.scrollY-gt2.offsetHeight; if(window.scrollY>y2) window.scrollTo(0,y2); } if(miniHandler) miniHandler(); return; }
+  var es=e.target.closest('[data-espn]'); if(es){ e.preventDefault(); openEspn(ESPNA[+es.getAttribute('data-espn')]); return; }
   var wk=e.target.closest('[data-wiki]'); if(wk){ e.preventDefault(); openWiki(wk.getAttribute('data-wiki'), wk.getAttribute('data-sec')); return; }
   var tt=e.target.closest('[data-ttab]');
   if(tt){ var tk=(location.hash.split('/')[1]); TTAB=tt.getAttribute('data-ttab'); var tb=document.getElementById('tbody');
