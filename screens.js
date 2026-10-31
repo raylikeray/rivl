@@ -653,7 +653,7 @@
       // who's on the floor now (live), and every five-man unit's minutes and margin
       const lu = g.state !== 'pre' && plays.length ? lineupsOf(d, g, L) : null;
       const ptsOf = (side, id) => { const st = statOf(boxOf(side), 'PTS'); const a = st && (st.s.athletes || []).find(x => String(x.athlete.id) === id); return a && a.stats ? a.stats[st.i] : ''; };
-      const floor = g.state === 'in' && lu && lu.on ? sec('On the floor', `as of ${esc(g.detail)}`) + `<div class="fives">${[['away', g.away], ['home', g.home]].map(([side, t]) => `<div class="five" style="${tcv(V._.teamColor(t, L))}"><div class="fh">${logo(t.logo, 's', V._.teamColor(t, L))}<b>${esc(t.short)}</b></div><div class="fr">${lu.on[side].map(id => { const n = lu.names[id] || {}; const pts = ptsOf(t, id); return `<a href="${href.player(lk, id)}">${headshot(n.hs || '', V._.teamColor(t, L), 48, n.name || '')}<b>${esc(n.short || '')}</b><span>${pts !== '' ? `${esc(pts)} pts` : ''}</span></a>`; }).join('')}</div></div>`).join('')}</div>` : '';
+      const floor = g.state === 'in' && lu && lu.on ? sec('On the floor', `as of ${g.detail}`) + `<div class="gxplate gxfloor">${[['away', g.away], ['home', g.home]].map(([side, t]) => `<div class="fl"><div class="fh">${gxCr(t.logo)}<b>${esc(t.short)}</b></div><div class="fr">${lu.on[side].map(id => { const n = lu.names[id] || {}; const pts = ptsOf(t, id); return `<a href="${href.player(lk, id)}">${headshot(n.hs || '', V._.teamColor(t, L), 44, n.name || '')}<b>${esc(V.lastName(n.name || n.short || ''))}</b><span>${pts !== '' ? `${esc(pts)} pts` : ''}</span></a>`; }).join('')}</div></div>`).join('')}</div>` : '';
       const unitsT = lu && lu.units && lu.units.length ? (() => { const mm = sx => `${Math.floor(sx / 60)}:${String(Math.round(sx % 60)).padStart(2, '0')}`; const table = (side, t) => { const rows = lu.units.filter(u => u.side === side && u.secs >= 60).sort((a, b) => b.secs - a.secs).slice(0, 6); if (!rows.length) return ''; return sec(`${esc(t.short)} units`, 'five-man groups, by minutes') + `<div class="rows units">${rows.map(u => { const onNow = g.state === 'in' && lu.on && u.ids.slice().sort().join() === lu.on[side].slice().sort().join(); return `<div class="row unit${onNow ? ' now' : ''}" style="${tcv(V._.teamColor(t, L))}"><span class="t"><b class="wrap">${u.ids.map(id => esc((lu.names[id] || {}).short || '')).join(' · ')}</b><span>${mm(u.secs)} min${onNow ? ' · on the floor now' : ''}</span></span><span class="pm ${u.pm > 0 ? 'up' : u.pm < 0 ? 'dn' : ''}">${u.pm > 0 ? '+' : u.pm < 0 ? '−' : ''}${Math.abs(u.pm)}</span></div>`; }).join('')}</div>`; }; return table('away', g.away) + table('home', g.home); })() : '';
       // the season series between the two, from the nightly schedule (pro leagues)
       let series = '';
@@ -683,6 +683,7 @@
         if (!g.tbd && sp.length) { const st = sp.length > 1 ? sp.pop() : ''; body += `<div class="gxser"><b>${esc(sp.join(', '))}</b>${st ? `<span>${esc(st)}</span>` : ''}${spick ? `<em>${esc(spick)}</em>` : ''}</div>`; }
         if (clips) body += clips;
         if (lineScore) body += sec('Line score') + lineScore;
+        if (floor) body += floor;
         /* game leaders, as v7 drew them: each side's best in points, rebounds and assists, the better number dark */
         const leadOf = (side, lab) => { const p = boxOf(side); const st = statOf(p, lab); if (!st) return null; const ath = (st.s.athletes || []).filter(x => x.stats && x.stats.length && !x.didNotPlay); if (!ath.length) return null; const best = ath.slice().sort((x, y) => (+y.stats[st.i] || 0) - (+x.stats[st.i] || 0))[0]; return { a: best.athlete, v: +best.stats[st.i] || 0 }; };
         const sideOf = team => String(team && team.id) === g.home.id ? g.home : String(team && team.id) === g.away.id ? g.away : (team && team.abbreviation === g.home.abbr ? g.home : g.away);
@@ -703,7 +704,6 @@
           if (rows) body += sec('Team stats') + `<div class="gxplate">${rows}</div>`;
         }
         if (starters) body += starters;
-        if (floor) body += floor;
         body += tracker;
         if (f && prefs.get('forecast')) {
           const fav = f.pHome >= .5 ? g.home : g.away; const p = Math.max(f.pHome, 1 - f.pHome);

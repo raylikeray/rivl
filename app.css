@@ -2561,3 +2561,15 @@ html.gxon body::before{display:none}
 /* the sheet is drawn as one solid layer: while a long tab is still being drawn, nothing behind it can show through */
 .gxsheet{will-change:transform;contain:paint}
 .gxmore{display:block;margin:18px auto 8px;padding:12px 22px;border-radius:999px;background:var(--surf-2);border:1px solid var(--line);font-size:15px;font-weight:700;color:var(--ink)}
+
+/* on the floor: one plate, a row per team */
+.gxfloor{padding:0 14px}
+.gxfloor .fl{padding:13px 0 14px}
+.gxfloor .fl+.fl{border-top:1px solid var(--line)}
+.gxfloor .fh{display:flex;align-items:center;gap:8px;padding-bottom:12px}
+.gxfloor .fh .gxcr{width:22px;height:22px}
+.gxfloor .fh b{font-size:13px;font-weight:700;letter-spacing:.02em;color:var(--ink-2)}
+.gxfloor .fr{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.gxfloor .fr a{display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;color:inherit;min-width:0}
+.gxfloor .fr b{font-size:12px;font-weight:700;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.gxfloor .fr span{font-size:11px;font-weight:600;color:var(--ink-3);margin-top:-3px}
