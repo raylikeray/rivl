@@ -1,0 +1,23 @@
+name: Recruit rankings
+on:
+  schedule:
+    - cron: '17 11 * * *'
+  workflow_dispatch:
+  push:
+    paths: ['scripts/prepranks.mjs', '.github/workflows/recruits.yml']
+permissions:
+  contents: write
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node scripts/prepranks.mjs
+      - run: |
+          git config user.name "RIVL bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/recruits.json data/prepranks-debug.json
+          git diff --cached --quiet || git commit -m "Recruit rankings: daily update"
+          git pull --rebase -q && git push
