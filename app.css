@@ -2557,3 +2557,7 @@ html.gxon body::before{display:none}
 .gxclip .pl svg{width:11px;height:11px;fill:#07090B}
 .gxclip .du{position:absolute;right:8px;bottom:9px;font-size:10px;font-weight:700;color:#fff;background:rgba(0,0,0,.62);padding:3px 7px;border-radius:7px}
 .gxclip p{margin:9px 0 0;font-size:12.5px;font-weight:600;line-height:1.32;color:var(--ink)}
+
+/* the sheet is drawn as one solid layer: while a long tab is still being drawn, nothing behind it can show through */
+.gxsheet{will-change:transform;contain:paint}
+.gxmore{display:block;margin:18px auto 8px;padding:12px 22px;border-radius:999px;background:var(--surf-2);border:1px solid var(--line);font-size:15px;font-weight:700;color:var(--ink)}

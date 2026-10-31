@@ -562,7 +562,7 @@
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Game not found'); return; }
     $main.innerHTML = topbar('', '#scores') + skeleton(1, 'card') + skeleton(6, 'row');
     let ctx = null, sched, tab = focus ? 'box' : 'summary';   // every game opens on Summary — or on the box score, led by one player, when opened from his line
-    const pv = { q: 'all', scoring: true };   // the plays tab's period and scoring-only filters
+    const pv = { q: 'all', scoring: true, n: 30 };   // the plays tab's period and scoring-only filters
     const sv = { team: 'both', pid: '', q: 0 };   // the shots tab's team and player filters
     const bv = { col: '', dir: 'desc', side: 'home' };   // the box score's sort column and which team is open
     const pf = { pid: '' };   // the plays tab's player filter
@@ -786,9 +786,9 @@
           const ctl = `<div class="gxseg"><button data-act="pscoring" data-v="1" aria-pressed="${!!pv.scoring}">Key plays</button><button data-act="pscoring" data-v="0" aria-pressed="${!pv.scoring}">All plays</button></div>`
             + `<div class="gxseg q"><button data-act="pq" data-q="all" aria-pressed="${pick === 'all'}">All</button>${periods.map(n => `<button data-act="pq" data-q="${n}" aria-pressed="${pick === n}">${pname(n)}</button>`).join('')}</div>`
             + (who.length ? `<div class="chips pchips pfchips">${who.map(([id, n]) => `<button class="chip${pid === id ? ' on' : ''}" data-act="pf" data-pid="${esc(id)}" aria-pressed="${pid === id}">${esc(V.lastName(pname2[id]))} <small>${n}</small></button>`).join('')}</div>` : '');
-          const groups = []; filt.reverse().forEach(([p, i]) => { const k = p.period && p.period.number; const grp = groups[groups.length - 1]; if (!grp || grp.k !== k) groups.push({ k, label: p.period && p.period.displayValue || '', list: [[p, i]] }); else grp.list.push([p, i]); });
+          const more = filt.length > pv.n; const groups = []; filt.reverse().slice(0, pv.n).forEach(([p, i]) => { const k = p.period && p.period.number; const grp = groups[groups.length - 1]; if (!grp || grp.k !== k) groups.push({ k, label: p.period && p.period.displayValue || '', list: [[p, i]] }); else grp.list.push([p, i]); });
           const nRuns = [...runs.keys()].filter(i => filt.some(([, j]) => j === i)).length;
-          body = `<div class="gxctl">${ctl}</div>` + '<div class="gxout">' + (groups.length ? groups.map(gr => sec(gr.label.replace(/(\d)(st|nd|rd|th) Quarter/, 'Quarter $1'), pick === 'all' && nRuns && gr === groups[0] ? `${runs.size} run${runs.size === 1 ? '' : 's'} of 8–0 or more marked` : '') + `<div class="gpls">${gr.list.map(([p, i]) => runMark(i) + playCard(L, lk, g, p, ppl)).join('')}</div>`).join('') : empty(pid ? `Nothing for ${esc(V.lastName(pname2[pid]))} in that span` : 'No scoring plays in that span')) + '</div>';
+          body = `<div class="gxctl">${ctl}</div>` + '<div class="gxout">' + (groups.length ? groups.map(gr => sec(gr.label.replace(/(\d)(st|nd|rd|th) Quarter/, 'Quarter $1'), pick === 'all' && nRuns && gr === groups[0] ? `${runs.size} run${runs.size === 1 ? '' : 's'} of 8–0 or more marked` : '') + `<div class="gpls">${gr.list.map(([p, i]) => runMark(i) + playCard(L, lk, g, p, ppl)).join('')}</div>`).join('') : empty(pid ? `Nothing for ${esc(V.lastName(pname2[pid]))} in that span` : 'No scoring plays in that span')) + (more ? `<button class="gxmore" data-act="pmore">Show more plays</button>` : '') + '</div>';
         }
       } else if (tab === 'shots') {
         const teamOf = s => s.side === 'home' ? g.home : g.away;
@@ -865,7 +865,7 @@
     const g = await paint();
     V.refresh = async () => { if (!g || g.state === 'post') return; await paint(15000); };
     if (V._gtabL) $main.removeEventListener('click', V._gtabL);
-    V._gtabL = e => { const b = e.target.closest('[data-act="gtab"],[data-act="pq"],[data-act="pscoring"],[data-act="sv-team"],[data-act="sv-pid"],[data-act="sv-q"],[data-act="bsort"],[data-act="pf"],[data-act="bside"]'); if (!b) return; const a = b.dataset.act; if (a === 'bside') bv.side = b.dataset.team; else if (a === 'gtab') tab = b.dataset.tab; else if (a === 'pq') pv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'pscoring') pv.scoring = b.dataset.v != null ? b.dataset.v === '1' : !pv.scoring; else if (a === 'sv-team') { sv.team = b.dataset.team; sv.pid = ''; } else if (a === 'sv-pid') sv.pid = b.dataset.pid; else if (a === 'sv-q') sv.q = +b.dataset.q || 0; else if (a === 'bsort') { const c = b.dataset.col; if (bv.col === c) { if (bv.dir === 'desc') bv.dir = 'asc'; else { bv.col = ''; bv.dir = 'desc'; } } else { bv.col = c; bv.dir = 'desc'; } } else if (a === 'pf') pf.pid = b.dataset.pid === pf.pid ? '' : b.dataset.pid; paint(); };
+    V._gtabL = e => { const b = e.target.closest('[data-act="gtab"],[data-act="pq"],[data-act="pscoring"],[data-act="sv-team"],[data-act="sv-pid"],[data-act="sv-q"],[data-act="bsort"],[data-act="pf"],[data-act="bside"],[data-act="pmore"]'); if (!b) return; const a = b.dataset.act; if (a !== 'pmore') pv.n = 30; if (a === 'pmore') pv.n += 40; else if (a === 'bside') bv.side = b.dataset.team; else if (a === 'gtab') tab = b.dataset.tab; else if (a === 'pq') pv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'pscoring') pv.scoring = b.dataset.v != null ? b.dataset.v === '1' : !pv.scoring; else if (a === 'sv-team') { sv.team = b.dataset.team; sv.pid = ''; } else if (a === 'sv-pid') sv.pid = b.dataset.pid; else if (a === 'sv-q') sv.q = +b.dataset.q || 0; else if (a === 'bsort') { const c = b.dataset.col; if (bv.col === c) { if (bv.dir === 'desc') bv.dir = 'asc'; else { bv.col = ''; bv.dir = 'desc'; } } else { bv.col = c; bv.dir = 'desc'; } } else if (a === 'pf') pf.pid = b.dataset.pid === pf.pid ? '' : b.dataset.pid; paint(); };
     $main.addEventListener('click', V._gtabL);
   }
 
