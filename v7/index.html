@@ -822,14 +822,14 @@ html[data-theme=light] .tsw button[aria-pressed=true]{background:#fff}
 .pgh .cr{width:18px;height:18px;background:transparent}
 .pgh .cr img{width:100%;height:100%}
 .pgh b{font-size:12.5px;font-weight:700;color:var(--t2)}
-.pgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-.pgrid button{display:flex;align-items:center;gap:6px;min-width:0;padding:8px 9px;border-radius:12px;
-  background:var(--L1);border:1px solid var(--line);text-align:left;transition:background .25s var(--ease),border-color .25s var(--ease)}
-.pgrid .dot{width:7px;height:7px;border-radius:999px;flex:none;background:var(--pc);opacity:.35;transition:opacity .25s var(--ease)}
-.pgrid b{flex:1;min-width:0;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pgrid span{font-size:11px;color:var(--t3);font-weight:600}
-.pgrid button[aria-pressed=true]{background:color-mix(in srgb,var(--pc) 22%,var(--L1));border-color:color-mix(in srgb,var(--pc) 70%,transparent)}
-.pgrid button[aria-pressed=true] .dot{opacity:1}
+.pgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.pgrid button{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;padding:9px 4px 8px;border-radius:14px;
+  background:var(--L1);border:1px solid var(--line);transition:background .25s var(--ease),border-color .25s var(--ease)}
+.pgrid .hs{width:44px;height:44px;font-size:44px;opacity:.75;transition:opacity .25s var(--ease),box-shadow .25s var(--ease)}
+.pgrid b{max-width:100%;font-size:11.5px;font-weight:600;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pgrid button[aria-pressed=true]{background:color-mix(in srgb,var(--pc) 24%,var(--L1));border-color:color-mix(in srgb,var(--pc) 75%,transparent)}
+.pgrid button[aria-pressed=true] .hs{opacity:1;box-shadow:0 0 0 2px var(--pc)}
+.pgrid button[aria-pressed=true] b{color:var(--t1)}
 .pclear{justify-self:start;font-size:12.5px;font-weight:600;color:var(--t3);padding:2px 0}
 .shsum.multi{flex-direction:column;align-items:flex-start;gap:4px}
 
@@ -1727,7 +1727,7 @@ function gameBody(tab,pc){
         +roster(tk).filter(function(p){return mk(p.s[1])[1]>0;}).map(function(p){
           var key=side+'|'+p.n, on=GF.sps.indexOf(key)>-1;
           return '<button data-pick="'+esc(key)+'" aria-pressed="'+on+'" style="--pc:'+col+'">'
-            +'<i class="dot"></i><b>'+esc(p.n)+'</b></button>';
+            +shot(p.id,p.n,T[tk].c,44)+'<b>'+esc(p.n)+'</b></button>';
         }).join('')+'</div></div>';
     }).join('')
     +(GF.sps.length?'<button class="pclear" data-pick="">Clear players</button>':'')+'</div>';
