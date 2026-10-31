@@ -1311,6 +1311,26 @@ html[data-theme=light] .phero{--pfade:color-mix(in srgb,var(--pc) 35%,#000)}
 .phero .pwm,.mcard .mwm,.ldtop .mwm,.ldcard .lwm,.pcard .pwm{filter:grayscale(1) contrast(1.35) brightness(1.15);mix-blend-mode:soft-light;opacity:.9}
 .phero .pwm{opacity:1}
 html[data-theme=light] .phero .pwm{opacity:.85}
+/* injuries */
+button.inj{background:none;border:0;border-bottom:1px solid var(--line);font:inherit;color:inherit;cursor:pointer}
+.tag.dtd{background:rgba(120,170,255,.16);color:#9CC1FF}
+html[data-theme=light] .tag.dtd{background:#E1ECFF;color:#1D4FA8}
+.ijc{background:var(--L1);border:1px solid var(--line);border-radius:20px;padding:16px;position:relative;overflow:hidden}
+.ijc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+.ijc.st-out::before{background:#FF375F}.ijc.st-q::before{background:#E8B43C}.ijc.st-dtd::before{background:#78AAFF}
+.ijwho{display:flex;align-items:center;gap:12px;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
+.ijwho .hs{box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.ijwho>span:not(.hs){flex:1;min-width:0}
+.ijwho b{display:block;font-size:18px;font-weight:700}
+.ijwho em{display:flex;align-items:center;gap:6px;font-style:normal;font-size:13px;color:var(--t3);margin-top:3px}
+.ijwho em .cr{width:14px;height:14px}
+.ijhead{display:flex;align-items:center;gap:10px}
+.ijhead b{font-size:19px;font-weight:700;letter-spacing:-.01em}
+.ijdet{margin:10px 0 0;font-size:14.5px;line-height:1.45;color:var(--t2)}
+.ijsheet{padding-top:6px;padding-bottom:28px}
+.ijsheet .sec{margin:6px 0 12px}
+.grab{width:40px;height:5px;border-radius:999px;background:var(--line2);margin:8px auto 4px}
+.ptag2{display:inline-block;vertical-align:middle;margin-left:6px;font-size:11px;padding:3px 8px}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -1423,11 +1443,20 @@ var MYPLAYERS = [
   {id:4278073, n:'Shai Gilgeous-Alexander',  t:'okc',  ln:''},
   {id:4065648, n:'Jayson Tatum',             t:'bos',  ln:''}
 ];
+/* Sample injury report for the mockup. In the app this is the official league
+   injury report, with the time it was last updated. */
 var INJ = [
-  {id:4593803, n:'Jalen Williams', t:'okc', st:'q',   w:'Right wrist · game-time decision'},
-  {id:0, n:'Derrick White',  t:'bos', st:'q',   w:'Left knee soreness'},
-  {id:0, n:'Gabe Vincent',   t:'lal', st:'out', w:'Left ankle sprain · out tonight'}
+  {id:4593803, n:'Jalen Williams', t:'okc', st:'q',   w:'Right wrist · game-time decision',
+    part:'Right wrist', detail:'Soreness after a fall in the last game. Went through shootaround this morning.',
+    ret:'Game-time decision tonight', since:'Oct 29', upd:'Today, 1:15 PM', miss:0},
+  {id:0, n:'Derrick White',  t:'bos', st:'dtd',   w:'Left knee soreness',
+    part:'Left knee', detail:'Soreness. Listed day-to-day; played through it last game.',
+    ret:'Day-to-day', since:'Oct 30', upd:'Today, 11:40 AM', miss:0},
+  {id:0, n:'Gabe Vincent',   t:'lal', st:'out', w:'Left ankle sprain · out tonight',
+    part:'Left ankle', detail:'Sprain. Will be re-evaluated in about one week.',
+    ret:'Re-evaluated in about 1 week', since:'Oct 27', upd:'Yesterday, 6:05 PM', miss:2}
 ];
+var INJLBL={out:'Out',q:'Questionable',dtd:'Day-to-day'};
 var NEWS = [
   {k:'Lakers',  t:'lal', h:'Dončić and James carry the Lakers into a big night at Chase Center', s:'2 hours ago'},
   {k:'Warriors',t:'gs',  h:'Curry hits eight threes as Golden State pulls away in the third',     s:'4 hours ago'}
@@ -1668,9 +1697,24 @@ function leagueChips(){
 }
 function injRow(p, withTeam){
   var t=T[p.t];
-  return '<a class="inj pressable" href="'+pHref(p.n)+'">'+shot(p.id,p.n,t.c,42)
+  return '<button class="inj pressable" data-act="inj" data-n="'+esc(p.n)+'">'+shot(p.id,p.n,t.c,42)
     +'<span class="t"><b>'+esc(p.n)+'</b><span>'+(withTeam?esc(t.full)+' · ':'')+esc(p.w)+'</span></span>'
-    +'<span class="tag '+p.st+'">'+(p.st==='out'?'Out':'Questionable')+'</span></a>';
+    +'<span class="tag '+p.st+'">'+INJLBL[p.st]+'</span></button>';
+}
+function injOf(name){ var n=norm(name); return INJ.filter(function(x){ return norm(x.n)===n; })[0]||null; }
+/* the injury, in full: what, how serious, until when, and when it was last updated */
+function injCard(p, inSheet){
+  var t=T[p.t];
+  var facts=[['Status',INJLBL[p.st]],['Injury',p.part],['Expected back',p.ret],['Since',p.since]].concat(p.miss?[['Games missed',p.miss]]:[]);
+  return '<div class="ijc st-'+p.st+'">'
+    +(inSheet?'<a class="ijwho" href="'+pHref(p.n)+'" data-act="sheet-close">'+shot(p.id,p.n,cardTone(t.c),56)
+      +'<span><b>'+esc(p.n)+'</b><em>'+crest(p.t,14,true)+esc(t.full)+'</em></span><i class="chev">›</i></a>':'')
+    +'<div class="ijhead"><span class="tag '+p.st+'">'+INJLBL[p.st]+'</span><b>'+esc(p.part)+'</b></div>'
+    +'<p class="ijdet">'+esc(p.detail)+'</p>'
+    +'<div class="xfacts">'+facts.map(function(f){ return '<div><span>'+esc(f[0])+'</span><b>'+esc(String(f[1]))+'</b></div>'; }).join('')+'</div>'
+    +'<p class="xnote">Updated '+esc(p.upd)+' · Sample report in this mockup</p>'
+    +(inSheet?'<a class="morebtn pressable" href="'+pHref(p.n)+'" data-act="sheet-close" style="text-decoration:none">Open '+esc(p.n.split(' ')[0])+'\'s profile<span>›</span></a>':'')
+    +'</div>';
 }
 function newsCard(n,i){
   return '<a class="news pressable" href="#" data-act="read" data-i="'+i+'"><span class="im" style="display:block;background:linear-gradient(140deg,'+T[n.t].c+',#0b0d0f)"></span>'
@@ -2079,7 +2123,7 @@ function answer(q){
     var p=f.ps[0], t=T[p.t];
     if(has(/ injur| hurt| status| health/)){
       var inj=INJ.filter(function(x){return x.n===p.n;})[0];
-      return ansCard(p, inj ? p.n+' is listed '+(inj.st==='out'?'out':'questionable')+'.' : p.n+' is not on the injury report.',
+      return ansCard(p, inj ? p.n+' is listed '+INJLBL[inj.st].toLowerCase()+'.' : p.n+' is not on the injury report.',
         inj ? [['Injury',inj.w],['Team',t.full]] : [['Status','Available'],['Team',t.full]]);
     }
     if(has(/ draft| pick /)) return p.draft
@@ -2517,7 +2561,8 @@ function playerWho(key){
   if(p) return {who:p, p:p};
   var m=MYPLAYERS.filter(function(x){return x.n===nm;})[0], bx=null;
   Object.keys(BOXES).forEach(function(k){ roster(k).forEach(function(r){ if(r.n===nm) bx={r:r,t:k}; }); });
-  var stub = m ? {n:m.n,t:m.t,id:m.id} : bx ? {n:bx.r.n,t:bx.t,id:bx.r.id,pos:bx.r.p,j:bx.r.j} : null;
+  var ij=injOf(nm);
+  var stub = m ? {n:m.n,t:m.t,id:m.id} : bx ? {n:bx.r.n,t:bx.t,id:bx.r.id,pos:bx.r.p,j:bx.r.j} : ij ? {n:ij.n,t:ij.t,id:ij.id} : null;
   return stub ? {who:stub, p:null} : null;
 }
 function viewPlayer(key){
@@ -2531,7 +2576,8 @@ function viewPlayer(key){
   var SL=soloLayer(who.t);
   var hero='<section class="phero'+(face?'':' noface')+SL.cls+'" style="--pc:'+c+';--tc:'+c+SL.vars+'"><span class="w"><i></i><i></i></span>'+SL.html+wmImg(who.t,'pwm')+face+'<span class="psil">'+SIL+'</span>'
     +'<div class="pid gut" id="gfade"><a href="#team/'+who.t+'" class="pcr">'+crest(who.t,46,true)+'</a><h1>'+esc(who.n)+'</h1>'
-      +'<p class="pmeta">'+esc([t.full, who.pos, (who.j!==''&&who.j!=null)?'#'+who.j:''].filter(Boolean).join(' · '))+'</p>'
+      +'<p class="pmeta">'+esc([t.full, who.pos, (who.j!==''&&who.j!=null)?'#'+who.j:''].filter(Boolean).join(' · '))
+        +(injOf(who.n)?' <span class="tag '+injOf(who.n).st+' ptag2">'+INJLBL[injOf(who.n).st]+'</span>':'')+'</p>'
       +'<button class="pfollow pressable">'+svg('<path d="M12 5v14M5 12h14"/>')+'Follow player</button></div></section>';
   var tabs=[['overview','Overview'],['bio','Bio'],['stats','Stats']];
   var sheet='<div class="sheet gsheet"><div class="gtw" id="gtw"><div class="gtwin"><div class="gut"><div class="gtabs ptabs2" style="--pc:'+markColor(t.c)+'">'
@@ -2543,6 +2589,8 @@ function factGrid(rows){ return '<div class="gp">'+rows.filter(function(r){retur
 function playerBody(who, p, tab){
   var t=T[who.t], out='', B=(p&&BIO[p.k])||{};
   if(tab==='overview'){
+    var IJ=injOf(who.n);
+    if(IJ) out+='<div class="gut sechd tight"><h2 class="sec">Injury</h2></div><div class="gut">'+injCard(IJ,false)+'</div>';
     var ag=p?age(p.dob):null;
     var facts=[[who.j!==''&&who.j!=null?who.j:'-','Jersey'],[who.pos||'-','Position'],[p?p.ht.replace('-','′')+'″':'-','Height'],[ag!=null?ag+' yrs':'-','Age'],[t.ab,'Team']];
     out+='<div class="gut" style="padding-top:8px"><div class="pfacts">'+facts.map(function(f,i){ return '<div'+(i>2?' class="lo"':'')+'><b>'+esc(String(f[0]))+'</b><span>'+f[1]+'</span></div>'; }).join('')+'</div></div>';
@@ -3001,7 +3049,8 @@ document.addEventListener('click',function(e){
     var act=a.getAttribute('data-act');
     if(act==='live'){ e.preventDefault(); openLive(); return; }
     if(act==='live-close'){ closeLive(); if(a.tagName!=='A') e.preventDefault(); return; }
-    if(act==='sheet-close'){ e.preventDefault(); closeSheet(); return; }
+    if(act==='sheet-close'){ if(a.tagName!=='A') e.preventDefault(); closeSheet(); return; }
+    if(act==='inj'){ e.preventDefault(); var ij=injOf(a.getAttribute('data-n')); if(ij) openSheet('<div class="gut ijsheet"><div class="grab"></div><h2 class="sec">Injury</h2>'+injCard(ij,true)+'</div>','bottom'); return; }
     if(act==='cal'){ e.preventDefault(); openCal(); return; }
     if(act==='read'){ e.preventDefault(); openSheet(readerHtml(NEWS[+a.getAttribute('data-i')]),'full'); return; }
     if(act==='clip'){ e.preventDefault(); var c=HL[+a.getAttribute('data-i')]; if(document.getElementById('sheet').hidden) openSheet(videoHtml(c),'full'); else document.querySelector('#sheet .panel').innerHTML=videoHtml(c); return; }
