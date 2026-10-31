@@ -260,7 +260,7 @@ html[data-theme=light] .tag.q{background:#FDEFC8;color:#7A5200}
 @keyframes fc{from{transform:translate3d(-22%,4%,0) scale(.85)}to{transform:translate3d(46%,-10%,0) scale(1.45)}}
 @keyframes fd{from{transform:translate3d(26%,-8%,0) scale(1.4)}to{transform:translate3d(-34%,10%,0) scale(.9)}}
 /* phones with animations turned down still get a slow drift, never a still picture */
-@media(prefers-reduced-motion:reduce){.w>i{animation-duration:26s}}
+
 .ghero .dots{position:absolute;inset:0;pointer-events:none;z-index:-1;
   background-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,.26) 1.1px,transparent 1.2px);
   background-size:5px 5px;mix-blend-mode:multiply;opacity:.3}
@@ -1153,6 +1153,13 @@ button.xpage{width:100%;text-align:left}
   mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 80'%3E%3Ccircle cx='50' cy='30' r='17'/%3E%3Cpath d='M14 80c2-18 17-28 36-28s34 10 36 28z'/%3E%3C/svg%3E") center/contain no-repeat}
 /* no halftone anywhere */
 span.dots{display:none!important}
+.ftop .fmk{flex:none;display:flex;align-items:center;height:40px;padding-left:4px}
+.ftop .fmk .mark{color:#fff}
+.ftop .icons{flex:none}
+.ftop .csc{text-decoration:none}
+.fcap{padding-top:6px}
+.fcap .ltabs{position:static;background:transparent}
+.ghero .sband{display:none!important}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -1574,14 +1581,21 @@ function viewFollowing(){
   var top;
   if(hero){
     var pc=pairColors(hero.a,hero.h);
-    top='<section class="ghero" style="--ha:'+pc.home+';--aw:'+pc.away+'">'
-      +'<span class="w"><i></i><i></i><i></i><i></i></span><span class="dots"></span><span class="veil"></span>'
-      +'<div class="in gut"><div class="fbar">'+MARK+topIcons(true)+'</div>'
+    /* same motion as the game page: the colour stays pinned and keeps moving,
+       the big score hazes out, the compact score hazes in. Nothing drops down. */
+    var cv='--ha:'+pc.home+';--aw:'+pc.away, aL=hero.as>hero.hs, hL=hero.hs>hero.as;
+    top='<div class="gtop ftop" id="gtop" style="'+cv+'"><span class="fmk">'+MARK+'</span>'
+        +'<div class="ctr"><a class="csc" id="csc" href="#game">'+crest(hero.a,24,true)+'<b class="num'+(aL?'':' tr')+'">'+hero.as+'</b>'
+          +'<span class="ck">'+stp(hero.clock,true,'flat sm')+'</span><b class="num'+(hL?'':' tr')+'">'+hero.hs+'</b>'+crest(hero.h,24,true)+'</a></div>'
+        +topIcons(true)+'</div>'
+      +'<section class="ghero gpage" style="'+cv+'">'
+      +'<span class="w"><i></i><i></i><i></i><i></i></span><span class="veil"></span>'
+      +'<div class="in gut"><div class="gspace"></div><div id="gfade">'
         +'<p class="gleague">Your team is live · '+esc(LNAME[hero.L])+'</p>'+heroScore(hero,pc)
-      +'</div></section><div class="sheet">'+miniBar(hero,pc);
+      +'</div></div></section><div class="sheet gsheet"><div class="gtw" id="gtw"><div class="gtwin fcap">'+(ENABLED.length>1?leagueChips():'<div style="height:12px"></div>')+'</div></div><div id="gbody">';
   } else top='<header class="hdr gut">'+MARK+topIcons(false)+'</header>';
 
-  var body='<div class="gut">'+greet()+'<div class="ptrow"><h1 class="ptitle">Following</h1><span class="more">Edit</span></div></div>'+leagueChips();
+  var body='<div class="gut">'+greet()+'<div class="ptrow"><h1 class="ptitle">Following</h1><span class="more">Edit</span></div></div>'+(hero?'':leagueChips());
   if(myLive.length>1) body+='<div class="gut"><button class="livebn pressable" data-act="live">'+stp(myLive.length+' live',true,'flat sm')
     +'<b>'+myLive.length+' of your teams are playing</b><u>Open Live ›</u></button></div>';
   if(rest.length){
@@ -1602,7 +1616,7 @@ function viewFollowing(){
   body+='<div class="gut demo"><span>Mockup</span>'
     +'<a href="#following/1" aria-pressed="'+(DEMO===1)+'">1 live</a><a href="#following/3" aria-pressed="'+(DEMO===3)+'">3 live</a>'
     +'<a href="#following/m" aria-pressed="'+(DEMO==='m')+'">Follows a lot</a></div>';
-  return top+body+(hero?'</div>':'');
+  return top+body+(hero?'</div></div>':'');
 }
 
 /* ---------- SCORES ---------- */
