@@ -2573,3 +2573,13 @@ html.gxon body::before{display:none}
 .gxfloor .fr a{display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;color:inherit;min-width:0}
 .gxfloor .fr b{font-size:12px;font-weight:700;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
 .gxfloor .fr span{font-size:11px;font-weight:600;color:var(--ink-3);margin-top:-3px}
+
+/* tabs you are not on stay laid out and drawn (just out of sight), so their images never have to be decoded again */
+#gbody>[data-p][hidden]{display:block!important;position:absolute;left:0;right:0;top:0;visibility:hidden;pointer-events:none;height:0;overflow:hidden}
+#gbody{position:relative}
+
+/* box score on the game page: every column a fixed width, so switching teams changes the numbers and nothing moves */
+.gxpage .tbl.box{width:auto;min-width:100%;table-layout:fixed}
+.gxpage .tbl.box th,.gxpage .tbl.box td{width:52px;min-width:52px;max-width:52px;overflow:hidden;text-overflow:clip}
+.gxpage .tbl.box th:first-child,.gxpage .tbl.box td:first-child{width:128px;min-width:128px;max-width:128px;text-overflow:ellipsis}
+.gxpage .tbl.box td[colspan]{max-width:none;width:auto}

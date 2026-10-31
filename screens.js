@@ -468,6 +468,22 @@
   function gxPin() { const box = document.getElementById('gxscroll'), sp = box && box.querySelector('.gxspace'); if (sp && box.scrollTop > sp.offsetHeight) box.scrollTop = sp.offsetHeight; }
   /* a filter inside a tab changes only what it filters: the controls keep their buttons (so nothing redraws under a finger) and
      the part below them is swapped. Returns false when the controls differ, so the caller swaps the whole body. */
+  function gxMorph(a, b) {
+    if (a.nodeType !== b.nodeType || a.nodeName !== b.nodeName) { a.replaceWith(b.cloneNode(true)); return; }
+    if (a.nodeType === 3) { if (a.nodeValue !== b.nodeValue) a.nodeValue = b.nodeValue; return; }
+    if (a.nodeType !== 1) return;
+    /* the same picture (by file name: phi.png, 3059318.png) keeps its element as is, even after it fell back to another copy */
+    const pic = u => { const m = /([\w-]+)\.(?:png|jpe?g|webp|svg)/i.exec(String(u || '')); return m ? m[1] : u; };
+    const sameImg = a.nodeName === 'IMG' && pic(a.getAttribute('src')) === pic(b.getAttribute('src'));
+    for (const at of [...a.attributes]) if (!b.hasAttribute(at.name) && at.name !== 'style' && at.name !== 'hidden' && !(sameImg && at.name === 'data-o')) a.removeAttribute(at.name);
+    for (const at of [...b.attributes]) if (a.getAttribute(at.name) !== at.value) { if (sameImg && (at.name === 'src' || at.name === 'data-o' || at.name === 'onerror')) continue; a.setAttribute(at.name, at.value); }
+    const ak = [...a.childNodes], bk = [...b.childNodes];
+    for (let i = 0; i < bk.length; i++) { if (i < ak.length) gxMorph(ak[i], bk[i]); else a.appendChild(bk[i].cloneNode(true)); }
+    for (let i = bk.length; i < ak.length; i++) ak[i].remove();
+  }
+  /* patch only the inside of el (el's own attributes, like the fades' inline styles, are left alone) */
+  function gxPatch(el, html) { const t = document.createElement('div'); t.innerHTML = html; const ak = [...el.childNodes], bk = [...t.childNodes];
+    for (let i = 0; i < bk.length; i++) { if (i < ak.length) gxMorph(ak[i], bk[i]); else el.appendChild(bk[i]); } for (let i = bk.length; i < ak.length; i++) ak[i].remove(); }
   function gxSwapOut(bodyEl, html) {
     const ctl = bodyEl.querySelector(':scope > .gxctl'); if (!ctl) return false;
     const t = document.createElement('div'); t.innerHTML = html; const nctl = t.querySelector(':scope > .gxctl'), nout = t.querySelector(':scope > .gxout'); if (!nctl || !nout) return false;
@@ -562,7 +578,8 @@
   async function gameV(lk, id, focus = '') {
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Game not found'); return; }
     $main.innerHTML = topbar('', '#scores') + skeleton(1, 'card') + skeleton(6, 'row');
-    let ctx = null, sched, tab = focus ? 'box' : 'summary';   // every game opens on Summary — or on the box score, led by one player, when opened from his line
+    const mem = (() => { try { return JSON.parse(sessionStorage.getItem('gx:' + id) || 'null') || {}; } catch { return {}; } })();
+    let ctx = null, sched, tab = focus ? 'box' : (mem.tab || 'summary');   // every game opens on Summary — or on the box score, led by one player, when opened from his line
     const pv = { q: 'all', scoring: true, n: 30 };   // the plays tab's period and scoring-only filters
     const sv = { team: 'both', pid: '', q: 0 };   // the shots tab's team and player filters
     const bv = { col: '', dir: 'desc', side: 'home' };   // the box score's sort column and which team is open
@@ -828,15 +845,15 @@
           const hero = page.querySelector('#gxhero'), bar = page.querySelector('#gxbar');
           if (hero.dataset.v !== vars) { hero.setAttribute('style', vars); hero.dataset.v = vars; }
           page.classList.toggle('nowp', !(f && !g.off));
-          const inn = page.querySelector('#gxin'); const ih = hashOf(inner); if (inn.dataset.h !== ih) { inn.innerHTML = inner; inn.dataset.h = ih; }
-          const bh = hashOf(barHtml); if (bar.dataset.h !== bh) { const st0 = bar.querySelector('#gxstrip'), sl = st0 ? st0.scrollLeft : null; bar.innerHTML = barHtml; bar.dataset.h = bh; const st1 = bar.querySelector('#gxstrip'); if (st1 && sl != null) st1.scrollLeft = sl; }
+          const inn = page.querySelector('#gxin'); const ih = hashOf(inner); if (inn.dataset.h !== ih) { gxPatch(inn, inner); inn.dataset.h = ih; }
+          const bh = hashOf(barHtml); if (bar.dataset.h !== bh) { gxPatch(bar, barHtml); bar.dataset.h = bh; }
           const tabsEl = page.querySelector('#gtabs'); if (tabsEl.dataset.k !== tabKey) { tabsEl.innerHTML = tabs; tabsEl.dataset.k = tabKey; }
           else tabsEl.querySelectorAll('.chip').forEach(x => { const on = x.dataset.tab === tab; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); x.setAttribute('aria-selected', String(on)); });
           const bodyEl = page.querySelector('#gbody'); const bhh = hashOf(body); const tabChanged = bodyEl.dataset.tab !== tab;
           let pan = bodyEl.querySelector(`:scope > [data-p="${tab}"]`);
           if (!pan) { pan = document.createElement('div'); pan.dataset.p = tab; bodyEl.appendChild(pan); }
-          if (pan.dataset.h !== bhh) { if (!gxSwapOut(pan, body)) pan.innerHTML = body; pan.dataset.h = bhh; }
-          if (tabChanged) { bodyEl.querySelectorAll(':scope > [data-p]').forEach(x => { x.hidden = x !== pan; }); bodyEl.dataset.tab = tab; gxPin(); }
+          if (pan.dataset.h !== bhh) { if (pan.firstChild) gxPatch(pan, body); else pan.innerHTML = body; pan.dataset.h = bhh; }
+          if (tabChanged) { bodyEl.querySelectorAll(':scope > [data-p]').forEach(x => { x.hidden = x !== pan; }); bodyEl.dataset.tab = tab; gxPin(); try { sessionStorage.setItem('gx:' + id, JSON.stringify({ tab, y: Math.round(document.getElementById('gxscroll').scrollTop) })); } catch { } }
           gxFit(); if (gxScroll.run) gxScroll.run();
         } else {
           $main.innerHTML = `<div id="gpage" class="gxpage${f && !g.off ? '' : ' nowp'}" data-gid="${esc(String(id))}">`
@@ -844,6 +861,8 @@
             + `<div class="gxbar" id="gxbar" data-h="${hashOf(barHtml)}">${barHtml}</div>`
             + `<div class="gxscroll" id="gxscroll"><div class="gxspace"></div><div class="gxsheet"><div id="gtabs" class="gxtabw" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}"><div data-p="${tab}" data-h="${hashOf(body)}">${body}</div></div></div></div></div>`;
           gxFit(); gxScroll(); if (gxScroll.run) gxScroll.run();
+          { const box = document.getElementById('gxscroll'); if (mem.y && !focus) { box.scrollTop = mem.y; requestAnimationFrame(() => { box.scrollTop = mem.y; if (gxScroll.run) gxScroll.run(); }); }
+            let tm = 0; box.addEventListener('scroll', () => { clearTimeout(tm); tm = setTimeout(() => { try { sessionStorage.setItem('gx:' + id, JSON.stringify({ tab, y: Math.round(box.scrollTop) })); } catch { } }, 150); }, { passive: true }); }
           requestAnimationFrame(() => { gxFit(); const st = document.getElementById('gxstrip'), cur = st && st.querySelector('.cur'); if (cur) st.scrollLeft = cur.offsetLeft - (st.clientWidth - cur.offsetWidth) / 2; });
         }
         /* a basket lands: the scorer's colour flashes forward */
