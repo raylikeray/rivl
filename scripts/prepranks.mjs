@@ -72,7 +72,8 @@ for (const [g, sport] of Object.entries(SPORTS)) {
     const url = `https://prepranks.com/${sport}/recruits/year/${y}`;
     try {
       const html = await get(url);
-      debug[g + y] = { bytes: html.length, hasNext: html.includes('__NEXT_DATA__'), head: html.slice(0, 400).replace(/\s+/g, ' ') };
+      debug[g + y] = { bytes: html.length };
+      if (!debug.row) { const i = html.indexOf('/' + sport + '/recruits/'); const j = html.indexOf('/' + sport + '/recruits/', i + 300); debug.row = html.slice(Math.max(0, i - 2500), i + 3500); debug.rowText = clean(debug.row); }
       let list = fromNextData(html);
       list = list && list.length ? list.map(normNext) : fromHtml(html, sport, y);
       list = list.filter(r => r.n).sort((a, b) => (a.rank || 999) - (b.rank || 999)).slice(0, 150);
@@ -82,6 +83,7 @@ for (const [g, sport] of Object.entries(SPORTS)) {
     await sleep(1500);
   }
 }
+try { const s1 = (result.boys[2027] || [])[0]; if (s1) { const h = await get('https://prepranks.com' + s1.slug); debug.detailText = clean(h.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ')).slice(0, 6000); } } catch (e) { debug.detailErr = String(e); }
 writeFileSync('data/recruits.json', JSON.stringify(result));
 writeFileSync('data/prepranks-debug.json', JSON.stringify(debug, null, 1));
 console.log(JSON.stringify(debug, null, 1).slice(0, 4000));
