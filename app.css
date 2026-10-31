@@ -2350,9 +2350,10 @@ html.gxon body::before{display:none}
 .gxpage{margin-top:calc(-1 * env(safe-area-inset-top,0px))}
 .gxbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:8px;height:calc(56px + env(safe-area-inset-top,0px));
   padding:env(safe-area-inset-top,0px) var(--gut-r) 0 var(--gut);margin-bottom:calc(-56px - env(safe-area-inset-top,0px));color:#fff}
-.gxbg{position:absolute;left:0;right:0;top:0;height:calc(100% + 22px);z-index:-1;overflow:hidden;pointer-events:none;
-  -webkit-mask:linear-gradient(#000,#000) left top/100% calc(100% - 22px) no-repeat,radial-gradient(circle at 100% 100%,transparent 21.5px,#000 22px) left bottom/22px 22px no-repeat,radial-gradient(circle at 0 100%,transparent 21.5px,#000 22px) right bottom/22px 22px no-repeat;
-          mask:linear-gradient(#000,#000) left top/100% calc(100% - 22px) no-repeat,radial-gradient(circle at 100% 100%,transparent 21.5px,#000 22px) left bottom/22px 22px no-repeat,radial-gradient(circle at 0 100%,transparent 21.5px,#000 22px) right bottom/22px 22px no-repeat}
+.gxbg{position:absolute;left:0;right:0;top:0;height:100%;z-index:-1;overflow:hidden;pointer-events:none}
+.gxbar.stk .gxbg{height:calc(100% + 22px);
+  -webkit-mask:linear-gradient(#000,#000) left top/100% calc(100% - 22px) no-repeat,radial-gradient(circle at 100% 100%,transparent 20px,#000 20.6px) left bottom/22px 22px no-repeat,radial-gradient(circle at 0 100%,transparent 20px,#000 20.6px) right bottom/22px 22px no-repeat;
+          mask:linear-gradient(#000,#000) left top/100% calc(100% - 22px) no-repeat,radial-gradient(circle at 100% 100%,transparent 20px,#000 20.6px) left bottom/22px 22px no-repeat,radial-gradient(circle at 0 100%,transparent 20px,#000 20.6px) right bottom/22px 22px no-repeat}
 .gxcov{position:absolute;left:0;right:0;top:0;height:var(--gxh,420px);overflow:hidden;isolation:isolate}
 .gxib{flex:none;width:44px;height:44px;border-radius:999px;display:grid;place-items:center;color:#fff;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.16);
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
@@ -2480,3 +2481,16 @@ html.gxon body::before{display:none}
 .gxcourt svg{position:absolute;inset:0;width:100%;height:100%}
 .gxcourt .mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:16%;opacity:.85}
 .gxshleg .kk em.x{margin:0;font-style:normal;font-size:11px;line-height:1;font-weight:800}
+
+/* v8 game page, round 3: crests without discs, smaller flat pickers with a sliding thumb */
+.gxpage .logo,.gxpage .logo.tint{background:none!important;box-shadow:none!important;border:0!important;border-radius:0;overflow:visible}
+.gxpage .logo::before{display:none}
+.gxpage .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.28))}
+.gxseg,.gxtsw{position:relative;padding:3px;gap:0;background:color-mix(in srgb,var(--ink) 7%,transparent);box-shadow:none}
+.gxseg button,.gxtsw button{position:relative;z-index:1;min-height:34px;font-size:14px;font-weight:600;color:var(--ink-3);background:none;transition:color .25s ease}
+.gxtsw button{gap:6px}
+.gxtsw button .logo{width:18px;height:18px}
+.gxtsw button b{font-size:14px}
+.gxseg button[aria-pressed=true],.gxtsw button[aria-pressed=true]{color:var(--bg);font-weight:700}
+.gxseg.hth button[aria-pressed=true],.gxtsw.hth button[aria-pressed=true]{background:none}
+.gxseg .th,.gxtsw .th{position:absolute;left:0;top:3px;bottom:3px;border-radius:999px;background:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.18);transition:transform .32s cubic-bezier(.3,.7,.2,1),width .32s cubic-bezier(.3,.7,.2,1);pointer-events:none}

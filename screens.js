@@ -440,13 +440,29 @@
     if (gxScroll.on) return; gxScroll.on = true; let tick = false;
     const run = () => { tick = false; const bar = document.getElementById('gxbar'), hero = document.getElementById('gxhero');
       if (!bar || !hero) { document.documentElement.classList.remove('gxon'); window.removeEventListener('scroll', on); gxScroll.on = false; return; }
-      document.documentElement.classList.add('gxon'); hero.classList.toggle('gone', window.scrollY > hero.offsetHeight + 60);
+      document.documentElement.classList.add('gxon');
+      const tw = document.getElementById('gtabs'); if (tw) bar.classList.toggle('stk', tw.getBoundingClientRect().top <= bar.offsetHeight + .5); hero.classList.toggle('gone', window.scrollY > hero.offsetHeight + 60);
       const span = Math.max(80, hero.offsetHeight - bar.offsetHeight - 22), p = Math.min(1, Math.max(0, window.scrollY / span));
       const fade = document.getElementById('gxin'), mini = document.getElementById('gxmini'); const f = Math.min(1, p / .6), c = Math.min(1, Math.max(0, (p - .45) / .4));
       if (fade) { fade.style.opacity = (1 - f).toFixed(3); fade.style.transform = `translateY(${(-18 * f).toFixed(1)}px) scale(${(1 - .06 * f).toFixed(3)})`; }
       if (mini) { mini.style.opacity = c.toFixed(3); mini.style.transform = `translateY(${(8 * (1 - c)).toFixed(1)}px)`; mini.style.pointerEvents = c > .5 ? '' : 'none'; } };
     const on = () => { if (!tick) { tick = true; requestAnimationFrame(run); } };
     window.addEventListener('scroll', on, { passive: true }); gxScroll.run = run; run();
+  }
+  /* joined controls: a thumb slides from the old choice to the new one, so a tap moves one thing and nothing else */
+  let gxSegPrev = null;
+  function gxSegPos() { const m = {}; document.querySelectorAll('#gbody .gxseg, #gbody .gxtsw').forEach((c, i) => { const on = c.querySelector('[aria-pressed=true]'); if (on) m[i] = [on.offsetLeft, on.offsetWidth]; }); return m; }
+  function gxSegs() {
+    const prev = gxSegPrev || {}; gxSegPrev = null;
+    document.querySelectorAll('#gbody .gxseg, #gbody .gxtsw').forEach((c, i) => {
+      const on = c.querySelector('[aria-pressed=true]'); if (!on) return;
+      let th = c.querySelector('.th'); if (!th) { th = document.createElement('span'); th.className = 'th'; c.insertBefore(th, c.firstChild); }
+      c.classList.add('hth');
+      const go = () => { th.style.transform = `translateX(${on.offsetLeft}px)`; th.style.width = on.offsetWidth + 'px'; };
+      const p = prev[i];
+      if (p && (p[0] !== on.offsetLeft || p[1] !== on.offsetWidth)) { th.style.transition = 'none'; th.style.transform = `translateX(${p[0]}px)`; th.style.width = p[1] + 'px'; void th.offsetWidth; th.style.transition = ''; requestAnimationFrame(go); }
+      else { th.style.transition = 'none'; go(); void th.offsetWidth; th.style.transition = ''; }
+    });
   }
   function gxPulse(side) { const h = document.getElementById('gxhero'); if (!h) return; let z = h.querySelector('.pz'); if (!z) { z = document.createElement('span'); h.insertBefore(z, h.querySelector('.veil')); } z.className = 'pz ' + (side === 'away' ? 'pa' : 'ph'); void z.offsetWidth; z.classList.add('go'); }
   /* a play, as a card on a timeline: the team's colour, the player's face and number, what happened, and the score after it */
@@ -792,12 +808,12 @@
           const tabsEl = page.querySelector('#gtabs'); if (tabsEl.dataset.k !== tabKey) { tabsEl.innerHTML = tabs; tabsEl.dataset.k = tabKey; }
           else tabsEl.querySelectorAll('.chip').forEach(x => { const on = x.dataset.tab === tab; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); x.setAttribute('aria-selected', String(on)); });
           const bodyEl = page.querySelector('#gbody'); if (bodyEl.dataset.h !== hashOf(body) || bodyEl.dataset.tab !== tab) { const tabChanged = bodyEl.dataset.tab !== tab; bodyEl.innerHTML = body; if (tabChanged && V.soft) V.soft(bodyEl); bodyEl.dataset.h = hashOf(body); bodyEl.dataset.tab = tab; }
-          if (gxScroll.run) gxScroll.run();
+          gxSegs(); if (gxScroll.run) gxScroll.run();
         } else {
           $main.innerHTML = `<div id="gpage" class="gxpage" data-gid="${esc(String(id))}"><div class="gxbar" id="gxbar" data-h="${hashOf(barHtml)}">${barHtml}</div>`
             + `<section class="gx" id="gxhero" data-v="${esc(vars)}" style="${vars}">${LOBES}<div class="gxin" id="gxin" data-h="${hashOf(inner)}">${inner}</div></section>`
             + `<div class="gxsheet"><div id="gtabs" class="gxtabw" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div></div>`;
-          requestAnimationFrame(() => { gxCover(); gxScroll(); if (gxScroll.run) gxScroll.run(); });
+          gxSegs(); requestAnimationFrame(() => { gxCover(); gxScroll(); if (gxScroll.run) gxScroll.run(); });
         }
         /* a basket lands: the scorer's colour flashes forward */
         if (gameV.last && gameV.last.id === g.id && g.state === 'in') { if (+g.home.score > gameV.last.h) gxPulse('home'); else if (+g.away.score > gameV.last.a) gxPulse('away'); }
@@ -818,7 +834,7 @@
     const g = await paint();
     V.refresh = async () => { if (!g || g.state === 'post') return; await paint(15000); };
     if (V._gtabL) $main.removeEventListener('click', V._gtabL);
-    V._gtabL = e => { const b = e.target.closest('[data-act="gtab"],[data-act="pq"],[data-act="pscoring"],[data-act="sv-team"],[data-act="sv-pid"],[data-act="sv-q"],[data-act="bsort"],[data-act="pf"]'); if (!b) return; const a = b.dataset.act; if (a === 'gtab') tab = b.dataset.tab; else if (a === 'pq') pv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'pscoring') pv.scoring = b.dataset.v != null ? b.dataset.v === '1' : !pv.scoring; else if (a === 'sv-team') { sv.team = b.dataset.team; sv.pid = ''; } else if (a === 'sv-pid') sv.pid = b.dataset.pid; else if (a === 'sv-q') sv.q = +b.dataset.q || 0; else if (a === 'bsort') { const c = b.dataset.col; if (bv.col === c) { if (bv.dir === 'desc') bv.dir = 'asc'; else { bv.col = ''; bv.dir = 'desc'; } } else { bv.col = c; bv.dir = 'desc'; } } else if (a === 'pf') pf.pid = b.dataset.pid === pf.pid ? '' : b.dataset.pid; paint(); };
+    V._gtabL = e => { const b = e.target.closest('[data-act="gtab"],[data-act="pq"],[data-act="pscoring"],[data-act="sv-team"],[data-act="sv-pid"],[data-act="sv-q"],[data-act="bsort"],[data-act="pf"]'); if (!b) return; const a = b.dataset.act; if (a === 'gtab') tab = b.dataset.tab; else if (a === 'pq') pv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'pscoring') pv.scoring = b.dataset.v != null ? b.dataset.v === '1' : !pv.scoring; else if (a === 'sv-team') { sv.team = b.dataset.team; sv.pid = ''; } else if (a === 'sv-pid') sv.pid = b.dataset.pid; else if (a === 'sv-q') sv.q = +b.dataset.q || 0; else if (a === 'bsort') { const c = b.dataset.col; if (bv.col === c) { if (bv.dir === 'desc') bv.dir = 'asc'; else { bv.col = ''; bv.dir = 'desc'; } } else { bv.col = c; bv.dir = 'desc'; } } else if (a === 'pf') pf.pid = b.dataset.pid === pf.pid ? '' : b.dataset.pid; if (a !== 'gtab') gxSegPrev = gxSegPos(); paint(); };
     $main.addEventListener('click', V._gtabL);
   }
 
