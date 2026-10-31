@@ -178,15 +178,17 @@ const favs = {
 /* ---------- parsing ---------- */
 /* the clock the way an app says it: "Q3 4:12", "1H 12:30", "OT 1:20", "End Q3"; anything else (Halftime, Final, a tip time) passes through */
 const perName = (n, L) => (L.periods === 2 ? (n === 1 ? '1H' : n === 2 ? '2H' : `OT${n - 2 > 1 ? n - 2 : ''}`) : (n <= 4 ? `Q${n}` : `OT${n - 4 > 1 ? n - 4 : ''}`));
-function prettyDetail(d, L) {
+function prettyDetail(d, L, name) {
   const s = String(d || '').trim(); let m;
   const clock = c => /^\d{1,2}(\.\d)?$/.test(c) ? `0:${c.padStart(c.includes('.') ? 4 : 2, '0')}` : c;   // under a minute ESPN writes "33.9": read as 0:33.9
-  /* the clock reads zero in the moment between the buzzer and the feed's own "End of …" or "Halftime": say that instead
-     of "Q2 0:00.0" */
+  /* A clock at zero: "Halftime" or "End Q2" only when the feed's own status says the period is over. ESPN's clock has
+     been seen stuck at 0.0 mid-quarter (Knicks at 76ers read "0.0 - 2nd" with 7:23 left), so a bare zero with the game
+     still in progress shows the period alone, never a break that isn't happening. */
   const zero = c => /^0{1,2}(?::00)?(?:\.0)?$/.test(c);
   const half = n => (L.periods === 2 ? n === 1 : n === 2);
-  if ((m = s.match(/^(\d{1,2}(?::\d{2})?(?:\.\d)?)\s*-\s*(\d+)(?:st|nd|rd|th)$/i)) && zero(m[1])) return half(+m[2]) ? 'Halftime' : `End ${perName(+m[2], L)}`;
-  if ((m = s.match(/^(\d{1,2}(?::\d{2})?(?:\.\d)?)\s*-\s*(\d*)OT$/i)) && zero(m[1])) return `End OT${m[2] && +m[2] > 1 ? m[2] : ''}`;
+  const over = /HALFTIME|END_PERIOD/.test(name || '');
+  if ((m = s.match(/^(\d{1,2}(?::\d{2})?(?:\.\d)?)\s*-\s*(\d+)(?:st|nd|rd|th)$/i)) && zero(m[1])) return over ? (half(+m[2]) ? 'Halftime' : `End ${perName(+m[2], L)}`) : perName(+m[2], L);
+  if ((m = s.match(/^(\d{1,2}(?::\d{2})?(?:\.\d)?)\s*-\s*(\d*)OT$/i)) && zero(m[1])) { const ot = `OT${m[2] && +m[2] > 1 ? m[2] : ''}`; return over ? `End ${ot}` : ot; }
   if ((m = s.match(/^(\d{1,2}(?::\d{2})?(?:\.\d)?)\s*-\s*(\d+)(?:st|nd|rd|th)$/i))) return `${perName(+m[2], L)} ${clock(m[1])}`;
   if ((m = s.match(/^(\d{1,2}(?::\d{2})?(?:\.\d)?)\s*-\s*(\d*)OT$/i))) return `OT${m[2] && +m[2] > 1 ? m[2] : ''} ${clock(m[1])}`;
   if ((m = s.match(/^End of (\d+)(?:st|nd|rd|th)$/i))) return `End ${perName(+m[1], L)}`;
@@ -222,7 +224,7 @@ function parseEvent(e, L) {
   // a game that isn't happening: ESPN files it as "post" with no score, so it needs its own word everywhere
   const offWord = /postpone/i.test(t.name || t.description || t.shortDetail || '') ? 'Postponed' : /cancel/i.test(t.name || t.description || t.shortDetail || '') ? 'Cancelled' : /suspend/i.test(t.name || t.description || t.shortDetail || '') ? 'Suspended' : /delay/i.test(t.name || t.description || '') ? 'Delayed' : '';
   return {
-    lk: L.key, id: String(e.id), date: e.date, state: t.state || 'pre', detail: prettyDetail(t.shortDetail || t.detail || '', L), completed: !!t.completed, off: offWord,
+    lk: L.key, id: String(e.id), date: e.date, state: t.state || 'pre', detail: prettyDetail(t.shortDetail || t.detail || '', L, t.name), status: t.name || '', completed: !!t.completed, off: offWord,
     timeValid: c.timeValid !== false, tbd: !!(home.tbd || away.tbd),
     period: st.period || 0, clock: st.displayClock || '', home, away,
     venue: c.venue && c.venue.fullName, city: c.venue && c.venue.address && [c.venue.address.city, c.venue.address.state].filter(Boolean).join(', '),
@@ -605,5 +607,5 @@ ORDER.forEach(k => S.today[k] = []);
 const allToday = () => ORDER.flatMap(k => S.today[k]);
 
 Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, tipOf, TZLABEL, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, carry, API, API2, WEB, logoUrl, seasonYear, favs,
-  EARLY_GP, EARLY_W, parseEvent, isLive, isDone, finalWord, isFav, isWire, readable, wireTeams, wirePlayers, wikiPage, wikiFacts, wikiPerson, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, seriesForecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
+  EARLY_GP, EARLY_W, parseEvent, prettyDetail, isLive, isDone, finalWord, isFav, isWire, readable, wireTeams, wirePlayers, wikiPage, wikiFacts, wikiPerson, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, seriesForecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
 })();

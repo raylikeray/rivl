@@ -455,6 +455,13 @@
       if (!hc) { $main.innerHTML = topbar('Game', '#scores') + empty("Couldn't load this game", '<p style="margin:6px 0 0">The feed didn\'t answer. Pull down to try again.</p>'); return null; }
       const ev = { id, competitions: [{ ...hc, venue: d.gameInfo && d.gameInfo.venue, status: hc.status, broadcasts: hc.broadcasts, geoBroadcasts: hc.geoBroadcasts }], date: hc.date, status: hc.status, season: d.header.season, pickcenter: d.pickcenter };   // the summary keeps the market line in pickcenter, not on the competition
       const g = parseEvent(ev, L); if (!g.date || isNaN(new Date(g.date))) g.date = new Date().toISOString();
+      /* the status clock has been seen stuck (0.0 with minutes left in the quarter). The play-by-play carries its own clock
+         on every play: when the game is in progress and the latest play is in the same period with time on it, that is
+         the clock shown. Only ever the feed's own numbers. */
+      if (g.state === 'in' && !/HALFTIME|END_PERIOD/.test(g.status || '')) {
+        const lp = (d.plays || []).slice(-1)[0]; const pp = lp && lp.period && lp.period.number; const pc = lp && lp.clock && lp.clock.displayValue;
+        if (pp && pc && pp >= (g.period || 0) && !/^0{1,2}(?::00)?(?:\.0)?$/.test(pc)) { const ord = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`; const reg = L.periods === 2 ? 2 : 4; g.detail = HW.prettyDetail(pp > reg ? `${pc} - ${pp - reg > 1 ? pp - reg : ''}OT` : `${pc} - ${ord(pp)}`, L, g.status); g.period = pp; g.clock = pc; }
+      }
       /* the series and the headline ("WNBA Finals - Game 7") are on the day's scoreboard for certain; the summary's header
          may or may not carry them. When this page's own feed lacks them, take them from the scoreboard entry for the
          same game — the same feed, the same facts, never a guess */
