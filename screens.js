@@ -385,6 +385,7 @@
   function gxLead(g) { const a = +g.away.score, h = +g.home.score; if (!isFinite(a) || !isFinite(h) || g.state === 'pre') return ''; const sh = Math.max(.3, Math.min(.7, .5 + (a - h) / 40)); return `;--split:${Math.round(sh * 100)}%;--sa:${(.82 + sh * .5).toFixed(2)};--sh:${(.82 + (1 - sh) * .5).toFixed(2)}`; }
   function gxClock(g) { return g.state === 'in' ? `<span class="gxst on"><i></i>${esc(g.detail || 'Live')}</span>` : g.state === 'post' ? `<span class="gxst">${esc(finalWord(g))}</span>` : `<span class="gxst">${esc(tipOf(g))}</span>`; }
   /* the crest on its own, no disc: ESPN's dark-mode art first (it reads on colour), the plain art if a team has none */
+  const gxL = src => `<span class="logo s">${src ? V._.imgSized(src, 96, 96, 'loading="eager" decoding="sync"') : ''}</span>`;
   const gxCr = (src, cls = '') => `<span class="gxcr${cls ? ' ' + cls : ''}">${src ? V._.imgSized(src, 96, 96) : ''}</span>`;
   function gxLogo(src) {
     if (!src) return '<span class="gxlg"></span>';
@@ -767,7 +768,7 @@
             lead = `<div class="pfocus" style="${tcv(tc)}"><a class="who" href="${href.player(lk, a.athlete.id)}">${headshot(hsUrl(a.athlete), tc, 56, a.athlete.displayName)}<span class="t"><b>${esc(a.athlete.displayName || a.athlete.shortName || '')}</b><span>${esc([side.short, pos, a.athlete.jersey ? `No. ${a.athlete.jersey}` : ''].filter(Boolean).join(' · '))}${a.starter ? ' · Started' : ''}</span></span>${chev}</a>${a.didNotPlay || !a.stats || !a.stats.length ? `<p class="legend">${esc(a.reason || 'Did not play')}</p>` : `<div class="stats three">${big}</div><div class="pdet">${rest}</div>`}</div>`;
             break; }
         }
-        const bsw = `<div class="gxtsw">${[['away', g.away], ['home', g.home]].map(([k, t]) => `<button data-act="bside" data-team="${k}" aria-pressed="${bv.side === k}">${logo(t.logo, 's')}<b>${esc(t.abbr)}</b></button>`).join('')}</div>`;
+        const bsw = `<div class="gxtsw">${[['away', g.away], ['home', g.home]].map(([k, t]) => `<button data-act="bside" data-team="${k}" aria-pressed="${bv.side === k}">${gxL(t.logo)}<b>${esc(t.abbr)}</b></button>`).join('')}</div>`;
         const bt = table(bv.side === 'away' ? g.away : g.home);
         body = `<div class="gxctl">${bsw}</div><div class="gxout">` + lead + (bt || empty('No box score yet')) + unitsT + '</div>';
       } else if (tab === 'plays') {
@@ -805,7 +806,7 @@
         const list = who ? pool.filter(s => (s.pid || s.name) === who) : pool;
         const sides = pick === 'both' ? [{ head: g.away.abbr, filter: s => s.side === 'away' }, { head: g.home.abbr, filter: s => s.side === 'home' }] : [{ head: who ? V.lastName(byP.get(who).name) : teamOf({ side: pick }).abbr }];
         const pair = V._.pairColors(L, g.away, g.home); const cv = [['a', pair[0]], ['h', pair[1]]].map(([k, c]) => `--c${k}-d:${esc(V._.lift(c))};--c${k}-l:${esc(V._.deep(c))}`).join(';');
-        const tsw = `<div class="gxtsw">${[['both', null], ['away', g.away], ['home', g.home]].map(([k, t]) => `<button data-act="sv-team" data-team="${k}" aria-pressed="${pick === k}">${t ? `${logo(t.logo, 's')}<b>${esc(t.abbr)}</b>` : '<b>Both</b>'}</button>`).join('')}</div>`;
+        const tsw = `<div class="gxtsw">${[['both', null], ['away', g.away], ['home', g.home]].map(([k, t]) => `<button data-act="sv-team" data-team="${k}" aria-pressed="${pick === k}">${t ? `${gxL(t.logo)}<b>${esc(t.abbr)}</b>` : '<b>Both</b>'}</button>`).join('')}</div>`;
         const key = (col) => `<span class="kk"><i style="background:${esc(col)}"></i>Made</span><span class="kk"><em style="color:${esc(col)}">✕</em>Missed</span>`;
         const shleg2 = `<div class="gxshleg">${pick !== 'home' ? `<div><b>${logo(g.away.logo, 's')}${esc(g.away.abbr)} ${tally('away')}</b><span>${key(pair[0])}</span></div>` : '<div></div>'}${pick !== 'away' ? `<div class="r"><b>${esc(g.home.abbr)} ${tally('home')}${logo(g.home.logo, 's')}</b><span>${key(pair[1])}</span></div>` : ''}</div>`;
         body = `<div class="gxctl">${tsw}</div><div class="gxout"><div class="gxcw">${gxCourt(L, list, pair[0], pair[1], g.home.logo)}</div>` + shleg2 + qseg + sec('By zone', `${list.length} shot${list.length === 1 ? '' : 's'}${g.state === 'in' ? ' so far' : ''}`) + zoneRows(list, sides) + `<p class="legend">Every field-goal attempt, where it was taken from. Free throws aren't on the chart.</p></div>`;
@@ -831,18 +832,17 @@
           const bh = hashOf(barHtml); if (bar.dataset.h !== bh) { const st0 = bar.querySelector('#gxstrip'), sl = st0 ? st0.scrollLeft : null; bar.innerHTML = barHtml; bar.dataset.h = bh; const st1 = bar.querySelector('#gxstrip'); if (st1 && sl != null) st1.scrollLeft = sl; }
           const tabsEl = page.querySelector('#gtabs'); if (tabsEl.dataset.k !== tabKey) { tabsEl.innerHTML = tabs; tabsEl.dataset.k = tabKey; }
           else tabsEl.querySelectorAll('.chip').forEach(x => { const on = x.dataset.tab === tab; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); x.setAttribute('aria-selected', String(on)); });
-          const bodyEl = page.querySelector('#gbody'); const bhh = hashOf(body);
-          if (bodyEl.dataset.h !== bhh || bodyEl.dataset.tab !== tab) {
-            const tabChanged = bodyEl.dataset.tab !== tab;
-            if (tabChanged || !gxSwapOut(bodyEl, body)) bodyEl.innerHTML = body;
-            bodyEl.dataset.h = bhh; bodyEl.dataset.tab = tab; if (tabChanged) gxPin();
-          }
+          const bodyEl = page.querySelector('#gbody'); const bhh = hashOf(body); const tabChanged = bodyEl.dataset.tab !== tab;
+          let pan = bodyEl.querySelector(`:scope > [data-p="${tab}"]`);
+          if (!pan) { pan = document.createElement('div'); pan.dataset.p = tab; bodyEl.appendChild(pan); }
+          if (pan.dataset.h !== bhh) { if (!gxSwapOut(pan, body)) pan.innerHTML = body; pan.dataset.h = bhh; }
+          if (tabChanged) { bodyEl.querySelectorAll(':scope > [data-p]').forEach(x => { x.hidden = x !== pan; }); bodyEl.dataset.tab = tab; gxPin(); }
           gxFit(); if (gxScroll.run) gxScroll.run();
         } else {
           $main.innerHTML = `<div id="gpage" class="gxpage${f && !g.off ? '' : ' nowp'}" data-gid="${esc(String(id))}">`
             + `<section class="gx" id="gxhero" data-v="${esc(vars)}" style="${vars}">${LOBES}<div class="gxin" id="gxin" data-h="${hashOf(inner)}">${inner}</div></section>`
             + `<div class="gxbar" id="gxbar" data-h="${hashOf(barHtml)}">${barHtml}</div>`
-            + `<div class="gxscroll" id="gxscroll"><div class="gxspace"></div><div class="gxsheet"><div id="gtabs" class="gxtabw" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div></div></div>`;
+            + `<div class="gxscroll" id="gxscroll"><div class="gxspace"></div><div class="gxsheet"><div id="gtabs" class="gxtabw" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}"><div data-p="${tab}" data-h="${hashOf(body)}">${body}</div></div></div></div></div>`;
           gxFit(); gxScroll(); if (gxScroll.run) gxScroll.run();
           requestAnimationFrame(() => { gxFit(); const st = document.getElementById('gxstrip'), cur = st && st.querySelector('.cur'); if (cur) st.scrollLeft = cur.offsetLeft - (st.clientWidth - cur.offsetWidth) / 2; });
         }
