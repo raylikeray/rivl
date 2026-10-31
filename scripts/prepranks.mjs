@@ -1,7 +1,8 @@
 // Pulls PrepRanks basketball rankings for RIVL (personal use, with PrepRanks' permission).
 // Runs on GitHub Actions once a day and writes data/recruits.json, which the app reads.
 // Polite: a handful of pages per day, identified user agent, no images copied.
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync } from 'node:fs';
+mkdirSync('data', { recursive: true });
 
 const UA = 'RIVL personal app (non-commercial, used with PrepRanks permission)';
 const YEARS = [2027, 2028, 2029];
