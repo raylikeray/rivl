@@ -2331,3 +2331,15 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .livebar .tm .logo{flex:none;width:28px;height:28px}
 .livebar .tm .logo img{width:78%;height:78%;filter:none}
 .livebar .lg{gap:10px;padding-left:7px}
+/* ===== v129: the live strip in dark mode, quieter =====
+   Each crest sat in a disc filled and glowing in its team colour, on a chip with a light ring: four bright things in one
+   small card. In dark mode the disc is now dark like the chip, raised a step, with only a thin ring in the team colour,
+   and the chip loses its light ring, keeping just its shadow. The leading score's badge is the one solid colour left. */
+:root[data-theme="dark"] .livebar .logo.tint{background:linear-gradient(180deg,#2A2D33,#1B1D22);box-shadow:inset 0 0 0 1.5px var(--tf-d,var(--tc)),inset 0 1px 0 rgba(255,255,255,.1),0 1px 2px rgba(0,0,0,.5),0 3px 8px -3px rgba(0,0,0,.6)}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .livebar .logo.tint{background:linear-gradient(180deg,#2A2D33,#1B1D22);box-shadow:inset 0 0 0 1.5px var(--tf-d,var(--tc)),inset 0 1px 0 rgba(255,255,255,.1),0 1px 2px rgba(0,0,0,.5),0 3px 8px -3px rgba(0,0,0,.6)} }
+:root[data-theme="dark"] .livebar .logo.tint::before,:root[data-theme="dark"] .livebar .logo.tint::after{display:none}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .livebar .logo.tint::before,:root:not([data-theme="light"]) .livebar .logo.tint::after{display:none} }
+:root[data-theme="dark"] .livebar .lg,:root[data-theme="dark"] .livebar .lg.fav{box-shadow:0 1px 2px rgba(0,0,0,.45),0 8px 18px -10px rgba(0,0,0,.8)}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .livebar .lg,:root:not([data-theme="light"]) .livebar .lg.fav{box-shadow:0 1px 2px rgba(0,0,0,.45),0 8px 18px -10px rgba(0,0,0,.8)} }
+:root[data-theme="dark"] .livebar .tm .sc.on{box-shadow:0 1px 2px rgba(0,0,0,.4)}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .livebar .tm .sc.on{box-shadow:0 1px 2px rgba(0,0,0,.4)} }
