@@ -1023,7 +1023,7 @@ button.xpage{width:100%;text-align:left}
 .hs i{opacity:0}
 .hs.noimg i{opacity:1}
 .cside::before{display:none}
-.cmph{background:linear-gradient(90deg,color-mix(in srgb,var(--ca,transparent) 20%,transparent),transparent 42%,transparent 58%,color-mix(in srgb,var(--cb,transparent) 20%,transparent))}
+.cmph{background:none}
 .cside .cr{width:60px;height:60px}
 .cside .hs{box-shadow:0 8px 18px rgba(0,0,0,.35)}
 
@@ -1047,17 +1047,17 @@ button.xpage{width:100%;text-align:left}
 .pcard.pmore b{font-size:28px;font-weight:700;color:var(--t1)}.pcard.pmore span{font-size:12px;color:var(--t3)}
 
 /* ---- leader card (MLS stats) ---- */
-.lcard{position:relative;display:block;height:168px;margin:-16px -16px 0;overflow:hidden;isolation:isolate;color:#fff;
+.ldcard{position:relative;display:block;height:168px;margin:-16px -16px 0;overflow:hidden;isolation:isolate;color:#fff;
   background:radial-gradient(90% 120% at 26% 40%,color-mix(in srgb,var(--pc) 72%,#fff),var(--pc) 70%)}
-.lcard .lwm{position:absolute;left:-30px;top:-20px;width:220px;height:220px;object-fit:contain;opacity:.14;filter:grayscale(1) brightness(4);z-index:0}
-.lcard .lface{position:absolute;left:-36px;bottom:-6px;width:280px;max-width:none;z-index:1}
-.lcard .lini{display:none;position:absolute;left:0;width:48%;top:0;bottom:0;place-items:center;font-size:62px;font-weight:800;color:rgba(255,255,255,.42)}
-.lcard.noface .lini{display:grid}
-.lcard .linfo{position:absolute;left:52%;right:14px;top:50%;transform:translateY(-50%);z-index:2}
-.lcard .linfo .cr{display:grid;margin-bottom:8px}
-.lcard .linfo b{display:block;font-size:22px;font-weight:800;letter-spacing:-.03em;line-height:1.1;color:#fff}
-.lcard .linfo em{display:block;font-style:normal;font-size:13px;color:rgba(255,255,255,.82);margin-top:3px}
-.lcard .lbig{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:34px;font-weight:800;z-index:2}
+.ldcard .lwm{position:absolute;left:-30px;top:-20px;width:220px;height:220px;object-fit:contain;opacity:.14;filter:grayscale(1) brightness(4);z-index:0}
+.ldcard .lface{position:absolute;left:-36px;bottom:-6px;width:280px;max-width:none;z-index:1}
+.ldcard .lini{display:none;position:absolute;left:0;width:48%;top:0;bottom:0;place-items:center;font-size:62px;font-weight:800;color:rgba(255,255,255,.42)}
+.ldcard.noface .lini{display:grid}
+.ldcard .linfo{position:absolute;left:52%;right:14px;top:50%;transform:translateY(-50%);z-index:2}
+.ldcard .linfo .cr{display:grid;margin-bottom:8px}
+.ldcard .linfo b{display:block;font-size:22px;font-weight:800;letter-spacing:-.03em;line-height:1.1;color:#fff}
+.ldcard .linfo em{display:block;font-style:normal;font-size:13px;color:rgba(255,255,255,.82);margin-top:3px}
+.ldcard .lbig{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:34px;font-weight:800;z-index:2}
 .xlead .xtrio{margin-top:16px}
 
 /* ---- player page (MLS profile) ---- */
@@ -1128,6 +1128,31 @@ button.xpage{width:100%;text-align:left}
 .mepick button[aria-pressed=true]{border-color:var(--t1);background:var(--L2)}
 .mepick span{font-size:12px;font-weight:700;color:var(--t2)}
 .mesave{width:100%;height:52px;margin-top:22px;border-radius:16px;background:var(--t1);color:var(--L0);font-size:16px;font-weight:700}
+/* player page v2: pinned colour, page slides over it */
+.phero{position:sticky;top:0;z-index:0;height:calc(500px + env(safe-area-inset-top,0px))}
+.phero .pwm{top:calc(64px + env(safe-area-inset-top,0px));width:300px;height:300px;opacity:.15}
+.phero .pface{width:460px;bottom:96px;filter:drop-shadow(0 18px 30px rgba(0,0,0,.25))}
+.phero::after{height:58%;background:linear-gradient(transparent,color-mix(in srgb,var(--L0) 40%,transparent) 42%,var(--L0) 92%)}
+.phero .pini{display:none!important}
+.psil{display:none;position:absolute;left:50%;bottom:110px;transform:translateX(-50%);width:250px;z-index:1}
+.phero.noface .psil{display:block}
+.psil .sil{width:100%;height:auto;fill:rgba(255,255,255,.22)}
+.pid{bottom:42px}
+.pmeta{margin:6px 0 0;font-size:14px;font-weight:500;color:var(--t2)}
+.pcsc b{font-size:16px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.gsheet .gtwin .ptabs2{display:flex;gap:28px;justify-content:flex-start}
+.gsheet .gtwin .ptabs2 button{justify-self:auto}
+.gsheet .gtwin .ptabs2 button[aria-pressed=true]::after{left:0;right:0;background:var(--pc)}
+.gp.hon .prow span{color:var(--t1);font-size:14.5px;line-height:1.35}
+.gp.tl .prow{justify-content:flex-start;gap:16px}
+.gp.tl .yr{flex:none;width:104px;color:var(--t3);font-size:13px;font-variant-numeric:tabular-nums}
+.gp.tl b{font-size:14.5px;font-weight:600}
+.pcard .pini{display:none!important}
+.pcard.noface::before{content:"";position:absolute;left:50%;bottom:40px;transform:translateX(-50%);width:140px;height:112px;z-index:1;
+  background:rgba(255,255,255,.22);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 80'%3E%3Ccircle cx='50' cy='30' r='17'/%3E%3Cpath d='M14 80c2-18 17-28 36-28s34 10 36 28z'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 80'%3E%3Ccircle cx='50' cy='30' r='17'/%3E%3Cpath d='M14 80c2-18 17-28 36-28s34 10 36 28z'/%3E%3C/svg%3E") center/contain no-repeat}
+/* no halftone anywhere */
+span.dots{display:none!important}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -1241,7 +1266,7 @@ var MYPLAYERS = [
   {id:4065648, n:'Jayson Tatum',             t:'bos',  ln:''}
 ];
 var INJ = [
-  {id:0, n:'Jalen Williams', t:'okc', st:'q',   w:'Right wrist · game-time decision'},
+  {id:4593803, n:'Jalen Williams', t:'okc', st:'q',   w:'Right wrist · game-time decision'},
   {id:0, n:'Derrick White',  t:'bos', st:'q',   w:'Left knee soreness'},
   {id:0, n:'Gabe Vincent',   t:'lal', st:'out', w:'Left ankle sprain · out tonight'}
 ];
@@ -1751,7 +1776,7 @@ var PEOPLE = [
    draft:{y:2018,r:1,p:11,by:'Charlotte, then traded to the LA Clippers'},
    trade:'Traded from the LA Clippers to Oklahoma City in July 2019, in the Paul George deal.',
    s:{mpg:34.1,ppg:32.1,rpg:5.0,apg:6.4,spg:1.7,bpg:1.0,fg:52.6,tp:37.1,ts:63.8}},
-  {k:'jwill', n:'Jalen Williams', t:'okc', id:0, pos:'F', j:8, al:['jalen williams','jdub','j dub','jwill','j will','jalen'],
+  {k:'jwill', n:'Jalen Williams', t:'okc', id:4593803, pos:'F', j:8, al:['jalen williams','jdub','j dub','jwill','j will','jalen'],
    dob:[2001,4,14], ht:'6-5', from:'Gilbert, AZ', school:'Perry HS (AZ)', college:'Santa Clara',
    draft:{y:2022,r:1,p:12,by:'Oklahoma City'}, trade:null,
    s:{mpg:33.0,ppg:21.4,rpg:5.4,apg:5.1,spg:1.6,bpg:.7,fg:48.8,tp:36.0,ts:58.1}},
@@ -1910,7 +1935,7 @@ function answer(q){
   }
   var k=f.ts[0], tt=T[k];
   if(has(/ schedule| next| upcoming/)) return teamSchedCard(k);
-  if(has(/ standing| rank| seed| place| record/)) return teamAns(k, standLine(k));
+  if(has(/ standing| rank| seed| place| record/)) return teamAns(k, standLine(k), false, 'stats');
   if(has(/ roster| how many| players/)) return teamAns(k, leagueOf(k)==='nba' ? 'NBA teams carry up to 15 players, plus 3 on two-way contracts. Here is who is on the '+tt.name+'.' : 'Here is who is on '+tt.full+'.', true);
   return teamQuick(k);
 }
@@ -1976,10 +2001,11 @@ function standLine(k){
   if(POLL[L] && POLL[L].indexOf(k)>-1) return t.full+' is '+t.rec+' and ranked No. '+(POLL[L].indexOf(k)+1)+' in the AP poll.';
   return (L==='wnba'?'The '+t.name+' are ':t.full+' is ')+(t.rec||'0-0')+'.';
 }
-function teamAns(k,line,roster){
-  var t=T[k];
-  return '<div class="xans"><a class="xwho" href="#team/'+k+'">'+crest(k,46,true)+'<span><b>'+esc(t.full)+'</b><em>'+esc(LNAME[leagueOf(k)])+'</em></span><i class="chev">›</i></a><p class="xline">'+esc(line)+'</p>'
-    +profileBtn('#team/'+k+(roster?'/roster':''), roster?'See the roster':'Open '+t.name)+'</div>';
+function teamAns(k,line,roster,tab){
+  var t=T[k]; tab=tab||(roster?'roster':'');
+  var href='#team/'+k+(tab?'/'+tab:'');
+  return '<a class="xans xlink" href="'+href+'"><span class="xwho">'+crest(k,46,true)+'<span><b>'+esc(t.full)+'</b><em>'+esc(LNAME[leagueOf(k)])+'</em></span><i class="chev">›</i></span><p class="xline">'+esc(line)+'</p>'
+    +'<span class="xgo">'+(tab==='roster'?'See the roster':tab==='stats'?'Standing and team stats':'Open '+esc(t.name))+'<i>›</i></span></a>';
 }
 function teamQuick(k){
   var t=T[k];
@@ -1993,7 +2019,7 @@ function teamGames(k, from, days, dir){
 }
 function teamSchedCard(k){
   var t=T[k], up=teamGames(k,TODAY,40,1).filter(function(x){return x.g.st!=='fin';}).slice(0,4);
-  return '<div class="xans"><a class="xwho" href="#team/'+k+'">'+crest(k,46,true)+'<span><b>'+esc(t.full)+'</b><em>Schedule</em></span><i class="chev">›</i></a>'
+  return '<div class="xans"><a class="xwho" href="#team/'+k+'/schedule">'+crest(k,46,true)+'<span><b>'+esc(t.full)+'</b><em>Schedule</em></span><i class="chev">›</i></a>'
     +(up.length?'<div class="xsched">'+up.map(schedRow(k)).join('')+'</div>':'<p class="xline" style="font-size:15px">No games scheduled yet.</p>')
     +profileBtn('#team/'+k+'/schedule','Full schedule')+'</div>';
 }
@@ -2173,7 +2199,7 @@ function pcard(o){
 /* the leader card (MLS stats grammar): big cut-out left, crest and name right */
 function leadCard(p, big, label){
   var t=T[p.t], c=cardTone(t.c), face=faceImg(p.id,640,'lface');
-  return '<span class="lcard'+(face?'':' noface')+'" style="--pc:'+c+'">'+wmImg(p.t,'lwm')+face+'<span class="lini">'+esc(initials(p.n))+'</span>'
+  return '<span class="ldcard'+(face?'':' noface')+'" style="--pc:'+c+'">'+wmImg(p.t,'lwm')+face+'<span class="lini">'+esc(initials(p.n))+'</span>'
     +'<span class="linfo">'+crest(p.t,40,true)+'<b>'+esc(shortName(p.n))+'</b><em>'+esc(t.full)+'</em></span>'
     +(big!=null?'<span class="lbig num">'+big+(label?'<i>'+esc(label)+'</i>':'')+'</span>':'')+'</span>';
 }
@@ -2257,40 +2283,116 @@ function meLive(){
 /* ============================================================
    PLAYER PAGE (MLS grammar)
    ============================================================ */
+/* Real biography facts (public record). Season numbers elsewhere are samples. */
+var BIO = {
+  curry:{full:'Wardell Stephen Curry II', nick:'Steph, Chef Curry', born:'Akron, Ohio',
+    career:[['2006–2009','Davidson (college)'],['2009–present','Golden State Warriors']],
+    honors:['4× NBA champion (2015, 2017, 2018, 2022)','2× NBA MVP (2015, 2016), the 2016 vote unanimous','NBA Finals MVP (2022)','2× scoring champion (2016, 2021)','NBA career leader in 3-pointers made','Olympic gold (2024)'],
+    family:['Father Dell Curry played 16 NBA seasons','Brother Seth Curry plays in the NBA','Married Ayesha Curry in 2011']},
+  lebron:{full:'LeBron Raymone James Sr.', nick:'King James, Bron', born:'Akron, Ohio',
+    career:[['2003–2010','Cleveland Cavaliers'],['2010–2014','Miami Heat'],['2014–2018','Cleveland Cavaliers'],['2018–present','Los Angeles Lakers']],
+    honors:['4× NBA champion (2012, 2013, 2016, 2020)','4× NBA MVP (2009, 2010, 2012, 2013)','4× NBA Finals MVP','NBA career scoring leader (since February 2023)','Rookie of the Year (2004)','Olympic gold (2008, 2012, 2024)'],
+    family:['Married Savannah James in 2013','Son Bronny James was drafted by the Lakers in 2024']},
+  luka:{full:'Luka Dončić', nick:'Luka Magic', born:'Ljubljana, Slovenia',
+    career:[['2015–2018','Real Madrid (Spain)'],['2018–2025','Dallas Mavericks'],['2025–present','Los Angeles Lakers']],
+    honors:['EuroLeague champion and MVP (2018)','EuroBasket champion with Slovenia (2017)','Rookie of the Year (2019)','5× All-NBA First Team (2020–2024)','Scoring champion (2024)'],
+    family:['Father Saša Dončić played professional basketball']},
+  sga:{full:'Shai Gilgeous-Alexander', nick:'SGA', born:'Toronto, Ontario (raised in Hamilton)',
+    career:[['2017–2018','Kentucky (college)'],['2018–2019','LA Clippers'],['2019–present','Oklahoma City Thunder']],
+    honors:['NBA champion (2025)','NBA MVP (2025)','NBA Finals MVP (2025)','Scoring champion (2025)'],
+    family:['Cousin Nickeil Alexander-Walker plays in the NBA']},
+  jwill:{full:'Jalen Williams', nick:'J-Dub',
+    career:[['2019–2022','Santa Clara (college)'],['2022–present','Oklahoma City Thunder']],
+    honors:['NBA champion (2025)','All-Star (2025)','All-NBA Third Team (2025)','All-Defensive Second Team (2025)','All-Rookie First Team (2023)']},
+  maxey:{full:'Tyrese Maxey',
+    career:[['2019–2020','Kentucky (college)'],['2020–present','Philadelphia 76ers']],
+    honors:['Most Improved Player (2024)','All-Star (2024)']},
+  tatum:{full:'Jayson Christopher Tatum', born:'St. Louis, Missouri',
+    career:[['2016–2017','Duke (college)'],['2017–present','Boston Celtics']],
+    honors:['NBA champion (2024)','Olympic gold (2021, 2024)','All-Rookie First Team (2018)'],
+    note:'Tore his right Achilles tendon in the 2025 playoffs.'},
+  reaves:{full:'Austin Reaves', born:'Newark, Arkansas',
+    career:[['2016–2018','Wichita State (college)'],['2019–2021','Oklahoma (college)'],['2021–present','Los Angeles Lakers']],
+    honors:['Signed by the Lakers after going undrafted in 2021']},
+  butler:{full:'Jimmy Butler III', nick:'Jimmy Buckets', born:'Houston, Texas (raised in Tomball)',
+    career:[['2007–2008','Tyler Junior College'],['2008–2011','Marquette (college)'],['2011–2017','Chicago Bulls'],['2017–2018','Minnesota Timberwolves'],['2018–2019','Philadelphia 76ers'],['2019–2025','Miami Heat'],['2025–present','Golden State Warriors']],
+    honors:['Olympic gold (2016)','Eastern Conference Finals MVP (2023)']},
+  draymond:{full:'Draymond Jamal Green Sr.', born:'Saginaw, Michigan',
+    career:[['2008–2012','Michigan State (college)'],['2012–present','Golden State Warriors']],
+    honors:['4× NBA champion (2015, 2017, 2018, 2022)','Defensive Player of the Year (2017)','Olympic gold (2016, 2021)']},
+  juju:{full:'Judea Watkins', nick:'JuJu', born:'Los Angeles, California',
+    career:[['High school','Windward School, then Sierra Canyon'],['2023–present','USC']],
+    honors:['AP Player of the Year (2025)','Naismith Player of the Year (2025)','National Freshman of the Year (2024)'],
+    family:['Great-granddaughter of Ted Watkins, who founded the Watts Labor Community Action Committee']}
+};
+
+var SIL='<svg class="sil" viewBox="0 0 100 80" aria-hidden="true"><circle cx="50" cy="30" r="17"/><path d="M14 80c2-18 17-28 36-28s34 10 36 28z"/></svg>';
+
+/* ============================================================
+   PLAYER PAGE (MLS grammar, game-page motion)
+   The colour and the player stay pinned; the page slides up over them,
+   the big name fades, and a compact crest + name arrives in the bar.
+   ============================================================ */
 var PTAB='overview';
-function viewPlayer(key){
-  var p=personOf(decodeURIComponent(key||'')), stub=null;
-  if(!p){ var nm=decodeURIComponent(key||''), m=MYPLAYERS.filter(function(x){return x.n===nm;})[0];
-    var bx=null; Object.keys(BOXES).forEach(function(k){ roster(k).forEach(function(r){ if(r.n===nm) bx={r:r,t:k}; }); });
-    stub = m ? {n:m.n,t:m.t,id:m.id} : bx ? {n:bx.r.n,t:bx.t,id:bx.r.id,pos:bx.r.p,j:bx.r.j} : null;
-    if(!stub) return viewFollowing(); }
-  var who=p||stub, t=T[who.t], c=cardTone(t.c), face=faceImg(who.id,0,'pface');
-  PTAB='overview';
-  var hero='<section class="phero'+(face?'':' noface')+'" style="--pc:'+c+'">'+wmImg(who.t,'pwm')+face+'<span class="pini">'+esc(initials(who.n))+'</span>'
-    +'<div class="pnav gut"><a class="disc g" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><span class="disc g" aria-label="Alerts">'+svg('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>')+'</span></div>'
-    +'<div class="pid gut"><a href="#team/'+who.t+'" class="pcr">'+crest(who.t,46,true)+'</a><h1>'+esc(who.n)+'</h1>'
-      +'<button class="pfollow pressable">'+svg('<path d="M12 5v14M5 12h14"/>')+'Follow player</button></div></section>';
-  var tabs='<div class="gut"><div class="gtabs ptabs2" style="--pc:'+markColor(t.c)+'">'
-    +[['overview','Overview'],['stats','Stats']].map(function(x){ return '<button data-ptab="'+x[0]+'" aria-pressed="'+(x[0]===PTAB)+'">'+x[1]+'</button>'; }).join('')+'</div></div>';
-  return hero+'<div class="pbodywrap">'+tabs+'<div id="pbody">'+playerBody(who,p,'overview')+'</div></div>';
+function playerWho(key){
+  var p=personOf(decodeURIComponent(key||'')), nm=decodeURIComponent(key||'');
+  if(p) return {who:p, p:p};
+  var m=MYPLAYERS.filter(function(x){return x.n===nm;})[0], bx=null;
+  Object.keys(BOXES).forEach(function(k){ roster(k).forEach(function(r){ if(r.n===nm) bx={r:r,t:k}; }); });
+  var stub = m ? {n:m.n,t:m.t,id:m.id} : bx ? {n:bx.r.n,t:bx.t,id:bx.r.id,pos:bx.r.p,j:bx.r.j} : null;
+  return stub ? {who:stub, p:null} : null;
 }
+function viewPlayer(key){
+  var W=playerWho(key); if(!W) return viewFollowing();
+  var who=W.who, p=W.p, t=T[who.t], c=cardTone(t.c), face=faceImg(who.id,0,'pface');
+  PTAB='overview';
+  var bell=svg('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>');
+  var top='<div class="gtop" id="gtop"><a class="disc g" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a>'
+    +'<div class="ctr"><div class="csc pcsc" id="csc">'+crest(who.t,26,true)+'<b>'+esc(who.n)+'</b></div></div>'
+    +'<span class="disc g" aria-label="Alerts">'+bell+'</span></div>';
+  var hero='<section class="phero'+(face?'':' noface')+'" style="--pc:'+c+'">'+wmImg(who.t,'pwm')+face+'<span class="psil">'+SIL+'</span>'
+    +'<div class="pid gut" id="gfade"><a href="#team/'+who.t+'" class="pcr">'+crest(who.t,46,true)+'</a><h1>'+esc(who.n)+'</h1>'
+      +'<p class="pmeta">'+esc([t.full, who.pos, (who.j!==''&&who.j!=null)?'#'+who.j:''].filter(Boolean).join(' · '))+'</p>'
+      +'<button class="pfollow pressable">'+svg('<path d="M12 5v14M5 12h14"/>')+'Follow player</button></div></section>';
+  var tabs=[['overview','Overview'],['bio','Bio'],['stats','Stats']];
+  var sheet='<div class="sheet gsheet"><div class="gtw" id="gtw"><div class="gtwin"><div class="gut"><div class="gtabs ptabs2" style="--pc:'+markColor(t.c)+'">'
+    +tabs.map(function(x){ return '<button data-ptab="'+x[0]+'" aria-pressed="'+(x[0]===PTAB)+'">'+x[1]+'</button>'; }).join('')+'</div></div></div></div>'
+    +'<div id="gbody"><div id="pbody">'+playerBody(who,p,'overview')+'</div></div></div>';
+  return top+hero+sheet;
+}
+function factGrid(rows){ return '<div class="gp">'+rows.filter(function(r){return r[1];}).map(function(r){ return '<div class="prow ab"><span>'+esc(r[0])+'</span><b>'+esc(String(r[1]))+'</b></div>'; }).join('')+'</div>'; }
 function playerBody(who, p, tab){
-  var t=T[who.t], out='';
+  var t=T[who.t], out='', B=(p&&BIO[p.k])||{};
   if(tab==='overview'){
-    var ag=p&&age(p.dob);
-    var facts=[[who.j!==''&&who.j!=null?who.j:'-','Jersey'],[who.pos||'-','Position'],[p?p.ht.replace('-','′')+'″':'-','Height'],[ag!=null&&ag!==false?ag+' yrs':'-','Age'],[t.ab,'Team']];
-    out+='<div class="gut" style="padding-top:16px"><div class="pfacts">'+facts.map(function(f,i){ return '<div'+(i>2?' class="lo"':'')+'><b>'+esc(String(f[0]))+'</b><span>'+f[1]+'</span></div>'; }).join('')+'</div></div>';
+    var ag=p?age(p.dob):null;
+    var facts=[[who.j!==''&&who.j!=null?who.j:'-','Jersey'],[who.pos||'-','Position'],[p?p.ht.replace('-','′')+'″':'-','Height'],[ag!=null?ag+' yrs':'-','Age'],[t.ab,'Team']];
+    out+='<div class="gut" style="padding-top:8px"><div class="pfacts">'+facts.map(function(f,i){ return '<div'+(i>2?' class="lo"':'')+'><b>'+esc(String(f[0]))+'</b><span>'+f[1]+'</span></div>'; }).join('')+'</div></div>';
     if(p){
       var s=p.s;
       out+='<div class="gut sechd"><h2 class="sec">Current season</h2><span class="ptag">Sample numbers</span></div><div class="gut"><div class="ptrio">'
         +[[s.ppg,'PTS'],[s.rpg,'REB'],[s.apg,'AST'],[s.fg,'FG%']].map(function(x){return '<div><b class="num">'+x[0]+'</b><span>'+x[1]+'</span></div>';}).join('')+'</div></div>';
-      out+='<div class="gut sechd"><h2 class="sec">About</h2></div><div class="gut"><div class="gp">'
-        +[['Born',p.dob?MON[p.dob[1]-1]+' '+p.dob[2]+', '+p.dob[0]:'Not listed'],['Hometown',p.from],['High school',p.school],['College',p.college],
-          ['Draft',p.draft?p.draft.y+', round '+p.draft.r+', pick '+p.draft.p:(p.undrafted?'Undrafted, '+p.undrafted:'Not yet')]]
-          .concat(p.spouse?[['Spouse',p.spouse+', married '+p.wed]]:[]).map(function(r){ return '<div class="prow ab"><span>'+r[0]+'</span><b>'+esc(String(r[1]))+'</b></div>'; }).join('')+'</div>'
-        +(p.trade?'<p class="xnote">'+esc(p.trade)+'</p>':'')+(p.note?'<p class="xnote">'+esc(p.note)+'</p>':'')+'</div>';
+      if(B.honors) out+='<div class="gut sechd"><h2 class="sec">Honors</h2></div><div class="gut"><div class="gp hon">'+B.honors.map(function(h){ return '<div class="prow"><span>'+esc(h)+'</span></div>'; }).join('')+'</div></div>';
+      out+='<div class="gut sechd"><h2 class="sec">At a glance</h2><button class="more" data-ptab="bio">Full bio ›</button></div><div class="gut">'
+        +factGrid([['Born',p.dob?MON[p.dob[1]-1]+' '+p.dob[2]+', '+p.dob[0]:''],['From',p.from],['College',p.college],['Draft',p.draft?p.draft.y+', pick '+p.draft.p:(p.undrafted?'Undrafted, '+p.undrafted:'')]])+'</div>';
       out+='<div class="gut"><button class="morebtn pressable" data-try-go="'+esc(p.n.split(' ')[0]+' vs ')+'">Compare '+esc(p.n.split(' ')[0])+' with someone<span>›</span></button></div>';
     } else out+='<div class="gut"><div class="empty"><b>The rest comes from the live feed</b><p>Bio, season stats, game log and career. Not loaded in this mockup.</p></div></div>';
+  }
+  if(tab==='bio'){
+    if(!p) return '<div class="gut"><div class="empty"><b>Bio comes from the live feed</b><p>Not loaded in this mockup.</p></div></div>';
+    out+='<div class="gut sechd tight"><h2 class="sec">Personal</h2></div><div class="gut">'
+      +factGrid([['Full name',B.full],['Known as',B.nick],['Born',p.dob?MON[p.dob[1]-1]+' '+p.dob[2]+', '+p.dob[0]+(B.born?' · '+B.born:''):B.born],['Age',p.dob?age(p.dob):''],
+        ['Height',p.ht.replace('-','′')+'″'],['Hometown',p.from],['High school',p.school]])+'</div>';
+    out+='<div class="gut sechd"><h2 class="sec">Basketball</h2></div><div class="gut">'
+      +factGrid([['Position',p.pos==='G'?'Guard':p.pos==='F'?'Forward':p.pos==='C'?'Center':p.pos],['Team',t.full],['Jersey',p.j!==''?'#'+p.j:''],['College',p.college],
+        ['Draft',p.draft?p.draft.y+', round '+p.draft.r+', pick '+p.draft.p+' by '+p.draft.by:(p.undrafted?'Undrafted, '+p.undrafted:'Not yet eligible')]])
+      +(p.trade?'<p class="xnote">'+esc(p.trade)+'</p>':'')+'</div>';
+    if(B.career) out+='<div class="gut sechd"><h2 class="sec">Career</h2></div><div class="gut"><div class="gp tl">'
+      +B.career.map(function(c){ return '<div class="prow"><span class="yr">'+esc(c[0])+'</span><b>'+esc(c[1])+'</b></div>'; }).join('')+'</div></div>';
+    if(B.honors) out+='<div class="gut sechd"><h2 class="sec">Honors</h2></div><div class="gut"><div class="gp hon">'+B.honors.map(function(h){ return '<div class="prow"><span>'+esc(h)+'</span></div>'; }).join('')+'</div></div>';
+    var fam=(B.family||[]).slice(); if(p.spouse && !fam.some(function(f){return f.indexOf(p.spouse)>-1;})) fam.push('Married '+p.spouse+' in '+p.wed);
+    if(fam.length) out+='<div class="gut sechd"><h2 class="sec">Family</h2></div><div class="gut"><div class="gp hon">'+fam.map(function(h){ return '<div class="prow"><span>'+esc(h)+'</span></div>'; }).join('')+'</div></div>';
+    var notes=[p.note,B.note].filter(Boolean);
+    if(notes.length) out+='<div class="gut">'+notes.map(function(n){ return '<p class="xnote">'+esc(n)+'</p>'; }).join('')+'</div>';
   }
   if(tab==='stats'){
     if(!p) return '<div class="gut"><div class="empty"><b>Stats come from the live feed</b><p>Not loaded in this mockup.</p></div></div>';
@@ -2299,7 +2401,7 @@ function playerBody(who, p, tab){
       +[['Minutes',s2.mpg],['Points',s2.ppg],['Rebounds',s2.rpg],['Assists',s2.apg],['Steals',s2.spg],['Blocks',s2.bpg],['Field goal %',s2.fg],['3-point %',s2.tp],['True shooting %',s2.ts]].map(function(r){
         return '<div class="prow"><span>'+r[0]+'</span><b class="num">'+r[1]+'</b></div>'; }).join('')+'</div></div>';
   }
-  return out+'<div style="height:110px"></div>';
+  return out+'<div style="height:120px"></div>';
 }
 
 /* ---------- in-app sheets: stories, highlights, the calendar ---------- */
@@ -2668,7 +2770,7 @@ function bindMini(){
   if(miniHandler){ window.removeEventListener('scroll',miniHandler); miniHandler=null; }
   var gt=document.getElementById('gtop');
   if(gt){
-    var hero0=document.querySelector('.ghero'), fade=document.getElementById('gfade'), st=document.getElementById('gstrip'),
+    var hero0=document.querySelector('.ghero,.phero'), fade=document.getElementById('gfade'), st=document.getElementById('gstrip'),
         cs=document.getElementById('csc'), tw=document.getElementById('gtw'), bg=gt.querySelector('.bg');
     var ticking=false;
     miniHandler=function(){ if(ticking) return; ticking=true; requestAnimationFrame(function(){ ticking=false;
@@ -2676,7 +2778,7 @@ function bindMini(){
       /* big score: fades and drifts up during the first 60% of the scroll */
       var f=Math.min(1,p/0.6); fade.style.opacity=String(1-f); fade.style.transform='translateY('+(-18*f)+'px) scale('+(1-0.06*f)+')';
       /* games strip leaves early; compact score arrives late */
-      var so=Math.max(0,1-p/0.35); st.style.opacity=String(so); st.style.pointerEvents=so<.2?'none':'';
+      var so=Math.max(0,1-p/0.35); if(st){ st.style.opacity=String(so); st.style.pointerEvents=so<.2?'none':''; }
       var c=Math.min(1,Math.max(0,(p-0.45)/0.4)); cs.style.opacity=String(c); cs.style.transform='translateY('+(8*(1-c))+'px)'; cs.style.pointerEvents=c>.5?'':'none';
       /* nothing scrolls above the tabs: the body is trimmed at the tabs' bottom edge,
          so the bar and the rounded corners only ever show the moving colour */
@@ -2724,7 +2826,8 @@ document.addEventListener('click',function(e){
     var who=pp||{n:key,t:(MYPLAYERS.filter(function(x){return x.n===key;})[0]||{}).t};
     if(!who.t){ Object.keys(BOXES).forEach(function(k){ roster(k).forEach(function(r){ if(r.n===key) who={n:r.n,t:k,pos:r.p,j:r.j,id:r.id}; }); }); }
     document.getElementById('pbody').innerHTML=playerBody(who,pp,PTAB);
-    document.querySelectorAll('[data-ptab]').forEach(function(b){ b.setAttribute('aria-pressed',String(b===ptb)); }); return; }
+    document.querySelectorAll('.ptabs2 [data-ptab]').forEach(function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-ptab')===PTAB)); });
+    var tw2=document.getElementById('gtw'), gt2=document.getElementById('gtop'); if(tw2&&gt2){ var y2=tw2.getBoundingClientRect().top+window.scrollY-gt2.offsetHeight; if(window.scrollY>y2) window.scrollTo(0,y2); } if(miniHandler) miniHandler(); return; }
   var tt=e.target.closest('[data-ttab]');
   if(tt){ var tk=(location.hash.split('/')[1]); TTAB=tt.getAttribute('data-ttab'); var tb=document.getElementById('tbody');
     if(tb){ tb.innerHTML=teamBody(tk,TTAB); document.querySelectorAll('.ptabs [data-ttab]').forEach(function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-ttab')===TTAB)); });
