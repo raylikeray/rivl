@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#000000">
 <title>RIVL v6</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
 :root{
   --L0:#000;--L1:#131517;--L2:#1E2124;
@@ -15,7 +15,7 @@
   --top:rgba(255,255,255,.055);
   --acc:#fff;--acc-ink:#000;
   --glass:rgba(16,18,20,.52);
-  --f:'Archivo','Helvetica Neue',Arial,sans-serif;
+  --f:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Inter','Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
   --gut:16px;--r:14px;--rl:18px;
   --ease:cubic-bezier(.2,.8,.2,1);
   --wash:.62;
@@ -36,7 +36,7 @@ body{font-family:var(--f);color:var(--t1);font-size:17px;line-height:1.35;
 img{max-width:100%;display:block}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 a{color:inherit;text-decoration:none}
-.num{font-variant-numeric:tabular-nums;letter-spacing:-.025em}
+.num{font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .gut{padding-left:max(var(--gut),env(safe-area-inset-left,0px));padding-right:max(var(--gut),env(safe-area-inset-right,0px))}
 .wrap{max-width:460px;margin-inline:auto;position:relative}
 @media(min-width:520px){.wrap{border-inline:1px solid var(--line);min-height:100vh}}
@@ -120,7 +120,7 @@ html[data-theme=light]{--midA:#2A2E34;--midB:#07090B}
   background:linear-gradient(101deg,var(--aw) 0%,var(--mid) 50%,var(--ha) 100%);overflow:hidden}
 .lh .dots{position:absolute;inset:0;pointer-events:none;z-index:-1;
   background-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,.26) 1.1px,transparent 1.2px);
-  background-size:5px 5px;mix-blend-mode:multiply;opacity:.4}
+  background-size:5px 5px;mix-blend-mode:multiply;opacity:.3}
 .lh .veil{position:absolute;inset:0;pointer-events:none;z-index:-1;
   background:linear-gradient(rgba(0,0,0,.24),rgba(0,0,0,.04) 44%,rgba(0,0,0,.16))}
 .lh .in{position:relative;padding-top:16px;padding-bottom:20px}
@@ -136,7 +136,7 @@ html[data-theme=light]{--midA:#2A2E34;--midB:#07090B}
 .lh .side .cr img{width:100%;height:100%}
 .lh .side b{font-size:13px;font-weight:800;letter-spacing:.06em}
 .lh .nums{display:flex;align-items:center;gap:16px}
-.lh .nums span{font-size:50px;font-weight:800;letter-spacing:-.045em;font-variant-numeric:tabular-nums;min-width:2.6ch;text-align:center;line-height:1}
+.lh .nums span{font-size:50px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;min-width:2.6ch;text-align:center;line-height:1}
 .lh .nums span.dim{opacity:.58}
 .wp{margin-top:18px}
 .wp .bar{height:7px;border-radius:999px;background:rgba(0,0,0,.26);overflow:hidden;display:flex}
@@ -234,31 +234,33 @@ html[data-theme=light]{--midA:#2A2E34;--midB:#07090B}
 /* ====== GAME PAGE ====== */
 /* the colour commits: a full two-team gradient edge to edge, a halftone screen
    over it, and the content riding up as a black sheet. */
-.ghero{position:relative;overflow:hidden;isolation:isolate;--mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
+.ghero{position:sticky;top:0;z-index:0;overflow:hidden;isolation:isolate;
+  --mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
 .ghero .w{position:absolute;inset:-2px;pointer-events:none;z-index:-2;
   background:linear-gradient(101deg,var(--aw) 0%,var(--mid) 50%,var(--ha) 100%);overflow:hidden}
-/* four soft blobs drifting on their own clocks — the colour is never still */
-.w>i{position:absolute;border-radius:50%;filter:blur(36px);will-change:transform}
-.w>i:nth-child(1){background:var(--aw);width:74%;height:190%;left:-24%;top:-46%;opacity:.8;
-  animation:fa 17s ease-in-out infinite alternate}
-.w>i:nth-child(2){background:var(--ha);width:74%;height:190%;right:-24%;top:-40%;opacity:.8;
-  animation:fb 23s ease-in-out infinite alternate}
-.w>i:nth-child(3){background:var(--aw);width:46%;height:150%;left:12%;top:-24%;opacity:.5;
-  animation:fc 13s ease-in-out infinite alternate}
-.w>i:nth-child(4){background:var(--ha);width:48%;height:150%;right:10%;top:-30%;opacity:.5;
-  animation:fd 19s ease-in-out infinite alternate}
-@keyframes fa{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(18%,9%,0) scale(1.2)}}
-@keyframes fb{from{transform:translate3d(0,5%,0) scale(1.12)}to{transform:translate3d(-16%,-7%,0) scale(.9)}}
-@keyframes fc{from{transform:translate3d(-10%,0,0) scale(.88)}to{transform:translate3d(24%,12%,0) scale(1.28)}}
-@keyframes fd{from{transform:translate3d(12%,-5%,0) scale(1.22)}to{transform:translate3d(-18%,7%,0) scale(.94)}}
+/* the colour is never still: big soft lobes of each team colour wandering
+   across the field on four different clocks. Transform only. */
+.w>i{position:absolute;border-radius:50%;filter:blur(40px);will-change:transform}
+.w>i:nth-child(1){background:var(--aw);width:96%;height:260%;left:-34%;top:-70%;opacity:.95;
+  animation:fa 9s ease-in-out infinite alternate}
+.w>i:nth-child(2){background:var(--ha);width:96%;height:260%;right:-34%;top:-60%;opacity:.95;
+  animation:fb 11s ease-in-out infinite alternate}
+.w>i:nth-child(3){background:var(--aw);width:60%;height:200%;left:6%;top:-46%;opacity:.7;
+  animation:fc 7s ease-in-out infinite alternate}
+.w>i:nth-child(4){background:var(--ha);width:62%;height:200%;right:4%;top:-52%;opacity:.7;
+  animation:fd 13s ease-in-out infinite alternate}
+@keyframes fa{from{transform:translate3d(-8%,-6%,0) scale(1)}  to{transform:translate3d(34%,10%,0) scale(1.4)}}
+@keyframes fb{from{transform:translate3d(10%,8%,0) scale(1.35)}to{transform:translate3d(-30%,-8%,0) scale(.95)}}
+@keyframes fc{from{transform:translate3d(-22%,4%,0) scale(.85)}to{transform:translate3d(46%,-10%,0) scale(1.45)}}
+@keyframes fd{from{transform:translate3d(26%,-8%,0) scale(1.4)}to{transform:translate3d(-34%,10%,0) scale(.9)}}
 @media(prefers-reduced-motion:reduce){.w>i{animation:none}}
 .ghero .dots{position:absolute;inset:0;pointer-events:none;z-index:-1;
   background-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,.26) 1.1px,transparent 1.2px);
-  background-size:5px 5px;mix-blend-mode:multiply;opacity:.4}
+  background-size:5px 5px;mix-blend-mode:multiply;opacity:.3}
 .ghero .veil{position:absolute;inset:0;pointer-events:none;z-index:-1;
   background:linear-gradient(rgba(0,0,0,.26),rgba(0,0,0,.05) 46%,rgba(0,0,0,.18))}
 .ghero.one .w{background:linear-gradient(101deg,var(--win) 0%,var(--win) 34%,var(--winHi) 72%,var(--win) 100%)}
-.ghero .in{position:relative;padding-top:calc(8px + env(safe-area-inset-top,0px));padding-bottom:22px}
+.ghero .in{position:relative;padding-top:calc(8px + env(safe-area-inset-top,0px));padding-bottom:30px}
 .ghero .in,.ghero .in *{text-shadow:0 1px 10px rgba(0,0,0,.3)}
 /* other games, as glass pills over the colour */
 .strip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-block:2px 4px;margin-top:4px}
@@ -280,8 +282,8 @@ html[data-theme=light]{--midA:#2A2E34;--midB:#07090B}
 .hlp svg{width:14px;height:14px;fill:#07090B;stroke:none}
 /* the black sheet the body rides on */
 .sheet{position:relative;z-index:2;background:var(--L0);border-radius:22px 22px 0 0;margin-top:-22px;
-  padding-top:2px}
-.sheet.cap{height:22px;margin-bottom:-2px}
+  padding-top:2px;box-shadow:0 -16px 34px rgba(0,0,0,.5);min-height:92vh}
+.sheet.cap{height:22px;margin-bottom:-2px;min-height:0;box-shadow:none}
 /* collapsed sticky bar */
 .minibar{position:fixed;top:0;left:50%;transform:translate(-50%,-100%);width:min(460px,100%);
   z-index:34;display:flex;align-items:center;gap:10px;
@@ -295,27 +297,27 @@ html[data-theme=light]{--midA:#2A2E34;--midB:#07090B}
   background-size:5px 5px;mix-blend-mode:multiply}
 .minibar .cr{width:24px;height:24px;background:rgba(255,255,255,.16)}
 .minibar .cr b{color:#fff}
-.minibar>b{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;color:#fff;letter-spacing:-.02em}
+.minibar>b{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff;letter-spacing:-.02em}
 .minibar>span{font-size:11.5px;font-weight:700;color:rgba(255,255,255,.85)}
 .ghero .in,.ghero .in b,.ghero .in em,.ghero .in span{color:#fff}
 .gnav{display:flex;align-items:center;justify-content:space-between;height:40px;gap:8px}
 .gnav .disc{background:rgba(0,0,0,.26);border-color:rgba(255,255,255,.16);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);flex:none}
 .gnav .disc svg{stroke:#fff}
-.gleague{margin:14px 0 0;text-align:center;font-size:11.5px;font-weight:600;opacity:.78}
+.gleague{margin:14px 0 0;text-align:center;font-size:11.5px;font-weight:600;opacity:.72}
 .gsc{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin-top:6px}
-.gsc>.sc{font-size:58px;font-weight:800;letter-spacing:-.055em;text-align:center;line-height:1;
+.gsc>.sc{font-size:56px;font-weight:600;letter-spacing:-.03em;text-align:center;line-height:1;
   font-variant-numeric:tabular-nums}
 .gsc>.mid{text-align:center;padding:0 4px;font-size:12.5px;font-weight:700;opacity:.92}
-.gsc .side{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:4px}
+.gsc .side{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:-6px}
 .gsc .side .cr{width:52px;height:52px;background:transparent;filter:drop-shadow(0 4px 12px rgba(0,0,0,.45))}
 .gsc .side .cr img{width:100%;height:100%}
-.gsc .side b{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.gsc .side b{font-size:14.5px;font-weight:600;letter-spacing:-.01em;margin-top:2px}
 .gsc .side em{font-style:normal;font-size:11.5px;font-weight:600;opacity:.72}
 .gnote{margin:13px 0 0;text-align:center;font-size:12.5px;font-weight:600;opacity:.88}
 /* highlight clips */
 .clip{flex:none;width:200px;display:block}
-.clip .im{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;
+.clip .im{display:block;position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;
   background:linear-gradient(142deg,var(--c1),#0a0c0e 86%);border:1px solid var(--line)}
 .clip .pl{position:absolute;left:9px;bottom:9px;width:30px;height:30px;border-radius:999px;
   background:rgba(255,255,255,.94);display:grid;place-items:center}
@@ -409,6 +411,74 @@ html[data-theme=light] .bx .bnd td,html[data-theme=light] .bx .bnd th{background
 .watch b{flex:1;font-size:14px;font-weight:700}
 .watch span{font-size:11.5px;color:var(--t3);font-weight:600}
 
+/* game leaders — head to head, the score clearly separated */
+.glhd{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:13px 0 11px;
+  border-bottom:1px solid var(--line)}
+.glhd .s{display:flex;align-items:center;gap:8px}
+.glhd .s.r{justify-content:flex-end}
+.glhd b{font-size:12.5px;font-weight:700;letter-spacing:.04em;color:var(--t2)}
+.glhd .cr{width:22px;height:22px}
+.glrow{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:13px 0}
+.glrow+.glrow{border-top:1px solid var(--line)}
+.glrow .p{display:flex;align-items:center;gap:10px;min-width:0}
+.glrow .p.r{justify-content:flex-end}
+.glrow .hs{width:44px;height:44px;font-size:44px}
+.glrow .t{min-width:0}
+.glrow .p.r .t{text-align:right}
+.glrow .t b{display:block;font-size:26px;font-weight:700;letter-spacing:-.03em;line-height:1.05}
+.glrow .t b.lo{color:var(--t3);font-weight:600}
+.glrow .t em{display:block;font-style:normal;font-size:11.5px;color:var(--t3);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.glrow .lab{font-size:12.5px;color:var(--t3);text-align:center;white-space:nowrap}
+
+/* play-by-play — MLS timeline */
+.seg2{display:flex;background:var(--L2);border-radius:999px;padding:3px;gap:2px;margin-bottom:16px}
+.seg2 button{flex:1;border-radius:999px;padding:9px 4px;font-size:13px;font-weight:600;color:var(--t3)}
+.seg2 button[aria-pressed=true]{background:var(--acc);color:var(--acc-ink);font-weight:700}
+.tl{position:relative;padding-left:52px}
+.tl::before{content:"";position:absolute;left:19px;top:6px;bottom:6px;width:1px;background:var(--line2)}
+.tle{position:relative;padding-bottom:18px;min-height:64px}
+.tle .mark{position:absolute;left:-52px;top:0;width:40px;text-align:center}
+.tle .ic{display:grid;place-items:center;width:38px;height:38px;border-radius:999px;background:var(--L2);
+  border:1px solid var(--line2);font-size:13px;color:var(--t2);line-height:1}
+.tle .ic.on{background:var(--tc);border-color:transparent;color:#fff;font-size:11px}
+.tle .mark b{display:block;margin-top:5px;font-size:12px;font-weight:700;color:var(--t3)}
+.tle .plain{font-size:14px;color:var(--t2);line-height:1.4;padding-top:10px;min-height:38px;display:flex;align-items:center}
+.tle .box{border-radius:14px;padding:13px 14px;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--tc) 30%,var(--L1)),var(--L1) 82%);
+  border:1px solid color-mix(in srgb,var(--tc) 36%,var(--line2))}
+.tle .bh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.tle .bh b{font-size:16px;font-weight:700;letter-spacing:-.015em}
+.tle .bh img{width:22px;height:22px;object-fit:contain;opacity:.95}
+.tle .bb{display:flex;gap:11px;align-items:flex-start}
+.tle .bb p{margin:0;font-size:13.5px;line-height:1.4;color:var(--t2)}
+.tle .bs{display:flex;gap:14px;margin-top:11px;padding-top:9px;border-top:1px solid var(--line);
+  font-size:12px;font-weight:700;color:var(--t2);font-variant-numeric:tabular-nums}
+.shn{position:relative;flex:none}
+.shn .no{position:absolute;right:-3px;bottom:-3px;min-width:18px;height:18px;border-radius:999px;
+  display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:800;color:#fff;
+  border:2px solid var(--L1);padding:0 3px}
+
+/* Home — several live games at once */
+.lstack{display:grid;gap:10px}
+.lg2{position:relative;overflow:hidden;border-radius:var(--rl);border:1px solid var(--line2);
+  isolation:isolate;--mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
+.lg2 .w{position:absolute;inset:-2px;z-index:-2;overflow:hidden;
+  background:linear-gradient(101deg,var(--aw) 0%,var(--mid) 50%,var(--ha) 100%)}
+.lg2 .dots{position:absolute;inset:0;z-index:-1;
+  background-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,.26) 1.1px,transparent 1.2px);
+  background-size:5px 5px;mix-blend-mode:multiply;opacity:.34}
+.lg2 .in{padding:12px 14px}
+.lg2 .in,.lg2 .in *{color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.3)}
+.lg2 .tp{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:9px}
+.lg2 .rw{display:flex;align-items:center;gap:9px;padding:3px 0}
+.lg2 .rw .cr{width:26px;height:26px;background:rgba(255,255,255,.14)}
+.lg2 .rw .cr b{color:#fff;font-size:7px}
+.lg2 .rw .nm{flex:1;min-width:0;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lg2 .rw .sc{font-size:23px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
+.lg2 .rw.lo{opacity:.62}
+.lg2 .fav{font-size:10px;font-weight:700;background:rgba(255,255,255,.2);padding:2px 7px;border-radius:999px}
+
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -463,12 +533,16 @@ function usable(h){ var s=hsl(h); return s[2]>.16 && s[2]<.88; }
 function hueGap(a,b){ var d=Math.abs(hsl(a)[0]-hsl(b)[0]); return d>180?360-d:d; }
 function pairColors(aKey,hKey){
   var A=T[aKey], H=T[hKey];
+  /* a team's own primary always wins unless the two would read as one colour:
+     they must differ enough in hue AND in lightness to survive side by side. */
+  if(hueGap(A.c,H.c)>=50 && Math.abs(hsl(A.c)[2]-hsl(H.c)[2])>=0.10)
+    return {away:A.c, home:H.c};
   var ac=[A.c].concat(A.alt&&usable(A.alt)?[A.alt]:[]);
   var hc=[H.c].concat(H.alt&&usable(H.alt)?[H.alt]:[]);
   var best=[A.c,H.c], score=-1;
   ac.forEach(function(x){ hc.forEach(function(y){
-    var s=hueGap(x,y) + Math.abs(hsl(x)[2]-hsl(y)[2])*120;
-    if(s>score){ score=s; best=[x,y]; }
+    var v=hueGap(x,y) + Math.abs(hsl(x)[2]-hsl(y)[2])*140;
+    if(v>score){ score=v; best=[x,y]; }
   });});
   return {away:best[0], home:best[1]};
 }
@@ -488,6 +562,10 @@ function shot(id, name, color, size){
     +'<i>'+esc(initials(name))+'</i>'
     +'<img src="'+HEAD(id)+'" alt="'+esc(name)+'" loading="lazy" onload="this.parentNode.classList.add(\'has\')" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">'
     +'</span>';
+}
+
+function shotWithNo(id,name,color,size,no){
+  return '<span class="shn">'+shot(id,name,color,size)+'<i class="no" style="background:'+color+'">'+esc(no||'')+'</i></span>';
 }
 
 /* ---------- data ---------- */
@@ -516,6 +594,10 @@ var MYPLAYERS = [
   {id:4065648,n:'Jayson Tatum',t:'bos',next:'Tonight 6:30'},
   {id:4278073,n:'Shai Gilgeous-Alexander',t:'okc',next:'Tonight 9:00'},
   {id:3945274,n:'Luka Dončić',t:'dal',next:'Tonight 7:30'}
+];
+var ALSOLIVE = [
+  {a:'bos',h:'nyk',as:71,hs:68,clock:'3rd · 4:08',fav:'Celtics'},
+  {a:'okc',h:'dal',as:54,hs:61,clock:'2nd · 1:22',fav:'Thunder'}
 ];
 var INJ = [
   {id:6583,n:'Anthony Davis',t:'lal',st:'q',w:'Left knee soreness · game-time'},
@@ -564,9 +646,9 @@ function viewHome(){
     +'<div class="in gut">'
       +'<div class="top"><span class="livedot"><i></i>'+esc(g.clock)+'</span><span>Your game</span></div>'
       +'<a class="score pressable" href="#game">'
-        +'<span class="side">'+crest(g.away,58)+'<b>'+esc(a.ab)+'</b></span>'
+        +'<span class="side">'+crest(g.away,56,true)+'<b>'+esc(a.ab)+'</b></span>'
         +'<span class="nums"><span class="num">'+g.as+'</span><span class="num">'+g.hs+'</span></span>'
-        +'<span class="side">'+crest(g.home,58)+'<b>'+esc(h.ab)+'</b></span>'
+        +'<span class="side">'+crest(g.home,56,true)+'<b>'+esc(h.ab)+'</b></span>'
       +'</a>'
       +'<div class="wp"><div class="bar">'
         +'<i data-w="'+(100-wpH)+'" style="background:'+pc.away+'"></i>'
@@ -583,6 +665,20 @@ function viewHome(){
         }).join('')+'</div>'
     +'</div></section>'
     +'<div class="sheet cap"></div>';
+
+  /* three followed teams playing at once: one hero, the rest as a live stack */
+  var alsoLive='<div class="gut sechd tight rise" style="animation-delay:.05s">'
+      +'<h2 class="sec">Also live</h2><span class="more">'+ALSOLIVE.length+' games</span></div>'
+    +'<div class="gut lstack rise" style="animation-delay:.07s">'+ALSOLIVE.map(function(x){
+        var q=pairColors(x.a,x.h), aw=x.as>x.hs;
+        return '<a class="lg2 pressable" href="#game" style="--ha:'+q.home+';--aw:'+q.away+'">'
+          +'<span class="w"></span><span class="dots"></span>'
+          +'<span class="in"><span class="tp"><span class="livedot"><i></i>'+esc(x.clock)+'</span>'
+            +'<span class="fav">'+esc(x.fav)+'</span></span>'
+          +'<span class="rw'+(aw?'':' lo')+'">'+crest(x.a,26)+'<span class="nm">'+esc(T[x.a].name)+'</span><span class="sc num">'+x.as+'</span></span>'
+          +'<span class="rw'+(aw?' lo':'')+'">'+crest(x.h,26)+'<span class="nm">'+esc(T[x.h].name)+'</span><span class="sc num">'+x.hs+'</span></span>'
+          +'</span></a>';
+      }).join('')+'</div>';
 
   var tonight='<div class="gut sechd tight rise" style="animation-delay:.08s"><h2 class="sec">Tonight</h2><span class="more">4 games</span></div>'
     +'<div class="rail rise" style="animation-delay:.1s">'+TONIGHT.map(function(x){return gameCard(x);}).join('')+'</div>';
@@ -619,12 +715,13 @@ function viewHome(){
           +'</span><h4>'+esc(n.h)+'</h4><p><span class="kick">'+esc(n.k)+'</span> · '+esc(n.s)+'</p></a>';
       }).join('')+'</div>';
 
-  return '<header class="hdr gut"><span class="mark">R<i>I</i>V<i>L</i></span>'
+  var __hdr='<header class="hdr gut"><span class="mark">R<i>I</i>V<i>L</i></span>'
     +'<span class="icons"><span class="disc">'+svg(IC.search)+'</span><span class="disc">'+svg(IC.gear)+'</span></span></header>'
     +'<div class="gut"><div class="pills">'
       +'<button aria-pressed="true">NBA</button><button aria-pressed="false">WNBA</button>'
       +'<button aria-pressed="false">NCAA M</button><button aria-pressed="false">NCAA W</button></div></div>'
-    +hero+tonight+players+last+inj+news;
+    +hero;
+  return __hdr+alsoLive+tonight+players+last+inj+news;
 }
 
 /* ---------- GAME ---------- */
@@ -645,12 +742,19 @@ var BOX = {
   cols:['Pts','FG','3PT','FT','Reb','Ast','Stl','Blk','TO','PF','+/−']
 };
 var PLAYS=[
-  {c:'6:12',t:'gs',x:'Stephen Curry makes 27-foot three point jumper (Draymond Green assists)',s:'88-101',big:true},
-  {c:'6:35',t:'lal',x:'LeBron James misses driving layup',s:'88-98'},
-  {c:'6:41',t:'gs',x:'Jonathan Kuminga defensive rebound',s:'88-98'},
-  {c:'7:02',t:'lal',x:'Anthony Davis makes two point shot (LeBron James assists)',s:'88-98',big:true},
-  {c:'7:28',t:'gs',x:'Golden State Warriors full timeout',s:'86-98'},
-  {c:'7:44',t:'gs',x:'Brandin Podziemski makes 25-foot three point jumper',s:'86-98',big:true}
+  {c:"6:12",t:'gs', k:'score', pid:3975, hd:'3-pointer', x:'Stephen Curry makes a 27-foot three point jumper from the left wing, assisted by Draymond Green.', s:'88-101'},
+  {c:"6:35",t:'lal',k:'miss',  x:'LeBron James misses a driving layup.'},
+  {c:"6:41",t:'gs', k:'reb',   x:'Jonathan Kuminga defensive rebound.'},
+  {c:"7:02",t:'lal',k:'score', pid:6583, hd:'Dunk', x:'Anthony Davis throws down the alley-oop, assisted by LeBron James.', s:'88-98'},
+  {c:"7:28",t:'gs', k:'to',    x:'Golden State Warriors full timeout.'},
+  {c:"7:44",t:'gs', k:'score', pid:4397424, hd:'3-pointer', x:'Brandin Podziemski makes a 25-foot three point jumper from the top of the key.', s:'86-98'},
+  {c:"8:05",t:'lal',k:'foul',  x:'Personal foul on Rui Hachimura.'}
+];
+var PKIND={score:'●',miss:'✕',reb:'▣',to:'⏱',foul:'▮'};
+var LEAD=[
+  {k:'Points',   a:{id:1966,n:'L. James',t:'lal',v:28}, h:{id:3975,n:'S. Curry',t:'gs',v:34}},
+  {k:'Rebounds', a:{id:6583,n:'A. Davis',t:'lal',v:14}, h:{id:3032978,n:'D. Green',t:'gs',v:8}},
+  {k:'Assists',  a:{id:1966,n:'L. James',t:'lal',v:11}, h:{id:3975,n:'S. Curry',t:'gs',v:9}}
 ];
 var HL=[
   {t:'gs', d:'0:18', x:'Curry pulls up from 30 feet to put Golden State in front'},
@@ -684,9 +788,11 @@ function shotsSvg(){
       var x = cx + dx + (cx<50?4:-4);
       var y = 4 + v*48;
       var made=((i*7+seed)%10)<4;
+      var d=1.5;
       out += made
-        ? '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="1.45" fill="'+col+'" stroke="rgba(20,12,4,.72)" stroke-width=".45"/>'
-        : '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="1.35" fill="none" stroke="'+col+'" stroke-width=".9"/>';
+        ? '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="1.7" fill="'+col+'" stroke="rgba(18,10,2,.85)" stroke-width=".5"/>'
+        : '<path d="M'+(x-d).toFixed(1)+' '+(y-d).toFixed(1)+'l'+(d*2)+' '+(d*2)+'M'+(x+d).toFixed(1)+' '+(y-d).toFixed(1)+'l-'+(d*2)+' '+(d*2)+'" stroke="rgba(18,10,2,.85)" stroke-width="1.9" stroke-linecap="round" fill="none"/>'
+          +'<path d="M'+(x-d).toFixed(1)+' '+(y-d).toFixed(1)+'l'+(d*2)+' '+(d*2)+'M'+(x+d).toFixed(1)+' '+(y-d).toFixed(1)+'l-'+(d*2)+' '+(d*2)+'" stroke="'+col+'" stroke-width="1.15" stroke-linecap="round" fill="none"/>';
     }
     return out;
   }
@@ -745,7 +851,6 @@ function viewGame(tab){
         +'<span></span>'
         +'<span class="side">'+crest(LIVE.home,52,true)+'<b>'+esc(h.name)+'</b><em>'+esc(h.rec)+'</em></span>'
       +'</div>'
-      +'<p class="gnote">S. Curry 34 · L. James 28, 11 ast · Sling, NBA TV</p>'
     +'</div></section>'
     +'<div class="sheet">'
     +'<div class="minibar gut" style="'+cvars+'" id="mini"><span class="w"></span><span class="dots"></span>'
@@ -770,17 +875,20 @@ function viewGame(tab){
       +'<tr><td><span class="tm">'+crest(LIVE.home,24)+esc(h.ab)+'</span></td><td>28</td><td>22</td><td>33</td><td>18</td><td>'+LIVE.hs+'</td></tr>'
       +'</table></div></div>'
 
-      +'<div class="gut sechd"><h2 class="sec">Leading the way</h2></div>'
-      +'<div class="rail">'+LIVE.performers.map(function(p){
-          var t=T[p.t];
-          return '<div class="pc mp" style="--tc:'+t.c+';width:170px">'
-            +'<img class="wmk" src="'+logoUrl(p.t)+'" alt="" onerror="this.remove()">'
-            +shot(p.id,p.n,t.c,74)
-            +'<b>'+esc(p.n)+'</b><span>'+esc(t.full)+'</span>'
-            +'<u style="display:flex;gap:14px;border-top:1px solid var(--line);padding-top:9px;margin-top:9px">'
-            +p.l.map(function(x){return '<span style="color:var(--t3)"><b style="display:block;color:var(--t1);font-size:18px;font-weight:800;letter-spacing:-.03em" class="num">'+x[0]+'</b>'+x[1]+'</span>';}).join('')
-            +'</u></div>';
-        }).join('')+'</div>'
+      +'<div class="gut sechd"><h2 class="sec">Game leaders</h2></div>'
+      +'<div class="gut"><div class="plate" style="padding:0 14px">'
+      +'<div class="glhd"><span class="s">'+crest(LIVE.away,22)+'<b>'+esc(a.ab)+'</b></span>'
+      +'<span></span><span class="s r"><b>'+esc(h.ab)+'</b>'+crest(LIVE.home,22)+'</span></div>'
+      +LEAD.map(function(r){
+          var A=r.a, H=r.h, aw=A.v>H.v;
+          return '<div class="glrow">'
+            +'<div class="p">'+shot(A.id,A.n,T[A.t].c,44)
+              +'<span class="t"><b class="num'+(aw?'':' lo')+'">'+A.v+'</b><em>'+esc(A.n)+'</em></span></div>'
+            +'<span class="lab">'+esc(r.k)+'</span>'
+            +'<div class="p r"><span class="t"><b class="num'+(aw?' lo':'')+'">'+H.v+'</b><em>'+esc(H.n)+'</em></span>'
+              +shot(H.id,H.n,T[H.t].c,44)+'</div>'
+          +'</div>';
+        }).join('')+'</div></div>'
 
       +'<div class="gut sechd"><h2 class="sec">Team stats</h2></div>'
       +'<div class="gut"><div class="plate">'+CMP.map(function(r){
@@ -838,10 +946,23 @@ function viewGame(tab){
   }
 
   if(tab==='play'){
-    body='<div class="gut" style="padding-top:14px">'+PLAYS.map(function(p){
-      return '<div class="play'+(p.big?' big':'')+'"><span class="ck num">'+esc(p.c)+'</span>'
-        +crest(p.t,22)+'<span class="tx">'+esc(p.x)+'</span><span class="rs num">'+esc(p.s)+'</span></div>';
-    }).join('')+'</div>';
+    body='<div class="gut" style="padding-top:14px">'
+      +'<div class="seg2"><button aria-pressed="true">Key plays</button><button aria-pressed="false">All plays</button></div>'
+      +'<div class="tl">'+PLAYS.map(function(p){
+        var big=p.k==='score', t=T[p.t];
+        return '<div class="tle">'
+          +'<div class="mark"><span class="ic'+(big?' on':'')+'" style="--tc:'+t.c+'">'+PKIND[p.k]+'</span><b class="num">'+esc(p.c)+'</b></div>'
+          +(big
+            ? '<div class="box" style="--tc:'+t.c+'">'
+                +'<div class="bh"><b>'+esc(p.hd)+'</b><img src="'+logoUrl(p.t)+'" alt="" onerror="this.remove()"></div>'
+                +'<div class="bb">'+shotWithNo(p.pid,p.x,t.c,40,p.s.split('-')[p.t===LIVE.home?1:0])
+                +'<p>'+esc(p.x)+'</p></div>'
+                +'<div class="bs"><span>'+esc(T[LIVE.away].ab)+' '+p.s.split('-')[0]+'</span>'
+                  +'<span>'+esc(T[LIVE.home].ab)+' '+p.s.split('-')[1]+'</span></div>'
+              +'</div>'
+            : '<div class="plain">'+esc(p.x)+'</div>')
+        +'</div>';
+      }).join('')+'</div></div>';
   }
 
   if(tab==='shot'){
@@ -856,7 +977,7 @@ function viewGame(tab){
         +'<img class="mid" src="'+logoUrl(LIVE.home)+'" alt="" onerror="this.remove()"></div></div>'
       +'<div class="lg" style="padding-top:14px">'
         +'<span><i style="background:'+pc.away+'"></i>Made</span>'
-        +'<span><i style="box-shadow:inset 0 0 0 2px '+pc.away+'"></i>Missed</span></div>';
+        +'<span><b style="font-size:13px;line-height:1">✕</b> Missed</span></div>';
   }
 
   return hero+body+'</div>';
