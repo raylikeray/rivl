@@ -140,7 +140,14 @@
     const order = [r.lk, ...ORDER.filter(k => k !== r.lk && (poll.n % 4 === 1 || S.today[k].some(isLive)))];   // the other leagues every fourth pass, every pass while one of them has a game on (the live strip shows it)
     let anyLive = ORDER.some(k => k !== r.lk && S.today[k].some(isLive)), failed = false;
     for (const k of order) {
-      try { const g = await scoreboard(LEAGUES[k], today, k === r.lk ? 20000 : 120000); S.today[k] = g; if (g.some(isLive)) anyLive = true; }
+      try {
+        const g = await scoreboard(LEAGUES[k], today, k === r.lk ? 20000 : 120000);
+        /* a game in play never loses its score: when the feed sends a live game with the score missing (it has done so at
+           the half), the last score it gave stands until a new one comes */
+        const was = new Map((S.today[k] || []).map(x => [x.id, x]));
+        g.forEach(x => { const p = was.get(x.id); if (!p || x.state !== 'in') return; ['home', 'away'].forEach(s => { if (x[s].score == null && p[s].score != null) x[s].score = p[s].score; }); });
+        S.today[k] = g; if (g.some(isLive)) anyLive = true;
+      }
       catch { failed = true; }
     }
     if (!failed) lastOk = Date.now();
