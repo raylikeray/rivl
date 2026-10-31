@@ -198,6 +198,7 @@
     const onToday = r.name === 'scores' && (store.get('v5:date', todayCT()) || todayCT()) === todayCT();   // Scores on today already lists this league's live games
     [r.lk, ...ORDER.filter(k => k !== r.lk)].forEach(k => {
       if (onToday && k === r.lk) return;
+      if (r.name === 'game') return;   // the game page carries the day's games in its own bar
       const L = LEAGUES[k]; const gs = S.today[k].filter(g => isLive(g) && !(r.name === 'game' && r.lk === k && String(r.args[1]) === g.id));
       gs.sort((a, b) => (HW.isFav(b) ? 1 : 0) - (HW.isFav(a) ? 1 : 0)).forEach(g => out.push({ g, L }));
     });

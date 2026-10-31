@@ -419,13 +419,23 @@
     return `<p class="gxleague">${esc([L.label, venue].filter(Boolean).join(' · '))}</p>
       <div class="gxsc3">${sc(g.away, aL)}<span class="gxmid">${gxClock(g)}</span>${sc(g.home, hL)}${side(g.away)}<span></span>${side(g.home)}</div>${bar}`;
   }
-  function gxBar(L, g, title, card) {
+  /* the day's other games, as small glass pills between Back and Share; this game is the lit one */
+  function gxStrip(L, g, day) {
+    const list = (day || []).filter(x => x && x.away && x.home && !x.tbd); if (list.length < 2) return '';
+    return list.map(x => {
+      if (String(x.id) === String(g.id)) return `<span class="gxp cur">${logo(x.away.logo, 's')}<i>@</i>${logo(x.home.logo, 's')}</span>`;
+      const sc = x.away.score != null && x.home.score != null && x.state !== 'pre';
+      const mid = x.state === 'in' ? `<b class="num">${x.away.score}–${x.home.score}</b><em class="lv">${esc(x.detail || 'Live')}</em>` : sc ? `<b class="num">${x.away.score}–${x.home.score}</b><em>${esc(finalWord(x))}</em>` : `<em>${esc(tipOf(x))}</em>`;
+      return `<a class="gxp" href="${href.game(L.key, x.id)}">${logo(x.away.logo, 's')}<span>${mid}</span>${logo(x.home.logo, 's')}</a>`;
+    }).join('');
+  }
+  function gxBar(L, g, title, card, strip) {
     const pre = g.state === 'pre' || g.away.score == null;
     const mini = pre ? `<span class="gxmn">${logo(g.away.logo, 's')}<b>${esc(g.away.abbr)}</b><i>at</i><b>${esc(g.home.abbr)}</b>${logo(g.home.logo, 's')}</span>`
       : `<span class="gxmn">${logo(g.away.logo, 's')}<b class="num${+g.away.score >= +g.home.score ? '' : ' tr'}">${g.away.score}</b>${gxClock(g)}<b class="num${+g.home.score >= +g.away.score ? '' : ' tr'}">${g.home.score}</b>${logo(g.home.logo, 's')}</span>`;
     const back = `<a class="gxib" href="#scores" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a>`;
     const share = `<button class="gxib" data-act="share" data-title="${esc(title.replace(/<[^>]+>/g, ''))}"${card ? ` data-card='${esc(JSON.stringify(card))}'` : ''} aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>`;
-    return `${back}<div class="gxctr" id="gxmini">${mini}</div>${share}`;
+    return `${back}<div class="gxmid2">${strip ? `<div class="gxstrip" id="gxstrip">${strip}</div>` : ''}<div class="gxctr" id="gxmini">${mini}</div></div>${share}`;
   }
   /* the bar's copy of the moving colour, lined up with the pinned hero and kept in step with it */
   function gxCover() {
@@ -451,6 +461,7 @@
       const span = Math.max(80, hero.offsetHeight - bar.offsetHeight - 22), p = Math.min(1, Math.max(0, window.scrollY / span));
       const fade = document.getElementById('gxin'), mini = document.getElementById('gxmini'); const f = Math.min(1, p / .6), c = Math.min(1, Math.max(0, (p - .45) / .4));
       if (fade) { fade.style.opacity = (1 - f).toFixed(3); fade.style.transform = `translateY(${(-18 * f).toFixed(1)}px) scale(${(1 - .06 * f).toFixed(3)})`; }
+      const strip = document.getElementById('gxstrip'); if (strip) { strip.style.opacity = (1 - c).toFixed(3); strip.style.pointerEvents = c > .5 ? 'none' : ''; }
       if (mini) { mini.style.opacity = c.toFixed(3); mini.style.transform = `translateY(${(8 * (1 - c)).toFixed(1)}px)`; mini.style.pointerEvents = c > .5 ? '' : 'none'; } };
     const on = () => run();
     window.addEventListener('scroll', on, { passive: true }); gxScroll.run = run; run();
@@ -805,12 +816,13 @@
       if (!g.tbd) {
         const c = gxColors(L, g); const vars = `--aw:${esc(c.ca)};--ha:${esc(c.ch)}${gxLead(g)}`;
         const inner = gxInner(L, lk, g, f, venue);
-        const barHtml = gxBar(L, g, title, card), page = $main.querySelector('#gpage');
+        const day = await scoreboard(L, ymdOf(g.date), g.state === 'in' ? 15000 : 60000).catch(() => null);
+        const barHtml = gxBar(L, g, title, card, gxStrip(L, g, day)), page = $main.querySelector('#gpage');
         if (page && page.dataset.gid === String(id) && page.querySelector('#gxhero')) {
           const hero = page.querySelector('#gxhero'), bar = page.querySelector('#gxbar');
           if (hero.dataset.v !== vars) { hero.setAttribute('style', vars + `;--gxt:${hero.dataset.t}`); hero.dataset.v = vars; gxCover(); }
           const inn = page.querySelector('#gxin'); const ih = hashOf(inner); if (inn.dataset.h !== ih) { inn.innerHTML = inner; inn.dataset.h = ih; }
-          const bh = hashOf(barHtml); if (bar.dataset.h !== bh) { const keep = bar.querySelector('.gxbg'); bar.innerHTML = barHtml; if (keep) bar.insertBefore(keep, bar.firstChild); bar.dataset.h = bh; }
+          const bh = hashOf(barHtml); if (bar.dataset.h !== bh) { const keep = bar.querySelector('.gxbg'), st0 = bar.querySelector('#gxstrip'), sl = st0 ? st0.scrollLeft : null; bar.innerHTML = barHtml; if (keep) bar.insertBefore(keep, bar.firstChild); bar.dataset.h = bh; const st1 = bar.querySelector('#gxstrip'); if (st1 && sl != null) st1.scrollLeft = sl; }
           const tabsEl = page.querySelector('#gtabs'); if (tabsEl.dataset.k !== tabKey) { tabsEl.innerHTML = tabs; tabsEl.dataset.k = tabKey; }
           else tabsEl.querySelectorAll('.chip').forEach(x => { const on = x.dataset.tab === tab; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); x.setAttribute('aria-selected', String(on)); });
           const bodyEl = page.querySelector('#gbody'); if (bodyEl.dataset.h !== hashOf(body) || bodyEl.dataset.tab !== tab) { const tabChanged = bodyEl.dataset.tab !== tab; bodyEl.innerHTML = body; if (tabChanged && V.soft) V.soft(bodyEl); bodyEl.dataset.h = hashOf(body); bodyEl.dataset.tab = tab; }
@@ -819,7 +831,7 @@
           $main.innerHTML = `<div id="gpage" class="gxpage" data-gid="${esc(String(id))}"><div class="gxbar" id="gxbar" data-h="${hashOf(barHtml)}">${barHtml}</div>`
             + `<section class="gx" id="gxhero" data-v="${esc(vars)}" data-t="${gxT()}" style="${vars};--gxt:${gxT()}">${LOBES}<div class="gxin" id="gxin" data-h="${hashOf(inner)}">${inner}</div></section>`
             + `<div class="gxsheet"><div id="gtabs" class="gxtabw" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div></div>`;
-          gxSegs(); requestAnimationFrame(() => { gxCover(); gxScroll(); if (gxScroll.run) gxScroll.run(); });
+          gxSegs(); requestAnimationFrame(() => { gxCover(); gxScroll(); if (gxScroll.run) gxScroll.run(); const st = document.getElementById('gxstrip'), cur = st && st.querySelector('.cur'); if (cur) st.scrollLeft = cur.offsetLeft - (st.clientWidth - cur.offsetWidth) / 2; });
         }
         /* a basket lands: the scorer's colour flashes forward */
         if (gameV.last && gameV.last.id === g.id && g.state === 'in') { if (+g.home.score > gameV.last.h) gxPulse('home'); else if (+g.away.score > gameV.last.a) gxPulse('away'); }

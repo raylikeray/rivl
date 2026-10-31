@@ -2511,3 +2511,20 @@ html.gxon body::before{display:none}
 /* the hero and the bar's copy run on one clock */
 .gx .w>i,.gx .w::before,.gx .w::after,.gxcov .w>i,.gxcov .w::before,.gxcov .w::after{animation-delay:var(--gxt,0s)!important}
 .gxsheet,.gxtabw{border-radius:22px 22px 0 0}
+
+/* the day's other games in the game bar: glass pills, fading at both edges, swipe sideways */
+.gxmid2{position:relative;flex:1;min-width:0;height:40px}
+.gxmid2>.gxctr{position:absolute;inset:0;align-items:center}
+.gxstrip{position:absolute;inset:0;display:flex;align-items:center;gap:7px;overflow-x:auto;scrollbar-width:none;padding:0 18px;scroll-snap-type:x proximity;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%)}
+.gxstrip::-webkit-scrollbar{display:none}
+.gxp{flex:none;display:flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:999px;color:#fff;text-decoration:none;
+  background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.14);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);scroll-snap-align:center}
+.gxp.cur{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.34)}
+.gxp .logo{width:20px;height:20px}
+.gxp i{font-style:normal;font-size:12px;font-weight:700;opacity:.85}
+.gxp span{display:flex;align-items:baseline;gap:5px;white-space:nowrap}
+.gxp b{font-size:13px;font-weight:700;color:#fff}
+.gxp em{font-style:normal;font-size:11px;font-weight:700;color:rgba(255,255,255,.8)}
+.gxp em.lv{color:#fff}
