@@ -481,7 +481,8 @@
       else { th.style.transition = 'none'; go(); void th.offsetWidth; th.style.transition = ''; }
     });
   }
-  function gxPulse(side) { const h = document.getElementById('gxhero'); if (!h) return; let z = h.querySelector('.pz'); if (!z) { z = document.createElement('span'); h.insertBefore(z, h.querySelector('.veil')); } z.className = 'pz ' + (side === 'away' ? 'pa' : 'ph'); void z.offsetWidth; z.classList.add('go'); }
+  /* a basket lands: the scorer's colour flashes, in the hero and in the bar's copy of it together */
+  function gxPulse(side) { ['#gxhero', '#gxbar .gxcov'].forEach(q => { const h = document.querySelector(q); if (!h) return; let z = h.querySelector(':scope > .pz'); if (!z) { z = document.createElement('span'); h.insertBefore(z, h.querySelector(':scope > .veil')); } z.className = 'pz ' + (side === 'away' ? 'pa' : 'ph'); void z.offsetWidth; z.classList.add('go'); }); }
   /* a play, as a card on a timeline: the team's colour, the player's face and number, what happened, and the score after it */
   function playCard(L, lk, g, p, ppl) {
     const id = p.team && String(p.team.id); const t = id === g.home.id ? g.home : id === g.away.id ? g.away : null;
