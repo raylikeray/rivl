@@ -197,7 +197,10 @@ function prettyDetail(d, L, name) {
 }
 function parseTeamSide(x, L) {
   const t = x.team || {};
-  const sc = x.score && typeof x.score === 'object' ? x.score.displayValue : x.score;
+  let sc = x.score && typeof x.score === 'object' ? (x.score.displayValue ?? x.score.value) : x.score;
+  /* the feed has sent live games with no score at all (Hornets at Wizards at the half). The quarter-by-quarter line adds up
+     to it, so when the total is missing and the quarters are there, the total is their sum */
+  if ((sc == null || sc === '') && Array.isArray(x.linescores) && x.linescores.length) { const v = x.linescores.map(l => +(l.value ?? l.displayValue)); if (v.every(n => Number.isFinite(n))) sc = v.reduce((a, b) => a + b, 0); }
   const rank = x.curatedRank && x.curatedRank.current && x.curatedRank.current <= 25 ? x.curatedRank.current : null;
   return {
     id: String(t.id), abbr: t.abbreviation || t.shortDisplayName || '', name: t.displayName || t.name || '', short: t.shortDisplayName || t.name || t.displayName || '', loc: t.location || '',
@@ -293,7 +296,17 @@ async function scoreboard(L, ymd, ttl) {
   // football is a weekly sport: the "today" slate is the current week's games (ESPN's default scoreboard); other dates still work by day
   const q = L.weekly && ymd === t ? `${API(L)}/scoreboard?${L.sbParams.replace(/^&/, '')}` : `${API(L)}/scoreboard?dates=${compact(ymd)}${L.sbParams}`;
   const d = await j(q, ttl ?? (ymd === t ? 25000 : (ymd < t ? 3600000 : 300000)));
-  return (d.events || []).map(e => parseEvent(e, L)).sort((a, b) => (order(a) - order(b)) || (new Date(a.date) - new Date(b.date)));
+  const gs = (d.events || []).map(e => parseEvent(e, L));
+  /* a live game the scoreboard sent without a score: the game's own summary is asked for it (its header carries the score
+     and the quarters). Only for those games, only while live, and quietly: if it doesn't answer either, the card says so */
+  await Promise.all(gs.filter(g => g.state === 'in' && (g.home.score == null || g.away.score == null)).map(async g => {
+    try {
+      const s = await j(`${API(L)}/summary?event=${encodeURIComponent(g.id)}`, 20000);
+      const cs = (s && s.header && s.header.competitions && s.header.competitions[0] && s.header.competitions[0].competitors) || [];
+      cs.forEach(c => { const side = c.homeAway === 'home' ? g.home : c.homeAway === 'away' ? g.away : null; if (!side || side.score != null) return; const p = parseTeamSide(c, L); if (p.score != null) side.score = p.score; if (!side.lines.length && p.lines.length) side.lines = p.lines; });
+    } catch { }
+  }));
+  return gs.sort((a, b) => (order(a) - order(b)) || (new Date(a.date) - new Date(b.date)));
 }
 function statMap(stats) { const s = {}; (stats || []).forEach(x => { if (x.name) s[x.name] = x; if (x.type) s[x.type] = s[x.type] || x; if (x.displayName) s[x.displayName] = s[x.displayName] || x; if (x.abbreviation) s[x.abbreviation] = s[x.abbreviation] || x; }); return s; }
 function parseStandingRow(en, L, grp) {
