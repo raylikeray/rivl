@@ -970,6 +970,49 @@ button.xpage{width:100%;text-align:left}
 .cmnr b{font-size:17px;font-weight:500;color:var(--t3)}.cmnr b.w{color:var(--t1);font-weight:700}
 .xmore{margin:18px 2px 0;font-size:12px;font-weight:600;color:var(--t3)}
 .xmore+.xsug{margin-top:8px}
+/* game page: one fixed top bar (Twitter grammar) */
+.gtop{position:fixed;top:0;left:50%;transform:translateX(-50%);width:min(460px,100%);z-index:34;
+  display:flex;align-items:center;gap:8px;height:calc(52px + env(safe-area-inset-top,0px));
+  padding:env(safe-area-inset-top,0px) 12px 0;--mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
+.gtop .bg{position:absolute;inset:0;z-index:-1;opacity:0;overflow:hidden}
+.gtop .bg .w,.gtw .cn .w{position:absolute;inset:0;background:linear-gradient(90deg,var(--aw) 0%,var(--mid) 50%,var(--ha) 100%)}
+.gtop .bg .dots,.gtw .cn .dots{position:absolute;inset:0;background-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,.26) 1.1px,transparent 1.2px);background-size:5px 5px;mix-blend-mode:multiply}
+.gtop .bg::after,.gtw .cn::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.14)}
+.gtop .disc{background:rgba(0,0,0,.26);border-color:rgba(255,255,255,.16);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);flex:none}
+.gtop .disc svg{stroke:#fff}
+.gtop .ctr{position:relative;flex:1;min-width:0;height:40px}
+.gstrip{position:absolute;inset:0;display:flex;align-items:center;gap:7px;overflow-x:auto;scrollbar-width:none;padding:0 18px;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%);
+  will-change:opacity;scroll-snap-type:x proximity}
+.gstrip::-webkit-scrollbar{display:none}
+.gp2{flex:none;display:flex;align-items:center;gap:6px;height:34px;padding:0 9px;border-radius:999px;color:#fff;
+  background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);scroll-snap-align:center}
+.gp2.cur{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.34)}
+.gp2 .cr{width:20px;height:20px;background:transparent}.gp2 .cr img{width:100%;height:100%}.gp2 .cr b{font-size:6px;color:#fff}
+.gp2 i{font-style:normal;font-size:11px;font-weight:700;opacity:.8}
+.gp2 span{display:flex;align-items:baseline;gap:5px;white-space:nowrap}
+.gp2 b{font-size:12.5px;font-weight:700;color:#fff}
+.gp2 em{font-style:normal;font-size:10.5px;font-weight:700;color:rgba(255,255,255,.78)}
+.gp2 em.lv{color:#fff}
+.csc{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px;opacity:0;color:#fff;will-change:opacity,transform}
+.csc .cr{width:26px;height:26px;background:transparent}.csc .cr img{width:100%;height:100%}.csc .cr b{font-size:8px;color:#fff}
+.csc>b{font-size:21px;font-weight:700;letter-spacing:-.02em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.3)}
+.csc>b.tr{opacity:.62;font-weight:600}
+.csc .ck{padding:0 4px}
+.ghero.gpage .gspace{height:calc(44px + env(safe-area-inset-top,0px) - 8px)}
+#gfade{transform-origin:50% 0;will-change:opacity,transform}
+/* the sheet's rounded top stays rounded while it is pinned under the bar */
+.gsheet{border-radius:0;background:transparent;box-shadow:none;margin-top:-22px;padding-top:0}
+.gsheet>#gbody{background:var(--L0);min-height:80vh;display:flow-root;padding-top:8px}
+.gtw{position:sticky;top:calc(52px + env(safe-area-inset-top,0px));z-index:10;--mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
+.gtw .cn{position:absolute;inset:0 0 50%;opacity:0;overflow:hidden;transition:opacity .15s}
+.gtw.stuck .cn{opacity:1}
+.gtwin{position:relative;background:var(--L0);border-radius:22px 22px 0 0;padding-top:2px;box-shadow:0 -16px 34px rgba(0,0,0,.5)}
+.gtw.stuck .gtwin{box-shadow:none}
+.gtwin .gtabs{position:static;background:transparent;display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.gtwin .gtabs button{justify-self:center}
+.gtwin .gtabs button[aria-pressed=true]::after{left:-6px;right:-6px}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -2170,29 +2213,34 @@ function viewGame(tab){
   tab = tab||'sum';
   var h=T[LIVE.home], a=T[LIVE.away], pc=pairColors(LIVE.away,LIVE.home), cvars='--ha:'+pc.home+';--aw:'+pc.away;
   var tabs=[['sum','Summary'],['box','Box score'],['play','Plays'],['shot','Shots']];
-  var OTHERS=[{a:'phi',h:'mia',as:74,hs:79,live:'3rd 2:15'},{a:'okc',h:'den',as:118,hs:110},{a:'bos',h:'nyk',t:'7:00 PM'},{a:'dal',h:'okc',t:'8:00 PM'}];
+  var OTHERS=[{a:'phi',h:'mia',as:74,hs:79,live:'3rd 2:15'},{cur:1},{a:'okc',h:'den',as:118,hs:110},{a:'bos',h:'nyk',t:'7:00 PM'},{a:'dal',h:'okc',t:'8:00 PM'}];
+  /* the other games: one-line glass pills between Back and Share, fading out at both edges */
   var strip=OTHERS.map(function(x){
-    var fin=x.as!=null && !x.live, st=x.live?stp(x.live,true,'sm'):(x.as!=null?'Final':esc(x.t)), aw=fin&&x.as>x.hs, hw=fin&&x.hs>x.as;
-    return '<a class="sc2" href="#game"><span class="t">'+st+'</span>'
-      +'<span class="r'+(fin&&!aw?' lo':'')+'">'+crest(x.a,18)+'<b>'+esc(T[x.a].ab)+'</b><u>'+(x.as!=null?x.as:'')+'</u></span>'
-      +'<span class="r'+(fin&&!hw?' lo':'')+'">'+crest(x.h,18)+'<b>'+esc(T[x.h].ab)+'</b><u>'+(x.hs!=null?x.hs:'')+'</u></span></a>';
+    if(x.cur) return '<span class="gp2 cur">'+crest(LIVE.away,20)+'<i>@</i>'+crest(LIVE.home,20)+'</span>';
+    var mid = x.live ? '<b class="num">'+x.as+'–'+x.hs+'</b><em class="lv">'+esc(x.live)+'</em>' : x.as!=null ? '<b class="num">'+x.as+'–'+x.hs+'</b><em>Final</em>' : '<em>'+esc(x.t)+'</em>';
+    return '<a class="gp2" href="#game">'+crest(x.a,20)+'<span>'+mid+'</span>'+crest(x.h,20)+'</a>';
   }).join('');
-  var hero='<section class="ghero" style="'+cvars+'">'
+  var aL=LIVE.as>LIVE.hs, hL=LIVE.hs>LIVE.as;
+  /* one fixed bar. At the top it carries the other games; as you scroll, the big
+     score fades away and the compact score fades in where the games were. */
+  var top='<div class="gtop" id="gtop" style="'+cvars+'"><span class="bg"><span class="w"></span><span class="dots"></span></span>'
+      +'<a class="disc g" href="#following" aria-label="Back">'+svg(IC.back)+'</a>'
+      +'<div class="ctr"><div class="gstrip" id="gstrip">'+strip+'</div>'
+        +'<div class="csc" id="csc">'+crest(LIVE.away,26,true)+'<b class="num'+(aL?'':' tr')+'">'+LIVE.as+'</b>'
+          +'<span class="ck">'+stp(LIVE.clock,true,'flat sm')+'</span><b class="num'+(hL?'':' tr')+'">'+LIVE.hs+'</b>'+crest(LIVE.home,26,true)+'</div></div>'
+      +'<span class="disc g">'+svg(IC.share)+'</span></div>';
+  var hero=top+'<section class="ghero gpage" style="'+cvars+'">'
     +'<span class="w"><i></i><i></i><i></i><i></i></span><span class="dots"></span><span class="veil"></span>'
-    +'<div class="in gut"><div class="gnav"><a class="disc" href="#following" aria-label="Back">'+svg(IC.back)+'</a>'
-      +'<span style="flex:1"></span><span class="disc">'+svg(IC.share)+'</span></div>'
-      +'<div class="strip">'+strip+'</div><p class="gleague">NBA · Chase Center, San Francisco</p>'
-      +'<div class="gsc"><span class="sc num '+(LIVE.as>LIVE.hs?'ld':'tr')+'">'+LIVE.as+'</span>'
-        +'<span class="mid">'+stp(LIVE.clock,true)+'</span><span class="sc num '+(LIVE.hs>LIVE.as?'ld':'tr')+'">'+LIVE.hs+'</span>'
+    +'<div class="in gut"><div class="gspace"></div><div id="gfade">'
+      +'<p class="gleague">NBA · Chase Center, San Francisco</p>'
+      +'<div class="gsc"><span class="sc num '+(aL?'ld':'tr')+'">'+LIVE.as+'</span>'
+        +'<span class="mid">'+stp(LIVE.clock,true)+'</span><span class="sc num '+(hL?'ld':'tr')+'">'+LIVE.hs+'</span>'
         +'<a class="side" href="#team/'+LIVE.away+'">'+crest(LIVE.away,52,true)+'<b>'+esc(a.name)+'</b><em>'+esc(a.rec)+'</em></a><span></span>'
         +'<a class="side" href="#team/'+LIVE.home+'">'+crest(LIVE.home,52,true)+'<b>'+esc(h.name)+'</b><em>'+esc(h.rec)+'</em></a></div>'
       +'<div class="wp"><div class="bar"><i data-w="21" style="background:'+markColor(pc.away)+'"></i><i data-w="79" style="background:'+markColor(pc.home)+'"></i></div>'
       +'<div class="cap"><span>'+esc(a.ab)+' 21%</span><span>Prediction</span><span>'+esc(h.ab)+' 79%</span></div></div>'
-    +'</div></section><div class="sheet">'
-    +'<div class="minibar gut" style="'+cvars+'" id="mini"><span class="w"></span><span class="dots"></span>'
-      +crest(LIVE.away,24)+'<b class="num">'+LIVE.as+'</b><span style="flex:1;text-align:center">'+stp(LIVE.clock,true,'sm')+'</span>'
-      +'<b class="num">'+LIVE.hs+'</b>'+crest(LIVE.home,24)+'</div>'
-    +'<div class="gut"><div class="gtabs">'+tabs.map(function(t){ return '<button data-tab="'+t[0]+'" aria-pressed="'+(tab===t[0])+'">'+t[1]+'</button>'; }).join('')+'</div></div>';
+    +'</div></div></section><div class="sheet gsheet">'
+    +'<div class="gtw" id="gtw" style="'+cvars+'"><span class="cn"><span class="w"></span><span class="dots"></span></span><div class="gtwin"><div class="gut"><div class="gtabs">'+tabs.map(function(t){ return '<button data-tab="'+t[0]+'" aria-pressed="'+(tab===t[0])+'">'+t[1]+'</button>'; }).join('')+'</div></div></div></div>';
   return hero+'<div id="gbody">'+gameBody(tab,pc)+'</div></div>';
 }
 
@@ -2309,7 +2357,7 @@ var heroTint=null;
 function paintBar(){
   var sbg=document.querySelector('.sbg'), meta=document.getElementById('tcolor');
   var light=document.documentElement.getAttribute('data-theme')==='light', page=light?'#EDF0F4':'#000000';
-  var hero=document.querySelector('.ghero'), over=hero ? window.scrollY>hero.offsetHeight-60 : window.scrollY>8;
+  var hero=document.querySelector('.ghero'), over=document.getElementById('gtop') ? false : hero ? window.scrollY>hero.offsetHeight-60 : window.scrollY>8;
   if(sbg) sbg.classList.toggle('solid', over);
   if(meta) meta.setAttribute('content', (hero && !over && heroTint) ? heroTint : page);
 }
@@ -2350,12 +2398,30 @@ function swapBody(tab, pinTabs){
   ob.innerHTML=gameBody(tab, pairColors(LIVE.away,LIVE.home));
   document.querySelectorAll('.gtabs [data-tab]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-tab')===tab)); });
   history.replaceState(null,'','#game/'+tab);
-  if(pinTabs){ var hero=document.querySelector('.ghero'), stuck=hero?hero.offsetHeight-52:0; if(window.scrollY>stuck) window.scrollTo(0,stuck); }
+  if(pinTabs){ var tw=document.getElementById('gtw'), gt=document.getElementById('gtop'); if(tw&&gt){ var y=tw.getBoundingClientRect().top+window.scrollY-gt.offsetHeight; if(window.scrollY>y) window.scrollTo(0,y); } }
   animateBars(ob);
 }
 var miniHandler=null;
 function bindMini(){
   if(miniHandler){ window.removeEventListener('scroll',miniHandler); miniHandler=null; }
+  var gt=document.getElementById('gtop');
+  if(gt){
+    var hero0=document.querySelector('.ghero'), fade=document.getElementById('gfade'), st=document.getElementById('gstrip'),
+        cs=document.getElementById('csc'), tw=document.getElementById('gtw'), bg=gt.querySelector('.bg');
+    var ticking=false;
+    miniHandler=function(){ if(ticking) return; ticking=true; requestAnimationFrame(function(){ ticking=false;
+      var bar=gt.offsetHeight, span=Math.max(80, hero0.offsetHeight-bar-22), p=Math.min(1,Math.max(0,window.scrollY/span));
+      /* big score: fades and drifts up during the first 60% of the scroll */
+      var f=Math.min(1,p/0.6); fade.style.opacity=String(1-f); fade.style.transform='translateY('+(-18*f)+'px) scale('+(1-0.06*f)+')';
+      /* games strip leaves early; compact score arrives late */
+      var so=Math.max(0,1-p/0.35); st.style.opacity=String(so); st.style.pointerEvents=so<.2?'none':'';
+      var c=Math.min(1,Math.max(0,(p-0.45)/0.4)); cs.style.opacity=String(c); cs.style.transform='translateY('+(8*(1-c))+'px)'; cs.style.pointerEvents=c>.5?'':'none';
+      var stuck=tw.getBoundingClientRect().top<=bar+0.5;
+      bg.style.opacity = stuck ? '1' : String(Math.max(0,(p-0.7)/0.3));
+      tw.classList.toggle('stuck', stuck);
+    }); };
+    window.addEventListener('scroll',miniHandler,{passive:true}); miniHandler(); return;
+  }
   var m=document.getElementById('mini'), hero=document.querySelector('.ghero'); if(!m||!hero) return;
   miniHandler=function(){ m.classList.toggle('on', window.scrollY>hero.offsetHeight-70); };
   window.addEventListener('scroll',miniHandler,{passive:true}); miniHandler();
