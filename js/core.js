@@ -181,6 +181,12 @@ const perName = (n, L) => (L.periods === 2 ? (n === 1 ? '1H' : n === 2 ? '2H' : 
 function prettyDetail(d, L) {
   const s = String(d || '').trim(); let m;
   const clock = c => /^\d{1,2}(\.\d)?$/.test(c) ? `0:${c.padStart(c.includes('.') ? 4 : 2, '0')}` : c;   // under a minute ESPN writes "33.9": read as 0:33.9
+  /* the clock reads zero in the moment between the buzzer and the feed's own "End of …" or "Halftime": say that instead
+     of "Q2 0:00.0" */
+  const zero = c => /^0{1,2}(?::00)?(?:\.0)?$/.test(c);
+  const half = n => (L.periods === 2 ? n === 1 : n === 2);
+  if ((m = s.match(/^(\d{1,2}(?::\d{2})?(?:\.\d)?)\s*-\s*(\d+)(?:st|nd|rd|th)$/i)) && zero(m[1])) return half(+m[2]) ? 'Halftime' : `End ${perName(+m[2], L)}`;
+  if ((m = s.match(/^(\d{1,2}(?::\d{2})?(?:\.\d)?)\s*-\s*(\d*)OT$/i)) && zero(m[1])) return `End OT${m[2] && +m[2] > 1 ? m[2] : ''}`;
   if ((m = s.match(/^(\d{1,2}(?::\d{2})?(?:\.\d)?)\s*-\s*(\d+)(?:st|nd|rd|th)$/i))) return `${perName(+m[2], L)} ${clock(m[1])}`;
   if ((m = s.match(/^(\d{1,2}(?::\d{2})?(?:\.\d)?)\s*-\s*(\d*)OT$/i))) return `OT${m[2] && +m[2] > 1 ? m[2] : ''} ${clock(m[1])}`;
   if ((m = s.match(/^End of (\d+)(?:st|nd|rd|th)$/i))) return `End ${perName(+m[1], L)}`;
