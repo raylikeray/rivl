@@ -10,8 +10,8 @@
   --live:#FF2D37; --win:#3DDC84; --loss:#FF5A5F; --warn:#FFD57A;
   --edge:inset 0 1px 0 rgba(255,255,255,.06),0 10px 24px -18px rgba(0,0,0,.9);
   --ring:rgba(255,255,255,.08);
-  --ui:"Schibsted Grotesk","Helvetica Neue",Arial,sans-serif;
-  --num:"Big Shoulders Display","Arial Narrow",sans-serif;
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --gut:max(16px,env(safe-area-inset-left,0px)); --gut-r:max(16px,env(safe-area-inset-right,0px));
   --tabs:64px;
   color-scheme:dark;
@@ -130,7 +130,7 @@ table,.num{font-variant-numeric:tabular-nums}
 .game .nm b{display:block;font-size:17px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .game .nm b i{font-style:normal;font-weight:700;color:var(--ink-3);font-size:13px;margin-right:6px}
 .game .nm span{display:block;font-size:12.5px;color:var(--ink-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.game .sc{font:800 36px/1 var(--num);letter-spacing:.01em;min-width:44px;text-align:right}
+.game .sc{font:700 32px/1 var(--num);letter-spacing:-.02em;font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
 .game .side.lo .nm b,.game .side.lo .sc{color:var(--ink-3)}
 .game .sc{color:var(--ink-3)}
 .game .sc.on{color:var(--tcd,var(--ink))}
@@ -167,7 +167,7 @@ table,.num{font-variant-numeric:tabular-nums}
 .hero .tm b{display:block;font-size:16px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hero .tm span{display:block;font-size:12px;opacity:.85;margin-top:1px}
 .hero .mid{text-align:center;min-width:0}
-.hero .mid .sc{font:800 58px/0.95 var(--num);letter-spacing:.01em;white-space:nowrap;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.hero .mid .sc{font:700 52px/0.95 var(--num);letter-spacing:-.03em;white-space:nowrap;text-shadow:0 2px 12px rgba(0,0,0,.35)}
 .hero .mid .sc i{font-style:normal;opacity:.55;margin:0 4px}
 .hero .mid .st{display:inline-flex;align-items:center;gap:7px;height:24px;padding:0 10px;border-radius:7px;background:rgba(0,0,0,.55);font-size:12.5px;font-weight:800;margin-bottom:10px;white-space:nowrap}
 .hero .mid .st.on::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--live);animation:blink 1.6s infinite}
@@ -238,7 +238,7 @@ table,.num{font-variant-numeric:tabular-nums}
 .ehero .in{position:relative;z-index:1;padding:16px 18px 18px;max-width:60%}
 .ehero .sub{font-size:11.5px;font-weight:800;opacity:.85;letter-spacing:.08em;text-transform:uppercase}
 .ehero .sub a{text-decoration:none}
-.ehero h1{font:800 44px/0.92 var(--num);letter-spacing:.005em;text-transform:uppercase;margin-top:6px;text-wrap:balance}
+.ehero h1{font:800 34px/1 var(--num);letter-spacing:-.02em;text-transform:uppercase;margin-top:6px;text-wrap:balance}
 .ehero .facts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;font-size:12.5px}
 .ehero .facts span{display:inline-flex;align-items:center;height:27px;padding:0 11px;border-radius:999px;background:rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.08),0 2px 6px -2px rgba(0,0,0,.35);font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-shadow:0 1px 1px rgba(0,0,0,.25)}
 .ehero .acts{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
@@ -481,7 +481,7 @@ button.row:last-child{border-bottom:0}
 .pc .shot img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;filter:drop-shadow(0 12px 14px rgba(0,0,0,.5))}
 .pc .in{position:relative;z-index:2;max-width:calc(100% - 176px);display:flex;flex-direction:column;gap:2px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .pc em{font-style:normal;font-size:11px;font-weight:800;opacity:.9;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pc b{font:800 26px/.92 var(--num);letter-spacing:.005em;text-transform:uppercase;margin-top:3px}
+.pc b{font:800 22px/1 var(--num);letter-spacing:-.02em;text-transform:uppercase;margin-top:3px}
 .pc .line{font:800 40px/1 var(--num);margin-top:8px;display:flex;align-items:baseline;gap:6px}
 .pc .line u{text-decoration:none;font:800 12px/1 var(--ui);opacity:.9;letter-spacing:.06em;text-transform:uppercase}
 .pc .xs{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
@@ -2344,86 +2344,118 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 :root[data-theme="dark"] .livebar .tm .sc.on{box-shadow:0 1px 2px rgba(0,0,0,.4)}
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .livebar .tm .sc.on{box-shadow:0 1px 2px rgba(0,0,0,.4)} }
 
-/* ================= v8 GAME PAGE =================
-   Pinned moving-colour hero, a clear bar on top, the page sliding up over it. */
+/* ================= v8 GAME PAGE: v7's game page on the working app =================
+   One fixed page. The hero (two-team moving colour) sits behind everything and never moves. A clear bar floats over it with
+   Back, the day's games as glass pills, the compact score, and Share. Under the bar the page scrolls in its own box, cut to
+   a rounded top: the sheet slides up over the hero and stops under the bar, and whatever scrolls under the pinned tabs is
+   cut by the same rounded corners, so the colour shows through the corners and nothing else can. There is no copy of the
+   hero, no mask, and nothing is moved by script while you scroll. */
 html.gxon body::before{display:none}
-.gxpage{margin-top:calc(-1 * env(safe-area-inset-top,0px))}
-.gxbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:8px;height:calc(56px + env(safe-area-inset-top,0px));
-  padding:env(safe-area-inset-top,0px) var(--gut-r) 0 var(--gut);margin-bottom:calc(-56px - env(safe-area-inset-top,0px));color:#fff}
-.gxbg{position:absolute;left:0;right:0;top:0;height:calc(100% + 22px);z-index:-1;overflow:hidden;pointer-events:none;
-  -webkit-mask:linear-gradient(#000,#000) left top/100% calc(100% - 22px) no-repeat,radial-gradient(circle at 100% 100%,transparent 21.5px,#000 22px) left bottom/22px 25px no-repeat,radial-gradient(circle at 0 100%,transparent 21.5px,#000 22px) right bottom/22px 25px no-repeat;
-          mask:linear-gradient(#000,#000) left top/100% calc(100% - 22px) no-repeat,radial-gradient(circle at 100% 100%,transparent 21.5px,#000 22px) left bottom/22px 25px no-repeat,radial-gradient(circle at 0 100%,transparent 21.5px,#000 22px) right bottom/22px 25px no-repeat}
-.gxcov{position:absolute;left:0;right:0;top:0;height:var(--gxh,420px);overflow:hidden;isolation:isolate}
-.gxib{flex:none;width:44px;height:44px;border-radius:999px;display:grid;place-items:center;color:#fff;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.16);
-  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
-.gxib svg{width:20px;height:20px}
-.gxctr{flex:1;min-width:0;display:flex;justify-content:center;opacity:0;pointer-events:none;will-change:opacity,transform}
-.gxmn{display:flex;align-items:center;gap:10px;white-space:nowrap}
-.gxmn .logo{width:26px;height:26px}
-.gxmn b{font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.3)}
-.gxmn b.tr{opacity:.62;font-weight:700}
-.gxmn i{font-style:normal;font-size:13px;opacity:.8}
-.gxst{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;font-size:14px;font-weight:700;color:#fff;
-  background:rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.14);white-space:nowrap}
-.gxst.on i{width:8px;height:8px;border-radius:999px;background:var(--live);box-shadow:0 0 0 0 rgba(255,45,55,.6);animation:gxp 1.8s infinite}
-@keyframes gxp{0%{box-shadow:0 0 0 0 rgba(255,45,55,.6)}70%{box-shadow:0 0 0 8px rgba(255,45,55,0)}100%{box-shadow:0 0 0 0 rgba(255,45,55,0)}}
-.gxmn .gxst{padding:4px 10px;font-size:13px}
-
-.gx{position:sticky;top:0;z-index:0;overflow:hidden;isolation:isolate;color:#fff;--mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
-.gx .w,.gxcov .w{position:absolute;inset:-2px;z-index:-2;overflow:hidden;pointer-events:none;
+.gxpage{position:fixed;inset:0;z-index:1;overflow:hidden;background:var(--bg);--gxbar:calc(52px + env(safe-area-inset-top,0px))}
+.gx{position:absolute;top:0;left:0;right:0;z-index:0;overflow:hidden;isolation:isolate;color:#fff;--mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
+.gx .w{position:absolute;inset:-2px;pointer-events:none;z-index:-2;overflow:hidden;
   background:linear-gradient(101deg,color-mix(in srgb,var(--aw) 42%,#04050a) 0%,#06070c var(--split,50%),color-mix(in srgb,var(--ha) 42%,#04050a) 100%);transition:background 1.2s}
-.gx .w>i,.gxcov .w>i{position:absolute;border-radius:50%;filter:blur(52px);will-change:transform}
-.gx .w>i:nth-child(1),.gxcov .w>i:nth-child(1){background:var(--aw);width:105%;height:250%;left:-40%;top:-75%;animation:gxa 19s ease-in-out infinite;scale:var(--sa,1);transition:scale 1.4s}
-.gx .w>i:nth-child(2),.gxcov .w>i:nth-child(2){background:var(--ha);width:105%;height:250%;right:-40%;top:-70%;animation:gxb 23s ease-in-out infinite;scale:var(--sh,1);transition:scale 1.4s}
-.gx .w>i:nth-child(3),.gxcov .w>i:nth-child(3){background:color-mix(in srgb,var(--aw) 78%,#fff);width:46%;height:150%;left:2%;top:-20%;opacity:.5;animation:gxc 13s ease-in-out infinite}
-.gx .w>i:nth-child(4),.gxcov .w>i:nth-child(4){background:color-mix(in srgb,var(--ha) 78%,#fff);width:46%;height:150%;right:0;top:-30%;opacity:.5;animation:gxd 15s ease-in-out infinite}
+.gx .w>i{position:absolute;border-radius:50%;filter:blur(52px);will-change:transform;transition:scale 1.4s cubic-bezier(.2,.8,.2,1)}
+.gx .w>i:nth-child(1){background:var(--aw);width:105%;height:250%;left:-40%;top:-75%;animation:gxa 19s ease-in-out infinite;scale:var(--sa,1)}
+.gx .w>i:nth-child(2){background:var(--ha);width:105%;height:250%;right:-40%;top:-70%;animation:gxb 23s ease-in-out infinite;scale:var(--sh,1)}
+.gx .w>i:nth-child(3){background:color-mix(in srgb,var(--aw) 78%,#fff);width:46%;height:150%;left:2%;top:-20%;opacity:.5;animation:gxc 13s ease-in-out infinite;scale:var(--sa,1)}
+.gx .w>i:nth-child(4){background:color-mix(in srgb,var(--ha) 78%,#fff);width:46%;height:150%;right:0;top:-30%;opacity:.5;animation:gxd 15s ease-in-out infinite;scale:var(--sh,1)}
 @keyframes gxa{0%,100%{transform:translate3d(-6%,-4%,0) rotate(0)}33%{transform:translate3d(26%,12%,0) rotate(28deg) scale(1.22)}66%{transform:translate3d(8%,-14%,0) rotate(-18deg) scale(.92)}}
 @keyframes gxb{0%,100%{transform:translate3d(6%,4%,0) rotate(0) scale(1.1)}33%{transform:translate3d(-24%,-10%,0) rotate(-24deg) scale(.9)}66%{transform:translate3d(-6%,14%,0) rotate(20deg) scale(1.25)}}
 @keyframes gxc{0%,100%{transform:translate3d(0,0,0) scale(.9)}50%{transform:translate3d(70%,18%,0) scale(1.3)}}
 @keyframes gxd{0%,100%{transform:translate3d(0,0,0) scale(1.2)}50%{transform:translate3d(-70%,-14%,0) scale(.85)}}
-.gx .w::before,.gx .w::after,.gxcov .w::before,.gxcov .w::after{content:"";position:absolute;inset:-20% -40%;pointer-events:none;mix-blend-mode:soft-light;will-change:transform}
-.gx .w::before,.gxcov .w::before{background:repeating-linear-gradient(97deg,transparent 0 34px,rgba(255,255,255,.55) 52px,transparent 78px,transparent 120px);filter:blur(14px);opacity:.55;animation:gxwa 11s ease-in-out infinite alternate}
-.gx .w::after,.gxcov .w::after{background:repeating-linear-gradient(83deg,transparent 0 50px,rgba(255,255,255,.4) 70px,transparent 96px,transparent 150px);filter:blur(18px);opacity:.45;animation:gxwb 15s ease-in-out infinite alternate}
+.gx .w::before,.gx .w::after{content:"";position:absolute;inset:-20% -40%;pointer-events:none;mix-blend-mode:soft-light;will-change:transform}
+.gx .w::before{background:repeating-linear-gradient(97deg,transparent 0 34px,rgba(255,255,255,.55) 52px,transparent 78px,transparent 120px);filter:blur(14px);opacity:.55;animation:gxwa 11s ease-in-out infinite alternate}
+.gx .w::after{background:repeating-linear-gradient(83deg,transparent 0 50px,rgba(255,255,255,.4) 70px,transparent 96px,transparent 150px);filter:blur(18px);opacity:.45;animation:gxwb 15s ease-in-out infinite alternate}
 @keyframes gxwa{from{transform:translate3d(-8%,0,0) skewX(-4deg)}to{transform:translate3d(8%,0,0) skewX(5deg)}}
 @keyframes gxwb{from{transform:translate3d(9%,0,0) skewX(4deg)}to{transform:translate3d(-9%,0,0) skewX(-5deg)}}
-.gx .veil,.gxcov .veil{position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,0) 34%,rgba(0,0,0,0) 62%,rgba(0,0,0,.34))}
+.gx .veil{position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,0) 34%,rgba(0,0,0,0) 62%,rgba(0,0,0,.34))}
 .gx .pz{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0}
 .gx .pz.pa{background:radial-gradient(70% 90% at 18% 45%,color-mix(in srgb,var(--aw) 85%,#fff),transparent 70%)}
 .gx .pz.ph{background:radial-gradient(70% 90% at 82% 45%,color-mix(in srgb,var(--ha) 85%,#fff),transparent 70%)}
 .gx .pz.go{animation:gxpz 1.5s cubic-bezier(.2,.7,.2,1)}
 @keyframes gxpz{0%{opacity:0;transform:scale(.85)}22%{opacity:.85;transform:scale(1.05)}100%{opacity:0;transform:scale(1.25)}}
-.gxin{padding:calc(64px + env(safe-area-inset-top,0px)) var(--gut-r) 44px var(--gut);transform-origin:50% 0;will-change:opacity,transform}
-.gxin,.gxin *{text-shadow:0 1px 10px rgba(0,0,0,.3)}
-.gxleague{margin:0;text-align:center;font-size:13px;font-weight:600;opacity:.78}
-.gxsc3{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin-top:8px}
-.gxsc{font-family:var(--ui);font-size:64px;font-weight:700;letter-spacing:-.04em;line-height:1;text-align:center}
-.gxsc.tr{opacity:.55;font-weight:600}
-.gxmid{text-align:center}
-.gxside{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:6px;text-decoration:none;color:#fff}
-.gxlg{display:block;width:76px;height:76px}
-.gxlg img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.42))}
-.gxside b{font-size:17px;font-weight:700}
-.gxside em{font-style:normal;font-size:13px;font-weight:600;opacity:.72}
-.gxwp{margin-top:22px}
-.gxwp .bar{display:flex;gap:4px;height:8px}
+@media (prefers-reduced-motion:reduce){.gx .w>i,.gx .w::before,.gx .w::after{animation-duration:60s}}
+/* the hero's words: v7's sizes */
+.gxin{position:relative;padding:calc(var(--gxbar) - 8px) var(--gut-r) 30px var(--gut);transform-origin:50% 0;will-change:opacity,transform}
+.gxin,.gxin *{text-shadow:0 1px 10px rgba(0,0,0,.3);color:#fff}
+.gxleague{margin:14px 0 0;text-align:center;font-size:11.5px;font-weight:600;opacity:.72}
+.gxsc3{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin-top:6px}
+.gxsc{font-size:56px;font-weight:600;letter-spacing:-.03em;text-align:center;line-height:1;font-variant-numeric:tabular-nums}
+.gxsc.ld{opacity:1;font-weight:600}
+.gxsc.tr{opacity:.5;font-weight:500}
+.gxmid{text-align:center;padding:0 4px}
+.gxst{display:inline-flex;align-items:center;gap:7px;padding:6px 12px 6px 10px;border-radius:999px;background:rgba(0,0,0,.46);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.2);font-size:14px;font-weight:700;color:#fff!important;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1;text-shadow:none!important}
+.gxst.on i{width:7px;height:7px;border-radius:999px;background:#FF375F;flex:none;box-shadow:0 0 0 0 rgba(255,55,95,.55);animation:gxp 2s cubic-bezier(.2,.8,.2,1) infinite}
+@keyframes gxp{0%{box-shadow:0 0 0 0 rgba(255,55,95,.55)}70%{box-shadow:0 0 0 7px rgba(255,55,95,0)}100%{box-shadow:0 0 0 0 rgba(255,55,95,0)}}
+.gxside{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:-6px;text-decoration:none}
+.gxlg{display:block;width:52px;height:52px}
+.gxlg img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 4px 12px rgba(0,0,0,.45))}
+.gxside b{font-size:14.5px;font-weight:600;letter-spacing:-.01em;margin-top:2px}
+.gxside em{font-style:normal;font-size:11.5px;font-weight:600;opacity:.72}
+.gxwp{margin-top:20px}
+.gxwp .bar{height:7px;display:flex;gap:3px}
 .gxwp .bar i{display:block;height:100%;border-radius:999px}
-.gxwp .cap{display:flex;justify-content:space-between;margin-top:8px;font-size:14px;font-weight:700}
-.gxsl{color:#fff;margin-top:14px}
-
-.gxsheet{position:relative;z-index:2;margin-top:-22px;background:var(--bg);border-radius:22px 22px 0 0;min-height:80vh;display:flow-root}
-.gxtabw{position:sticky;top:calc(56px + env(safe-area-inset-top,0px));z-index:10;background:var(--bg);border-radius:22px 22px 0 0;padding:4px var(--gut-r) 0 var(--gut)}
+.gxwp .cap{display:flex;justify-content:space-between;font-size:11.5px;margin-top:7px;font-weight:700}
+/* the bar: clear, with Back and Share as glass discs; between them the day's games, then the compact score once you scroll */
+.gxbar{position:absolute;top:0;left:0;right:0;z-index:3;display:flex;align-items:center;gap:8px;height:var(--gxbar);padding:env(safe-area-inset-top,0px) 12px 0;color:#fff}
+.gxib{flex:none;width:34px;height:34px;border-radius:999px;display:grid;place-items:center;color:#fff;background:rgba(0,0,0,.26);border:1px solid rgba(255,255,255,.16);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.gxib svg{width:17px;height:17px;stroke-width:1.8}
+.gxmid2{position:relative;flex:1;min-width:0;height:40px}
+.gxstrip{position:absolute;inset:0;display:flex;align-items:center;gap:7px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:0 18px;will-change:opacity;overscroll-behavior-x:contain;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%)}
+.gxstrip::-webkit-scrollbar{display:none}
+.gxp{flex:none;display:flex;align-items:center;gap:6px;height:34px;padding:0 9px;border-radius:999px;color:#fff;text-decoration:none;
+  background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.14);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.gxp.cur{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.34)}
+.gxp .logo{width:20px;height:20px}
+.gxp i{font-style:normal;font-size:11px;font-weight:700;opacity:.8}
+.gxp span{display:flex;align-items:baseline;gap:5px;white-space:nowrap}
+.gxp b{font-size:12.5px;font-weight:700;color:#fff}
+.gxp em{font-style:normal;font-size:10.5px;font-weight:700;color:rgba(255,255,255,.78)}
+.gxp em.lv{color:#fff}
+.gxctr{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;will-change:opacity,transform}
+.gxmn{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.gxmn .logo{width:26px;height:26px}
+.gxmn b{font-size:21px;font-weight:700;letter-spacing:-.02em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.3)}
+.gxmn b.tr{opacity:.62;font-weight:600}
+.gxmn i{font-style:normal;font-size:13px;opacity:.8}
+.gxmn .gxst{background:var(--surf-2);border-color:var(--line-2);color:var(--ink)!important;-webkit-backdrop-filter:none;backdrop-filter:none;font-size:12.5px;padding:5px 10px 5px 9px;gap:5px}
+.gxmn .gxst.on i{width:6px;height:6px}
+/* the scrolling box under the bar, cut to a rounded top; the sheet rides up inside it */
+.gxscroll{position:absolute;top:var(--gxbar);left:0;right:0;bottom:0;z-index:2;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+  clip-path:inset(0 0 0 0 round 22px 22px 0 0)}
+.gxscroll::-webkit-scrollbar{display:none}
+.gxspace{height:var(--gxsp,300px)}
+.gxsheet{position:relative;background:transparent;min-height:100%;padding-bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 24px)}
+.gxtabw{position:sticky;top:0;z-index:10;background:var(--bg);border-radius:22px 22px 0 0;padding:4px var(--gut-r) 0 var(--gut)}
+#gbody{background:var(--bg);min-height:100vh;display:flow-root;padding-top:8px}
 .gxtabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border-bottom:1px solid var(--line)}
-.gxtabs .chip{height:auto;padding:16px 0 14px;border-radius:0;background:none;box-shadow:none;font-size:16px;font-weight:500;color:var(--ink-3);position:relative}
+.gxtabs .chip{height:auto;padding:13px 0;border-radius:0;background:none;box-shadow:none;font-size:16px;font-weight:500;color:var(--ink-3);position:relative;justify-self:center;white-space:nowrap}
 .gxtabs .chip.on{color:var(--ink);font-weight:700;background:none}
-.gxtabs .chip.on::after{content:"";position:absolute;left:10%;right:10%;bottom:-1px;height:3px;border-radius:999px;background:var(--ink)}
-#gbody{padding-top:8px}
+.gxtabs .chip.on::after{content:"";position:absolute;left:-6px;right:-6px;bottom:-1px;height:3px;border-radius:999px;background:var(--ink)}
 
-/* joined controls: one pill, the chosen part filled */
-.gxseg{display:flex;margin:12px var(--gut-r) 0 var(--gut);padding:3px;border-radius:999px;background:var(--surf-2);box-shadow:inset 0 0 0 1px var(--line)}
-.gxseg button{flex:1;min-height:40px;border-radius:999px;font-size:15px;font-weight:600;color:var(--ink-3)}
-.gxseg button[aria-pressed=true]{background:var(--ink);color:var(--bg);font-weight:700}
+.gxtabs .chip,.gxtabs .chip.on,.gxtabs .chip[aria-pressed="true"]{border:0!important;box-shadow:none!important;outline:0;background:none!important;color:var(--ink-3)}
+.gxtabs .chip.on{color:var(--ink)!important}
+.gxtabs .chip::before{display:none!important}
+.gxtabs .chip+.chip{margin-left:0}
+
+/* v7's controls: a team switch with crests, and one joined quarter control; the chosen part fades in, nothing slides */
+.gxtsw{display:flex;gap:4px;margin:14px var(--gut-r) 0 var(--gut);padding:3px;border-radius:999px;background:var(--surf-2);border:1px solid var(--line)}
+.gxtsw button{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 6px;border-radius:999px;color:var(--ink-3);transition:background .3s cubic-bezier(.2,.8,.2,1),color .3s cubic-bezier(.2,.8,.2,1)}
+.gxtsw button b{font-size:13.5px;font-weight:700;letter-spacing:.02em}
+.gxtsw button .logo{width:22px;height:22px}
+.gxtsw button[aria-pressed=true]{background:var(--surf);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.gxseg{display:flex;margin:16px var(--gut-r) 0 var(--gut);padding:3px;border-radius:999px;background:var(--surf-2);border:1px solid var(--line)}
+.gxseg button{flex:1;padding:9px 0;border-radius:999px;font-size:14px;font-weight:600;color:var(--ink-2);transition:background .3s cubic-bezier(.2,.8,.2,1),color .3s cubic-bezier(.2,.8,.2,1)}
+.gxseg button[aria-pressed=true]{background:var(--ink);color:var(--bg);font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .gxseg.q{margin-top:10px}
-
+/* crests on the game page: the art alone, lifted */
+.gxpage .logo,.gxpage .logo.tint{background:none!important;box-shadow:none!important;border:0!important;border-radius:0;overflow:visible}
+.gxpage .logo::before{display:none}
+.gxpage .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 1px 1.2px rgba(0,0,0,.28)) drop-shadow(0 4px 9px rgba(0,0,0,.22))}
 /* plays as cards on a timeline */
 .gpls{position:relative;padding:4px var(--gut-r) 0 var(--gut)}
 .gpls::before{content:"";position:absolute;left:calc(var(--gut) + 23px);top:16px;bottom:0;width:2px;background:var(--line)}
@@ -2443,120 +2475,41 @@ html.gxon body::before{display:none}
 .pcf>i{position:absolute;z-index:3;right:-6px;bottom:-4px;min-width:22px;height:22px;padding:0 5px;border-radius:999px;font-style:normal;font-size:11.5px;font-weight:800;color:#fff;display:grid;place-items:center;box-shadow:0 0 0 2px var(--surf)}
 .plf{display:flex;gap:18px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:14px;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
 
-/* shots: one court, a key per team, one joined quarter control */
-.gxshleg{display:flex;flex-direction:column;gap:8px;margin:12px var(--gut-r) 0 var(--gut)}
-.gxshleg>span{display:flex;align-items:center;gap:8px;font-size:14px}
-.gxshleg .logo{width:22px;height:22px}
-.gxshleg em{font-style:normal;font-weight:800;margin-right:auto}
-.gxshleg .kk{display:inline-flex;align-items:center;gap:5px;color:var(--ink-3);font-size:13px}
-.gxshleg .kk i{width:10px;height:10px;border-radius:999px}
-.gxshleg .kk i.miss{background:none;border:1.5px solid}
-
-.gxshleg{--ca:var(--ca-d);--ch:var(--ch-d)}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .gxshleg{--ca:var(--ca-l);--ch:var(--ch-l)} }
+/* shots: v7's court, a key per team on each side, one joined quarter control */
+.gxshleg{display:flex;justify-content:space-between;gap:10px;margin:14px var(--gut-r) 0 var(--gut)}
+.gxshleg>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.gxshleg>div.r{align-items:flex-end}
+.gxshleg b{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.gxshleg .logo{width:20px;height:20px}
+.gxshleg span{display:flex;gap:12px}
+.gxshleg .kk{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-3);font-weight:500}
+.gxshleg .kk i{width:7px;height:7px;border-radius:999px;display:block}
+.gxshleg .kk em{font-style:normal;font-size:11px;line-height:1;font-weight:800}
 .pfchips{flex-wrap:wrap;overflow:visible;margin-top:10px}
-.gxtabs .chip,.gxtabs .chip.on,.gxtabs .chip[aria-pressed="true"]{border:0!important;box-shadow:none!important;outline:0;background:none!important;color:var(--ink-3)}
-.gxtabs .chip.on{color:var(--ink)!important}
-.gxtabs .chip::before{display:none!important}
-.gxtabs .chip+.chip{margin-left:0}
-
-/* v8 game page, round 2 */
-.gx.gone{visibility:hidden}
 .gxser{margin:14px var(--gut-r) 4px var(--gut);padding:14px 16px;border-radius:18px;background:var(--surf);box-shadow:var(--edge)}
 .gxser b{display:block;font-size:17px;font-weight:800;color:var(--ink)}
 .gxser span{display:block;margin-top:3px;font-size:16px;font-weight:600;color:var(--ink-2)}
 .gxser em{display:block;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-style:normal;font-size:15px;color:var(--ink-3)}
-.gxtsw{display:flex;gap:4px;margin:14px var(--gut-r) 0 var(--gut);padding:3px;border-radius:999px;background:var(--surf-2);box-shadow:inset 0 0 0 1px var(--line)}
-.gxtsw button{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;color:var(--ink-3)}
-.gxtsw button b{font-size:15px;font-weight:700}
-.gxtsw button .logo{width:24px;height:24px;background:none;box-shadow:none}
-.gxtsw button .logo::before{display:none}
-.gxtsw button .logo img{width:100%;height:100%}
-.gxtsw button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
 .gxcw{padding:14px var(--gut-r) 0 var(--gut)}
 .gxcourt{position:relative;aspect-ratio:95.2/51.2;overflow:hidden;border-radius:16px;
   background:repeating-linear-gradient(90deg,rgba(120,72,30,.10) 0 2px,transparent 2px 9px),linear-gradient(176deg,#E8C48E,#D8AC6D 46%,#E3BE84);
   box-shadow:inset 0 0 0 2px rgba(90,52,18,.3),0 6px 18px -8px rgba(0,0,0,.45)}
 .gxcourt svg{position:absolute;inset:0;width:100%;height:100%}
 .gxcourt .mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:16%;opacity:.85}
-.gxshleg .kk em.x{margin:0;font-style:normal;font-size:11px;line-height:1;font-weight:800}
 
-/* v8 game page, round 3: crests without discs, smaller flat pickers with a sliding thumb */
-.gxpage .logo,.gxpage .logo.tint{background:none!important;box-shadow:none!important;border:0!important;border-radius:0;overflow:visible}
-.gxpage .logo::before{display:none}
-.gxpage .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.28))}
-.gxseg,.gxtsw{position:relative;padding:3px;gap:0;background:color-mix(in srgb,var(--ink) 7%,transparent);box-shadow:none}
-.gxseg button,.gxtsw button{position:relative;z-index:1;min-height:34px;font-size:14px;font-weight:600;color:var(--ink-3);background:none;transition:color .25s ease}
-.gxtsw button{gap:6px}
-.gxtsw button .logo{width:18px;height:18px}
-.gxtsw button b{font-size:14px}
-.gxseg button[aria-pressed=true],.gxtsw button[aria-pressed=true]{color:var(--bg);font-weight:700}
-.gxseg.hth button[aria-pressed=true],.gxtsw.hth button[aria-pressed=true]{background:none}
-.gxseg .th,.gxtsw .th{position:absolute;left:0;top:3px;bottom:3px;border-radius:999px;background:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.18);transition:transform .32s cubic-bezier(.3,.7,.2,1),width .32s cubic-bezier(.3,.7,.2,1);pointer-events:none}
-
-/* top performer cards: the team colour moves, like the player page */
-.pc.mv{background:var(--ad)}
-.pc.mv::before{z-index:1}
-.pcw{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
-.pcw i{position:absolute;border-radius:50%;filter:blur(36px);will-change:transform}
-.pcw i:nth-child(1){background:var(--a);width:95%;height:170%;left:-25%;top:-45%;animation:pca 14s ease-in-out infinite}
-.pcw i:nth-child(2){background:color-mix(in srgb,var(--a) 55%,#fff);opacity:.42;width:55%;height:120%;left:30%;top:-30%;animation:pcb 17s ease-in-out infinite}
-.pcw i:nth-child(3){background:var(--c);width:75%;height:150%;right:-25%;top:5%;animation:pcc 19s ease-in-out infinite}
-.pcw::after{content:"";position:absolute;inset:-20% -40%;mix-blend-mode:soft-light;background:repeating-linear-gradient(97deg,transparent 0 34px,rgba(255,255,255,.5) 52px,transparent 78px,transparent 120px);filter:blur(12px);opacity:.5;animation:gxwa 11s ease-in-out infinite alternate}
-@keyframes pca{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(38%,10%,0) scale(1.18)}}
-@keyframes pcb{0%,100%{transform:translate3d(0,0,0) scale(.9)}50%{transform:translate3d(-45%,22%,0) scale(1.25)}}
-@keyframes pcc{0%,100%{transform:translate3d(0,0,0) scale(1.1)}50%{transform:translate3d(-30%,-14%,0) scale(.9)}}
-@media (prefers-reduced-motion:reduce){.pcw i,.pcw::after{animation:none}}
-
-/* the hero and the bar's copy run on one clock */
-.gx .w>i,.gx .w::before,.gx .w::after,.gxcov .w>i,.gxcov .w::before,.gxcov .w::after{animation-delay:var(--gxt,0s)!important}
-.gxsheet,.gxtabw{border-radius:22px 22px 0 0}
-
-/* the day's other games in the game bar: glass pills, fading at both edges, swipe sideways */
-.gxmid2{position:relative;flex:1;min-width:0;height:40px}
-.gxmid2>.gxctr{position:absolute;inset:0;align-items:center}
-.gxstrip{position:absolute;inset:0;display:flex;align-items:center;gap:7px;overflow-x:auto;scrollbar-width:none;padding:0 18px;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%);
-          mask-image:linear-gradient(90deg,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%)}
-.gxstrip::-webkit-scrollbar{display:none}
-.gxp{flex:none;display:flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:999px;color:#fff;text-decoration:none;
-  background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.14);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
-.gxp.cur{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.34)}
-.gxp .logo{width:20px;height:20px}
-.gxp i{font-style:normal;font-size:12px;font-weight:700;opacity:.85}
-.gxp span{display:flex;align-items:baseline;gap:5px;white-space:nowrap}
-.gxp b{font-size:13px;font-weight:700;color:#fff}
-.gxp em{font-style:normal;font-size:11px;font-weight:700;color:rgba(255,255,255,.8)}
-.gxp em.lv{color:#fff}
-
-/* as v7: the sheet itself is clear; only the tabs and the page under them are painted, so nothing square sits behind the corners */
-.gxsheet{background:transparent!important;border-radius:0!important;min-height:0}
-#gbody{background:var(--bg);min-height:80vh;display:flow-root}
-.gxstrip{overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
-
-/* the flash runs in the bar's copy too, so the two never differ */
-.gxcov .pz{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0}
-.gxcov .pz.pa{background:radial-gradient(70% 90% at 18% 45%,color-mix(in srgb,var(--aw) 85%,#fff),transparent 70%)}
-.gxcov .pz.ph{background:radial-gradient(70% 90% at 82% 45%,color-mix(in srgb,var(--ha) 85%,#fff),transparent 70%)}
-.gxcov .pz.go{animation:gxpz 1.5s cubic-bezier(.2,.7,.2,1)}
-
-/* the tabs' white edge sits a hair inside the bar's coloured corner, so no light can fringe around the curve */
-.gxtabw{border-radius:23.5px 23.5px 0 0!important}
-
-/* the moving colour without blur: soft gradients render the same in the hero and in the bar's copy on every phone */
-.gx .w>i,.gxcov .w>i{filter:none!important;border-radius:0!important}
-.gx .w>i:nth-child(1),.gxcov .w>i:nth-child(1){background:radial-gradient(closest-side,var(--aw),color-mix(in srgb,var(--aw) 70%,transparent) 45%,transparent)!important}
-.gx .w>i:nth-child(2),.gxcov .w>i:nth-child(2){background:radial-gradient(closest-side,var(--ha),color-mix(in srgb,var(--ha) 70%,transparent) 45%,transparent)!important}
-.gx .w>i:nth-child(3),.gxcov .w>i:nth-child(3){background:radial-gradient(closest-side,color-mix(in srgb,var(--aw) 78%,#fff),transparent)!important}
-.gx .w>i:nth-child(4),.gxcov .w>i:nth-child(4){background:radial-gradient(closest-side,color-mix(in srgb,var(--ha) 78%,#fff),transparent)!important}
-.gx .w::before,.gx .w::after,.gxcov .w::before,.gxcov .w::after{filter:none!important}
-/* pickers: while the highlight slides, every label stays quiet; the chosen one lights when it arrives */
-.gxseg.mv button,.gxtsw.mv button{color:var(--ink-3)!important;font-weight:600}
-
-/* gradient blobs drawn larger to carry the same spread the blur used to give */
-.gx .w>i:nth-child(1),.gxcov .w>i:nth-child(1){width:150%!important;height:330%!important;left:-70%!important;top:-115%!important}
-.gx .w>i:nth-child(2),.gxcov .w>i:nth-child(2){width:150%!important;height:330%!important;right:-70%!important;top:-110%!important}
-.gx .w>i:nth-child(3),.gxcov .w>i:nth-child(3){width:70%!important;height:200%!important;left:-10%!important;top:-50%!important}
-.gx .w>i:nth-child(4),.gxcov .w>i:nth-child(4){width:70%!important;height:200%!important;right:-12%!important;top:-55%!important}
-.gx .w::before,.gxcov .w::before{background:repeating-linear-gradient(97deg,transparent 0,rgba(255,255,255,.34) 60px,transparent 120px)!important}
-.gx .w::after,.gxcov .w::after{background:repeating-linear-gradient(83deg,transparent 0,rgba(255,255,255,.26) 75px,transparent 150px)!important}
+/* game leaders, as v7 drew them: a plate with one row per category, each side's best, the better number dark */
+.glplate{margin:0 var(--gut-r) 0 var(--gut);padding:0 14px;border-radius:18px;background:var(--surf);box-shadow:var(--edge)}
+.glhd{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:13px 0 11px;border-bottom:1px solid var(--line)}
+.glhd .s{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700}
+.glhd .s.r{justify-content:flex-end}
+.glhd .logo{width:22px;height:22px}
+.glrow{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:13px 0;text-decoration:none;color:inherit}
+.glrow+.glrow{border-top:1px solid var(--line)}
+.glrow .p{display:flex;align-items:center;gap:10px;min-width:0;text-decoration:none;color:inherit}
+.glrow .p.r{justify-content:flex-end}
+.glrow .t{min-width:0}
+.glrow .p.r .t{text-align:right}
+.glrow .t b{display:block;font-size:26px;font-weight:700;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums}
+.glrow .t b.lo{color:var(--ink-3);font-weight:600}
+.glrow .t em{display:block;font-style:normal;font-size:11.5px;color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.glrow .lab{font-size:12.5px;color:var(--ink-3);text-align:center;white-space:nowrap}
