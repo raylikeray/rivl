@@ -96,5 +96,11 @@ for (const L of ['ncaam', 'ncaaw']) {
   keep.forEach(p => { if (p.moved && tn[p.nowTeamId]) { p.from = p.team; p.team = tn[p.nowTeamId].ab; p.teamName = tn[p.nowTeamId].name; } });
   out.leagues[L] = { label: `${Y - 1}-${String(Y).slice(2)}`, year: Y, final: true, lastSeason: true, players: keep, dropped: last.players.length - keep.length };
 }
+// keep the file light: drop college players with too few games, round numbers
+for (const [L, v] of Object.entries(out.leagues)) {
+  const max = Math.max(1, ...v.players.map(p => p.s.gp || 0));
+  if (L === 'ncaam' || L === 'ncaaw') v.players = v.players.filter(p => (p.s.gp || 0) >= Math.round(max * 0.5));
+  v.players.forEach(p => { for (const k in p.s) if (typeof p.s[k] === 'number') p.s[k] = Math.round(p.s[k] * 10) / 10; if (p.prev) for (const k in p.prev) if (typeof p.prev[k] === 'number') p.prev[k] = Math.round(p.prev[k] * 10) / 10; delete p.teamId; delete p.nowTeamId; delete p.moved; });
+}
 writeFileSync('data/leaders.json', JSON.stringify(out));
 for (const [L, v] of Object.entries(out.leagues)) console.log(L, v.label, v.players.length, 'rookies:', v.players.filter(p => p.rookie).length, 'dropped:', v.dropped || 0);

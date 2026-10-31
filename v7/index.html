@@ -1459,6 +1459,24 @@ h3.wrdh{font-size:17px}
 .fchip.flip{background:rgba(232,180,60,.18);color:#F0C766}
 html[data-theme=light] .fchip.flip{background:#FBE2A0;color:#573A00}
 .nltabs{margin-top:0}
+/* leaders */
+.ldchips{margin-top:4px}
+.ldchips button{padding:8px 13px}
+button.ldtop,button.ldrow{width:100%;text-align:left;border:0;font:inherit;color:inherit;background:none}
+button.ldtop{background:radial-gradient(120% 140% at 30% 70%,color-mix(in srgb,var(--pc) 72%,#1b1e26),color-mix(in srgb,var(--pc) 30%,#101217) 80%);color:#fff}
+.ldtop .ldab{display:inline-block;font-size:13px;font-weight:800;color:rgba(255,255,255,.8);margin-bottom:6px}
+.ldhs{flex:none;overflow:hidden}
+.ldhs img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
+.ldrow .t span{display:flex;align-items:center;gap:5px}
+.ldrow .t span .cr{width:14px;height:14px}
+.awblock{border-radius:20px;overflow:hidden;background:var(--L1);border:1px solid var(--line);margin-top:14px}
+.awhd{padding:14px 16px 10px}
+.awhd b{display:block;font-size:17px;font-weight:700}.awhd span{display:block;font-size:12.5px;color:var(--t3);margin-top:2px}
+.awv{flex:none;font-size:12.5px;font-weight:600;color:var(--t2);text-align:right;max-width:44%}
+.ldtop .minfo{left:44%!important;right:88px!important}
+.ldtop .minfo b{white-space:normal;font-size:18px;line-height:1.15;overflow:visible}
+.ldtop .minfo em{white-space:normal}
+.ldtop .mbig{font-size:30px}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -2108,7 +2126,7 @@ function viewStandings(){
         +'<a class="ldtop" href="'+pHref(L1.n)+'"><span class="rk">1</span>'+wmImg(L1.t,'mwm')+faceImg(L1.id,640,'mface')
           +'<span class="minfo">'+crest(L1.t,34,true)+'<b>'+esc(shortName(L1.n))+'</b><em>'+esc(T1.full)+'</em></span><span class="mbig num">'+L1.v+'</span></a>'
         +LEADERS.slice(1).map(function(p,i){ var t=T[p.t]; return '<a class="ldrow" href="'+pHref(p.n)+'"><span class="rk">'+(i+2)+'</span>'+shot(p.id,p.n,cardTone(t.c),46)
-          +'<span class="t"><b>'+esc(shortName(p.n))+'</b><span>'+esc(t.full)+'</span></span><b class="v num">'+p.v+'</b></a>'; }).join('')+'</div></div>';
+          +'<span class="t"><b>'+esc(shortName(p.n))+'</b><span>'+esc(t.full)+'</span></span><b class="v num">'+p.v+'</b></a>'; }).join('')+'</div><a class="morebtn pressable" href="#leaders">Every stat, rookies and award watch<span>›</span></a></div>';
     }).join('');
   }
   return out;
@@ -3201,7 +3219,7 @@ function exTile(href,act,icon,title,sub,c1,c2){
 function exploreHome(){
   return '<div class="exgrid">'
     +exTile('#news','', SI.lg,'News','Headlines by league','#1D4ED8','#0B2A6F')
-    +exTile('#standings','data-sub-go="leaders"', IC.trophy,'Leaders','Points, rebounds, assists','#C2410C','#7C2D12')
+    +exTile('#leaders','', IC.trophy,'Leaders','Every stat, rookies, award watch','#C2410C','#7C2D12')
     +exTile('#injuries','', '<path d="M12 5v14M5 12h14"/>','Injuries','Who is out and until when','#B91C1C','#7F1D1D')
     +exTile('#recruits','', '<path d="M12 2l3 6 6.5.9-4.7 4.6 1.1 6.5L12 17l-5.9 3 1.1-6.5L2.5 8.9 9 8z"/>','Top recruits','High school, boys and girls','#7B2CBF','#3A0CA3')
     +'</div>';
@@ -3226,6 +3244,103 @@ function viewNews(){
   return '<div class="stop gut"><a class="disc" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><b>News</b><span></span></div>'
     +'<div class="ltabs gut nltabs">'+ENABLED.map(function(x){ return '<button data-newsl="'+x+'" aria-pressed="'+(x===L)+'">'+esc(full[x])+'</button>'; }).join('')+'</div>'
     +'<div class="gut" id="newsb" style="margin-top:12px"><div class="wcard wload"><span class="wk">Loading headlines</span><i></i><i></i><i></i></div></div>';
+}
+
+/* ============================================================
+   LEADERS: every stat, top 25, every league you follow.
+   NBA: this season, plus Rookies and Award watch.
+   WNBA: the season just played. College: last season, only players
+   still on a roster this season. Data: ESPN, refreshed every 3 hours.
+   ============================================================ */
+var LD={data:null, L:null, view:'all', cat:'pts'};
+var LCATS=[['pts','Points','PPG'],['reb','Rebounds','RPG'],['ast','Assists','APG'],['stl','Steals','SPG'],['blk','Blocks','BPG'],['tpm','3-pointers made','3PM'],
+  ['fg','Field goal %','FG%'],['tp','3-point %','3P%'],['ft','Free throw %','FT%'],['min','Minutes','MPG'],['dd','Double-doubles','DD'],['td','Triple-doubles','TD'],['to','Turnovers','TOV']];
+function ldLoad(){ if(LD.data) return Promise.resolve(LD.data);
+  return fetch('../data/leaders.json',{cache:'no-cache'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(d){ return (LD.data=d); }); }
+function ldTeamKey(L, ab){ if(!ab) return null; var k=String(ab).toLowerCase(); if(L==='ncaaw' && T[k+'w']) k=k+'w'; return T[k]&&leagueOf(k)===L?k:null; }
+function gmsc(s){ return (s.pts||0)+0.4*(s.fgm||0)-0.7*(s.fga||0)-0.4*((s.fta||0)-(s.ftm||0))+0.5*(s.reb||0)+0.7*(s.ast||0)+(s.stl||0)+0.7*(s.blk||0)-0.4*(s.pf||0)-(s.to||0); }
+function ldQualified(L, list, cat, rookies){
+  var maxgp=Math.max.apply(null,list.map(function(p){return p.s.gp||0;}).concat([1]));
+  var minGp=L==='ncaam'||L==='ncaaw'?Math.max(1,Math.round(maxgp*0.5)):Math.max(1,Math.round(maxgp*(rookies?0.4:0.6)));
+  return list.filter(function(p){ var s=p.s; if((s.gp||0)<minGp) return false;
+    if(cat==='fg') return (s.fga||0)>=(rookies?3:5);
+    if(cat==='tp') return (s.tpa||0)>=(rookies?1.5:2.5);
+    if(cat==='ft') return (s.fta||0)>=(rookies?1:2);
+    return true; });
+}
+function ldVal(cat,v){ if(v==null) return '-'; if(cat==='fg'||cat==='tp'||cat==='ft') return (+v).toFixed(1); if(cat==='dd'||cat==='td') return String(Math.round(v)); return (+v).toFixed(1); }
+function ldRows(L, list, cat, valFn, sub){
+  if(!list.length) return '<div class="empty"><b>Nothing to rank yet</b><p>Leaders fill in as games are played.</p></div>';
+  var top=list[0], tk=ldTeamKey(L,top.team), tc=tk?cardTone(T[tk].c):'#2a3140';
+  LD.rows=list;
+  return '<div class="ldblock" style="--pc:'+tc+'"><div class="ldhd"><b>'+esc(sub[0])+'</b><span>'+esc(sub[1])+'</span></div>'
+    +'<button class="ldtop pressable" data-ldp="0"><span class="rk">1</span>'+(tk?wmImg(tk,'mwm'):'')+(top.img?'<img class="mface" src="'+esc(top.img)+'" alt="" onerror="this.remove()">':'')
+      +'<span class="minfo">'+(tk?crest(tk,34,true):'<span class="ldab">'+esc(top.team||'')+'</span>')+'<b>'+esc(top.sn||top.n)+'</b><em>'+esc(top.teamName||top.team||'')+(top.rookie?' · Rookie':'')+'</em></span><span class="mbig num">'+valFn(top)+'</span></button>'
+    +list.slice(1,25).map(function(p,i){ var k=ldTeamKey(L,p.team);
+      return '<button class="ldrow pressable" data-ldp="'+(i+1)+'"><span class="rk">'+(i+2)+'</span>'
+        +(p.img?'<span class="hs ldhs" style="--tc:'+(k?cardTone(T[k].c):'#2a3140')+';width:46px;height:46px"><img src="'+esc(p.img)+'" alt="" loading="lazy" onerror="this.remove()"></span>':'<span class="rmono">'+esc(initials(p.n))+'</span>')
+        +'<span class="t"><b>'+esc(p.sn||p.n)+'</b><span>'+(k?crest(k,14,true):'')+esc(p.teamName||p.team||'')+(p.from?' · from '+esc(p.from):'')+(p.rookie&&LD.view!=='rook'?' · Rookie':'')+'</span></span><b class="v num">'+valFn(p)+'</b></button>'; }).join('')
+    +'</div>';
+}
+function viewLeaders(){
+  return '<div class="stop gut"><a class="disc" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><b>Leaders</b><span></span></div><div id="ldb"><div class="gut"><div class="wcard wload"><span class="wk">Loading leaders</span><i></i><i></i><i></i></div></div></div>';
+}
+function ldRender(){
+  var b=document.getElementById('ldb'); if(!b) return;
+  ldLoad().then(function(D){
+    var Ls=ENABLED.filter(function(L){ return D.leagues[L]; }); if(!Ls.length){ b.innerHTML='<div class="gut empty"><b>No leaders yet</b></div>'; return; }
+    if(!LD.L || Ls.indexOf(LD.L)<0) LD.L=Ls[0];
+    var L=LD.L, G=D.leagues[L], isNBA=L==='nba';
+    if(!isNBA && LD.view!=='all') LD.view='all';
+    var note = G.lastSeason ? G.label+' season. Only players on a roster this season; '+(G.dropped||0)+' who left are not shown. Switches to the new season once games start.'
+      : (G.final?G.label+' season, final.':G.label+' season so far.');
+    var html='<div class="ltabs gut nltabs">'+Ls.map(function(x){ return '<button data-ldl="'+x+'" aria-pressed="'+(x===L)+'">'+esc(LNAME[x])+'</button>'; }).join('')+'</div>'
+      +'<div class="gut">'+(isNBA?'<div class="seg2" style="margin-top:12px">'+[['all','Leaders'],['rook','Rookies'],['awards','Award watch']].map(function(x){ return '<button data-ldv="'+x[0]+'" aria-pressed="'+(LD.view===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div>':'')
+      +'<p class="legend" style="margin-top:'+(isNBA?'0':'12px')+'">'+esc(note)+'</p></div>';
+    if(LD.view==='awards'){ html+=ldAwards(G); }
+    else {
+      var pool=LD.view==='rook'?G.players.filter(function(p){return p.rookie;}):G.players;
+      html+='<div class="ychips ldchips gut">'+LCATS.map(function(c){ return '<button data-ldc="'+c[0]+'" aria-pressed="'+(LD.cat===c[0])+'">'+c[2]+'</button>'; }).join('')+'</div>';
+      var cat=LD.cat, cdef=LCATS.filter(function(c){return c[0]===cat;})[0];
+      var q=ldQualified(L,pool,cat,LD.view==='rook').filter(function(p){ return p.s[cat]!=null; });
+      q.sort(function(a,b){ return (b.s[cat]||0)-(a.s[cat]||0); });
+      html+='<div class="gut">'+ldRows(L,q,cat,function(p){ return ldVal(cat,p.s[cat]); },[(LD.view==='rook'?'Rookies · ':'')+cdef[1],cdef[2]])
+        +(LD.view==='rook'?'<p class="xnote">Rookies are the '+(G.year-1)+' draft class ('+(G.rookieCount||0)+' picks). Undrafted rookies aren\'t tagged yet.</p>':'')+'</div>';
+    }
+    html+='<p class="gut xnote">Stats from ESPN, updated '+esc(ago(D.updated))+'. Top 25 among qualified players.</p><div style="height:120px"></div>';
+    b.innerHTML=html;
+  }).catch(function(){ b.innerHTML='<div class="gut empty"><b>Leaders aren\'t loaded yet</b><p>They refresh every few hours.</p></div>'; });
+}
+/* Award watch: a stat index, not a poll. Voters decide the real awards. */
+function ldAwards(G){
+  var P=G.players, win=G.win||{}, maxgp=Math.max.apply(null,P.map(function(p){return p.s.gp||0;}).concat([1]));
+  var Q=P.filter(function(p){ return (p.s.gp||0)>=Math.max(1,Math.round(maxgp*0.6)) && (p.s.min||0)>=20; });
+  var w=function(p){ var v=win[p.team]; return v==null?0.5:v; };
+  var races=[
+    ['mvp','Most Valuable Player','Production weighted by team record',Q.map(function(p){ return {p:p,v:gmsc(p.s)*(0.55+0.9*w(p))}; }),function(x){ return x.p.s.pts.toFixed(1)+' / '+x.p.s.reb.toFixed(1)+' / '+x.p.s.ast.toFixed(1); }],
+    ['roy','Rookie of the Year','Rookie production',P.filter(function(p){ return p.rookie && (p.s.gp||0)>=Math.max(1,Math.round(maxgp*0.4)); }).map(function(p){ return {p:p,v:gmsc(p.s)}; }),function(x){ return x.p.s.pts.toFixed(1)+' / '+x.p.s.reb.toFixed(1)+' / '+x.p.s.ast.toFixed(1); }],
+    ['dpoy','Defensive Player of the Year','Steals, blocks and boards, weighted by team record',Q.filter(function(p){return (p.s.min||0)>=24;}).map(function(p){ return {p:p,v:(2*(p.s.stl||0)+2*(p.s.blk||0)+0.3*(p.s.reb||0))*(0.7+0.6*w(p))}; }),function(x){ return x.p.s.stl.toFixed(1)+' STL · '+x.p.s.blk.toFixed(1)+' BLK'; }],
+    ['mip','Most Improved Player','Biggest jump in points per game from last season',Q.filter(function(p){ return p.prev && (p.prev.gp||0)>=20; }).map(function(p){ return {p:p,v:(p.s.pts||0)-(p.prev.pts||0)}; }),function(x){ return '+'+x.v.toFixed(1)+' PPG ('+x.p.prev.pts.toFixed(1)+' to '+x.p.s.pts.toFixed(1)+')'; }]
+  ];
+  LD.awards={};
+  return '<div class="gut">'+races.map(function(r){ var list=r[3].sort(function(a,b){return b.v-a.v;}).slice(0,10); LD.awards[r[0]]=list.map(function(x){return x.p;});
+    if(!list.length) return '';
+    return '<div class="awblock"><div class="awhd"><b>'+esc(r[1])+'</b><span>'+esc(r[2])+'</span></div>'+list.map(function(x,i){ var p=x.p, k=ldTeamKey('nba',p.team);
+      return '<button class="ldrow pressable" data-aw="'+r[0]+':'+i+'"><span class="rk">'+(i+1)+'</span>'
+        +(p.img?'<span class="hs ldhs" style="--tc:'+(k?cardTone(T[k].c):'#2a3140')+';width:42px;height:42px"><img src="'+esc(p.img)+'" alt="" loading="lazy" onerror="this.remove()"></span>':'<span class="rmono">'+esc(initials(p.n))+'</span>')
+        +'<span class="t"><b>'+esc(p.sn||p.n)+'</b><span>'+(k?crest(k,14,true):'')+esc(p.teamName||p.team)+'</span></span><span class="awv">'+esc(r[4](x))+'</span></button>'; }).join('')+'</div>'; }).join('')
+    +'<p class="xnote">Award watch ranks players with a simple stat index from ESPN numbers and team records. It is not a poll or a prediction; media voters decide the awards. Sixth Man and Clutch Player need starts and late-game data RIVL doesn\'t have yet.</p></div>';
+}
+function ldSheet(p){
+  if(!p) return; var L=LD.L, k=ldTeamKey(L,p.team), s=p.s, pp=personOf(p.n);
+  var rows=[['Games',s.gp],['Minutes',s.min],['Points',s.pts],['Rebounds',s.reb],['Assists',s.ast],['Steals',s.stl],['Blocks',s.blk],['Turnovers',s.to],['FG',(s.fgm!=null?s.fgm.toFixed(1)+'-'+s.fga.toFixed(1):'-')+' · '+ldVal('fg',s.fg)+'%'],['3PT',(s.tpm!=null?s.tpm.toFixed(1)+'-'+s.tpa.toFixed(1):'-')+' · '+ldVal('tp',s.tp)+'%'],['FT',(s.ftm!=null?s.ftm.toFixed(1)+'-'+s.fta.toFixed(1):'-')+' · '+ldVal('ft',s.ft)+'%'],['Double-doubles',s.dd],['Triple-doubles',s.td]];
+  openSheet('<div class="grab"></div><div class="ijs"><div class="ijwho" style="cursor:default">'
+      +(p.img?'<span class="hs" style="--tc:'+(k?cardTone(T[k].c):'#2a3140')+';width:52px;height:52px"><img src="'+esc(p.img)+'" alt="" onerror="this.remove()"></span>':'<span class="rmono big">'+esc(initials(p.n))+'</span>')
+      +'<span><b>'+esc(p.n)+'</b><em>'+(k?crest(k,14,true):'')+esc([p.teamName||p.team,p.pos,p.rookie?'Rookie'+(p.pick?', pick '+p.pick:''):'',p.cls].filter(Boolean).join(' · '))+'</em></span></div>'
+    +(p.from?'<p class="ijp" style="margin:0 0 12px">Transferred from '+esc(p.from)+'. Stats below are from last season.</p>':'')
+    +'<div class="gp">'+rows.map(function(r){ return '<div class="prow"><span>'+r[0]+'</span><b class="num">'+(r[1]==null?'-':(typeof r[1]==='number'?(r[0]==='Games'||/doubles/.test(r[0])?Math.round(r[1]):r[1].toFixed(1)):esc(r[1])))+'</b></div>'; }).join('')+'</div>'
+    +(pp?'<a class="ijmore pressable" href="#player/'+slug(pp)+'" data-act="sheet-close">'+esc(pp.n.split(' ')[0])+'\'s profile<span>Bio, family, career</span></a>':'')
+    +'<p class="xnote">'+esc(LD.data.leagues[L].label)+' · Stats from ESPN.</p></div>','bottom');
 }
 
 /* ---------- in-app sheets: stories, highlights, the calendar ---------- */
@@ -3577,6 +3692,7 @@ function render(){
   else if(r==='settings'){ main.innerHTML=viewSettings(parts[1]); renderTabs(''); }
   else if(r==='recruits'){ main.innerHTML=viewRecruits(); renderTabs('explore'); setTimeout(recLoad,10); }
   else if(r==='news'){ main.innerHTML=viewNews(); renderTabs('explore'); }
+  else if(r==='leaders'){ main.innerHTML=viewLeaders(); renderTabs('explore'); setTimeout(ldRender,10); }
   else if(r==='injuries'){ main.innerHTML=viewInjuries(); renderTabs('explore'); }
   else if(r==='scores'){ main.innerHTML=viewScores(); renderTabs('scores'); }
   else if(r==='standings'){ main.innerHTML=viewStandings(); renderTabs('standings'); }
@@ -3662,6 +3778,12 @@ document.addEventListener('click',function(e){
   if(bsc){ e.preventDefault(); var all=[].slice.call(bsc.parentNode.querySelectorAll(':scope>.sc')); pulse(all.indexOf(bsc)===0?'away':'home'); return; }
   if(location.hash.indexOf('#settings')===0 && settingsClick(e)) return;
   var phb=e.target.closest('[data-ph]'); if(phb){ e.preventDefault(); openPH(PHA[+phb.getAttribute('data-ph')]); return; }
+  var lq;
+  if((lq=e.target.closest('[data-ldl]'))){ LD.L=lq.getAttribute('data-ldl'); ldRender(); return; }
+  if((lq=e.target.closest('[data-ldv]'))){ LD.view=lq.getAttribute('data-ldv'); ldRender(); return; }
+  if((lq=e.target.closest('[data-ldc]'))){ LD.cat=lq.getAttribute('data-ldc'); var sy=window.scrollY, sx=(document.querySelector('.ldchips')||{}).scrollLeft; ldRender(); setTimeout(function(){ var c=document.querySelector('.ldchips'); if(c) c.scrollLeft=sx; },0); return; }
+  if((lq=e.target.closest('[data-ldp]')) && !e.target.closest('[data-team]')){ ldSheet(LD.rows[+lq.getAttribute('data-ldp')]); return; }
+  if((lq=e.target.closest('[data-aw]')) && !e.target.closest('[data-team]')){ var aw=lq.getAttribute('data-aw').split(':'); ldSheet(LD.awards[aw[0]][+aw[1]]); return; }
   var nl=e.target.closest('[data-newsl]'); if(nl){ NEWSL=nl.getAttribute('data-newsl'); keepScroll(); return; }
   var rg=e.target.closest('[data-recg]'); if(rg){ REC.g=rg.getAttribute('data-recg'); keepScroll(); setTimeout(recLoad,10); return; }
   var ry=e.target.closest('[data-recy]'); if(ry){ REC.y=+ry.getAttribute('data-recy'); keepScroll(); setTimeout(recLoad,10); return; }
