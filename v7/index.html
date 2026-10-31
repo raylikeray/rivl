@@ -242,11 +242,11 @@ html[data-theme=light] .tag.q{background:#FDEFC8;color:#7A5200}
    over it, and the content riding up as a black sheet. */
 .ghero{position:sticky;top:0;z-index:0;overflow:hidden;isolation:isolate;
   --mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
-.ghero .w{position:absolute;inset:-2px;pointer-events:none;z-index:-2;
-  background:linear-gradient(101deg,var(--aw) 0%,var(--mid) 50%,var(--ha) 100%);overflow:hidden}
+.ghero .w{position:absolute;inset:-2px;pointer-events:none;z-index:-2;overflow:hidden;
+  background:linear-gradient(101deg,color-mix(in srgb,var(--aw) 62%,#000) 0%,color-mix(in srgb,var(--mid) 38%,#000) 50%,color-mix(in srgb,var(--ha) 62%,#000) 100%)}
 /* the colour is never still: big soft lobes of each team colour wandering
    across the field on four different clocks. Transform only. */
-.w>i{position:absolute;border-radius:50%;filter:blur(40px);will-change:transform}
+.w>i{position:absolute;border-radius:50%;filter:blur(46px);will-change:transform}
 .w>i:nth-child(1){background:var(--aw);width:96%;height:260%;left:-34%;top:-70%;opacity:.95;
   animation:fa 9s ease-in-out infinite alternate}
 .w>i:nth-child(2){background:var(--ha);width:96%;height:260%;right:-34%;top:-60%;opacity:.95;
@@ -259,12 +259,15 @@ html[data-theme=light] .tag.q{background:#FDEFC8;color:#7A5200}
 @keyframes fb{from{transform:translate3d(10%,8%,0) scale(1.35)}to{transform:translate3d(-30%,-8%,0) scale(.95)}}
 @keyframes fc{from{transform:translate3d(-22%,4%,0) scale(.85)}to{transform:translate3d(46%,-10%,0) scale(1.45)}}
 @keyframes fd{from{transform:translate3d(26%,-8%,0) scale(1.4)}to{transform:translate3d(-34%,10%,0) scale(.9)}}
-@media(prefers-reduced-motion:reduce){.w>i{animation:none}}
+/* phones with animations turned down still get a slow drift, never a still picture */
+@media(prefers-reduced-motion:reduce){.w>i{animation-duration:26s}}
 .ghero .dots{position:absolute;inset:0;pointer-events:none;z-index:-1;
   background-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,.26) 1.1px,transparent 1.2px);
   background-size:5px 5px;mix-blend-mode:multiply;opacity:.3}
 .ghero .veil{position:absolute;inset:0;pointer-events:none;z-index:-1;
-  background:linear-gradient(rgba(0,0,0,.26),rgba(0,0,0,.05) 46%,rgba(0,0,0,.18))}
+  background:linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,0) 34%,rgba(0,0,0,0) 62%,rgba(0,0,0,.34))}
+/* Apple Sports: rich moving colour, no halftone */
+.ghero .dots,.minibar .dots,.gtop .dots,.gtw .dots{display:none}
 .ghero.one .w{background:linear-gradient(101deg,var(--win) 0%,var(--win) 34%,var(--winHi) 72%,var(--win) 100%)}
 .ghero .in{position:relative;padding-top:calc(8px + env(safe-area-inset-top,0px));padding-bottom:30px}
 .ghero .in,.ghero .in *{text-shadow:0 1px 10px rgba(0,0,0,.3)}
@@ -648,7 +651,7 @@ html[data-theme=light] .bx .bnd td,html[data-theme=light] .bx .bnd th{background
    phone paints behind the clock, so there is no seam (Android). On an
    iPhone the page itself runs under the clock, so the band is not needed. */
 .ghero .sband{position:absolute;inset:0 0 auto;height:72px;z-index:-1;pointer-events:none;
-  background:linear-gradient(var(--sbc) 0, var(--sbc) 10px, transparent 100%)}
+  background:linear-gradient(var(--sbc) 0, color-mix(in srgb,var(--sbc) 55%,transparent) 26px, transparent 100%)}
 html.notch .ghero .sband{display:none}
 
 /* ---- one chip style everywhere ---- */
@@ -1006,10 +1009,9 @@ button.xpage{width:100%;text-align:left}
 .gsheet{border-radius:0;background:transparent;box-shadow:none;margin-top:-22px;padding-top:0}
 .gsheet>#gbody{background:var(--L0);min-height:80vh;display:flow-root;padding-top:8px}
 .gtw{position:sticky;top:calc(52px + env(safe-area-inset-top,0px));z-index:10;--mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
-.gtw .cn{position:absolute;inset:0 0 50%;opacity:0;overflow:hidden;transition:opacity .15s}
-.gtw.stuck .cn{opacity:1}
+.gtw .cn{display:none}
 .gtwin{position:relative;background:var(--L0);border-radius:22px 22px 0 0;padding-top:2px;box-shadow:0 -16px 34px rgba(0,0,0,.5)}
-.gtw.stuck .gtwin{box-shadow:none}
+
 .gtwin .gtabs{position:static;background:transparent;display:grid;grid-template-columns:repeat(4,1fr);gap:0}
 .gtwin .gtabs button{justify-self:center}
 .gtwin .gtabs button[aria-pressed=true]::after{left:-6px;right:-6px}
@@ -2640,7 +2642,7 @@ function afterPaint(){
   if(hv){
     var cs=getComputedStyle(hv);
     /* the exact colour at the top-centre of the hero, under the top veil */
-    heroTint=hexMix(cs.getPropertyValue('--aw').trim(), cs.getPropertyValue('--ha').trim(), .26);
+    heroTint=hexMix(cs.getPropertyValue('--aw').trim(), cs.getPropertyValue('--ha').trim(), .64);
     hv.style.setProperty('--sbc',heroTint);
     if(!hv.querySelector('.sband')){ var sb=document.createElement('span'); sb.className='sband'; hv.insertBefore(sb,hv.firstChild); }
   } else heroTint=null;
@@ -2676,9 +2678,10 @@ function bindMini(){
       /* games strip leaves early; compact score arrives late */
       var so=Math.max(0,1-p/0.35); st.style.opacity=String(so); st.style.pointerEvents=so<.2?'none':'';
       var c=Math.min(1,Math.max(0,(p-0.45)/0.4)); cs.style.opacity=String(c); cs.style.transform='translateY('+(8*(1-c))+'px)'; cs.style.pointerEvents=c>.5?'':'none';
-      var stuck=tw.getBoundingClientRect().top<=bar+0.5;
-      bg.style.opacity = stuck ? '1' : String(Math.max(0,(p-0.7)/0.3));
-      tw.classList.toggle('stuck', stuck);
+      /* nothing scrolls above the tabs: the body is trimmed at the tabs' bottom edge,
+         so the bar and the rounded corners only ever show the moving colour */
+      var gb=document.getElementById('gbody'), cut=tw.getBoundingClientRect().bottom-gb.getBoundingClientRect().top;
+      gb.style.clipPath = cut>0 ? 'inset('+Math.ceil(cut)+'px 0 0 0)' : '';
     }); };
     window.addEventListener('scroll',miniHandler,{passive:true}); miniHandler(); return;
   }
