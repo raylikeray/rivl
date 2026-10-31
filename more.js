@@ -9,7 +9,9 @@
   /* ---------- service worker: instant opens, last good data when the feed is slow ---------- */
   if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').then(reg => {
+      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
+        /* look for a new version whenever the app is opened or comes back to the front */
+        reg.update().catch(() => { }); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => { }); });
         reg.addEventListener('updatefound', () => { const w = reg.installing; if (!w) return; w.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) showUpdate(); }); });
       }).catch(() => { });
       const had = !!navigator.serviceWorker.controller;   // first install takes control without a reload; a later update reloads once
