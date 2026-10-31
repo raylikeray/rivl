@@ -385,6 +385,7 @@
   function gxLead(g) { const a = +g.away.score, h = +g.home.score; if (!isFinite(a) || !isFinite(h) || g.state === 'pre') return ''; const sh = Math.max(.3, Math.min(.7, .5 + (a - h) / 40)); return `;--split:${Math.round(sh * 100)}%;--sa:${(.82 + sh * .5).toFixed(2)};--sh:${(.82 + (1 - sh) * .5).toFixed(2)}`; }
   function gxClock(g) { return g.state === 'in' ? `<span class="gxst on"><i></i>${esc(g.detail || 'Live')}</span>` : g.state === 'post' ? `<span class="gxst">${esc(finalWord(g))}</span>` : `<span class="gxst">${esc(tipOf(g))}</span>`; }
   /* the crest on its own, no disc: ESPN's dark-mode art first (it reads on colour), the plain art if a team has none */
+  const gxCr = (src, cls = '') => `<span class="gxcr${cls ? ' ' + cls : ''}">${src ? V._.imgSized(src, 96, 96) : ''}</span>`;
   function gxLogo(src) {
     if (!src) return '<span class="gxlg"></span>';
     const dk = /\/500\//.test(src) ? src.replace('/500/', '/500-dark/') : src;
@@ -619,7 +620,7 @@
       // the line score, quarter by quarter
       const lsOf = side => { const c = (hc.competitors || []).find(x => x.team && String(x.team.id) === side.id); return (c && c.linescores || []).map(l => l.displayValue ?? l.value ?? ''); };
       const lsA = lsOf(g.away), lsH = lsOf(g.home); const nq = Math.max(lsA.length, lsH.length);
-      const lineScore = g.state !== 'pre' && nq ? `<div class="tw"><table class="tbl ls"><thead><tr><th></th>${Array.from({ length: nq }, (_, i) => `<th>${i < (L.periods || 4) ? i + 1 : `OT${i - (L.periods || 4) + 1 > 1 ? i - (L.periods || 4) + 1 : ''}`}</th>`).join('')}<th>T</th></tr></thead><tbody>${[[g.away, lsA], [g.home, lsH]].map(([t, ls]) => `<tr><td class="l">${logo(t.logo, 's', V._.teamColor(t, L))} ${esc(t.abbr)}</td>${Array.from({ length: nq }, (_, i) => `<td>${esc(String(ls[i] ?? ''))}</td>`).join('')}<td><b>${t.score ?? ''}</b></td></tr>`).join('')}</tbody></table></div>` : '';
+      const lineScore = g.state !== 'pre' && nq ? `<div class="gxplate"><table class="gxls"><thead><tr><th></th>${Array.from({ length: nq }, (_, i) => `<th>${i < (L.periods || 4) ? i + 1 : `OT${i - (L.periods || 4) + 1 > 1 ? i - (L.periods || 4) + 1 : ''}`}</th>`).join('')}<th>T</th></tr></thead><tbody>${[[g.away, lsA], [g.home, lsH]].map(([t, ls]) => `<tr><td><a class="tm" href="${href.team(lk, t.id)}">${gxCr(t.logo)}${esc(t.abbr)}</a></td>${Array.from({ length: nq }, (_, i) => `<td>${esc(String(ls[i] ?? ''))}</td>`).join('')}<td>${t.score ?? ''}</td></tr>`).join('')}</tbody></table></div>` : '';
       // the lead tracker: ESPN's win probability for the home side through the game
       const wpAll = (d.winprobability || []).filter(x => x.homeWinPercentage != null);
       let tracker = '';
@@ -632,7 +633,7 @@
       }
       // highlights ESPN has cut for this game, in the same sheet the stories' clips use
       const vids = (d.videos || []).filter(v => v && v.links); vids.forEach(v => { if (v.id != null) S.videos[String(v.id)] = v; });
-      const clips = vids.length ? sec('Highlights', vids.length > 1 ? `${vids.length} clips` : '') + `<div class="media">${vids.map(v => `<button class="clip" data-act="play" data-vid="${esc(String(v.id))}"><div class="th">${v.thumbnail ? `<img src="${esc(v.thumbnail)}" alt="" loading="lazy">` : ''}<i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12-7.5z"/></svg></i>${v.duration ? `<em>${Math.floor(v.duration / 60)}:${String(v.duration % 60).padStart(2, '0')}</em>` : ''}</div><b>${esc(v.headline || v.title || '')}</b></button>`).join('')}</div>` : '';
+      const clips = vids.length ? sec('Highlights', vids.length > 1 ? `${vids.length} clips` : '') + `<div class="gxclips">${vids.map((v, k) => `<button class="gxclip" data-act="play" data-vid="${esc(String(v.id))}" style="--c1:${esc(V._.teamColor(k % 2 ? g.home : g.away, L))}"><span class="im">${v.thumbnail ? `<img src="${esc(v.thumbnail)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<span class="pl"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg></span>${v.duration ? `<span class="du">${Math.floor(v.duration / 60)}:${String(v.duration % 60).padStart(2, '0')}</span>` : ''}</span><p>${esc(v.headline || v.title || '')}</p></button>`).join('')}</div>` : '';
       // the announced fives, once ESPN flags them (usually in the last half hour before tip); after tip the box score has them
       const rosterOf = side => { const r = (d.rosters || []).find(x => x.team && String(x.team.id) === side.id); return r && r.roster || []; };
       const fiveOf = side => rosterOf(side).filter(x => x.starter && x.athlete).slice(0, 5);
@@ -688,14 +689,19 @@
         if (g.state !== 'pre') {
           const cats = [['PTS', 'Points'], ['REB', 'Rebounds'], ['AST', 'Assists']].map(([k, n]) => [leadOf(g.away, k), leadOf(g.home, k), n]).filter(([x, y]) => x && y);
           const who = (x, t, right, lo) => { const c = V._.teamColor(t, L); const nm = x.a.shortName || x.a.displayName || ''; const face = headshot(hsUrl(x.a), c, 44, x.a.displayName); return `<a class="p${right ? ' r' : ''}" href="${href.player(lk, x.a.id)}">${right ? '' : face}<span class="t"><b class="num${lo ? ' lo' : ''}">${x.v}</b><em>${esc(nm)}</em></span>${right ? face : ''}</a>`; };
-          if (cats.length) body += sec('Game leaders') + `<div class="glplate"><div class="glhd"><span class="s">${logo(g.away.logo, 's')}<b>${esc(g.away.abbr)}</b></span><span></span><span class="s r"><b>${esc(g.home.abbr)}</b>${logo(g.home.logo, 's')}</span></div>`
+          if (cats.length) body += sec('Game leaders') + `<div class="glplate"><div class="glhd"><span class="s">${gxCr(g.away.logo)}<b>${esc(g.away.abbr)}</b></span><span></span><span class="s r"><b>${esc(g.home.abbr)}</b>${gxCr(g.home.logo)}</span></div>`
             + cats.map(([x, y, n]) => { const aw = x.v > y.v, hw = y.v > x.v; return `<div class="glrow">${who(x, g.away, false, hw)}<span class="lab">${n}</span>${who(y, g.home, true, aw)}</div>`; }).join('') + '</div>';
         } else if (d.leaders && d.leaders.length) {
           const items = []; d.leaders.forEach(t => (t.leaders || []).slice(0, 3).forEach(cat => { const Ld = cat.leaders && cat.leaders[0]; if (Ld) items.push({ side: sideOf(t.team), cat, Ld }); }));
           const rowsOf = side => items.filter(x => x.side === side).slice(0, 3).map(x => `<a class="row" href="${href.player(lk, x.Ld.athlete.id)}">${headshot(hsUrl(x.Ld.athlete), V._.teamColor(side, L), 40, x.Ld.athlete.displayName)}<span class="t"><b>${esc(x.Ld.athlete.displayName || '')}</b><span>${esc(x.cat.shortDisplayName || x.cat.displayName || '')}</span></span><b class="num">${esc((x.Ld.displayValue || '').split(' ')[0])}</b></a>`).join('');
           const both = rowsOf(g.away) + rowsOf(g.home); if (both) body += sec('Season leaders') + `<div class="rows">${both}</div>`;
         }
-        if (ta && th && g.state !== 'pre') { const rows = cmpRows(WANT.slice(0, 6)); if (rows) body += sec('Team stats', '', `<button data-act="gtab" data-tab="stats">All</button>`) + `<div class="cmp">${cmpHead}${rows}</div>`; }
+        if (ta && th && g.state !== 'pre') {
+          const [ca, ch] = V._.pairColors(L, g.away, g.home);
+          const rows = WANT.filter(n => n !== 'largestLead').map(n => { const a = get(ta, n), h = get(th, n); if (!a || !h) return ''; const av = parseFloat(String(a.displayValue).split('-')[0]) || 0, hv = parseFloat(String(h.displayValue).split('-')[0]) || 0; const tot = (av + hv) || 1; const lowGood = !!LOW[n]; const aw = av === hv || (lowGood ? av < hv : av > hv), hw = av === hv || (lowGood ? hv < av : hv > av); const pctS = /Pct$/.test(n) ? '%' : ''; const show = x => esc(String(x.displayValue)) + (pctS && !String(x.displayValue).includes('%') ? '%' : '');
+            return `<div class="gxcmp"><div class="tp"><b class="${aw ? 'w' : 'l'}">${show(a)}</b><span>${esc(NICE[n] === 'Threes' ? '3-pointers' : (NICE[n] || a.label || n))}</span><b class="${hw ? 'w' : 'l'}">${show(h)}</b></div><div class="tk"><div><i style="width:${(av / tot * 100).toFixed(1)}%;background:${esc(V._.lift(ca))}"></i></div><div><i style="width:${(hv / tot * 100).toFixed(1)}%;background:${esc(V._.lift(ch))}"></i></div></div></div>`; }).filter(Boolean).slice(0, 8).join('');
+          if (rows) body += sec('Team stats') + `<div class="gxplate">${rows}</div>`;
+        }
         if (starters) body += starters;
         if (floor) body += floor;
         body += tracker;

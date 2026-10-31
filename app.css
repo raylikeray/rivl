@@ -2515,3 +2515,45 @@ html.gxon body::before{display:none}
 .glrow .t b.lo{color:var(--ink-3);font-weight:600}
 .glrow .t em{display:block;font-style:normal;font-size:11.5px;color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .glrow .lab{font-size:12.5px;color:var(--ink-3);text-align:center;white-space:nowrap}
+
+/* v7's plates on the game page: a soft gray card with a faint light at the top, crests in small gray discs */
+.gxpage .sec{padding:34px var(--gut-r) 14px var(--gut)}
+.gxpage .sec h2{flex:1;display:flex;align-items:baseline;justify-content:space-between;font-size:21px;font-weight:700;letter-spacing:-.02em}
+.gxpage .sec h2 small{font-size:12px;font-weight:600;color:var(--ink-3)}
+.gxplate,.glplate{margin:0 var(--gut-r) 0 var(--gut);border-radius:18px;border:1px solid var(--line);box-shadow:none;
+  background:linear-gradient(rgba(255,255,255,.055),transparent 56px),var(--surf)}
+.gxplate{padding:16px}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .gxplate,:root:not([data-theme="dark"]) .glplate{background:linear-gradient(rgba(255,255,255,.9),transparent 56px),var(--surf)} }
+.gxcr{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:999px;background:var(--surf-3);overflow:hidden}
+.gxcr img{width:76%;height:76%;object-fit:contain;filter:drop-shadow(0 1px 1.2px rgba(0,0,0,.28))}
+.glhd .gxcr{width:22px;height:22px}
+.glhd .s b{font-size:13px;letter-spacing:.04em;color:var(--ink-2)}
+.gxls{width:100%;border-collapse:collapse}
+.gxls th{font-size:10.5px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;padding-bottom:9px;text-align:center}
+.gxls th:first-child{text-align:left}
+.gxls td{font-size:14px;font-variant-numeric:tabular-nums;text-align:center;padding:9px 0;color:var(--ink-2)}
+.gxls td:first-child{text-align:left}
+.gxls td:last-child,.gxls th:last-child{font-weight:800;color:var(--ink)}
+.gxls tbody tr td{border-top:1px solid var(--line)}
+.gxls .tm{display:flex;align-items:center;gap:9px;font-weight:700;color:var(--ink);font-size:14px;text-decoration:none}
+.gxcmp{padding:13px 0}
+.gxcmp+.gxcmp{border-top:1px solid var(--line)}
+.gxcmp .tp{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.gxcmp .tp b{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums}
+.gxcmp .tp b.w{color:var(--ink)}
+.gxcmp .tp b.l{color:var(--ink-3);font-weight:600}
+.gxcmp .tp span{flex:1;text-align:center;font-size:12px;color:var(--ink-3)}
+.gxcmp .tk{display:flex;gap:3px;margin-top:9px;height:7px}
+.gxcmp .tk div{flex:1;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden;display:flex}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .gxcmp .tk div{background:rgba(0,0,0,.08)} }
+.gxcmp .tk div:first-child{justify-content:flex-end}
+.gxcmp .tk i{display:block;height:100%;border-radius:999px}
+.gxclips{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:0 var(--gut-r) 2px var(--gut)}
+.gxclips::-webkit-scrollbar{display:none}
+.gxclip{flex:none;width:210px;display:block;text-align:left;background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer}
+.gxclip .im{display:block;position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:linear-gradient(142deg,var(--c1),#0a0c0e 86%);border:1px solid var(--line)}
+.gxclip .im img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.gxclip .pl{position:absolute;left:9px;bottom:9px;width:30px;height:30px;border-radius:999px;background:rgba(255,255,255,.94);display:grid;place-items:center}
+.gxclip .pl svg{width:11px;height:11px;fill:#07090B}
+.gxclip .du{position:absolute;right:8px;bottom:9px;font-size:10px;font-weight:700;color:#fff;background:rgba(0,0,0,.62);padding:3px 7px;border-radius:7px}
+.gxclip p{margin:9px 0 0;font-size:12.5px;font-weight:600;line-height:1.32;color:var(--ink)}
