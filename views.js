@@ -226,9 +226,18 @@
   /* the hero: on Home it is one link to the game; on the game page each team is a link to its own page */
   function heroCard(L, g, ctx, { page = false } = {}) {
     const f = prefs.get('forecast') && !g.tbd ? safeF(L, g, ctx) : null;
-    const a = teamColor(g.away, L), b = teamColor(g.home, L);
+    let a = teamColor(g.away, L), b = teamColor(g.home, L);
+    /* two teams in near enough the same colour (Knicks and 76ers, both royal blue) would paint one card in one colour: one
+       side takes its second colour instead, whichever swap leaves the two halves furthest apart. A second colour too pale
+       or too dark to carry white type is not used. */
+    if (rgbDist(a, b) < 110) {
+      const ok = c => c && !BAD(c) && lumOf(c) >= .06 && lumOf(c) <= .6;
+      const aa = teamAlt(g.away, L), ba = teamAlt(g.home, L);
+      const opts = [[a, b, rgbDist(a, b)]]; if (ok(ba)) opts.push([a, ba, rgbDist(a, ba)]); if (ok(aa)) opts.push([aa, b, rgbDist(aa, b)]);
+      [a, b] = opts.sort((x, y) => y[2] - x[2])[0];
+    }
     const fav = f ? (f.pHome >= .5 ? g.home : g.away) : null; const p = f ? Math.max(f.pHome, 1 - f.pHome) : 0;
-    const favC = fav ? V_lift(teamColor(fav, L)) : '#fff';   // the bar wears the favourite's own colour — the one its panel above is painted in — lifted so it reads on the dark strip
+    const favC = fav ? V_lift(fav === g.home ? b : a) : '#fff';   // the bar wears the favourite's own colour — the one its panel above is painted in — lifted so it reads on the dark strip
     const tm = t => t.tbd ? `<div class="tm"><span class="logo tbd"></span><b>TBD</b><span>${esc(noteWord(g))}</span></div>` : page ? `<a class="tm" href="${href.team(L.key, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></a>` : `<div class="tm">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><span>${esc(recOf(t))}</span></div>`;
     const inner = `<div class="in">
       <div class="vs">${tm(g.away)}<div class="mid"><span class="st${g.state === 'in' ? ' on' : ''}">${esc(g.state === 'in' ? g.detail : g.state === 'post' ? finalWord(g) : tipOf(g))}</span>${g.off || g.state === 'pre' || g.home.score == null || g.away.score == null ? '' : `<div class="sc">${g.away.score}<i>–</i>${g.home.score}</div>`}<span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>${tm(g.home)}</div>
