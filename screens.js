@@ -432,6 +432,8 @@
     const bar = document.getElementById('gxbar'), hero = document.getElementById('gxhero'); if (!bar || !hero) return;
     let bg = bar.querySelector('.gxbg'); if (!bg) { bg = document.createElement('span'); bg.className = 'gxbg'; bar.insertBefore(bg, bar.firstChild); }
     bg.style.setProperty('--gxh', hero.offsetHeight + 'px');
+    /* the hero grows when fonts and logos arrive; the copy follows it exactly */
+    if (window.ResizeObserver && gxCover.ro !== hero) { if (gxCover.obs) gxCover.obs.disconnect(); gxCover.obs = new ResizeObserver(() => { const b = document.querySelector('#gxbar .gxbg'), h = document.getElementById('gxhero'); if (b && h) b.style.setProperty('--gxh', h.offsetHeight + 'px'); }); gxCover.obs.observe(hero); gxCover.ro = hero; }
     if (!bg.dataset.t) bg.dataset.t = gxT();
     const st = (hero.getAttribute('style') || '') + `;--gxt:${bg.dataset.t}`;
     if (!bg.firstChild) bg.innerHTML = `<span class="gxcov" style="${st}">${LOBES}</span>`;
@@ -445,8 +447,7 @@
     const run = () => { tick = false; const bar = document.getElementById('gxbar'), hero = document.getElementById('gxhero');
       if (!bar || !hero) { document.documentElement.classList.remove('gxon'); window.removeEventListener('scroll', on); gxScroll.on = false; return; }
       document.documentElement.classList.add('gxon');
-      /* the sheet stays rounded; it is cut off at the bar, so nothing slides into the corners */
-      const sh = document.querySelector('#gpage .gxsheet'); if (sh) { const y = bar.offsetHeight - sh.getBoundingClientRect().top; const cp = y > 0 ? `inset(${y.toFixed(1)}px 0 0 0 round 22px 22px 0 0)` : ''; if (sh.style.clipPath !== cp) sh.style.clipPath = cp; }
+      /* nothing here moves the sheet: the bar's colour reaches 22px below it and fills the sheet's two corners (CSS only) */
       const span = Math.max(80, hero.offsetHeight - bar.offsetHeight - 22), p = Math.min(1, Math.max(0, window.scrollY / span));
       const fade = document.getElementById('gxin'), mini = document.getElementById('gxmini'); const f = Math.min(1, p / .6), c = Math.min(1, Math.max(0, (p - .45) / .4));
       if (fade) { fade.style.opacity = (1 - f).toFixed(3); fade.style.transform = `translateY(${(-18 * f).toFixed(1)}px) scale(${(1 - .06 * f).toFixed(3)})`; }
