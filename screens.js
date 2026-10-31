@@ -477,7 +477,7 @@
       c.classList.add('hth');
       const go = () => { th.style.transform = `translateX(${on.offsetLeft}px)`; th.style.width = on.offsetWidth + 'px'; };
       const p = prev[i];
-      if (p && (p[0] !== on.offsetLeft || p[1] !== on.offsetWidth)) { th.style.transition = 'none'; th.style.transform = `translateX(${p[0]}px)`; th.style.width = p[1] + 'px'; void th.offsetWidth; th.style.transition = ''; requestAnimationFrame(go); }
+      if (p && (p[0] !== on.offsetLeft || p[1] !== on.offsetWidth)) { c.classList.add('mv'); th.style.transition = 'none'; th.style.transform = `translateX(${p[0]}px)`; th.style.width = p[1] + 'px'; void th.offsetWidth; th.style.transition = ''; requestAnimationFrame(go); setTimeout(() => c.classList.remove('mv'), 300); }
       else { th.style.transition = 'none'; go(); void th.offsetWidth; th.style.transition = ''; }
     });
   }

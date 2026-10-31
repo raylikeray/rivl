@@ -2542,3 +2542,21 @@ html.gxon body::before{display:none}
 
 /* the tabs' white edge sits a hair inside the bar's coloured corner, so no light can fringe around the curve */
 .gxtabw{border-radius:23.5px 23.5px 0 0!important}
+
+/* the moving colour without blur: soft gradients render the same in the hero and in the bar's copy on every phone */
+.gx .w>i,.gxcov .w>i{filter:none!important;border-radius:0!important}
+.gx .w>i:nth-child(1),.gxcov .w>i:nth-child(1){background:radial-gradient(closest-side,var(--aw),color-mix(in srgb,var(--aw) 70%,transparent) 45%,transparent)!important}
+.gx .w>i:nth-child(2),.gxcov .w>i:nth-child(2){background:radial-gradient(closest-side,var(--ha),color-mix(in srgb,var(--ha) 70%,transparent) 45%,transparent)!important}
+.gx .w>i:nth-child(3),.gxcov .w>i:nth-child(3){background:radial-gradient(closest-side,color-mix(in srgb,var(--aw) 78%,#fff),transparent)!important}
+.gx .w>i:nth-child(4),.gxcov .w>i:nth-child(4){background:radial-gradient(closest-side,color-mix(in srgb,var(--ha) 78%,#fff),transparent)!important}
+.gx .w::before,.gx .w::after,.gxcov .w::before,.gxcov .w::after{filter:none!important}
+/* pickers: while the highlight slides, every label stays quiet; the chosen one lights when it arrives */
+.gxseg.mv button,.gxtsw.mv button{color:var(--ink-3)!important;font-weight:600}
+
+/* gradient blobs drawn larger to carry the same spread the blur used to give */
+.gx .w>i:nth-child(1),.gxcov .w>i:nth-child(1){width:150%!important;height:330%!important;left:-70%!important;top:-115%!important}
+.gx .w>i:nth-child(2),.gxcov .w>i:nth-child(2){width:150%!important;height:330%!important;right:-70%!important;top:-110%!important}
+.gx .w>i:nth-child(3),.gxcov .w>i:nth-child(3){width:70%!important;height:200%!important;left:-10%!important;top:-50%!important}
+.gx .w>i:nth-child(4),.gxcov .w>i:nth-child(4){width:70%!important;height:200%!important;right:-12%!important;top:-55%!important}
+.gx .w::before,.gxcov .w::before{background:repeating-linear-gradient(97deg,transparent 0,rgba(255,255,255,.34) 60px,transparent 120px)!important}
+.gx .w::after,.gxcov .w::after{background:repeating-linear-gradient(83deg,transparent 0,rgba(255,255,255,.26) 75px,transparent 150px)!important}
