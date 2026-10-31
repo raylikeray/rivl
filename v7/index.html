@@ -218,7 +218,7 @@ html[data-theme=light]{--midA:#2A2E34;--midB:#07090B}
 .srow .ax span{display:block;font-size:10.5px;color:var(--t3);margin-top:2px;font-weight:600}
 
 /* injuries */
-.inj{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.inj{color:inherit;display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);width:100%;text-align:left}
 .inj .hs{width:42px;height:42px;font-size:42px}
 .inj .t{flex:1;min-width:0}
 .inj .t b{display:block;font-size:14px;font-weight:700}
@@ -377,6 +377,7 @@ html[data-theme=light] .bxl{background:rgba(0,0,0,.025)}
 .bxr th{min-width:44px}
 .bx td{height:44px;font-size:13.5px;font-variant-numeric:tabular-nums;border-top:1px solid var(--line);white-space:nowrap}
 .bxl td{padding-left:var(--gut);padding-right:6px;font-weight:700;overflow:hidden;text-overflow:ellipsis;max-width:126px}
+.bxl td a{color:inherit}
 .bxl td small{color:var(--t4);font-weight:400;margin-left:4px;font-size:10px}
 .bxr td{text-align:right;padding-right:12px;color:var(--t2)}
 .bx .bnd td,.bx .bnd th{height:30px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;
@@ -909,6 +910,66 @@ html[data-theme=light] .tsw button[aria-pressed=true]{background:#fff}
 .xtile span{display:block;font-size:12px;color:var(--t3);margin-top:5px;line-height:1.35}
 .xtile.soon{opacity:.55}
 
+
+/* shots: one court, one connected quarter control */
+.shleg{display:flex;justify-content:space-between;gap:10px;margin-top:14px}
+.shleg>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.shleg>div.r{align-items:flex-end}
+.shleg b{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.shleg .cr{width:20px;height:20px;background:transparent}.shleg .cr img{width:100%;height:100%}
+.shleg span{display:flex;gap:12px}
+.shleg .kk{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--t3);font-weight:500}
+.shleg .kk i{width:7px;height:7px;border-radius:999px;display:block}
+.shleg .kk em{font-style:normal;font-size:11px;line-height:1}
+.qseg{display:flex;margin-top:16px;padding:3px;border-radius:999px;background:var(--L2);border:1px solid var(--line)}
+.qseg button{flex:1;padding:9px 0;border-radius:999px;font-size:14px;font-weight:600;color:var(--t2);transition:background .3s var(--ease),color .3s var(--ease)}
+.qseg button[aria-pressed=true]{background:var(--t1);color:var(--L0);font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+
+.ptrio{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;background:var(--L1);border:1px solid var(--line);border-radius:20px;padding:16px 6px}
+.ptrio b{display:block;font-size:26px;font-weight:700;letter-spacing:-.02em}
+.ptrio span{display:block;font-size:10.5px;color:var(--t3);font-weight:600;letter-spacing:.06em;margin-top:3px}
+.prow{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-top:1px solid var(--line)}
+.prow:first-child{border-top:0}.prow span{font-size:14px;color:var(--t2)}.prow b{font-size:16px;font-weight:600}
+.phd{display:flex;align-items:center;gap:16px;padding:14px 0 26px}
+.phd .cr{width:72px;height:72px;background:transparent;flex:none}.phd .cr img{width:100%;height:100%}
+.phd.pl .hs{width:96px;height:96px;font-size:96px;flex:none;box-shadow:0 10px 24px rgba(0,0,0,.4)}
+.phd em{display:block;font-style:normal;font-size:13px;color:rgba(255,255,255,.82);font-weight:500}
+.phd em a{color:#fff;font-weight:700;text-decoration:underline;text-decoration-color:rgba(255,255,255,.4);text-underline-offset:3px}
+.phd h1{margin:4px 0 0;font-size:30px;line-height:1.05;font-weight:800;letter-spacing:-.03em;color:#fff}
+.phd p{margin:6px 0 0;font-size:13.5px;color:rgba(255,255,255,.86);line-height:1.35}
+.ptabs{margin-top:4px}
+.xsug{margin-top:12px;background:var(--L1);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+#xres .xans+.xsug,#xres .xsug+.xans{margin-top:12px}
+.xsug a,.rrow{display:flex;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid var(--line)}
+.xsug a:first-child,.rrow:first-child{border-top:0}
+.xsug .cr,.rrow .cr{width:40px;height:40px;background:transparent;flex:none}.xsug .cr img{width:100%;height:100%}
+.xsug a>span:not(.hs):not(.cr),.rrow>span:not(.hs):not(.cr){flex:1;min-width:0}
+.xsug b,.rrow b{display:block;font-size:15px;font-weight:600}
+.xsug em,.rrow em{display:block;font-style:normal;font-size:12px;color:var(--t3);margin-top:2px}
+.chev{font-style:normal;color:var(--t4);font-size:22px;line-height:1;flex:none;margin-left:auto}
+.xlink{display:block}
+.xgo{display:flex;justify-content:space-between;align-items:center;margin:14px -16px -16px;padding:13px 16px;border-top:1px solid var(--line);font-size:14px;font-weight:600;color:var(--t1)}
+.xgo i{font-style:normal;color:var(--t3);font-size:20px}
+.xpage{display:block}.xpage b{display:block;font-size:18px;font-weight:700}.xpage span{display:block;font-size:13px;color:var(--t3);margin-top:3px}
+button.xpage{width:100%;text-align:left}
+.xsched{margin-top:12px;border-top:1px solid var(--line)}
+.xsched.big{margin-top:0;border-top:0;background:var(--L1);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.srow2{display:grid;grid-template-columns:84px 1fr auto;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px}
+.xsched.big .srow2{padding:12px 16px}.xsched.big .srow2:last-child{border-bottom:0}
+.srow2 .d{color:var(--t3);font-size:13px}
+.srow2 .o{display:flex;align-items:center;gap:7px;min-width:0;font-weight:600}
+.srow2 .o .cr{width:22px;height:22px;background:transparent}
+.srow2 b{font-weight:600}.srow2 b.w{color:var(--t1)}.srow2 b.l{color:var(--t3)}
+.sechd button.more{background:none;border:0;color:var(--t3);font:inherit;font-size:13px}
+.cmpn{padding:0 16px 10px}
+.cmnh{display:grid;gap:4px;margin:0 -16px;padding:18px 8px 14px}
+.cmnh .cside b{font-size:13px}
+.cmnr{padding:10px 0;border-top:1px solid var(--line)}
+.cmnr>span{display:block;text-align:center;font-size:12px;color:var(--t3);margin-bottom:4px}
+.cmnr>div{display:grid;text-align:center}
+.cmnr b{font-size:17px;font-weight:500;color:var(--t3)}.cmnr b.w{color:var(--t1);font-weight:700}
+.xmore{margin:18px 2px 0;font-size:12px;font-weight:600;color:var(--t3)}
+.xmore+.xsug{margin-top:8px}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -935,7 +996,8 @@ html[data-theme=light] .tsw button[aria-pressed=true]{background:#fff}
    RIVL v6 — design mockup. Sample data, real ESPN art.
    ============================================================ */
 var LOGO = function(lg, ab){ return 'https://a.espncdn.com/i/teamlogos/'+lg+'/500/'+ab+'.png'; };
-var HEAD = function(id){ return 'https://a.espncdn.com/combiner/i?img=/i/headshots/nba/players/full/'+id+'.png&w=254&h=185'; };
+var HEAD = function(id){ var lg='nba'; if(typeof id==='string' && id.indexOf(':')>0){ lg=id.split(':')[0]; id=id.split(':')[1]; }
+  return 'https://a.espncdn.com/combiner/i?img=/i/headshots/'+lg+'/players/full/'+id+'.png&w=254&h=185'; };
 
 var T = {
   lal:{ab:'LAL',lg:'nba',name:'Lakers',full:'LA Lakers',c:'#552583',alt:'#FDB927',rec:'4-3'},
@@ -1086,7 +1148,7 @@ var LORDER = ['nba','wnba','ncaam','ncaaw'];
 var LG = 'all';
 
 var MYP_EXTRA = [
-  {id:0, n:'JuJu Watkins',    t:'uscw',   ln:'18 pts · 5 ast'},
+  {id:'womens-college-basketball:5175946', n:'JuJu Watkins',    t:'uscw',   ln:'18 pts · 5 ast'},
   {id:0, n:'Sarah Strong',    t:'uconnw', ln:'14 pts · 9 reb'},
   {id:0, n:"A'ja Wilson",     t:'lva',    ln:''},
   {id:0, n:'Caitlin Clark',   t:'ind',    ln:''},
@@ -1237,7 +1299,7 @@ function gameRow(g){
   else {
     var q=pairColors(g.a,g.h), fav=g.p.k, v=g.p.v, aw=fav===g.a?v:100-v;
     mid='<b class="tt">'+esc(g.t)+'</b><small>'+esc(T[fav].ab)+' '+v+'%</small>'
-      +'<span class="pb"><i style="width:'+aw+'%;background:'+q.away+'"></i><i style="width:'+(100-aw)+'%;background:'+q.home+'"></i></span>';
+      +'<span class="pb"><i style="width:'+aw+'%;background:'+markColor(q.away)+'"></i><i style="width:'+(100-aw)+'%;background:'+markColor(q.home)+'"></i></span>';
   }
   return '<a class="grow pressable" href="#game">'+side(g.a,aLose)+score(g.a,g.as,aUp,aLose)
     +'<span class="mid">'+mid+'</span>'+score(g.h,g.hs,hUp,hLose)+side(g.h,hLose)+'</a>';
@@ -1254,7 +1316,7 @@ function heroScore(g, pc){
       +'<span class="side">'+crest(g.a,52,true)+'<b>'+esc(A.name)+'</b><em>'+esc(A.rec)+'</em></span><span></span>'
       +'<span class="side">'+crest(g.h,52,true)+'<b>'+esc(H.name)+'</b><em>'+esc(H.rec)+'</em></span>'
     +'</a>'
-    +'<div class="wp"><div class="bar"><i data-w="'+wv+'" style="background:'+pc.away+'"></i><i data-w="'+(100-wv)+'" style="background:'+pc.home+'"></i></div>'
+    +'<div class="wp"><div class="bar"><i data-w="'+wv+'" style="background:'+markColor(pc.away)+'"></i><i data-w="'+(100-wv)+'" style="background:'+markColor(pc.home)+'"></i></div>'
     +'<div class="cap"><span>'+esc(A.ab)+' '+wv+'%</span><span>Prediction</span><span>'+esc(H.ab)+' '+(100-wv)+'%</span></div></div>';
 }
 function miniBar(g, pc){
@@ -1279,9 +1341,9 @@ function leagueChips(){
 }
 function injRow(p, withTeam){
   var t=T[p.t];
-  return '<button class="inj pressable">'+shot(p.id,p.n,t.c,42)
+  return '<a class="inj pressable" href="'+pHref(p.n)+'">'+shot(p.id,p.n,t.c,42)
     +'<span class="t"><b>'+esc(p.n)+'</b><span>'+(withTeam?esc(t.full)+' · ':'')+esc(p.w)+'</span></span>'
-    +'<span class="tag '+p.st+'">'+(p.st==='out'?'Out':'Questionable')+'</span></button>';
+    +'<span class="tag '+p.st+'">'+(p.st==='out'?'Out':'Questionable')+'</span></a>';
 }
 function newsCard(n,i){
   return '<a class="news pressable" href="#" data-act="read" data-i="'+i+'"><span class="im" style="display:block;background:linear-gradient(140deg,'+T[n.t].c+',#0b0d0f)"></span>'
@@ -1302,8 +1364,8 @@ function teamTiles(gs){
       else if(g.st==='fin'){ var m=home?g.hs:g.as, o=home?g.as:g.hs;
         now='<p class="k">Final</p><p><b>'+(m>o?'W':'L')+' '+m+'–'+o+'</b> '+pre+esc(opp)+'</p>'; }
       else now='<p class="k">Today</p><p><b>'+esc(g.t)+'</b> '+pre+esc(opp)+'</p>';
-    } else now='<p class="k">Next</p><p>'+esc(NEXTG[k]||'—')+'</p>';
-    return '<a class="tl2 pressable" href="#game" style="--tc:'+t.c+'">'
+    } else now='<p class="k">Next</p><p>'+esc(NEXTG[k]||'-')+'</p>';
+    return '<a class="tl2 pressable" href="#team/'+k+'" style="--tc:'+t.c+'">'
       +'<img class="wm" src="'+logoUrl(k)+'" alt="" onerror="this.remove()">'
       +(ENABLED.length>1?'<span class="lgt">'+esc(LNAME[leagueOf(k)])+'</span>':'')
       +crest(k,34,true)+'<h4>'+esc(t.full)+'</h4>'
@@ -1326,7 +1388,7 @@ function playerStrip(gs){
       else if(g&&g.st==='pre') st='<u><b>Today</b> · '+esc(g.t)+'</u>';
       else if(g&&g.st==='fin') st='<u><b>Final</b>'+(p.ln?' · '+esc(p.ln):'')+'</u>';
       else st='<u>'+esc(NEXTG[p.t]||'No game today')+'</u>';
-      return '<a class="mp pressable" href="#game" style="--tc:'+t.c+'"'+(i>=8?' hidden':'')+'>'
+      return '<a class="mp pressable" href="'+pHref(p.n)+'" style="--tc:'+t.c+'"'+(i>=8?' hidden':'')+'>'
         +'<img class="wmk" src="'+logoUrl(p.t)+'" alt="" onerror="this.remove()">'
         +shot(p.id,p.n,t.c,62)+'<b>'+esc(p.n)+'</b><span>'+esc(t.ab)+(ENABLED.length>1?' · '+esc(LNAME[leagueOf(p.t)]):'')+'</span>'+st+'</a>';
     }).join('')
@@ -1451,7 +1513,7 @@ function liveSheet(){
         +'<span class="lrow"><span class="s">'+crest(g.a,42,true)+'<b>'+esc(A.ab)+'</b></span>'
           +'<span class="n num'+(aUp?'':' tr')+'">'+g.as+'</span><span class="n num'+(hUp?'':' tr')+'">'+g.hs+'</span>'
           +'<span class="s">'+crest(g.h,42,true)+'<b>'+esc(H.ab)+'</b></span></span>'
-        +'<span class="wp"><span class="bar"><i style="width:'+wv+'%;background:'+pc.away+'"></i><i style="width:'+(100-wv)+'%;background:'+pc.home+'"></i></span>'
+        +'<span class="wp"><span class="bar"><i style="width:'+wv+'%;background:'+markColor(pc.away)+'"></i><i style="width:'+(100-wv)+'%;background:'+markColor(pc.home)+'"></i></span>'
         +'<span class="cap"><span>'+esc(A.ab)+' '+wv+'%</span><span>Prediction</span><span>'+esc(H.ab)+' '+(100-wv)+'%</span></span></span></span></a>';
     }).join('')+'</div>';
 }
@@ -1472,15 +1534,15 @@ var LEADERS=[
 function rec(k){ var r=(T[k].rec||'0-0').split('-'); return [+r[0],+r[1]]; }
 function stRow(k,i,gb,cols){
   var me=FOLLOW.indexOf(k)>-1, w=rec(k);
-  return '<div class="st2'+(me?' me':'')+'"><i class="edge" style="background:'+T[k].c+'"></i><span class="rk">'+(i+1)+'</span>'
+  return '<a href="#team/'+k+'" class="st2'+(me?' me':'')+'"><i class="edge" style="background:'+T[k].c+'"></i><span class="rk">'+(i+1)+'</span>'
     +crest(k,24,true)+'<span class="nm">'+esc(T[k].name)+'</span>'
     +(cols==='poll' ? '<span class="c w">'+w[0]+'–'+w[1]+'</span>'
-       : '<span class="c">'+w[0]+'</span><span class="c">'+w[1]+'</span><span class="c">'+(w[0]/(w[0]+w[1])).toFixed(3).replace(/^0/,'')+'</span><span class="c">'+gb+'</span>')+'</div>';
+       : '<span class="c">'+w[0]+'</span><span class="c">'+w[1]+'</span><span class="c">'+(w[0]/(w[0]+w[1])).toFixed(3).replace(/^0/,'')+'</span><span class="c">'+gb+'</span>')+'</a>';
 }
 function confTable(name,keys,limit){
   var ks=keys.slice().sort(function(a,b){ var x=rec(a),y=rec(b); return (y[0]/(y[0]+y[1]))-(x[0]/(x[0]+x[1])); });
   var L=rec(ks[0]);
-  var rows=ks.slice(0,limit||ks.length).map(function(k,i){ var r=rec(k), gb=((L[0]-r[0])+(r[1]-L[1]))/2; return stRow(k,i,gb?gb.toFixed(1).replace('.0',''):'—'); }).join('');
+  var rows=ks.slice(0,limit||ks.length).map(function(k,i){ var r=rec(k), gb=((L[0]-r[0])+(r[1]-L[1]))/2; return stRow(k,i,gb?gb.toFixed(1).replace('.0',''):'-'); }).join('');
   return '<div class="sthd"><b>'+esc(name)+'</b><span>W</span><span>L</span><span>PCT</span><span>GB</span></div>'+rows;
 }
 function pollTable(name,keys,limit){
@@ -1512,193 +1574,430 @@ function viewStandings(){
     out+=ls.map(function(L){
       var t = L==='nba' ? ['NBA Cup','Group play is underway. The knockout bracket appears here once the eight teams are set in early December.']
         : L==='wnba' ? ['Playoffs','Offseason. The bracket returns with the postseason.']
-        : ['Holiday tournaments and March Madness','Thanksgiving-week events first, then the full tournament bracket in March — with live scores and the Prediction for every game.'];
+        : ['Holiday tournaments and March Madness','Thanksgiving-week events first, then the full tournament bracket in March, with live scores and the Prediction for every game.'];
       return '<div class="gut"><div class="brk"><span class="lgt2">'+esc(LNAME[L])+'</span><b>'+esc(t[0])+'</b><p>'+esc(t[1])+'</p></div></div>';
     }).join('')+'<p class="gut legend">Brackets are the next build.</p>';
   } else {
     out+=ls.map(function(L){
       if(L!=='nba') return '<div class="gut"><div class="sechd" style="margin-top:22px"><h2 class="sec">'+esc(LNAME[L])+'</h2></div><div class="empty"><b>Leaders fill in as the season starts</b><p>Points, rebounds, assists and more.</p></div></div>';
       return '<div class="gut"><div class="sechd" style="margin-top:22px"><h2 class="sec">NBA · Points per game</h2></div><div class="gp">'
-        +LEADERS.map(function(p,i){ var t=T[p.t]; return '<div class="ldr"><span class="rk">'+(i+1)+'</span>'+shot(p.id,p.n,t.c,40)
-          +'<span class="t"><b>'+esc(p.n)+'</b><span>'+esc(t.full)+'</span></span><b class="v num">'+p.v+'</b></div>'; }).join('')+'</div></div>';
+        +LEADERS.map(function(p,i){ var t=T[p.t]; return '<a class="ldr" href="'+pHref(p.n)+'"><span class="rk">'+(i+1)+'</span>'+shot(p.id,p.n,t.c,40)
+          +'<span class="t"><b>'+esc(p.n)+'</b><span>'+esc(t.full)+'</span></span><b class="v num">'+p.v+'</b></a>'; }).join('')+'</div></div>';
     }).join('');
   }
   return out;
 }
 
 /* ============================================================
-   EXPLORE — one search box that answers, plus things to browse.
-   No AI model, no tokens, nothing running in the background: the
-   question is matched against names and a small set of question
-   shapes, and the answer is read straight from the data.
+   EXPLORE: one search box that finds anything, and profiles.
+   No AI model, no tokens, nothing running in the background.
+   Names are matched by full name, nickname, the start of a name
+   ("max" finds Maxey) and small typos ("maxi"); the question is
+   matched to a known shape; the answer is read from the data.
    ============================================================ */
 
-/* Bio facts are real. Season numbers are SAMPLE numbers for the mockup. */
+/* Bio facts are real. Season numbers are sample numbers for the mockup. */
 var PEOPLE = [
-  {k:'maxey', n:'Tyrese Maxey', t:'phi', id:0, pos:'G', j:0, al:['tyrese maxey','maxey','tyrese'],
+  {k:'maxey', n:'Tyrese Maxey', t:'phi', id:4431678, pos:'G', j:0, al:['tyrese maxey','maxey','tyrese'],
    dob:[2000,11,4], ht:'6-2', from:'Garland, TX', school:'South Garland HS (TX)', college:'Kentucky',
    draft:{y:2020,r:1,p:21,by:'Philadelphia'}, trade:null,
    s:{mpg:38.2,ppg:28.2,rpg:4.2,apg:4.5,spg:1.8,bpg:.4,fg:47.2,tp:38.4,ts:58.9}},
   {k:'sga', n:'Shai Gilgeous-Alexander', t:'okc', id:4278073, pos:'G', j:2, al:['shai gilgeous alexander','shai','sga','gilgeous'],
    dob:[1998,7,12], ht:'6-6', from:'Toronto, ON', school:'Hamilton Heights Christian Academy (TN)', college:'Kentucky',
-   draft:{y:2018,r:1,p:11,by:'Charlotte (traded to the LA Clippers)'},
-   trade:'Traded from the LA Clippers to Oklahoma City in July 2019 in the Paul George deal.',
+   draft:{y:2018,r:1,p:11,by:'Charlotte, then traded to the LA Clippers'},
+   trade:'Traded from the LA Clippers to Oklahoma City in July 2019, in the Paul George deal.',
    s:{mpg:34.1,ppg:32.1,rpg:5.0,apg:6.4,spg:1.7,bpg:1.0,fg:52.6,tp:37.1,ts:63.8}},
-  {k:'jwill', n:'Jalen Williams', t:'okc', id:0, pos:'F', j:8, al:['jalen williams','jdub','j dub','jwill','j will'],
+  {k:'jwill', n:'Jalen Williams', t:'okc', id:0, pos:'F', j:8, al:['jalen williams','jdub','j dub','jwill','j will','jalen'],
    dob:[2001,4,14], ht:'6-5', from:'Gilbert, AZ', school:'Perry HS (AZ)', college:'Santa Clara',
    draft:{y:2022,r:1,p:12,by:'Oklahoma City'}, trade:null,
    s:{mpg:33.0,ppg:21.4,rpg:5.4,apg:5.1,spg:1.6,bpg:.7,fg:48.8,tp:36.0,ts:58.1}},
   {k:'luka', n:'Luka Dončić', t:'lal', id:3945274, pos:'G', j:77, al:['luka doncic','doncic','luka'],
-   dob:[1999,2,28], ht:'6-6', from:'Ljubljana, Slovenia', school:'—', college:'None (Real Madrid)',
-   draft:{y:2018,r:1,p:3,by:'Atlanta (traded to Dallas)'},
+   dob:[1999,2,28], ht:'6-6', from:'Ljubljana, Slovenia', school:'Real Madrid youth academy', college:'None, turned pro with Real Madrid',
+   draft:{y:2018,r:1,p:3,by:'Atlanta, then traded to Dallas'},
    trade:'Traded from Dallas to the Lakers in February 2025.',
    s:{mpg:36.4,ppg:30.4,rpg:8.6,apg:8.9,spg:1.5,bpg:.5,fg:46.9,tp:36.2,ts:60.1}},
-  {k:'curry', n:'Stephen Curry', t:'gs', id:3975, pos:'G', j:30, al:['stephen curry','steph curry','steph','curry'],
+  {k:'curry', n:'Stephen Curry', t:'gs', id:3975, pos:'G', j:30, al:['stephen curry','steph curry','steph','curry','stephen'],
    dob:[1988,3,14], ht:'6-2', from:'Akron, OH', school:'Charlotte Christian (NC)', college:'Davidson',
    draft:{y:2009,r:1,p:7,by:'Golden State'}, trade:null, spouse:'Ayesha Curry', wed:2011,
    s:{mpg:32.6,ppg:27.8,rpg:4.5,apg:6.0,spg:1.1,bpg:.4,fg:46.1,tp:41.2,ts:62.4}},
-  {k:'lebron', n:'LeBron James', t:'lal', id:1966, pos:'F', j:23, al:['lebron james','lebron','bron'],
-   dob:[1984,12,30], ht:'6-9', from:'Akron, OH', school:'St. Vincent–St. Mary HS (OH)', college:'None — drafted out of high school',
+  {k:'lebron', n:'LeBron James', t:'lal', id:1966, pos:'F', j:23, al:['lebron james','lebron','bron','king james'],
+   dob:[1984,12,30], ht:'6-9', from:'Akron, OH', school:'St. Vincent–St. Mary HS (OH)', college:'None, drafted out of high school',
    draft:{y:2003,r:1,p:1,by:'Cleveland'}, trade:null, spouse:'Savannah James', wed:2013,
    s:{mpg:34.0,ppg:23.6,rpg:7.4,apg:8.1,spg:1.0,bpg:.6,fg:50.8,tp:37.3,ts:60.4}},
-  {k:'tatum', n:'Jayson Tatum', t:'bos', id:4065648, pos:'F', j:0, al:['jayson tatum','tatum'],
+  {k:'tatum', n:'Jayson Tatum', t:'bos', id:4065648, pos:'F', j:0, al:['jayson tatum','tatum','jayson'],
    dob:[1998,3,3], ht:'6-8', from:'St. Louis, MO', school:'Chaminade College Prep (MO)', college:'Duke',
-   draft:{y:2017,r:1,p:3,by:'Boston (pick acquired from Philadelphia)'}, trade:null,
+   draft:{y:2017,r:1,p:3,by:'Boston, with a pick acquired from Philadelphia'}, trade:null,
    s:{mpg:36.0,ppg:26.8,rpg:8.4,apg:5.2,spg:1.1,bpg:.6,fg:45.5,tp:35.9,ts:58.0}},
-  {k:'juju', n:'JuJu Watkins', t:'uscw', id:0, pos:'G', j:12, al:['juju watkins','juju','watkins'],
-   dob:null, ht:'6-2', from:'Los Angeles, CA', school:'Sierra Canyon (CA)', college:'USC', draft:null, trade:null,
-   s:{mpg:33.5,ppg:24.2,rpg:6.9,apg:3.6,spg:2.1,bpg:1.6,fg:44.0,tp:33.1,ts:55.6}}
+  {k:'juju', n:'JuJu Watkins', t:'uscw', id:'womens-college-basketball:5175946', pos:'G', j:12, al:['juju watkins','juju','watkins'],
+   dob:[2005,7,15], ht:'6-2', from:'Los Angeles, CA', school:'Sierra Canyon (CA), after starting at Windward School', college:'USC', draft:null, trade:null, note:'Missed the 2025-26 season after tearing her right ACL in the 2025 NCAA Tournament.',
+   s:{mpg:33.5,ppg:24.2,rpg:6.9,apg:3.6,spg:2.1,bpg:1.6,fg:44.0,tp:33.1,ts:55.6}},
+  {k:'reaves', n:'Austin Reaves', t:'lal', id:4066457, pos:'G', j:15, al:['austin reaves','reaves'],
+   dob:[1998,5,29], ht:'6-5', from:'Newark, AR', school:'Cedar Ridge HS (AR)', college:'Oklahoma',
+   draft:null, undrafted:2021, trade:null,
+   s:{mpg:34.2,ppg:20.1,rpg:4.6,apg:5.9,spg:1.0,bpg:.3,fg:46.4,tp:37.0,ts:61.2}},
+  {k:'butler', n:'Jimmy Butler', t:'gs', id:6430, pos:'F', j:10, al:['jimmy butler','butler','jimmy'],
+   dob:[1989,9,14], ht:'6-6', from:'Tomball, TX', school:'Tomball HS (TX)', college:'Marquette',
+   draft:{y:2011,r:1,p:30,by:'Chicago'}, trade:'Traded from Miami to Golden State in February 2025.',
+   s:{mpg:31.8,ppg:18.6,rpg:5.6,apg:5.0,spg:1.4,bpg:.4,fg:50.1,tp:30.5,ts:61.0}},
+  {k:'draymond', n:'Draymond Green', t:'gs', id:6589, pos:'F', j:23, al:['draymond green','draymond','dray'],
+   dob:[1990,3,4], ht:'6-6', from:'Saginaw, MI', school:'Saginaw HS (MI)', college:'Michigan State',
+   draft:{y:2012,r:2,p:35,by:'Golden State'}, trade:null,
+   s:{mpg:29.0,ppg:8.8,rpg:7.0,apg:6.2,spg:1.3,bpg:1.0,fg:44.0,tp:32.0,ts:54.0}}
 ];
-var TEAMAL = {lal:['lakers','los angeles lakers','la lakers'], gs:['warriors','golden state','dubs','gsw'], bos:['celtics','boston'],
-  okc:['thunder','oklahoma city','okc'], dal:['mavericks','mavs','dallas'], nyk:['knicks','new york knicks'], den:['nuggets','denver'],
-  min:['timberwolves','wolves','minnesota'], chi:['bulls','chicago'], hou:['rockets','houston rockets'], phi:['76ers','sixers','philadelphia'],
-  mia:['heat','miami'], uconn:['uconn men','uconn huskies'], duke:['duke'], ku:['kansas','jayhawks'], gonz:['gonzaga','zags'],
-  uconnw:['uconn women','uconn'], uscw:['usc women','usc trojans','usc'], scw:['south carolina','gamecocks'], uclaw:['ucla']};
+var TEAMAL = {lal:['lakers','los angeles lakers','la lakers','los angeles'], gs:['warriors','golden state','dubs','gsw'], bos:['celtics','boston','celts'],
+  okc:['thunder','oklahoma city','okc'], dal:['mavericks','mavs','dallas'], nyk:['knicks','new york knicks','new york'], den:['nuggets','denver'],
+  min:['timberwolves','wolves','minnesota'], chi:['bulls','chicago'], hou:['rockets','houston rockets'], phi:['76ers','sixers','philadelphia','philly'],
+  mia:['heat','miami'], uconn:['uconn men','uconn mens'], duke:['duke','blue devils'], ku:['kansas','jayhawks'], gonz:['gonzaga','zags'],
+  uconnw:['uconn','uconn women','huskies'], uscw:['usc','usc women','trojans'], scw:['south carolina','gamecocks'], uclaw:['ucla','bruins'],
+  uk:['kentucky','wildcats'], unc:['north carolina','unc','tar heels'], pur:['purdue','boilermakers'], uh:['houston cougars','houston'],
+  ariz:['arizona'], aub:['auburn','tigers'], texw:['texas','longhorns'], lsuw:['lsu'], ndw:['notre dame'],
+  ind:['fever','indiana fever','indiana'], lva:['aces','las vegas aces','las vegas'], nyl:['liberty','new york liberty']};
 var TEAMSTAT = {okc:{ppg:118.4,opp:104.1}, lal:{ppg:114.0,opp:113.2}, gs:{ppg:116.2,opp:110.8}, bos:{ppg:117.9,opp:108.0},
-  dal:{ppg:112.6,opp:111.9}, nyk:{ppg:115.3,opp:109.4}, uconnw:{ppg:86.0,opp:55.5}, uscw:{ppg:81.5,opp:60.0}};
-var ROSTER_N = 15, TWOWAY_N = 3;
+  dal:{ppg:112.6,opp:111.9}, nyk:{ppg:115.3,opp:109.4}, phi:{ppg:110.2,opp:112.0}, uconnw:{ppg:86.0,opp:55.5}, uscw:{ppg:81.5,opp:60.0}};
 
+/* ---------- matching ---------- */
 function norm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
-function findAll(q){
-  var nq=' '+norm(q)+' ', ps=[], ts=[], used=nq;
-  PEOPLE.map(function(p){ var best=0; p.al.forEach(function(a){ var i=used.indexOf(' '+a+' '); if(i>-1 && a.length>best) best=a.length; });
-      return {p:p,len:best}; })
-    .filter(function(x){return x.len;}).sort(function(a,b){return b.len-a.len;})
-    .forEach(function(x){ ps.push(x.p); x.p.al.forEach(function(a){ used=used.split(' '+a+' ').join(' # '); }); });
-  Object.keys(TEAMAL).forEach(function(k){ var hit=TEAMAL[k].some(function(a){ return used.indexOf(' '+a+' ')>-1; }); if(hit) ts.push(k); });
-  /* "uconn" alone means the women when the men aren't followed — keep one */
-  if(ts.indexOf('uconnw')>-1 && ts.indexOf('uconn')>-1) ts.splice(ts.indexOf('uconn'),1);
-  return {ps:ps, ts:ts, nq:nq};
+function lev(a,b){ if(Math.abs(a.length-b.length)>2) return 9; var d=[],i,j; for(i=0;i<=a.length;i++){d[i]=[i];} for(j=0;j<=b.length;j++) d[0][j]=j;
+  for(i=1;i<=a.length;i++) for(j=1;j<=b.length;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1)); return d[a.length][b.length]; }
+/* everything that can be found: people, then teams */
+function ENTS(){
+  var out=PEOPLE.map(function(p){ return {type:'p', ref:p, name:p.n, al:p.al.concat([norm(p.n)])}; });
+  Object.keys(TEAMAL).forEach(function(k){ if(T[k]) out.push({type:'t', ref:k, name:T[k].full, al:TEAMAL[k].concat([norm(T[k].full), norm(T[k].name)])}); });
+  return out;
 }
-function age(d){ if(!d) return null; var b=new Date(d[0],d[1]-1,d[2]), a=TODAY.getFullYear()-b.getFullYear();
-  if(TODAY<new Date(TODAY.getFullYear(),d[1]-1,d[2])) a--; return a; }
-function ord(n){ return n+(['th','st','nd','rd'][(n%100-20)%10]||['th','st','nd','rd'][n%100]||'th'); }
+var STOP = 'vs versus v compare compared against and or with to the a an of is are was were how when where what who whos which did does do in on at for from show me my stats stat statistics averages career season this year team teams players player roster many old age tall height college school high university go went graduate graduated attend attended drafted draft pick traded trade married wife husband spouse born hometown injury injured hurt status schedule next game games standings standing rank record seed play plays playing tonight today'.split(' ');
+/* each word of the query finds its best entity: whole name, then the start
+   of a name (the last word you're still typing), then a small typo */
+function findAll(q){
+  var toks=norm(q).split(' ').filter(Boolean), ents=ENTS(), hits=[], usedIdx={};
+  /* two-word names first */
+  for(var i=0;i<toks.length-1;i++){
+    var bi=toks[i]+' '+toks[i+1];
+    ents.forEach(function(e){ if(e.al.indexOf(bi)>-1 && !hits.some(function(h){return h.e===e;})){ hits.push({e:e,pos:i,score:4}); usedIdx[i]=usedIdx[i+1]=1; } });
+  }
+  toks.forEach(function(tok,i){
+    if(usedIdx[i] || STOP.indexOf(tok)>-1) return;
+    var last=i===toks.length-1, best=null;
+    ents.forEach(function(e){
+      var sc=0;
+      e.al.forEach(function(a){
+        if(a===tok) sc=Math.max(sc,3);
+        a.split(' ').forEach(function(w){
+          if(w===tok) sc=Math.max(sc,2.6);
+          else if(tok.length>=2 && w.indexOf(tok)===0 && (last || tok.length>=4)) sc=Math.max(sc,2);
+          else if(tok.length>=4 && lev(tok,w)<=(tok.length>=7?2:1)) sc=Math.max(sc,1.5);
+          else if(last && tok.length>=3 && w.length>tok.length && lev(tok,w.slice(0,tok.length))<=1) sc=Math.max(sc,1.2);
+        });
+      });
+      if(sc && (!best || sc>best.score || (sc===best.score && e.type==='p' && best.e.type==='t'))) best={e:e,pos:i,score:sc};
+    });
+    if(best && !hits.some(function(h){return h.e===best.e;})) hits.push(best);
+  });
+  hits.sort(function(a,b){ return a.pos-b.pos; });
+  var th=hits.filter(function(h){return h.e.type==='t';});
+  if(th.length===2 && leagueOf(th[0].e.ref)!==leagueOf(th[1].e.ref)){
+    th.forEach(function(h,i){ var o=th[1-i].e.ref, me=h.e.ref, twin=Object.keys(TEAMAL).filter(function(k){ return k!==me && T[k] && T[k].full===T[me].full && leagueOf(k)===leagueOf(o); })[0];
+      if(twin) h.e=ENTS().filter(function(e){return e.ref===twin;})[0]; });
+  }
+  return {ps:hits.filter(function(h){return h.e.type==='p';}).map(function(h){return h.e.ref;}),
+          ts:hits.filter(function(h){return h.e.type==='t';}).map(function(h){return h.e.ref;}), nq:' '+norm(q)+' ', hits:hits};
+}
+/* suggestions while typing: everyone whose name starts the way you're typing */
+function suggest(q){
+  var nq=norm(q); if(!nq) return [];
+  var last=nq.split(' ').pop(), out=[];
+  ENTS().forEach(function(e){
+    var sc=0;
+    e.al.forEach(function(a){ if(a.indexOf(nq)===0) sc=Math.max(sc,3); a.split(' ').forEach(function(w){
+      if(w.indexOf(last)===0) sc=Math.max(sc,2); else if(last.length>=4 && lev(last,w)<=(last.length>=7?2:1)) sc=Math.max(sc,1);
+      else if(last.length>=3 && w.length>last.length && lev(last,w.slice(0,last.length))<=1) sc=Math.max(sc,.8); }); });
+    if(sc) out.push({e:e,sc:sc});
+  });
+  return out.sort(function(a,b){ return b.sc-a.sc || (a.e.type==='p'?-1:1); }).slice(0,6).map(function(x){return x.e;});
+}
+function age(d){ if(!d) return null; var a=TODAY.getFullYear()-d[0]; if(TODAY<new Date(TODAY.getFullYear(),d[1]-1,d[2])) a--; return a; }
+function ord(n){ var s=['th','st','nd','rd'], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+function pHref(name){ var p=personOf(name); return '#player/'+encodeURIComponent(p?p.k:name); }
+function slug(p){ return encodeURIComponent(p.k||p.n); }
+function personOf(name){
+  var n=norm(name), hit=PEOPLE.filter(function(p){ return p.k===name || norm(p.n)===n; })[0];
+  if(hit) return hit;
+  /* short box-score names ("L. Dončić") resolve to the full profile when the last names agree */
+  var parts=n.split(' '), last=parts[parts.length-1], init=parts[0].charAt(0);
+  return PEOPLE.filter(function(p){ var w=norm(p.n).split(' '); return w[w.length-1]===last && w[0].charAt(0)===init; })[0] || null;
+}
 
-/* the answer surface */
+/* ---------- answers ---------- */
 function answer(q){
+  var nq0=norm(q); if(!nq0) return '';
   var f=findAll(q), nq=f.nq, has=function(re){ return re.test(nq); };
-  if(!norm(q)) return '';
+  /* the app's own pages, by name */
+  if(!f.ps.length && !f.ts.length){
+    if(has(/ standing| table| rank/)) return pageCard('Standings','Every table in your leagues','#standings');
+    if(has(/ score| games| tonight| today/)) return pageCard('Scores','Every game, any day','#scores');
+    if(has(/ injur/)) return '<div class="xans"><p class="xline">Injuries in your leagues</p>'+INJ.map(function(p){return injRow(p,true);}).join('')+'</div>';
+    if(has(/ leader| top scor| most points/)) return pageCard('Leaders','Points, rebounds, assists and more','#standings','leaders');
+    if(has(/ live/)) return '<button class="xans xpage" data-act="live"><b>Live</b><span>Every game in progress</span></button>';
+    return '';
+  }
+  if(f.ps.length>=3) return cmpMany(f.ps.slice(0,4));
   if(f.ps.length>=2) return cmpPlayers(f.ps[0],f.ps[1]);
   if(f.ts.length>=2 && !f.ps.length) return cmpTeams(f.ts[0],f.ts[1]);
   if(f.ps.length===1){
     var p=f.ps[0], t=T[p.t];
-    if(has(/ injur| hurt| status| out | health/)) {
+    if(has(/ injur| hurt| status| health/)){
       var inj=INJ.filter(function(x){return x.n===p.n;})[0];
       return ansCard(p, inj ? p.n+' is listed '+(inj.st==='out'?'out':'questionable')+'.' : p.n+' is not on the injury report.',
         inj ? [['Injury',inj.w],['Team',t.full]] : [['Status','Available'],['Team',t.full]]);
     }
-    if(has(/ draft/)) return p.draft
+    if(has(/ draft| pick /)) return p.draft
       ? ansCard(p, p.n+' was drafted '+ord(p.draft.p)+' overall in '+p.draft.y+' by '+p.draft.by+'.', [['Year',p.draft.y],['Round',p.draft.r],['Pick',p.draft.p]])
-      : ansCard(p, p.n+' has not been drafted yet.', [['School',p.college]]);
-    if(has(/ trade/)) return ansCard(p, p.trade || p.n+' has not been traded. He has played his whole career in '+t.full+'.', [['Team now',t.full]]);
-    if(has(/ college| school| graduat| university| attend/)) return ansCard(p, p.n+' played college basketball at '+p.college+'.', [['College',p.college],['High school',p.school]]);
+      : ansCard(p, p.undrafted ? p.n+' went undrafted in '+p.undrafted+'.' : p.n+' has not entered the draft yet.', [['College',p.college]]);
+    if(has(/ trade/)) return ansCard(p, p.trade || p.n+' has not been traded.', [['Team now',t.full]]);
+    if(has(/ high school| highschool| hs /)) return ansCard(p, p.n+' went to '+p.school+'.', [['High school',p.school],['Hometown',p.from]]);
+    if(has(/ college| school| graduat| university| attend| went /)) return ansCard(p, /^None/.test(p.college)?p.n+' did not play college basketball. '+p.college.replace(/^None, /,'').replace(/^./,function(c){return c.toUpperCase();})+'.':p.n+' plays or played college basketball at '+p.college+'.', [['College',p.college],['High school',p.school]]);
     if(has(/ married| wife| husband| spouse/)) return p.spouse
       ? ansCard(p, p.n+' married '+p.spouse+' in '+p.wed+'.', [['Spouse',p.spouse],['Married',p.wed]])
       : ansCard(p, 'RIVL doesn\'t have that.', [], 'None of RIVL\'s sources list it, so RIVL won\'t guess.');
-    if(has(/ born| from | hometown| where /)) return ansCard(p, p.n+' is from '+p.from+'.', [['Hometown',p.from],['High school',p.school]]);
-    if(has(/ how old| age /)) return age(p.dob)!=null ? ansCard(p, p.n+' is '+age(p.dob)+'.', [['Born',MON[p.dob[1]-1]+' '+p.dob[2]+', '+p.dob[0]]]) : ansCard(p,'RIVL doesn\'t have that.',[]);
+    if(has(/ born| from | hometown| where/)) return ansCard(p, p.n+' is from '+p.from+'.', [['Hometown',p.from],['High school',p.school]]);
+    if(has(/ how old| age /)) return age(p.dob)!=null ? ansCard(p, p.n+' is '+age(p.dob)+'.', [['Born',MON[p.dob[1]-1]+' '+p.dob[2]+', '+p.dob[0]]]) : ansCard(p,'RIVL doesn\'t have that.',[],'None of RIVL\'s sources list a birth date, so RIVL won\'t guess.');
     if(has(/ how tall| height/)) return ansCard(p, p.n+' is '+p.ht.replace('-','′')+'″.', []);
     return playerCard(p);
   }
-  if(f.ts.length===1){
-    var k=f.ts[0], tt=T[k];
-    if(has(/ how many| roster| players/)) return teamAns(k, tt.full+' has '+ROSTER_N+' players on its roster, plus '+TWOWAY_N+' on two-way contracts.');
-    return teamAns(k, tt.full+' are '+tt.rec+' this season.');
-  }
-  return '<div class="xnone"><b>No match yet</b><p>Try a player or team name — “Maxey drafted”, “Luka vs Curry”, “Thunder vs Lakers”.</p></div>';
+  var k=f.ts[0], tt=T[k];
+  if(has(/ schedule| next| upcoming/)) return teamSchedCard(k);
+  if(has(/ standing| rank| seed| place| record/)) return teamAns(k, standLine(k));
+  if(has(/ roster| how many| players/)) return teamAns(k, leagueOf(k)==='nba' ? 'NBA teams carry up to 15 players, plus 3 on two-way contracts. Here is who is on the '+tt.name+'.' : 'Here is who is on '+tt.full+'.', true);
+  return teamQuick(k);
 }
+function pageCard(title,sub,href,sub2){ return '<a class="xans xpage" href="'+href+'"'+(sub2?' data-sub-go="'+sub2+'"':'')+'><b>'+esc(title)+'</b><span>'+esc(sub)+'</span></a>'; }
+function profileBtn(href,label){ return '<a class="xgo" href="'+href+'">'+esc(label)+'<i>›</i></a>'; }
 function ansCard(p, line, facts, note){
   var t=T[p.t];
-  return '<div class="xans"><div class="xwho" style="--tc:'+t.c+'">'+shot(p.id,p.n,t.c,46)+'<span><b>'+esc(p.n)+'</b><em>'+esc(t.full)+' · '+esc(p.pos)+(p.j!==''?' · #'+p.j:'')+'</em></span></div>'
+  return '<div class="xans"><a class="xwho" href="#player/'+slug(p)+'">'+shot(p.id,p.n,t.c,46)+'<span><b>'+esc(p.n)+'</b><em>'+esc(t.full)+' · '+esc(p.pos)+(p.j!==''?' · #'+p.j:'')+'</em></span><i class="chev">›</i></a>'
     +'<p class="xline">'+esc(line)+'</p>'
     +(facts.length?'<div class="xfacts">'+facts.map(function(f){return '<div><span>'+esc(f[0])+'</span><b>'+esc(String(f[1]))+'</b></div>';}).join('')+'</div>':'')
     +(note?'<p class="xnote">'+esc(note)+'</p>':'')+'</div>';
 }
 function playerCard(p){
   var t=T[p.t], s=p.s;
-  return '<div class="xans">'+'<div class="xhero" style="--tc:'+t.c+'">'+shot(p.id,p.n,t.c,72)
-      +'<span><em>'+esc(t.full)+' · '+esc(p.pos)+(p.j!==''?' · #'+p.j:'')+'</em><b>'+esc(p.n)+'</b></span></div>'
-    +'<div class="xtrio"><div><b class="num">'+s.ppg+'</b><span>PTS</span></div><div><b class="num">'+s.rpg+'</b><span>REB</span></div><div><b class="num">'+s.apg+'</b><span>AST</span></div><div><b class="num">'+s.fg+'</b><span>FG%</span></div></div>'
-    +'<div class="xfacts">'+[['College',p.college],['From',p.from],['Height',p.ht],['Draft',p.draft?p.draft.y+' · Rd '+p.draft.r+', Pick '+p.draft.p:'—']].map(function(f){
-        return '<div><span>'+esc(f[0])+'</span><b>'+esc(String(f[1]))+'</b></div>'; }).join('')+'</div></div>';
+  return '<a class="xans xlink" href="#player/'+slug(p)+'"><span class="xhero" style="--tc:'+t.c+'">'+shot(p.id,p.n,t.c,72)
+      +'<span><em>'+esc(t.full)+' · '+esc(p.pos)+(p.j!==''?' · #'+p.j:'')+'</em><b>'+esc(p.n)+'</b></span></span>'
+    +'<span class="xtrio"><span><b class="num">'+s.ppg+'</b><i>PTS</i></span><span><b class="num">'+s.rpg+'</b><i>REB</i></span><span><b class="num">'+s.apg+'</b><i>AST</i></span><span><b class="num">'+s.fg+'</b><i>FG%</i></span></span>'
+    +'<span class="xgo">Full profile<i>›</i></span></a>';
 }
-/* compare two players — across leagues, per 40 minutes */
+function cmpMany(ps){
+  var cross=ps.some(function(p){ return leagueOf(p.t)!==leagueOf(ps[0].t); }), n=ps.length;
+  function v(p,k){ var x=p.s[k]; if(cross && ['ppg','rpg','apg','spg','bpg'].indexOf(k)>-1) x=x*40/p.s.mpg; return (Math.round(x*10)/10).toFixed(1); }
+  var rows=[['Points','ppg'],['Rebounds','rpg'],['Assists','apg'],['Steals','spg'],['Blocks','bpg'],['Field goal %','fg'],['3-point %','tp'],['True shooting %','ts']];
+  var cols='style="grid-template-columns:repeat('+n+',1fr)"';
+  return '<div class="xans cmpn"><div class="cmnh" '+cols+'>'+ps.map(function(p){ var t=T[p.t];
+      return '<a class="cside" href="#player/'+slug(p)+'" style="--tc:'+markColor(t.c)+'">'+shot(p.id,p.n,t.c,n>3?44:52)+'<b>'+esc(p.n.split(' ').slice(-1)[0])+'</b><em>'+esc(t.ab)+'</em></a>'; }).join('')+'</div>'
+    +'<p class="xnote" style="text-align:center;margin:10px 0 2px">'+(cross?'Different leagues, so these are per 40 minutes':'This season, per game')+'</p>'
+    +rows.map(function(r){ var vals=ps.map(function(p){return v(p,r[1]);}), mx=Math.max.apply(null,vals.map(Number));
+      return '<div class="cmnr"><span>'+r[0]+'</span><div '+cols+'>'+vals.map(function(x){ return '<b class="num'+(+x===mx?' w':'')+'">'+x+'</b>'; }).join('')+'</div></div>'; }).join('')
+    +'</div>';
+}
 function cmpPlayers(a,b){
   var ta=T[a.t], tb=T[b.t], cross=leagueOf(a.t)!==leagueOf(b.t);
   function v(p,k){ var x=p.s[k]; if(cross && ['ppg','rpg','apg','spg','bpg'].indexOf(k)>-1) x=x*40/p.s.mpg; return (Math.round(x*10)/10).toFixed(1); }
   var rows=[['Points','ppg'],['Rebounds','rpg'],['Assists','apg'],['Steals','spg'],['Blocks','bpg'],['Field goal %','fg'],['3-point %','tp'],['True shooting %','ts']];
   return '<div class="xans cmp2"><div class="cmph">'
-      +[[a,ta],[b,tb]].map(function(x){ return '<div class="cside" style="--tc:'+x[1].c+'">'+shot(x[0].id,x[0].n,x[1].c,62)+'<b>'+esc(x[0].n)+'</b><em>'+esc(x[1].full)+'</em></div>'; }).join('<span class="vs">vs</span>')
-    +'</div><p class="xnote" style="text-align:center;margin:10px 0 2px">'+(cross?'Different leagues · per 40 minutes':'This season · per game')+'</p>'
+      +[[a,ta],[b,tb]].map(function(x){ return '<a class="cside" href="#player/'+slug(x[0])+'" style="--tc:'+markColor(x[1].c)+'">'+shot(x[0].id,x[0].n,x[1].c,62)+'<b>'+esc(x[0].n)+'</b><em>'+esc(x[1].full)+'</em></a>'; }).join('<span class="vs">vs</span>')
+    +'</div><p class="xnote" style="text-align:center;margin:10px 0 2px">'+(cross?'Different leagues, so these are per 40 minutes':'This season, per game')+'</p>'
     +rows.map(function(r){ var x=v(a,r[1]), y=v(b,r[1]), aw=+x>+y, bw=+y>+x;
         return '<div class="crow"><b class="num'+(aw?' w':'')+'">'+x+'</b><span>'+r[0]+'</span><b class="num'+(bw?' w':'')+'">'+y+'</b></div>'; }).join('')
     +'</div>';
 }
 function cmpTeams(a,b){
   var A=T[a], B=T[b], sa=TEAMSTAT[a]||{}, sb=TEAMSTAT[b]||{}, same=leagueOf(a)===leagueOf(b);
-  var rows=[['Record',A.rec,B.rec,null],['Points per game',sa.ppg,sb.ppg,1],['Points allowed',sa.opp,sb.opp,-1],
-    ['Point margin',sa.ppg&&sa.opp?(sa.ppg-sa.opp).toFixed(1):'—',sb.ppg&&sb.opp?(sb.ppg-sb.opp).toFixed(1):'—',1]];
+  function n1(x){ return x==null?'-':(+x).toFixed(1); }
+  var rows=[['Record',A.rec||'-',B.rec||'-',null],['Points per game',n1(sa.ppg),n1(sb.ppg),1],['Points allowed',n1(sa.opp),n1(sb.opp),-1],
+    ['Point margin',sa.ppg?(sa.ppg-sa.opp).toFixed(1):'-',sb.ppg?(sb.ppg-sb.opp).toFixed(1):'-',1]];
   var pr='';
   if(same){ var q=pairColors(a,b), ma=(sa.ppg||110)-(sa.opp||110), mb=(sb.ppg||110)-(sb.opp||110), pa=Math.round(100/(1+Math.exp(-(ma-mb)/8)));
-    pr='<div class="wp xwp"><div class="bar"><i style="width:'+pa+'%;background:'+q.away+'"></i><i style="width:'+(100-pa)+'%;background:'+q.home+'"></i></div>'
-      +'<div class="cap"><span>'+esc(A.ab)+' '+pa+'%</span><span>Prediction · neutral floor</span><span>'+esc(B.ab)+' '+(100-pa)+'%</span></div></div>'; }
+    pr='<div class="wp xwp"><div class="bar"><i style="width:'+pa+'%;background:'+markColor(q.away)+'"></i><i style="width:'+(100-pa)+'%;background:'+markColor(q.home)+'"></i></div>'
+      +'<div class="cap"><span>'+esc(A.ab)+' '+pa+'%</span><span>Prediction, neutral floor</span><span>'+esc(B.ab)+' '+(100-pa)+'%</span></div></div>'; }
   return '<div class="xans cmp2"><div class="cmph">'
-      +[[a,A],[b,B]].map(function(x){ return '<div class="cside" style="--tc:'+x[1].c+'">'+crest(x[0],56,true)+'<b>'+esc(x[1].full)+'</b><em>'+esc(LNAME[leagueOf(x[0])])+'</em></div>'; }).join('<span class="vs">vs</span>')
+      +[[a,A],[b,B]].map(function(x){ return '<a class="cside" href="#team/'+x[0]+'" style="--tc:'+markColor(x[1].c)+'">'+crest(x[0],56,true)+'<b>'+esc(x[1].full)+'</b><em>'+esc(LNAME[leagueOf(x[0])])+'</em></a>'; }).join('<span class="vs">vs</span>')
     +'</div>'+pr
-    +rows.map(function(r){ var x=r[1]==null?'—':r[1], y=r[2]==null?'—':r[2], aw=r[3]&&+x*r[3]>+y*r[3], bw=r[3]&&+y*r[3]>+x*r[3];
+    +rows.map(function(r){ var x=r[1], y=r[2], aw=r[3]&&+x*r[3]>+y*r[3], bw=r[3]&&+y*r[3]>+x*r[3];
         return '<div class="crow"><b class="num'+(aw?' w':'')+'">'+x+'</b><span>'+r[0]+'</span><b class="num'+(bw?' w':'')+'">'+y+'</b></div>'; }).join('')
-    +(same?'':'<p class="xnote" style="margin-top:12px">Different levels never play each other, so there\'s no prediction — just the numbers side by side.</p>')
+    +(same?'':'<p class="xnote" style="margin-top:12px">Teams at different levels never play each other, so there is no prediction. Here are the numbers side by side.</p>')
     +'</div>';
 }
-function teamAns(k,line){
-  var t=T[k];
-  return '<div class="xans"><div class="xwho" style="--tc:'+t.c+'">'+crest(k,46,true)+'<span><b>'+esc(t.full)+'</b><em>'+esc(LNAME[leagueOf(k)])+'</em></span></div><p class="xline">'+esc(line)+'</p></div>';
+function standLine(k){
+  var L=leagueOf(k), t=T[k];
+  if(L==='nba'){ var conf=CONF.West.indexOf(k)>-1?'West':'East', ks=CONF[conf].slice().sort(function(a,b){ var x=rec(a),y=rec(b); return (y[0]/(y[0]+y[1]))-(x[0]/(x[0]+x[1])); });
+    return 'The '+t.name+' are '+t.rec+', '+ord(ks.indexOf(k)+1)+' in the '+conf+'.'; }
+  if(POLL[L] && POLL[L].indexOf(k)>-1) return t.full+' is '+t.rec+' and ranked No. '+(POLL[L].indexOf(k)+1)+' in the AP poll.';
+  return (L==='wnba'?'The '+t.name+' are ':t.full+' is ')+(t.rec||'0-0')+'.';
 }
+function teamAns(k,line,roster){
+  var t=T[k];
+  return '<div class="xans"><a class="xwho" href="#team/'+k+'">'+crest(k,46,true)+'<span><b>'+esc(t.full)+'</b><em>'+esc(LNAME[leagueOf(k)])+'</em></span><i class="chev">›</i></a><p class="xline">'+esc(line)+'</p>'
+    +profileBtn('#team/'+k+(roster?'/roster':''), roster?'See the roster':'Open '+t.name)+'</div>';
+}
+function teamQuick(k){
+  var t=T[k];
+  return '<a class="xans xlink" href="#team/'+k+'"><span class="xhero" style="--tc:'+t.c+'">'+crest(k,64,true)
+    +'<span><em>'+esc(LNAME[leagueOf(k)])+' · '+esc(t.rec||'')+'</em><b>'+esc(t.full)+'</b></span></span>'
+    +'<p class="xline" style="font-size:15px">'+esc(standLine(k))+'</p><span class="xgo">Team page<i>›</i></span></a>';
+}
+function teamGames(k, from, days, dir){
+  var out=[]; for(var i=0;i<days && out.length<6;i++){ var d=addDays(from, dir*i); genDay(d).forEach(function(g){ if(g.a===k||g.h===k) out.push({d:d,g:g}); }); }
+  return out;
+}
+function teamSchedCard(k){
+  var t=T[k], up=teamGames(k,TODAY,40,1).filter(function(x){return x.g.st!=='fin';}).slice(0,4);
+  return '<div class="xans"><a class="xwho" href="#team/'+k+'">'+crest(k,46,true)+'<span><b>'+esc(t.full)+'</b><em>Schedule</em></span><i class="chev">›</i></a>'
+    +(up.length?'<div class="xsched">'+up.map(schedRow(k)).join('')+'</div>':'<p class="xline" style="font-size:15px">No games scheduled yet.</p>')
+    +profileBtn('#team/'+k+'/schedule','Full schedule')+'</div>';
+}
+function schedRow(k){ return function(x){ var g=x.g, home=g.h===k, o=home?g.a:g.h, res='';
+  if(g.st==='fin'){ var m=home?g.hs:g.as, th=home?g.as:g.hs; res='<b class="'+(m>th?'w':'l')+'">'+(m>th?'W':'L')+' '+m+'–'+th+'</b>'; }
+  else if(g.st==='live') res=stp(g.clock,true,'flat sm');
+  else res='<b>'+esc(g.t)+'</b>';
+  return '<a class="srow2" href="#game"><span class="d">'+esc(dayWord(x.d))+'</span><span class="o">'+(home?'vs':'at')+' '+crest(o,22,true)+esc(T[o].name)+'</span>'+res+'</a>'; }; }
 
+/* ---------- the Explore page ---------- */
 var XQ='';
-var TRY=['Jalen Williams vs Shai','Luka vs Curry','When was Maxey drafted','Where did SGA go to college','Is Curry married','How many players are on the Mavericks','Thunder vs Lakers','UConn vs USC'];
+var TRY=['Jalen Williams vs Shai','Luka vs Curry','When was Maxey drafted','Where did JuJu go to high school','Thunder schedule','Lakers standings','How many players are on the Mavericks','UConn vs USC'];
+function xresults(q){
+  var sug=suggest(q), ans=answer(q), f=findAll(q);
+  /* typing a name with nothing else: show the matches as rows; the answer card covers the rest */
+  var onlyName = f.hits.length===1 && norm(q).split(' ').every(function(w){ return STOP.indexOf(w)<0; });
+  if(onlyName && ans) sug=sug.slice(1);
+  var rows = sug.length && (onlyName || !ans) ? '<div class="xsug">'+sug.map(function(e){
+      if(e.type==='p'){ var p=e.ref, t=T[p.t]; return '<a href="#player/'+slug(p)+'">'+shot(p.id,p.n,t.c,40)+'<span><b>'+esc(p.n)+'</b><em>'+esc(t.full)+' · '+esc(LNAME[leagueOf(p.t)])+'</em></span><i class="chev">›</i></a>'; }
+      var k=e.ref; return '<a href="#team/'+k+'">'+crest(k,40,true)+'<span><b>'+esc(T[k].full)+'</b><em>'+esc(LNAME[leagueOf(k)])+' · Team</em></span><i class="chev">›</i></a>';
+    }).join('')+'</div>' : '';
+  if(!ans && !rows) return norm(q) ? '<div class="xnone"><b>Nothing found</b><p>Try a player, a team, or a question like "Maxey drafted" or "Thunder schedule".</p></div>' : '';
+  if(onlyName && rows) rows='<p class="xmore">More matches</p>'+rows;
+  return ans+rows;
+}
 function viewExplore(){
   return '<header class="hdr gut">'+MARK+topIcons(false)+'</header>'
     +'<div class="gut"><h1 class="ptitle">Explore</h1>'
-    +'<label class="xbox">'+svg(IC.search)+'<input id="xq" type="search" autocomplete="off" placeholder="Ask anything — players, teams, stats" value="'+esc(XQ)+'">'
+    +'<label class="xbox">'+svg(IC.search)+'<input id="xq" type="search" autocomplete="off" autocapitalize="off" placeholder="Players, teams, stats, anything" value="'+esc(XQ)+'">'
     +'<button class="xclr" data-act="xclear" aria-label="Clear"'+(XQ?'':' hidden')+'>'+svg('<path d="M6 6l12 12M18 6 6 18"/>')+'</button></label>'
-    +'<div id="xres">'+answer(XQ)+'</div>'
+    +'<div id="xres">'+xresults(XQ)+'</div>'
     +'<div id="xbrowse"'+(XQ?' hidden':'')+'>'
       +'<div class="sechd"><h2 class="sec">Try asking</h2></div><div class="xtry">'+TRY.map(function(t){return '<button data-try="'+esc(t)+'">'+esc(t)+'</button>';}).join('')+'</div>'
       +'<div class="sechd"><h2 class="sec">Injuries</h2><span class="more">Your leagues</span></div>'+INJ.map(function(p){return injRow(p,true);}).join('')
       +'<div class="sechd"><h2 class="sec">More to explore</h2></div>'
       +'<div class="xgrid">'
         +'<button class="xtile" data-try="Luka vs Curry"><b>Compare</b><span>Any two players or teams, across leagues</span></button>'
-        +'<a class="xtile" href="#standings" data-sub-go="leaders"><b>Leaders</b><span>Points, rebounds, assists…</span></a>'
-        +'<div class="xtile soon"><b>Trades &amp; signings</b><span>Next in the build</span></div>'
+        +'<a class="xtile" href="#standings" data-sub-go="leaders"><b>Leaders</b><span>Points, rebounds, assists</span></a>'
+        +'<div class="xtile soon"><b>Trades and signings</b><span>Next in the build</span></div>'
         +'<div class="xtile soon"><b>Top recruits</b><span>Next in the build</span></div>'
       +'</div>'
-    +'</div>'
-    +'<p class="legend">Answers come from RIVL\'s data — no AI, nothing leaves the app. Season numbers here are mockup samples.</p></div>';
+    +'</div></div>';
 }
 function runSearch(v){
   XQ=v; var r=document.getElementById('xres'), b=document.getElementById('xbrowse'), c=document.querySelector('.xclr');
-  if(r) r.innerHTML=answer(v); if(b) b.hidden=!!norm(v); if(c) c.hidden=!v;
+  if(r) r.innerHTML=xresults(v); if(b) b.hidden=!!norm(v); if(c) c.hidden=!v;
+}
+
+/* ============================================================
+   PROFILES: every team and every player is one tap away
+   ============================================================ */
+function rosterOf(k){
+  var out=[], seen={};
+  if(BOXES[k]) roster(k).forEach(function(r){ var p=personOf(r.n); var n=p?p.n:r.n; if(!seen[n]){ seen[n]=1; out.push({n:n, p:p, id:p?p.id:r.id, pos:r.p, j:r.j}); } });
+  PEOPLE.forEach(function(p){ if(p.t===k && !seen[p.n]){ seen[p.n]=1; out.push({n:p.n,p:p,id:p.id,pos:p.pos,j:p.j}); } });
+  MYPLAYERS.forEach(function(m){ if(m.t===k && !seen[m.n]){ seen[m.n]=1; out.push({n:m.n,p:personOf(m.n),id:m.id,pos:'',j:''}); } });
+  return out;
+}
+function heroFor(color, inner){
+  var dk='color-mix(in srgb,'+color+' 55%,#000)';
+  return '<section class="ghero" style="--ha:'+dk+';--aw:'+color+'">'
+    +'<span class="w"><i></i><i></i><i></i><i></i></span><span class="dots"></span><span class="veil"></span>'
+    +'<div class="in gut"><div class="gnav"><a class="disc g" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><span style="flex:1"></span>'
+    +'<span class="disc g" aria-label="Follow">'+svg(IC.star)+'</span></div>'+inner+'</div></section>';
+}
+var TTAB='overview';
+function viewTeam(k, tab){
+  var t=T[k]; if(!t) return viewFollowing();
+  TTAB=tab||'overview';
+  var hero=heroFor(t.c,'<div class="phd">'+crest(k,72,true)+'<div><em>'+esc(LNAME[leagueOf(k)])+'</em><h1>'+esc(t.full)+'</h1><p>'+esc(standLine(k))+'</p></div></div>');
+  var tabs=[['overview','Overview'],['schedule','Schedule'],['roster','Roster'],['stats','Stats']];
+  return hero+'<div class="sheet"><div class="gut"><div class="gtabs ptabs">'+tabs.map(function(x){ return '<button data-ttab="'+x[0]+'" aria-pressed="'+(TTAB===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div></div>'
+    +'<div id="tbody">'+teamBody(k,TTAB)+'</div></div>';
+}
+function teamBody(k,tab){
+  var t=T[k], out='';
+  if(tab==='overview'){
+    var today=gameFor(k,games().filter(enabledG)), next=teamGames(k,addDays(TODAY,1),40,1)[0], last=teamGames(k,addDays(TODAY,-1),40,-1)[0];
+    if(today) out+='<div class="gut sechd tight"><h2 class="sec">Today</h2></div><div class="gut">'+gamePlate([today])+'</div>';
+    else if(next) out+='<div class="gut sechd tight"><h2 class="sec">Next game</h2><span class="more">'+esc(dayWord(next.d))+'</span></div><div class="gut">'+gamePlate([next.g])+'</div>';
+    if(last) out+='<div class="gut sechd"><h2 class="sec">Last game</h2><span class="more">'+esc(dayWord(last.d))+'</span></div><div class="gut">'+gamePlate([last.g])+'</div>';
+    var ros=rosterOf(k).filter(function(r){return r.p;});
+    if(ros.length) out+='<div class="gut sechd"><h2 class="sec">Players</h2><button class="more" data-ttab="roster">Roster ›</button></div><div class="rail">'+ros.map(function(r){ var p=r.p;
+        return '<a class="mp pressable" href="#player/'+slug(p)+'" style="--tc:'+t.c+'"><img class="wmk" src="'+logoUrl(k)+'" alt="" onerror="this.remove()">'+shot(p.id,p.n,t.c,62)+'<b>'+esc(p.n)+'</b><span>'+esc(p.pos)+(p.j!==''?' · #'+p.j:'')+'</span><u>'+p.s.ppg+' pts · '+p.s.rpg+' reb · '+p.s.apg+' ast</u></a>'; }).join('')+'</div>';
+    var inj=INJ.filter(function(x){return x.t===k;});
+    if(inj.length) out+='<div class="gut sechd"><h2 class="sec">Injuries</h2></div><div class="gut">'+inj.map(function(p){return injRow(p,false);}).join('')+'</div>';
+    var nw=NEWS.filter(function(x){return x.t===k;});
+    if(nw.length) out+='<div class="gut sechd"><h2 class="sec">News</h2></div><div class="gut">'+nw.map(function(n){return newsCard(n,NEWS.indexOf(n));}).join('')+'</div>';
+  }
+  if(tab==='schedule'){
+    var past=teamGames(k,addDays(TODAY,-1),60,-1).reverse(), fut=teamGames(k,TODAY,60,1);
+    out+='<div class="gut sechd tight"><h2 class="sec">Coming up</h2></div><div class="gut"><div class="xsched big">'+(fut.length?fut.map(schedRow(k)).join(''):'<p class="legend">No games scheduled yet.</p>')+'</div></div>'
+      +'<div class="gut sechd"><h2 class="sec">Results</h2></div><div class="gut"><div class="xsched big">'+(past.length?past.map(schedRow(k)).join(''):'<p class="legend">No results yet.</p>')+'</div></div>';
+  }
+  if(tab==='roster'){
+    var rs=rosterOf(k);
+    out+='<div class="gut sechd tight"><h2 class="sec">Roster</h2><span class="more">'+rs.length+' shown</span></div><div class="gut"><div class="gp">'+rs.map(function(r){
+        return '<a class="rrow" href="#player/'+encodeURIComponent(r.p?(r.p.k):r.n)+'">'+shot(r.id,r.n,t.c,44)+'<span><b>'+esc(r.n)+'</b><em>'+esc([r.pos,r.j!==''&&r.j!=null?'#'+r.j:''].filter(Boolean).join(' · '))+'</em></span><i class="chev">›</i></a>'; }).join('')+'</div>'
+      +'<p class="legend">In the app the full roster comes from the live feed.</p></div>';
+  }
+  if(tab==='stats'){
+    var s=TEAMSTAT[k]||{};
+    out+='<div class="gut sechd tight"><h2 class="sec">Season</h2></div><div class="gut"><div class="xfacts">'
+      +[['Record',t.rec||'-'],['Standing',standLine(k).replace(/^.*? (are|is) /,'').replace(/\.$/,'')],['Points per game',s.ppg?s.ppg.toFixed(1):'-'],['Points allowed',s.opp?s.opp.toFixed(1):'-']].map(function(f){
+        return '<div><span>'+esc(f[0])+'</span><b>'+esc(String(f[1]))+'</b></div>'; }).join('')+'</div>'
+      +'<button class="morebtn pressable" data-compare-team="'+k+'">Compare '+esc(t.name)+' with another team<span>›</span></button></div>';
+  }
+  return out;
+}
+function viewPlayer(key){
+  var p=personOf(decodeURIComponent(key||''));
+  var stub=null;
+  if(!p){ var nm=decodeURIComponent(key||''), m=MYPLAYERS.filter(function(x){return x.n===nm;})[0];
+    var bx=null; Object.keys(BOXES).forEach(function(k){ roster(k).forEach(function(r){ if(r.n===nm) bx={r:r,t:k}; }); });
+    stub = m ? {n:m.n,t:m.t,id:m.id} : bx ? {n:bx.r.n,t:bx.t,id:bx.r.id,pos:bx.r.p,j:bx.r.j} : null;
+    if(!stub) return viewFollowing(); }
+  var who=p||stub, t=T[who.t];
+  var hero=heroFor(t.c,'<div class="phd pl">'+shot(who.id,who.n,t.c,96)+'<div><em><a href="#team/'+who.t+'">'+esc(t.full)+'</a>'+(who.pos?' · '+esc(who.pos):'')+(who.j!==''&&who.j!=null?' · #'+who.j:'')+'</em><h1>'+esc(who.n)+'</h1></div></div>');
+  var body='';
+  if(p){
+    var s=p.s;
+    body+='<div class="gut" style="padding-top:18px"><div class="ptrio">'
+      +[[s.ppg,'PTS'],[s.rpg,'REB'],[s.apg,'AST'],[s.fg,'FG%']].map(function(x){return '<div><b class="num">'+x[0]+'</b><span>'+x[1]+'</span></div>';}).join('')+'</div></div>';
+    body+='<div class="gut sechd"><h2 class="sec">Bio</h2></div><div class="gut"><div class="xfacts">'
+      +[['Age',age(p.dob)!=null?age(p.dob)+' (born '+MON[p.dob[1]-1].slice(0,3)+' '+p.dob[2]+', '+p.dob[0]+')':'Not listed'],['Height',p.ht],['Hometown',p.from],['High school',p.school],
+        ['College',p.college],['Draft',p.draft?p.draft.y+', Round '+p.draft.r+', Pick '+p.draft.p:(p.undrafted?'Undrafted, '+p.undrafted:'Not yet')]]
+        .concat(p.spouse?[['Spouse',p.spouse+' (married '+p.wed+')']]:[]).map(function(f){ return '<div><span>'+esc(f[0])+'</span><b>'+esc(String(f[1]))+'</b></div>'; }).join('')+'</div>'
+      +(p.trade?'<p class="xnote">'+esc(p.trade)+'</p>':'')+(p.note?'<p class="xnote">'+esc(p.note)+'</p>':'')+'</div>';
+    body+='<div class="gut sechd"><h2 class="sec">This season</h2><span class="ptag">Sample numbers</span></div><div class="gut"><div class="gp">'
+      +[['Minutes',s.mpg],['Points',s.ppg],['Rebounds',s.rpg],['Assists',s.apg],['Steals',s.spg],['Blocks',s.bpg],['Field goal %',s.fg],['3-point %',s.tp],['True shooting %',s.ts]].map(function(r){
+        return '<div class="prow"><span>'+r[0]+'</span><b class="num">'+r[1]+'</b></div>'; }).join('')+'</div></div>';
+    body+='<div class="gut"><button class="morebtn pressable" data-try-go="'+esc(p.n.split(' ')[0]+' vs ')+'">Compare '+esc(p.n.split(' ')[0])+' with someone<span>›</span></button></div>';
+  } else {
+    body+='<div class="gut" style="padding-top:18px"><div class="empty"><b>Full profile comes from the live feed</b><p>Bio, season stats, game log and career. Not loaded in this mockup.</p></div></div>';
+  }
+  return hero+'<div class="sheet">'+body+'</div>';
+}
+
+/* ---------- colour floor: a mark must stand out from the page ---------- */
+function toHex(h,s,l){ var c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2, r=0,g=0,b=0;
+  if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;}
+  return '#'+[r,g,b].map(function(v){ return ('0'+Math.round((v+m)*255).toString(16)).slice(-2); }).join(''); }
+function markColor(c){
+  var light=document.documentElement.getAttribute('data-theme')==='light', h=hsl(c);
+  if(!light && h[2]<0.38) return toHex(h[0], Math.max(h[1],.55), 0.46);
+  if(light && h[2]>0.72) return toHex(h[0], h[1], 0.6);
+  return c;
 }
 
 /* ---------- in-app sheets: stories, highlights, the calendar ---------- */
@@ -1759,7 +2058,7 @@ function totals(k){
   roster(k).forEach(function(p){ for(var i=0;i<10;i++){ if(i>=1&&i<=3){ var m=mk(p.s[i]); t[i][0]+=m[0]; t[i][1]+=m[1]; } else t[i]+=+p.s[i]; } });
   return t;
 }
-function pct(m){ return m[1]? (100*m[0]/m[1]).toFixed(1)+'%' : '—'; }
+function pct(m){ return m[1]? (100*m[0]/m[1]).toFixed(1)+'%' : '-'; }
 function teamCmp(){
   var A=totals(LIVE.away), H=totals(LIVE.home);
   function row(lbl,a,b,av,bv,lowGood){ var s=av+bv||1; return {l:lbl,a:a,b:b,aw:Math.round(100*av/s),bw:Math.round(100*bv/s),aWin:lowGood?av<bv:av>bv,tie:av===bv}; }
@@ -1840,8 +2139,7 @@ function genShots(){
 function shotFilter(){
   if(!SHOTS) SHOTS=genShots();
   return SHOTS.filter(function(s){
-    var byP = GF.sps.length ? GF.sps.indexOf(s.side+'|'+s.pl)>-1 : (GF.steam==='all'||s.side===GF.steam);
-    return byP && (!GF.sq||s.q===GF.sq);
+    return !GF.sq||s.q===GF.sq;
   });
 }
 function shotsSvg(list, pc){
@@ -1886,9 +2184,9 @@ function viewGame(tab){
       +'<div class="strip">'+strip+'</div><p class="gleague">NBA · Chase Center, San Francisco</p>'
       +'<div class="gsc"><span class="sc num '+(LIVE.as>LIVE.hs?'ld':'tr')+'">'+LIVE.as+'</span>'
         +'<span class="mid">'+stp(LIVE.clock,true)+'</span><span class="sc num '+(LIVE.hs>LIVE.as?'ld':'tr')+'">'+LIVE.hs+'</span>'
-        +'<span class="side">'+crest(LIVE.away,52,true)+'<b>'+esc(a.name)+'</b><em>'+esc(a.rec)+'</em></span><span></span>'
-        +'<span class="side">'+crest(LIVE.home,52,true)+'<b>'+esc(h.name)+'</b><em>'+esc(h.rec)+'</em></span></div>'
-      +'<div class="wp"><div class="bar"><i data-w="21" style="background:'+pc.away+'"></i><i data-w="79" style="background:'+pc.home+'"></i></div>'
+        +'<a class="side" href="#team/'+LIVE.away+'">'+crest(LIVE.away,52,true)+'<b>'+esc(a.name)+'</b><em>'+esc(a.rec)+'</em></a><span></span>'
+        +'<a class="side" href="#team/'+LIVE.home+'">'+crest(LIVE.home,52,true)+'<b>'+esc(h.name)+'</b><em>'+esc(h.rec)+'</em></a></div>'
+      +'<div class="wp"><div class="bar"><i data-w="21" style="background:'+markColor(pc.away)+'"></i><i data-w="79" style="background:'+markColor(pc.home)+'"></i></div>'
       +'<div class="cap"><span>'+esc(a.ab)+' 21%</span><span>Prediction</span><span>'+esc(h.ab)+' 79%</span></div></div>'
     +'</div></section><div class="sheet">'
     +'<div class="minibar gut" style="'+cvars+'" id="mini"><span class="w"></span><span class="dots"></span>'
@@ -1915,13 +2213,13 @@ function gameBody(tab,pc){
       +'<div class="gut sechd"><h2 class="sec">Game leaders</h2></div><div class="gut"><div class="plate" style="padding:0 14px">'
       +'<div class="glhd"><span class="s">'+crest(LIVE.away,22)+'<b>'+esc(a.ab)+'</b></span><span></span><span class="s r"><b>'+esc(h.ab)+'</b>'+crest(LIVE.home,22)+'</span></div>'
       +LEAD.map(function(r){ var A=r.a, H=r.h, aw=A.v>H.v;
-          return '<div class="glrow"><div class="p">'+shot(A.id,A.n,T[A.t].c,44)+'<span class="t"><b class="num'+(aw?'':' lo')+'">'+A.v+'</b><em>'+esc(A.n)+'</em></span></div>'
-            +'<span class="lab">'+esc(r.k)+'</span><div class="p r"><span class="t"><b class="num'+(aw?' lo':'')+'">'+H.v+'</b><em>'+esc(H.n)+'</em></span>'+shot(H.id,H.n,T[H.t].c,44)+'</div></div>';
+          return '<div class="glrow"><a class="p" href="'+pHref(A.n)+'">'+shot(A.id,A.n,T[A.t].c,44)+'<span class="t"><b class="num'+(aw?'':' lo')+'">'+A.v+'</b><em>'+esc(A.n)+'</em></span></a>'
+            +'<span class="lab">'+esc(r.k)+'</span><a class="p r" href="'+pHref(H.n)+'"><span class="t"><b class="num'+(aw?' lo':'')+'">'+H.v+'</b><em>'+esc(H.n)+'</em></span>'+shot(H.id,H.n,T[H.t].c,44)+'</a></div>';
         }).join('')+'</div></div>'
       +'<div class="gut sechd"><h2 class="sec">Team stats</h2></div><div class="gut"><div class="plate">'+CMP.map(function(r){
           var aw=r.tie?'w':(r.aWin?'w':'l'), hw=r.tie?'w':(r.aWin?'l':'w');
           return '<div class="cmp"><div class="tp"><b class="num '+aw+'">'+r.a+'</b><span>'+r.l+'</span><b class="num '+hw+'">'+r.b+'</b></div>'
-            +'<div class="tk"><div><i data-w="'+r.aw+'" style="background:'+pc.away+'"></i></div><div><i data-w="'+r.bw+'" style="background:'+pc.home+'"></i></div></div></div>';
+            +'<div class="tk"><div><i data-w="'+r.aw+'" style="background:'+markColor(pc.away)+'"></i></div><div><i data-w="'+r.bw+'" style="background:'+markColor(pc.home)+'"></i></div></div></div>';
         }).join('')+'</div></div>'
       +'<div class="gut sechd"><h2 class="sec">Injury report</h2></div><div class="gut">'+GINJ.map(function(p){return injRow(p,true);}).join('')
         +'<p class="legend" style="margin-top:10px">'+esc(h.full)+': no injuries listed.</p></div>'
@@ -1931,7 +2229,7 @@ function gameBody(tab,pc){
   }
   if(tab==='box'){
     var k=LIVE[GF.box], ros=BOXES[k], tot=totals(k);
-    var name=function(p){ return '<tr><td>'+esc(p.n)+' <small>'+esc(p.p)+'</small></td></tr>'; };
+    var name=function(p){ return '<tr><td><a href="'+pHref(p.n)+'">'+esc(p.n)+'</a> <small>'+esc(p.p)+'</small></td></tr>'; };
     var nums=function(p){ return '<tr>'+p.s.map(function(v){return '<td>'+esc(v)+'</td>';}).join('')+'</tr>'; };
     var trow=[tot[0],tot[1].join('-'),tot[2].join('-'),tot[3].join('-'),tot[4],tot[5],tot[6],tot[7],tot[8],tot[9],''];
     body='<div class="gut" style="padding-top:16px">'+teamSwitch('box',false)+'</div>'
@@ -1943,7 +2241,7 @@ function gameBody(tab,pc){
         +ros.starters.map(nums).join('')
         +'<tr class="bnd"><th colspan="'+BCOLS.length+'">&nbsp;</th></tr>'+ros.bench.map(nums).join('')
         +'<tr class="tt">'+trow.map(function(v){return '<td>'+esc(v)+'</td>';}).join('')+'</tr></table></div></div>'
-      +'<p class="gut legend">Drag the numbers sideways — the names stay put.</p>';
+      +'<p class="gut legend">Drag the numbers sideways. The names stay put.</p>';
   }
   if(tab==='play'){
     var plist=PLAYS.filter(function(p){
@@ -1966,34 +2264,15 @@ function gameBody(tab,pc){
       }).join('')+'</div></div>';
   }
   if(tab==='shot'){
+    /* the whole game on one court; one connected control for the quarter */
     var list=shotFilter();
-    var sides = GF.steam==='all' ? ['away','home'] : [GF.steam];
-    /* every player who has taken a shot, all visible at once, grouped by
-       team; tap as many as you like — across teams too (Dončić vs Curry) */
-    var picker='<div class="gut ppick">'+sides.map(function(side){
-      var tk=LIVE[side], col=side==='away'?pc.away:pc.home;
-      return '<div class="pgrp"><div class="pgh">'+crest(tk,18,true)+'<b>'+esc(T[tk].name)+'</b></div><div class="pgrid">'
-        +roster(tk).filter(function(p){return mk(p.s[1])[1]>0;}).map(function(p){
-          var key=side+'|'+p.n, on=GF.sps.indexOf(key)>-1;
-          return '<button data-pick="'+esc(key)+'" aria-pressed="'+on+'" style="--pc:'+col+'">'
-            +'<i class="jn">'+esc(String(p.j))+'</i><i class="ck">✓</i>'+shot(p.id,p.n,T[tk].c,50)+'<b>'+esc(p.n)+'</b></button>';
-        }).join('')+'</div></div>';
-    }).join('')
-    +(GF.sps.length?'<button class="pclear" data-pick="">Clear players</button>':'')+'</div>';
-    var qs=[[0,'All'],[1,'1st'],[2,'2nd'],[3,'3rd'],[4,'4th']];
-    var summary;
-    if(GF.sps.length){
-      summary=GF.sps.map(function(k){ var side=k.split('|')[0], n=k.split('|').slice(1).join('|');
-        return '<span style="color:'+(side==='away'?pc.away:pc.home)+'">'+esc(n)+' · '+fgLine(list.filter(function(s){return s.side+'|'+s.pl===k;}))+'</span>';
-      }).join('');
-    } else {
-      summary=sides.map(function(side){ return '<span style="color:'+(side==='away'?pc.away:pc.home)+'">'+esc(T[LIVE[side]].ab)+' · '+fgLine(list.filter(function(s){return s.side===side;}))+'</span>'; }).join('');
-    }
-    body='<div class="gut" style="padding-top:16px">'+teamSwitch('steam',true)+'</div>'+picker
-      +'<div class="gut"><div class="ctl">'+qs.map(function(q){ return '<button data-gf="sq:'+q[0]+'" aria-pressed="'+(GF.sq===q[0])+'">'+q[1]+'</button>'; }).join('')+'</div></div>'
-      +'<div class="gut shsum'+(GF.sps.length>1||GF.steam==='all'?' multi':'')+'">'+summary+'</div>'
-      +'<div class="gut"><div class="court">'+shotsSvg(list,pc)+'<img class="mid" src="'+logoUrl(LIVE.home)+'" alt="" onerror="this.remove()"></div></div>'
-      +'<div class="lg" style="padding-top:14px"><span><i style="background:var(--t2)"></i>Made</span><span><b style="font-size:13px;line-height:1;font-weight:400">✕</b> Missed</span></div>';
+    var qs=[[0,'All'],[1,'Q1'],[2,'Q2'],[3,'Q3'],[4,'Q4']];
+    function line(side){ var l=list.filter(function(s){return s.side===side;}), m=l.filter(function(s){return s.made;}).length; return m+'–'+l.length; }
+    function key(col){ return '<span class="kk"><i style="background:'+col+'"></i>Made</span><span class="kk"><em style="color:'+col+'">✕</em>Missed</span>'; }
+    body='<div class="gut" style="padding-top:18px"><div class="court">'+shotsSvg(list,pc)+'<img class="mid" src="'+logoUrl(LIVE.home)+'" alt="" onerror="this.remove()"></div></div>'
+      +'<div class="gut shleg"><div>'+'<b>'+crest(LIVE.away,20,true)+esc(a.ab)+' '+line('away')+'</b><span>'+key(pc.away)+'</span></div>'
+        +'<div class="r"><b>'+esc(h.ab)+' '+line('home')+crest(LIVE.home,20,true)+'</b><span>'+key(pc.home)+'</span></div></div>'
+      +'<div class="gut"><div class="qseg">'+qs.map(function(q){ return '<button data-gf="sq:'+q[0]+'" aria-pressed="'+(GF.sq===q[0])+'">'+q[1]+'</button>'; }).join('')+'</div></div>';
   }
   return body;
 }
@@ -2040,6 +2319,8 @@ function render(){
   var parts=(location.hash||'#following').slice(1).split('/'), main=document.getElementById('main'), r=parts[0]||'following';
   if(r==='following' && parts[1]){ DEMO=parts[1]==='m'?'m':+parts[1]; applyDemo(); }
   if(r==='game'){ main.innerHTML=viewGame(parts[1]); renderTabs(''); }
+  else if(r==='team'){ main.innerHTML=viewTeam(parts[1],parts[2]); renderTabs(''); }
+  else if(r==='player'){ main.innerHTML=viewPlayer(parts[1]); renderTabs(''); }
   else if(r==='scores'){ main.innerHTML=viewScores(); renderTabs('scores'); }
   else if(r==='standings'){ main.innerHTML=viewStandings(); renderTabs('standings'); }
   else if(r==='explore'){ main.innerHTML=viewExplore(); renderTabs('explore'); }
@@ -2101,6 +2382,14 @@ document.addEventListener('click',function(e){
       return; }
     if(act==='xclear'){ e.preventDefault(); var inp=document.getElementById('xq'); inp.value=''; runSearch(''); inp.focus(); return; }
   }
+  var tt=e.target.closest('[data-ttab]');
+  if(tt){ var tk=(location.hash.split('/')[1]); TTAB=tt.getAttribute('data-ttab'); var tb=document.getElementById('tbody');
+    if(tb){ tb.innerHTML=teamBody(tk,TTAB); document.querySelectorAll('.ptabs [data-ttab]').forEach(function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-ttab')===TTAB)); });
+      history.replaceState(null,'','#team/'+tk+(TTAB==='overview'?'':'/'+TTAB)); var hero=document.querySelector('.ghero'), stuck=hero?hero.offsetHeight-52:0; if(window.scrollY>stuck) window.scrollTo(0,stuck); }
+    return; }
+  var tg=e.target.closest('[data-try-go],[data-compare-team]');
+  if(tg){ XQ=tg.getAttribute('data-try-go') || (T[tg.getAttribute('data-compare-team')].name+' vs '); location.hash='#explore';
+    setTimeout(function(){ var i=document.getElementById('xq'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length); } },60); return; }
   var tr=e.target.closest('[data-try]');
   if(tr){ var inp2=document.getElementById('xq'); if(inp2){ inp2.value=tr.getAttribute('data-try'); runSearch(inp2.value); window.scrollTo(0,0); } return; }
   var sg=e.target.closest('[data-sub-go]'); if(sg){ STAND.sub=sg.getAttribute('data-sub-go'); }
