@@ -2321,3 +2321,9 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .hero .tm .logo::before{display:block;content:"";position:absolute;inset:-14%;border-radius:50%;z-index:-1;pointer-events:none;
   background:radial-gradient(closest-side,rgba(255,255,255,.2),rgba(255,255,255,.07) 60%,rgba(255,255,255,0))}
 .hero .tm .logo img{filter:drop-shadow(0 0 1px rgba(255,255,255,.55)) drop-shadow(0 4px 6px rgba(0,0,0,.4)) drop-shadow(0 14px 20px rgba(0,0,0,.35))}
+/* ===== v127: the leader's score in the live strip wears its team's colour =====
+   Both scores were the same grey type, the leader a shade darker. The leading score now sits on a small badge in that
+   team's colour (a near-black team takes its second colour, as everywhere else), with type that reads on it; the trailing
+   score stays plain. Only one side is ever coloured, so two teams in the same colour never clash. A tie is plain. */
+.livebar .tm .sc{display:inline-grid;place-items:center;min-width:26px;height:22px;padding:0 5px;border-radius:7px;text-align:center;transition:background .3s var(--ease),color .3s var(--ease)}
+.livebar .tm .sc.on{background:var(--tg,var(--ink));color:var(--tgi,var(--bg));box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 1px rgba(255,255,255,.16),0 1px 2px rgba(0,0,0,.3)}
