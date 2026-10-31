@@ -1,0 +1,112 @@
+{
+ "boys2027": {
+  "bytes": 616617,
+  "hasNext": false,
+  "head": "<!DOCTYPE html><html lang=\"en\" data-pr-palette=\"oxford\" data-pr-paper=\"neutral\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/595/635/635595.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/498/590/590498.jpeg\"/><link rel=\"preload\" as=\"image\" ",
+  "count": 48,
+  "sample": [
+   {
+    "n": "Lewis Uvwo",
+    "rank": null,
+    "slug": "/basketball/recruits/lewis-uvwo-2027",
+    "ctx": "C · '27 · 6'11\" · 225 <a style=\"font-size:13px;color:var"
+   },
+   {
+    "n": "CJ Rosser",
+    "rank": null,
+    "slug": "/basketball/recruits/c-j-rosser-2027",
+    "ctx": "PF · '27 · 6'10\" · 200 <a style=\"font-size:13px;color:va"
+   },
+   {
+    "n": "Marcus Spears Jr.",
+    "rank": null,
+    "slug": "/basketball/recruits/marcus-spears-jr-2027",
+    "ctx": "PF · '27 · 6'9\" · 210 <a style=\"font-size:13px;color:var"
+   }
+  ]
+ },
+ "boys2028": {
+  "bytes": 597591,
+  "hasNext": false,
+  "head": "<!DOCTYPE html><html lang=\"en\" data-pr-palette=\"oxford\" data-pr-paper=\"neutral\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/675/666/666675.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/666/684/684666.png\"/><link rel=\"preload\" as=\"image\" h",
+  "count": 50,
+  "sample": [
+   {
+    "n": "Yann Kamagate",
+    "rank": null,
+    "slug": "/basketball/recruits/yann-kamagate-2028",
+    "ctx": "C · '28 · 7'0\" · 230 <a style=\"font-size:13px;color:var("
+   },
+   {
+    "n": "Xavier Young",
+    "rank": null,
+    "slug": "/basketball/recruits/xavier-young-2028",
+    "ctx": "C · '28 · 6'10\" · 210 <a style=\"font-size:13px;color:var"
+   },
+   {
+    "n": "Bamba Touray",
+    "rank": null,
+    "slug": "/basketball/recruits/bamba-touray-2028",
+    "ctx": "C · '28 · 7'0\" · 210 <a style=\"font-size:13px;color:var("
+   }
+  ]
+ },
+ "boys2029": {
+  "error": "Error: https://prepranks.com/basketball/recruits/year/2029 404"
+ },
+ "girls2027": {
+  "bytes": 613560,
+  "hasNext": false,
+  "head": "<!DOCTYPE html><html lang=\"en\" data-pr-palette=\"oxford\" data-pr-paper=\"neutral\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/66/363/363066.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/577/320/320577.jpeg\"/><link rel=\"preload\" as=\"image\" h",
+  "count": 49,
+  "sample": [
+   {
+    "n": "Jordyn Palmer",
+    "rank": null,
+    "slug": "/womens-basketball/recruits/jordyn-palmer-2027",
+    "ctx": "SF · '27 · 6'1\" <a style=\"font-size:13px;color:var(--pr-ink);text-decoration:none;"
+   },
+   {
+    "n": "GG Banks",
+    "rank": null,
+    "slug": "/womens-basketball/recruits/jezelle-gg-banks-2027",
+    "ctx": "CG · '27 · 5'9\" <a style=\"font-size:13px;color:var(--pr-ink);text-decoration:none;"
+   },
+   {
+    "n": "Nation Williams",
+    "rank": null,
+    "slug": "/womens-basketball/recruits/nation-williams-2027",
+    "ctx": "PF · '27 · 6'2\" <a style=\"font-size:13px;color:var(--pr-ink);text-decoration:none;"
+   }
+  ]
+ },
+ "girls2028": {
+  "bytes": 320084,
+  "hasNext": false,
+  "head": "<!DOCTYPE html><html lang=\"en\" data-pr-palette=\"oxford\" data-pr-paper=\"neutral\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/920/514/514920.png\"/><link rel=\"preload\" as=\"image\" href=\"https://on3static.com/uploads/assets/926/514/514926.png\"/><link rel=\"preload\" as=\"image\" h",
+  "count": 25,
+  "sample": [
+   {
+    "n": "Sydney Douglas",
+    "rank": null,
+    "slug": "/womens-basketball/recruits/sydney-douglas-2028",
+    "ctx": "PF · '28 · 6'6\" <a style=\"font-size:13px;color:var(--pr-ink);text-decoration:none;"
+   },
+   {
+    "n": "Ella Peper",
+    "rank": null,
+    "slug": "/womens-basketball/recruits/ella-peper-2028",
+    "ctx": "SF · '28 · 6'4\" <a style=\"font-size:13px;color:var(--pr-ink);text-decoration:none;"
+   },
+   {
+    "n": "Nyajuacni Riak",
+    "rank": null,
+    "slug": "/womens-basketball/recruits/nyajuacni-riak-2028",
+    "ctx": "SF · '28 · 6'2\" <a style=\"font-size:13px;color:var(--pr-ink);text-decoration:none;"
+   }
+  ]
+ },
+ "girls2029": {
+  "error": "Error: https://prepranks.com/womens-basketball/recruits/year/2029 404"
+ }
+}
