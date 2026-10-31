@@ -1286,6 +1286,26 @@ html[data-theme=light] .phero{--pfade:color-mix(in srgb,var(--pc) 35%,#000)}
 .phd .cr,.pid .pcr .cr{animation:lift 7s ease-in-out infinite}
 @keyframes lift{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-4px,0)}}
 @media(prefers-reduced-motion:reduce){.phd .cr,.pid .pcr .cr{animation:none}}
+/* ---- your teams and players: rows ---- */
+.frows{padding:0}
+.frow{position:relative;display:flex;align-items:center;gap:12px;min-height:62px;padding:10px 14px 10px 16px;border-top:1px solid var(--line);color:inherit}
+.frow:first-child{border-top:0}
+.frow[hidden]{display:none}
+.frow .nm{min-width:44%}
+.frow .edge{position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0;background:var(--tc)}
+.frow>.cr{flex:none}
+.frow .nm{flex:1;min-width:0}
+.frow .nm b{display:block;font-size:15.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow .nm small{display:block;font-size:12px;color:var(--t3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow .fs{flex:0 1 auto;min-width:0;display:flex;flex-direction:column;align-items:flex-end;gap:3px;max-width:48%;text-align:right}
+.frow .sl{display:flex;align-items:center;gap:7px}
+.frow .sl b{font-size:15px;font-weight:700;white-space:nowrap}
+.frow .sl b.w{color:var(--t1)}.frow .sl b.l{color:var(--t3)}.frow .sl b.dim{color:var(--t3);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.frow .fs em{font-style:normal;font-size:12px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.frow .fface{position:relative;flex:none}
+.frow .fface .hs{box-shadow:0 3px 8px rgba(0,0,0,.22)}
+.frow .fcr{position:absolute;right:-4px;bottom:-3px;width:20px;height:20px;border-radius:999px;background:var(--L1);display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.ldot{width:7px;height:7px;border-radius:999px;background:#FF375F;box-shadow:0 0 0 0 rgba(255,55,95,.55);animation:pulse 1.8s infinite}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -1654,48 +1674,43 @@ function newsCard(n,i){
 
 /* ---------- FOLLOWING ---------- */
 var OPEN={teams:false};
+/* One row grammar for your teams and your players: who, then one short status.
+   Live first, then today, then the rest. Five show; the rest open in place. */
+var ROWCAP=5;
+function moreRows(id,n){ return n>ROWCAP ? '<button class="morebtn pressable" data-act="more-rows" data-for="'+id+'" data-n="'+n+'">Show all '+n+'<span>'+(n-ROWCAP)+' more</span></button>' : ''; }
 function teamTiles(gs){
   var ks=FOLLOW.filter(inLG).slice().sort(function(a,b){ return cmpTeams(a,b,gs); });
-  var cap=(LG==='all' && !OPEN.teams) ? 4 : ks.length, shown=ks.slice(0,cap), more=ks.length-shown.length;
-  return '<div class="tiles2">'+shown.map(function(k){
-    var t=T[k], g=gameFor(k,gs), now='';
+  return '<div class="gp frows" id="fteams">'+ks.map(function(k,i){
+    var t=T[k], g=gameFor(k,gs), st;
     if(g){
-      var home=g.h===k, opp=home?T[g.a].name:T[g.h].name, pre=home?'vs ':'at ';
-      if(g.st==='live'){ var mine=home?g.hs:g.as, th=home?g.as:g.hs;
-        now='<span class="nw">'+stp(g.clock,true,'sm')+'</span><p><b class="num">'+mine+'–'+th+'</b> '+pre+esc(opp)+'</p>'; }
-      else if(g.st==='fin'){ var m=home?g.hs:g.as, o=home?g.as:g.hs;
-        now='<p class="k">Final</p><p><b>'+(m>o?'W':'L')+' '+m+'–'+o+'</b> '+pre+esc(opp)+'</p>'; }
-      else now='<p class="k">Today</p><p><b>'+esc(g.t)+'</b> '+pre+esc(opp)+'</p>';
-    } else now='<p class="k">Next</p><p>'+esc(NEXTG[k]||'-')+'</p>';
-    return '<a class="tl2 pressable" href="#team/'+k+'" style="--tc:'+t.c+'">'
-      +'<img class="wm" src="'+logoUrl(k)+'" alt="" onerror="this.remove()">'
-      +(ENABLED.length>1?'<span class="lgt">'+esc(LNAME[leagueOf(k)])+'</span>':'')
-      +crest(k,34,true)+'<h4>'+esc(t.full)+'</h4>'
-      +'<div class="tb">'+now+(LASTRES[k]?'<p class="last">Last · '+esc(LASTRES[k])+'</p>':'')+'</div></a>';
-  }).join('')+'</div>'
-  +(more>0?'<button class="morebtn pressable" data-act="open-teams">All '+ks.length+' teams<span>'+more+' more</span></button>':'')
-  +(OPEN.teams && LG==='all' && ks.length>4?'<button class="morebtn pressable" data-act="open-teams">Show fewer</button>':'');
+      var home=g.h===k, o=T[home?g.a:g.h], pre=home?'vs ':'at ';
+      if(g.st==='live'){ var m=home?g.hs:g.as, th=home?g.as:g.hs;
+        st='<span class="sl">'+stp(g.clock,true,'flat sm')+'<b class="num">'+m+'–'+th+'</b></span><em>'+pre+esc(o.name)+'</em>'; }
+      else if(g.st==='fin'){ var m2=home?g.hs:g.as, o2=home?g.as:g.hs;
+        st='<span class="sl"><b class="'+(m2>o2?'w':'l')+'">'+(m2>o2?'W':'L')+' '+m2+'–'+o2+'</b></span><em>Final · '+pre+esc(o.name)+'</em>'; }
+      else st='<span class="sl"><b>'+esc(g.t)+'</b></span><em>Tonight · '+pre+esc(o.name)+'</em>';
+    } else st='<span class="sl"><b class="dim">Next</b></span><em>'+esc(NEXTG[k]||'Not scheduled')+'</em>';
+    return '<a class="frow pressable" href="#team/'+k+'" style="--tc:'+markColor(t.c)+'"'+(i>=ROWCAP?' hidden data-x="1"':'')+'><i class="edge"></i>'
+      +crest(k,34,true)+'<span class="nm"><b>'+esc(t.full)+'</b>'+(ENABLED.length>1?'<small>'+esc(LNAME[leagueOf(k)])+'</small>':'')+'</span>'
+      +'<span class="fs">'+st+'</span></a>';
+  }).join('')+'</div>'+moreRows('fteams',ks.length);
 }
-/* every player is rendered; past the first eight they wait hidden, and the
-   +N tile reveals them where you are — the strip never jumps back */
 function playerStrip(gs){
   var ps=MYPLAYERS.filter(function(p){return inLG(p.t);}).slice().sort(function(a,b){
     var g1=gameFor(a.t,gs), g2=gameFor(b.t,gs);
     if(g1 && g1===g2) return MYPLAYERS.indexOf(a)-MYPLAYERS.indexOf(b);
     return cmpTeams(a.t,b.t,gs) || MYPLAYERS.indexOf(a)-MYPLAYERS.indexOf(b); });
-  var more=Math.max(0,ps.length-8);
-  return '<div class="rail" id="prail">'+ps.map(function(p,i){
-      var t=T[p.t], g=gameFor(p.t,gs), top='', foot;
-      if(g&&g.st==='live'){ top=stp(g.clock,true,'sm'); foot=esc(p.ln); }
-      else if(g&&g.st==='pre') foot='<b>Today</b> · '+esc(g.t);
-      else if(g&&g.st==='fin') foot='<b>Final</b>'+(p.ln?' · '+esc(p.ln):'');
-      else foot=esc(NEXTG[p.t]||'No game today');
-      var pp=personOf(p.n);
-      return pcard({n:p.n,id:p.id,t:p.t,href:pHref(p.n),top:top,foot:foot,hidden:i>=8,
-        sub:(pp&&pp.pos?pp.pos+(pp.j!==''?' · #'+pp.j:''):t.ab)+(ENABLED.length>1?' · '+LNAME[leagueOf(p.t)]:'')});
-    }).join('')
-    +(more>0?'<button class="mcard pmore pressable" data-act="more-players"><b>+'+more+'</b><span>See all '+ps.length+'</span></button>':'')
-    +'</div>';
+  return '<div class="gut"><div class="gp frows" id="fplayers">'+ps.map(function(p,i){
+    var t=T[p.t], g=gameFor(p.t,gs), pp=personOf(p.n), st;
+    if(g&&g.st==='live') st='<span class="sl"><i class="ldot"></i><b>'+esc(p.ln||'In the game')+'</b></span><em>'+esc(g.clock)+'</em>';
+    else if(g&&g.st==='pre') st='<span class="sl"><b>'+esc(g.t)+'</b></span><em>Tonight</em>';
+    else if(g&&g.st==='fin') st='<span class="sl"><b>'+esc(p.ln||'Final')+'</b></span><em>Final</em>';
+    else st='<span class="sl"><b class="dim">Next</b></span><em>'+esc(NEXTG[p.t]||'Not scheduled')+'</em>';
+    return '<a class="frow pressable" href="'+pHref(p.n)+'"'+(i>=ROWCAP?' hidden data-x="1"':'')+'>'
+      +'<span class="fface">'+shot(p.id,p.n,cardTone(t.c),42)+'<span class="fcr">'+crest(p.t,16,true)+'</span></span>'
+      +'<span class="nm"><b>'+esc(p.n)+'</b><small>'+esc(t.ab+(pp&&pp.pos?' · '+pp.pos:'')+(ENABLED.length>1?' · '+LNAME[leagueOf(p.t)]:''))+'</small></span>'
+      +'<span class="fs">'+st+'</span></a>';
+  }).join('')+'</div>'+moreRows('fplayers',ps.length)+'</div>';
 }
 function viewFollowing(){
   var gs=games().filter(enabledG);
@@ -2987,6 +3002,9 @@ document.addEventListener('click',function(e){
     if(act==='clip'){ e.preventDefault(); var c=HL[+a.getAttribute('data-i')]; if(document.getElementById('sheet').hidden) openSheet(videoHtml(c),'full'); else document.querySelector('#sheet .panel').innerHTML=videoHtml(c); return; }
     if(act==='fold'){ var open=a.getAttribute('aria-expanded')==='true'; a.setAttribute('aria-expanded',String(!open)); a.nextElementSibling.hidden=open; return; }
     if(act==='open-teams'){ OPEN.teams=!OPEN.teams; keepScroll(); return; }
+    if(act==='more-rows'){ e.preventDefault(); var box=document.getElementById(a.getAttribute('data-for')), op=a.getAttribute('aria-expanded')==='true';
+      box.querySelectorAll('[data-x]').forEach(function(x){ x.hidden=op; }); a.setAttribute('aria-expanded',String(!op));
+      a.innerHTML = op ? 'Show all '+a.getAttribute('data-n')+'<span>'+(+a.getAttribute('data-n')-ROWCAP)+' more</span>' : 'Show fewer<span></span>'; return; }
     if(act==='more-players'){ e.preventDefault(); document.querySelectorAll('#prail .mcard[hidden]').forEach(function(x){x.hidden=false;}); a.remove(); return; }
     if(act==='more-today'){ e.preventDefault(); var gp=document.getElementById('todaygp'), open=a.getAttribute('aria-expanded')==='true';
       gp.querySelectorAll('.xtra').forEach(function(x){x.hidden=open;});
