@@ -2351,8 +2351,10 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
    cut by the same rounded corners, so the colour shows through the corners and nothing else can. There is no copy of the
    hero, no mask, and nothing is moved by script while you scroll. */
 html.gxon body::before{display:none}
-.gxpage{position:fixed;inset:0;z-index:1;overflow:hidden;background:var(--bg);--gxbar:calc(52px + env(safe-area-inset-top,0px))}
-.gx{position:absolute;top:0;left:0;right:0;z-index:0;overflow:hidden;isolation:isolate;color:#fff;--mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
+.gxpage{position:fixed;inset:0;z-index:1;overflow:hidden;background:var(--bg);--gxbar:calc(52px + env(safe-area-inset-top,0px));--gxh:calc(var(--gxbar) + 268px)}
+.gxpage.nowp{--gxh:calc(var(--gxbar) + 218px)}
+/* the hero's height is fixed in CSS (not measured), so the sheet below it rests in the same place on every phone */
+.gx{position:absolute;top:0;left:0;right:0;height:var(--gxh);z-index:0;overflow:hidden;isolation:isolate;color:#fff;--mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
 .gx .w{position:absolute;inset:-2px;pointer-events:none;z-index:-2;overflow:hidden;
   background:linear-gradient(101deg,color-mix(in srgb,var(--aw) 42%,#04050a) 0%,#06070c var(--split,50%),color-mix(in srgb,var(--ha) 42%,#04050a) 100%);transition:background 1.2s}
 .gx .w>i{position:absolute;border-radius:50%;filter:blur(52px);will-change:transform;transition:scale 1.4s cubic-bezier(.2,.8,.2,1)}
@@ -2379,9 +2381,9 @@ html.gxon body::before{display:none}
 /* the hero's words: v7's sizes */
 .gxin{position:relative;padding:calc(var(--gxbar) - 8px) var(--gut-r) 30px var(--gut);transform-origin:50% 0;will-change:opacity,transform}
 .gxin,.gxin *{text-shadow:0 1px 10px rgba(0,0,0,.3);color:#fff}
-.gxleague{margin:14px 0 0;text-align:center;font-size:11.5px;font-weight:600;opacity:.72}
+.gxleague{margin:14px 0 0;text-align:center;font-size:11.5px;font-weight:600;opacity:.72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gxsc3{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin-top:6px}
-.gxsc{font-size:56px;font-weight:600;letter-spacing:-.03em;text-align:center;line-height:1;font-variant-numeric:tabular-nums}
+.gxsc{font-size:56px;font-weight:600;letter-spacing:-.03em;text-align:center;line-height:1;min-height:56px;font-variant-numeric:tabular-nums}
 .gxsc.ld{opacity:1;font-weight:600}
 .gxsc.tr{opacity:.5;font-weight:500}
 .gxmid{text-align:center;padding:0 4px}
@@ -2392,7 +2394,7 @@ html.gxon body::before{display:none}
 .gxside{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:-6px;text-decoration:none}
 .gxlg{display:block;width:52px;height:52px}
 .gxlg img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 4px 12px rgba(0,0,0,.45))}
-.gxside b{font-size:14.5px;font-weight:600;letter-spacing:-.01em;margin-top:2px}
+.gxside b{font-size:14.5px;font-weight:600;letter-spacing:-.01em;margin-top:2px;white-space:nowrap;max-width:44vw;overflow:hidden;text-overflow:ellipsis}
 .gxside em{font-style:normal;font-size:11.5px;font-weight:600;opacity:.72}
 .gxwp{margin-top:20px}
 .gxwp .bar{height:7px;display:flex;gap:3px}
@@ -2425,11 +2427,11 @@ html.gxon body::before{display:none}
 .gxmn .gxst{background:var(--surf-2);border-color:var(--line-2);color:var(--ink)!important;-webkit-backdrop-filter:none;backdrop-filter:none;font-size:12.5px;padding:5px 10px 5px 9px;gap:5px}
 .gxmn .gxst.on i{width:6px;height:6px}
 /* the scrolling box under the bar, cut to a rounded top; the sheet rides up inside it */
-.gxscroll{position:absolute;top:var(--gxbar);left:0;right:0;bottom:0;z-index:2;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+.gxscroll{position:absolute;top:var(--gxbar);left:0;right:0;bottom:0;z-index:2;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;overflow-anchor:none;-webkit-overflow-scrolling:touch;scrollbar-width:none;
   clip-path:inset(0 0 0 0 round 22px 22px 0 0)}
 .gxscroll::-webkit-scrollbar{display:none}
-.gxspace{height:var(--gxsp,300px)}
-.gxsheet{position:relative;background:transparent;min-height:100%;padding-bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 24px)}
+.gxspace{height:calc(var(--gxh) - var(--gxbar) - 22px)}
+.gxsheet{position:relative;background:var(--bg);border-radius:22px 22px 0 0;min-height:100%;padding-bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 24px)}
 .gxtabw{position:sticky;top:0;z-index:10;background:var(--bg);border-radius:22px 22px 0 0;padding:4px var(--gut-r) 0 var(--gut)}
 #gbody{background:var(--bg);min-height:100vh;display:flow-root;padding-top:8px}
 .gxtabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border-bottom:1px solid var(--line)}

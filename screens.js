@@ -441,9 +441,9 @@
      to a rounded top, so the sheet stops under the bar and the colour shows through its corners; nothing needs a copy of the
      hero or a mask, and nothing is moved by script while you scroll. */
   function gxFit() {
-    const page = document.getElementById('gpage'), hero = document.getElementById('gxhero'), bar = document.getElementById('gxbar'); if (!page || !hero || !bar) return;
-    const sp = Math.max(0, hero.offsetHeight - bar.offsetHeight - 22); page.style.setProperty('--gxsp', sp + 'px'); gxFit.span = Math.max(80, sp);
-    if (window.ResizeObserver && gxFit.ro !== hero) { if (gxFit.obs) gxFit.obs.disconnect(); gxFit.obs = new ResizeObserver(() => gxFit()); gxFit.obs.observe(hero); gxFit.ro = hero; }
+    /* the hero's height is set in CSS, so nothing here moves the page; this only reads how far the sheet travels before the
+       tabs pin, for the fades */
+    const sp = document.querySelector('#gpage .gxspace'); gxFit.span = Math.max(80, sp ? sp.offsetHeight : 240);
   }
   function gxScroll() {
     const box = document.getElementById('gxscroll'); if (!box) return;
@@ -463,7 +463,7 @@
     box.addEventListener('click', e => { if (!e.target.closest('.gxspace')) return; const a = document.elementsFromPoint(e.clientX, e.clientY).map(x => x.closest && x.closest('#gxhero a[href]')).find(Boolean); if (a) { e.preventDefault(); location.hash = a.getAttribute('href').replace(/^#/, ''); } });
   }
   /* switching tabs while deep in the page: come back up so the tabs sit just under the bar */
-  function gxPin() { const box = document.getElementById('gxscroll'); if (box && gxFit.span != null) { const y = +(document.getElementById('gpage').style.getPropertyValue('--gxsp') || '0').replace('px', ''); if (box.scrollTop > y) box.scrollTop = y; } }
+  function gxPin() { const box = document.getElementById('gxscroll'), sp = box && box.querySelector('.gxspace'); if (sp && box.scrollTop > sp.offsetHeight) box.scrollTop = sp.offsetHeight; }
   /* a filter inside a tab changes only what it filters: the controls keep their buttons (so nothing redraws under a finger) and
      the part below them is swapped. Returns false when the controls differ, so the caller swaps the whole body. */
   function gxSwapOut(bodyEl, html) {
@@ -820,6 +820,7 @@
         if (page && page.dataset.gid === String(id) && page.querySelector('#gxhero')) {
           const hero = page.querySelector('#gxhero'), bar = page.querySelector('#gxbar');
           if (hero.dataset.v !== vars) { hero.setAttribute('style', vars); hero.dataset.v = vars; }
+          page.classList.toggle('nowp', !(f && !g.off));
           const inn = page.querySelector('#gxin'); const ih = hashOf(inner); if (inn.dataset.h !== ih) { inn.innerHTML = inner; inn.dataset.h = ih; }
           const bh = hashOf(barHtml); if (bar.dataset.h !== bh) { const st0 = bar.querySelector('#gxstrip'), sl = st0 ? st0.scrollLeft : null; bar.innerHTML = barHtml; bar.dataset.h = bh; const st1 = bar.querySelector('#gxstrip'); if (st1 && sl != null) st1.scrollLeft = sl; }
           const tabsEl = page.querySelector('#gtabs'); if (tabsEl.dataset.k !== tabKey) { tabsEl.innerHTML = tabs; tabsEl.dataset.k = tabKey; }
@@ -832,7 +833,7 @@
           }
           gxFit(); if (gxScroll.run) gxScroll.run();
         } else {
-          $main.innerHTML = `<div id="gpage" class="gxpage" data-gid="${esc(String(id))}">`
+          $main.innerHTML = `<div id="gpage" class="gxpage${f && !g.off ? '' : ' nowp'}" data-gid="${esc(String(id))}">`
             + `<section class="gx" id="gxhero" data-v="${esc(vars)}" style="${vars}">${LOBES}<div class="gxin" id="gxin" data-h="${hashOf(inner)}">${inner}</div></section>`
             + `<div class="gxbar" id="gxbar" data-h="${hashOf(barHtml)}">${barHtml}</div>`
             + `<div class="gxscroll" id="gxscroll"><div class="gxspace"></div><div class="gxsheet"><div id="gtabs" class="gxtabw" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div></div></div>`;
