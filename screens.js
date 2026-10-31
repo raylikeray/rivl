@@ -448,7 +448,7 @@
   function gxScroll() {
     const box = document.getElementById('gxscroll'); if (!box) return;
     if (gxScroll.box === box) return; gxScroll.box = box;
-    const last = {}; const set = (el, k, v) => { if (el && last[el.id + k] !== v) { el.style[k] = v; last[el.id + k] = v; } };
+    const set = (el, k, v) => { if (el && el.style[k] !== v) el.style[k] = v; };
     const run = () => {
       const hero = document.getElementById('gxhero'); if (!hero || !document.body.contains(box)) { document.documentElement.classList.remove('gxon'); gxScroll.box = null; gxScroll.run = null; return; }
       document.documentElement.classList.add('gxon');
@@ -827,7 +827,7 @@
           const bodyEl = page.querySelector('#gbody'); const bhh = hashOf(body);
           if (bodyEl.dataset.h !== bhh || bodyEl.dataset.tab !== tab) {
             const tabChanged = bodyEl.dataset.tab !== tab;
-            if (tabChanged || !gxSwapOut(bodyEl, body)) { bodyEl.innerHTML = body; if (tabChanged && V.soft) V.soft(bodyEl); }
+            if (tabChanged || !gxSwapOut(bodyEl, body)) bodyEl.innerHTML = body;
             bodyEl.dataset.h = bhh; bodyEl.dataset.tab = tab; if (tabChanged) gxPin();
           }
           gxFit(); if (gxScroll.run) gxScroll.run();
