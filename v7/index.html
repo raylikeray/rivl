@@ -1306,6 +1306,11 @@ html[data-theme=light] .phero{--pfade:color-mix(in srgb,var(--pc) 35%,#000)}
 .frow .fface .hs{box-shadow:0 3px 8px rgba(0,0,0,.22)}
 .frow .fcr{position:absolute;right:-4px;bottom:-3px;width:20px;height:20px;border-radius:999px;background:var(--L1);display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 .ldot{width:7px;height:7px;border-radius:999px;background:#FF375F;box-shadow:0 0 0 0 rgba(255,55,95,.55);animation:pulse 1.8s infinite}
+/* team watermarks keep the logo's own detail: a toned print of the crest,
+   not a flat white silhouette (the Celtics clover was turning into a plain disc) */
+.phero .pwm,.mcard .mwm,.ldtop .mwm,.ldcard .lwm,.pcard .pwm{filter:grayscale(1) contrast(1.35) brightness(1.15);mix-blend-mode:soft-light;opacity:.9}
+.phero .pwm{opacity:1}
+html[data-theme=light] .phero .pwm{opacity:.85}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
