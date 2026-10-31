@@ -1477,6 +1477,32 @@ button.ldtop{background:radial-gradient(120% 140% at 30% 70%,color-mix(in srgb,v
 .ldtop .minfo b{white-space:normal;font-size:18px;line-height:1.15;overflow:visible}
 .ldtop .minfo em{white-space:normal}
 .ldtop .mbig{font-size:30px}
+/* ---- v8 bottom bar: three labeled items, the selected one in a filled pill ---- */
+.tabs{align-items:center;padding:6px;gap:4px;width:min(400px,calc(100% - 24px))}
+.tabs button{flex:1;min-height:56px;gap:3px;justify-content:center;border-radius:999px;font-size:12px;font-weight:600;color:var(--t2);position:relative;transition:background .25s var(--ease),color .25s var(--ease)}
+.tabs .tpill{position:relative;display:grid;place-items:center}
+.tabs svg{width:23px;height:23px;fill:currentColor;fill-opacity:0;transition:fill-opacity .25s}
+.tabs .tlbl{line-height:1}
+.tabs button[aria-pressed=true]{background:var(--t1);color:var(--L0);font-weight:700}
+.tabs button[aria-pressed=true] svg{fill-opacity:.28;stroke-width:2.2}
+.tabs .ldot2{position:absolute;top:-2px;right:-6px;width:9px;height:9px;border-radius:999px;background:#FF375F;box-shadow:0 0 0 2px var(--L1);animation:pulse 1.8s infinite}
+.tabs button.mid{display:none}
+html[data-theme=light] .tabs{box-shadow:0 10px 30px rgba(0,0,0,.14)}
+/* top bar icons */
+.hdr .icons{align-items:center;gap:10px}
+.hdr .icons .disc,.hdr .icons .meav{width:44px;height:44px}
+.hdr .icons .disc svg{width:19px;height:19px;fill:none;stroke:var(--t1);stroke-width:2;stroke-linecap:round}
+.disc.g svg{stroke:#fff}
+/* search page */
+.xhint{margin:28px 4px 0;font-size:16px;line-height:1.55;color:var(--t3);text-align:center}
+.xhint b{color:var(--t2);font-weight:600}
+/* leagues */
+.secchips{margin-top:12px}
+.secchips{gap:6px}
+.secchips button{padding:10px 12px;font-size:14.5px}
+.lgbody{margin-top:4px}
+.lgbody #recb{margin-top:12px}
+.lgbody .seg2{margin-top:14px}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -1838,7 +1864,7 @@ function miniBar(g, pc){
 }
 function topIcons(onColor){
   var c=onColor?' g':'';
-  return '<span class="icons">'+avatar(onColor)+'</span>';
+  return '<span class="icons"><a class="disc'+c+'" href="#search" aria-label="Search">'+svg(IC.search)+'</a>'+avatar(onColor)+'</span>';
 }
 var MARK='<span class="mark">R<i>I</i>V<i>L</i></span>';
 /* the same chips, the same look, on every tab — only when you follow more than one league */
@@ -1951,11 +1977,10 @@ function viewFollowing(){
       +'<div class="in gut"><div class="gspace"></div><div id="gfade">'
         +'<p class="gleague">'+(ME&&ME.name?esc(ME.name)+', your ':'Your ')+esc(T[FOLLOW.indexOf(hero.a)>-1?hero.a:hero.h].name)+' are live · '+esc(LNAME[hero.L])+'</p>'+heroScore(hero,pc)
       +'</div></div></section><div class="sheet gsheet"><div class="gtw" id="gtw"><div class="gtwin fcap">'+(ENABLED.length>1?leagueChips():'<div style="height:12px"></div>')+'</div></div><div id="gbody">';
-  } else top='<header class="hdr gut">'+MARK+topIcons(false)+'</header>';
+  } else top=topBar();
 
-  var body='<div class="gut">'+greet()+'<div class="ptrow"><h1 class="ptitle">Following</h1><span class="more">Edit</span></div></div>'+(hero?'':leagueChips());
-  if(myLive.length>1) body+='<div class="gut"><button class="livebn pressable" data-act="live">'+stp(myLive.length+' live',true,'flat sm')
-    +'<b>'+myLive.length+' of your teams are playing</b><u>Open Live ›</u></button></div>';
+  var body='<div class="gut"><div class="ptrow"><h1 class="ptitle">'+esc(greetText())+'</h1><a class="more" href="#settings">Edit</a></div></div>'+(hero?'':leagueChips());
+
   if(rest.length){
     /* every game today, with its Prediction; past four they open in place */
     var extra=rest.length-4;
@@ -2004,8 +2029,8 @@ function viewScores(){
     var g=list.filter(function(x){return x.L===L && !isMine(x);}).sort(cmpGames);
     if(g.length) groups.push([LNAME[L],g]);
   });
-  var out='<header class="hdr gut">'+MARK+topIcons(false)+'</header>'
-    +'<div class="gut ptrow"><h1 class="ptitle">Scores</h1><span class="dctl">'
+  var out=topBar()
+    +'<div class="gut ptrow"><h1 class="ptitle">'+esc(dayWord(sel)+(sameDay(sel,TODAY)||/day$/.test(dayWord(sel))?', '+MON[sel.getMonth()].slice(0,3)+' '+sel.getDate():''))+'</h1><span class="dctl">'
       +(sameDay(sel,TODAY)?'':'<button class="todaybtn pressable" data-date="'+dkey(TODAY)+'">Today</button>')
       +'<button class="calbtn pressable" data-act="cal" aria-label="Pick a date">'+svg(IC.cal)+'</button></span></div>'
     +leagueChips()+dateRow();
@@ -2279,12 +2304,12 @@ function answer(q){
   var f=findAll(q), nq=f.nq, has=function(re){ return re.test(nq); };
   /* the app's own pages, by name */
   if(!f.ps.length && !f.ts.length){
-    if(has(/ standing| table| rank/)) return pageCard('Standings','Every table in your leagues','#standings');
+    if(has(/ standing| table| rank/)) return pageCard('Standings','Every table in your leagues','#leagues');
     if(has(/ score| games| tonight| today/)) return pageCard('Scores','Every game, any day','#scores');
     if(has(/ injur/)) return '<div class="xans"><p class="xline">Injuries in your leagues</p>'+'<div class="gut" style="padding:0">'+injList(INJ,true)+'</div>'+'</div>';
-    if(has(/ leader| top scor| most points/)) return pageCard('Leaders','Points, rebounds, assists and more','#standings','leaders');
+    if(has(/ leader| top scor| most points/)) return pageCard('Leaders','Every stat, rookies, award watch','#leagues/nba/leaders');
     LASTKIND='none';
-    if(has(/ live/)) return '<button class="xans xpage" data-act="live"><b>Live</b><span>Every game in progress</span></button>';
+    if(has(/ live/)) return pageCard('Scores','Every game, live ones first','#scores');
     return '';
   }
   if(f.ps.length>=3) return cmpMany(f.ps.slice(0,4));
@@ -2424,7 +2449,7 @@ function xresults(q){
   return ans+rows;
 }
 function viewExplore(){
-  return '<header class="hdr gut">'+MARK+topIcons(false)+'</header>'
+  return topBar()
     +'<div class="gut"><h1 class="ptitle">Explore</h1>'
     +'<label class="xbox">'+svg(IC.search)+'<input id="xq" type="search" autocomplete="off" autocapitalize="off" placeholder="Players, teams, stats, anything" value="'+esc(XQ)+'">'
     +'<button class="xclr" data-act="xclear" aria-label="Clear"'+(XQ?'':' hidden')+'>'+svg('<path d="M6 6l12 12M18 6 6 18"/>')+'</button></label>'
@@ -3242,7 +3267,7 @@ function viewNews(){
   },30);
   var full=LNAME;
   return '<div class="stop gut"><a class="disc" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><b>News</b><span></span></div>'
-    +'<div class="ltabs gut nltabs">'+ENABLED.map(function(x){ return '<button data-newsl="'+x+'" aria-pressed="'+(x===L)+'">'+esc(full[x])+'</button>'; }).join('')+'</div>'
+    +(NEWS_EMBED?'':'<div class="ltabs gut nltabs">'+ENABLED.map(function(x){ return '<button data-newsl="'+x+'" aria-pressed="'+(x===L)+'">'+esc(full[x])+'</button>'; }).join('')+'</div>')
     +'<div class="gut" id="newsb" style="margin-top:12px"><div class="wcard wload"><span class="wk">Loading headlines</span><i></i><i></i><i></i></div></div>';
 }
 
@@ -3294,7 +3319,7 @@ function ldRender(){
     if(!isNBA && LD.view!=='all') LD.view='all';
     var note = G.lastSeason ? G.label+' season. Only players on a roster this season; '+(G.dropped||0)+' who left are not shown. Switches to the new season once games start.'
       : (G.final?G.label+' season, final.':G.label+' season so far.');
-    var html='<div class="ltabs gut nltabs">'+Ls.map(function(x){ return '<button data-ldl="'+x+'" aria-pressed="'+(x===L)+'">'+esc(LNAME[x])+'</button>'; }).join('')+'</div>'
+    var html=(LD.embed?'':'<div class="ltabs gut nltabs">'+Ls.map(function(x){ return '<button data-ldl="'+x+'" aria-pressed="'+(x===L)+'">'+esc(LNAME[x])+'</button>'; }).join('')+'</div>')
       +'<div class="gut">'+(isNBA?'<div class="seg2" style="margin-top:12px">'+[['all','Leaders'],['rook','Rookies'],['awards','Award watch']].map(function(x){ return '<button data-ldv="'+x[0]+'" aria-pressed="'+(LD.view===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div>':'')
       +'<p class="legend" style="margin-top:'+(isNBA?'0':'12px')+'">'+esc(note)+'</p></div>';
     if(LD.view==='awards'){ html+=ldAwards(G); }
@@ -3342,6 +3367,68 @@ function ldSheet(p){
     +(pp?'<a class="ijmore pressable" href="#player/'+slug(pp)+'" data-act="sheet-close">'+esc(pp.n.split(' ')[0])+'\'s profile<span>Bio, family, career</span></a>':'')
     +'<p class="xnote">'+esc(LD.data.leagues[L].label)+' · Stats from ESPN.</p></div>','bottom');
 }
+
+/* ============================================================
+   v8 SHELL: three tabs (Scores, Following, Leagues), one top bar,
+   search behind the magnifier. Each thing lives in one place.
+   ============================================================ */
+function topBar(){ return '<header class="hdr gut">'+MARK+topIcons(false)+'</header>'; }
+function anyLive(){ return games().some(function(g){ return g.st==='live' && enabledG(g); }); }
+function greetText(){ var h=new Date().getHours(), part=h<5?'Up late':h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  return part+(ME&&ME.name?', '+ME.name:''); }
+
+/* ---------- Search (full screen) ---------- */
+function viewSearch(){
+  setTimeout(function(){ var i=document.getElementById('xq'); if(i && !XQ) i.focus(); if(XQ) runSearch(XQ); },60);
+  return '<div class="stop gut"><a class="disc" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><b>Search</b><span></span></div>'
+    +'<div class="gut"><label class="xbox" style="margin-top:2px">'+svg(IC.search)+'<input id="xq" type="search" autocomplete="off" autocapitalize="off" placeholder="Players, teams, or a question" value="'+esc(XQ)+'">'
+    +'<button class="xclr" data-act="xclear" aria-label="Clear"'+(XQ?'':' hidden')+'>'+svg('<path d="M6 6l12 12M18 6 6 18"/>')+'</button></label>'
+    +'<div id="xres">'+xresults(XQ)+'</div><div id="xweb"></div>'
+    +'<div id="xbrowse"'+(XQ?' hidden':'')+'><p class="xhint">Search a player, a team, or ask a question like<br><b>When was Maxey drafted?</b> or <b>Thunder schedule</b>.</p></div>'
+    +'<div style="height:120px"></div></div>';
+}
+
+/* ---------- Leagues ---------- */
+var LGS={L:null, sec:'standings'};
+var LFULL={nba:'NBA',wnba:'WNBA',ncaam:'NCAA Men',ncaaw:'NCAA Women',hs:'High School'};
+var LSECS=[['standings','Standings'],['leaders','Leaders'],['brackets','Brackets'],['injuries','Injuries'],['news','News']];
+function noStop(html){ return String(html).replace(/^<div class="stop gut">[\s\S]*?<\/div>/,''); }
+function leagueList(){ return LORDER.filter(function(L){ return ENABLED.indexOf(L)>-1; }).concat(['hs']); }
+function viewLeagues(L, sec){
+  var ls=leagueList();
+  if(L && ls.indexOf(L)>-1) LGS.L=L; if(!LGS.L || ls.indexOf(LGS.L)<0) LGS.L=ls[0];
+  if(sec && LSECS.some(function(s){return s[0]===sec;})) LGS.sec=sec;
+  L=LGS.L; sec=LGS.sec;
+  var out=topBar()
+    +'<div class="gut"><h1 class="ptitle">'+esc(LFULL[L])+'</h1></div>'
+    +'<nav class="ltabs" id="ltabs">'+ls.map(function(x){ return '<button data-lgsl="'+x+'" aria-pressed="'+(x===L)+'">'+esc(x==='hs'?'HS':LNAME[x])+'</button>'; }).join('')+'</nav>';
+  if(L==='hs'){
+    setTimeout(recLoad,10);
+    return out+'<div class="lgbody">'+noStop(viewRecruits())+'</div><div style="height:120px"></div>';
+  }
+  out+='<div class="ychips secchips gut">'+LSECS.map(function(s){ return '<button data-lgss="'+s[0]+'" aria-pressed="'+(s[0]===sec)+'">'+s[1]+'</button>'; }).join('')+'</div><div class="lgbody">';
+  if(sec==='standings'){
+    out+='<div class="gut"><div class="gp stp2" style="margin-top:6px">'+leagueBlock(L,false)+'</div></div>';
+  } else if(sec==='leaders'){
+    LD.L=L; LD.embed=true; if(L!=='nba') LD.view='all';
+    setTimeout(ldRender,10);
+    out+='<div id="ldb"><div class="gut"><div class="wcard wload"><span class="wk">Loading leaders</span><i></i><i></i><i></i></div></div></div>';
+  } else if(sec==='brackets'){
+    var t = L==='nba' ? ['NBA Cup','Group play is underway. The knockout bracket appears here once the eight teams are set in early December.']
+      : L==='wnba' ? ['Playoffs','Offseason. The bracket returns with the postseason.']
+      : ['Holiday tournaments and March Madness','Thanksgiving-week events first, then the full tournament bracket in March, with live scores and the Prediction for every game.'];
+    out+='<div class="gut"><div class="brk"><span class="lgt2">'+esc(LNAME[L])+'</span><b>'+esc(t[0])+'</b><p>'+esc(t[1])+'</p></div><p class="legend">Brackets are the next build.</p></div>';
+  } else if(sec==='injuries'){
+    var list=INJ.filter(function(p){ return leagueOf(p.t)===L; });
+    out+='<div class="gut">'+(list.length?injList(list,true):'<div class="empty"><b>No injuries listed</b><p>'+esc(LNAME[L])+' has nobody on the report right now.</p></div>')
+      +'<p class="xnote">Sample report in this mockup. In the app this is the official league injury report.</p></div>';
+  } else if(sec==='news'){
+    NEWSL=L; NEWS_EMBED=true;
+    out+=noStop(viewNews());
+  }
+  return out+'</div><div style="height:120px"></div>';
+}
+var NEWS_EMBED=false;
 
 /* ---------- in-app sheets: stories, highlights, the calendar ---------- */
 function openSheet(html, kind){
@@ -3653,13 +3740,12 @@ if(MQ){ if(MQ.addEventListener) MQ.addEventListener('change',applyTheme); else i
 (function(){ var p=document.createElement('div'); p.style.cssText='position:fixed;top:0;height:env(safe-area-inset-top,0px);width:1px;visibility:hidden';
   document.body.appendChild(p); if(p.offsetHeight>0) document.documentElement.classList.add('notch'); p.remove(); })();
 
-var TABS=[['following','Following',IC.star],['scores','Scores',IC.scores],['live','',''],['standings','Standings',IC.trophy],['explore','Explore',IC.search]];
+var TABS=[['scores','Scores',IC.scores],['following','Following',IC.star],['leagues','Leagues',IC.trophy]];
 function renderTabs(active){
-  var n=myLiveCount();
+  var live=anyLive();
   document.getElementById('tabs').innerHTML=TABS.map(function(t){
-    if(t[0]==='live') return '<button class="mid" data-act="live" aria-label="Live'+(n?', '+n+' of your teams playing':'')+'">'
-      +'<i class="'+(n?'on':'')+'">'+svg(IC.live)+(n?'<span class="bdg">'+n+'</span>':'')+'</i></button>';
-    return '<button data-nav="'+t[0]+'" aria-pressed="'+(active===t[0])+'">'+svg(t[2])+t[1]+'</button>';
+    var dot=t[0]==='scores'&&live?'<i class="ldot2" aria-hidden="true"></i>':'';
+    return '<button data-nav="'+t[0]+'" aria-pressed="'+(active===t[0])+'"'+(t[0]==='scores'&&live?' aria-label="Scores, games live now"':'')+'><span class="tpill">'+svg(t[2])+dot+'</span><span class="tlbl">'+t[1]+'</span></button>';
   }).join('');
 }
 function animateBars(root){
@@ -3690,13 +3776,14 @@ function render(){
       if(el) window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-(gt?gt.offsetHeight:0)-(tw?tw.offsetHeight:0)-12,behavior:'smooth'}); },380); } }
   else if(r==='me'){ main.innerHTML=viewMe(); renderTabs(''); }
   else if(r==='settings'){ main.innerHTML=viewSettings(parts[1]); renderTabs(''); }
-  else if(r==='recruits'){ main.innerHTML=viewRecruits(); renderTabs('explore'); setTimeout(recLoad,10); }
-  else if(r==='news'){ main.innerHTML=viewNews(); renderTabs('explore'); }
-  else if(r==='leaders'){ main.innerHTML=viewLeaders(); renderTabs('explore'); setTimeout(ldRender,10); }
-  else if(r==='injuries'){ main.innerHTML=viewInjuries(); renderTabs('explore'); }
+  /* old addresses land in their one home */
+  else if(r==='standings'||r==='recruits'||r==='news'||r==='leaders'||r==='injuries'){
+    var to={standings:'standings',recruits:'',news:'news',leaders:'leaders',injuries:'injuries'}[r];
+    location.replace('#leagues/'+(r==='recruits'?'hs':(r==='leaders'?'nba':leagueList()[0]))+(to?'/'+to:'')); return; }
+  else if(r==='explore'){ location.replace('#search'); return; }
+  else if(r==='search'){ main.innerHTML=viewSearch(); renderTabs(''); }
+  else if(r==='leagues'){ main.innerHTML=viewLeagues(parts[1],parts[2]); renderTabs('leagues'); }
   else if(r==='scores'){ main.innerHTML=viewScores(); renderTabs('scores'); }
-  else if(r==='standings'){ main.innerHTML=viewStandings(); renderTabs('standings'); }
-  else if(r==='explore'){ main.innerHTML=viewExplore(); renderTabs('explore'); }
   else { main.innerHTML=viewFollowing(); renderTabs('following'); }
   window.scrollTo(0,0); animateBars(); bindMini(); afterPaint();
 }
@@ -3770,6 +3857,7 @@ function bindMini(){
   miniHandler=function(){ m.classList.toggle('on', window.scrollY>hero.offsetHeight-70); };
   window.addEventListener('scroll',miniHandler,{passive:true}); miniHandler();
 }
+function main_render_keep(){ var y=window.scrollY; render(); var t=document.getElementById('ltabs'); var max=t?t.offsetTop:0; window.scrollTo(0,Math.min(y,max)); paintBar(); }
 function keepScroll(){ var y=window.scrollY; render(); window.scrollTo(0,y); paintBar(); }
 
 document.addEventListener('click',function(e){
@@ -3784,6 +3872,8 @@ document.addEventListener('click',function(e){
   if((lq=e.target.closest('[data-ldc]'))){ LD.cat=lq.getAttribute('data-ldc'); var sy=window.scrollY, sx=(document.querySelector('.ldchips')||{}).scrollLeft; ldRender(); setTimeout(function(){ var c=document.querySelector('.ldchips'); if(c) c.scrollLeft=sx; },0); return; }
   if((lq=e.target.closest('[data-ldp]')) && !e.target.closest('[data-team]')){ ldSheet(LD.rows[+lq.getAttribute('data-ldp')]); return; }
   if((lq=e.target.closest('[data-aw]')) && !e.target.closest('[data-team]')){ var aw=lq.getAttribute('data-aw').split(':'); ldSheet(LD.awards[aw[0]][+aw[1]]); return; }
+  var lgq=e.target.closest('[data-lgsl]'); if(lgq){ var nL=lgq.getAttribute('data-lgsl'); history.replaceState(null,'','#leagues/'+nL+(nL==='hs'?'':'/'+LGS.sec)); main_render_keep(); return; }
+  var lsq=e.target.closest('[data-lgss]'); if(lsq){ history.replaceState(null,'','#leagues/'+LGS.L+'/'+lsq.getAttribute('data-lgss')); main_render_keep(); return; }
   var nl=e.target.closest('[data-newsl]'); if(nl){ NEWSL=nl.getAttribute('data-newsl'); keepScroll(); return; }
   var rg=e.target.closest('[data-recg]'); if(rg){ REC.g=rg.getAttribute('data-recg'); keepScroll(); setTimeout(recLoad,10); return; }
   var ry=e.target.closest('[data-recy]'); if(ry){ REC.y=+ry.getAttribute('data-recy'); keepScroll(); setTimeout(recLoad,10); return; }
@@ -3838,7 +3928,7 @@ document.addEventListener('click',function(e){
       history.replaceState(null,'','#team/'+tk+(TTAB==='overview'?'':'/'+TTAB)); var hero=document.querySelector('.ghero'), stuck=hero?hero.offsetHeight-52:0; if(window.scrollY>stuck) window.scrollTo(0,stuck); }
     return; }
   var tg=e.target.closest('[data-try-go],[data-compare-team]');
-  if(tg){ XQ=tg.getAttribute('data-try-go') || (T[tg.getAttribute('data-compare-team')].name+' vs '); location.hash='#explore';
+  if(tg){ XQ=tg.getAttribute('data-try-go') || (T[tg.getAttribute('data-compare-team')].name+' vs '); location.hash='#search';
     setTimeout(function(){ var i=document.getElementById('xq'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length); } },60); return; }
   var tr=e.target.closest('[data-try]');
   if(tr){ var inp2=document.getElementById('xq'); if(inp2){ inp2.value=tr.getAttribute('data-try'); runSearch(inp2.value); window.scrollTo(0,0); } return; }
