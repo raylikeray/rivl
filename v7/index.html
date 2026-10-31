@@ -61,7 +61,7 @@ button:active,a.pressable:active,.card:active{transition-duration:.06s}
 .icons{display:flex;gap:8px}
 .disc{width:34px;height:34px;border-radius:999px;background:var(--L2);display:grid;place-items:center;
   border:1px solid var(--line)}
-.disc svg{width:16px;height:16px;stroke:var(--t2);fill:none;stroke-width:2;stroke-linecap:round}
+.disc svg{width:17px;height:17px;stroke:var(--t2);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 .pills{display:flex;gap:3px;background:var(--L2);border:1px solid var(--line);border-radius:999px;padding:3px;margin-top:10px;
   position:sticky;top:calc(env(safe-area-inset-top,0px) + 4px);z-index:12}
@@ -642,6 +642,154 @@ html[data-theme=light] .bx .bnd td,html[data-theme=light] .bx .bnd th{background
 .mpmore::after{display:none}
 .mpmore b{font-size:26px;font-weight:700;color:var(--t1)!important}
 .mpmore span{color:var(--t3)!important;font-size:11.5px}
+
+/* ---- status bar: the top of the hero fades into exactly the colour the
+   phone paints behind the clock, so there is no seam (Android). On an
+   iPhone the page itself runs under the clock, so the band is not needed. */
+.ghero .sband{position:absolute;inset:0 0 auto;height:72px;z-index:-1;pointer-events:none;
+  background:linear-gradient(var(--sbc) 0, var(--sbc) 10px, transparent 100%)}
+html.notch .ghero .sband{display:none}
+
+/* ---- one chip style everywhere ---- */
+.fchips{margin-top:14px}
+.fchips button{transition:background .3s var(--ease),color .3s var(--ease)}
+.fchips button:active{transition-duration:.06s}
+
+/* ---- scores: date strip and calendar ---- */
+.calbtn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;background:var(--L2);
+  border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--t1);align-self:flex-end}
+.calbtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.days2{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin-top:14px;scroll-behavior:smooth;
+  padding-left:max(var(--gut),env(safe-area-inset-left,0px));padding-right:max(var(--gut),env(safe-area-inset-right,0px))}
+.days2::-webkit-scrollbar{display:none}
+.dy{flex:none;width:50px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0 8px;border-radius:14px}
+.dy span{font-size:10.5px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.04em}
+.dy b{font-size:21px;font-weight:600;color:var(--t2);line-height:1}
+.dy i{width:5px;height:5px;border-radius:999px;background:var(--t2)}
+.dy i.x{background:transparent}
+.dy.td span{color:#FF375F}
+.dy.on{background:var(--L2)}
+.dy.on b{color:var(--t1)}
+.dy.none b{color:var(--t4)}
+.empty{margin-top:22px;padding:22px 18px;border-radius:18px;background:var(--L1);border:1px solid var(--line);text-align:center}
+.empty b{display:block;font-size:16px;font-weight:700}
+.empty p{margin:6px 0 0;font-size:13px;color:var(--t3);line-height:1.45}
+
+/* ---- sheets ---- */
+#sheet{position:fixed;inset:0;z-index:70}
+#sheet .scrim{position:absolute;inset:0;background:rgba(0,0,0,.5);opacity:0;transition:opacity .35s var(--ease)}
+#sheet.on .scrim{opacity:1}
+#sheet .panel{position:absolute;left:0;right:0;margin:0 auto;max-width:460px;transition:transform .42s var(--ease)}
+#sheet.bottom .panel{bottom:0;transform:translateY(105%);border-radius:28px 28px 0 0;
+  padding:8px 18px calc(22px + env(safe-area-inset-bottom,0px));
+  background:color-mix(in srgb,var(--L1) 90%,transparent);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);
+  border:1px solid var(--line2);border-bottom:0;box-shadow:0 -20px 50px rgba(0,0,0,.4)}
+#sheet.full .panel{top:0;bottom:0;transform:translateY(100%);background:var(--L0);overflow-y:auto;
+  padding-bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+#sheet.on .panel{transform:none}
+.grab{width:38px;height:5px;border-radius:999px;background:var(--line2);margin:4px auto 14px}
+.calhd{display:flex;align-items:center;gap:8px}
+.calhd h3{flex:1;min-width:0;margin:0;font-size:23px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+.calhd h3 span{color:var(--t3);font-weight:600}
+.cb{width:40px;height:40px;border-radius:999px;background:var(--L2);display:grid;place-items:center;color:var(--t2)}
+.cb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cb.t{width:auto;padding:0 16px;font-size:14px;font-weight:600}
+.calwd,.calg{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
+.calwd{margin-top:18px;font-size:12px;font-weight:600;color:var(--t3)}
+.calg{row-gap:6px;margin-top:8px}
+.cd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:48px;border-radius:999px}
+.cd b{font-size:18px;font-weight:500;color:var(--t1)}
+.cd i{width:5px;height:5px;border-radius:999px;background:var(--t2)}
+.cd.td b{color:#FF375F;font-weight:700}
+.cd.on{background:var(--t1)}
+.cd.on b{color:var(--L0);font-weight:700}
+.cd.on i{background:var(--L0)}
+.cd.none b{color:var(--t4)}
+.calkey{display:flex;align-items:center;gap:8px;justify-content:center;margin:14px 0 0;font-size:12px;color:var(--t3)}
+.calkey i{width:5px;height:5px;border-radius:999px;background:var(--t2)}
+.fhd{display:flex;justify-content:flex-end;padding-top:calc(14px + env(safe-area-inset-top,0px));padding-bottom:6px}
+.rd .kick{font-size:12px;font-weight:600;color:var(--t3);margin:8px 0 0}
+.rd h1{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:8px 0 16px}
+.rd .rim{aspect-ratio:16/9;border-radius:16px;margin-bottom:18px}
+.rd p{font-size:17px;line-height:1.55;color:var(--t2);margin:0 0 14px}
+.vid{position:relative;aspect-ratio:16/9;background:linear-gradient(142deg,var(--c1),#050607 80%);display:grid;place-items:center;margin-top:4px}
+.vid .pl2{width:64px;height:64px;border-radius:999px;background:rgba(255,255,255,.94);display:grid;place-items:center}
+.vid .pl2 svg{width:24px;height:24px;fill:#07090B}
+.vid .du{position:absolute;right:12px;bottom:12px;font-size:12px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);padding:4px 8px;border-radius:8px}
+.vt{font-size:20px;font-weight:700;letter-spacing:-.015em;margin:16px 0 0;line-height:1.25}
+.vrow{display:flex;align-items:center;gap:12px;width:100%;padding:10px 0;border-bottom:1px solid var(--line);text-align:left}
+.vrow .vth{width:96px;aspect-ratio:16/9;border-radius:10px;flex:none;background:linear-gradient(142deg,var(--c1),#050607 86%)}
+.vrow b{flex:1;font-size:14px;font-weight:600;line-height:1.3}
+.vrow span{font-size:12px;color:var(--t3)}
+
+/* ---- game page: team switch, player chips, period cards ---- */
+.tsw{display:flex;gap:4px;background:var(--L2);border-radius:999px;padding:3px;border:1px solid var(--line)}
+.tsw button{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 6px;border-radius:999px;color:var(--t3)}
+.tsw button b{font-size:13.5px;font-weight:700;letter-spacing:.02em}
+.tsw button .cr{width:22px;height:22px;background:transparent}
+.tsw button .cr img{width:100%;height:100%}
+.tsw button[aria-pressed=true]{background:var(--L0);color:var(--t1);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+html[data-theme=light] .tsw button[aria-pressed=true]{background:#fff}
+.pchips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-top:12px;
+  padding-left:max(var(--gut),env(safe-area-inset-left,0px));padding-right:max(var(--gut),env(safe-area-inset-right,0px))}
+.pchips::-webkit-scrollbar{display:none}
+.pchips button{flex:none;display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;border-radius:999px;
+  background:var(--L1);border:1px solid var(--line)}
+.pchips .hs{width:28px;height:28px;font-size:28px}
+.pchips b{font-size:12.5px;font-weight:600}
+.pchips span.num{font-size:11.5px;color:var(--t3);font-weight:600}
+.pchips button[aria-pressed=true]{background:var(--t1);border-color:transparent}
+.pchips button[aria-pressed=true] b,.pchips button[aria-pressed=true] span.num{color:var(--L0)}
+.shsum{display:flex;justify-content:space-between;gap:10px;font-size:13px;font-weight:700;padding-bottom:10px}
+.ctl{padding-block:12px}
+.bx .bnd .hd2{display:none}
+.tle.per{padding-left:0;margin-left:-52px;min-height:0}
+.perc{border-radius:14px;background:var(--L1);border:1px solid var(--line);padding:12px;text-align:center}
+.perc b{display:block;font-size:15px;font-weight:700}
+.perc span{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px}
+.perc .cr{width:22px;height:22px;background:transparent}
+.perc .cr img{width:100%;height:100%}
+.perc em{font-style:normal;font-size:13px;font-weight:700;padding:4px 10px;border-radius:8px;background:var(--L2)}
+
+/* ---- player cards: the state is the first thing you read ---- */
+.mp .pst{display:block;margin-top:9px;position:relative}
+.mp>u b{font-weight:700;color:#fff}
+
+/* ---- standings ---- */
+.seg2.sub{margin-bottom:0}
+.stp2{padding:4px 12px 8px}
+.sthd{display:grid;grid-template-columns:1fr 34px 34px 46px 38px;align-items:center;gap:4px;padding:12px 0 8px;
+  font-size:10.5px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--line)}
+.sthd span{text-align:right}
+.sthd b{font-size:12.5px;color:var(--t2);text-transform:none;letter-spacing:0}
+.sthd.poll{grid-template-columns:1fr 70px}
+.st2{position:relative;display:flex;align-items:center;gap:8px;height:46px;padding-left:8px}
+.st2+.st2{border-top:1px solid var(--line)}
+.st2 .edge{position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:999px}
+.st2 .rk{width:18px;text-align:right;font-size:12px;color:var(--t3);font-variant-numeric:tabular-nums}
+.st2 .cr{width:24px;height:24px;background:transparent}
+.st2 .cr img{width:100%;height:100%}
+.st2 .nm{flex:1;min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st2 .c{width:34px;text-align:right;font-size:13.5px;color:var(--t2);font-variant-numeric:tabular-nums}
+.st2 .c:nth-last-child(2){width:46px}
+.st2 .c:last-child{width:38px}
+.st2 .c.w{width:70px}
+.st2.me{background:linear-gradient(90deg,color-mix(in srgb,var(--t1) 7%,transparent),transparent);border-radius:10px}
+.st2.me .nm::after{content:" ★";font-size:10px;color:var(--t3)}
+.sechd button.more{font-size:13px;color:var(--t3);font-weight:600}
+.brk{margin-top:16px;padding:16px;border-radius:18px;background:var(--L1);border:1px solid var(--line)}
+.brk .lgt2{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--t3)}
+.brk b{display:block;margin-top:6px;font-size:17px;font-weight:700}
+.brk p{margin:6px 0 0;font-size:13.5px;line-height:1.45;color:var(--t2)}
+.ldr{display:flex;align-items:center;gap:11px;padding:10px 0}
+.ldr+.ldr{border-top:1px solid var(--line)}
+.ldr .rk{width:16px;text-align:right;font-size:12px;color:var(--t3)}
+.ldr .hs{width:40px;height:40px;font-size:40px}
+.ldr .t{flex:1;min-width:0}
+.ldr .t b{display:block;font-size:14.5px;font-weight:600}
+.ldr .t span{display:block;font-size:12px;color:var(--t3);margin-top:1px}
+.ldr .v{font-size:22px;font-weight:600}
+
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -661,6 +809,7 @@ html[data-theme=light] .bx .bnd td,html[data-theme=light] .bx .bnd th{background
 
 <nav class="tabs" id="tabs"></nav>
 <div id="live" hidden></div>
+<div id="sheet" hidden></div>
 
 <script>
 /* ============================================================
@@ -692,6 +841,15 @@ var T = {
   gonz:{ab:'GONZ',lg:'ncaa',slug:'2250',name:'Gonzaga',full:'Gonzaga',c:'#041E42',alt:'#C8102E',rec:'1-1'},
   duke:{ab:'DUKE',lg:'ncaa',slug:'150',name:'Duke',full:'Duke',c:'#003087',rec:'2-0'},
   ku:{ab:'KU',lg:'ncaa',slug:'2305',name:'Kansas',full:'Kansas',c:'#0051BA',alt:'#E8000D',rec:'2-0'},
+  uk:{ab:'UK',lg:'ncaa',slug:'96',name:'Kentucky',full:'Kentucky',c:'#0033A0',rec:'2-0'},
+  unc:{ab:'UNC',lg:'ncaa',slug:'153',name:'North Carolina',full:'North Carolina',c:'#13294B',alt:'#7BAFD4',rec:'1-1'},
+  pur:{ab:'PUR',lg:'ncaa',slug:'2509',name:'Purdue',full:'Purdue',c:'#9D7D2E',alt:'#000000',rec:'2-0'},
+  uh:{ab:'HOU',lg:'ncaa',slug:'248',name:'Houston',full:'Houston',c:'#C8102E',rec:'2-0'},
+  ariz:{ab:'ARIZ',lg:'ncaa',slug:'12',name:'Arizona',full:'Arizona',c:'#CC0033',alt:'#003366',rec:'1-1'},
+  aub:{ab:'AUB',lg:'ncaa',slug:'2',name:'Auburn',full:'Auburn',c:'#0C2340',alt:'#E87722',rec:'2-0'},
+  texw:{ab:'TEX',lg:'ncaa',slug:'251',L:'ncaaw',name:'Texas',full:'Texas',c:'#BF5700',rec:'2-0'},
+  lsuw:{ab:'LSU',lg:'ncaa',slug:'99',L:'ncaaw',name:'LSU',full:'LSU',c:'#461D7C',alt:'#FDD023',rec:'2-0'},
+  ndw:{ab:'ND',lg:'ncaa',slug:'87',L:'ncaaw',name:'Notre Dame',full:'Notre Dame',c:'#0C2340',alt:'#C99700',rec:'1-1'},
   nyk:{ab:'NYK',lg:'nba',name:'Knicks',full:'New York',c:'#006BB6',alt:'#F58426',rec:'5-2'}
 };
 function logoUrl(k){ var t=T[k]; return LOGO(t.lg, t.slug||k); }
@@ -746,45 +904,27 @@ function shotWithNo(id,name,color,size,no){
 }
 
 /* ---------- data ---------- */
-var LIVE = {
-  home:'gs', away:'lal', hs:101, as:88, clock:'4th · 6:12', wp:0.79,
-  performers:[
-    {id:3975,  n:'Stephen Curry',  t:'gs',  l:[['34','Pts'],['6','Reb'],['9','Ast']]},
-    {id:1966,  n:'LeBron James',   t:'lal', l:[['28','Pts'],['9','Reb'],['11','Ast']]},
-    {id:6583,  n:'Anthony Davis',  t:'lal', l:[['19','Pts'],['14','Reb'],['3','Blk']]}
-  ]
-};
-var TONIGHT = [
-  {a:'chi',h:'bos',t:'6:30 PM CT',tv:'NBCS'},
-  {a:'dal',h:'hou',t:'7:30 PM CT',tv:'Sling'},
-  {a:'min',h:'den',t:'8:00 PM CT',tv:'Prime'},
-  {a:'nyk',h:'okc',t:'9:00 PM CT',tv:'Sling'}
-];
-var LASTNIGHT = [
-  {a:'okc',h:'den',as:118,hs:110},
-  {a:'bos',h:'nyk',as:104,hs:99},
-  {a:'min',h:'dal',as:97,hs:112}
-];
+/* Sample data. Rosters reflect the 2025–26 moves (Dončić and Ayton in LA,
+   Butler in Golden State, Davis in Dallas). Numbers are made up but every
+   total on the game page is added up from the box score, so they agree. */
+var LIVE = { home:'gs', away:'lal', hs:101, as:88, clock:'4th 6:12' };
 var MYPLAYERS = [
-  {id:1966,n:'LeBron James',t:'lal',next:'Live · 28 pts'},
-  {id:3975,n:'Stephen Curry',t:'gs',next:'Live · 34 pts'},
-  {id:4065648,n:'Jayson Tatum',t:'bos',next:'Tonight 6:30'},
-  {id:4278073,n:'Shai Gilgeous-Alexander',t:'okc',next:'Tonight 9:00'},
-  {id:3945274,n:'Luka Dončić',t:'dal',next:'Tonight 7:30'}
-];
-var ALSOLIVE = [
-  {a:'bos',h:'nyk',as:71,hs:68,clock:'3rd · 4:08',fav:'Celtics'},
-  {a:'okc',h:'dal',as:54,hs:61,clock:'2nd · 1:22',fav:'Thunder'}
+  {id:3945274, n:'Luka Dončić',              t:'lal',  ln:'31 pts · 9 ast'},
+  {id:1966,    n:'LeBron James',             t:'lal',  ln:'18 pts · 8 ast'},
+  {id:3975,    n:'Stephen Curry',            t:'gs',   ln:'34 pts · 8 3PM'},
+  {id:4278073, n:'Shai Gilgeous-Alexander',  t:'okc',  ln:''},
+  {id:4065648, n:'Jayson Tatum',             t:'bos',  ln:''}
 ];
 var INJ = [
-  {id:6583,n:'Anthony Davis',t:'lal',st:'q',w:'Left knee soreness · game-time'},
-  {id:4065648,n:'Jayson Tatum',t:'bos',st:'out',w:'Right ankle · out 2 weeks'},
-  {id:3032977,n:'Giannis Antetokounmpo',t:'min',st:'q',w:'Calf tightness · questionable'}
+  {id:0, n:'Jalen Williams', t:'okc', st:'q',   w:'Right wrist · game-time decision'},
+  {id:0, n:'Derrick White',  t:'bos', st:'q',   w:'Left knee soreness'},
+  {id:0, n:'Gabe Vincent',   t:'lal', st:'out', w:'Left ankle sprain · out tonight'}
 ];
 var NEWS = [
-  {k:'Lakers',h:'James triple-doubles again as Lakers claw back in the fourth',s:'2 hours ago',im:'https://a.espncdn.com/i/teamlogos/nba/500/lal.png'},
-  {k:'Warriors',h:'Curry hits eight threes in a third quarter that decided it',s:'4 hours ago',im:'https://a.espncdn.com/i/teamlogos/nba/500/gs.png'}
+  {k:'Lakers',  t:'lal', h:'Dončić and James carry the Lakers into a big night at Chase Center', s:'2 hours ago'},
+  {k:'Warriors',t:'gs',  h:'Curry hits eight threes as Golden State pulls away in the third',     s:'4 hours ago'}
 ];
+var TONIGHT=[], LASTNIGHT=[], ALSOLIVE=[];
 
 /* ---------- icons ---------- */
 var IC = {
@@ -794,7 +934,8 @@ var IC = {
   teams:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',
   players:'<circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/>',
   search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
-  gear:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v2.4M12 19.1v2.4M21.5 12h-2.4M4.9 12H2.5M18.7 5.3 17 7M7 17l-1.7 1.7M18.7 18.7 17 17M7 7 5.3 5.3"/>',
+  gear:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  cal:'<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>',
   back:'<path d="m14.5 5-7 7 7 7"/>',
   star:'<path d="m12 3.6 2.55 5.2 5.75.83-4.15 4.05.98 5.72L12 16.7l-5.13 2.7.98-5.72L3.7 9.63l5.75-.83z"/>',
   trophy:'<path d="M7.5 4h9v4.5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 6H4.5a3 3 0 0 0 3 4M16.5 6h3a3 3 0 0 1-3 4M12 13v3.5M8.5 20h7M10 16.5h4V20h-4z"/>',
@@ -805,47 +946,97 @@ var IC = {
 function svg(p){ return '<svg viewBox="0 0 24 24" aria-hidden="true">'+p+'</svg>'; }
 
 /* ============================================================
-   v7 — Following · Scores · Live · Leagues · News
+   v7 — Following · Scores · Live · Standings · News
    ============================================================ */
 
-/* the status pill: quarter and clock are never bare text on colour again */
+/* the status pill: quarter and clock are never bare text on colour */
 function stp(txt, live, cls){
   return '<span class="stp'+(cls?' '+cls:'')+'">'+(live?'<i></i>':'')+esc(txt)+'</span>';
 }
 
-/* mockup state — how many followed teams are live right now (1 or 3) */
+/* ---------- who you follow, and which leagues you picked at setup ---------- */
 var DEMO = 1;
-/* the user's teams, in their own order. #1's game wins the hero. */
 var FOLLOW_BASE = ['lal','okc','bos','uconn'];
 var FOLLOW_MANY = ['lal','okc','bos','uconn','uconnw','scw','uscw','ind','lva','duke','phi','ku','gonz','uclaw','nyl'];
 var FOLLOW = FOLLOW_BASE;
-/* leagues picked at setup — only these ever appear */
 var ENABLED = ['nba','ncaam'];
+var LNAME = {nba:'NBA', wnba:'WNBA', ncaam:'NCAA M', ncaaw:'NCAA W'};
+var LORDER = ['nba','wnba','ncaam','ncaaw'];
+/* ONE league filter for the whole app. Pick NCAA W on Following and
+   Scores and Standings are on NCAA W too; pick All anywhere, All everywhere. */
+var LG = 'all';
+
 var MYP_EXTRA = [
-  {id:0,n:'JuJu Watkins',t:'uscw',next:'Live · 18 pts'},
-  {id:0,n:'Sarah Strong',t:'uconnw',next:'Live · 14 pts, 9 reb'},
-  {id:0,n:"A'ja Wilson",t:'lva',next:'Offseason'},
-  {id:0,n:'Caitlin Clark',t:'ind',next:'Offseason'},
-  {id:0,n:'Breanna Stewart',t:'nyl',next:'Offseason'}
+  {id:0, n:'JuJu Watkins',    t:'uscw',   ln:'18 pts · 5 ast'},
+  {id:0, n:'Sarah Strong',    t:'uconnw', ln:'14 pts · 9 reb'},
+  {id:0, n:"A'ja Wilson",     t:'lva',    ln:''},
+  {id:0, n:'Caitlin Clark',   t:'ind',    ln:''},
+  {id:0, n:'Breanna Stewart', t:'nyl',    ln:''}
 ];
 var MYP_BASE=null;
 function applyDemo(){
   if(!MYP_BASE) MYP_BASE=MYPLAYERS.slice();
   if(DEMO==='m'){ FOLLOW=FOLLOW_MANY; ENABLED=['nba','wnba','ncaam','ncaaw']; MYPLAYERS=MYP_BASE.concat(MYP_EXTRA); }
   else { FOLLOW=FOLLOW_BASE; ENABLED=['nba','ncaam']; MYPLAYERS=MYP_BASE.slice(); }
-  if(FL!=='all' && ENABLED.indexOf(FL)<0) FL='all';
+  if(LG!=='all' && ENABLED.indexOf(LG)<0) LG='all';
 }
 var NEXTG = {duke:'Tue vs UConn · 6:00 PM', ku:'Wed vs Kentucky', gonz:'Sat vs Arizona', phi:'Tomorrow at Chicago',
+  okc:'Tomorrow vs Warriors', bos:'Mon at Miami', uconn:'Tue at Duke',
   ind:'Offseason · season opens in May', lva:'Offseason · season opens in May', nyl:'Offseason · season opens in May'};
-var LNAME = {nba:'NBA', wnba:'WNBA', ncaam:'NCAA M', ncaaw:'NCAA W'};
+var LASTRES = {lal:'L 104–110 vs Nuggets', okc:'W 118–110 at Nuggets', bos:'W 104–99 at Knicks', uconn:'W 88–62 vs Stonehill',
+  uconnw:'W 85–51 vs Boston U', scw:'W 79–60 vs N. Carolina', uscw:'W 78–64 vs Ole Miss', uclaw:'W 82–60 vs Arizona',
+  duke:'L 69–72 vs Kansas', ku:'W 72–69 at Duke', gonz:'L 76–81 at UConn', phi:'L 98–107 vs Celtics'};
 
+function leagueOf(k){ var t=T[k]; return t.L || (t.lg==='ncaa'?'ncaam':t.lg); }
+function inLG(k){ return LG==='all' || leagueOf(k)===LG; }
+function gInLG(g){ return LG==='all' || g.L===LG; }
+function enabledG(g){ return ENABLED.indexOf(g.L)>-1; }
 function isMine(g){ return FOLLOW.indexOf(g.a)>-1 || FOLLOW.indexOf(g.h)>-1; }
-function rankOf(g){
-  var a=FOLLOW.indexOf(g.a), h=FOLLOW.indexOf(g.h);
-  a=a<0?99:a; h=h<0?99:h; return Math.min(a,h);
-}
-function stateOrder(g){ return g.st==='live'?0 : g.st==='pre'?1 : 2; }
+function rankOf(g){ var a=FOLLOW.indexOf(g.a), h=FOLLOW.indexOf(g.h); a=a<0?99:a; h=h<0?99:h; return Math.min(a,h); }
 
+/* ---------- ordering — one rule, used for games, teams and players ----------
+   1. Playing now, the game furthest along first. Measured as the share of
+      regulation played, so leagues compare fairly: NBA quarters are 12
+      minutes, WNBA and women's college quarters 10, men's college halves 20.
+   2. Playing later today, earliest tip first.
+   3. Finished today.
+   4. Not playing today — next game first, offseason last.
+   Ties go to the order the user set in Edit.                               */
+var PER = {nba:[4,12], wnba:[4,10], ncaaw:[4,10], ncaam:[2,20]};
+function progress(g){
+  var m=/^(\d)(?:st|nd|rd|th)\s+(\d+):(\d+)/.exec(g.clock||''); if(!m) return 0;
+  var p=PER[g.L]||PER.nba, n=p[0], len=p[1], q=+m[1], left=+m[2]+(+m[3])/60;
+  return ((q-1)*len + (len-left))/(n*len);
+}
+function tipMin(t){ var m=/(\d+):(\d+)\s*(AM|PM)/.exec(t||''); if(!m) return 9999; return (+m[1]%12+(m[3]==='PM'?12:0))*60+(+m[2]); }
+function stateOrder(g){ return !g?3 : g.st==='live'?0 : g.st==='pre'?1 : 2; }
+function cmpGames(x,y){
+  var s=stateOrder(x)-stateOrder(y); if(s) return s;
+  if(x.st==='live'){ var d=progress(y)-progress(x); if(Math.abs(d)>1e-6) return d>0?1:-1; }
+  if(x.st==='pre'){ var e=tipMin(x.t)-tipMin(y.t); if(e) return e; }
+  return rankOf(x)-rankOf(y);
+}
+function gameFor(k,gs){ for(var i=0;i<gs.length;i++){ if(gs[i].a===k||gs[i].h===k) return gs[i]; } return null; }
+function idle(k){ return /^Offseason/.test(NEXTG[k]||'') ? 1 : 0; }
+function cmpTeams(a,b,gs){
+  var ga=gameFor(a,gs), gb=gameFor(b,gs);
+  if(ga && gb && ga!==gb){ var c=cmpGames(ga,gb); if(c) return c; }
+  else if(!ga || !gb){ if(ga||gb) return ga?-1:1; var o=idle(a)-idle(b); if(o) return o; }
+  function fi(k){ var i=FOLLOW.indexOf(k); return i<0?99:i; }
+  return fi(a)-fi(b);
+}
+
+/* ---------- dates ---------- */
+var TODAY = new Date(2026,9,31);
+var MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function dkey(d){ return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function pkey(s){ var p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+function addDays(d,n){ var x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); x.setDate(x.getDate()+n); return x; }
+function sameDay(a,b){ return dkey(a)===dkey(b); }
+function longDate(d){ return WD[d.getDay()]+', '+MON[d.getMonth()].slice(0,3)+' '+d.getDate(); }
+
+/* ---------- games ---------- */
 function games(){
   var m3 = DEMO===3;
   return [
@@ -876,63 +1067,74 @@ var TOMOR = [
   {L:'nba', a:'mia', h:'chi', st:'pre', t:'7:00 PM', p:{k:'mia',v:56}},
   {L:'ncaam', a:'uconn', h:'duke', st:'pre', t:'6:00 PM', p:{k:'uconn',v:53}}
 ];
-var LASTRES = {lal:'L 104–110 vs Nuggets', okc:'W 118–110 at Nuggets', bos:'W 104–99 at Knicks', uconn:'W 88–62 vs Stonehill',
-  uconnw:'W 85–51 vs Boston U', scw:'W 79–60 vs N. Carolina', uscw:'W 78–64 vs Ole Miss', uclaw:'W 82–60 vs Arizona',
-  duke:'L 69–72 vs Kansas', ku:'W 72–69 at Duke', gonz:'L 76–81 at UConn', phi:'L 98–107 vs Celtics'};
+/* any other day: a believable slate, the same every time you open that day */
+var POOL = {nba:['lal','gs','bos','nyk','okc','dal','den','min','chi','hou','phi','mia'],
+  ncaam:['uconn','gonz','duke','ku','uk','unc','pur','uh','ariz','aub'],
+  ncaaw:['uconnw','scw','uscw','uclaw','texw','lsuw','ndw'], wnba:['ind','lva','nyl']};
+var SEASON = {nba:[new Date(2026,9,20),new Date(2027,5,20)], ncaam:[new Date(2026,10,2),new Date(2027,3,6)],
+  ncaaw:[new Date(2026,10,2),new Date(2027,3,5)], wnba:[new Date(2027,4,15),new Date(2027,9,20)]};
+function rnd(seed){ var s=seed%233280; return function(){ s=(s*9301+49297)%233280; return s/233280; }; }
+var DAYCACHE={};
+function genDay(d){
+  if(sameDay(d,TODAY)) return games();
+  if(sameDay(d,addDays(TODAY,-1))) return YEST;
+  if(sameDay(d,addDays(TODAY,1))) return TOMOR;
+  var key=dkey(d); if(DAYCACHE[key]) return DAYCACHE[key];
+  var out=[], past=d<TODAY, seed=d.getFullYear()*400+d.getMonth()*32+d.getDate();
+  var times=['6:00 PM','6:30 PM','7:00 PM','7:30 PM','8:00 PM','9:00 PM','9:30 PM'];
+  LORDER.forEach(function(L,li){
+    var se=SEASON[L]; if(d<se[0]||d>se[1]) return;
+    var r=rnd(seed*7+li*131), pool=POOL[L].slice();
+    for(var i=pool.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)), t=pool[i]; pool[i]=pool[j]; pool[j]=t; }
+    var n = L==='nba' ? 3+Math.floor(r()*3) : L==='wnba' ? 1 : 2+Math.floor(r()*2);
+    n=Math.min(n, Math.floor(pool.length/2));
+    for(var g=0; g<n; g++){
+      var a=pool[2*g], h=pool[2*g+1];
+      if(past){ var base=L==='nba'?106:72, as=base+Math.floor(r()*22)-11, hs=base+Math.floor(r()*22)-9; if(as===hs) hs++;
+        out.push({L:L,a:a,h:h,st:'fin',as:as,hs:hs}); }
+      else { var fav=r()<.56?h:a; out.push({L:L,a:a,h:h,st:'pre',t:times[Math.floor(r()*times.length)],p:{k:fav,v:52+Math.floor(r()*24)}}); }
+    }
+  });
+  DAYCACHE[key]=out; return out;
+}
 
-/* ---------- the score row: Apple's grammar ----------
-   crest over name | score | status | score | crest over name.
-   Fixed-width score and status columns, so every row's numbers
-   fall on the same vertical lines down the page.            */
+/* ---------- the score row: Apple's grammar on fixed columns ---------- */
 function gameRow(g){
   var live=g.st==='live', fin=g.st==='fin', pre=g.st==='pre';
-  var aUp=(live||fin)&&g.as>g.hs, hUp=(live||fin)&&g.hs>g.as;
-  var aLose=fin&&!aUp, hLose=fin&&!hUp;
+  var aUp=(live||fin)&&g.as>g.hs, hUp=(live||fin)&&g.hs>g.as, aLose=fin&&!aUp, hLose=fin&&!hUp;
   function side(k,lose){
-    return '<span class="tm'+(lose?' lo':'')+'">'
-      +(FOLLOW.indexOf(k)>-1?'<em class="star" aria-label="Following">★</em>':'')
+    return '<span class="tm'+(lose?' lo':'')+'">'+(FOLLOW.indexOf(k)>-1?'<em class="star" aria-label="Following">★</em>':'')
       +crest(k,38,true)+'<b>'+esc(T[k].name)+'</b></span>';
   }
   function score(k,v,up,lose){
-    if(pre) return '<span class="sc rec">'+esc(T[k].rec)+'</span>';
+    if(pre) return '<span class="sc rec">'+esc(T[k].rec||'')+'</span>';
     return '<span class="sc num'+(up?'':' tr')+(lose?' lo':'')+'">'+v+'</span>';
   }
   var mid;
   if(live) mid=stp(g.clock,true,'flat');
   else if(fin) mid='<span class="ft">Final</span>';
   else {
-    var q=pairColors(g.a,g.h), fav=g.p.k, v=g.p.v, favAway=fav===g.a;
-    var aw=favAway?v:100-v;
-    mid='<b class="tt">'+esc(g.t)+'</b>'
-      +'<small>'+esc(T[fav].ab)+' '+v+'%</small>'
+    var q=pairColors(g.a,g.h), fav=g.p.k, v=g.p.v, aw=fav===g.a?v:100-v;
+    mid='<b class="tt">'+esc(g.t)+'</b><small>'+esc(T[fav].ab)+' '+v+'%</small>'
       +'<span class="pb"><i style="width:'+aw+'%;background:'+q.away+'"></i><i style="width:'+(100-aw)+'%;background:'+q.home+'"></i></span>';
   }
-  return '<a class="grow pressable" href="#game">'
-    +side(g.a,aLose)+score(g.a,g.as,aUp,aLose)
-    +'<span class="mid">'+mid+'</span>'
-    +score(g.h,g.hs,hUp,hLose)+side(g.h,hLose)
-    +'</a>';
+  return '<a class="grow pressable" href="#game">'+side(g.a,aLose)+score(g.a,g.as,aUp,aLose)
+    +'<span class="mid">'+mid+'</span>'+score(g.h,g.hs,hUp,hLose)+side(g.h,hLose)+'</a>';
 }
-function gamePlate(list){
-  return '<div class="gp">'+list.map(gameRow).join('')+'</div>';
-}
+function gamePlate(list){ return '<div class="gp">'+list.map(gameRow).join('')+'</div>'; }
 
-/* ---------- the hero score block, shared by Following and the game page ---------- */
-function heroScore(g, pc, href){
+/* ---------- shared pieces ---------- */
+function heroScore(g, pc){
   var A=T[g.a], H=T[g.h], aUp=g.as>g.hs, hUp=g.hs>g.as;
-  var wv = g.wp ? (g.wp.k===g.a ? g.wp.v : 100-g.wp.v) : 50;   // away team's chance
-  return '<a class="gsc" href="'+(href||'#game')+'">'
-      +'<span class="sc num '+(aUp?'ld':'tr')+'">'+g.as+'</span>'
-      +'<span class="mid">'+stp(g.clock,true)+'</span>'
+  var wv = g.wp ? (g.wp.k===g.a ? g.wp.v : 100-g.wp.v) : 50;
+  return '<a class="gsc" href="#game">'
+      +'<span class="sc num '+(aUp?'ld':'tr')+'">'+g.as+'</span><span class="mid">'+stp(g.clock,true)+'</span>'
       +'<span class="sc num '+(hUp?'ld':'tr')+'">'+g.hs+'</span>'
-      +'<span class="side">'+crest(g.a,52,true)+'<b>'+esc(A.name)+'</b><em>'+esc(A.rec)+'</em></span>'
-      +'<span></span>'
+      +'<span class="side">'+crest(g.a,52,true)+'<b>'+esc(A.name)+'</b><em>'+esc(A.rec)+'</em></span><span></span>'
       +'<span class="side">'+crest(g.h,52,true)+'<b>'+esc(H.name)+'</b><em>'+esc(H.rec)+'</em></span>'
     +'</a>'
-    +'<div class="wp"><div class="bar">'
-      +'<i data-w="'+wv+'" style="background:'+pc.away+'"></i>'
-      +'<i data-w="'+(100-wv)+'" style="background:'+pc.home+'"></i>'
-    +'</div><div class="cap"><span>'+esc(A.ab)+' '+wv+'%</span><span>Prediction</span><span>'+esc(H.ab)+' '+(100-wv)+'%</span></div></div>';
+    +'<div class="wp"><div class="bar"><i data-w="'+wv+'" style="background:'+pc.away+'"></i><i data-w="'+(100-wv)+'" style="background:'+pc.home+'"></i></div>'
+    +'<div class="cap"><span>'+esc(A.ab)+' '+wv+'%</span><span>Prediction</span><span>'+esc(H.ab)+' '+(100-wv)+'%</span></div></div>';
 }
 function miniBar(g, pc){
   return '<div class="minibar gut" style="--ha:'+pc.home+';--aw:'+pc.away+'" id="mini"><span class="w"></span><span class="dots"></span>'
@@ -941,633 +1143,671 @@ function miniBar(g, pc){
 }
 function topIcons(onColor){
   var c=onColor?' g':'';
-  return '<span class="icons"><span class="disc'+c+'">'+svg(IC.search)+'</span><span class="disc'+c+'">'+svg(IC.gear)+'</span></span>';
+  return '<span class="icons"><span class="disc'+c+'" aria-label="Search">'+svg(IC.search)+'</span>'
+    +'<span class="disc'+c+'" aria-label="Settings">'+svg(IC.gear)+'</span></span>';
 }
 var MARK='<span class="mark">R<i>I</i>V<i>L</i></span>';
+/* the same chips, the same look, on every tab — only when you follow more than one league */
+function leagueChips(){
+  if(ENABLED.length<2) return '';
+  var ls=LORDER.filter(function(L){return ENABLED.indexOf(L)>-1;});
+  return '<div class="fchips">'+[['all','All']].concat(ls.map(function(L){return [L,LNAME[L]];})).map(function(c){
+    return '<button data-lg="'+c[0]+'" aria-pressed="'+(LG===c[0])+'">'+c[1]+'</button>';
+  }).join('')+'</div>';
+}
+function injRow(p, withTeam){
+  var t=T[p.t];
+  return '<button class="inj pressable">'+shot(p.id,p.n,t.c,42)
+    +'<span class="t"><b>'+esc(p.n)+'</b><span>'+(withTeam?esc(t.full)+' · ':'')+esc(p.w)+'</span></span>'
+    +'<span class="tag '+p.st+'">'+(p.st==='out'?'Out':'Questionable')+'</span></button>';
+}
+function newsCard(n,i){
+  return '<a class="news pressable" href="#" data-act="read" data-i="'+i+'"><span class="im" style="display:block;background:linear-gradient(140deg,'+T[n.t].c+',#0b0d0f)"></span>'
+    +'<h4>'+esc(n.h)+'</h4><p><span class="kick">'+esc(n.k)+'</span> · '+esc(n.s)+'</p></a>';
+}
 
-/* ---------- FOLLOWING ----------
-   Built to hold a lot: a league filter appears once you follow more than
-   one league, today's teams always come first, and long lists show the
-   first few with the rest one tap away — never a wall to sift through. */
-var FL='all';            /* the Following filter: 'all' or a league key */
+/* ---------- FOLLOWING ---------- */
 var OPEN={teams:false, players:false};
-function leagueOf(k){ var t=T[k]; return t.L || (t.lg==='ncaa'?'ncaam':t.lg); }
-function inFilter(k){ return FL==='all' || leagueOf(k)===FL; }
-function gInFilter(g){ return FL==='all' || g.L===FL; }
-
-function teamTiles(){
-  var gs=games();
-  var ks=FOLLOW.filter(inFilter);
-  /* teams with a game today first (live, then upcoming, then final), then the rest, each in the user's order */
-  function gameFor(k){ return gs.filter(function(x){return x.a===k||x.h===k;})[0]; }
-  function w(k){ var g=gameFor(k); return g ? stateOrder(g) : 3; }
-  ks.sort(function(a,b){ return w(a)-w(b) || FOLLOW.indexOf(a)-FOLLOW.indexOf(b); });
-  var cap = (FL==='all' && !OPEN.teams) ? 4 : ks.length;
-  var shown=ks.slice(0,cap), more=ks.length-shown.length;
-
+function teamTiles(gs){
+  var ks=FOLLOW.filter(inLG).slice().sort(function(a,b){ return cmpTeams(a,b,gs); });
+  var cap=(LG==='all' && !OPEN.teams) ? 4 : ks.length, shown=ks.slice(0,cap), more=ks.length-shown.length;
   return '<div class="tiles2">'+shown.map(function(k){
-    var t=T[k], g=gameFor(k), now='';
+    var t=T[k], g=gameFor(k,gs), now='';
     if(g){
       var home=g.h===k, opp=home?T[g.a].name:T[g.h].name, pre=home?'vs ':'at ';
-      if(g.st==='live'){
-        var mine=home?g.hs:g.as, theirs=home?g.as:g.hs;
-        now='<span class="nw">'+stp(g.clock,true,'sm')+'</span><p><b class="num">'+mine+'–'+theirs+'</b> '+pre+esc(opp)+'</p>';
-      } else if(g.st==='fin'){
-        var m=home?g.hs:g.as, o=home?g.as:g.hs;
-        now='<p class="k">Final</p><p><b>'+(m>o?'W':'L')+' '+m+'–'+o+'</b> '+pre+esc(opp)+'</p>';
-      } else {
-        now='<p class="k">Today</p><p><b>'+esc(g.t)+'</b> '+pre+esc(opp)+'</p>';
-      }
-    } else {
-      now='<p class="k">Next</p><p>'+esc(NEXTG[k]||'—')+'</p>';
-    }
+      if(g.st==='live'){ var mine=home?g.hs:g.as, th=home?g.as:g.hs;
+        now='<span class="nw">'+stp(g.clock,true,'sm')+'</span><p><b class="num">'+mine+'–'+th+'</b> '+pre+esc(opp)+'</p>'; }
+      else if(g.st==='fin'){ var m=home?g.hs:g.as, o=home?g.as:g.hs;
+        now='<p class="k">Final</p><p><b>'+(m>o?'W':'L')+' '+m+'–'+o+'</b> '+pre+esc(opp)+'</p>'; }
+      else now='<p class="k">Today</p><p><b>'+esc(g.t)+'</b> '+pre+esc(opp)+'</p>';
+    } else now='<p class="k">Next</p><p>'+esc(NEXTG[k]||'—')+'</p>';
     return '<a class="tl2 pressable" href="#game" style="--tc:'+t.c+'">'
       +'<img class="wm" src="'+logoUrl(k)+'" alt="" onerror="this.remove()">'
-      +'<span class="lgt">'+esc(LNAME[leagueOf(k)])+'</span>'
+      +(ENABLED.length>1?'<span class="lgt">'+esc(LNAME[leagueOf(k)])+'</span>':'')
       +crest(k,34,true)+'<h4>'+esc(t.full)+'</h4>'
       +'<div class="tb">'+now+(LASTRES[k]?'<p class="last">Last · '+esc(LASTRES[k])+'</p>':'')+'</div></a>';
   }).join('')+'</div>'
-  + (more>0 ? '<button class="morebtn pressable" data-act="open-teams">All '+ks.length+' teams<span>'+more+' more</span></button>' : '')
-  + (OPEN.teams && FL==='all' && ks.length>4 ? '<button class="morebtn pressable" data-act="open-teams">Show fewer</button>' : '');
+  +(more>0?'<button class="morebtn pressable" data-act="open-teams">All '+ks.length+' teams<span>'+more+' more</span></button>':'')
+  +(OPEN.teams && LG==='all' && ks.length>4?'<button class="morebtn pressable" data-act="open-teams">Show fewer</button>':'');
 }
-
-function playerStrip(){
-  var gs=games();
-  var ps=MYPLAYERS.filter(function(p){return inFilter(p.t);});
-  function w(p){ var g=gs.filter(function(x){return x.a===p.t||x.h===p.t;})[0]; return g?stateOrder(g):3; }
-  ps.sort(function(a,b){ return w(a)-w(b); });
-  var cap=(!OPEN.players)?8:ps.length, shown=ps.slice(0,cap), more=ps.length-shown.length;
+function playerStrip(gs){
+  /* same rule as teams; players in the same game keep the order you set */
+  var ps=MYPLAYERS.filter(function(p){return inLG(p.t);}).slice().sort(function(a,b){
+    var g1=gameFor(a.t,gs), g2=gameFor(b.t,gs);
+    if(g1 && g1===g2) return MYPLAYERS.indexOf(a)-MYPLAYERS.indexOf(b);
+    return cmpTeams(a.t,b.t,gs) || MYPLAYERS.indexOf(a)-MYPLAYERS.indexOf(b); });
+  var cap=OPEN.players?ps.length:8, shown=ps.slice(0,cap), more=ps.length-shown.length;
   return '<div class="rail">'+shown.map(function(p){
-      var t=T[p.t];
+      var t=T[p.t], g=gameFor(p.t,gs), st;
+      if(g&&g.st==='live') st='<span class="pst">'+stp(g.clock,true,'sm')+'</span><u>'+esc(p.ln)+'</u>';
+      else if(g&&g.st==='pre') st='<u><b>Today</b> · '+esc(g.t)+'</u>';
+      else if(g&&g.st==='fin') st='<u><b>Final</b>'+(p.ln?' · '+esc(p.ln):'')+'</u>';
+      else st='<u>'+esc(NEXTG[p.t]||'No game today')+'</u>';
       return '<a class="mp pressable" href="#game" style="--tc:'+t.c+'">'
         +'<img class="wmk" src="'+logoUrl(p.t)+'" alt="" onerror="this.remove()">'
-        +shot(p.id,p.n,t.c,62)
-        +'<b>'+esc(p.n)+'</b><span>'+esc(t.ab)+' · '+esc(LNAME[leagueOf(p.t)])+'</span><u>'+esc(p.next)+'</u></a>';
+        +shot(p.id,p.n,t.c,62)+'<b>'+esc(p.n)+'</b><span>'+esc(t.ab)+(ENABLED.length>1?' · '+esc(LNAME[leagueOf(p.t)]):'')+'</span>'+st+'</a>';
     }).join('')
     +(more>0?'<button class="mp mpmore pressable" data-act="open-players"><b>+'+more+'</b><span>See all '+ps.length+'</span></button>':'')
     +'</div>';
 }
-
 function viewFollowing(){
-  var gs=games().filter(function(g){return ENABLED.indexOf(g.L)>-1;});
-  var mineAll=gs.filter(isMine).sort(function(x,y){ return stateOrder(x)-stateOrder(y) || rankOf(x)-rankOf(y); });
-  var myLiveAll=mineAll.filter(function(g){return g.st==='live';});
-  var mine=mineAll.filter(gInFilter);
-  var myLive=mine.filter(function(g){return g.st==='live';});
-  /* the hero is decided across everything you follow, not the filter */
-  var hero = (FL==='all' && myLiveAll.length===1) ? myLiveAll[0] : null;
-  var rest = hero ? mine.filter(function(g){return g!==hero;}) : mine;
-
+  var gs=games().filter(enabledG);
+  var mineAll=gs.filter(isMine).sort(cmpGames), liveAll=mineAll.filter(function(g){return g.st==='live';});
+  var mine=mineAll.filter(gInLG), myLive=mine.filter(function(g){return g.st==='live';});
+  var hero=(LG==='all' && liveAll.length===1) ? liveAll[0] : null;
+  var rest=hero ? mine.filter(function(g){return g!==hero;}) : mine;
   var top;
   if(hero){
     var pc=pairColors(hero.a,hero.h);
     top='<section class="ghero" style="--ha:'+pc.home+';--aw:'+pc.away+'">'
       +'<span class="w"><i></i><i></i><i></i><i></i></span><span class="dots"></span><span class="veil"></span>'
-      +'<div class="in gut">'
-        +'<div class="fbar">'+MARK+topIcons(true)+'</div>'
-        +'<p class="gleague">Your team is live · '+esc(LNAME[hero.L])+' · Chase Center</p>'
-        +heroScore(hero,pc)
-      +'</div></section>'
-      +'<div class="sheet">'+miniBar(hero,pc);
-  } else {
-    top='<header class="hdr gut">'+MARK+topIcons(false)+'</header>';
-  }
+      +'<div class="in gut"><div class="fbar">'+MARK+topIcons(true)+'</div>'
+        +'<p class="gleague">Your team is live · '+esc(LNAME[hero.L])+' · Chase Center</p>'+heroScore(hero,pc)
+      +'</div></section><div class="sheet">'+miniBar(hero,pc);
+  } else top='<header class="hdr gut">'+MARK+topIcons(false)+'</header>';
 
-  var body='<div class="gut"><div class="ptrow"><h1 class="ptitle">Following</h1><span class="more">Edit</span></div></div>';
-
-  /* the filter appears only when you follow more than one league */
-  var lgs=[]; FOLLOW.forEach(function(k){ var L=leagueOf(k); if(lgs.indexOf(L)<0 && ENABLED.indexOf(L)>-1) lgs.push(L); });
-  lgs.sort(function(a,b){ return ['nba','wnba','ncaam','ncaaw'].indexOf(a)-['nba','wnba','ncaam','ncaaw'].indexOf(b); });
-  if(lgs.length>1){
-    body+='<div class="fchips">'+[['all','All']].concat(lgs.map(function(L){return [L,LNAME[L]];})).map(function(c){
-      return '<button data-fl="'+c[0]+'" aria-pressed="'+(FL===c[0])+'">'+c[1]+'</button>';
-    }).join('')+'</div>';
-  }
-
-  if(myLive.length>1){
-    body+='<div class="gut"><button class="livebn pressable" data-act="live">'
-      +stp(myLive.length+' live',true,'flat sm')
-      +'<b>'+myLive.length+' of your teams are playing</b><u>Open Live ›</u></button></div>';
-  }
-
+  var body='<div class="gut"><div class="ptrow"><h1 class="ptitle">Following</h1><span class="more">Edit</span></div></div>'+leagueChips();
+  if(myLive.length>1) body+='<div class="gut"><button class="livebn pressable" data-act="live">'+stp(myLive.length+' live',true,'flat sm')
+    +'<b>'+myLive.length+' of your teams are playing</b><u>Open Live ›</u></button></div>';
   if(rest.length){
-    /* live games always show; after that the first few, then a way to the rest */
-    var nlive=rest.filter(function(g){return g.st==='live';}).length;
-    var cap=Math.max(4,nlive), shownG=rest.slice(0,cap), moreG=rest.length-shownG.length;
+    var nlive=rest.filter(function(g){return g.st==='live';}).length, cap=Math.max(4,nlive), sh=rest.slice(0,cap), mg=rest.length-sh.length;
     body+='<div class="gut sechd"><h2 class="sec">Today</h2><span class="more">'+rest.length+' game'+(rest.length>1?'s':'')+'</span></div>'
-      +'<div class="gut">'+gamePlate(shownG)
-      +(moreG>0?'<a class="morebtn pressable" href="#scores">All '+rest.length+' of your games<span>'+moreG+' more in Scores</span></a>':'')
-      +'</div>';
+      +'<div class="gut">'+gamePlate(sh)+(mg>0?'<a class="morebtn pressable" href="#scores">All '+rest.length+' of your games<span>'+mg+' more in Scores</span></a>':'')+'</div>';
   }
-
-  body+='<div class="gut sechd"><h2 class="sec">My teams</h2><span class="more">'+FOLLOW.filter(inFilter).length+'</span></div>'
-    +'<div class="gut">'+teamTiles()+'</div>';
-
-  var np=MYPLAYERS.filter(function(p){return inFilter(p.t);}).length;
-  if(np){
-    body+='<div class="gut sechd"><h2 class="sec">My players</h2><span class="more">'+np+'</span></div>'+playerStrip();
-  }
-
-  var inj=INJ.filter(function(p){return FOLLOW.indexOf(p.t)>-1 && inFilter(p.t);});
-  if(inj.length){
-    body+='<div class="gut sechd"><h2 class="sec">Injuries</h2></div>'
-      +'<div class="gut">'+inj.map(function(p){
-        var t=T[p.t];
-        return '<button class="inj pressable">'+shot(p.id,p.n,t.c,42)
-          +'<span class="t"><b>'+esc(p.n)+'</b><span>'+esc(t.full)+' · '+esc(p.w)+'</span></span>'
-          +'<span class="tag '+p.st+'">'+(p.st==='out'?'Out':'Questionable')+'</span></button>';
-      }).join('')+'</div>';
-  }
-
-  var around=gs.filter(function(g){return !isMine(g) && g.st==='pre' && gInFilter(g);}).slice(0,4);
-  if(around.length){
-    body+='<div class="gut sechd"><h2 class="sec">Around the league</h2><span class="ptag">Prediction</span></div>'
-      +'<div class="gut">'+gamePlate(around)+'</div>';
-  }
-
-  body+='<div class="gut sechd"><h2 class="sec">News</h2><span class="more">All news</span></div>'
-    +'<div class="gut">'+NEWS.map(function(n){
-        var k=n.k==='Lakers'?'lal':'gs';
-        return '<a class="news pressable" href="#news"><span class="im" style="display:block;background:linear-gradient(140deg,'+T[k].c+',#0b0d0f)"></span>'
-          +'<h4>'+esc(n.h)+'</h4><p><span class="kick">'+esc(n.k)+'</span> · '+esc(n.s)+'</p></a>';
-      }).join('')+'</div>';
-
+  body+='<div class="gut sechd"><h2 class="sec">My teams</h2><span class="more">'+FOLLOW.filter(inLG).length+'</span></div><div class="gut">'+teamTiles(gs)+'</div>';
+  var np=MYPLAYERS.filter(function(p){return inLG(p.t);}).length;
+  if(np) body+='<div class="gut sechd"><h2 class="sec">My players</h2><span class="more">'+np+'</span></div>'+playerStrip(gs);
+  var inj=INJ.filter(function(p){return FOLLOW.indexOf(p.t)>-1 && inLG(p.t);});
+  if(inj.length) body+='<div class="gut sechd"><h2 class="sec">Injuries</h2></div><div class="gut">'+inj.map(function(p){return injRow(p,true);}).join('')+'</div>';
+  var around=gs.filter(function(g){return !isMine(g) && g.st==='pre' && gInLG(g);}).sort(cmpGames).slice(0,4);
+  if(around.length) body+='<div class="gut sechd"><h2 class="sec">Around the league</h2><span class="ptag">Prediction</span></div><div class="gut">'+gamePlate(around)+'</div>';
+  body+='<div class="gut sechd"><h2 class="sec">News</h2><span class="more">All news</span></div><div class="gut">'+NEWS.map(newsCard).join('')+'</div>';
   body+='<div class="gut demo"><span>Mockup</span>'
-    +'<a href="#following/1" aria-pressed="'+(DEMO===1)+'">1 live</a>'
-    +'<a href="#following/3" aria-pressed="'+(DEMO===3)+'">3 live</a>'
+    +'<a href="#following/1" aria-pressed="'+(DEMO===1)+'">1 live</a><a href="#following/3" aria-pressed="'+(DEMO===3)+'">3 live</a>'
     +'<a href="#following/m" aria-pressed="'+(DEMO==='m')+'">Follows a lot</a></div>';
-
   return top+body+(hero?'</div>':'');
 }
 
 /* ---------- SCORES ---------- */
-var SCORES = {day:'today', lg:'all'};
-function viewScores(){
-  var list = SCORES.day==='today' ? games() : SCORES.day==='yesterday' ? YEST : TOMOR;
-  if(SCORES.lg!=='all') list=list.filter(function(g){return g.L===SCORES.lg;});
-  function sorted(a){ return a.slice().sort(function(x,y){ return stateOrder(x)-stateOrder(y) || rankOf(x)-rankOf(y); }); }
-  var mine=sorted(list.filter(isMine));
-  var groups=[];
-  if(mine.length) groups.push(['mine','★  Your games',mine]);
-  ENABLED.forEach(function(L){
-    var g=sorted(list.filter(function(x){return x.L===L && !isMine(x);}));
-    if(g.length) groups.push([L,LNAME[L],g]);
-  });
-
-  var chips = ENABLED.length>1
-    ? '<div class="gut"><div class="pills">'
-        +[['all','All']].concat(ENABLED.map(function(L){return [L,LNAME[L]];})).map(function(c){
-          return '<button data-lg="'+c[0]+'" aria-pressed="'+(SCORES.lg===c[0])+'">'+c[1]+'</button>';
-        }).join('')+'</div></div>'
-    : '';
-
-  return '<header class="hdr gut">'+MARK+topIcons(false)+'</header>'
-    +'<div class="gut"><h1 class="ptitle">Scores</h1></div>'
-    +chips
-    +'<div class="gut" style="margin-top:14px"><div class="seg2 days">'
-      +[['yesterday','Yesterday'],['today','Today'],['tomorrow','Tomorrow']].map(function(d){
-        return '<button data-day="'+d[0]+'" aria-pressed="'+(SCORES.day===d[0])+'">'+d[1]+'</button>';
-      }).join('')+'</div></div>'
-    +groups.map(function(g){
-      return '<div class="gut"><button class="grp" data-act="fold" aria-expanded="true">'
-          +'<b>'+esc(g[1])+'</b><span>'+g[2].length+'</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>'
-        +gamePlate(g[2])+'</div>';
-    }).join('')
-    +'<p class="gut legend">Only the leagues you follow appear here. Change them in Settings.</p>';
+var SCORES={date:TODAY};
+function hasMine(d){ return genDay(d).some(function(g){ return enabledG(g) && isMine(g); }); }
+function hasAny(d){ return genDay(d).some(enabledG); }
+function dayStrip(){
+  var sel=SCORES.date, out='';
+  for(var i=-10;i<=10;i++){
+    var d=addDays(sel,i), on=i===0, td=sameDay(d,TODAY);
+    out+='<button class="dy'+(on?' on':'')+(td?' td':'')+(hasAny(d)?'':' none')+'" data-date="'+dkey(d)+'">'
+      +'<span>'+(td?'Today':WD[d.getDay()])+'</span><b class="num">'+d.getDate()+'</b>'+(hasMine(d)?'<i></i>':'<i class="x"></i>')+'</button>';
+  }
+  return '<div class="days2" id="days2">'+out+'</div>';
 }
+function viewScores(){
+  var sel=SCORES.date;
+  var list=genDay(sel).filter(function(g){return enabledG(g) && gInLG(g);});
+  var groups=[], mine=list.filter(isMine).sort(cmpGames);
+  if(mine.length) groups.push(['★  Your games',mine]);
+  LORDER.forEach(function(L){
+    if(ENABLED.indexOf(L)<0) return;
+    var g=list.filter(function(x){return x.L===L && !isMine(x);}).sort(cmpGames);
+    if(g.length) groups.push([LNAME[L],g]);
+  });
+  var out='<header class="hdr gut">'+MARK+topIcons(false)+'</header>'
+    +'<div class="gut ptrow"><h1 class="ptitle">Scores</h1>'
+    +'<button class="calbtn pressable" data-act="cal">'+svg(IC.cal)+'<span>'+MON[sel.getMonth()].slice(0,3)+' '+sel.getFullYear()+'</span></button></div>'
+    +leagueChips()+dayStrip();
+  if(!groups.length){
+    var lbl = LG==='all' ? 'in your leagues' : 'in '+LNAME[LG];
+    out+='<div class="gut"><div class="empty"><b>No games '+lbl+'</b><p>'+esc(longDate(sel))+'. Pick another day or open the calendar.</p></div></div>';
+  } else {
+    out+=groups.map(function(g){
+      return '<div class="gut"><button class="grp" data-act="fold" aria-expanded="true"><b>'+esc(g[0])+'</b><span>'+g[1].length+'</span>'
+        +'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>'+gamePlate(g[1])+'</div>';
+    }).join('');
+  }
+  return out+'<p class="gut legend">Only the leagues you picked at setup appear. A dot under a day means one of your teams plays.</p>';
+}
+/* the calendar: a bottom sheet, any day of the season */
+var CAL=null;
+function calHtml(){
+  var y=CAL.getFullYear(), mo=CAL.getMonth(), start=new Date(y,mo,1).getDay(), days=new Date(y,mo+1,0).getDate(), cells='';
+  for(var i=0;i<start;i++) cells+='<span></span>';
+  for(var d=1; d<=days; d++){
+    var dt=new Date(y,mo,d);
+    cells+='<button class="cd'+(sameDay(dt,SCORES.date)?' on':'')+(sameDay(dt,TODAY)?' td':'')+(hasAny(dt)?'':' none')+'" data-cal="'+dkey(dt)+'">'
+      +'<b class="num">'+d+'</b>'+(hasMine(dt)?'<i></i>':'')+'</button>';
+  }
+  return '<div class="grab"></div><div class="calhd"><h3>'+MON[mo]+' <span>'+y+'</span></h3>'
+    +'<button class="cb" data-calnav="-1" aria-label="Previous month">'+svg('<path d="m14.5 6-6 6 6 6"/>')+'</button>'
+    +'<button class="cb t" data-calnav="0">Today</button>'
+    +'<button class="cb" data-calnav="1" aria-label="Next month">'+svg('<path d="m9.5 6 6 6-6 6"/>')+'</button></div>'
+    +'<div class="calwd">'+['S','M','T','W','T','F','S'].map(function(c){return '<span>'+c+'</span>';}).join('')+'</div>'
+    +'<div class="calg">'+cells+'</div><p class="calkey"><i></i>One of your teams plays</p>';
+}
+function openCal(){ CAL=new Date(SCORES.date.getFullYear(),SCORES.date.getMonth(),1); openSheet(calHtml(),'bottom'); }
 
 /* ---------- LIVE (the centre button) ---------- */
-function myLiveCount(){ return games().filter(function(g){return g.st==='live'&&isMine(g)&&ENABLED.indexOf(g.L)>-1;}).length; }
+function myLiveCount(){ return games().filter(function(g){return g.st==='live' && isMine(g) && enabledG(g);}).length; }
 function liveSheet(){
-  var ls=games().filter(function(g){return g.st==='live' && ENABLED.indexOf(g.L)>-1;})
-    .sort(function(x,y){ return rankOf(x)-rankOf(y); });
-  var cards=ls.map(function(g){
-    var pc=pairColors(g.a,g.h), A=T[g.a], H=T[g.h], aUp=g.as>g.hs, hUp=g.hs>g.as;
-    var wv = g.wp.k===g.a ? g.wp.v : 100-g.wp.v;
-    return '<a class="lcard" href="#game" data-act="live-close" style="--ha:'+pc.home+';--aw:'+pc.away+'">'
-      +'<span class="w"><i></i><i></i><i></i><i></i></span><span class="dots"></span><span class="veil"></span>'
-      +'<span class="in">'
-        +'<span class="lt">'+stp(g.clock,true,'sm')+'<span>'+(isMine(g)?'★ Following':esc(LNAME[g.L]))+'</span></span>'
-        +'<span class="lrow">'
-          +'<span class="s">'+crest(g.a,42,true)+'<b>'+esc(A.ab)+'</b></span>'
-          +'<span class="n num'+(aUp?'':' tr')+'">'+g.as+'</span>'
-          +'<span class="n num'+(hUp?'':' tr')+'">'+g.hs+'</span>'
-          +'<span class="s">'+crest(g.h,42,true)+'<b>'+esc(H.ab)+'</b></span>'
-        +'</span>'
-        +'<span class="wp"><span class="bar"><i style="width:'+wv+'%;background:'+pc.away+'"></i><i style="width:'+(100-wv)+'%;background:'+pc.home+'"></i></span>'
-        +'<span class="cap"><span>'+esc(A.ab)+' '+wv+'%</span><span>Prediction</span><span>'+esc(H.ab)+' '+(100-wv)+'%</span></span></span>'
-      +'</span></a>';
-  }).join('');
+  var ls=games().filter(function(g){return g.st==='live' && enabledG(g);}).sort(function(x,y){
+    var a=isMine(x)?0:1, b=isMine(y)?0:1; return a-b || cmpGames(x,y); });
   return '<div class="lsh-hd gut"><h2>Live</h2><span class="n">'+ls.length+' games</span>'
       +'<button class="disc" data-act="live-close" aria-label="Close">'+svg('<path d="M6 6l12 12M18 6 6 18"/>')+'</button></div>'
-    +'<div class="gut lgrid">'+cards+'</div>';
+    +'<div class="gut lgrid">'+ls.map(function(g){
+      var pc=pairColors(g.a,g.h), A=T[g.a], H=T[g.h], aUp=g.as>g.hs, hUp=g.hs>g.as, wv=g.wp.k===g.a?g.wp.v:100-g.wp.v;
+      return '<a class="lcard" href="#game" data-act="live-close" style="--ha:'+pc.home+';--aw:'+pc.away+'">'
+        +'<span class="w"><i></i><i></i><i></i><i></i></span><span class="dots"></span><span class="veil"></span><span class="in">'
+        +'<span class="lt">'+stp(g.clock,true,'sm')+'<span>'+(isMine(g)?'★ Following':esc(LNAME[g.L]))+'</span></span>'
+        +'<span class="lrow"><span class="s">'+crest(g.a,42,true)+'<b>'+esc(A.ab)+'</b></span>'
+          +'<span class="n num'+(aUp?'':' tr')+'">'+g.as+'</span><span class="n num'+(hUp?'':' tr')+'">'+g.hs+'</span>'
+          +'<span class="s">'+crest(g.h,42,true)+'<b>'+esc(H.ab)+'</b></span></span>'
+        +'<span class="wp"><span class="bar"><i style="width:'+wv+'%;background:'+pc.away+'"></i><i style="width:'+(100-wv)+'%;background:'+pc.home+'"></i></span>'
+        +'<span class="cap"><span>'+esc(A.ab)+' '+wv+'%</span><span>Prediction</span><span>'+esc(H.ab)+' '+(100-wv)+'%</span></span></span></span></a>';
+    }).join('')+'</div>';
 }
-function openLive(){
-  var el=document.getElementById('live');
-  el.innerHTML=liveSheet();
-  el.hidden=false;
-  requestAnimationFrame(function(){ el.classList.add('on'); });
-  document.body.style.overflow='hidden';
+function openLive(){ var el=document.getElementById('live'); el.innerHTML=liveSheet(); el.hidden=false;
+  requestAnimationFrame(function(){ el.classList.add('on'); }); document.body.style.overflow='hidden'; }
+function closeLive(){ var el=document.getElementById('live'); el.classList.remove('on'); document.body.style.overflow='';
+  setTimeout(function(){ el.hidden=true; },450); }
+
+/* ---------- STANDINGS (was "Leagues") ----------
+   The bottom bar says WHAT you want to see; the chips at the top say WHICH
+   league. Standings holds the league's own pages: tables, brackets, leaders. */
+var STAND={sub:'table', full:false};
+var CONF={West:['okc','gs','den','lal','dal','min','hou'], East:['bos','nyk','mia','phi','chi']};
+var POLL={ncaam:['uconn','ku','duke','pur','uh','gonz','uk','aub','unc','ariz'], ncaaw:['scw','uconnw','uclaw','uscw','texw','lsuw','ndw']};
+var LEADERS=[
+  {id:4278073,n:'Shai Gilgeous-Alexander',t:'okc',v:'32.1'},{id:3945274,n:'Luka Dončić',t:'lal',v:'30.4'},
+  {id:3975,n:'Stephen Curry',t:'gs',v:'27.8'},{id:4594268,n:'Anthony Edwards',t:'min',v:'27.1'},{id:3934672,n:'Jalen Brunson',t:'nyk',v:'26.0'}];
+function rec(k){ var r=(T[k].rec||'0-0').split('-'); return [+r[0],+r[1]]; }
+function stRow(k,i,gb,cols){
+  var me=FOLLOW.indexOf(k)>-1, w=rec(k);
+  return '<div class="st2'+(me?' me':'')+'"><i class="edge" style="background:'+T[k].c+'"></i><span class="rk">'+(i+1)+'</span>'
+    +crest(k,24,true)+'<span class="nm">'+esc(T[k].name)+'</span>'
+    +(cols==='poll' ? '<span class="c w">'+w[0]+'–'+w[1]+'</span>'
+       : '<span class="c">'+w[0]+'</span><span class="c">'+w[1]+'</span><span class="c">'+(w[0]/(w[0]+w[1])).toFixed(3).replace(/^0/,'')+'</span><span class="c">'+gb+'</span>')+'</div>';
 }
-function closeLive(){
-  var el=document.getElementById('live');
-  el.classList.remove('on');
-  document.body.style.overflow='';
-  setTimeout(function(){ el.hidden=true; },450);
+function confTable(name,keys,limit){
+  var ks=keys.slice().sort(function(a,b){ var x=rec(a),y=rec(b); return (y[0]/(y[0]+y[1]))-(x[0]/(x[0]+x[1])); });
+  var L=rec(ks[0]);
+  var rows=ks.slice(0,limit||ks.length).map(function(k,i){ var r=rec(k), gb=((L[0]-r[0])+(r[1]-L[1]))/2; return stRow(k,i,gb?gb.toFixed(1).replace('.0',''):'—'); }).join('');
+  return '<div class="sthd"><b>'+esc(name)+'</b><span>W</span><span>L</span><span>PCT</span><span>GB</span></div>'+rows;
+}
+function pollTable(name,keys,limit){
+  return '<div class="sthd poll"><b>'+esc(name)+'</b><span>Record</span></div>'
+    +keys.slice(0,limit||keys.length).map(function(k,i){ return stRow(k,i,'','poll'); }).join('');
+}
+function leagueBlock(L,compact){
+  var lim=compact?5:0, h='';
+  if(L==='nba') h=confTable('Western Conference',CONF.West,lim)+'<div style="height:18px"></div>'+confTable('Eastern Conference',CONF.East,lim);
+  else if(L==='ncaam'||L==='ncaaw') h=pollTable('AP Top 25',POLL[L],lim);
+  else h='<div class="empty"><b>Offseason</b><p>The 2027 WNBA season tips off in May. The table comes back with it.</p></div>';
+  return h;
+}
+function viewStandings(){
+  var ls=LORDER.filter(function(L){return ENABLED.indexOf(L)>-1 && (LG==='all'||LG===L);});
+  var subs=[['table','Standings'],['bracket','Brackets'],['leaders','Leaders']];
+  var out='<header class="hdr gut">'+MARK+topIcons(false)+'</header><div class="gut"><h1 class="ptitle">Standings</h1></div>'
+    +leagueChips()
+    +'<div class="gut"><div class="seg2 sub" style="margin-top:14px">'+subs.map(function(s){
+      return '<button data-sub="'+s[0]+'" aria-pressed="'+(STAND.sub===s[0])+'">'+s[1]+'</button>'; }).join('')+'</div></div>';
+  if(STAND.sub==='table'){
+    out+=ls.map(function(L){
+      var compact=LG==='all' && ls.length>1;
+      return '<div class="gut"><div class="sechd" style="margin-top:22px"><h2 class="sec">'+esc(LNAME[L])+'</h2>'
+        +(compact && L!=='wnba'?'<button class="more" data-lg="'+L+'">Full table ›</button>':'')+'</div>'
+        +'<div class="gp stp2">'+leagueBlock(L,compact)+'</div></div>';
+    }).join('');
+  } else if(STAND.sub==='bracket'){
+    out+=ls.map(function(L){
+      var t = L==='nba' ? ['NBA Cup','Group play is underway. The knockout bracket appears here once the eight teams are set in early December.']
+        : L==='wnba' ? ['Playoffs','Offseason. The bracket returns with the postseason.']
+        : ['Holiday tournaments and March Madness','Thanksgiving-week events first, then the full tournament bracket in March — with live scores and the Prediction for every game.'];
+      return '<div class="gut"><div class="brk"><span class="lgt2">'+esc(LNAME[L])+'</span><b>'+esc(t[0])+'</b><p>'+esc(t[1])+'</p></div></div>';
+    }).join('')+'<p class="gut legend">Brackets are the next build.</p>';
+  } else {
+    out+=ls.map(function(L){
+      if(L!=='nba') return '<div class="gut"><div class="sechd" style="margin-top:22px"><h2 class="sec">'+esc(LNAME[L])+'</h2></div><div class="empty"><b>Leaders fill in as the season starts</b><p>Points, rebounds, assists and more.</p></div></div>';
+      return '<div class="gut"><div class="sechd" style="margin-top:22px"><h2 class="sec">NBA · Points per game</h2></div><div class="gp">'
+        +LEADERS.map(function(p,i){ var t=T[p.t]; return '<div class="ldr"><span class="rk">'+(i+1)+'</span>'+shot(p.id,p.n,t.c,40)
+          +'<span class="t"><b>'+esc(p.n)+'</b><span>'+esc(t.full)+'</span></span><b class="v num">'+p.v+'</b></div>'; }).join('')+'</div></div>';
+    }).join('');
+  }
+  return out;
 }
 
-/* ---------- LEAGUES / NEWS — next in the build ---------- */
-function viewSoon(title, lines){
-  return '<header class="hdr gut">'+MARK+topIcons(false)+'</header>'
-    +'<div class="gut"><h1 class="ptitle">'+esc(title)+'</h1></div>'
-    +'<div class="gut" style="margin-top:18px"><div class="plate soon"><p class="lbl">Next in the build</p>'
-    +'<ul>'+lines.map(function(l){return '<li>'+esc(l)+'</li>';}).join('')+'</ul></div></div>';
+/* ---------- NEWS (placeholder) ---------- */
+function viewNews(){
+  return '<header class="hdr gut">'+MARK+topIcons(false)+'</header><div class="gut"><h1 class="ptitle">News</h1></div>'+leagueChips()
+    +'<div class="gut" style="margin-top:20px">'+NEWS.map(newsCard).join('')+'</div>'
+    +'<p class="gut legend">Every story, link and highlight opens inside RIVL. Nothing sends you to a browser or another app.</p>';
 }
 
-/* ---------- GAME ---------- */
-var BOX = {
-  starters:[
-    {id:3975,n:'S. Curry',p:'G',s:[34,'12-21','8-14','2-2',6,9,2,0,3,2,'+14']},
-    {id:4397424,n:'B. Podziemski',p:'G',s:[12,'5-9','2-5','0-0',4,3,1,0,1,3,'+9']},
-    {id:4278104,n:'J. Kuminga',p:'F',s:[17,'7-13','1-3','2-3',7,2,0,1,2,4,'+11']},
-    {id:3032978,n:'D. Green',p:'F',s:[6,'2-5','0-2','2-2',8,7,2,2,3,5,'+16']},
-    {id:4683856,n:'Q. Post',p:'C',s:[9,'4-7','1-2','0-0',6,1,0,1,0,2,'+4']}
-  ],
-  bench:[
-    {id:4066648,n:'M. Moody',p:'G',s:[11,'4-8','3-6','0-0',3,1,1,0,1,1,'+5']},
-    {id:4397102,n:'G. Santos',p:'F',s:[8,'3-6','1-2','1-2',5,2,1,0,2,3,'-2']},
-    {id:4683935,n:'T. Jackson-Davis',p:'C',s:[4,'2-4','0-0','0-0',6,1,0,2,1,2,'+1']}
-  ],
-  tot:[101,'39-73','16-34','7-9',45,26,7,6,13,22,''],
-  cols:['Pts','FG','3PT','FT','Reb','Ast','Stl','Blk','TO','PF','+/−']
+/* ---------- in-app sheets: stories, highlights, the calendar ---------- */
+function openSheet(html, kind){
+  var el=document.getElementById('sheet');
+  el.className='sh '+kind; el.innerHTML='<div class="scrim" data-act="sheet-close"></div><div class="panel">'+html+'</div>';
+  el.hidden=false; requestAnimationFrame(function(){ el.classList.add('on'); }); document.body.style.overflow='hidden';
+}
+function closeSheet(){ var el=document.getElementById('sheet'); el.classList.remove('on'); document.body.style.overflow='';
+  setTimeout(function(){ el.hidden=true; el.innerHTML=''; },420); }
+var XBTN='<button class="disc" data-act="sheet-close" aria-label="Close">'+svg('<path d="M6 6l12 12M18 6 6 18"/>')+'</button>';
+function readerHtml(n){
+  return '<div class="fhd gut">'+XBTN+'</div><article class="gut rd">'
+    +'<p class="kick">'+esc(n.k)+' · '+esc(n.s)+'</p><h1>'+esc(n.h)+'</h1>'
+    +'<div class="rim" style="background:linear-gradient(140deg,'+T[n.t].c+',#0b0d0f)"></div>'
+    +'<p>The full story from the feed opens right here, set in RIVL\'s own type, with the photos and video that came with it.</p>'
+    +'<p>Players and teams in the story link to their pages inside the app. There is no "Continue on ESPN" and no browser tab. If a story isn\'t available in full, RIVL doesn\'t list it.</p></article>';
+}
+function videoHtml(c){
+  return '<div class="fhd gut">'+XBTN+'</div>'
+    +'<div class="vid" style="--c1:'+T[c.t].c+'"><span class="pl2">'+'<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>'+'</span><span class="du">'+esc(c.d)+'</span></div>'
+    +'<div class="gut"><h2 class="vt">'+esc(c.x)+'</h2><p class="legend" style="margin-top:6px">Plays inside RIVL.</p>'
+    +'<div class="sechd"><h2 class="sec">More highlights</h2></div>'
+    +HL.filter(function(x){return x!==c;}).map(function(x){ return '<button class="vrow pressable" data-act="clip" data-i="'+HL.indexOf(x)+'"><span class="vth" style="--c1:'+T[x.t].c+'"></span><b>'+esc(x.x)+'</b><span>'+esc(x.d)+'</span></button>'; }).join('')
+    +'</div>';
+}
+
+/* ============================================================
+   GAME
+   ============================================================ */
+var BOXES = {
+  lal:{ starters:[
+    {id:3945274,n:'L. Dončić',p:'G',j:77,s:[31,'10-22','4-10','7-8',8,9,1,0,4,2,'-9']},
+    {id:4066457,n:'A. Reaves',p:'G',j:15,s:[14,'5-12','2-6','2-2',3,4,1,0,2,3,'-11']},
+    {id:1966,   n:'L. James', p:'F',j:23,s:[18,'7-15','1-4','3-4',7,8,1,1,3,2,'-6']},
+    {id:4066648,n:'R. Hachimura',p:'F',j:28,s:[9,'4-9','1-3','0-0',4,0,0,0,1,3,'-8']},
+    {id:0,      n:'D. Ayton', p:'C',j:'', s:[10,'5-8','0-0','0-1',11,1,0,2,2,4,'-12']}],
+   bench:[
+    {id:0,n:'J. Vanderbilt',p:'F',j:'',s:[2,'1-3','0-1','0-0',6,1,1,0,0,2,'-3']},
+    {id:0,n:'B. James',     p:'G',j:9, s:[4,'1-6','1-4','1-2',1,2,0,0,1,1,'-7']},
+    {id:0,n:'M. Kleber',    p:'F',j:'',s:[0,'0-2','0-2','0-0',3,0,0,1,0,2,'-4']}] },
+  gs:{ starters:[
+    {id:3975,n:'S. Curry',     p:'G',j:30,s:[34,'12-21','8-14','2-2',6,9,2,0,3,2,'+14']},
+    {id:0,   n:'B. Podziemski',p:'G',j:2, s:[12,'5-9','2-5','0-0',4,3,1,0,1,3,'+9']},
+    {id:6430,n:'J. Butler',    p:'F',j:10,s:[17,'7-13','1-3','2-3',7,2,0,1,2,4,'+11']},
+    {id:6589,n:'D. Green',     p:'F',j:23,s:[6,'2-5','0-2','2-2',8,7,2,2,3,5,'+16']},
+    {id:0,   n:'Q. Post',      p:'C',j:'',s:[9,'4-7','1-2','0-0',6,1,0,1,0,2,'+4']}],
+   bench:[
+    {id:0,n:'M. Moody',        p:'G',j:4, s:[11,'4-8','3-6','0-0',3,1,1,0,1,1,'+5']},
+    {id:0,n:'J. Kuminga',      p:'F',j:1, s:[8,'3-6','1-2','1-2',5,2,1,0,2,3,'-2']},
+    {id:0,n:'T. Jackson-Davis',p:'C',j:32,s:[4,'2-4','0-0','0-0',6,1,0,2,1,2,'+1']}] }
 };
+var BCOLS=['Pts','FG','3PT','FT','Reb','Ast','Stl','Blk','TO','PF','+/−'];
+function roster(k){ return BOXES[k].starters.concat(BOXES[k].bench); }
+function mk(s){ var p=String(s).split('-'); return [+p[0],+p[1]]; }
+function totals(k){
+  var t=[0,[0,0],[0,0],[0,0],0,0,0,0,0,0];
+  roster(k).forEach(function(p){ for(var i=0;i<10;i++){ if(i>=1&&i<=3){ var m=mk(p.s[i]); t[i][0]+=m[0]; t[i][1]+=m[1]; } else t[i]+=+p.s[i]; } });
+  return t;
+}
+function pct(m){ return m[1]? (100*m[0]/m[1]).toFixed(1)+'%' : '—'; }
+function teamCmp(){
+  var A=totals(LIVE.away), H=totals(LIVE.home);
+  function row(lbl,a,b,av,bv,lowGood){ var s=av+bv||1; return {l:lbl,a:a,b:b,aw:Math.round(100*av/s),bw:Math.round(100*bv/s),aWin:lowGood?av<bv:av>bv,tie:av===bv}; }
+  return [
+    row('Field goals', pct(A[1]),pct(H[1]), A[1][0]/A[1][1], H[1][0]/H[1][1]),
+    row('3-pointers', pct(A[2]),pct(H[2]), A[2][0]/A[2][1], H[2][0]/H[2][1]),
+    row('Free throws',pct(A[3]),pct(H[3]), A[3][0]/A[3][1], H[3][0]/H[3][1]),
+    row('Rebounds', A[4],H[4],A[4],H[4]), row('Assists',A[5],H[5],A[5],H[5]),
+    row('Steals',A[6],H[6],A[6],H[6]), row('Blocks',A[7],H[7],A[7],H[7]),
+    row('Turnovers',A[8],H[8],A[8],H[8],true)];
+}
+function gameLeaders(){
+  return [['Points',0],['Rebounds',4],['Assists',5]].map(function(c){
+    function top(k){ return roster(k).reduce(function(b,p){ return +p.s[c[1]]>+b.s[c[1]]?p:b; }); }
+    var A=top(LIVE.away), H=top(LIVE.home);
+    return {k:c[0], a:{id:A.id,n:A.n,t:LIVE.away,v:+A.s[c[1]]}, h:{id:H.id,n:H.n,t:LIVE.home,v:+H.s[c[1]]}};
+  });
+}
 var PLAYS=[
-  {c:"6:12",t:'gs', k:'score', pid:3975, hd:'3-pointer', x:'Stephen Curry makes a 27-foot three point jumper from the left wing, assisted by Draymond Green.', s:'88-101'},
-  {c:"6:35",t:'lal',k:'miss',  x:'LeBron James misses a driving layup.'},
-  {c:"6:41",t:'gs', k:'reb',   x:'Jonathan Kuminga defensive rebound.'},
-  {c:"7:02",t:'lal',k:'score', pid:6583, hd:'Dunk', x:'Anthony Davis throws down the alley-oop, assisted by LeBron James.', s:'88-98'},
-  {c:"7:28",t:'gs', k:'to',    x:'Golden State Warriors full timeout.'},
-  {c:"7:44",t:'gs', k:'score', pid:4397424, hd:'3-pointer', x:'Brandin Podziemski makes a 25-foot three point jumper from the top of the key.', s:'86-98'},
-  {c:"8:05",t:'lal',k:'foul',  x:'Personal foul on Rui Hachimura.'}
+  {c:'6:12',t:'gs', k:'score',pl:'S. Curry',     hd:'3-pointer',x:'Stephen Curry makes a 27-foot three from the left wing. Draymond Green with the assist.', s:'88-101'},
+  {c:'6:31',t:'lal',k:'miss', x:'Luka Dončić misses a 26-foot step-back three.'},
+  {c:'6:44',t:'gs', k:'score',pl:'J. Butler',    hd:'Layup',    x:'Jimmy Butler drives baseline and finishes through contact.', s:'88-98'},
+  {c:'7:05',t:'lal',k:'score',pl:'L. Dončić',    hd:'3-pointer',x:'Luka Dončić hits the step-back three over Moses Moody.', s:'88-96'},
+  {c:'7:20',t:'gs', k:'reb',  x:'Draymond Green defensive rebound.'},
+  {c:'7:31',t:'lal',k:'miss', x:'LeBron James misses an 18-foot pull-up.'},
+  {c:'7:48',t:'gs', k:'score',pl:'B. Podziemski',hd:'3-pointer',x:'Brandin Podziemski knocks down a three from the top of the key.', s:'85-96'},
+  {c:'8:02',t:'lal',k:'score',pl:'D. Ayton',     hd:'Dunk',     x:'Deandre Ayton rolls and dunks it. Luka Dončić with the assist.', s:'85-93'},
+  {c:'8:15',t:'gs', k:'to',   x:'Golden State full timeout.'},
+  {c:'8:30',t:'lal',k:'foul', x:'Personal foul on Rui Hachimura.'},
+  {c:'8:44',t:'gs', k:'score',pl:'S. Curry',     hd:'Free throws',x:'Stephen Curry makes both free throws.', s:'83-93'},
+  {k:'end', x:'End of 3rd', s:'70-83'}
 ];
 var PKIND={score:'●',miss:'✕',reb:'▣',to:'⏱',foul:'▮'};
-var LEAD=[
-  {k:'Points',   a:{id:1966,n:'L. James',t:'lal',v:28}, h:{id:3975,n:'S. Curry',t:'gs',v:34}},
-  {k:'Rebounds', a:{id:6583,n:'A. Davis',t:'lal',v:14}, h:{id:3032978,n:'D. Green',t:'gs',v:8}},
-  {k:'Assists',  a:{id:1966,n:'L. James',t:'lal',v:11}, h:{id:3975,n:'S. Curry',t:'gs',v:9}}
-];
 var HL=[
   {t:'gs', d:'0:18', x:'Curry pulls up from 30 feet to put Golden State in front'},
-  {t:'lal',d:'0:24', x:'James finds Davis on the roll for the alley-oop'},
-  {t:'gs', d:'0:15', x:'Kuminga chases down the block in transition'}
+  {t:'lal',d:'0:24', x:'Dončić finds Ayton on the roll for the alley-oop'},
+  {t:'gs', d:'0:15', x:'Butler draws the and-one in traffic'}
 ];
-var CMP=[
-  ['Field goals','40.2%','42.7%',48,52],
-  ['3-pointers','28.2%','47.8%',37,63],
-  ['Free throws','75.0%','82.4%',48,52],
-  ['Rebounds','56','55',51,49],
-  ['Assists','18','31',37,63],
-  ['Turnovers','22','17',56,44],
-  ['Points in paint','36','28',56,44],
-  ['Fast break','9','18',33,67]
-];
+var GINJ=[{id:0,n:'Gabe Vincent',t:'lal',st:'out',w:'Left ankle sprain · out tonight'}];
 
-var SC={away:'#FDB927',home:'#1D428A'};
-function shotsSvg(){
-  /* markers sized like the broadcast charts: a filled disc with a dark rim for a
-     make, a hollow ring for a miss. */
-  function pts(seed,n,cx,sp,col){
-    var out='',r=seed;
-    for(var i=0;i<n;i++){
-      r=(r*9301+49297)%233280; var u=r/233280;
-      r=(r*9301+49297)%233280; var v=r/233280;
-      r=(r*9301+49297)%233280; var w=r/233280;
-      // bias toward the rim and the paint, the way shots actually fall
-      var band = w<.42 ? 0 : (w<.72 ? 1 : 2);
-      var dx = band===0 ? (u-0.5)*9 : band===1 ? (u-0.5)*20 : (u-0.5)*26;
-      var x = cx + dx + (cx<50?4:-4);
-      var y = 4 + v*48;
-      var made=((i*7+seed)%10)<4;
-      var d=1.25;
-      out += made
-        ? '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="1.5" fill="'+col+'" stroke="rgba(18,10,2,.7)" stroke-width=".35"/>'
-        : '<path d="M'+(x-d).toFixed(2)+' '+(y-d).toFixed(2)+'l'+(d*2)+' '+(d*2)+'M'+(x+d).toFixed(2)+' '+(y-d).toFixed(2)+'l-'+(d*2)+' '+(d*2)+'" stroke="'+col+'" stroke-width=".42" stroke-linecap="round" fill="none"/>';
-    }
-    return out;
-  }
-  var ink='rgba(86,50,16,.5)';
+/* game-page filters: which team's box score, which team's plays,
+   and whose shots — a team, or one player */
+var GF={box:'home', pteam:'all', pkey:'key', steam:'all', sp:null, sq:0};
+function teamSwitch(field, withAll){
+  var opts=(withAll?[['all','Both']]:[]).concat([['away',LIVE.away],['home',LIVE.home]]);
+  return '<div class="tsw">'+opts.map(function(o){
+    var on=GF[field]===o[0];
+    return '<button data-gf="'+field+':'+o[0]+'" aria-pressed="'+on+'">'+(o[0]==='all'?'<b>Both</b>':crest(o[1],22,true)+'<b>'+esc(T[o[1]].ab)+'</b>')+'</button>';
+  }).join('')+'</div>';
+}
+
+/* shots: generated from each player's own makes and attempts, so the chart
+   always matches the box score */
+var SHOTS=null;
+function genShots(){
+  var all=[];
+  ['away','home'].forEach(function(side){
+    var k=LIVE[side], r=rnd(k.charCodeAt(0)*977+k.length*31);
+    roster(k).forEach(function(p){
+      var fg=mk(p.s[1]), tp=mk(p.s[2]), twm=fg[0]-tp[0];
+      for(var i=0;i<fg[1];i++){
+        var three=i<tp[1], made=three ? i<tp[0] : (i-tp[1])<twm, x, y, tries=0;
+        if(three){
+          if(r()<.22){ x=2.5+r()*6.5; y=r()<.5 ? 3.2+r()*2.6 : 50.2+r()*2.6; }
+          else { var th=(r()-.5)*2.15, rr=25.4+r()*3.6; x=-4.16+rr*Math.cos(th); y=28+rr*Math.sin(th); }
+        } else {
+          do { var near=r()<.58, th2=(r()-.5)*3.0, rr2=near?r()*5:5+r()*11; x=7+rr2*Math.cos(th2); y=28+rr2*Math.sin(th2); tries++; }
+          while(Math.hypot(x+4.16,y-28)>22.8 && tries<12);
+        }
+        x=Math.max(2.4,Math.min(46,x)); y=Math.max(3,Math.min(53,y));
+        if(side==='home') x=100-x;
+        all.push({side:side,t:k,pl:p.n,x:x,y:y,made:made,q:1+Math.floor(r()*4),three:three});
+      }
+    });
+  });
+  return all;
+}
+function shotFilter(){
+  if(!SHOTS) SHOTS=genShots();
+  return SHOTS.filter(function(s){
+    return (GF.steam==='all'||s.side===GF.steam) && (!GF.sp||s.pl===GF.sp) && (!GF.sq||s.q===GF.sq);
+  });
+}
+function shotsSvg(list, pc){
+  var ink='rgba(86,50,16,.5)', out='';
+  list.forEach(function(s){
+    var col=s.side==='away'?pc.away:pc.home, d=1.25;
+    out += s.made
+      ? '<circle cx="'+s.x.toFixed(1)+'" cy="'+s.y.toFixed(1)+'" r="1.5" fill="'+col+'" stroke="rgba(18,10,2,.7)" stroke-width=".35"/>'
+      : '<path d="M'+(s.x-d).toFixed(2)+' '+(s.y-d).toFixed(2)+'l'+(d*2)+' '+(d*2)+'M'+(s.x+d).toFixed(2)+' '+(s.y-d).toFixed(2)+'l-'+(d*2)+' '+(d*2)+'" stroke="'+col+'" stroke-width=".42" stroke-linecap="round" fill="none"/>';
+  });
   return '<svg viewBox="0 0 100 56" preserveAspectRatio="none">'
-    +'<g stroke="'+ink+'" fill="none" stroke-width=".6">'
-    +'<rect x="1.5" y="1.5" width="97" height="53"/>'
+    +'<g stroke="'+ink+'" fill="none" stroke-width=".6"><rect x="1.5" y="1.5" width="97" height="53"/>'
     +'<path d="M50 1.5v53"/><circle cx="50" cy="28" r="6"/>'
     +'<rect x="1.5" y="19" width="15" height="18"/><rect x="83.5" y="19" width="15" height="18"/>'
     +'<path d="M16.5 19a9 9 0 0 1 0 18M83.5 19a9 9 0 0 0 0 18"/>'
     +'<path d="M1.5 6.5h5M1.5 49.5h5M98.5 6.5h-5M98.5 49.5h-5"/>'
     +'<path d="M6.5 6.5a24 24 0 0 1 0 43M93.5 6.5a24 24 0 0 0 0 43"/>'
-    +'<circle cx="7" cy="28" r="1.1"/><circle cx="93" cy="28" r="1.1"/>'
-    +'</g>'
-    +pts(11,34,22,30,SC.away)
-    +pts(29,38,78,30,SC.home)
-    +'</svg>';
+    +'<circle cx="7" cy="28" r="1.1"/><circle cx="93" cy="28" r="1.1"/></g>'+out+'</svg>';
+}
+function fgLine(list){
+  var m=0,a=list.length,m3=0,a3=0; list.forEach(function(s){ if(s.made)m++; if(s.three){a3++; if(s.made)m3++;} });
+  return m+'–'+a+' FG'+(a3?' · '+m3+'–'+a3+' 3PT':'');
 }
 
 function viewGame(tab){
   tab = tab||'sum';
-  var h=T[LIVE.home], a=T[LIVE.away];
+  var h=T[LIVE.home], a=T[LIVE.away], pc=pairColors(LIVE.away,LIVE.home), cvars='--ha:'+pc.home+';--aw:'+pc.away;
   var tabs=[['sum','Summary'],['box','Box score'],['play','Plays'],['shot','Shots']];
-
-  var pc=pairColors(LIVE.away,LIVE.home);
-  var cvars='--ha:'+pc.home+';--aw:'+pc.away;
-  /* the other games, as small glass score cards — live ones carry the clock */
-  var OTHERS=[
-    {a:'chi',h:'bos',as:88,hs:94,live:'4th 2:41'},
-    {a:'okc',h:'den',as:118,hs:110},
-    {a:'dal',h:'hou',t:'7:30 CT'},
-    {a:'min',h:'nyk',t:'8:00 CT'}
-  ];
+  var OTHERS=[{a:'phi',h:'mia',as:74,hs:79,live:'3rd 2:15'},{a:'okc',h:'den',as:118,hs:110},{a:'bos',h:'nyk',t:'7:00 PM'},{a:'dal',h:'okc',t:'8:00 PM'}];
   var strip=OTHERS.map(function(x){
-    var fin=x.as!=null && !x.live;
-    var st = x.live ? stp(x.live,true,'sm')
-                    : (x.as!=null ? 'Final' : esc(x.t));
-    var aw=fin&&x.as>x.hs, hw=fin&&x.hs>x.as;
+    var fin=x.as!=null && !x.live, st=x.live?stp(x.live,true,'sm'):(x.as!=null?'Final':esc(x.t)), aw=fin&&x.as>x.hs, hw=fin&&x.hs>x.as;
     return '<a class="sc2" href="#game"><span class="t">'+st+'</span>'
       +'<span class="r'+(fin&&!aw?' lo':'')+'">'+crest(x.a,18)+'<b>'+esc(T[x.a].ab)+'</b><u>'+(x.as!=null?x.as:'')+'</u></span>'
       +'<span class="r'+(fin&&!hw?' lo':'')+'">'+crest(x.h,18)+'<b>'+esc(T[x.h].ab)+'</b><u>'+(x.hs!=null?x.hs:'')+'</u></span></a>';
   }).join('');
-
   var hero='<section class="ghero" style="'+cvars+'">'
     +'<span class="w"><i></i><i></i><i></i><i></i></span><span class="dots"></span><span class="veil"></span>'
-    +'<div class="in gut">'
-      +'<div class="gnav"><a class="disc" href="#following" aria-label="Back">'+svg(IC.back)+'</a>'
-        +'<span style="flex:1"></span><span class="disc">'+svg(IC.share)+'</span></div>'
-      +'<div class="strip">'+strip+'</div>'
-      +'<p class="gleague">NBA · Chase Center, San Francisco</p>'
-      +'<div class="gsc">'
-        +'<span class="sc num '+(LIVE.as>LIVE.hs?'ld':'tr')+'">'+LIVE.as+'</span>'
-        +'<span class="mid">'+stp(LIVE.clock,true)+'</span>'
-        +'<span class="sc num '+(LIVE.hs>LIVE.as?'ld':'tr')+'">'+LIVE.hs+'</span>'
-        +'<span class="side">'+crest(LIVE.away,52,true)+'<b>'+esc(a.name)+'</b><em>'+esc(a.rec)+'</em></span>'
-        +'<span></span>'
-        +'<span class="side">'+crest(LIVE.home,52,true)+'<b>'+esc(h.name)+'</b><em>'+esc(h.rec)+'</em></span>'
-      +'</div>'
+    +'<div class="in gut"><div class="gnav"><a class="disc" href="#following" aria-label="Back">'+svg(IC.back)+'</a>'
+      +'<span style="flex:1"></span><span class="disc">'+svg(IC.share)+'</span></div>'
+      +'<div class="strip">'+strip+'</div><p class="gleague">NBA · Chase Center, San Francisco</p>'
+      +'<div class="gsc"><span class="sc num '+(LIVE.as>LIVE.hs?'ld':'tr')+'">'+LIVE.as+'</span>'
+        +'<span class="mid">'+stp(LIVE.clock,true)+'</span><span class="sc num '+(LIVE.hs>LIVE.as?'ld':'tr')+'">'+LIVE.hs+'</span>'
+        +'<span class="side">'+crest(LIVE.away,52,true)+'<b>'+esc(a.name)+'</b><em>'+esc(a.rec)+'</em></span><span></span>'
+        +'<span class="side">'+crest(LIVE.home,52,true)+'<b>'+esc(h.name)+'</b><em>'+esc(h.rec)+'</em></span></div>'
       +'<div class="wp"><div class="bar"><i data-w="21" style="background:'+pc.away+'"></i><i data-w="79" style="background:'+pc.home+'"></i></div>'
       +'<div class="cap"><span>'+esc(a.ab)+' 21%</span><span>Prediction</span><span>'+esc(h.ab)+' 79%</span></div></div>'
-    +'</div></section>'
-    +'<div class="sheet">'
+    +'</div></section><div class="sheet">'
     +'<div class="minibar gut" style="'+cvars+'" id="mini"><span class="w"></span><span class="dots"></span>'
       +crest(LIVE.away,24)+'<b class="num">'+LIVE.as+'</b><span style="flex:1;text-align:center">'+stp(LIVE.clock,true,'sm')+'</span>'
       +'<b class="num">'+LIVE.hs+'</b>'+crest(LIVE.home,24)+'</div>'
-    +'<div class="gut"><div class="gtabs">'+tabs.map(function(t){
-        return '<button data-tab="'+t[0]+'" aria-pressed="'+(tab===t[0])+'">'+t[1]+'</button>';
-      }).join('')+'</div></div>';
+    +'<div class="gut"><div class="gtabs">'+tabs.map(function(t){ return '<button data-tab="'+t[0]+'" aria-pressed="'+(tab===t[0])+'">'+t[1]+'</button>'; }).join('')+'</div></div>';
+  return hero+'<div id="gbody">'+gameBody(tab,pc)+'</div></div>';
+}
 
-  var body='';
+function gameBody(tab,pc){
+  var h=T[LIVE.home], a=T[LIVE.away], body='';
   if(tab==='sum'){
-    body='<div class="gut sechd tight"><h2 class="sec">Highlights</h2><span class="more">12 clips</span></div>'
-      +'<div class="rail">'+HL.map(function(c){
-          return '<a class="clip pressable" href="#game" style="--c1:'+T[c.t].c+'">'
+    var LEAD=gameLeaders(), CMP=teamCmp();
+    body='<div class="gut sechd tight"><h2 class="sec">Highlights</h2><span class="more">'+HL.length+' clips</span></div>'
+      +'<div class="rail">'+HL.map(function(c,i){
+          return '<a class="clip pressable" href="#" data-act="clip" data-i="'+i+'" style="--c1:'+T[c.t].c+'">'
             +'<span class="im"><span class="pl"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg></span>'
-            +'<span class="du">'+esc(c.d)+'</span></span><p>'+esc(c.x)+'</p></a>';
-        }).join('')+'</div>'
-      +'<div class="gut"><div class="sechd"><h2 class="sec">Line score</h2></div>'
-      +'<div class="plate"><table class="ls">'
+            +'<span class="du">'+esc(c.d)+'</span></span><p>'+esc(c.x)+'</p></a>'; }).join('')+'</div>'
+      +'<div class="gut"><div class="sechd"><h2 class="sec">Line score</h2></div><div class="plate"><table class="ls">'
       +'<tr><th>&nbsp;</th><th>1</th><th>2</th><th>3</th><th>4</th><th>T</th></tr>'
       +'<tr><td><span class="tm">'+crest(LIVE.away,24)+esc(a.ab)+'</span></td><td>24</td><td>21</td><td>25</td><td>18</td><td>'+LIVE.as+'</td></tr>'
       +'<tr><td><span class="tm">'+crest(LIVE.home,24)+esc(h.ab)+'</span></td><td>28</td><td>22</td><td>33</td><td>18</td><td>'+LIVE.hs+'</td></tr>'
       +'</table></div></div>'
-
-      +'<div class="gut sechd"><h2 class="sec">Game leaders</h2></div>'
-      +'<div class="gut"><div class="plate" style="padding:0 14px">'
-      +'<div class="glhd"><span class="s">'+crest(LIVE.away,22)+'<b>'+esc(a.ab)+'</b></span>'
-      +'<span></span><span class="s r"><b>'+esc(h.ab)+'</b>'+crest(LIVE.home,22)+'</span></div>'
-      +LEAD.map(function(r){
-          var A=r.a, H=r.h, aw=A.v>H.v;
-          return '<div class="glrow">'
-            +'<div class="p">'+shot(A.id,A.n,T[A.t].c,44)
-              +'<span class="t"><b class="num'+(aw?'':' lo')+'">'+A.v+'</b><em>'+esc(A.n)+'</em></span></div>'
-            +'<span class="lab">'+esc(r.k)+'</span>'
-            +'<div class="p r"><span class="t"><b class="num'+(aw?' lo':'')+'">'+H.v+'</b><em>'+esc(H.n)+'</em></span>'
-              +shot(H.id,H.n,T[H.t].c,44)+'</div>'
-          +'</div>';
+      +'<div class="gut sechd"><h2 class="sec">Game leaders</h2></div><div class="gut"><div class="plate" style="padding:0 14px">'
+      +'<div class="glhd"><span class="s">'+crest(LIVE.away,22)+'<b>'+esc(a.ab)+'</b></span><span></span><span class="s r"><b>'+esc(h.ab)+'</b>'+crest(LIVE.home,22)+'</span></div>'
+      +LEAD.map(function(r){ var A=r.a, H=r.h, aw=A.v>H.v;
+          return '<div class="glrow"><div class="p">'+shot(A.id,A.n,T[A.t].c,44)+'<span class="t"><b class="num'+(aw?'':' lo')+'">'+A.v+'</b><em>'+esc(A.n)+'</em></span></div>'
+            +'<span class="lab">'+esc(r.k)+'</span><div class="p r"><span class="t"><b class="num'+(aw?' lo':'')+'">'+H.v+'</b><em>'+esc(H.n)+'</em></span>'+shot(H.id,H.n,T[H.t].c,44)+'</div></div>';
         }).join('')+'</div></div>'
-
-      +'<div class="gut sechd"><h2 class="sec">Team stats</h2></div>'
-      +'<div class="gut"><div class="plate">'+CMP.map(function(r){
-          var aWin=parseFloat(r[1])>parseFloat(r[2]);
-          if(r[0]==='Turnovers') aWin=!aWin;
-          return '<div class="cmp"><div class="tp">'
-            +'<b class="num '+(aWin?'w':'l')+'">'+r[1]+'</b><span>'+r[0]+'</span><b class="num '+(aWin?'l':'w')+'">'+r[2]+'</b></div>'
-            +'<div class="tk"><div><i data-w="'+r[3]+'" style="background:'+pc.away+'"></i></div><div><i data-w="'+r[4]+'" style="background:'+pc.home+'"></i></div></div></div>';
+      +'<div class="gut sechd"><h2 class="sec">Team stats</h2></div><div class="gut"><div class="plate">'+CMP.map(function(r){
+          var aw=r.tie?'w':(r.aWin?'w':'l'), hw=r.tie?'w':(r.aWin?'l':'w');
+          return '<div class="cmp"><div class="tp"><b class="num '+aw+'">'+r.a+'</b><span>'+r.l+'</span><b class="num '+hw+'">'+r.b+'</b></div>'
+            +'<div class="tk"><div><i data-w="'+r.aw+'" style="background:'+pc.away+'"></i></div><div><i data-w="'+r.bw+'" style="background:'+pc.home+'"></i></div></div></div>';
         }).join('')+'</div></div>'
-
-      +'<div class="gut sechd"><h2 class="sec">Injury report</h2></div>'
-      +'<div class="gut">'+INJ.slice(0,2).map(function(p){
-          var t=T[p.t];
-          return '<button class="inj pressable">'+shot(p.id,p.n,t.c,42)
-            +'<span class="t"><b>'+esc(p.n)+'</b><span>'+esc(p.w)+'</span></span>'
-            +'<span class="tag '+p.st+'">'+(p.st==='out'?'Out':'Questionable')+'</span></button>';
-        }).join('')+'</div>'
-
-      +'<div class="gut sechd"><h2 class="sec">Where to watch</h2></div>'
-      +'<div class="gut">'
-      +'<button class="watch pressable"><span class="bx2">SLING</span><b>Sling TV</b><span>Open app</span></button>'
-      +'<button class="watch pressable"><span class="bx2">NBA</span><b>League Pass</b><span>Open app</span></button>'
-      +'</div>';
+      +'<div class="gut sechd"><h2 class="sec">Injury report</h2></div><div class="gut">'+GINJ.map(function(p){return injRow(p,true);}).join('')
+        +'<p class="legend" style="margin-top:10px">'+esc(h.full)+': no injuries listed.</p></div>'
+      +'<div class="gut sechd"><h2 class="sec">Where to watch</h2></div><div class="gut">'
+      +'<button class="watch pressable"><span class="bx2">SLING</span><b>Sling TV</b><span>Watch</span></button>'
+      +'<button class="watch pressable"><span class="bx2">NBA</span><b>League Pass</b><span>Watch</span></button></div>';
   }
-
   if(tab==='box'){
-    var row=function(p){
-      return '<tr><td>'+esc(p.n)+' <small>'+esc(p.p)+'</small></td></tr>';
-    };
-    var rrow=function(p){
-      return '<tr>'+p.s.map(function(v){return '<td>'+esc(v)+'</td>';}).join('')+'</tr>';
-    };
-    body='<div class="gut sechd" style="display:flex;align-items:center;gap:10px">'
-      +crest(LIVE.home,26)+'<h2 class="sec" style="flex:1">'+esc(h.full)+'</h2>'
-      +'<span class="more">All stats</span></div>'
-      +'<div class="bx">'
-        +'<div class="bxl"><table>'
-          +'<tr><th>Player</th></tr>'
-          +'<tr class="bnd"><td>Starters</td></tr>'
-          +BOX.starters.map(row).join('')
-          +'<tr class="bnd"><td>Bench</td></tr>'
-          +BOX.bench.map(row).join('')
-          +'<tr class="tt"><td>Team</td></tr>'
-        +'</table></div>'
-        +'<div class="bxr"><table>'
-          +'<tr>'+BOX.cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr>'
-          +'<tr class="bnd"><th colspan="'+BOX.cols.length+'">&nbsp;</th></tr>'
-          +BOX.starters.map(rrow).join('')
-          +'<tr class="bnd"><th colspan="'+BOX.cols.length+'">&nbsp;</th></tr>'
-          +BOX.bench.map(rrow).join('')
-          +'<tr class="tt">'+BOX.tot.map(function(v){return '<td>'+esc(v)+'</td>';}).join('')+'</tr>'
-        +'</table></div>'
-      +'</div>'
-      +'<p class="gut" style="font-size:11px;color:var(--t4);margin-top:12px">Drag the numbers sideways — the name rail stays put.</p>';
+    var k=LIVE[GF.box], ros=BOXES[k], tot=totals(k);
+    var name=function(p){ return '<tr><td>'+esc(p.n)+' <small>'+esc(p.p)+'</small></td></tr>'; };
+    var nums=function(p){ return '<tr>'+p.s.map(function(v){return '<td>'+esc(v)+'</td>';}).join('')+'</tr>'; };
+    var trow=[tot[0],tot[1].join('-'),tot[2].join('-'),tot[3].join('-'),tot[4],tot[5],tot[6],tot[7],tot[8],tot[9],''];
+    body='<div class="gut" style="padding-top:16px">'+teamSwitch('box',false)+'</div>'
+      +'<div class="gut sechd" style="margin-top:18px"><h2 class="sec">'+esc(T[k].full)+'</h2><span class="more">'+tot[1].join('–')+' FG</span></div>'
+      +'<div class="bx"><div class="bxl"><table><tr><th>Player</th></tr><tr class="bnd"><td>Starters</td></tr>'+ros.starters.map(name).join('')
+        +'<tr class="bnd"><td>Bench</td></tr>'+ros.bench.map(name).join('')+'<tr class="tt"><td>Team</td></tr></table></div>'
+      +'<div class="bxr"><table><tr>'+BCOLS.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr>'
+        +'<tr class="bnd"><th colspan="'+BCOLS.length+'">'+BCOLS.map(function(c){return '<span class="hd2">'+c+'</span>';}).join('')+'</th></tr>'
+        +ros.starters.map(nums).join('')
+        +'<tr class="bnd"><th colspan="'+BCOLS.length+'">&nbsp;</th></tr>'+ros.bench.map(nums).join('')
+        +'<tr class="tt">'+trow.map(function(v){return '<td>'+esc(v)+'</td>';}).join('')+'</tr></table></div></div>'
+      +'<p class="gut legend">Drag the numbers sideways — the names stay put.</p>';
   }
-
   if(tab==='play'){
-    body='<div class="gut" style="padding-top:14px">'
-      +'<div class="seg2"><button aria-pressed="true">Key plays</button><button aria-pressed="false">All plays</button></div>'
-      +'<div class="tl">'+PLAYS.map(function(p){
-        var big=p.k==='score', t=T[p.t];
-        return '<div class="tle">'
-          +'<div class="mark"><span class="ic'+(big?' on':'')+'" style="--tc:'+t.c+'">'+PKIND[p.k]+'</span><b class="num">'+esc(p.c)+'</b></div>'
-          +(big
-            ? '<div class="box" style="--tc:'+t.c+'">'
-                +'<div class="bh"><b>'+esc(p.hd)+'</b><img src="'+logoUrl(p.t)+'" alt="" onerror="this.remove()"></div>'
-                +'<div class="bb">'+shotWithNo(p.pid,p.x,t.c,40,p.s.split('-')[p.t===LIVE.home?1:0])
-                +'<p>'+esc(p.x)+'</p></div>'
-                +'<div class="bs"><span>'+esc(T[LIVE.away].ab)+' '+p.s.split('-')[0]+'</span>'
-                  +'<span>'+esc(T[LIVE.home].ab)+' '+p.s.split('-')[1]+'</span></div>'
-              +'</div>'
-            : '<div class="plain">'+esc(p.x)+'</div>')
-        +'</div>';
+    var plist=PLAYS.filter(function(p){
+      if(p.k==='end') return true;
+      if(GF.pkey==='key' && p.k!=='score') return false;
+      return GF.pteam==='all' || LIVE[GF.pteam]===p.t;
+    });
+    body='<div class="gut" style="padding-top:16px">'+teamSwitch('pteam',true)
+      +'<div class="seg2" style="margin-top:12px"><button data-gf="pkey:key" aria-pressed="'+(GF.pkey==='key')+'">Key plays</button>'
+      +'<button data-gf="pkey:all" aria-pressed="'+(GF.pkey==='all')+'">All plays</button></div>'
+      +'<div class="tl">'+plist.map(function(p){
+        if(p.k==='end'){ var sc=p.s.split('-');
+          return '<div class="tle per"><div class="perc"><b>'+esc(p.x)+'</b><span>'+crest(LIVE.away,22,true)+'<em class="num">'+sc[0]+' – '+sc[1]+'</em>'+crest(LIVE.home,22,true)+'</span></div></div>'; }
+        var big=p.k==='score', t=T[p.t], pl=big?roster(p.t).filter(function(r){return r.n===p.pl;})[0]:null, sc2=big?p.s.split('-'):null;
+        return '<div class="tle"><div class="mark"><span class="ic'+(big?' on':'')+'" style="--tc:'+t.c+'">'+PKIND[p.k]+'</span><b class="num">'+esc(p.c)+'</b></div>'
+          +(big ? '<div class="box" style="--tc:'+t.c+'"><div class="bh"><b>'+esc(p.hd)+'</b><img src="'+logoUrl(p.t)+'" alt="" onerror="this.remove()"></div>'
+                +'<div class="bb">'+(pl?shotWithNo(pl.id,pl.n,t.c,40,pl.j):'')+'<p>'+esc(p.x)+'</p></div>'
+                +'<div class="bs"><span>'+esc(a.ab)+' '+sc2[0]+'</span><span>'+esc(h.ab)+' '+sc2[1]+'</span></div></div>'
+              : '<div class="plain">'+esc(p.x)+'</div>')+'</div>';
       }).join('')+'</div></div>';
   }
-
   if(tab==='shot'){
-    body='<div class="gut"><div class="ctl">'
-      +'<button aria-pressed="true">All</button><button aria-pressed="false">1st</button>'
-      +'<button aria-pressed="false">2nd</button><button aria-pressed="false">3rd</button><button aria-pressed="false">4th</button>'
-      +'</div></div>'
-      +'<div class="gut" style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;padding-bottom:10px">'
-        +'<span style="color:'+pc.away+'">'+esc(a.ab)+' 33–82</span>'
-        +'<span style="color:'+pc.home+'">'+esc(h.ab)+' 39–73</span></div>'
-      +'<div class="gut"><div class="court">'+shotsSvg()
-        +'<img class="mid" src="'+logoUrl(LIVE.home)+'" alt="" onerror="this.remove()"></div></div>'
-      +'<div class="lg" style="padding-top:14px">'
-        +'<span><i style="background:'+pc.away+'"></i>Made</span>'
-        +'<span><b style="font-size:13px;line-height:1">✕</b> Missed</span></div>';
+    var list=shotFilter();
+    var players='';
+    if(GF.steam!=='all'){
+      var tk=LIVE[GF.steam];
+      players='<div class="pchips">'+roster(tk).filter(function(p){return mk(p.s[1])[1]>0;}).map(function(p){
+        var on=GF.sp===p.n;
+        return '<button data-gf="sp:'+(on?'':esc(p.n))+'" aria-pressed="'+on+'">'+shot(p.id,p.n,T[tk].c,28)+'<b>'+esc(p.n)+'</b><span class="num">'+esc(p.s[1])+'</span></button>';
+      }).join('')+'</div>';
+    }
+    var qs=[[0,'All'],[1,'1st'],[2,'2nd'],[3,'3rd'],[4,'4th']];
+    var who = GF.sp ? esc(GF.sp) : GF.steam==='all' ? '' : esc(T[LIVE[GF.steam]].ab);
+    var summary = GF.steam==='all'
+      ? '<span style="color:'+pc.away+'">'+esc(a.ab)+' '+fgLine(list.filter(function(s){return s.side==='away';}))+'</span>'
+        +'<span style="color:'+pc.home+'">'+esc(h.ab)+' '+fgLine(list.filter(function(s){return s.side==='home';}))+'</span>'
+      : '<span>'+who+' · '+fgLine(list)+'</span>';
+    body='<div class="gut" style="padding-top:16px">'+teamSwitch('steam',true)+'</div>'+players
+      +'<div class="gut"><div class="ctl">'+qs.map(function(q){ return '<button data-gf="sq:'+q[0]+'" aria-pressed="'+(GF.sq===q[0])+'">'+q[1]+'</button>'; }).join('')+'</div></div>'
+      +'<div class="gut shsum">'+summary+'</div>'
+      +'<div class="gut"><div class="court">'+shotsSvg(list,pc)+'<img class="mid" src="'+logoUrl(LIVE.home)+'" alt="" onerror="this.remove()"></div></div>'
+      +'<div class="lg" style="padding-top:14px"><span><i style="background:var(--t2)"></i>Made</span><span><b style="font-size:13px;line-height:1;font-weight:400">✕</b> Missed</span></div>';
   }
-
-  return hero+'<div id="gbody">'+body+'</div></div>';
+  return body;
 }
 
-/* ---------- router ---------- */
-var TABS=[['following','Following',IC.star],['scores','Scores',IC.scores],['live','',''],['leagues','Leagues',IC.trophy],['news','News',IC.news]];
+/* ============================================================
+   ROUTER
+   ============================================================ */
+/* light or dark follows the phone. No setting. */
+var MQ=window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+function applyTheme(){ document.documentElement.setAttribute('data-theme', MQ&&MQ.matches?'light':'dark'); if(window.paintBar) paintBar(); }
+applyTheme();
+if(MQ){ if(MQ.addEventListener) MQ.addEventListener('change',applyTheme); else if(MQ.addListener) MQ.addListener(applyTheme); }
+/* iPhone draws the page under the clock; Android paints the bar one solid colour */
+(function(){ var p=document.createElement('div'); p.style.cssText='position:fixed;top:0;height:env(safe-area-inset-top,0px);width:1px;visibility:hidden';
+  document.body.appendChild(p); if(p.offsetHeight>0) document.documentElement.classList.add('notch'); p.remove(); })();
+
+var TABS=[['following','Following',IC.star],['scores','Scores',IC.scores],['live','',''],['standings','Standings',IC.trophy],['news','News',IC.news]];
 function renderTabs(active){
   var n=myLiveCount();
-  document.getElementById('tabs').innerHTML = TABS.map(function(t){
+  document.getElementById('tabs').innerHTML=TABS.map(function(t){
     if(t[0]==='live') return '<button class="mid" data-act="live" aria-label="Live'+(n?', '+n+' of your teams playing':'')+'">'
       +'<i class="'+(n?'on':'')+'">'+svg(IC.live)+(n?'<span class="bdg">'+n+'</span>':'')+'</i></button>';
     return '<button data-nav="'+t[0]+'" aria-pressed="'+(active===t[0])+'">'+svg(t[2])+t[1]+'</button>';
   }).join('');
 }
-function animateBars(){
+function animateBars(root){
   requestAnimationFrame(function(){ requestAnimationFrame(function(){
-    document.querySelectorAll('[data-w]').forEach(function(el){ el.style.width = el.getAttribute('data-w')+'%'; });
+    (root||document).querySelectorAll('[data-w]').forEach(function(el){ el.style.width=el.getAttribute('data-w')+'%'; });
   });});
 }
-function render(){
-  var parts=(location.hash||'#following').slice(1).split('/');
-  var main=document.getElementById('main'), r=parts[0]||'following';
-  if(r==='following' && parts[1]){ DEMO = parts[1]==='m' ? 'm' : +parts[1]; applyDemo(); }
-  if(r==='game'){ main.innerHTML=viewGame(parts[1]); renderTabs(''); }
-  else if(r==='scores'){ main.innerHTML=viewScores(); renderTabs('scores'); }
-  else if(r==='leagues'){ main.innerHTML=viewSoon('Leagues',['Standings, playoff picture and odds','Leaders','Teams','Schedule','Brackets — NBA Cup, holiday tournaments, March Madness']); renderTabs('leagues'); }
-  else if(r==='news'){ main.innerHTML=viewSoon('News',['Your teams · League · All','Breaking wire at the top','Every story opens inside RIVL']); renderTabs('news'); }
-  else { main.innerHTML=viewFollowing(); renderTabs('following'); }
-  window.scrollTo(0,0);
-  animateBars();
-  bindMini();
-  var hv=document.querySelector('.ghero');
-  if(hv){ var cs=getComputedStyle(hv); heroTint=hexMix(cs.getPropertyValue('--aw').trim(), cs.getPropertyValue('--ha').trim(), .22); }
-  else heroTint=null;
-  paintBar();
-}
-/* switching Summary / Box score / Plays / Shots swaps the body only.
-   Nothing above it reloads, the bars don't re-animate, and if the tabs
-   are stuck at the top they stay there. */
-function swapTab(tab){
-  var tmp=document.createElement('div'); tmp.innerHTML=viewGame(tab);
-  var nb=tmp.querySelector('#gbody'), ob=document.getElementById('gbody');
-  if(!nb||!ob) return;
-  ob.innerHTML=nb.innerHTML;
-  document.querySelectorAll('.gtabs [data-tab]').forEach(function(b){
-    b.setAttribute('aria-pressed', String(b.getAttribute('data-tab')===tab));
-  });
-  history.replaceState(null,'','#game/'+tab);
-  var tabs=document.querySelector('.gtabs'), hero=document.querySelector('.ghero');
-  var stuck = hero ? hero.offsetHeight - 52 : 0;
-  if(window.scrollY>stuck) window.scrollTo(0,stuck);
-  requestAnimationFrame(function(){ requestAnimationFrame(function(){
-    ob.querySelectorAll('[data-w]').forEach(function(el){ el.style.width=el.getAttribute('data-w')+'%'; });
-  });});
-}
-
-/* status bar: on a hero page it shows the hero's colour (Android takes one
-   solid colour, so it gets the blend of the two teams); once the sheet has
-   covered the hero, it goes back to the page colour. */
-function hexMix(a,b,dark){
-  var A=rgb(a),B=rgb(b),k=1-(dark||0);
-  return '#'+[0,1,2].map(function(i){ var v=Math.round((A[i]+B[i])/2*k); return ('0'+v.toString(16)).slice(-2); }).join('');
-}
+function hexMix(a,b,dark){ var A=rgb(a),B=rgb(b),k=1-(dark||0);
+  return '#'+[0,1,2].map(function(i){ var v=Math.round((A[i]+B[i])/2*k); return ('0'+v.toString(16)).slice(-2); }).join(''); }
 var heroTint=null;
 function paintBar(){
   var sbg=document.querySelector('.sbg'), meta=document.getElementById('tcolor');
-  var light=document.documentElement.getAttribute('data-theme')==='light';
-  var page=light?'#EDF0F4':'#000000';
-  var hero=document.querySelector('.ghero');
-  var over = hero ? window.scrollY > hero.offsetHeight-60 : window.scrollY>8;
+  var light=document.documentElement.getAttribute('data-theme')==='light', page=light?'#EDF0F4':'#000000';
+  var hero=document.querySelector('.ghero'), over=hero ? window.scrollY>hero.offsetHeight-60 : window.scrollY>8;
   if(sbg) sbg.classList.toggle('solid', over);
   if(meta) meta.setAttribute('content', (hero && !over && heroTint) ? heroTint : page);
 }
+window.paintBar=paintBar;
 window.addEventListener('scroll',paintBar,{passive:true});
-
-/* the collapsed bar appears only once the hero has scrolled past */
+function render(){
+  var parts=(location.hash||'#following').slice(1).split('/'), main=document.getElementById('main'), r=parts[0]||'following';
+  if(r==='following' && parts[1]){ DEMO=parts[1]==='m'?'m':+parts[1]; applyDemo(); }
+  if(r==='game'){ main.innerHTML=viewGame(parts[1]); renderTabs(''); }
+  else if(r==='scores'){ main.innerHTML=viewScores(); renderTabs('scores'); }
+  else if(r==='standings'){ main.innerHTML=viewStandings(); renderTabs('standings'); }
+  else if(r==='news'){ main.innerHTML=viewNews(); renderTabs('news'); }
+  else { main.innerHTML=viewFollowing(); renderTabs('following'); }
+  window.scrollTo(0,0); animateBars(); bindMini(); afterPaint();
+}
+function afterPaint(){
+  var hv=document.querySelector('.ghero');
+  if(hv){
+    var cs=getComputedStyle(hv);
+    /* the exact colour at the top-centre of the hero, under the top veil */
+    heroTint=hexMix(cs.getPropertyValue('--aw').trim(), cs.getPropertyValue('--ha').trim(), .26);
+    hv.style.setProperty('--sbc',heroTint);
+    if(!hv.querySelector('.sband')){ var sb=document.createElement('span'); sb.className='sband'; hv.insertBefore(sb,hv.firstChild); }
+  } else heroTint=null;
+  var ds=document.getElementById('days2');
+  if(ds){ var on=ds.querySelector('.on'); if(on) ds.scrollLeft=on.offsetLeft-ds.clientWidth/2+on.offsetWidth/2; }
+  paintBar();
+}
+/* switching Summary / Box score / Plays / Shots — or a filter inside one —
+   swaps the body only; nothing above it reloads */
+function curTab(){ var p=(location.hash||'').split('/'); return p[0]==='#game' ? (p[1]||'sum') : 'sum'; }
+function swapBody(tab, pinTabs){
+  var ob=document.getElementById('gbody'); if(!ob) return;
+  ob.innerHTML=gameBody(tab, pairColors(LIVE.away,LIVE.home));
+  document.querySelectorAll('.gtabs [data-tab]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-tab')===tab)); });
+  history.replaceState(null,'','#game/'+tab);
+  if(pinTabs){ var hero=document.querySelector('.ghero'), stuck=hero?hero.offsetHeight-52:0; if(window.scrollY>stuck) window.scrollTo(0,stuck); }
+  animateBars(ob);
+}
 var miniHandler=null;
 function bindMini(){
   if(miniHandler){ window.removeEventListener('scroll',miniHandler); miniHandler=null; }
-  var m=document.getElementById('mini'); if(!m) return;
-  var hero=document.querySelector('.ghero'); if(!hero) return;
+  var m=document.getElementById('mini'), hero=document.querySelector('.ghero'); if(!m||!hero) return;
   miniHandler=function(){ m.classList.toggle('on', window.scrollY>hero.offsetHeight-70); };
-  window.addEventListener('scroll',miniHandler,{passive:true});
-  miniHandler();
+  window.addEventListener('scroll',miniHandler,{passive:true}); miniHandler();
 }
+function keepScroll(){ var y=window.scrollY; render(); window.scrollTo(0,y); paintBar(); }
+
 document.addEventListener('click',function(e){
   var a=e.target.closest('[data-act]');
   if(a){
     var act=a.getAttribute('data-act');
     if(act==='live'){ e.preventDefault(); openLive(); return; }
     if(act==='live-close'){ closeLive(); if(a.tagName!=='A') e.preventDefault(); return; }
-    if(act==='fold'){
-      var open=a.getAttribute('aria-expanded')==='true';
-      a.setAttribute('aria-expanded', String(!open));
-      a.nextElementSibling.hidden=open; return;
-    }
+    if(act==='sheet-close'){ e.preventDefault(); closeSheet(); return; }
+    if(act==='cal'){ e.preventDefault(); openCal(); return; }
+    if(act==='read'){ e.preventDefault(); openSheet(readerHtml(NEWS[+a.getAttribute('data-i')]),'full'); return; }
+    if(act==='clip'){ e.preventDefault(); var c=HL[+a.getAttribute('data-i')]; if(document.getElementById('sheet').hidden) openSheet(videoHtml(c),'full'); else document.querySelector('#sheet .panel').innerHTML=videoHtml(c); return; }
+    if(act==='fold'){ var open=a.getAttribute('aria-expanded')==='true'; a.setAttribute('aria-expanded',String(!open)); a.nextElementSibling.hidden=open; return; }
+    if(act==='open-teams'){ OPEN.teams=!OPEN.teams; keepScroll(); return; }
+    if(act==='open-players'){ OPEN.players=true; keepScroll(); return; }
   }
-  var t=e.target.closest('[data-tab]');
-  if(t){ swapTab(t.getAttribute('data-tab')); return; }
-  var n=e.target.closest('[data-nav]');
-  if(n){ var nv=n.getAttribute('data-nav'); location.hash='#'+(nv==='following'?'following/'+DEMO:nv); return; }
-  var fl=e.target.closest('[data-fl]');
-  if(fl){ FL=fl.getAttribute('data-fl'); keepScroll(); return; }
-  var ot=e.target.closest('[data-act="open-teams"]');
-  if(ot){ OPEN.teams=!OPEN.teams; keepScroll(); return; }
-  var op=e.target.closest('[data-act="open-players"]');
-  if(op){ OPEN.players=true; keepScroll(); return; }
-  var d=e.target.closest('[data-day]');
-  if(d){ SCORES.day=d.getAttribute('data-day'); render(); return; }
-  var l=e.target.closest('[data-lg]');
-  if(l){ SCORES.lg=l.getAttribute('data-lg'); render(); return; }
-  var c=e.target.closest('.ctl button,.seg2:not(.days) button');
-  if(c){ c.parentNode.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed','false');});
-    c.setAttribute('aria-pressed','true'); return; }
+  var lg=e.target.closest('[data-lg]'); if(lg){ LG=lg.getAttribute('data-lg'); keepScroll(); return; }
+  var sub=e.target.closest('[data-sub]'); if(sub){ STAND.sub=sub.getAttribute('data-sub'); keepScroll(); return; }
+  var dt=e.target.closest('[data-date]'); if(dt){ SCORES.date=pkey(dt.getAttribute('data-date')); keepScroll(); return; }
+  var cd=e.target.closest('[data-cal]'); if(cd){ SCORES.date=pkey(cd.getAttribute('data-cal')); closeSheet(); setTimeout(function(){ render(); },10); return; }
+  var cn=e.target.closest('[data-calnav]');
+  if(cn){ var dn=+cn.getAttribute('data-calnav');
+    CAL = dn===0 ? new Date(TODAY.getFullYear(),TODAY.getMonth(),1) : new Date(CAL.getFullYear(),CAL.getMonth()+dn,1);
+    if(dn===0){ SCORES.date=TODAY; }
+    document.querySelector('#sheet .panel').innerHTML=calHtml(); return; }
+  var gf=e.target.closest('[data-gf]');
+  if(gf){ var kv=gf.getAttribute('data-gf').split(':'), key=kv[0], val=kv.slice(1).join(':');
+    if(key==='sq') val=+val;
+    if(key==='sp') val=val||null;
+    GF[key]=val;
+    if(key==='steam') GF.sp=null;
+    swapBody(curTab(), false); return; }
+  var t=e.target.closest('[data-tab]'); if(t){ swapBody(t.getAttribute('data-tab'), true); return; }
+  var n=e.target.closest('[data-nav]'); if(n){ var nv=n.getAttribute('data-nav'); location.hash='#'+(nv==='following'?'following/'+DEMO:nv); return; }
+  var c2=e.target.closest('.ctl button,.seg2:not(.sub) button'); if(c2 && !c2.hasAttribute('data-gf')){
+    c2.parentNode.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed','false');}); c2.setAttribute('aria-pressed','true'); }
 });
-function keepScroll(){ var y=window.scrollY; render(); window.scrollTo(0,y); paintBar(); }
 window.addEventListener('hashchange',render);
 render();
-
-/* theme toggle, mockup only */
-var tb=document.createElement('button');
-tb.className='themer'; tb.textContent='◐'; tb.title='Theme';
-tb.onclick=function(){
-  var d=document.documentElement;
-  d.setAttribute('data-theme', d.getAttribute('data-theme')==='light'?'dark':'light');
-};
-document.body.appendChild(tb);
 </script>
+
 
 </body>
 </html>
