@@ -3094,6 +3094,9 @@ function settingsClick(e){
    a paid service. Basketball only: these are high school athletes.
    ============================================================ */
 var REC={g:'boys', y:null, data:{}, pr:null, src:'pr'};
+var PHA=[];
+function openPH(a){ openSheet('<div class="wrd"><div class="wrdbar"><button class="disc" data-act="sheet-close" aria-label="Close">'+svg('<path d="M6 6l12 12M18 6 6 18"/>')+'</button><span>Prep Hoops · '+esc(new Date(a.d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</span></div><div class="gut" id="wrdb">'
+  +'<h1 class="wrdt">'+esc(a.t)+'</h1><p>'+esc(a.s)+'</p><p class="xnote">The full scouting report is on '+esc(a.u.replace(/^https?:\/\//,'').split('/')[0])+' for subscribers.</p></div></div>','full'); }
 function prLoad(){ if(REC.pr) return Promise.resolve(REC.pr);
   return fetch('../data/recruits.json',{cache:'no-cache'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(d){ return (REC.pr=d); }); }
 function recYears(){ var y=TODAY.getFullYear(); return [y+1,y+2,y,y-1]; }
@@ -3182,7 +3185,10 @@ function recSheet(i){
     +(svc.length?'<div class="fgrp" style="margin-top:14px"><span class="fl">How the services rate them</span><div class="svcg" style="grid-template-columns:repeat('+svc.length+',1fr)">'+svc.map(function(n){ var v=r.svc[n];
         return '<div><span>'+esc(n)+'</span><b>'+(v.rank?'#'+v.rank:'-')+'</b><em>'+(v.rating!=null?v.rating:'')+'</em></div>'; }).join('')+'</div></div>':'')
     +(!pr&&r.wiki&&!r.red?'<button class="ijmore pressable" data-wiki="'+esc(r.wiki)+'">Read more<span>Their Wikipedia article</span></button>':'')
-    +'<p class="xnote">'+(pr?'From PrepRanks, updated '+esc(ago(R.upd))+'. Personal, non-commercial use with permission.':'From the '+esc(R.title)+' roster on Wikipedia.')+' Stats and highlights aren\'t in RIVL yet.</p></div>','bottom');
+    +(r.club?'<div class="fgrp" style="margin-top:14px"><span class="fl">Club team</span><div class="fvals"><span class="fchip">'+esc(r.club)+'</span></div></div>':'')
+    +(r.ph&&r.ph.length?'<div class="fgrp" style="margin-top:16px"><span class="fl">Prep Hoops coverage</span>'+r.ph.map(function(a){ var i=PHA.push(a)-1;
+        return '<button class="wrow pressable" data-ph="'+i+'"><b>'+esc(a.t)+'</b><span>'+esc(new Date(a.d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+(a.s?' · '+esc(a.s.slice(0,140))+'…':'')+'</span></button>'; }).join('')+'</div>':'')
+    +'<p class="xnote">'+(pr?'From PrepRanks, updated '+esc(ago(R.upd))+'. Personal, non-commercial use with permission.':'From the '+esc(R.title)+' roster on Wikipedia.')+(r.ph?' Coverage from Prep Hoops, with permission.':'')+'</p></div>','bottom');
 }
 
 /* ============================================================
@@ -3216,7 +3222,7 @@ function viewNews(){
       b.innerHTML=items.length?newsBlock(items).replace('Latest from ESPN','Latest from ESPN · '+LNAME[L]):'<div class="empty"><b>No '+esc(LNAME[L])+' headlines right now</b><p>Check back later.</p></div>'; })
     .catch(function(){ b.innerHTML='<div class="empty"><b>Can\'t reach ESPN right now</b><p>Try again in a moment.</p></div>'; });
   },30);
-  var full={nba:'NBA',wnba:'WNBA',ncaam:'College men',ncaaw:'College women'};
+  var full=LNAME;
   return '<div class="stop gut"><a class="disc" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><b>News</b><span></span></div>'
     +'<div class="ltabs gut nltabs">'+ENABLED.map(function(x){ return '<button data-newsl="'+x+'" aria-pressed="'+(x===L)+'">'+esc(full[x])+'</button>'; }).join('')+'</div>'
     +'<div class="gut" id="newsb" style="margin-top:12px"><div class="wcard wload"><span class="wk">Loading headlines</span><i></i><i></i><i></i></div></div>';
@@ -3655,6 +3661,7 @@ document.addEventListener('click',function(e){
   var bsc=e.target.closest('.gpage .gsc>.sc');
   if(bsc){ e.preventDefault(); var all=[].slice.call(bsc.parentNode.querySelectorAll(':scope>.sc')); pulse(all.indexOf(bsc)===0?'away':'home'); return; }
   if(location.hash.indexOf('#settings')===0 && settingsClick(e)) return;
+  var phb=e.target.closest('[data-ph]'); if(phb){ e.preventDefault(); openPH(PHA[+phb.getAttribute('data-ph')]); return; }
   var nl=e.target.closest('[data-newsl]'); if(nl){ NEWSL=nl.getAttribute('data-newsl'); keepScroll(); return; }
   var rg=e.target.closest('[data-recg]'); if(rg){ REC.g=rg.getAttribute('data-recg'); keepScroll(); setTimeout(recLoad,10); return; }
   var ry=e.target.closest('[data-recy]'); if(ry){ REC.y=+ry.getAttribute('data-recy'); keepScroll(); setTimeout(recLoad,10); return; }

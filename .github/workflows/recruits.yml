@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: node scripts/prepranks.mjs
-      - run: node scripts/prephoops-probe.mjs
+      - run: node scripts/prephoops.mjs
       - run: |
           git config user.name "RIVL bot"
           git config user.email "actions@users.noreply.github.com"
