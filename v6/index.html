@@ -98,7 +98,8 @@ html[data-theme=light]{--midA:#2A2E34;--midB:#07090B}
 
 /* crests */
 .cr{border-radius:999px;background:var(--L2);display:grid;place-items:center;overflow:hidden;flex:none;position:relative}
-.cr img{width:76%;height:76%;object-fit:contain}
+.cr img{position:absolute;inset:0;margin:auto;width:76%;height:76%;object-fit:contain}
+.cr.has b{display:none}
 .cr b{font-size:.34em;font-weight:800;letter-spacing:.02em;color:var(--t2)}
 .cr.plain{background:transparent;border:0}
 .cr.plain img{width:100%;height:100%}
@@ -106,7 +107,8 @@ html[data-theme=light]{--midA:#2A2E34;--midB:#07090B}
 /* headshot */
 .hs{border-radius:999px;overflow:hidden;flex:none;position:relative;display:grid;place-items:center;
   background:linear-gradient(170deg,color-mix(in srgb,var(--tc) 70%,transparent),color-mix(in srgb,var(--tc) 22%,transparent))}
-.hs img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.hs img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
+.hs.has i{display:none}
 .hs i{font-style:normal;font-weight:700;color:#fff;font-size:.36em;letter-spacing:.02em}
 .hs.noimg img{display:none}
 
@@ -115,11 +117,10 @@ html[data-theme=light]{--midA:#2A2E34;--midB:#07090B}
   --mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
 .minibar{--mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
 .lh .w{position:absolute;inset:-2px;pointer-events:none;z-index:-2;
-  background:linear-gradient(101deg,var(--aw) 0%,var(--aw) 18%,var(--mid) 50%,var(--ha) 82%,var(--ha) 100%);
-  background-size:160% 100%;animation:drift 18s var(--ease) infinite alternate}
+  background:linear-gradient(101deg,var(--aw) 0%,var(--mid) 50%,var(--ha) 100%);overflow:hidden}
 .lh .dots{position:absolute;inset:0;pointer-events:none;z-index:-1;
   background-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,.26) 1.1px,transparent 1.2px);
-  background-size:5px 5px;mix-blend-mode:multiply;opacity:.9}
+  background-size:5px 5px;mix-blend-mode:multiply;opacity:.4}
 .lh .veil{position:absolute;inset:0;pointer-events:none;z-index:-1;
   background:linear-gradient(rgba(0,0,0,.24),rgba(0,0,0,.04) 44%,rgba(0,0,0,.16))}
 .lh .in{position:relative;padding-top:16px;padding-bottom:20px}
@@ -145,11 +146,11 @@ html[data-theme=light]{--midA:#2A2E34;--midB:#07090B}
 .perf{display:flex;gap:10px;margin-top:18px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;
   scroll-snap-type:none}
 .perf::-webkit-scrollbar{display:none}
-.perf .pc{flex:none;width:168px;border-radius:var(--r);padding:12px;position:relative;overflow:hidden;
+.perf .pc{flex:none;width:186px;border-radius:var(--r);padding:12px;position:relative;overflow:hidden;
   background:rgba(0,0,0,.3);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);
   border:1px solid rgba(255,255,255,.16)}
 .perf .pc .wmk{position:absolute;right:-16px;top:-14px;width:84px;opacity:.2}
-.perf .pc .hs{width:52px;height:52px;font-size:52px;box-shadow:0 8px 18px rgba(0,0,0,.38)}
+.perf .pc .hs{width:74px;height:74px;font-size:74px;box-shadow:0 10px 22px rgba(0,0,0,.42)}
 .perf .pc h4{margin:10px 0 0;font-size:14px;font-weight:700;letter-spacing:-.01em;position:relative}
 .perf .pc p{margin:2px 0 10px;font-size:11px;color:var(--t2);position:relative}
 .perf .pc .line{display:flex;gap:12px;position:relative}
@@ -193,7 +194,7 @@ html[data-theme=light]{--midA:#2A2E34;--midB:#07090B}
 .mp>span,.mp>u{color:rgba(255,255,255,.82)!important}
 .mp>u{border-top-color:rgba(255,255,255,.2)!important}
 .mp .wmk{position:absolute;right:-20px;bottom:-16px;width:84px;opacity:.26;z-index:0}
-.mp .hs{width:50px;height:50px;font-size:50px;box-shadow:0 7px 15px rgba(0,0,0,.35)}
+.mp .hs{width:62px;height:62px;font-size:62px;box-shadow:0 8px 18px rgba(0,0,0,.4)}
 .mp>b{display:block;margin-top:10px;font-size:13px;font-weight:700;letter-spacing:-.01em;position:relative;line-height:1.15}
 .mp>span:not(.hs){display:block;font-size:10.5px;color:var(--t2);margin-top:3px;position:relative}
 .mp>u{display:block;margin-top:9px;font-size:10.5px;color:var(--t3);text-decoration:none;position:relative;
@@ -235,26 +236,43 @@ html[data-theme=light]{--midA:#2A2E34;--midB:#07090B}
    over it, and the content riding up as a black sheet. */
 .ghero{position:relative;overflow:hidden;isolation:isolate;--mid:color-mix(in srgb,var(--ha) 50%,var(--aw))}
 .ghero .w{position:absolute;inset:-2px;pointer-events:none;z-index:-2;
-  background:linear-gradient(101deg,var(--aw) 0%,var(--aw) 18%,var(--mid) 50%,var(--ha) 82%,var(--ha) 100%);
-  background-size:160% 100%;background-position:50% 0;
-  animation:drift 18s var(--ease) infinite alternate}
-@keyframes drift{from{background-position:36% 0}to{background-position:64% 0}}
+  background:linear-gradient(101deg,var(--aw) 0%,var(--mid) 50%,var(--ha) 100%);overflow:hidden}
+/* four soft blobs drifting on their own clocks — the colour is never still */
+.w>i{position:absolute;border-radius:50%;filter:blur(36px);will-change:transform}
+.w>i:nth-child(1){background:var(--aw);width:74%;height:190%;left:-24%;top:-46%;opacity:.8;
+  animation:fa 17s ease-in-out infinite alternate}
+.w>i:nth-child(2){background:var(--ha);width:74%;height:190%;right:-24%;top:-40%;opacity:.8;
+  animation:fb 23s ease-in-out infinite alternate}
+.w>i:nth-child(3){background:var(--aw);width:46%;height:150%;left:12%;top:-24%;opacity:.5;
+  animation:fc 13s ease-in-out infinite alternate}
+.w>i:nth-child(4){background:var(--ha);width:48%;height:150%;right:10%;top:-30%;opacity:.5;
+  animation:fd 19s ease-in-out infinite alternate}
+@keyframes fa{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(18%,9%,0) scale(1.2)}}
+@keyframes fb{from{transform:translate3d(0,5%,0) scale(1.12)}to{transform:translate3d(-16%,-7%,0) scale(.9)}}
+@keyframes fc{from{transform:translate3d(-10%,0,0) scale(.88)}to{transform:translate3d(24%,12%,0) scale(1.28)}}
+@keyframes fd{from{transform:translate3d(12%,-5%,0) scale(1.22)}to{transform:translate3d(-18%,7%,0) scale(.94)}}
+@media(prefers-reduced-motion:reduce){.w>i{animation:none}}
 .ghero .dots{position:absolute;inset:0;pointer-events:none;z-index:-1;
   background-image:radial-gradient(circle at 50% 50%,rgba(0,0,0,.26) 1.1px,transparent 1.2px);
-  background-size:5px 5px;mix-blend-mode:multiply;opacity:.9}
+  background-size:5px 5px;mix-blend-mode:multiply;opacity:.4}
 .ghero .veil{position:absolute;inset:0;pointer-events:none;z-index:-1;
   background:linear-gradient(rgba(0,0,0,.26),rgba(0,0,0,.05) 46%,rgba(0,0,0,.18))}
 .ghero.one .w{background:linear-gradient(101deg,var(--win) 0%,var(--win) 34%,var(--winHi) 72%,var(--win) 100%)}
 .ghero .in{position:relative;padding-top:calc(8px + env(safe-area-inset-top,0px));padding-bottom:22px}
 .ghero .in,.ghero .in *{text-shadow:0 1px 10px rgba(0,0,0,.3)}
 /* other games, as glass pills over the colour */
-.strip{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-block:4px 2px}
+.strip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-block:2px 4px;margin-top:4px}
 .strip::-webkit-scrollbar{display:none}
-.strip a{flex:none;display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;
-  background:rgba(0,0,0,.26);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  border:1px solid rgba(255,255,255,.14);font-size:11.5px;font-weight:700;color:#fff;white-space:nowrap}
-.strip .cr{width:17px;height:17px;background:rgba(255,255,255,.14)}
-.strip .cr b{color:#fff}
+.sc2{flex:none;width:122px;padding:9px 10px;border-radius:13px;display:block;
+  background:rgba(0,0,0,.26);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);
+  border:1px solid rgba(255,255,255,.15)}
+.sc2 .t{display:block;font-size:10px;font-weight:700;opacity:.85;margin-bottom:6px;white-space:nowrap}
+.sc2 .r{display:flex;align-items:center;gap:7px;padding:2px 0}
+.sc2 .r .cr{width:18px;height:18px;background:rgba(255,255,255,.14)}
+.sc2 .r .cr b{font-size:6px}
+.sc2 .r>b{flex:1;font-size:11.5px;font-weight:700}
+.sc2 .r u{text-decoration:none;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+.sc2 .lo{opacity:.5}
 /* white pill CTA */
 .hlp{display:flex;align-items:center;justify-content:center;gap:9px;margin:18px auto 0;
   background:#fff;color:#07090B;border-radius:999px;padding:12px 24px;font-size:15px;font-weight:700;
@@ -284,18 +302,27 @@ html[data-theme=light]{--midA:#2A2E34;--midB:#07090B}
 .gnav .disc{background:rgba(0,0,0,.26);border-color:rgba(255,255,255,.16);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);flex:none}
 .gnav .disc svg{stroke:#fff}
-.gsc{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin-top:14px}
-.gsc .side{display:flex;flex-direction:column;align-items:center;gap:9px}
-.gsc .side .cr{width:60px;height:60px;background:transparent;
-  filter:drop-shadow(0 4px 12px rgba(0,0,0,.45))}
+.gleague{margin:14px 0 0;text-align:center;font-size:11.5px;font-weight:600;opacity:.78}
+.gsc{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin-top:6px}
+.gsc>.sc{font-size:58px;font-weight:800;letter-spacing:-.055em;text-align:center;line-height:1;
+  font-variant-numeric:tabular-nums}
+.gsc>.mid{text-align:center;padding:0 4px;font-size:12.5px;font-weight:700;opacity:.92}
+.gsc .side{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:4px}
+.gsc .side .cr{width:52px;height:52px;background:transparent;filter:drop-shadow(0 4px 12px rgba(0,0,0,.45))}
 .gsc .side .cr img{width:100%;height:100%}
-.gsc .side b{font-size:14px;font-weight:800;letter-spacing:.05em}
-.gsc .side em{font-style:normal;font-size:11.5px;font-weight:600;opacity:.8}
-.gsc .mid{text-align:center}
-.gsc .mid .n{display:flex;align-items:center;gap:16px}
-.gsc .mid .n span{font-size:50px;font-weight:800;letter-spacing:-.05em;font-variant-numeric:tabular-nums;min-width:2.7ch;line-height:1}
-.gsc .mid .n span.dim{opacity:.58}
-.gsc .mid .st{margin-top:8px;font-size:12.5px;font-weight:700;opacity:.92}
+.gsc .side b{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.gsc .side em{font-style:normal;font-size:11.5px;font-weight:600;opacity:.72}
+.gnote{margin:13px 0 0;text-align:center;font-size:12.5px;font-weight:600;opacity:.88}
+/* highlight clips */
+.clip{flex:none;width:200px;display:block}
+.clip .im{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;
+  background:linear-gradient(142deg,var(--c1),#0a0c0e 86%);border:1px solid var(--line)}
+.clip .pl{position:absolute;left:9px;bottom:9px;width:30px;height:30px;border-radius:999px;
+  background:rgba(255,255,255,.94);display:grid;place-items:center}
+.clip .pl svg{width:11px;height:11px;fill:#07090B;stroke:none}
+.clip .du{position:absolute;right:8px;bottom:9px;font-size:10px;font-weight:700;color:#fff;
+  background:rgba(0,0,0,.62);padding:3px 7px;border-radius:7px}
+.clip p{margin:9px 0 0;font-size:12.5px;font-weight:600;line-height:1.32}
 .gtabs{display:flex;gap:22px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line);
   position:sticky;top:calc(env(safe-area-inset-top,0px) + 52px);z-index:10;background:var(--L0);
   padding-top:4px}
@@ -453,13 +480,13 @@ function crest(k, size, plain){
   var t=T[k];
   return '<span class="cr'+(plain?' plain':'')+'" style="width:'+size+'px;height:'+size+'px;font-size:'+size+'px">'
     +'<b>'+esc(t.ab)+'</b>'
-    +'<img src="'+logoUrl(k)+'" alt="'+esc(t.full)+'" loading="lazy" onerror="this.remove()">'
+    +'<img src="'+logoUrl(k)+'" alt="'+esc(t.full)+'" loading="lazy" onload="this.parentNode.classList.add(\'has\')" onerror="this.remove()">'
     +'</span>';
 }
 function shot(id, name, color, size){
   return '<span class="hs" style="--tc:'+color+';width:'+size+'px;height:'+size+'px;font-size:'+size+'px">'
     +'<i>'+esc(initials(name))+'</i>'
-    +'<img src="'+HEAD(id)+'" alt="'+esc(name)+'" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">'
+    +'<img src="'+HEAD(id)+'" alt="'+esc(name)+'" loading="lazy" onload="this.parentNode.classList.add(\'has\')" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">'
     +'</span>';
 }
 
@@ -533,7 +560,7 @@ function viewHome(){
 
   var pc=pairColors(g.away,g.home);
   var hero='<section class="lh rise" style="--ha:'+pc.home+';--aw:'+pc.away+';animation-delay:.02s">'
-    +'<span class="w"></span><span class="dots"></span><span class="veil"></span>'
+    +'<span class="w"><i></i><i></i><i></i><i></i></span><span class="dots"></span><span class="veil"></span>'
     +'<div class="in gut">'
       +'<div class="top"><span class="livedot"><i></i>'+esc(g.clock)+'</span><span>Your game</span></div>'
       +'<a class="score pressable" href="#game">'
@@ -549,7 +576,7 @@ function viewHome(){
           var t=T[p.t];
           return '<div class="pc" style="--tc:'+t.c+'">'
             +'<img class="wmk" src="'+logoUrl(p.t)+'" alt="" onerror="this.remove()">'
-            +shot(p.id,p.n,t.c,52)
+            +shot(p.id,p.n,t.c,74)
             +'<h4>'+esc(p.n)+'</h4><p>'+esc(t.ab)+'</p>'
             +'<div class="line">'+p.l.map(function(x){return '<div><b class="num">'+x[0]+'</b><span>'+x[1]+'</span></div>';}).join('')+'</div>'
           +'</div>';
@@ -565,7 +592,7 @@ function viewHome(){
         var t=T[p.t];
         return '<a class="mp pressable" href="#game" style="--tc:'+t.c+'">'
           +'<img class="wmk" src="'+logoUrl(p.t)+'" alt="" onerror="this.remove()">'
-          +shot(p.id,p.n,t.c,50)
+          +shot(p.id,p.n,t.c,62)
           +'<b>'+esc(p.n)+'</b><span>'+esc(t.ab)+'</span><u>'+esc(p.next)+'</u></a>';
       }).join('')+'</div>';
 
@@ -625,6 +652,11 @@ var PLAYS=[
   {c:'7:28',t:'gs',x:'Golden State Warriors full timeout',s:'86-98'},
   {c:'7:44',t:'gs',x:'Brandin Podziemski makes 25-foot three point jumper',s:'86-98',big:true}
 ];
+var HL=[
+  {t:'gs', d:'0:18', x:'Curry pulls up from 30 feet to put Golden State in front'},
+  {t:'lal',d:'0:24', x:'James finds Davis on the roll for the alley-oop'},
+  {t:'gs', d:'0:15', x:'Kuminga chases down the block in transition'}
+];
 var CMP=[
   ['Field goals','40.2%','42.7%',48,52],
   ['3-pointers','28.2%','47.8%',37,63],
@@ -681,25 +713,39 @@ function viewGame(tab){
 
   var pc=pairColors(LIVE.away,LIVE.home);
   var cvars='--ha:'+pc.home+';--aw:'+pc.away;
-  /* the other games in play, as glass pills over the colour */
-  var strip=LASTNIGHT.concat(TONIGHT.slice(0,2)).slice(0,4).map(function(x){
-    var lbl = x.as!=null ? ('Final '+x.as+'-'+x.hs) : (x.t||'').replace(' PM CT','');
-    return '<a href="#game">'+crest(x.a,17)+'<span>'+esc(lbl)+'</span>'+crest(x.h,17)+'</a>';
+  /* the other games, as small glass score cards — live ones carry the clock */
+  var OTHERS=[
+    {a:'chi',h:'bos',as:88,hs:94,live:'4th 2:41'},
+    {a:'okc',h:'den',as:118,hs:110},
+    {a:'dal',h:'hou',t:'7:30 CT'},
+    {a:'min',h:'nyk',t:'8:00 CT'}
+  ];
+  var strip=OTHERS.map(function(x){
+    var fin=x.as!=null && !x.live;
+    var st = x.live ? '<span class="livedot"><i></i>'+esc(x.live)+'</span>'
+                    : (x.as!=null ? 'Final' : esc(x.t));
+    var aw=fin&&x.as>x.hs, hw=fin&&x.hs>x.as;
+    return '<a class="sc2" href="#game"><span class="t">'+st+'</span>'
+      +'<span class="r'+(fin&&!aw?' lo':'')+'">'+crest(x.a,18)+'<b>'+esc(T[x.a].ab)+'</b><u>'+(x.as!=null?x.as:'')+'</u></span>'
+      +'<span class="r'+(fin&&!hw?' lo':'')+'">'+crest(x.h,18)+'<b>'+esc(T[x.h].ab)+'</b><u>'+(x.hs!=null?x.hs:'')+'</u></span></a>';
   }).join('');
 
   var hero='<section class="ghero" style="'+cvars+'">'
-    +'<span class="w"></span><span class="dots"></span><span class="veil"></span>'
+    +'<span class="w"><i></i><i></i><i></i><i></i></span><span class="dots"></span><span class="veil"></span>'
     +'<div class="in gut">'
       +'<div class="gnav"><a class="disc" href="#home" aria-label="Back">'+svg(IC.back)+'</a>'
-        +'<div class="strip">'+strip+'</div>'
-        +'<span class="disc">'+svg(IC.share)+'</span></div>'
+        +'<span style="flex:1"></span><span class="disc">'+svg(IC.share)+'</span></div>'
+      +'<div class="strip">'+strip+'</div>'
+      +'<p class="gleague">NBA · Chase Center, San Francisco</p>'
       +'<div class="gsc">'
-        +'<span class="side">'+crest(LIVE.away,60,true)+'<b>'+esc(a.ab)+'</b><em>'+esc(a.rec)+'</em></span>'
-        +'<span class="mid"><span class="n"><span class="num">'+LIVE.as+'</span><span class="num">'+LIVE.hs+'</span></span>'
-          +'<span class="st"><span class="livedot"><i></i>'+esc(LIVE.clock)+'</span></span></span>'
-        +'<span class="side">'+crest(LIVE.home,60,true)+'<b>'+esc(h.ab)+'</b><em>'+esc(h.rec)+'</em></span>'
+        +'<span class="sc">'+LIVE.as+'</span>'
+        +'<span class="mid"><span class="livedot"><i></i>'+esc(LIVE.clock)+'</span></span>'
+        +'<span class="sc">'+LIVE.hs+'</span>'
+        +'<span class="side">'+crest(LIVE.away,52,true)+'<b>'+esc(a.name)+'</b><em>'+esc(a.rec)+'</em></span>'
+        +'<span></span>'
+        +'<span class="side">'+crest(LIVE.home,52,true)+'<b>'+esc(h.name)+'</b><em>'+esc(h.rec)+'</em></span>'
       +'</div>'
-      +'<button class="hlp">'+'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>'+'Highlights</button>'
+      +'<p class="gnote">S. Curry 34 · L. James 28, 11 ast · Sling, NBA TV</p>'
     +'</div></section>'
     +'<div class="sheet">'
     +'<div class="minibar gut" style="'+cvars+'" id="mini"><span class="w"></span><span class="dots"></span>'
@@ -711,7 +757,13 @@ function viewGame(tab){
 
   var body='';
   if(tab==='sum'){
-    body='<div class="gut"><div class="sechd"><h2 class="sec">Line score</h2></div>'
+    body='<div class="gut sechd tight"><h2 class="sec">Highlights</h2><span class="more">12 clips</span></div>'
+      +'<div class="rail">'+HL.map(function(c){
+          return '<a class="clip pressable" href="#game" style="--c1:'+T[c.t].c+'">'
+            +'<span class="im"><span class="pl"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg></span>'
+            +'<span class="du">'+esc(c.d)+'</span></span><p>'+esc(c.x)+'</p></a>';
+        }).join('')+'</div>'
+      +'<div class="gut"><div class="sechd"><h2 class="sec">Line score</h2></div>'
       +'<div class="plate"><table class="ls">'
       +'<tr><th>&nbsp;</th><th>1</th><th>2</th><th>3</th><th>4</th><th>T</th></tr>'
       +'<tr><td><span class="tm">'+crest(LIVE.away,24)+esc(a.ab)+'</span></td><td>24</td><td>21</td><td>25</td><td>18</td><td>'+LIVE.as+'</td></tr>'
@@ -723,7 +775,7 @@ function viewGame(tab){
           var t=T[p.t];
           return '<div class="pc mp" style="--tc:'+t.c+';width:170px">'
             +'<img class="wmk" src="'+logoUrl(p.t)+'" alt="" onerror="this.remove()">'
-            +shot(p.id,p.n,t.c,54)
+            +shot(p.id,p.n,t.c,74)
             +'<b>'+esc(p.n)+'</b><span>'+esc(t.full)+'</span>'
             +'<u style="display:flex;gap:14px;border-top:1px solid var(--line);padding-top:9px;margin-top:9px">'
             +p.l.map(function(x){return '<span style="color:var(--t3)"><b style="display:block;color:var(--t1);font-size:18px;font-weight:800;letter-spacing:-.03em" class="num">'+x[0]+'</b>'+x[1]+'</span>';}).join('')
