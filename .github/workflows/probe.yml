@@ -1,0 +1,16 @@
+name: Probe
+on:
+  push:
+    paths: ['scripts/leaders-probe.mjs']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/leaders-probe.mjs
+      - run: |
+          git config user.name "RIVL bot"; git config user.email "actions@users.noreply.github.com"
+          git add data/; git diff --cached --quiet || git commit -m "Probe output"; git pull --rebase -q && git push
