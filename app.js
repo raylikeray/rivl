@@ -96,6 +96,7 @@
       requestAnimationFrame(() => { de.style.overflow = ''; window.scrollTo(0, 0); });
     } else if ($main.dataset.y === '0' && fresh) window.scrollTo(0, 0);
     render.lk = r.lk;
+    if (r.name !== 'game') document.documentElement.classList.remove('gxon');
     if (!['team', 'player', 'game'].includes(r.name) && V._.tint) V._.tint('');   // only a team's, a player's or a game's page wears a team colour
     if (leagueScreen) store.set('v5:screen', r.name);
     /* The Scores date goes back to today when you move to another tab — Home, Standings, Teams, Players — so a day you

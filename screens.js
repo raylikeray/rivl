@@ -375,6 +375,68 @@
     });
     return out;
   }
+  /* ================= v8 GAME HEAD =================
+     The two teams' colours move behind the score on a near-black base; the side that leads takes more of the screen.
+     The hero is pinned; the page slides up over it. A clear bar at the top carries back and share; as the page rises the
+     big score fades away and a compact score fades in inside the bar. The bar holds an in-step copy of the moving colour
+     (with the two rounded corners cut out of it) so whatever slides beneath it is hidden. */
+  const LOBES = '<span class="w"><i></i><i></i><i></i><i></i></span><span class="veil"></span>';
+  function gxColors(L, g) { const [ca, ch] = V._.pairColors(L, g.away, g.home); return { ca, ch, la: V._.lift(ca), lh: V._.lift(ch) }; }
+  function gxLead(g) { const a = +g.away.score, h = +g.home.score; if (!isFinite(a) || !isFinite(h) || g.state === 'pre') return ''; const sh = Math.max(.3, Math.min(.7, .5 + (a - h) / 40)); return `;--split:${Math.round(sh * 100)}%;--sa:${(.82 + sh * .5).toFixed(2)};--sh:${(.82 + (1 - sh) * .5).toFixed(2)}`; }
+  function gxClock(g) { return g.state === 'in' ? `<span class="gxst on"><i></i>${esc(g.detail || 'Live')}</span>` : g.state === 'post' ? `<span class="gxst">${esc(finalWord(g))}</span>` : `<span class="gxst">${esc(tipOf(g))}</span>`; }
+  function gxInner(L, lk, g, f, venue) {
+    const pre = g.state === 'pre' || g.away.score == null || g.home.score == null, aL = +g.away.score > +g.home.score, hL = +g.home.score > +g.away.score;
+    const side = t => `<a class="gxside" href="${href.team(lk, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, 'hero')}<b>${esc(t.short || t.name)}</b><em>${esc(t.rec || '')}</em></a>`;
+    const sc = (t, lead) => pre ? '<span class="gxsc"></span>' : `<span class="gxsc num ${lead ? 'ld' : 'tr'}">${t.score}</span>`;
+    let bar = '';
+    if (f && !g.off) { const c = gxColors(L, g); const pa = Math.round((1 - f.pHome) * 100); bar = `<div class="gxwp"><div class="bar"><i style="width:${pa}%;background:${esc(c.la)}"></i><i style="width:${100 - pa}%;background:${esc(c.lh)}"></i></div><div class="cap"><span>${esc(g.away.abbr)} ${pa}%</span><span>${g.state === 'post' ? 'Pregame prediction' : 'Prediction'}</span><span>${esc(g.home.abbr)} ${100 - pa}%</span></div></div>`; }
+    return `<p class="gxleague">${esc([L.label, venue].filter(Boolean).join(' · '))}</p>
+      <div class="gxsc3">${sc(g.away, aL)}<span class="gxmid">${gxClock(g)}</span>${sc(g.home, hL)}${side(g.away)}<span></span>${side(g.home)}</div>${bar}`;
+  }
+  function gxBar(L, g, title, card) {
+    const pre = g.state === 'pre' || g.away.score == null;
+    const mini = pre ? `<span class="gxmn">${logo(g.away.logo, 's')}<b>${esc(g.away.abbr)}</b><i>at</i><b>${esc(g.home.abbr)}</b>${logo(g.home.logo, 's')}</span>`
+      : `<span class="gxmn">${logo(g.away.logo, 's')}<b class="num${+g.away.score >= +g.home.score ? '' : ' tr'}">${g.away.score}</b>${gxClock(g)}<b class="num${+g.home.score >= +g.away.score ? '' : ' tr'}">${g.home.score}</b>${logo(g.home.logo, 's')}</span>`;
+    const back = `<a class="gxib" href="#scores" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a>`;
+    const share = `<button class="gxib" data-act="share" data-title="${esc(title.replace(/<[^>]+>/g, ''))}"${card ? ` data-card='${esc(JSON.stringify(card))}'` : ''} aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>`;
+    return `${back}<div class="gxctr" id="gxmini">${mini}</div>${share}`;
+  }
+  /* the bar's copy of the moving colour, lined up with the pinned hero and kept in step with it */
+  function gxCover() {
+    const bar = document.getElementById('gxbar'), hero = document.getElementById('gxhero'); if (!bar || !hero) return;
+    let bg = bar.querySelector('.gxbg'); if (!bg) { bg = document.createElement('span'); bg.className = 'gxbg'; bar.insertBefore(bg, bar.firstChild); }
+    bg.style.setProperty('--gxh', hero.offsetHeight + 'px');
+    if (!bg.firstChild) bg.innerHTML = `<span class="gxcov" style="${hero.getAttribute('style') || ''}">${LOBES}</span>`;
+    else bg.firstChild.setAttribute('style', hero.getAttribute('style') || '');
+    try { const A = hero.querySelector('.w').getAnimations({ subtree: true }), B = bg.querySelector('.w').getAnimations({ subtree: true }); for (let i = 0; i < A.length && i < B.length; i++) B[i].currentTime = A[i].currentTime; } catch { }
+  }
+  function gxScroll() {
+    if (gxScroll.on) return; gxScroll.on = true; let tick = false;
+    const run = () => { tick = false; const bar = document.getElementById('gxbar'), hero = document.getElementById('gxhero');
+      if (!bar || !hero) { document.documentElement.classList.remove('gxon'); window.removeEventListener('scroll', on); gxScroll.on = false; return; }
+      document.documentElement.classList.add('gxon');
+      const span = Math.max(80, hero.offsetHeight - bar.offsetHeight - 22), p = Math.min(1, Math.max(0, window.scrollY / span));
+      const fade = document.getElementById('gxin'), mini = document.getElementById('gxmini'); const f = Math.min(1, p / .6), c = Math.min(1, Math.max(0, (p - .45) / .4));
+      if (fade) { fade.style.opacity = (1 - f).toFixed(3); fade.style.transform = `translateY(${(-18 * f).toFixed(1)}px) scale(${(1 - .06 * f).toFixed(3)})`; }
+      if (mini) { mini.style.opacity = c.toFixed(3); mini.style.transform = `translateY(${(8 * (1 - c)).toFixed(1)}px)`; mini.style.pointerEvents = c > .5 ? '' : 'none'; } };
+    const on = () => { if (!tick) { tick = true; requestAnimationFrame(run); } };
+    window.addEventListener('scroll', on, { passive: true }); gxScroll.run = run; run();
+  }
+  function gxPulse(side) { const h = document.getElementById('gxhero'); if (!h) return; let z = h.querySelector('.pz'); if (!z) { z = document.createElement('span'); h.insertBefore(z, h.querySelector('.veil')); } z.className = 'pz ' + (side === 'away' ? 'pa' : 'ph'); void z.offsetWidth; z.classList.add('go'); }
+  /* a play, as a card on a timeline: the team's colour, the player's face and number, what happened, and the score after it */
+  function playCard(L, lk, g, p, ppl) {
+    const id = p.team && String(p.team.id); const t = id === g.home.id ? g.home : id === g.away.id ? g.away : null;
+    const c = t ? V._.teamColor(t, L) : '#6E7582';
+    const sv = +p.scoreValue || 0; const typ = p.type && p.type.text || '';
+    const title = p.scoringPlay ? (sv === 3 ? '3-pointer' : sv === 1 ? 'Free throw' : /dunk/i.test(typ) ? 'Dunk' : /layup/i.test(typ) ? 'Layup' : /hook/i.test(typ) ? 'Hook shot' : 'Basket')
+      : /timeout/i.test(typ) ? 'Timeout' : /foul/i.test(typ) ? 'Foul' : /turnover/i.test(typ) ? 'Turnover' : /rebound/i.test(typ) ? 'Rebound' : /block/i.test(typ) ? 'Block' : /steal/i.test(typ) ? 'Steal' : /substitution/i.test(typ) ? 'Substitution' : /end/i.test(typ) ? 'End of period' : /miss/i.test(String(p.text || '')) ? 'Miss' : (typ || 'Play');
+    const pa = (p.participants || [])[0]; const aid = pa && pa.athlete && String(pa.athlete.id); const who = aid && ppl[aid];
+    const face = who ? `<a class="pcf" href="${href.player(lk, aid)}">${headshot(who.hs, c, 48, who.name)}${who.jersey ? `<i style="background:${esc(c)}">${esc(who.jersey)}</i>` : ''}</a>` : '';
+    const clock = `${p.period && p.period.number ? (p.period.number <= L.periods ? (L.periods === 2 ? `H${p.period.number}` : `Q${p.period.number}`) : 'OT') : ''} ${p.clock && p.clock.displayValue || ''}`.trim();
+    return `<div class="gpl${p.scoringPlay ? ' sc' : ''}" style="--pc:${esc(c)};--pcl:${esc(V._.lift(c))}"><div class="pld"><span class="dot"><i></i></span><em>${esc(clock)}</em></div>
+      <div class="plc"><div class="plh"><b>${esc(title)}</b>${t ? logo(t.logo, 's') : ''}</div><div class="plb">${face}<p>${esc(p.text || '')}</p></div>
+      ${p.awayScore != null ? `<div class="plf"><span>${esc(g.away.abbr)} ${p.awayScore}</span><span>${esc(g.home.abbr)} ${p.homeScore}</span></div>` : ''}</div></div>`;
+  }
   /* true when the coordinates and the written distances tell the same story (or nothing is written to check against) */
   function shotsTrusted(shots) {
     const known = shots.filter(s => s.said != null); if (known.length < 3) return true;
@@ -445,8 +507,8 @@
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Game not found'); return; }
     $main.innerHTML = topbar('', '#scores') + skeleton(1, 'card') + skeleton(6, 'row');
     let ctx = null, sched, tab = focus ? 'box' : 'summary';   // every game opens on Summary — or on the box score, led by one player, when opened from his line
-    const pv = { q: 'all', scoring: false };   // the plays tab's period and scoring-only filters
-    const sv = { team: 'both', pid: '' };   // the shots tab's team and player filters
+    const pv = { q: 'all', scoring: true };   // the plays tab's period and scoring-only filters
+    const sv = { team: 'both', pid: '', q: 0 };   // the shots tab's team and player filters
     const bv = { col: '', dir: 'desc' };   // the box score's sort column
     const pf = { pid: '' };   // the plays tab's player filter
     const paint = async (ttl) => {
@@ -481,7 +543,7 @@
       const shots = g.state === 'pre' ? [] : shotsOf(d.plays, g); const shotsOk = shots.length > 0 && shotsTrusted(shots);
       const tabList = [['summary', 'Summary'], ['box', 'Box score'], ['plays', 'Plays'], ['shots', 'Shots'], ['stats', 'Team stats']].filter(([k]) => (g.state !== 'pre' || k === 'summary' || k === 'stats') && (k !== 'shots' || shotsOk));
       if (!tabList.some(([k]) => k === tab)) tab = 'summary';
-      const tabs = chips(tabList, tab, 'gtab', 'tab'); const tabKey = tabList.map(([k]) => k).join();
+      const tabs = `<div class="gxtabs" role="tablist">${tabList.filter(([k]) => k !== 'stats').map(([k, l]) => `<button class="chip${k === tab ? ' on' : ''}" role="tab" data-act="gtab" data-tab="${esc(k)}" aria-selected="${k === tab}" aria-pressed="${k === tab}">${esc(l)}</button>`).join('')}</div>`; const tabKey = tabList.map(([k]) => k).join();
       // box score helpers
       const bx = d.boxscore && d.boxscore.players || [];
       const boxOf = side => bx.find(x => String(x.team.id) === side.id);
@@ -494,6 +556,7 @@
       const cmpHead = `<div class="cmph"><a class="tm" href="${href.team(lk, g.away.id)}">${logo(g.away.logo, 's', V._.teamColor(g.away, L))}<b>${esc(g.away.abbr)}</b></a><a class="tm r" href="${href.team(lk, g.home.id)}"><b>${esc(g.home.abbr)}</b>${logo(g.home.logo, 's', V._.teamColor(g.home, L))}</a></div>`;
       const cmpRows = (names) => names.map(n => { const a = get(ta, n), h = get(th, n); if (!a || !h) return ''; const av = parseFloat(String(a.displayValue).split('-')[0]) || 0, hv = parseFloat(String(h.displayValue).split('-')[0]) || 0; const mx = Math.max(av, hv) || 1; const lowGood = !!LOW[n]; const aw = lowGood ? av <= hv : av >= hv, hw = lowGood ? hv <= av : hv >= av; return `<div><span class="lab">${esc(NICE[n] || a.label || n)}</span><b class="${aw ? 'lead' : ''}">${esc(a.displayValue)}</b><em class="l"><i style="width:${av / mx * 100}%;${tcv(V._.teamColor(g.away, L))}"></i></em><em class="r"><i style="width:${hv / mx * 100}%;${tcv(V._.teamColor(g.home, L))}"></i></em><b class="${hw ? 'lead' : ''}">${esc(h.displayValue)}</b></div>`; }).join('');
       const plays = (d.plays || []);
+      const ppl = {}; bx.forEach(side => { const st0 = side.statistics && side.statistics[0]; (st0 && st0.athletes || []).forEach(a => { if (a.athlete) ppl[String(a.athlete.id)] = { name: a.athlete.displayName || '', hs: hsUrl(a.athlete), jersey: a.athlete.jersey || '' }; }); });
       // scoring runs: consecutive points by one side, called out at 8-0 and up
       const runs = new Map(); if (plays.length) { let ph = +plays[0].homeScore || 0, pa = +plays[0].awayScore || 0, team = '', pts = 0, from = 0; plays.forEach((p, i) => { if (!i) return; const h = +p.homeScore || 0, a = +p.awayScore || 0; const dh = h - ph, da = a - pa; ph = h; pa = a; if (dh > 4 || da > 4 || dh < 0 || da < 0) { team = ''; pts = 0; return; }   /* a gap in the feed, not a run */ const who = dh > 0 ? 'home' : da > 0 ? 'away' : ''; if (!who) return; const v = dh > 0 ? dh : da; if (who === team) { pts += v; } else { if (team && pts >= 8) runs.set(from, { team, pts }); team = who; pts = v; } from = i; }); if (team && pts >= 8) runs.set(from, { team, pts }); }
       const runMark = i => { const r = runs.get(i); if (!r) return ''; const t = r.team === 'home' ? g.home : g.away; return `<div class="runmark" style="${tcv(V._.teamColor(t))}"><b>${r.pts}–0</b> ${esc(t.short)} run</div>`; };
@@ -611,7 +674,7 @@
         }
         if (ta && th && g.state !== 'pre') { const rows = cmpRows(WANT.slice(0, 6)); if (rows) body += sec('Team stats', '', `<button data-act="gtab" data-tab="stats">All</button>`) + `<div class="cmp">${cmpHead}${rows}</div>`; }
         if (report) body += report;
-        if (plays.length && g.state !== 'pre') body += sec(g.state === 'in' ? 'Last plays' : 'Final plays', '', `<button data-act="gtab" data-tab="plays">All plays</button>`) + `<div class="rows plays">${plays.map((p, i) => [p, i]).slice(-5).reverse().map(([p, i]) => playRow(p, i)).join('')}</div>`;
+        if (plays.length && g.state !== 'pre') body += sec(g.state === 'in' ? 'Last plays' : 'Final plays', '', `<button data-act="gtab" data-tab="plays">All plays</button>`) + `<div class="gpls">${plays.map((p, i) => [p, i]).slice(-5).reverse().map(([p, i]) => runMark(i) + playCard(L, lk, g, p, ppl)).join('')}</div>`;
         if (series) body += series;
         if (g.state !== 'post') { const ws = watchFor(g, L); const list = ws.length ? ws.map(w => `<a class="row" href="${esc(w.href)}" target="_blank" rel="noopener"><span class="t"><b>${esc(w.label || w.short)}</b><span>${esc(w.bundle ? `Through ${w.bundle}` : tvLabel(g) || 'Opens in the app')}</span></span>${chev}</a>`).join('') : (tvLabel(g) ? `<div class="row"><span class="t"><b>${esc(tvLabel(g))}</b><span><a href="#settings/watch">Pick your services</a> to get a direct link here.</span></span></div>` : ''); if (list) body += sec('Where to watch') + `<div class="rows">${list}</div>`; }
         if (clips) body += clips;
@@ -652,16 +715,21 @@
           const who = Object.entries(counts).filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]).slice(0, 12);
           const pid = pf.pid && pname2[pf.pid] ? pf.pid : '';
           const filt = plays.map((p, i) => [p, i]).filter(([p]) => (pick === 'all' || (p.period && p.period.number) === pick) && (!pv.scoring || p.scoringPlay) && (!pid || involves(p, pid)));
-          const ctl = `<div class="chips pchips"><button class="chip${pick === 'all' ? ' on' : ''}" data-act="pq" data-q="all" aria-pressed="${pick === 'all'}">All</button>${periods.map(n => `<button class="chip${pick === n ? ' on' : ''}" data-act="pq" data-q="${n}" aria-pressed="${pick === n}">${pname(n)}</button>`).join('')}<button class="chip tog${pv.scoring ? ' on' : ''}" data-act="pscoring" aria-pressed="${!!pv.scoring}">Scoring only</button></div>` +
-            (who.length ? `<div class="chips pchips pfchips">${who.map(([id, n]) => `<button class="chip${pid === id ? ' on' : ''}" data-act="pf" data-pid="${esc(id)}" aria-pressed="${pid === id}">${esc(V.lastName(pname2[id]))} <small>${n}</small></button>`).join('')}</div>` : '');
+          const ctl = `<div class="gxseg"><button data-act="pscoring" data-v="1" aria-pressed="${!!pv.scoring}">Key plays</button><button data-act="pscoring" data-v="0" aria-pressed="${!pv.scoring}">All plays</button></div>`
+            + `<div class="gxseg q"><button data-act="pq" data-q="all" aria-pressed="${pick === 'all'}">All</button>${periods.map(n => `<button data-act="pq" data-q="${n}" aria-pressed="${pick === n}">${pname(n)}</button>`).join('')}</div>`
+            + (who.length ? `<div class="chips pchips pfchips">${who.map(([id, n]) => `<button class="chip${pid === id ? ' on' : ''}" data-act="pf" data-pid="${esc(id)}" aria-pressed="${pid === id}">${esc(V.lastName(pname2[id]))} <small>${n}</small></button>`).join('')}</div>` : '');
           const groups = []; filt.reverse().forEach(([p, i]) => { const k = p.period && p.period.number; const grp = groups[groups.length - 1]; if (!grp || grp.k !== k) groups.push({ k, label: p.period && p.period.displayValue || '', list: [[p, i]] }); else grp.list.push([p, i]); });
           const nRuns = [...runs.keys()].filter(i => filt.some(([, j]) => j === i)).length;
-          body = lineScore + ctl + (groups.length ? groups.map(gr => sec(gr.label.replace(/(\d)(st|nd|rd|th) Quarter/, 'Quarter $1'), pick === 'all' && nRuns && gr === groups[0] ? `${runs.size} run${runs.size === 1 ? '' : 's'} of 8–0 or more marked` : '') + `<div class="rows plays">${gr.list.map(([p, i]) => playRow(p, i)).join('')}</div>`).join('') : empty(pid ? `Nothing for ${esc(V.lastName(pname2[pid]))} in that span` : 'No scoring plays in that span'));
+          body = lineScore + ctl + (groups.length ? groups.map(gr => sec(gr.label.replace(/(\d)(st|nd|rd|th) Quarter/, 'Quarter $1'), pick === 'all' && nRuns && gr === groups[0] ? `${runs.size} run${runs.size === 1 ? '' : 's'} of 8–0 or more marked` : '') + `<div class="gpls">${gr.list.map(([p, i]) => runMark(i) + playCard(L, lk, g, p, ppl)).join('')}</div>`).join('') : empty(pid ? `Nothing for ${esc(V.lastName(pname2[pid]))} in that span` : 'No scoring plays in that span'));
         }
       } else if (tab === 'shots') {
         const teamOf = s => s.side === 'home' ? g.home : g.away;
         const pick = sv.team === 'home' || sv.team === 'away' ? sv.team : 'both';
-        const pool = shots.filter(s => pick === 'both' || s.side === pick);
+        const pool = shots.filter(s => (pick === 'both' || s.side === pick) && (!sv.q || s.period === sv.q));
+        const sper = [...new Set(shots.map(s => s.period).filter(n => n != null))].sort((a, b) => a - b);
+        const spn = n => n <= L.periods ? (L.periods === 2 ? (n === 1 ? '1st half' : '2nd half') : `Q${n}`) : (n - L.periods > 1 ? `OT${n - L.periods}` : 'OT');
+        const qseg = `<div class="gxseg q"><button data-act="sv-q" data-q="0" aria-pressed="${!sv.q}">All</button>${sper.map(n => `<button data-act="sv-q" data-q="${n}" aria-pressed="${sv.q === n}">${spn(n)}</button>`).join('')}</div>`;
+        const tally = side => { const l = pool.filter(s => s.side === side); return `${l.filter(s => s.made).length}-${l.length}`; };
         // players with attempts on the chosen side, most attempts first
         const byP = new Map(); pool.forEach(s => { const k = s.pid || s.name; if (!k) return; const e = byP.get(k) || { k, name: s.name, n: 0, m: 0 }; e.n++; if (s.made) e.m++; byP.set(k, e); });
         const players = [...byP.values()].sort((a, b) => b.n - a.n).slice(0, 10);
@@ -672,7 +740,8 @@
         const legend = `<div class="clegend">${(pick === 'both' ? [['a', g.away], ['h', g.home]] : [[pick === 'home' ? 'h' : 'a', teamOf({ side: pick })]]).map(([k, t]) => `<span><i style="background:var(--c${k})"></i>${esc(t.abbr)} made</span><span><i class="miss" style="border-color:var(--c${k})"></i>missed</span>`).join('')}</div>`;
         const sides = pick === 'both' ? [{ head: g.away.abbr, filter: s => s.side === 'away' }, { head: g.home.abbr, filter: s => s.side === 'home' }] : [{ head: who ? V.lastName(byP.get(who).name) : teamOf({ side: pick }).abbr }];
         const pair = V._.pairColors(L, g.away, g.home); const cv = [['a', pair[0]], ['h', pair[1]]].map(([k, c]) => `--c${k}-d:${esc(V._.lift(c))};--c${k}-l:${esc(V._.deep(c))}`).join(';');
-        body = teamChips + playerChips + `<div class="chart" style="${cv}">${courtSvg(L, list, { colorOf: s => s.side === 'home' ? 'var(--ch)' : 'var(--ca)' })}${legend}</div>` + sec('By zone', `${list.length} shot${list.length === 1 ? '' : 's'}${g.state === 'in' ? ' so far' : ''}`) + zoneRows(list, sides) + `<p class="legend">Every field-goal attempt, where it was taken from. Free throws aren't on the chart.</p>`;
+        const shleg = `<div class="gxshleg" style="${cv}">${[['away', g.away, 'a'], ['home', g.home, 'h']].map(([sd, t, k]) => `<span>${logo(t.logo, 's')}<b>${esc(t.abbr)}</b><em class="num">${tally(sd)}</em><span class="kk"><i style="background:var(--c${k})"></i>Made</span><span class="kk"><i class="miss" style="border-color:var(--c${k})"></i>Missed</span></span>`).join('')}</div>`;
+        body = `<div class="chart" style="${cv}">${courtSvg(L, list, { colorOf: s => s.side === 'home' ? 'var(--ch)' : 'var(--ca)' })}</div>` + shleg + qseg + sec('By zone', `${list.length} shot${list.length === 1 ? '' : 's'}${g.state === 'in' ? ' so far' : ''}`) + zoneRows(list, sides) + `<p class="legend">Every field-goal attempt, where it was taken from. Free throws aren't on the chart.</p>`;
       } else if (tab === 'stats') {
         const rows = ta && th ? cmpRows(flat(ta).map(x => x.name).filter(n => get(th, n))) : '';
         body = rows ? `<div class="cmp" style="padding-top:6px">${cmpHead}${rows}</div>` : empty(g.state === 'pre' ? 'Stats arrive at tip-off' : 'No team stats yet');
@@ -681,6 +750,32 @@
       const side = t => ({ short: t.short, abbr: t.abbr, logo: t.logo, color: V._.teamColor(t), score: t.score, rec: t.rec || '' });
       const card = g.state === 'pre' ? null : { kind: 'game', away: side(g.away), home: side(g.home), status: g.state === 'post' ? finalWord(g) : g.detail, sub: tvLabel(g) || (d.gameInfo && d.gameInfo.venue && d.gameInfo.venue.fullName) || '', date: dayLabel(ymdOf(g.date), { weekday: 'long', month: 'long', day: 'numeric' }), note: f && prefs.get('forecast') ? `RIVL had ${(f.pHome >= .5 ? g.home : g.away).short} ${pct(Math.max(f.pHome, 1 - f.pHome))}` : '', title: `${g.away.short} ${g.away.score ?? ''}, ${g.home.short} ${g.home.score ?? ''}`, text: `${g.away.short} ${g.away.score ?? ''}, ${g.home.short} ${g.home.score ?? ''} · ${g.state === 'post' ? finalWord(g) : g.detail}`, file: `${g.away.abbr}-${g.home.abbr}-${ymdOf(g.date)}` };
       // the page is three parts: the head (bar + hero) changes only when the score does, the chips only toggle, the body swaps
+      const venue = d.gameInfo && d.gameInfo.venue ? [d.gameInfo.venue.fullName, d.gameInfo.venue.address && d.gameInfo.venue.address.city].filter(Boolean).join(', ') : '';
+      if (!g.tbd) {
+        const c = gxColors(L, g); const vars = `--aw:${esc(c.ca)};--ha:${esc(c.ch)}${gxLead(g)}`;
+        const inner = gxInner(L, lk, g, f, venue) + (V._.seriesLine(g) ? `<p class="sline gxsl"><span>${esc(V._.seriesLine(g))}</span>${spick ? `<b>${esc(spick)}</b>` : ''}</p>` : '');
+        const barHtml = gxBar(L, g, title, card), page = $main.querySelector('#gpage');
+        if (page && page.dataset.gid === String(id) && page.querySelector('#gxhero')) {
+          const hero = page.querySelector('#gxhero'), bar = page.querySelector('#gxbar');
+          if (hero.dataset.v !== vars) { hero.setAttribute('style', vars); hero.dataset.v = vars; gxCover(); }
+          const inn = page.querySelector('#gxin'); const ih = hashOf(inner); if (inn.dataset.h !== ih) { inn.innerHTML = inner; inn.dataset.h = ih; }
+          const bh = hashOf(barHtml); if (bar.dataset.h !== bh) { const keep = bar.querySelector('.gxbg'); bar.innerHTML = barHtml; if (keep) bar.insertBefore(keep, bar.firstChild); bar.dataset.h = bh; }
+          const tabsEl = page.querySelector('#gtabs'); if (tabsEl.dataset.k !== tabKey) { tabsEl.innerHTML = tabs; tabsEl.dataset.k = tabKey; }
+          else tabsEl.querySelectorAll('.chip').forEach(x => { const on = x.dataset.tab === tab; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); x.setAttribute('aria-selected', String(on)); });
+          const bodyEl = page.querySelector('#gbody'); if (bodyEl.dataset.h !== hashOf(body) || bodyEl.dataset.tab !== tab) { const tabChanged = bodyEl.dataset.tab !== tab; bodyEl.innerHTML = body; if (tabChanged && V.soft) V.soft(bodyEl); bodyEl.dataset.h = hashOf(body); bodyEl.dataset.tab = tab; }
+          if (gxScroll.run) gxScroll.run();
+        } else {
+          $main.innerHTML = `<div id="gpage" class="gxpage" data-gid="${esc(String(id))}"><div class="gxbar" id="gxbar" data-h="${hashOf(barHtml)}">${barHtml}</div>`
+            + `<section class="gx" id="gxhero" data-v="${esc(vars)}" style="${vars}">${LOBES}<div class="gxin" id="gxin" data-h="${hashOf(inner)}">${inner}</div></section>`
+            + `<div class="gxsheet"><div id="gtabs" class="gxtabw" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div></div>`;
+          requestAnimationFrame(() => { gxCover(); gxScroll(); if (gxScroll.run) gxScroll.run(); });
+        }
+        /* a basket lands: the scorer's colour flashes forward */
+        if (gameV.last && gameV.last.id === g.id && g.state === 'in') { if (+g.home.score > gameV.last.h) gxPulse('home'); else if (+g.away.score > gameV.last.a) gxPulse('away'); }
+        gameV.last = { id: g.id, a: +g.away.score || 0, h: +g.home.score || 0 };
+        document.title = `${g.away.short} at ${g.home.short} · RIVL`;
+        return g;
+      }
       const headHtml = topbar(title, '#scores', '', card) + hero, hh = hashOf(headHtml), page = $main.querySelector('#gpage');
       if (page && page.dataset.gid === String(id)) {
         const head = page.querySelector('#ghead'); if (head.dataset.h !== hh) { head.innerHTML = headHtml; head.dataset.h = hh; }
@@ -694,7 +789,7 @@
     const g = await paint();
     V.refresh = async () => { if (!g || g.state === 'post') return; await paint(15000); };
     if (V._gtabL) $main.removeEventListener('click', V._gtabL);
-    V._gtabL = e => { const b = e.target.closest('[data-act="gtab"],[data-act="pq"],[data-act="pscoring"],[data-act="sv-team"],[data-act="sv-pid"],[data-act="bsort"],[data-act="pf"]'); if (!b) return; const a = b.dataset.act; if (a === 'gtab') tab = b.dataset.tab; else if (a === 'pq') pv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'pscoring') pv.scoring = !pv.scoring; else if (a === 'sv-team') { sv.team = b.dataset.team; sv.pid = ''; } else if (a === 'sv-pid') sv.pid = b.dataset.pid; else if (a === 'bsort') { const c = b.dataset.col; if (bv.col === c) { if (bv.dir === 'desc') bv.dir = 'asc'; else { bv.col = ''; bv.dir = 'desc'; } } else { bv.col = c; bv.dir = 'desc'; } } else if (a === 'pf') pf.pid = b.dataset.pid === pf.pid ? '' : b.dataset.pid; paint(); };
+    V._gtabL = e => { const b = e.target.closest('[data-act="gtab"],[data-act="pq"],[data-act="pscoring"],[data-act="sv-team"],[data-act="sv-pid"],[data-act="sv-q"],[data-act="bsort"],[data-act="pf"]'); if (!b) return; const a = b.dataset.act; if (a === 'gtab') tab = b.dataset.tab; else if (a === 'pq') pv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'pscoring') pv.scoring = b.dataset.v != null ? b.dataset.v === '1' : !pv.scoring; else if (a === 'sv-team') { sv.team = b.dataset.team; sv.pid = ''; } else if (a === 'sv-pid') sv.pid = b.dataset.pid; else if (a === 'sv-q') sv.q = +b.dataset.q || 0; else if (a === 'bsort') { const c = b.dataset.col; if (bv.col === c) { if (bv.dir === 'desc') bv.dir = 'asc'; else { bv.col = ''; bv.dir = 'desc'; } } else { bv.col = c; bv.dir = 'desc'; } } else if (a === 'pf') pf.pid = b.dataset.pid === pf.pid ? '' : b.dataset.pid; paint(); };
     $main.addEventListener('click', V._gtabL);
   }
 
