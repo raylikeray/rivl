@@ -5,7 +5,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 mkdirSync('data', { recursive: true });
 
 const UA = 'RIVL personal app (non-commercial, used with PrepRanks permission)';
-const YEARS = [2027, 2028, 2029];
+const YEARS = [2027, 2028];
 const SPORTS = { boys: 'basketball', girls: 'womens-basketball' };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const debug = {};
@@ -66,6 +66,34 @@ function fromHtml(html, sport, year) {
   }
   return out;
 }
+function detail(html, base) {
+  const img = (html.match(new RegExp('<img[^>]+alt="' + base.n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[^"]*"[^>]*>', 'i')) || [])[0] || '';
+  const src = (img.match(/src="([^"]+)"/) || [])[1] || null;
+  const t = clean(html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' '));
+  const m = re => (t.match(re) || [])[1] || null;
+  const svc = {};
+  for (const name of ['ON3', '247', 'Rivals', 'ESPN']) {
+    const r = t.match(new RegExp('\\b' + name + ' (#\\s*\\d+|—) ([\\d.]+|—)'));
+    if (r) svc[name] = { rank: r[1] === '—' ? null : +r[1].replace(/\D/g, ''), rating: r[2] === '—' ? null : +r[2] };
+  }
+  const status = m(/(Uncommitted|Committed to [^·]+?|Signed with [^·]+?|Committed|Signed|Enrolled[^·]*?)(?= Top schools| Composite)/);
+  return {
+    ...base,
+    pos: m(/POSITION (\S+)/) || base.pos,
+    ht: m(/HT \/ WT (\d+'\d+")/) || m(/HT (\d+'\d+")/),
+    wt: (m(/· ([\d.]+) lbs/) || '').replace(/\.00$/, '') || null,
+    home: m(/HOMETOWN i (.+?) SCHOOL /),
+    hs: m(/ SCHOOL (.+?) (?:[A-Z]{3,}(?: [A-Z]{2,})* )?MVI /) || m(/ SCHOOL (.+?) (?:REGION|PR SCORE)/),
+    tier: m(/ ([A-Z]{3,}(?: [A-Z]{2,})*) MVI /),
+    score: +(m(/PR SCORE ([\d.]+) \/ 100/) || 0) || null,
+    rank: +(m(/# (\d+) National/) || 0) || base.rank,
+    cons: +(m(/Consensus # (\d+)/) || 0) || null,
+    posRank: m(/Consensus # \d+ · \S+ # (\d+)/),
+    status,
+    top: (m(/Top schools: (.+?) Composite/) || '').split(' · ').map(x => x.trim()).filter(Boolean),
+    svc, img: src
+  };
+}
 const result = { updated: new Date().toISOString(), source: 'PrepRanks', url: 'https://prepranks.com', boys: {}, girls: {} };
 for (const [g, sport] of Object.entries(SPORTS)) {
   for (const y of YEARS) {
@@ -73,12 +101,19 @@ for (const [g, sport] of Object.entries(SPORTS)) {
     try {
       const html = await get(url);
       debug[g + y] = { bytes: html.length };
-      if (!debug.row) { const i = html.indexOf('/' + sport + '/recruits/'); const j = html.indexOf('/' + sport + '/recruits/', i + 300); debug.row = html.slice(Math.max(0, i - 2500), i + 3500); debug.rowText = clean(debug.row); }
+
       let list = fromNextData(html);
       list = list && list.length ? list.map(normNext) : fromHtml(html, sport, y);
       list = list.filter(r => r.n).sort((a, b) => (a.rank || 999) - (b.rank || 999)).slice(0, 150);
+      list.forEach((r, i) => { if (!r.rank) r.rank = i + 1; });
+      for (let i = 0; i < Math.min(list.length, 60); i++) {
+        try { list[i] = detail(await get('https://prepranks.com' + list[i].slug), list[i]); } catch (e) { list[i].err = String(e); }
+        await sleep(900);
+      }
+      list.forEach(r => { delete r.ctx; });
+      list.sort((a, b) => (a.rank || 999) - (b.rank || 999));
       result[g][y] = list;
-      debug[g + y].count = list.length; debug[g + y].sample = list.slice(0, 3);
+      debug[g + y].count = list.length; debug[g + y].sample = list.slice(0, 2);
     } catch (e) { debug[g + y] = { error: String(e) }; }
     await sleep(1500);
   }
