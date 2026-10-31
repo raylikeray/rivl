@@ -686,7 +686,8 @@ html.notch .ghero .sband{display:none}
 #sheet{position:fixed;inset:0;z-index:70}
 #sheet .scrim{position:absolute;inset:0;background:rgba(0,0,0,.5);opacity:0;transition:opacity .35s var(--ease)}
 #sheet.on .scrim{opacity:1}
-#sheet .panel{position:absolute;left:0;right:0;margin:0 auto;max-width:460px;transition:transform .42s var(--ease)}
+#sheet .panel{position:absolute;left:0;right:0;margin:0 auto;max-width:460px;transition:transform .5s cubic-bezier(.32,.72,0,1);touch-action:pan-y;will-change:transform}
+#sheet .scrim{transition:opacity .5s cubic-bezier(.32,.72,0,1)}
 #sheet.bottom .panel{bottom:0;transform:translateY(105%);border-radius:28px 28px 0 0;
   padding:8px 18px calc(22px + env(safe-area-inset-bottom,0px));
   background:color-mix(in srgb,var(--L1) 90%,transparent);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);
@@ -1331,6 +1332,64 @@ html[data-theme=light] .tag.dtd{background:#E1ECFF;color:#1D4FA8}
 .ijsheet .sec{margin:6px 0 12px}
 .grab{width:40px;height:5px;border-radius:999px;background:var(--line2);margin:8px auto 4px}
 .ptag2{display:inline-block;vertical-align:middle;margin-left:6px;font-size:11px;padding:3px 8px}
+/* injury rows, sheet and report */
+.ijrow{width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);font:inherit;color:inherit;cursor:pointer}
+.frows .ijrow:first-child{border-top:0}
+.ijrow .fs .tag{font-size:11.5px}
+html[data-theme=light] .tag.out{background:#FFD6DE;color:#8A0A23}
+html[data-theme=light] .tag.q{background:#FBE2A0;color:#573A00}
+html[data-theme=light] .tag.dtd{background:#D3E2FF;color:#123E8A}
+#sheet.bottom .panel{padding-left:20px;padding-right:20px}
+.ijs{padding-bottom:6px}
+.ijs .ijwho{padding:4px 0 16px}
+.ijs .ijwho b{font-size:20px}
+.ijs .ijhead b,.ijc .ijhead b{font-size:24px;font-weight:700;letter-spacing:-.02em}
+.ijs .ijdet,.ijc .ijdet{font-size:16px;line-height:1.5;color:var(--t1);opacity:.86}
+.ijgrid{display:grid;grid-template-columns:1fr 1fr;margin-top:16px;border-radius:16px;overflow:hidden;background:var(--line);gap:1px}
+.ijgrid div{background:var(--L2);padding:14px 16px}
+.ijc .ijgrid div{background:var(--L2)}
+.ijgrid span{display:block;font-size:12.5px;font-weight:600;color:var(--t3)}
+.ijgrid b{display:block;font-size:17px;font-weight:700;margin-top:4px;line-height:1.25}
+.ijmore{display:flex;flex-direction:column;gap:3px;margin-top:14px;padding:15px 16px;border-radius:16px;background:var(--L2);color:var(--t1);text-decoration:none;font-size:16px;font-weight:700}
+.ijmore span{font-size:13px;font-weight:500;color:var(--t3)}
+.ijc{padding:18px}
+.ijh{margin:22px 0 8px;font-size:17px;font-weight:700}
+.ijp{margin:0;font-size:15.5px;line-height:1.55;color:var(--t2)}
+.ijtl{position:relative;padding-left:4px}
+.ijtl div{position:relative;display:grid;grid-template-columns:62px 1fr;gap:12px;padding:8px 0}
+.ijtl div::before{content:"";position:absolute;left:66px;top:0;bottom:0;width:2px;background:var(--line2)}
+.ijtl div::after{content:"";position:absolute;left:62px;top:14px;width:10px;height:10px;border-radius:999px;background:var(--t3)}
+.ijtl div:last-child::after{background:var(--t1)}
+.ijtl span{font-size:13px;font-weight:600;color:var(--t3);padding-top:4px}
+.ijtl p{margin:0;padding-left:14px;font-size:15px;line-height:1.45}
+/* web answers */
+#xweb:not(:empty){margin-top:12px}
+.wcard{background:var(--L1);border:1px solid var(--line);border-radius:20px;padding:16px}
+.wk{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--t3)}
+.wk svg{width:14px;height:14px;fill:none;stroke:var(--t3);stroke-width:1.8}
+.wans{margin:10px 0 0;font-size:17px;line-height:1.5;color:var(--t1)}
+.wans b{font-weight:700;background:color-mix(in srgb,var(--acc) 18%,transparent);border-radius:4px;padding:0 2px}
+.wans.dim{color:var(--t3);font-size:15px}
+.wread{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin-top:14px;padding:13px 14px;border-radius:14px;background:var(--L2);text-align:left;font:inherit;color:var(--t1);font-weight:700;font-size:15px}
+.wread span{font-size:12.5px;font-weight:500;color:var(--t3)}
+.wmore{margin-top:12px;background:var(--L1);border:1px solid var(--line);border-radius:20px;padding:14px 16px 6px}
+.wrow{display:block;width:100%;text-align:left;padding:11px 0;border-top:1px solid var(--line);font:inherit;color:inherit;background:none}
+.wmore .wk+.wrow{border-top:0;margin-top:4px}
+.wrow b{display:block;font-size:15px;font-weight:600}
+.wrow span{display:block;font-size:13px;line-height:1.4;color:var(--t3);margin-top:3px}
+.wrow span b{display:inline;font-size:inherit;color:var(--t2)}
+.wload{display:flex;align-items:center;gap:6px}
+.wload i{width:6px;height:6px;border-radius:999px;background:var(--t3);animation:wl 1s ease-in-out infinite}
+.wload i:nth-child(3){animation-delay:.15s}.wload i:nth-child(4){animation-delay:.3s}
+@keyframes wl{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+.wrd{padding-top:calc(6px + env(safe-area-inset-top,0px))}
+.wrdbar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:8px 14px;background:color-mix(in srgb,var(--L0) 88%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.wrdbar span{font-size:13px;font-weight:600;color:var(--t3)}
+.wrdt{font-size:30px;font-weight:800;letter-spacing:-.03em;margin:12px 0 10px}
+.wrdi{width:120px;border-radius:14px;float:right;margin:0 0 10px 12px}
+.wrdh{font-size:20px;font-weight:700;margin:24px 0 8px;clear:both}
+h3.wrdh{font-size:17px}
+#wrdb p{font-size:16px;line-height:1.6;color:var(--t2);margin:0 0 12px}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -1448,13 +1507,22 @@ var MYPLAYERS = [
 var INJ = [
   {id:4593803, n:'Jalen Williams', t:'okc', st:'q',   w:'Right wrist · game-time decision',
     part:'Right wrist', detail:'Soreness after a fall in the last game. Went through shootaround this morning.',
-    ret:'Game-time decision tonight', since:'Oct 29', upd:'Today, 1:15 PM', miss:0},
+    ret:'Game-time decision tonight', since:'Oct 29', upd:'Today, 1:15 PM', miss:0,
+    how:'Williams landed on his right hand after contact on a drive late in the third quarter against Denver on Oct 29. He stayed in the game but had the wrist taped at the next timeout and was limited in practice the following day.',
+    tl:[['Oct 29','Hurt the wrist on a drive in the third quarter; finished the game'],['Oct 30','Limited in practice; listed as questionable'],['Oct 31','Went through shootaround; still questionable']],
+    next:'The Thunder will decide about an hour before tip. If he sits, he is expected to be available for the next game.'},
   {id:0, n:'Derrick White',  t:'bos', st:'dtd',   w:'Left knee soreness',
     part:'Left knee', detail:'Soreness. Listed day-to-day; played through it last game.',
-    ret:'Day-to-day', since:'Oct 30', upd:'Today, 11:40 AM', miss:0},
+    ret:'Day-to-day', since:'Oct 30', upd:'Today, 11:40 AM', miss:0,
+    how:'White reported soreness in his left knee after the win at New York on Oct 30. There was no single play where he was hurt; the team called it general soreness.',
+    tl:[['Oct 30','Reported knee soreness after the game'],['Oct 31','Listed day-to-day; expected to warm up before deciding']],
+    next:'Day-to-day means the team decides each game. He has not missed a game yet.'},
   {id:0, n:'Gabe Vincent',   t:'lal', st:'out', w:'Left ankle sprain · out tonight',
     part:'Left ankle', detail:'Sprain. Will be re-evaluated in about one week.',
-    ret:'Re-evaluated in about 1 week', since:'Oct 27', upd:'Yesterday, 6:05 PM', miss:2}
+    ret:'Re-evaluated in about 1 week', since:'Oct 27', upd:'Yesterday, 6:05 PM', miss:2,
+    how:'Vincent rolled his left ankle landing on a defender\'s foot in the second quarter on Oct 27 and left the game. Imaging the next day showed a sprain.',
+    tl:[['Oct 27','Rolled the ankle in the second quarter; did not return'],['Oct 28','Imaging showed a left ankle sprain'],['Oct 30','Out for the second straight game']],
+    next:'He will be re-evaluated in about a week. Until then he is out.'}
 ];
 var INJLBL={out:'Out',q:'Questionable',dtd:'Day-to-day'};
 var NEWS = [
@@ -1697,25 +1765,37 @@ function leagueChips(){
 }
 function injRow(p, withTeam){
   var t=T[p.t];
-  return '<button class="inj pressable" data-act="inj" data-n="'+esc(p.n)+'">'+shot(p.id,p.n,t.c,42)
-    +'<span class="t"><b>'+esc(p.n)+'</b><span>'+(withTeam?esc(t.full)+' · ':'')+esc(p.w)+'</span></span>'
-    +'<span class="tag '+p.st+'">'+INJLBL[p.st]+'</span></button>';
+  return '<button class="frow ijrow pressable" data-act="inj" data-n="'+esc(p.n)+'">'
+    +'<span class="fface">'+shot(p.id,p.n,cardTone(t.c),42)+'<span class="fcr">'+crest(p.t,16,true)+'</span></span>'
+    +'<span class="nm"><b>'+esc(p.n)+'</b><small>'+esc(t.ab+' · '+p.part)+'</small></span>'
+    +'<span class="fs"><span class="tag '+p.st+'">'+INJLBL[p.st]+'</span><em>'+esc(p.ret)+'</em></span></button>';
 }
+function injList(list,withTeam){ return '<div class="gp frows">'+list.map(function(p){return injRow(p,withTeam);}).join('')+'</div>'; }
 function injOf(name){ var n=norm(name); return INJ.filter(function(x){ return norm(x.n)===n; })[0]||null; }
 /* the injury, in full: what, how serious, until when, and when it was last updated */
+function injHref(p){ return pHref(p.n)+'/injury'; }
+function injFacts(p){
+  var f=[['Status',INJLBL[p.st]],['Injury',p.part],['Expected back',p.ret],['Since',p.since]].concat(p.miss?[['Games missed',p.miss]]:[]);
+  return '<div class="ijgrid">'+f.map(function(x){ return '<div><span>'+esc(x[0])+'</span><b>'+esc(String(x[1]))+'</b></div>'; }).join('')+'</div>';
+}
 function injCard(p, inSheet){
   var t=T[p.t];
-  var facts=[['Status',INJLBL[p.st]],['Injury',p.part],['Expected back',p.ret],['Since',p.since]].concat(p.miss?[['Games missed',p.miss]]:[]);
-  return '<div class="ijc st-'+p.st+'">'
-    +(inSheet?'<a class="ijwho" href="'+pHref(p.n)+'" data-act="sheet-close">'+shot(p.id,p.n,cardTone(t.c),56)
-      +'<span><b>'+esc(p.n)+'</b><em>'+crest(p.t,14,true)+esc(t.full)+'</em></span><i class="chev">›</i></a>':'')
+  if(inSheet) return '<div class="ijs st-'+p.st+'">'
+    +'<a class="ijwho" href="'+injHref(p)+'" data-act="sheet-close">'+shot(p.id,p.n,cardTone(t.c),52)
+      +'<span><b>'+esc(p.n)+'</b><em>'+crest(p.t,14,true)+esc(t.full)+'</em></span><i class="chev">›</i></a>'
     +'<div class="ijhead"><span class="tag '+p.st+'">'+INJLBL[p.st]+'</span><b>'+esc(p.part)+'</b></div>'
-    +'<p class="ijdet">'+esc(p.detail)+'</p>'
-    +'<div class="xfacts">'+facts.map(function(f){ return '<div><span>'+esc(f[0])+'</span><b>'+esc(String(f[1]))+'</b></div>'; }).join('')+'</div>'
-    +'<p class="xnote">Updated '+esc(p.upd)+' · Sample report in this mockup</p>'
-    +(inSheet?'<a class="morebtn pressable" href="'+pHref(p.n)+'" data-act="sheet-close" style="text-decoration:none">Open '+esc(p.n.split(' ')[0])+'\'s profile<span>›</span></a>':'')
-    +'</div>';
+    +'<p class="ijdet">'+esc(p.detail)+'</p>'+injFacts(p)
+    +'<a class="ijmore pressable" href="'+injHref(p)+'" data-act="sheet-close">Full injury report<span>How it happened, timeline, what\'s next ›</span></a>'
+    +'<p class="xnote">Updated '+esc(p.upd)+' · Sample report in this mockup</p></div>';
+  return '<div class="ijc st-'+p.st+'" id="injury">'
+    +'<div class="ijhead"><span class="tag '+p.st+'">'+INJLBL[p.st]+'</span><b>'+esc(p.part)+'</b></div>'
+    +'<p class="ijdet">'+esc(p.detail)+'</p>'+injFacts(p)
+    +(p.how?'<h3 class="ijh">How it happened</h3><p class="ijp">'+esc(p.how)+'</p>':'')
+    +(p.tl?'<h3 class="ijh">Timeline</h3><div class="ijtl">'+p.tl.map(function(x){ return '<div><span>'+esc(x[0])+'</span><p>'+esc(x[1])+'</p></div>'; }).join('')+'</div>':'')
+    +(p.next?'<h3 class="ijh">What\'s next</h3><p class="ijp">'+esc(p.next)+'</p>':'')
+    +'<p class="xnote">Updated '+esc(p.upd)+' · Sample report in this mockup. In the app this comes from the official league injury report.</p></div>';
 }
+
 function newsCard(n,i){
   return '<a class="news pressable" href="#" data-act="read" data-i="'+i+'"><span class="im" style="display:block;background:linear-gradient(140deg,'+T[n.t].c+',#0b0d0f)"></span>'
     +'<h4>'+esc(n.h)+'</h4><p><span class="kick">'+esc(n.k)+'</span> · '+esc(n.s)+'</p></a>';
@@ -1801,7 +1881,7 @@ function viewFollowing(){
   var np=MYPLAYERS.filter(function(p){return inLG(p.t);}).length;
   if(np) body+='<div class="gut sechd"><h2 class="sec">'+(ME&&ME.name?esc(ME.name)+'\'s players':'My players')+'</h2><span class="more">'+np+'</span></div>'+playerStrip(gs);
   var inj=INJ.filter(function(p){return FOLLOW.indexOf(p.t)>-1 && inLG(p.t);});
-  if(inj.length) body+='<div class="gut sechd"><h2 class="sec">Injuries</h2></div><div class="gut">'+inj.map(function(p){return injRow(p,true);}).join('')+'</div>';
+  if(inj.length) body+='<div class="gut sechd"><h2 class="sec">Injuries</h2></div><div class="gut">'+injList(inj,true)+'</div>';
   body+='<div class="gut sechd"><h2 class="sec">About your teams</h2></div><div class="gut">'+NEWS.map(newsCard).join('')+'</div>';
   body+='<div class="gut demo"><span>Mockup</span>'
     +'<a href="#following/1" aria-pressed="'+(DEMO===1)+'">1 live</a><a href="#following/3" aria-pressed="'+(DEMO===3)+'">3 live</a>'
@@ -2041,7 +2121,7 @@ function ENTS(){
   Object.keys(TEAMAL).forEach(function(k){ if(T[k]) out.push({type:'t', ref:k, name:T[k].full, al:TEAMAL[k].concat([norm(T[k].full), norm(T[k].name)])}); });
   return out;
 }
-var STOP = 'vs versus v compare compared against and or with to the a an of is are was were how when where what who whos which did does do in on at for from show me my stats stat statistics averages career season this year team teams players player roster many old age tall height college school high university go went graduate graduated attend attended drafted draft pick traded trade married wife husband spouse born hometown injury injured hurt status schedule next game games standings standing rank record seed play plays playing tonight today'.split(' ');
+var STOP = 'son sons daughter daughters kid kids child children dating girlfriend boyfriend partner family mother father mom dad parents brother sister worth salary contract nickname won win finals championship who vs versus v compare compared against and or with to the a an of is are was were how when where what who whos which did does do in on at for from show me my stats stat statistics averages career season this year team teams players player roster many old age tall height college school high university go went graduate graduated attend attended drafted draft pick traded trade married wife husband spouse born hometown injury injured hurt status schedule next game games standings standing rank record seed play plays playing tonight today'.split(' ');
 /* each word of the query finds its best entity: whole name, then the start
    of a name (the last word you're still typing), then a small typo */
 function findAll(q){
@@ -2062,7 +2142,7 @@ function findAll(q){
           if(w===tok) sc=Math.max(sc,2.6);
           else if(tok.length>=2 && w.indexOf(tok)===0 && (last || tok.length>=4)) sc=Math.max(sc,2);
           else if(tok.length>=4 && lev(tok,w)<=(tok.length>=7?2:1)) sc=Math.max(sc,1.5);
-          else if(last && tok.length>=3 && w.length>tok.length && lev(tok,w.slice(0,tok.length))<=1) sc=Math.max(sc,1.2);
+          else if(last && tok.length>=4 && w.length>tok.length && lev(tok,w.slice(0,tok.length))<=1) sc=Math.max(sc,1.2);
         });
       });
       if(sc && (!best || sc>best.score || (sc===best.score && e.type==='p' && best.e.type==='t'))) best={e:e,pos:i,score:sc};
@@ -2086,7 +2166,7 @@ function suggest(q){
     var sc=0;
     e.al.forEach(function(a){ if(a.indexOf(nq)===0) sc=Math.max(sc,3); a.split(' ').forEach(function(w){
       if(w.indexOf(last)===0) sc=Math.max(sc,2); else if(last.length>=4 && lev(last,w)<=(last.length>=7?2:1)) sc=Math.max(sc,1);
-      else if(last.length>=3 && w.length>last.length && lev(last,w.slice(0,last.length))<=1) sc=Math.max(sc,.8); }); });
+      else if(last.length>=4 && w.length>last.length && lev(last,w.slice(0,last.length))<=1) sc=Math.max(sc,.8); }); });
     if(sc) out.push({e:e,sc:sc});
   });
   return out.sort(function(a,b){ return b.sc-a.sc || (a.e.type==='p'?-1:1); }).slice(0,6).map(function(x){return x.e;});
@@ -2104,15 +2184,18 @@ function personOf(name){
 }
 
 /* ---------- answers ---------- */
+var LASTKIND='none';
 function answer(q){
-  var nq0=norm(q); if(!nq0) return '';
+  LASTKIND='intent';
+  var nq0=norm(q); if(!nq0){ LASTKIND='none'; return ''; }
   var f=findAll(q), nq=f.nq, has=function(re){ return re.test(nq); };
   /* the app's own pages, by name */
   if(!f.ps.length && !f.ts.length){
     if(has(/ standing| table| rank/)) return pageCard('Standings','Every table in your leagues','#standings');
     if(has(/ score| games| tonight| today/)) return pageCard('Scores','Every game, any day','#scores');
-    if(has(/ injur/)) return '<div class="xans"><p class="xline">Injuries in your leagues</p>'+INJ.map(function(p){return injRow(p,true);}).join('')+'</div>';
+    if(has(/ injur/)) return '<div class="xans"><p class="xline">Injuries in your leagues</p>'+'<div class="gut" style="padding:0">'+injList(INJ,true)+'</div>'+'</div>';
     if(has(/ leader| top scor| most points/)) return pageCard('Leaders','Points, rebounds, assists and more','#standings','leaders');
+    LASTKIND='none';
     if(has(/ live/)) return '<button class="xans xpage" data-act="live"><b>Live</b><span>Every game in progress</span></button>';
     return '';
   }
@@ -2138,13 +2221,13 @@ function answer(q){
     if(has(/ born| from | hometown| where/)) return ansCard(p, p.n+' is from '+p.from+'.', [['Hometown',p.from],['High school',p.school]]);
     if(has(/ how old| age /)) return age(p.dob)!=null ? ansCard(p, p.n+' is '+age(p.dob)+'.', [['Born',MON[p.dob[1]-1]+' '+p.dob[2]+', '+p.dob[0]]]) : ansCard(p,'RIVL doesn\'t have that.',[],'None of RIVL\'s sources list a birth date, so RIVL won\'t guess.');
     if(has(/ how tall| height/)) return ansCard(p, p.n+' is '+p.ht.replace('-','′')+'″.', []);
-    return playerCard(p);
+    LASTKIND='generic'; return playerCard(p);
   }
   var k=f.ts[0], tt=T[k];
   if(has(/ schedule| next| upcoming/)) return teamSchedCard(k);
   if(has(/ standing| rank| seed| place| record/)) return teamAns(k, standLine(k), false, 'stats');
   if(has(/ roster| how many| players/)) return teamAns(k, leagueOf(k)==='nba' ? 'NBA teams carry up to 15 players, plus 3 on two-way contracts. Here is who is on the '+tt.name+'.' : 'Here is who is on '+tt.full+'.', true);
-  return teamQuick(k);
+  LASTKIND='generic'; return teamQuick(k);
 }
 function pageCard(title,sub,href,sub2){ return '<a class="xans xpage" href="'+href+'"'+(sub2?' data-sub-go="'+sub2+'"':'')+'><b>'+esc(title)+'</b><span>'+esc(sub)+'</span></a>'; }
 function profileBtn(href,label){ return '<a class="xgo" href="'+href+'">'+esc(label)+'<i>›</i></a>'; }
@@ -2238,7 +2321,7 @@ function schedRow(k){ return function(x){ var g=x.g, home=g.h===k, o=home?g.a:g.
 
 /* ---------- the Explore page ---------- */
 var XQ='';
-var TRY=['Jalen Williams vs Shai','Luka vs Curry','When was Maxey drafted','Where did JuJu go to high school','Thunder schedule','Lakers standings','How many players are on the Mavericks','UConn vs USC'];
+var TRY=['Jalen Williams vs Shai','When was Maxey drafted','Tyrese Maxey son','Who did the Thunder beat in the 2025 Finals','Where did JuJu go to high school','Thunder schedule','LeBron James kids','UConn vs USC'];
 function xresults(q){
   var sug=suggest(q), ans=answer(q), f=findAll(q);
   /* typing a name with nothing else: show the matches as rows; the answer card covers the rest */
@@ -2257,10 +2340,10 @@ function viewExplore(){
     +'<div class="gut"><h1 class="ptitle">Explore</h1>'
     +'<label class="xbox">'+svg(IC.search)+'<input id="xq" type="search" autocomplete="off" autocapitalize="off" placeholder="Players, teams, stats, anything" value="'+esc(XQ)+'">'
     +'<button class="xclr" data-act="xclear" aria-label="Clear"'+(XQ?'':' hidden')+'>'+svg('<path d="M6 6l12 12M18 6 6 18"/>')+'</button></label>'
-    +'<div id="xres">'+xresults(XQ)+'</div>'
+    +'<div id="xres">'+xresults(XQ)+'</div><div id="xweb"></div>'
     +'<div id="xbrowse"'+(XQ?' hidden':'')+'>'
       +'<div class="sechd"><h2 class="sec">Try asking</h2></div><div class="xtry">'+TRY.map(function(t){return '<button data-try="'+esc(t)+'">'+esc(t)+'</button>';}).join('')+'</div>'
-      +'<div class="sechd"><h2 class="sec">Injuries</h2><span class="more">Your leagues</span></div>'+INJ.map(function(p){return injRow(p,true);}).join('')
+      +'<div class="sechd"><h2 class="sec">Injuries</h2><span class="more">Your leagues</span></div>'+'<div class="gut" style="padding:0">'+injList(INJ,true)+'</div>'
       +'<div class="sechd"><h2 class="sec">More to explore</h2></div>'
       +'<div class="xgrid">'
         +'<button class="xtile" data-try="Luka vs Curry"><b>Compare</b><span>Any two players or teams, across leagues</span></button>'
@@ -2273,6 +2356,123 @@ function viewExplore(){
 function runSearch(v){
   XQ=v; var r=document.getElementById('xres'), b=document.getElementById('xbrowse'), c=document.querySelector('.xclr');
   if(r){ var html=xresults(v); if(html!==r._last){ r.innerHTML=html; r._last=html; } } if(b) b.hidden=!!norm(v); if(c) c.hidden=!v;
+  webLater(v);
+}
+
+/* ============================================================
+   THE OPEN WEB, READ INSIDE RIVL
+   RIVL answers from its own data first. When a question goes past that
+   ("Tyrese Maxey son", "who won the 1998 Finals"), it looks it up in
+   Wikipedia, finds the paragraph that answers it, and shows that
+   paragraph here with its source. No AI and nothing invented: the words
+   are the source's words, and the full article opens inside the app.
+   ============================================================ */
+var WEBT=null, WEBC={}, WEBN=0;
+var PERSONAL=['son','sons','daughter','daughters','kid','kids','child','children','wife','husband','married','dating','girlfriend','boyfriend','partner','engaged','fiance','fiancee','family','mother','father','mom','dad','parents','brother','sister','born','religion','net','worth','salary','contract','nickname','tattoo','charity','foundation','business'];
+var KEEPW='son sons daughter daughters kid kids child children dating girlfriend boyfriend partner family mother father mom dad parents brother sister worth salary contract nickname won win finals championship married wife husband born trade traded injury draft drafted college school high'.split(' ');
+var WSTOP=STOP.filter(function(w){ return KEEPW.indexOf(w)<0; }).concat(['name','named','whats','tell','about','his','her','their','does','he','she','they','have','has','had','it','any','much','many']);
+function webTerms(q){
+  var f=findAll(q), nameW={};
+  f.hits.forEach(function(h){ h.e.al.forEach(function(a){ a.split(' ').forEach(function(w){ nameW[w]=1; }); }); });
+  var all=norm(q).split(' ').filter(Boolean);
+  var terms=all.filter(function(w){ return w.length>1 && !nameW[w] && WSTOP.indexOf(w)<0; });
+  var ent=f.ps.length?f.ps[0].n:(f.ts.length?(leagueOf(f.ts[0])==='nba'||leagueOf(f.ts[0])==='wnba'?T[f.ts[0]].full+' '+T[f.ts[0]].name:T[f.ts[0]].full+' '+(leagueOf(f.ts[0])==='ncaaw'?'women\'s basketball':'men\'s basketball')):'');
+  /* question words that hint at the kind of fact */
+  var raw=norm(q);
+  if(/\bkids?\b|\bchildren\b|\bson\b|\bdaughter\b/.test(raw) && terms.indexOf('children')<0) terms.push('children');
+  return {terms:terms, ent:ent, f:f};
+}
+function wantsWeb(q){
+  var n=norm(q); if(n.length<3) return false;
+  var w=webTerms(q);
+  if(LASTKIND==='intent') return false;
+  if(LASTKIND==='none') return n.split(' ').length>=2 || !w.f.hits.length;
+  return w.terms.length>0;
+}
+function webLater(v){
+  clearTimeout(WEBT); var box=document.getElementById('xweb');
+  answer(v); /* sets LASTKIND for this text */
+  if(!wantsWeb(v)){ if(box) box.innerHTML=''; return; }
+  if(box) box.innerHTML='<div class="wcard wload"><span class="wk">Looking it up</span><i></i><i></i><i></i></div>';
+  WEBT=setTimeout(function(){ webAsk(v); },450);
+}
+function jget(url){ return fetch(url).then(function(r){ if(!r.ok) throw 0; return r.json(); }); }
+var WAPI='https://en.wikipedia.org/w/api.php?format=json&origin=*&';
+function webAsk(v){
+  var my=++WEBN, W=webTerms(v), query=(W.ent?W.ent+' ':'')+W.terms.join(' ');
+  if(!W.ent && !W.terms.length) query=v;
+  var key=query.toLowerCase();
+  var done=function(html){ if(my!==WEBN) return; var box=document.getElementById('xweb'); if(box) box.innerHTML=html; };
+  if(WEBC[key]){ done(WEBC[key]); return; }
+  jget(WAPI+'action=query&list=search&srlimit=5&srprop=snippet&srsearch='+encodeURIComponent(query))
+  .then(function(d){
+    var hits=(d.query&&d.query.search)||[]; if(!hits.length) throw 'none';
+    var pick=hits[0];
+    if(W.ent){ var e=W.ent.toLowerCase(); hits.forEach(function(h){ if(h.title.toLowerCase()===e.split(' ').slice(0,4).join(' ')) pick=h; }); }
+    return jget(WAPI+'action=query&prop=extracts|pageimages&explaintext=1&exsectionformat=wiki&redirects=1&pithumbsize=120&titles='+encodeURIComponent(pick.title))
+      .then(function(x){ var pg=x.query&&x.query.pages; pg=pg&&pg[Object.keys(pg)[0]]; return {pg:pg, hits:hits, pick:pick}; });
+  })
+  .then(function(R){
+    var best=bestPara(R.pg&&R.pg.extract||'', W.terms), title=R.pg?R.pg.title:R.pick.title;
+    var html='';
+    if(best){
+      html='<div class="wcard"><span class="wk">'+svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>')+'From Wikipedia'+(best.sec?' · '+esc(best.sec):'')+'</span>'
+        +'<p class="wans">'+best.html+'</p>'
+        +'<button class="wread pressable" data-wiki="'+esc(title)+'" data-sec="'+esc(best.sec||'')+'">'+esc(title)+'<span>Read the full article ›</span></button></div>';
+    } else {
+      html='<div class="wcard"><span class="wk">From Wikipedia</span><p class="wans">'+cleanSnip(R.pick.snippet)+'…</p>'
+        +'<button class="wread pressable" data-wiki="'+esc(R.pick.title)+'">'+esc(R.pick.title)+'<span>Read the full article ›</span></button></div>';
+    }
+    var more=R.hits.filter(function(h){ return h.title!==title; }).slice(0,3);
+    if(more.length) html+='<div class="wmore"><span class="wk">More from the web</span>'+more.map(function(h){
+      return '<button class="wrow pressable" data-wiki="'+esc(h.title)+'"><b>'+esc(h.title)+'</b><span>'+cleanSnip(h.snippet)+'…</span></button>'; }).join('')+'</div>';
+    WEBC[key]=html; done(html);
+  })
+  .catch(function(e){ done(e==='none'
+    ? '<div class="wcard"><span class="wk">Nothing found</span><p class="wans dim">No public source answers that yet. Try different words, or a player or team name.</p></div>'
+    : '<div class="wcard"><span class="wk">Can\'t reach the source</span><p class="wans dim">Check your connection and try again.</p></div>'); });
+}
+function cleanSnip(s){ return String(s||'').replace(/<span class="searchmatch">/g,'<b>').replace(/<\/span>/g,'</b>').replace(/<(?!\/?b>)[^>]+>/g,''); }
+function splitWiki(text){
+  var out=[], sec='', lines=String(text).split('\n');
+  lines.forEach(function(l){ var m=l.match(/^=+\s*(.+?)\s*=+$/); if(m){ sec=m[1]; return; } if(l.trim().length>40) out.push({sec:sec, p:l.trim()}); });
+  return out;
+}
+function bestPara(text, terms){
+  if(!text || !terms.length) return null;
+  var paras=splitWiki(text), stems=terms.map(function(t){ return t.length>5?t.slice(0,5):t; }), personal=terms.some(function(t){ return PERSONAL.indexOf(t)>-1; });
+  var best=null;
+  paras.forEach(function(x,i){
+    var low=x.p.toLowerCase(), sc=0;
+    stems.forEach(function(st){ var re=new RegExp('\\b'+st.replace(/[^a-z0-9]/g,''),'g'), m=low.match(re); if(m) sc+=2+Math.min(m.length,3); });
+    if(personal && /personal life|family|early life/i.test(x.sec)) sc+=3;
+    if(stems.some(function(st){ return x.sec.toLowerCase().indexOf(st)>-1; })) sc+=3;
+    var hit=stems.some(function(st){ return low.indexOf(st)>-1; }); if(!hit) sc=sc/4;
+    if(sc>0 && (!best || sc>best.sc)) best={sc:sc, sec:x.sec, p:x.p};
+  });
+  if(!best) return null;
+  /* keep the sentences that carry the answer, with a little context */
+  var sents=best.p.match(/[^.!?]+[.!?]+(\s|$)/g)||[best.p], keep=[];
+  sents.forEach(function(s,i){ var l=s.toLowerCase(); if(stems.some(function(st){ return l.indexOf(st)>-1; })) keep.push(i); });
+  var idx=keep.length?keep:[0], from=Math.max(0,idx[0]), to=Math.min(sents.length-1,idx[idx.length-1]+(idx.length===1?1:0));
+  var txt=sents.slice(from,to+1).join(' ').trim();
+  var html=esc(txt); stems.forEach(function(st){ html=html.replace(new RegExp('(\\b'+st.replace(/[^a-z0-9]/g,'')+'[a-z]*)','gi'),'<b>$1</b>'); });
+  return {sec:best.sec, html:html};
+}
+/* the article, inside the app */
+function openWiki(title, sec){
+  openSheet('<div class="wrd"><div class="wrdbar"><button class="disc" data-act="sheet-close" aria-label="Close">'+svg('<path d="M6 6l12 12M18 6 6 18"/>')+'</button><span>Wikipedia</span></div><div class="gut" id="wrdb"><p class="legend">Loading…</p></div></div>','full');
+  jget(WAPI+'action=query&prop=extracts|pageimages&explaintext=1&exsectionformat=wiki&redirects=1&pithumbsize=600&titles='+encodeURIComponent(title)).then(function(x){
+    var pg=x.query.pages[Object.keys(x.query.pages)[0]], b=document.getElementById('wrdb'); if(!b) return;
+    var html='<h1 class="wrdt">'+esc(pg.title)+'</h1>'+(pg.thumbnail?'<img class="wrdi" src="'+pg.thumbnail.source+'" alt="">':''), cur=null;
+    String(pg.extract||'').split('\n').forEach(function(l){ var m=l.match(/^(=+)\s*(.+?)\s*=+$/);
+      if(m){ cur=m[2]; html+='<h'+(m[1].length<=2?2:3)+' class="wrdh" data-sec="'+esc(cur)+'">'+esc(cur)+'</h'+(m[1].length<=2?2:3)+'>'; }
+      else if(l.trim()) html+='<p>'+esc(l.trim())+'</p>'; });
+    html+='<p class="xnote">Text from Wikipedia, shared under CC BY-SA 4.0.</p>';
+    b.innerHTML=html;
+    if(sec){ var h=[].slice.call(b.querySelectorAll('.wrdh')).filter(function(e){ return e.getAttribute('data-sec')===sec; })[0];
+      if(h){ var pn=document.querySelector('#sheet .panel'); pn.scrollTo({top:h.offsetTop-70,behavior:'smooth'}); } }
+  }).catch(function(){ var b=document.getElementById('wrdb'); if(b) b.innerHTML='<p class="legend">Can\'t reach the source right now.</p>'; });
 }
 
 /* ============================================================
@@ -2332,7 +2532,7 @@ function teamBody(k,tab){
     if(ros.length) out+='<div class="gut sechd"><h2 class="sec">Players</h2><button class="more" data-ttab="roster">Roster ›</button></div><div class="rail">'+ros.map(function(r){ var p=r.p;
         return pcard({n:p.n,id:p.id,t:k,href:'#player/'+slug(p),sub:p.pos+(p.j!==''?' · #'+p.j:''),foot:p.s.ppg+' pts · '+p.s.rpg+' reb · '+p.s.apg+' ast'}); }).join('')+'</div>';
     var inj=INJ.filter(function(x){return x.t===k;});
-    if(inj.length) out+='<div class="gut sechd"><h2 class="sec">Injuries</h2></div><div class="gut">'+inj.map(function(p){return injRow(p,false);}).join('')+'</div>';
+    if(inj.length) out+='<div class="gut sechd"><h2 class="sec">Injuries</h2></div><div class="gut">'+injList(inj,false)+'</div>';
     var nw=NEWS.filter(function(x){return x.t===k;});
     if(nw.length) out+='<div class="gut sechd"><h2 class="sec">News</h2></div><div class="gut">'+nw.map(function(n){return newsCard(n,NEWS.indexOf(n));}).join('')+'</div>';
   }
@@ -2635,10 +2835,26 @@ function playerBody(who, p, tab){
 function openSheet(html, kind){
   var el=document.getElementById('sheet');
   el.className='sh '+kind; el.innerHTML='<div class="scrim" data-act="sheet-close"></div><div class="panel">'+html+'</div>';
-  el.hidden=false; requestAnimationFrame(function(){ el.classList.add('on'); }); document.body.style.overflow='hidden';
+  el.hidden=false; requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.classList.add('on'); }); }); document.body.style.overflow='hidden';
+  bindDrag(el);
 }
-function closeSheet(){ var el=document.getElementById('sheet'); el.classList.remove('on'); document.body.style.overflow='';
-  setTimeout(function(){ el.hidden=true; el.innerHTML=''; },420); }
+function closeSheet(){ var el=document.getElementById('sheet'), pn=el.querySelector('.panel'), sc=el.querySelector('.scrim');
+  if(pn){ pn.style.transition=''; pn.style.transform=''; } if(sc){ sc.style.transition=''; sc.style.opacity=''; }
+  el.classList.remove('on'); document.body.style.overflow='';
+  setTimeout(function(){ el.hidden=true; el.innerHTML=''; },500); }
+/* pull a sheet down to dismiss it: it follows your finger, and a short flick is enough */
+function bindDrag(el){
+  var pn=el.querySelector('.panel'), sc=el.querySelector('.scrim'); if(!pn) return;
+  var y0=0, t0=0, dy=0, on=false;
+  pn.addEventListener('touchstart',function(e){ if(pn.scrollTop>0) return; on=true; y0=e.touches[0].clientY; t0=Date.now(); dy=0;
+    pn.style.transition='none'; sc.style.transition='none'; },{passive:true});
+  pn.addEventListener('touchmove',function(e){ if(!on) return; dy=e.touches[0].clientY-y0;
+    if(dy<0){ dy=dy/6; } pn.style.transform='translateY('+dy+'px)'; sc.style.opacity=String(Math.max(0,1-dy/(pn.offsetHeight||500))); },{passive:true});
+  pn.addEventListener('touchend',function(){ if(!on) return; on=false; var v=dy/Math.max(1,Date.now()-t0);
+    if(dy>110 || v>0.55){ pn.style.transition='transform .32s cubic-bezier(.32,.72,0,1)'; pn.style.transform='translateY(105%)'; sc.style.transition='opacity .32s'; sc.style.opacity='0';
+      setTimeout(function(){ el.classList.remove('on'); document.body.style.overflow=''; el.hidden=true; el.innerHTML=''; },320); }
+    else { pn.style.transition=''; pn.style.transform=''; sc.style.transition=''; sc.style.opacity=''; } });
+}
 var XBTN='<button class="disc" data-act="sheet-close" aria-label="Close">'+svg('<path d="M6 6l12 12M18 6 6 18"/>')+'</button>';
 function readerHtml(n){
   return '<div class="fhd gut">'+XBTN+'</div><article class="gut rd">'
@@ -2728,7 +2944,7 @@ var HL=[
   {t:'lal',d:'0:24', x:'Dončić finds Ayton on the roll for the alley-oop'},
   {t:'gs', d:'0:15', x:'Butler draws the and-one in traffic'}
 ];
-var GINJ=[{id:0,n:'Gabe Vincent',t:'lal',st:'out',w:'Left ankle sprain · out tonight'}];
+var GINJ=INJ.filter(function(x){ return x.t===LIVE.home||x.t===LIVE.away; });
 
 /* game-page filters: which team's box score, which team's plays,
    and whose shots — a team, or one player */
@@ -2857,8 +3073,8 @@ function gameBody(tab,pc){
           return '<div class="cmp"><div class="tp"><b class="num '+aw+'">'+r.a+'</b><span>'+r.l+'</span><b class="num '+hw+'">'+r.b+'</b></div>'
             +'<div class="tk"><div><i data-w="'+r.aw+'" style="background:'+markColor(pc.away)+'"></i></div><div><i data-w="'+r.bw+'" style="background:'+markColor(pc.home)+'"></i></div></div></div>';
         }).join('')+'</div></div>'
-      +'<div class="gut sechd"><h2 class="sec">Injury report</h2></div><div class="gut">'+GINJ.map(function(p){return injRow(p,true);}).join('')
-        +'<p class="legend" style="margin-top:10px">'+esc(h.full)+': no injuries listed.</p></div>'
+      +'<div class="gut sechd"><h2 class="sec">Injury report</h2></div><div class="gut">'+injList(GINJ,true)
+        +(GINJ.some(function(x){return x.t===LIVE.home;})?'':'<p class="legend" style="margin-top:10px">'+esc(h.full)+': no injuries listed.</p>')+'</div>'
       +'<div class="gut sechd"><h2 class="sec">Where to watch</h2></div><div class="gut">'
       +'<button class="watch pressable"><span class="bx2">SLING</span><b>Sling TV</b><span>Watch</span></button>'
       +'<button class="watch pressable"><span class="bx2">NBA</span><b>League Pass</b><span>Watch</span></button></div>';
@@ -2956,7 +3172,9 @@ function render(){
   if(r==='following' && parts[1]){ DEMO=parts[1]==='m'?'m':+parts[1]; applyDemo(); }
   if(r==='game'){ main.innerHTML=viewGame(parts[1]); renderTabs(''); }
   else if(r==='team'){ main.innerHTML=viewTeam(parts[1],parts[2]); renderTabs(''); }
-  else if(r==='player'){ main.innerHTML=viewPlayer(parts[1]); renderTabs(''); }
+  else if(r==='player'){ main.innerHTML=viewPlayer(parts[1]); renderTabs('');
+    if(parts[2]==='injury'){ setTimeout(function(){ var el=document.getElementById('injury'), gt=document.getElementById('gtop'), tw=document.getElementById('gtw');
+      if(el) window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-(gt?gt.offsetHeight:0)-(tw?tw.offsetHeight:0)-12,behavior:'smooth'}); },380); } }
   else if(r==='me'){ main.innerHTML=viewMe(); renderTabs(''); }
   else if(r==='scores'){ main.innerHTML=viewScores(); renderTabs('scores'); }
   else if(r==='standings'){ main.innerHTML=viewStandings(); renderTabs('standings'); }
@@ -3050,7 +3268,7 @@ document.addEventListener('click',function(e){
     if(act==='live'){ e.preventDefault(); openLive(); return; }
     if(act==='live-close'){ closeLive(); if(a.tagName!=='A') e.preventDefault(); return; }
     if(act==='sheet-close'){ if(a.tagName!=='A') e.preventDefault(); closeSheet(); return; }
-    if(act==='inj'){ e.preventDefault(); var ij=injOf(a.getAttribute('data-n')); if(ij) openSheet('<div class="gut ijsheet"><div class="grab"></div><h2 class="sec">Injury</h2>'+injCard(ij,true)+'</div>','bottom'); return; }
+    if(act==='inj'){ e.preventDefault(); var ij=injOf(a.getAttribute('data-n')); if(ij) openSheet('<div class="grab"></div>'+injCard(ij,true),'bottom'); return; }
     if(act==='cal'){ e.preventDefault(); openCal(); return; }
     if(act==='read'){ e.preventDefault(); openSheet(readerHtml(NEWS[+a.getAttribute('data-i')]),'full'); return; }
     if(act==='clip'){ e.preventDefault(); var c=HL[+a.getAttribute('data-i')]; if(document.getElementById('sheet').hidden) openSheet(videoHtml(c),'full'); else document.querySelector('#sheet .panel').innerHTML=videoHtml(c); return; }
@@ -3082,6 +3300,7 @@ document.addEventListener('click',function(e){
     document.getElementById('pbody').innerHTML=playerBody(who,pp,PTAB);
     document.querySelectorAll('.ptabs2 [data-ptab]').forEach(function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-ptab')===PTAB)); });
     var tw2=document.getElementById('gtw'), gt2=document.getElementById('gtop'); if(tw2&&gt2){ var y2=tw2.getBoundingClientRect().top+window.scrollY-gt2.offsetHeight; if(window.scrollY>y2) window.scrollTo(0,y2); } if(miniHandler) miniHandler(); return; }
+  var wk=e.target.closest('[data-wiki]'); if(wk){ e.preventDefault(); openWiki(wk.getAttribute('data-wiki'), wk.getAttribute('data-sec')); return; }
   var tt=e.target.closest('[data-ttab]');
   if(tt){ var tk=(location.hash.split('/')[1]); TTAB=tt.getAttribute('data-ttab'); var tb=document.getElementById('tbody');
     if(tb){ tb.innerHTML=teamBody(tk,TTAB); document.querySelectorAll('.ptabs [data-ttab]').forEach(function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-ttab')===TTAB)); });
