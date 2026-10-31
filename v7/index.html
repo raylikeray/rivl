@@ -1446,6 +1446,18 @@ h3.wrdh{font-size:17px}
 .ijwho>span.rmono{flex:none}
 .xclr[hidden]{display:none}
 .fl{font-size:12.5px;font-weight:600;color:var(--t3)}
+.extile.wide{grid-column:1/-1;min-height:150px}
+.extile.wide b{font-size:22px}
+.rmono.rimg{position:relative;overflow:hidden;background:var(--L2)}
+.rmono.rimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;z-index:1}
+.rscore{flex:none;font-size:16px;font-weight:700;color:var(--t2)}
+.svcg{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-radius:14px;overflow:hidden}
+.svcg div{background:var(--L2);padding:10px 8px;text-align:center}
+.svcg span{display:block;font-size:11.5px;font-weight:600;color:var(--t3)}
+.svcg b{display:block;font-size:17px;font-weight:700;margin-top:3px}
+.svcg em{display:block;font-style:normal;font-size:11.5px;color:var(--t3)}
+.fchip.flip{background:rgba(232,180,60,.18);color:#F0C766}
+html[data-theme=light] .fchip.flip{background:#FBE2A0;color:#573A00}
 /* misc */
 .rise{opacity:0;transform:translateY(10px);animation:rise .5s var(--ease) forwards}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -3080,8 +3092,10 @@ function settingsClick(e){
    school and college choice. Free, sourced, and nothing copied from
    a paid service. Basketball only: these are high school athletes.
    ============================================================ */
-var REC={g:'boys', y:null, data:{}};
-function recYears(){ var y=TODAY.getFullYear(); return [y+1,y,y-1]; }
+var REC={g:'boys', y:null, data:{}, pr:null, src:'pr'};
+function prLoad(){ if(REC.pr) return Promise.resolve(REC.pr);
+  return fetch('../data/recruits.json',{cache:'no-cache'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(d){ return (REC.pr=d); }); }
+function recYears(){ var y=TODAY.getFullYear(); return [y+1,y+2,y,y-1]; }
 function recTitle(g,y){ return y+' McDonald\'s All-American '+(g==='boys'?'Boys':'Girls')+' Game'; }
 function recFetch(g,y){
   var key=g+y; if(REC.data[key]) return Promise.resolve(REC.data[key]);
@@ -3096,67 +3110,94 @@ function recFetch(g,y){
       if(cN<0||cC<0) return;
       rows.slice(1).forEach(function(r){ var td=[].slice.call(r.querySelectorAll('td,th')); if(td.length<hd.length-1) return;
         var cell=function(i){ return i>-1&&td[i]?td[i].textContent.replace(/\[\d+\]/g,'').replace(/\^/g,'').trim():''; };
-        var a=td[cN]&&td[cN].querySelector('a[href^="/wiki/"]');
-        var n=cell(cN); if(!n) return;
+        var a=td[cN]&&td[cN].querySelector('a[href^="/wiki/"]'); var n=cell(cN); if(!n) return;
         out.push({n:n, rank:parseInt(cell(cR),10)||null, ht:cell(cH).replace(/[−–]/g,'-'), wt:cell(cW), pos:cell(cP), home:cell(cT), hs:cell(cS), col:cell(cC),
           wiki:a?decodeURIComponent(a.getAttribute('href').slice(6)).replace(/_/g,' '):'', red:a&&/new/.test(a.className)}); });
     });
     out.sort(function(a,b){ return (a.rank||999)-(b.rank||999); });
-    return (REC.data[key]={list:out, title:d.parse.title});
+    return (REC.data[key]={list:out, title:d.parse.title, src:'wiki'});
   });
 }
-function colKey(name){ var n=norm(name); if(!n||n==='undecided') return null;
-  var hit=null; Object.keys(T).forEach(function(k){ if(hit) return; var t=T[k]; if(norm(t.full)===n||norm(t.name)===n) hit=k; });
+function colKey(name){ var n=norm(name); if(!n||n==='undecided'||n==='uncommitted') return null;
+  n=n.replace(/^committed to |^signed with /,'');
+  var ALIAS={connecticut:'uconn','north carolina':'north carolina','southern california':'usc','usc':'usc'};
+  var hit=null; Object.keys(T).forEach(function(k){ if(hit) return; var t=T[k], f=norm(t.full), nm=norm(t.name);
+    if(f===n||nm===n||n.indexOf(f+' ')===0||(ALIAS[n.split(' ')[0]]&&norm(T[k].full)===ALIAS[n.split(' ')[0]])) hit=k; });
   if(hit && REC.g==='girls' && T[hit+'w']) hit=hit+'w'; if(hit && REC.g==='boys' && /w$/.test(hit) && T[hit.slice(0,-1)]) hit=hit.slice(0,-1);
   return hit; }
-function colChip(c){ var k=colKey(c);
-  if(!c) return ''; if(norm(c)==='undecided') return '<span class="cchip und">Undecided</span>';
-  return '<span class="cchip"'+(k?' data-team="'+k+'"':'')+'>'+(k?crest(k,18,true):'')+esc(c)+'</span>'; }
+function colChip(c){ if(!c) return ''; var k=colKey(c), lbl=String(c).replace(/^Committed to |^Signed with /,'');
+  if(/^(undecided|uncommitted)$/i.test(lbl)) return '<span class="cchip und">Uncommitted</span>';
+  return '<span class="cchip"'+(k?' data-team="'+k+'"':'')+'>'+(k?crest(k,18,true):'')+esc(lbl)+'</span>'; }
+function rFace(r,size){ var ini=esc(initials(r.n));
+  return r.img ? '<span class="rmono'+(size>44?' big':'')+' rimg"><img src="'+esc(r.img)+'" alt="" loading="lazy" onerror="this.parentNode.classList.remove(\'rimg\');this.parentNode.textContent=\''+ini+'\'"></span>' : '<span class="rmono'+(size>44?' big':'')+'">'+ini+'</span>'; }
 function viewRecruits(){
-  var ys=recYears(); if(!REC.y) REC.y=ys[1];
+  var ys=recYears(); if(!REC.y) REC.y=ys[0];
   return '<div class="stop gut"><a class="disc" href="javascript:history.back()" aria-label="Back">'+svg(IC.back)+'</a><b>Top recruits</b><span></span></div>'
     +'<div class="gut"><div class="seg2" style="margin-top:4px">'+[['boys','Boys'],['girls','Girls']].map(function(x){ return '<button data-recg="'+x[0]+'" aria-pressed="'+(REC.g===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div>'
-    +'<div class="ychips">'+ys.map(function(y){ return '<button data-recy="'+y+'" aria-pressed="'+(REC.y===y)+'">Class of '+y+'</button>'; }).join('')+'</div>'
-    +'<div id="recb"><div class="wcard wload"><span class="wk">Loading rosters</span><i></i><i></i><i></i></div></div></div>';
+    +'<div class="ychips">'+ys.map(function(y){ return '<button data-recy="'+y+'" aria-pressed="'+(REC.y===y)+'">Class of '+y+(y<=TODAY.getFullYear()?' · All-Americans':'')+'</button>'; }).join('')+'</div>'
+    +'<div id="recb"><div class="wcard wload"><span class="wk">Loading rankings</span><i></i><i></i><i></i></div></div></div>';
 }
 function recLoad(){
   var b=document.getElementById('recb'); if(!b) return; var g=REC.g, y=REC.y;
+  if(y>TODAY.getFullYear()){
+    prLoad().then(function(D){ if(REC.g!==g||REC.y!==y) return;
+      var L=(D[g]||{})[y]||[];
+      if(!L.length){ b.innerHTML='<div class="empty"><b>No rankings for this class yet</b><p>PrepRanks hasn\'t published it.</p></div>'; return; }
+      REC.cur={list:L, src:'pr', upd:D.updated};
+      b.innerHTML='<p class="legend">PrepRanks score, blending ON3, 247Sports, Rivals and ESPN. Updated '+esc(ago(D.updated))+'.</p>'
+        +'<div class="ldblock rcblock"><div class="ldhd"><b>'+(g==='boys'?'Boys':'Girls')+' · Class of '+y+'</b><span>PR score</span></div>'
+        +L.slice(0,100).map(function(r,i){ return '<button class="ldrow rcrow pressable" data-rec="'+i+'"><span class="rk">'+(r.rank||i+1)+'</span>'+rFace(r,40)
+          +'<span class="t"><b>'+esc(r.n)+'</b><span>'+esc([r.pos,r.ht].filter(Boolean).join(' · ')+(r.hs?' · '+r.hs:''))+'</span></span>'
+          +(r.commitTo?colChip(r.commitTo):(r.score?'<span class="rscore num">'+r.score.toFixed(1)+'</span>':''))+'</button>'; }).join('')+'</div>'
+        +'<p class="xnote">Source: PrepRanks (prepranks.com), used for personal, non-commercial use with permission.</p>';
+    }).catch(function(){ b.innerHTML='<div class="empty"><b>Rankings aren\'t loaded yet</b><p>They refresh once a day.</p></div>'; });
+    return;
+  }
   recFetch(g,y).then(function(R){ if(REC.g!==g||REC.y!==y) return;
-    if(R.missing||!R.list.length){ b.innerHTML='<div class="empty"><b>Class of '+y+' isn\'t out yet</b><p>The McDonald\'s All-American rosters for each class are announced in late January of their senior year. Pick an earlier class to browse.</p></div>'; return; }
-    var L=R.list, top=L[0];
+    if(R.missing||!R.list.length){ b.innerHTML='<div class="empty"><b>Class of '+y+' isn\'t out yet</b><p>The McDonald\'s All-American rosters are announced in late January of senior year.</p></div>'; return; }
+    REC.cur=R; var L=R.list;
     b.innerHTML='<p class="legend">'+L.length+' McDonald\'s All-Americans, ordered by ESPN 100 rank. From Wikipedia.</p>'
       +'<div class="ldblock rcblock"><div class="ldhd"><b>'+(g==='boys'?'Boys':'Girls')+' · Class of '+y+'</b><span>ESPN 100 rank</span></div>'
-      +L.map(function(r,i){ return '<button class="ldrow rcrow pressable" data-rec="'+i+'"><span class="rk">'+(r.rank||'-')+'</span><span class="rmono">'+esc(initials(r.n))+'</span>'
+      +L.map(function(r,i){ return '<button class="ldrow rcrow pressable" data-rec="'+i+'"><span class="rk">'+(r.rank||'-')+'</span>'+rFace(r,40)
         +'<span class="t"><b>'+esc(r.n)+'</b><span>'+esc([r.pos,r.ht].filter(Boolean).join(' · ')+(r.hs?' · '+r.hs:''))+'</span></span>'+colChip(r.col)+'</button>'; }).join('')+'</div>'
       +'<p class="xnote">Source: <button class="lnk" data-wiki="'+esc(R.title)+'">'+esc(R.title)+'</button> on Wikipedia (CC BY-SA 4.0). Ranks as published there, from ESPN.</p>';
   }).catch(function(){ b.innerHTML='<div class="empty"><b>Can\'t reach the source</b><p>Check your connection and try again.</p></div>'; });
 }
 function recSheet(i){
-  var R=REC.data[REC.g+REC.y], r=R&&R.list[i]; if(!r) return;
-  var k=colKey(r.col);
+  var R=REC.cur, r=R&&R.list[i]; if(!r) return;
+  var pr=R.src==='pr', choice=pr?(r.commitTo||'Uncommitted'):(r.col||'Undecided'), k=colKey(choice);
+  var grid=pr
+    ? [['National rank','#'+(r.rank||'-')],['PR score',r.score?r.score.toFixed(1)+' / 100':'-'],['Position',r.pos+(r.posRank?' · #'+r.posRank:'')],['Height',r.ht||'-'],['Weight',r.wt?r.wt+' lb':'-'],['Consensus',r.cons?'#'+r.cons:'-'],['High school',r.hs||'-'],['Hometown',r.home||'-']]
+    : [['ESPN 100',r.rank?'#'+r.rank:'-'],['Position',r.pos||'-'],['Height',r.ht||'-'],['Weight',r.wt?r.wt+' lb':'-'],['High school',r.hs||'-'],['Hometown',r.home||'-']];
+  var svc=pr&&r.svc?Object.keys(r.svc):[];
   openSheet('<div class="grab"></div><div class="ijs">'
-    +'<div class="ijwho" style="cursor:default"><span class="rmono big">'+esc(initials(r.n))+'</span><span><b>'+esc(r.n)+'</b><em>Class of '+REC.y+' · '+(REC.g==='boys'?'Boys':'Girls')+'</em></span></div>'
-    +'<div class="ijgrid">'+[['ESPN 100',r.rank?'#'+r.rank:'-'],['Position',r.pos||'-'],['Height',r.ht||'-'],['Weight',r.wt?r.wt+' lb':'-'],['High school',r.hs||'-'],['Hometown',r.home||'-']].map(function(x){
-      return '<div><span>'+x[0]+'</span><b>'+esc(String(x[1]))+'</b></div>'; }).join('')+'</div>'
-    +'<div class="fgrp" style="margin-top:16px"><span class="fl">College choice</span><div class="fvals">'+(k?'<a class="fchip pressable" href="#team/'+k+'" data-act="sheet-close">'+crest(k,18,true)+esc(r.col)+'<i>›</i></a>':'<span class="fchip">'+esc(r.col||'Undecided')+'</span>')+'</div></div>'
-    +(r.wiki&&!r.red?'<button class="ijmore pressable" data-wiki="'+esc(r.wiki)+'">Read more<span>Their Wikipedia article</span></button>':'')
-    +'<p class="xnote">From the '+esc(R.title)+' roster on Wikipedia. Offers, visits, stats and highlights need a source we can use for free; see About and sources.</p></div>','bottom');
+    +'<div class="ijwho" style="cursor:default">'+rFace(r,52)+'<span><b>'+esc(r.n)+'</b><em>Class of '+REC.y+' · '+(REC.g==='boys'?'Boys':'Girls')+(r.tier?' · '+esc(r.tier.charAt(0)+r.tier.slice(1).toLowerCase()):'')+'</em></span></div>'
+    +'<div class="ijgrid">'+grid.map(function(x){ return '<div><span>'+x[0]+'</span><b>'+esc(String(x[1]))+'</b></div>'; }).join('')+'</div>'
+    +'<div class="fgrp" style="margin-top:16px"><span class="fl">'+(pr?(r.commitTo?(r.status||'Committed')+(r.commitSince?' since '+esc(r.commitSince):''):'Status'):'College choice')+'</span><div class="fvals">'
+      +(k?'<a class="fchip pressable" href="#team/'+k+'" data-act="sheet-close">'+crest(k,18,true)+esc(choice)+'<i>›</i></a>':'<span class="fchip">'+esc(choice)+'</span>')
+      +(r.flip?'<span class="fchip flip">Flip watch</span>':'')+'</div></div>'
+    +(pr&&r.top&&r.top.length?'<div class="fgrp" style="margin-top:14px"><span class="fl">Top schools</span><div class="fvals">'+r.top.map(function(c){ var kk=colKey(c);
+        return kk?'<a class="fchip pressable" href="#team/'+kk+'" data-act="sheet-close">'+crest(kk,18,true)+esc(c)+'<i>›</i></a>':'<span class="fchip">'+esc(c)+'</span>'; }).join('')+'</div></div>':'')
+    +(svc.length?'<div class="fgrp" style="margin-top:14px"><span class="fl">How the services rate them</span><div class="svcg" style="grid-template-columns:repeat('+svc.length+',1fr)">'+svc.map(function(n){ var v=r.svc[n];
+        return '<div><span>'+esc(n)+'</span><b>'+(v.rank?'#'+v.rank:'-')+'</b><em>'+(v.rating!=null?v.rating:'')+'</em></div>'; }).join('')+'</div></div>':'')
+    +(!pr&&r.wiki&&!r.red?'<button class="ijmore pressable" data-wiki="'+esc(r.wiki)+'">Read more<span>Their Wikipedia article</span></button>':'')
+    +'<p class="xnote">'+(pr?'From PrepRanks, updated '+esc(ago(R.upd))+'. Personal, non-commercial use with permission.':'From the '+esc(R.title)+' roster on Wikipedia.')+' Stats and highlights aren\'t in RIVL yet.</p></div>','bottom');
 }
 
 /* ============================================================
    EXPLORE HOME: search on top, sections to browse below
    ============================================================ */
 function exTile(href,act,icon,title,sub,c1,c2){
-  return '<a class="extile pressable" href="'+href+'"'+(act?' '+act:'')+' style="--c1:'+c1+';--c2:'+c2+'"><i class="ei">'+svg(icon)+'</i><b>'+esc(title)+'</b><span>'+esc(sub)+'</span></a>';
+  var wide=act==='class="wide"'; if(wide) act='';
+  return '<a class="extile pressable'+(wide?' wide':'')+'" href="'+href+'"'+(act?' '+act:'')+' style="--c1:'+c1+';--c2:'+c2+'"><i class="ei">'+svg(icon)+'</i><b>'+esc(title)+'</b><span>'+esc(sub)+'</span></a>';
 }
 function exploreHome(){
   return '<div class="exgrid">'
-    +exTile('#recruits','', '<path d="M12 2l3 6 6.5.9-4.7 4.6 1.1 6.5L12 17l-5.9 3 1.1-6.5L2.5 8.9 9 8z"/>','Top recruits','High school stars, boys and girls','#7B2CBF','#3A0CA3')
+    +exTile('#recruits','class="wide"', '<path d="M12 2l3 6 6.5.9-4.7 4.6 1.1 6.5L12 17l-5.9 3 1.1-6.5L2.5 8.9 9 8z"/>','Top recruits','The best high school players, boys and girls, by class','#7B2CBF','#3A0CA3')
     +exTile('#news','', SI.lg,'News','Latest from ESPN, your leagues','#1D4ED8','#0B2A6F')
     +exTile('#standings','data-sub-go="leaders"', IC.trophy,'Leaders','Points, rebounds, assists','#C2410C','#7C2D12')
     +exTile('#explore','data-try="Luka vs Curry"', '<path d="M8 4v16M16 4v16M4 8h4M16 16h4"/>','Compare','Any two players or teams','#0F766E','#134E4A')
     +exTile('#injuries','', '<path d="M12 5v14M5 12h14"/>','Injuries','Who is out and until when','#B91C1C','#7F1D1D')
-    +exTile('#standings','data-sub-go="table"', IC.trophy,'Standings','Every table and bracket','#4D7C0F','#1A2E05')
     +'</div>';
 }
 function viewInjuries(){

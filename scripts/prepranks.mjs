@@ -76,7 +76,10 @@ function detail(html, base) {
     const r = t.match(new RegExp('\\b' + name + ' (#\\s*\\d+|—) ([\\d.]+|—)'));
     if (r) svc[name] = { rank: r[1] === '—' ? null : +r[1].replace(/\D/g, ''), rating: r[2] === '—' ? null : +r[2] };
   }
-  const status = m(/(Uncommitted|Committed to [^·]+?|Signed with [^·]+?|Committed|Signed|Enrolled[^·]*?)(?= Top schools| Composite)/);
+  const cm = t.match(/● (Committed|Signed|Enrolled) (FLIP WATCH )?(.+?) since (\w+ \d{4})/);
+  const title = x => x.replace(/\b\w/g, c => c.toUpperCase());
+  const status = cm ? cm[1] : m(/(Uncommitted)(?= Top schools| Composite)/);
+  const commitTo = cm ? title(cm[3].trim()) : null, commitSince = cm ? cm[4] : null, flip = !!(cm && cm[2]);
   return {
     ...base,
     pos: m(/POSITION (\S+)/) || base.pos,
@@ -91,6 +94,7 @@ function detail(html, base) {
     posRank: m(/Consensus # \d+ · \S+ # (\d+)/),
     status,
     top: (m(/Top schools: (.+?) Composite/) || '').split(' · ').map(x => x.trim()).filter(Boolean),
+    commitTo, commitSince, flip,
     svc, img: src,
     _st: status ? undefined : (t.match(/National Consensus[\s\S]{0,220}/) || [''])[0]
   };
