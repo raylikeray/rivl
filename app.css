@@ -2351,8 +2351,8 @@ html.gxon body::before{display:none}
 .gxbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:8px;height:calc(56px + env(safe-area-inset-top,0px));
   padding:env(safe-area-inset-top,0px) var(--gut-r) 0 var(--gut);margin-bottom:calc(-56px - env(safe-area-inset-top,0px));color:#fff}
 .gxbg{position:absolute;left:0;right:0;top:0;height:calc(100% + 22px);z-index:-1;overflow:hidden;pointer-events:none;
-  -webkit-mask:linear-gradient(#000,#000) left top/100% calc(100% - 22px) no-repeat,radial-gradient(circle at 100% 100%,transparent 21px,#000 21.7px) left bottom/22px 22px no-repeat,radial-gradient(circle at 0 100%,transparent 21px,#000 21.7px) right bottom/22px 22px no-repeat;
-          mask:linear-gradient(#000,#000) left top/100% calc(100% - 22px) no-repeat,radial-gradient(circle at 100% 100%,transparent 21px,#000 21.7px) left bottom/22px 22px no-repeat,radial-gradient(circle at 0 100%,transparent 21px,#000 21.7px) right bottom/22px 22px no-repeat}
+  -webkit-mask:linear-gradient(#000,#000) left top/100% calc(100% - 22px) no-repeat,radial-gradient(circle at 100% 100%,transparent 21.5px,#000 22px) left bottom/22px 24px no-repeat,radial-gradient(circle at 0 100%,transparent 21.5px,#000 22px) right bottom/22px 24px no-repeat;
+          mask:linear-gradient(#000,#000) left top/100% calc(100% - 22px) no-repeat,radial-gradient(circle at 100% 100%,transparent 21.5px,#000 22px) left bottom/22px 24px no-repeat,radial-gradient(circle at 0 100%,transparent 21.5px,#000 22px) right bottom/22px 24px no-repeat}
 .gxcov{position:absolute;left:0;right:0;top:0;height:var(--gxh,420px);overflow:hidden;isolation:isolate}
 .gxib{flex:none;width:44px;height:44px;border-radius:999px;display:grid;place-items:center;color:#fff;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.16);
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
@@ -2515,12 +2515,12 @@ html.gxon body::before{display:none}
 /* the day's other games in the game bar: glass pills, fading at both edges, swipe sideways */
 .gxmid2{position:relative;flex:1;min-width:0;height:40px}
 .gxmid2>.gxctr{position:absolute;inset:0;align-items:center}
-.gxstrip{position:absolute;inset:0;display:flex;align-items:center;gap:7px;overflow-x:auto;scrollbar-width:none;padding:0 18px;scroll-snap-type:x proximity;
+.gxstrip{position:absolute;inset:0;display:flex;align-items:center;gap:7px;overflow-x:auto;scrollbar-width:none;padding:0 18px;
   -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%);
           mask-image:linear-gradient(90deg,transparent 0,#000 22px,#000 calc(100% - 22px),transparent 100%)}
 .gxstrip::-webkit-scrollbar{display:none}
 .gxp{flex:none;display:flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:999px;color:#fff;text-decoration:none;
-  background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.14);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);scroll-snap-align:center}
+  background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.14);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 .gxp.cur{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.34)}
 .gxp .logo{width:20px;height:20px}
 .gxp i{font-style:normal;font-size:12px;font-weight:700;opacity:.85}
@@ -2528,3 +2528,8 @@ html.gxon body::before{display:none}
 .gxp b{font-size:13px;font-weight:700;color:#fff}
 .gxp em{font-style:normal;font-size:11px;font-weight:700;color:rgba(255,255,255,.8)}
 .gxp em.lv{color:#fff}
+
+/* as v7: the sheet itself is clear; only the tabs and the page under them are painted, so nothing square sits behind the corners */
+.gxsheet{background:transparent!important;border-radius:0!important;min-height:0}
+#gbody{background:var(--bg);min-height:80vh;display:flow-root}
+.gxstrip{overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}

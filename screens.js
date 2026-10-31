@@ -461,7 +461,7 @@
       const span = Math.max(80, hero.offsetHeight - bar.offsetHeight - 22), p = Math.min(1, Math.max(0, window.scrollY / span));
       const fade = document.getElementById('gxin'), mini = document.getElementById('gxmini'); const f = Math.min(1, p / .6), c = Math.min(1, Math.max(0, (p - .45) / .4));
       if (fade) { fade.style.opacity = (1 - f).toFixed(3); fade.style.transform = `translateY(${(-18 * f).toFixed(1)}px) scale(${(1 - .06 * f).toFixed(3)})`; }
-      const strip = document.getElementById('gxstrip'); if (strip) { strip.style.opacity = (1 - c).toFixed(3); strip.style.pointerEvents = c > .5 ? 'none' : ''; }
+      const strip = document.getElementById('gxstrip'); if (strip) { const so = Math.max(0, 1 - p / .35); strip.style.opacity = so.toFixed(3); strip.style.pointerEvents = so < .2 ? 'none' : ''; }
       if (mini) { mini.style.opacity = c.toFixed(3); mini.style.transform = `translateY(${(8 * (1 - c)).toFixed(1)}px)`; mini.style.pointerEvents = c > .5 ? '' : 'none'; } };
     const on = () => run();
     window.addEventListener('scroll', on, { passive: true }); gxScroll.run = run; run();
