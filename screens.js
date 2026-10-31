@@ -432,22 +432,26 @@
     const bar = document.getElementById('gxbar'), hero = document.getElementById('gxhero'); if (!bar || !hero) return;
     let bg = bar.querySelector('.gxbg'); if (!bg) { bg = document.createElement('span'); bg.className = 'gxbg'; bar.insertBefore(bg, bar.firstChild); }
     bg.style.setProperty('--gxh', hero.offsetHeight + 'px');
-    if (!bg.firstChild) bg.innerHTML = `<span class="gxcov" style="${hero.getAttribute('style') || ''}">${LOBES}</span>`;
-    else bg.firstChild.setAttribute('style', hero.getAttribute('style') || '');
-    try { const A = hero.querySelector('.w').getAnimations({ subtree: true }), B = bg.querySelector('.w').getAnimations({ subtree: true }); for (let i = 0; i < A.length && i < B.length; i++) B[i].currentTime = A[i].currentTime; } catch { }
+    if (!bg.dataset.t) bg.dataset.t = gxT();
+    const st = (hero.getAttribute('style') || '') + `;--gxt:${bg.dataset.t}`;
+    if (!bg.firstChild) bg.innerHTML = `<span class="gxcov" style="${st}">${LOBES}</span>`;
+    else bg.firstChild.setAttribute('style', st);
   }
+  /* the hero and the bar's copy both start their motion at page-load time, so they always show the same moment
+     (the copy is made later, so it sets its own offset from the same clock) */
+  const gxT = () => `-${(performance.now() / 1000).toFixed(3)}s`;
   function gxScroll() {
     if (gxScroll.on) return; gxScroll.on = true; let tick = false;
     const run = () => { tick = false; const bar = document.getElementById('gxbar'), hero = document.getElementById('gxhero');
       if (!bar || !hero) { document.documentElement.classList.remove('gxon'); window.removeEventListener('scroll', on); gxScroll.on = false; return; }
       document.documentElement.classList.add('gxon');
-      /* the sheet's corners flatten as it meets the bar, so there is no seam to catch */
-      const tw = document.getElementById('gtabs'), sh = tw && tw.parentNode; if (tw) { const r = Math.max(0, Math.min(22, tw.getBoundingClientRect().top - bar.offsetHeight)).toFixed(1) + 'px'; if (tw.style.borderTopLeftRadius !== r) { tw.style.borderRadius = sh.style.borderRadius = `${r} ${r} 0 0`; } } hero.classList.toggle('gone', window.scrollY > hero.offsetHeight + 60);
+      /* the sheet stays rounded; it is cut off at the bar, so nothing slides into the corners */
+      const sh = document.querySelector('#gpage .gxsheet'); if (sh) { const y = bar.offsetHeight - sh.getBoundingClientRect().top; const cp = y > 0 ? `inset(${y.toFixed(1)}px 0 0 0 round 22px 22px 0 0)` : ''; if (sh.style.clipPath !== cp) sh.style.clipPath = cp; }
       const span = Math.max(80, hero.offsetHeight - bar.offsetHeight - 22), p = Math.min(1, Math.max(0, window.scrollY / span));
       const fade = document.getElementById('gxin'), mini = document.getElementById('gxmini'); const f = Math.min(1, p / .6), c = Math.min(1, Math.max(0, (p - .45) / .4));
       if (fade) { fade.style.opacity = (1 - f).toFixed(3); fade.style.transform = `translateY(${(-18 * f).toFixed(1)}px) scale(${(1 - .06 * f).toFixed(3)})`; }
       if (mini) { mini.style.opacity = c.toFixed(3); mini.style.transform = `translateY(${(8 * (1 - c)).toFixed(1)}px)`; mini.style.pointerEvents = c > .5 ? '' : 'none'; } };
-    const on = () => { if (!tick) { tick = true; requestAnimationFrame(run); } };
+    const on = () => run();
     window.addEventListener('scroll', on, { passive: true }); gxScroll.run = run; run();
   }
   /* joined controls: a thumb slides from the old choice to the new one, so a tap moves one thing and nothing else */
@@ -803,7 +807,7 @@
         const barHtml = gxBar(L, g, title, card), page = $main.querySelector('#gpage');
         if (page && page.dataset.gid === String(id) && page.querySelector('#gxhero')) {
           const hero = page.querySelector('#gxhero'), bar = page.querySelector('#gxbar');
-          if (hero.dataset.v !== vars) { hero.setAttribute('style', vars); hero.dataset.v = vars; gxCover(); }
+          if (hero.dataset.v !== vars) { hero.setAttribute('style', vars + `;--gxt:${hero.dataset.t}`); hero.dataset.v = vars; gxCover(); }
           const inn = page.querySelector('#gxin'); const ih = hashOf(inner); if (inn.dataset.h !== ih) { inn.innerHTML = inner; inn.dataset.h = ih; }
           const bh = hashOf(barHtml); if (bar.dataset.h !== bh) { const keep = bar.querySelector('.gxbg'); bar.innerHTML = barHtml; if (keep) bar.insertBefore(keep, bar.firstChild); bar.dataset.h = bh; }
           const tabsEl = page.querySelector('#gtabs'); if (tabsEl.dataset.k !== tabKey) { tabsEl.innerHTML = tabs; tabsEl.dataset.k = tabKey; }
@@ -812,7 +816,7 @@
           gxSegs(); if (gxScroll.run) gxScroll.run();
         } else {
           $main.innerHTML = `<div id="gpage" class="gxpage" data-gid="${esc(String(id))}"><div class="gxbar" id="gxbar" data-h="${hashOf(barHtml)}">${barHtml}</div>`
-            + `<section class="gx" id="gxhero" data-v="${esc(vars)}" style="${vars}">${LOBES}<div class="gxin" id="gxin" data-h="${hashOf(inner)}">${inner}</div></section>`
+            + `<section class="gx" id="gxhero" data-v="${esc(vars)}" data-t="${gxT()}" style="${vars};--gxt:${gxT()}">${LOBES}<div class="gxin" id="gxin" data-h="${hashOf(inner)}">${inner}</div></section>`
             + `<div class="gxsheet"><div id="gtabs" class="gxtabw" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div></div>`;
           gxSegs(); requestAnimationFrame(() => { gxCover(); gxScroll(); if (gxScroll.run) gxScroll.run(); });
         }

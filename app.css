@@ -2351,7 +2351,6 @@ html.gxon body::before{display:none}
 .gxbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:8px;height:calc(56px + env(safe-area-inset-top,0px));
   padding:env(safe-area-inset-top,0px) var(--gut-r) 0 var(--gut);margin-bottom:calc(-56px - env(safe-area-inset-top,0px));color:#fff}
 .gxbg{position:absolute;left:0;right:0;top:0;height:100%;z-index:-1;overflow:hidden;pointer-events:none}
-          mask:linear-gradient(#000,#000) left top/100% calc(100% - 22px) no-repeat,radial-gradient(circle at 100% 100%,transparent 20px,#000 20.6px) left bottom/22px 22px no-repeat,radial-gradient(circle at 0 100%,transparent 20px,#000 20.6px) right bottom/22px 22px no-repeat}
 .gxcov{position:absolute;left:0;right:0;top:0;height:var(--gxh,420px);overflow:hidden;isolation:isolate}
 .gxib{flex:none;width:44px;height:44px;border-radius:999px;display:grid;place-items:center;color:#fff;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.16);
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
@@ -2506,3 +2505,7 @@ html.gxon body::before{display:none}
 @keyframes pcb{0%,100%{transform:translate3d(0,0,0) scale(.9)}50%{transform:translate3d(-45%,22%,0) scale(1.25)}}
 @keyframes pcc{0%,100%{transform:translate3d(0,0,0) scale(1.1)}50%{transform:translate3d(-30%,-14%,0) scale(.9)}}
 @media (prefers-reduced-motion:reduce){.pcw i,.pcw::after{animation:none}}
+
+/* the hero and the bar's copy run on one clock */
+.gx .w>i,.gx .w::before,.gx .w::after,.gxcov .w>i,.gxcov .w::before,.gxcov .w::after{animation-delay:var(--gxt,0s)!important}
+.gxsheet,.gxtabw{border-radius:22px 22px 0 0}
