@@ -416,7 +416,7 @@
       }
       // your teams playing right now: the hero
       const live = games.filter(g => isLive(g) && isFav(g)).sort((a, b) => rankGame(b) - rankGame(a));
-      if (live.length && P.live) secs.live = sec('Live now') + `<div class="heroes">${live.map(g => heroCard(L, g, ctx)).join('')}</div>`; else delete secs.live;
+      if (live.length && P.live) secs.live = sec('Live now') + `<div class="gp grows">${live.map(g => gameRow(L, g, ctx)).join('')}</div>`; else delete secs.live;
       const clk = g => { const per = +g.period || 0, d = String(g.detail || ''), st = String(g.status || ''); if (!per) return d || 'Live'; if (/HALFTIME/.test(st) || /^half/i.test(d)) return 'Halftime'; const reg = L.periods === 2 ? 2 : 4; const ord = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`; const nm = per <= reg ? (reg === 2 ? `${ord(per)} half` : ord(per)) : (per - reg > 1 ? `${per - reg}OT` : 'OT'); if (/END_PERIOD/.test(st) || /^end/i.test(d)) return `End of ${nm}`; const c = String(g.clock || '').trim(); return c && !/^0{1,2}(?::00)?(?:\.0)?$/.test(c) ? `${nm} ${c}` : nm; };
       // my teams: record, what's next or how it's going, win chance
       if (P.teams) {
@@ -991,5 +991,5 @@
   }
 
   HW.v5 = Object.assign(HW.v5 || {}, { home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { injBody, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
+    _: { gameRow, injBody, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

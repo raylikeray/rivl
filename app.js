@@ -178,6 +178,14 @@
     const byId = new Map(S.today[r.lk].map(g => [g.id, g]));
     $main.querySelectorAll('[data-gid]').forEach(el => {
       const g = byId.get(el.dataset.gid); if (!g) return;
+      if (el.classList.contains('grow')) {   // a score row: copy over the numbers, the middle and the fading; the crests stay put
+        const t = document.createElement('div'); t.innerHTML = V._.gameRow(L, g, null); const n = t.firstElementChild; if (!n) return;
+        const a2 = el.querySelectorAll(':scope > .sc'), b2 = n.querySelectorAll(':scope > .sc'); a2.forEach((s, i) => { if (!b2[i]) return; if (s.textContent !== b2[i].textContent) s.textContent = b2[i].textContent; if (s.className !== b2[i].className) s.className = b2[i].className; });
+        const m1 = el.querySelector(':scope > .mid'), m2 = n.querySelector(':scope > .mid'); if (m1 && m2 && m1.innerHTML !== m2.innerHTML) m1.innerHTML = m2.innerHTML;
+        const t1 = el.querySelectorAll(':scope > .tm'), t2 = n.querySelectorAll(':scope > .tm'); t1.forEach((s, i) => { if (t2[i] && s.className !== t2[i].className) s.className = t2[i].className; });
+        if (g.state === 'post' && el.closest('[data-sec="live"]')) render();
+        return;
+      }
       const scores = el.querySelectorAll('.sc');
       if (el.classList.contains('hero')) { const sc = el.querySelector('.mid .sc'); const st = el.querySelector('.mid .st'); if (sc) { const txt = `${g.away.score ?? ''}–${g.home.score ?? ''}`; if (sc.textContent !== txt) { sc.innerHTML = `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`; sc.classList.remove('bump'); void sc.offsetWidth; sc.classList.add('bump'); } } if (st) st.textContent = g.state === 'in' ? g.detail : g.state === 'post' ? HW.finalWord(g) : st.textContent; return; }
       if (scores.length === 2) {
