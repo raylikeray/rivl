@@ -85,7 +85,7 @@
   const pColor = e => _.teamColor(e.team ? { id: e.team.id, abbr: e.team.abbr } : { abbr: e.p && e.p.team }, L_(e.lk));
   const pHref = e => _.href.player(e.lk, e.id), tHref = e => _.href.team(e.lk, e.id);
   const face = (e, size) => _.headshot(e.p && e.p.img, pColor(e), size, e.name);
-  const crest = (t, size) => t && t.logo ? `<img class="xcr" src="${esc(t.logo)}" alt="" width="${size}" height="${size}" loading="lazy" style="width:${size}px;height:${size}px">` : '';
+  const crest = (t, size) => t && t.logo ? `<img class="xlogo" src="${esc(t.logo)}" alt="" width="${size}" height="${size}" loading="lazy" style="width:${size}px;height:${size}px">` : '';
   const ord = n => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
   const one = v => v == null || isNaN(v) ? '-' : (Math.round(v * 10) / 10).toFixed(1);
   const statsOf = p => { const s = p.s || {}; return s.gp > 0 ? { s, label: '' } : p.prev && p.prev.gp ? { s: p.prev, label: 'last season' } : { s, label: '' }; };
