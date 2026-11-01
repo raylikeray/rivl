@@ -2903,3 +2903,13 @@ html.gxon body::before{display:none}
 .gxpage:not(.tmpage) .giplate .row{min-height:64px}
 .gxpage:not(.tmpage) .zones{padding:8px 18px 4px}
 .gxpage:not(.tmpage) .gxfloor{padding:0 18px}
+
+/* pickers and chips on the game and team pages match the cards: the card's flat surface and thin line, nothing raised */
+.gxpage :is(.gxseg,.gxtsw){background:var(--surf)!important;border:1px solid var(--line)!important;box-shadow:none!important}
+.gxpage :is(.gxseg,.gxtsw) button[aria-pressed=true]{box-shadow:none!important}
+.gxpage .pfchips .chip,.gxpage .chips .chip{background:var(--surf)!important;background-image:none!important;border:1px solid var(--line)!important;box-shadow:none!important;color:var(--ink)!important;font-weight:600}
+.gxpage .pfchips .chip::before,.gxpage .chips .chip::before,.gxpage .pfchips .chip::after,.gxpage .chips .chip::after{display:none!important}
+.gxpage .pfchips .chip small{color:var(--ink-3)}
+.gxpage .pfchips .chip.on,.gxpage .chips .chip.on{background:var(--ink)!important;color:var(--bg)!important;border-color:var(--ink)!important}
+.gxpage .pfchips .chip.on small{color:color-mix(in srgb,var(--bg) 70%,transparent)}
+.gxpage .sec a,.gxpage .sec button{background:var(--surf)!important;background-image:none!important;box-shadow:none!important;border:1px solid var(--line)!important}
