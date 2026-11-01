@@ -6,5 +6,5 @@ jobs:
     steps:
       - run: |
           H='-H User-Agent:Mozilla/5.0 -H Referer:https://www.nba.com/ -H Origin:https://www.nba.com -H Accept:application/json'
-          for u in "https://stats.nba.com/stats/playerindex?LeagueID=00&Season=2025-26&Historical=0" "https://stats.wnba.com/stats/playerindex?LeagueID=10&Season=2025&Historical=0" "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2.json" "https://cdn.wnba.com/static/json/staticData/scheduleLeagueV2.json"; do
-            echo "== $u"; curl -s -m 25 $H "$u" -o o.json -w "%{http_code} %{size_download}\n"; head -c 400 o.json; echo; done
+          for u in "https://stats.wnba.com/stats/playerindex?LeagueID=10&Season=2025&Historical=0" "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2.json" "https://cdn.wnba.com/static/json/staticData/scheduleLeagueV2.json"; do
+            echo "== $u"; curl -s -m 25 $H "$u" -o o.json -w "%{http_code} %{size_download}\n" || true; head -c 400 o.json; echo; done
