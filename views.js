@@ -112,7 +112,7 @@
   /* ESPN's art at the size it is drawn: the CDN's combiner scales a logo or headshot on the fly, so a 46px disc doesn't
      pull the 500px original. If the combiner ever refuses, the image falls back to the original it was made from. */
   const sized = (src, w, h) => { const m = /^https:\/\/a\.espncdn\.com(\/i\/[^?]+\.png)(?:\?.*)?$/i.exec(String(src || '')); return m ? `https://a.espncdn.com/combiner/i?img=${m[1]}&w=${w}&h=${h}` : src || ''; };
-  const fallback = then => `onerror="if(this.dataset.o){this.src=this.dataset.o;this.removeAttribute('data-o')}else{${then}}"`;
+  const fallback = then => `onerror="if(this.dataset.o){this.dataset.f=this.src;this.src=this.dataset.o;this.removeAttribute('data-o')}else{${then}}"`;   // data-f: the sized URL that failed, so a later patch never asks for it again
   // `extra` is written before loading="lazy" so a caller can pass loading="eager": with a duplicate attribute the first wins
   const imgSized = (src, w, h, extra = '', then = "this.style.visibility='hidden'") => { const u = sized(src, w, h); return `<img src="${esc(u)}"${u !== src ? ` data-o="${esc(src)}"` : ''} alt="" ${extra} loading="lazy" ${fallback(then)}>`; };
   /* a logo disc; with a team colour it takes a tint and a ring in that colour */
@@ -370,7 +370,7 @@
     if (a.nodeType !== b.nodeType || a.nodeName !== b.nodeName) { a.replaceWith(b); return; }
     if (a.nodeType === 3) { if (a.data !== b.data) a.data = b.data; return; }
     if (a.nodeType !== 1) return;
-    if (a.tagName === 'IMG' && a.getAttribute('src') !== b.getAttribute('src') && a.dataset.o === b.getAttribute('src')) b.setAttribute('src', a.getAttribute('src'));   // a crest that fell back to its plain file keeps it
+    if (a.tagName === 'IMG' && a.getAttribute('src') !== b.getAttribute('src') && (a.dataset.o === b.getAttribute('src') || a.dataset.f === b.getAttribute('src'))) { b.setAttribute('src', a.getAttribute('src')); b.removeAttribute('data-o'); if (a.dataset.f) b.setAttribute('data-f', a.dataset.f); }   // a crest that fell back to its plain file keeps it
     for (const at of [...a.attributes]) if (!b.hasAttribute(at.name) && at.name !== 'style' && !(at.name === 'class' && a.tagName === 'IMG')) a.removeAttribute(at.name);
     for (const at of [...b.attributes]) if (a.getAttribute(at.name) !== at.value) { if (at.name === 'class' && a.tagName === 'IMG' && a.classList.contains('fitted')) continue; a.setAttribute(at.name, at.value); }
     if (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'IMG' || a.tagName === 'VIDEO') return;
@@ -1197,6 +1197,10 @@
     await playerPicker($main.querySelector('#ppick'), L, { following: true, leaders: true });
   }
 
-  HW.v5 = Object.assign(HW.v5 || {}, { unrivaledCard, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
+  /* the other leagues' first-paint data, fetched at idle after the one on screen has painted, so a swipe into a league not
+     yet opened this session finds its numbers in the cache and paints at once instead of showing the skeleton */
+  const homeWarm = async lk => { const L = LEAGUES[lk]; if (!L) return; const today = todayCT(), yday = addDays(today, -1);
+    await Promise.all([teamsIndex(L), scoreboard(L, today).catch(() => []), scoreboard(L, yday, 600000).catch(() => []), forecastCtx(L, today).catch(() => null), standings(L).catch(() => null)]).catch(() => { }); };
+  HW.v5 = Object.assign(HW.v5 || {}, { homeWarm, unrivaledCard, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
     _: { morph, patch, centerX, capOpen, capSave, teamNow: (L, id) => L && ((teamIdx[L.key] || {})[String(id)] || pool(L.key)[String(id)] || null), gameRow, injBody, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

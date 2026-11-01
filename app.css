@@ -4634,3 +4634,10 @@ html:root body .soft{animation:soft 160ms linear both}
 }
 /* the "Show all" button inside the Last night list sits like the card ones */
 html:root body .brief-rows > .capbtn.capin{display:block;width:100%!important;margin:10px 0 2px!important}
+
+/* ---------- v348: a screen you have seen comes back as it stood ----------
+   Tab switches are instant, like X: no fade from transparent on a page that was already drawn (it read as a reload). */
+html:root body #main.enter>*{animation:none!important}
+html:root body #main.fade:not([data-dir]){animation:none!important}
+/* a headshot has its width before the file arrives (ESPN's are 600 by 436), so nothing grows when the picture lands */
+html:root body .plh .plshot,html:root body .sthero .stshot{aspect-ratio:600/436}

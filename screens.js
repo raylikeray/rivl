@@ -160,8 +160,8 @@
       const have = [...page.querySelectorAll('#stchips .chip')].map(c => c.dataset.tab).join();
       if (have !== items.map(([k]) => k).join()) page.querySelector('#stchips').innerHTML = chips(items, tab, 'stab', 'tab');
       else page.querySelectorAll('#stchips .chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); c.setAttribute('aria-selected', String(on)); });
-      const sb = page.querySelector('#stbody'); if (V._.patch) V._.patch(sb, body); else sb.innerHTML = body; if (V.soft) V.soft(sb);
-    } else $main.innerHTML = `<div id="stpage" data-lk="${esc((V.route && V.route() || {}).lk || '')}"><div id="stchips">${chips(items, tab, 'stab', 'tab')}</div><div id="stbody">${body}</div></div>`;
+      const sb = page.querySelector('#stbody'); if (sb.dataset.h !== hashOf(body)) { if (V._.patch) V._.patch(sb, body); else sb.innerHTML = body; sb.dataset.h = hashOf(body); } sb.dataset.tab = tab;   // unchanged numbers are left alone: no patch, no fade
+    } else $main.innerHTML = `<div id="stpage" data-lk="${esc((V.route && V.route() || {}).lk || '')}"><div id="stchips">${chips(items, tab, 'stab', 'tab')}</div><div id="stbody" data-h="${hashOf(body)}" data-tab="${esc(tab)}">${body}</div></div>`;
     const on = $main.querySelector('#stchips .chip.on'); if (on) V._.centerX(on);
   }
 
@@ -1043,7 +1043,7 @@
         const head = page.querySelector('#ghead'); if (head.dataset.h !== hh) { head.innerHTML = headHtml; head.dataset.h = hh; }
         const tabsEl = page.querySelector('#gtabs'); if (tabsEl.dataset.k !== tabKey) { tabsEl.innerHTML = tabs; tabsEl.dataset.k = tabKey; }
         else tabsEl.querySelectorAll('.chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); c.setAttribute('aria-selected', String(on)); });
-        const bodyEl = page.querySelector('#gbody'); if (bodyEl.dataset.h !== hashOf(body) || bodyEl.dataset.tab !== tab) { const tabChanged = bodyEl.dataset.tab !== tab; bodyEl.innerHTML = body; if (tabChanged && V.soft) V.soft(bodyEl); bodyEl.dataset.h = hashOf(body); bodyEl.dataset.tab = tab; }
+        const bodyEl = page.querySelector('#gbody'); if (bodyEl.dataset.h !== hashOf(body) || bodyEl.dataset.tab !== tab) { const tabChanged = bodyEl.dataset.tab !== tab; if (tabChanged || !V._.patch) bodyEl.innerHTML = body; else V._.patch(bodyEl, body); bodyEl.dataset.h = hashOf(body); bodyEl.dataset.tab = tab; }
       } else $main.innerHTML = `<div id="gpage" data-gid="${esc(String(id))}"><div id="ghead" data-h="${hh}">${headHtml}</div><div id="gtabs" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div>`;
       document.title = `${g.tbd ? 'Teams to be decided' : `${g.away.short} at ${g.home.short}`} · RIVL`;
       return g;
