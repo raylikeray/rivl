@@ -99,6 +99,19 @@ for (const L of ['ncaam', 'ncaaw']) {
   keep.forEach(p => { if (p.moved && tn[p.nowTeamId]) { p.from = p.team; p.team = tn[p.nowTeamId].ab; p.teamName = tn[p.nowTeamId].name; } });
   out.leagues[L] = { label: `${Y - 1}-${String(Y).slice(2)}`, year: Y, final: true, lastSeason: true, players: keep, dropped: last.players.length - keep.length };
 }
+// HD photos: ESPN's cut-outs top out at 600px, the leagues' own are 1040px. Wikidata links ESPN's NBA ids to NBA.com ids;
+// for the WNBA it lists WNBA.com ids by name. The app swaps in the sharper photo where one exists.
+async function sparql(q) { try { const r = await fetch('https://query.wikidata.org/sparql?query=' + encodeURIComponent(q), { headers: { accept: 'application/sparql-results+json', 'user-agent': 'RIVL personal app (raylikeray.github.io/rivl)' } }); if (!r.ok) return []; return (await r.json()).results.bindings; } catch (e) { return []; } }
+{
+  const nb = await sparql('SELECT ?e ?n WHERE { ?x wdt:P3685 ?e ; wdt:P3647 ?n . }');
+  const nmap = new Map(nb.map(b => [b.e.value, b.n.value])); let hit = 0;
+  (out.leagues.nba?.players || []).forEach(p => { const h = nmap.get(String(p.id)); if (h && /^\d+$/.test(h)) { p.hd = h; hit++; } });
+  const wb = await sparql('SELECT ?w ?l WHERE { ?x wdt:P3588 ?w ; rdfs:label ?l . FILTER(LANG(?l)="en") }');
+  const nn = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z]/g, '');
+  const wmap = new Map(); wb.forEach(b => { if (/^\d+$/.test(b.w.value)) wmap.set(nn(b.l.value), b.w.value); }); let whit = 0;
+  (out.leagues.wnba?.players || []).forEach(p => { const h = wmap.get(nn(p.n)); if (h) { p.hd = h; whit++; } });
+  console.log('hd photos', 'nba', hit, 'wnba', whit);
+}
 // keep the file light: drop college players with too few games, round numbers
 for (const [L, v] of Object.entries(out.leagues)) {
   const max = Math.max(1, ...v.players.map(p => p.s.gp || 0));

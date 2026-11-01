@@ -21,5 +21,19 @@
     const out = []; Object.entries(d.leagues).forEach(([lk, v]) => (v.players || []).forEach(p => out.push({ ...p, lk, season: v.label, lastSeason: !!v.lastSeason })));
     return out;
   }
-  HW.hub = { file, leaders, league, recruits, everyone };
+  /* HD photos: the leagues' own 1040px cut-outs, for players the data file links to them (NBA, WNBA). Any big face on
+     screen (the player page, roster cards, stat leaders, profile cards) is upgraded once the sharp copy has loaded, so the
+     swap is invisible: same framing, just crisper. If the league's photo fails, ESPN's stays. */
+  let HD = null;
+  async function hdMap() { if (HD) return HD; const d = await leaders(); HD = { nba: {}, wnba: {} }; if (d && d.leagues) ['nba', 'wnba'].forEach(k => ((d.leagues[k] || {}).players || []).forEach(p => { if (p.hd) HD[k][String(p.id)] = p.hd; })); return HD; }
+  const hdUrl = (lk, id) => `https://cdn.${lk}.com/headshots/${lk}/latest/1040x760/${id}.png`;
+  async function upgrade(img) {
+    if (!img || img.dataset.hd) return; const src = decodeURIComponent(img.currentSrc || img.src || ''); const m = /headshots\/(nba|wnba)\/players\/full\/(\d+)\.png/.exec(src); if (!m) return;
+    img.dataset.hd = '1'; const map = await hdMap(); const id = map[m[1]] && map[m[1]][m[2]]; if (!id) return;
+    const pre = new Image(); pre.decoding = 'async'; pre.onload = () => { if (pre.naturalWidth > 700 && img.isConnected) { img.removeAttribute('srcset'); img.removeAttribute('data-o'); img.src = pre.src; } }; pre.src = hdUrl(m[1], id);
+  }
+  const BIG = '.plshot,.rhs,.stshot,.pfshot,.sthero img.stshot';
+  const scan = root => (root.querySelectorAll ? root.querySelectorAll(BIG) : []).forEach(upgrade);
+  if (typeof document !== 'undefined') { const run = () => scan(document); new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) { if (n.matches && n.matches(BIG)) upgrade(n); scan(n); } }))).observe(document.documentElement, { childList: true, subtree: true }); setTimeout(run, 500); }
+  HW.hub = { file, leaders, league, recruits, everyone, hdMap };
 })();
