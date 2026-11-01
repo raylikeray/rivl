@@ -3351,3 +3351,15 @@ html body .plpage .gx.solo .w>i:nth-child(2){width:95%!important;height:75%!impo
 .plh .plshot{bottom:22px!important;-webkit-mask-image:linear-gradient(180deg,#000 62%,transparent 96%);mask-image:linear-gradient(180deg,#000 62%,transparent 96%)}
 .plh::after{height:42%;background:linear-gradient(180deg,transparent,rgba(0,0,0,.18) 45%,rgba(0,0,0,.42))!important}
 .plpage .pltx{transform:none!important}
+/* the small face in the player bar: a light ring around it so it stands off the team colour; the team line carries the crest */
+html body .plmn .hs{box-shadow:0 0 0 2.5px rgba(255,255,255,.62)!important}
+.plmn small{display:flex;align-items:center;gap:5px}
+.plmn small img{width:16px;height:16px;object-fit:contain}
+.plmn b{font-size:17px!important}
+
+/* dark mode cards, matched to v7: black page, cards #141517 with a thin #292A2C outline, the same line between rows */
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){--bg:#000000;--card:#141517;--surf:#141517;--card-line:#292A2C;--line:#292A2C;--surf-2:#232427}
+  :root:not([data-theme="light"]) .glplate{background:var(--card)!important} }
+:root[data-theme="dark"]{--bg:#000000;--card:#141517;--surf:#141517;--card-line:#292A2C;--line:#292A2C;--surf-2:#232427}
+:root[data-theme="dark"] .glplate{background:var(--card)!important}
+.plpage .gxbar .gxmid2,.plpage .gxbar .gxctr{justify-content:flex-start!important;text-align:left}.plpage .gxbar .gxmid2{margin-left:10px}
