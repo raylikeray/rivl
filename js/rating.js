@@ -201,8 +201,10 @@
       const [prev, TS] = await Promise.all([HW.leaguePlayers(L, prevYear).catch(() => null), HW.teamStats ? HW.teamStats(L).catch(() => null) : null]);
       return { ...compute(cur.rows, prev && prev.rows, { teams: TS && TS.teams }), label: cur.label, stale: cur.stale };
     })().catch(() => null) };
-    const res = await memo[k].p; return res && res.byId[String(id)] ? { ...res.byId[String(id)], season: res.label, stale: res.stale } : null;
+    const res = await memo[k].p; const R = res && res.byId[String(id)] ? { ...res.byId[String(id)], season: res.label, stale: res.stale } : null; if (R) last[k + ':' + id] = R; return R;
   }
+  /* the rating already worked out this visit, so a refresh can draw the cards straight away instead of after a beat */
+  const last = {}; const cached = (L, id) => L && last[L.key + ':' + id] || null;
 
   /* ---------- the two cards on the player page ---------- */
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -243,5 +245,5 @@
       card.insertAdjacentHTML('beforeend', `<div class="hxexp"><p><b>Built only from his stats.</b> Every stat is turned into a rate per 36 minutes and compared with players at his position. Six traits come from those rates, and the percentage is the share of ${R.posWord} he beats.</p><p><b>Small samples are held back.</b> A few hot games barely move a player until the minutes back them up. Last season counts too, fading out as this season fills in.</p><p><b>The overall</b> weights impact most, then scoring, playmaking, shooting, defense and rebounding, plus the minutes his coach gives him, and is placed on the 2K scale: a 74 is a typical rotation player, 82 is the top 15%, 90 the top 3%, and the league's best is a 99.</p><p><b>Defense is the hardest to measure</b> from a box score: steals, blocks, defensive rebounds, fouls and his team's defense while he plays.</p><p>Tap any trait on the chart for the numbers behind it.</p></div>`); how.classList.add('on'); }
   });
 
-  HW.rating = { compute, detail, summary, get, cards, mount, POS, TRAITS };
+  HW.rating = { compute, detail, summary, get, cached, cards, mount, POS, TRAITS };
 })();

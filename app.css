@@ -3474,3 +3474,7 @@ html body .plh .pltx{will-change:opacity;isolation:auto}
 html body .plh .plshot,html body .plh .plshot.small{height:400px!important;bottom:0!important;image-rendering:-webkit-optimize-contrast;
   filter:drop-shadow(0 22px 34px rgba(0,0,0,.42)) drop-shadow(0 3px 6px rgba(0,0,0,.28)) drop-shadow(0 0 1px rgba(0,0,0,.35))!important}
 .gxpage.plpage{--gxh:calc(var(--gxbar) + 420px)!important}
+/* the name, team line and Follow pill no longer fade on scroll: the sheet slides over them. A fading layer is what drew
+   the box behind the name and shifted the pill's colour on the phone. */
+html body .plpage .pltx{opacity:1!important;transform:none!important;will-change:auto!important}
+.nogrow .hexsvg .hxw,.nogrow .hexsvg .hxover{animation:none!important}
