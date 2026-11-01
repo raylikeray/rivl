@@ -586,14 +586,14 @@
   async function gameV(lk, id, focus = '') {
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Game not found'); return; }
     $main.innerHTML = topbar('', '#scores') + skeleton(1, 'card') + skeleton(6, 'row');
-    const mem = (() => { try { return JSON.parse(sessionStorage.getItem('gx:' + id) || 'null') || {}; } catch { return {}; } })();
+    const mem = (() => { try { const m = JSON.parse(localStorage.getItem('gx:' + id) || sessionStorage.getItem('gx:' + id) || 'null') || {}; return m.at && Date.now() - m.at > 12 * 3600000 ? {} : m; } catch { return {}; } })();
     let ctx = null, sched, tab = focus ? 'box' : (mem.tab || 'summary');   // every game opens on Summary — or on the box score, led by one player, when opened from his line
     const pv = Object.assign({ q: 'all', scoring: true, n: 30 }, mem.pv || {});   // the plays tab's period and scoring-only filters
     const sv = Object.assign({ team: 'both', pid: '', q: 0 }, mem.sv || {});   // the shots tab's team and player filters
     const bv = Object.assign({ col: '', dir: 'desc', side: 'home' }, mem.bv || {});   // the box score's sort column and which team is open
     const pf = Object.assign({ pid: '' }, mem.pf || {});
     /* everything you chose on this game, kept for this visit: a refresh lands exactly where you were */
-    const save = () => { try { const box = document.getElementById('gxscroll'); sessionStorage.setItem('gx:' + id, JSON.stringify({ tab, pv, sv, bv, pf, y: box ? Math.round(box.scrollTop) : (mem.y || 0) })); } catch { } };   // the plays tab's player filter
+    const save = () => { try { const box = document.getElementById('gxscroll'); const v = JSON.stringify({ tab, pv, sv, bv, pf, y: box ? Math.round(box.scrollTop) : (mem.y || 0), at: Date.now() }); localStorage.setItem('gx:' + id, v); sessionStorage.setItem('gx:' + id, v); } catch { } };   // the plays tab's player filter
     const paint = async (ttl, local) => {
       const d = local && paint.d ? paint.d : await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, ttl); if (d) paint.d = d;
       const hc = d && d.header && d.header.competitions && d.header.competitions[0];
