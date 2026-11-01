@@ -5,16 +5,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          for u in \
-            "https://site.api.espn.com/apis/site/v2/sports/basketball/unrivaled/scoreboard" \
-            "https://site.api.espn.com/apis/site/v2/sports/basketball/unrivaled/teams" \
-            "https://sports.core.api.espn.com/v2/sports/basketball/leagues/unrivaled" \
-            "https://www.unrivaled.basketball/schedule" \
-            "https://www.unrivaled.basketball/stats" \
-            "https://www.unrivaled.basketball/standings" \
-            "https://www.unrivaled.basketball/sitemap.xml" \
-            "https://www.unrivaled.basketball/robots.txt" ; do
-            echo "=== $u"; curl -sSL -m 20 -A "Mozilla/5.0" -w "\nHTTP %{http_code} %{size_download}\n" "$u" | head -c 1500; echo
-          done
-          echo "=== next data"; curl -sSL -m 20 -A "Mozilla/5.0" https://www.unrivaled.basketball/schedule | grep -o '__NEXT_DATA__\|_next/data/[^"]*\|api[^"]\{0,80\}' | sort -u | head -40
-          echo "=== links"; curl -sSL -m 20 -A "Mozilla/5.0" https://www.unrivaled.basketball/schedule | grep -o 'href="[^"]*"' | sort -u | head -80
+          mkdir out; cd out
+          B=https://www.unrivaled.basketball
+          for p in schedule standings stats clubs game/1eww6736sf9v; do curl -sSL -m 30 -A "Mozilla/5.0" "$B/$p" -o "$(echo $p | tr / _).html"; done
+          G=$(grep -o 'href="/game/[^"]*"' schedule.html | head -1 | cut -d'"' -f2); echo $G
+          ls -la
+      - uses: actions/upload-artifact@v4
+        with: { name: out, path: out }
