@@ -478,8 +478,17 @@
       // my teams: record, what's next or how it's going, win chance
       if (P.teams) {
         /* v7's rows: the team's colour as a thin edge, the crest, the name and league; on the right one status and one line under it */
-        const rows = teams.map(t => {
-          const g = byTeam.get(t.id) || t.next || t.last;
+        /* in the order you'd want them: playing now first, then games that ended today, then the soonest game coming up,
+           then older results, then teams with nothing scheduled. Followed order only breaks ties. */
+        const gOf = t => byTeam.get(t.id) || t.next || t.last;
+        const todayY = HW.todayCT ? HW.todayCT() : '';
+        const rank = t => { const g = gOf(t); if (!g) return [5, 0]; const at = new Date(g.date).getTime() || 0;
+          if (g.state === 'in') return [0, at];
+          if (g.state === 'post') return HW.ymdOf(g.date) === todayY ? [1, -at] : [3, -at];
+          return [2, at]; };
+        const ordered = teams.map((t, i) => ({ t, i, r: rank(t) })).sort((x, y) => x.r[0] - y.r[0] || x.r[1] - y.r[1] || x.i - y.i).map(x => x.t);
+        const rows = ordered.map(t => {
+          const g = gOf(t);
           let st = `<span class="sl"><b class="dim">Next</b></span><em>${esc(t.standing || 'No game scheduled')}</em>`;
           if (g) {
             const home = g.home.id === t.id, us = home ? g.home : g.away, them = home ? g.away : g.home, vs = `${home ? 'vs' : 'at'} ${esc(them.short)}`;
