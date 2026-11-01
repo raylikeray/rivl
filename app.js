@@ -262,7 +262,7 @@
     const base = tc(mine || h) || tc(a) || '#333';
     const as = Number(a.score), hs = Number(h.score), lo = t => (isFinite(as) && isFinite(hs) && as !== hs && (t === a ? as < hs : hs < as)) ? ' lo' : '';
     const row = t => `<span class="lr${lo(t)}">${V._.logo(t.logo || '', 's', tc(t))}<span class="nm">${nm(t)}</span><i class="sc">${sc(t)}</i></span>`;
-    return `<a class="lg sb${HW.isFav(g) ? ' fav' : ''}" href="#game/${L.key}/${esc(g.id)}" data-lid="${L.key}:${esc(g.id)}" style="--ca:${esc(tc(a) || '#333')};--ch:${esc(tc(h) || '#333')};--cb:${esc(base)};--pl:${(played * 100).toFixed(1)}%"><span class="lrows">${row(a)}${row(h)}</span><span class="lside"><span class="st"><span class="dot"></span>${esc(g.detail)}</span>${g.tv && g.tv.label ? `<small>${esc(g.tv.label)}</small>` : ''}</span></a>`;
+    return `<a class="lg sb${HW.isFav(g) ? ' fav' : ''}" href="#game/${L.key}/${esc(g.id)}" data-lid="${L.key}:${esc(g.id)}" style="--ca:${esc(tc(a) || '#333')};--ch:${esc(tc(h) || '#333')};--cb:${esc(base)};--pl:${(played * 100).toFixed(1)}%"><span class="lrows">${row(a)}${row(h)}</span><span class="lside"><span class="st"><span class="dot"></span>${esc(HW.clockOf ? HW.clockOf(g, L) : g.detail)}</span>${g.tv && g.tv.label ? `<small>${esc(g.tv.label)}</small>` : ''}</span></a>`;
   }
   function paintLive() {
     if (!$live) return;

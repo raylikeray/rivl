@@ -4566,3 +4566,10 @@ html:root body #main .hsec[data-sec="wire"] .wire2{margin:0 0 14px}
 .w2it small{flex:none;font-size:12px;color:var(--ink-3)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .w2k{color:#ff6b8f}:root:not([data-theme="light"]) .w2k .dot{background:#ff6b8f}}
 :root[data-theme="dark"] .w2k{color:#ff6b8f}:root[data-theme="dark"] .w2k .dot{background:#ff6b8f}
+/* v330: the clock sits centred above the score, written the way the rest of the app writes it; the lead line is gone */
+.nowc.nhero .nhmid{margin-top:2px}
+.nowc.nhero .nhc{display:flex;flex-direction:column;align-items:center;gap:6px}
+.nowc.nhero .nhclk{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap}
+.nowc.nhero .nhclk .dot{width:7px;height:7px;border-radius:50%;background:#ff4d73;box-shadow:0 0 0 3px rgba(255,77,115,.25);flex:none}
+.nowc.nhero .nhc small{font-size:12px;font-weight:600;color:rgba(255,255,255,.7)}
+html:root body .nowc.nhero{padding:16px 14px!important}

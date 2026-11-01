@@ -372,9 +372,7 @@
     const big = pre ? `<span class="nhs pre">${esc(tip)}</span>` : `<span class="nhs"><b class="${as >= hs ? '' : 'lo'}">${as}</b><b class="${hs >= as ? '' : 'lo'}">${hs}</b></span>`;
     const side = t => `<span class="nht">${logo(t.logo, '', teamColor(t, L))}<b>${esc(t.short)}</b></span>`;
     return `<a class="nowc nhero${live ? ' nlive' : ''}" href="${href.game(lk, g.id)}" style="--ca:${esc(ca)};--ch:${esc(ch)}">
-      <span class="nhtop"><span>${live ? '<i class="dot"></i>' : ''}${esc(st)}</span><span>${esc(tv || right || '')}</span></span>
-      <span class="nhmid">${side(a)}${big}${side(h)}</span>
-      <span class="nhfoot">${head}</span></a>`;
+      <span class="nhmid">${side(a)}<span class="nhc"><span class="nhclk">${live ? '<i class="dot"></i>' : ''}${esc(live ? HW.clockOf(g, L) : st)}</span>${big}${tv ? `<small>${esc(tv)}</small>` : ''}</span>${side(h)}</span></a>`;
   }
   /* Duolingo's "jump here": a pill that brings you back to the Now card once it has scrolled away */
   function backNow() {
