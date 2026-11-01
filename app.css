@@ -4111,3 +4111,23 @@ html.sheet-open body{overflow:hidden}
 .xdnav a:active{background:var(--surf-2)}
 .xdsub{border-top:1px solid var(--line);padding:6px 0}
 .xdsub a{display:block;padding:12px 20px;color:var(--ink);text-decoration:none;font:700 15.5px/1.2 var(--ui)}
+/* profile header with no picture: the team page's moving colour. The team colour lit from the top, a lighter and a darker
+   lobe drifting slowly, the second colour as a soft travelling glow, the crest floating faintly */
+.xpban{background:radial-gradient(110% 120% at 40% 20%,color-mix(in srgb,var(--aw) 88%,#fff),var(--aw) 45%,color-mix(in srgb,var(--aw) 45%,#030406) 100%)!important;isolation:isolate}
+.xpw{position:absolute;inset:0;overflow:hidden;z-index:0}
+.xpw>i{position:absolute;border-radius:50%;filter:blur(46px)}
+.xpw>i:nth-child(1){background:color-mix(in srgb,var(--aw) 65%,#fff);width:80%;height:200%;left:-30%;top:-60%;opacity:.55;animation:sa 24s ease-in-out infinite}
+.xpw>i:nth-child(2){background:color-mix(in srgb,var(--aw) 45%,#000);width:90%;height:220%;right:-35%;top:-50%;opacity:.7;animation:sb2 28s ease-in-out infinite}
+.xpsb{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.xpsb::before{content:"";position:absolute;width:60%;height:140%;right:-18%;top:0;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--t2) 75%,transparent),transparent);filter:blur(24px);opacity:.6;animation:ac 16s ease-in-out infinite}
+.xpban .xpbwm{z-index:1;animation:wmfloat 9s ease-in-out infinite}
+.xpban .xpback,.xpban .xpbimg{z-index:2}
+@media (prefers-reduced-motion:reduce){ .xpw>i,.xpsb::before,.xpban .xpbwm{animation:none} }
+/* the ring around your photo, crisp: a solid team-colour ring, a clean gap in the page colour, then the photo. No blurred
+   inner line. */
+html:root body .xpav{padding:3px!important;background:var(--pc)!important;box-shadow:0 0 0 4px var(--bg)!important}
+html:root body .xpav img,html:root body .xpav .xpini{box-shadow:none!important;border:3px solid var(--bg);box-sizing:border-box}
+html:root body .xtop .avbtn:has(.avimg){padding:2px!important}
+html:root body .xtop .avbtn .avimg{border:2px solid var(--bg);box-sizing:border-box}
+html:root body .xdav:has(.avimg){padding:2px;border-radius:50%;background:var(--avc,#1D9BF0)}
+html:root body .xdav .avimg{border:2px solid var(--bg);box-sizing:border-box}

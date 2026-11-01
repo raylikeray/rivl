@@ -1295,10 +1295,10 @@
          opens a sheet to change the header, the photo, the name and number, and the jersey team. */
       const banner = store.get('v5:banner', ''), tlogo = pick && pick.t.logo || '';
       const avHTML = photo ? `<img src="${esc(photo)}" alt="Your photo">` : `<span class="xpini" style="background:${esc(main)};color:${esc(ink)}">${esc((name || '').trim().charAt(0).toUpperCase() || '+')}</span>`;
-      const banHTML = banner ? `<img class="xpbimg" src="${esc(banner)}" alt="">` : `<span class="xpbdef"></span>${tlogo ? `<img class="xpbwm" src="${esc(tlogo)}" alt="">` : ''}`;
+      const banHTML = banner ? `<img class="xpbimg" src="${esc(banner)}" alt="">` : `<span class="xpw"><i></i><i></i></span><span class="xpsb"></span>${tlogo ? `<img class="xpbwm" src="${esc(tlogo)}" alt="">` : ''}`;   // your team's colour moving, the way a team page's header does
       const cam = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
       $main.innerHTML = `<div class="pfpage xprof" style="--pc:${esc(main)};--pc2:${esc(trim)}">
-        <div class="xpban">${banHTML}<a class="xpback" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>
+        <div class="xpban" style="--aw:${esc(main)};--t2:${esc(trim)}">${banHTML}<a class="xpback" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>
         <div class="xprow"><span class="xpav">${avHTML}</span><button class="xpedit" data-act="xpopen">Edit profile</button></div>
         <div class="xpid"><h1>${esc(name || 'Your name')}</h1><p class="xpteam">${pick ? `${tlogo ? `<img src="${esc(tlogo)}" alt="">` : ''}${esc(pick.t.name || pick.t.short)}${num ? ` · #${esc(num)}` : ''}` : 'Pick your team in Edit profile'}</p>
           <p class="xpst"><a href="#teams"><b>${teams.length}</b> Teams</a><a href="#players"><b>${fp.length}</b> Players</a></p></div>
