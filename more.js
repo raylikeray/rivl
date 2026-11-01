@@ -68,29 +68,31 @@
 
   /* ---------- logos sized by their artwork, not their file: ESPN's PNGs carry different padding ---------- */
   const fitCache = new Map();
-  /* the artwork's box inside a logo file: ESPN's PNGs pad wildly (a shield fills its square, a wordmark sits in a strip),
-     so every disc scales and centres the artwork itself, not the file. Needs the CDN's CORS header; without it a disc keeps its default size. */
+  /* measurements kept on the phone, so a crest is sized before it is ever drawn instead of snapping to size a moment later */
+  const known = (() => { try { return JSON.parse(localStorage.getItem('hw:v5:logofit') || '{}') || {}; } catch { return {}; } })();
+  let saveT = 0; const saveKnown = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { const ks = Object.keys(known); if (ks.length > 1500) ks.slice(0, ks.length - 1500).forEach(k => delete known[k]); localStorage.setItem('hw:v5:logofit', JSON.stringify(known)); } catch { } }, 1500); };
   function measure(src) {
     if (fitCache.has(src)) return fitCache.get(src);
+    if (known[src] !== undefined) return Promise.resolve(known[src]);
     const p = new Promise(res => {
       const im = new Image(); im.crossOrigin = 'anonymous';
       im.onload = () => { try { const S = 72; const c = document.createElement('canvas'); c.width = S; c.height = S; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, S, S); const d = x.getImageData(0, 0, S, S).data; let x0 = S, y0 = S, x1 = -1, y1 = -1; for (let y = 0; y < S; y++) for (let xx = 0; xx < S; xx++) if (d[(y * S + xx) * 4 + 3] > 30) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; } if (x1 < 0) return res(null); res({ w: (x1 - x0 + 1) / S, h: (y1 - y0 + 1) / S, cx: ((x0 + x1 + 1) / 2) / S, cy: ((y0 + y1 + 1) / 2) / S }); } catch { res(null); } };
       im.onerror = () => res(null); im.src = src + (src.includes('?') ? '&' : '?') + 'fit';   // its own URL, so the cache never hands a no-CORS copy to a CORS load
     });
-    fitCache.set(src, p); return p;
+    p.then(m => { if (m) { known[src] = m; saveKnown(); } }); fitCache.set(src, p); return p;   // a failed read is not remembered: it is tried again next time
   }
   const apply = (img, scale, m) => { img.style.setProperty('--fit', scale.toFixed(3)); img.style.setProperty('--fx', (-(m.cx - .5) * 100).toFixed(1) + '%'); img.style.setProperty('--fy', (-(m.cy - .5) * 100).toFixed(1) + '%'); img.classList.add('fit'); };
-  async function fitLogos() {
-    // the big ones: fill the box
-    for (const img of document.querySelectorAll('.ehero .biglogo:not(.fitted), .hero .tm .logo img:not(.fitted)')) { img.classList.add('fitted'); const m = await measure(img.getAttribute('src') || ''); if (!m) continue; apply(img, Math.min(1.45, Math.max(1, Math.min(1 / m.w, 1 / m.h) * 0.94)), m); }
-    // the discs: the artwork's longer side lands at 68% of the disc, whatever the file's padding, and sits on the disc's centre
-    for (const img of document.querySelectorAll('.logo img:not(.fitted)')) {
-      img.classList.add('fitted'); if (img.closest('.onb-team,.thead,.injhd,.pp-team,.hero,.ehero,.gxpage')) continue;
-      const m = await measure(img.getAttribute('src') || ''); if (!m) continue;
-      const base = parseFloat(getComputedStyle(img).width) / Math.max(1, parseFloat(getComputedStyle(img.parentElement).width)) || .74;
-      apply(img, Math.min(1.4, Math.max(.7, (0.68 / base) / Math.max(m.w, m.h))), m);
-    }
+  const bigScale = m => Math.min(1.45, Math.max(1, Math.min(1 / m.w, 1 / m.h) * 0.94));
+  const discScale = (img, m) => { const base = parseFloat(getComputedStyle(img).width) / Math.max(1, parseFloat(getComputedStyle(img.parentElement).width)) || .74; return Math.min(1.4, Math.max(.7, (0.68 / base) / Math.max(m.w, m.h))); };
+  /* runs in the same frame the crest is added (known artwork is applied at once), unknown artwork is measured in parallel */
+  function fitLogos() {
+    const one = (img, scaleOf) => { img.classList.add('fitted'); const src = img.getAttribute('src') || ''; const k = known[src];
+      if (k !== undefined) { if (k) apply(img, scaleOf(k), k); return; }
+      measure(src).then(m => { if (m && img.isConnected) apply(img, scaleOf(m), m); }); };
+    for (const img of document.querySelectorAll('.ehero .biglogo:not(.fitted), .hero .tm .logo img:not(.fitted)')) one(img, bigScale);
+    for (const img of document.querySelectorAll('.logo img:not(.fitted)')) { if (img.closest('.onb-team,.thead,.injhd,.pp-team,.hero,.ehero,.gxpage')) { img.classList.add('fitted'); continue; } one(img, m => discScale(img, m)); }
   }
+
   document.addEventListener('rivl:rendered', fitLogos); setTimeout(fitLogos, 1200);
 
   /* ---------- strips fade at the edge that still has more to show ---------- */
@@ -109,7 +111,7 @@
   document.addEventListener('scroll', e => { const t = e.target; if (t && t.nodeType === 1 && t.matches && t.matches(STRIPS)) edge(t); }, true);
   document.addEventListener('rivl:rendered', () => { edges(); setTimeout(edges, 300); });
   window.addEventListener('resize', edges);
-  new MutationObserver(() => { clearTimeout(edges.t); edges.t = setTimeout(() => { edges(); fitLogos(); }, 60); }).observe(document.getElementById('main'), { childList: true, subtree: true });
+  new MutationObserver(() => { fitLogos(); clearTimeout(edges.t); edges.t = setTimeout(edges, 60); }).observe(document.getElementById('main'), { childList: true, subtree: true });
 
   /* ---------- share cards: a picture of the result or the line, not a link ---------- */
   const loadImg = src => new Promise(res => { if (!src) return res(null); const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
