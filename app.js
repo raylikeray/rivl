@@ -283,37 +283,60 @@
   };
   window.RIVL_paintAv = () => { const b = document.getElementById('avbtn'); if (!b) return; b.innerHTML = window.RIVL_avatar(); const j = HW.store.get('v5:jlook', null); b.style.setProperty('--avc', j && j.main || '#1D9BF0'); };
   window.RIVL_paintAv();
-  /* the side panel, like X's: your icon opens it from the left over a dimmed page. Your photo and name open your profile;
-     the list holds what Settings holds. Tap outside or swipe it left to close. */
+  /* the side panel, like X's: your icon opens it, or drag the page to the right from anywhere. It follows your finger:
+     the panel slides in from the left, the page is pushed along to the right and dims, and letting go settles it open or
+     shut on the same curve. Your photo and name open your profile; the list holds what Settings holds. */
   (() => {
     const btn = document.getElementById('avbtn'); if (!btn) return;
     const I = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
     const ICO = { me: I('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>'), teams: I('<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'),
       players: I('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.7c2 .7 3.5 2.4 3.5 5.3"/>'), bell: I('<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>'),
-      eye: I('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'), tv: I('<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/>'), sync: I('<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/>'),
+      tv: I('<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/>'),
       sun: I('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'), moon: I('<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>') };
-    let el = null;
-    const close = () => { if (!el) return; const d = el; el = null; d.classList.remove('in'); setTimeout(() => d.remove(), 330); };
-    const open = () => {
+    const EASE = 'cubic-bezier(.32,.72,0,1)';
+    let el = null, panel = null, bg = null, W = 300, p = 0;
+    const pushed = () => ['main', 'hdr', 'tabs', 'lbhome'].map(id => document.getElementById(id)).filter(Boolean);
+    const build = () => {
       if (el) return; const S = HW.store, name = S.get('v5:name', '') || 'Add your name', F = HW.favs.all(), nT = Object.values(F).reduce((a, x) => a + (x || []).length, 0), nP = V.fplayers ? V.fplayers.all().length : 0;
       const theme = S.get('v5:theme', 'system'), dark = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
       el = document.createElement('div'); el.className = 'xdrawer';
       el.innerHTML = `<div class="xdbg"></div><nav class="xdp" aria-label="You and settings">
-        <div class="xdtop"><a class="xdav avbtn" href="#settings/profile" aria-label="Your profile">${window.RIVL_avatar()}</a><button class="xdtheme" data-xd="theme" aria-label="Switch to ${dark ? 'light' : 'dark'} mode">${dark ? ICO.sun : ICO.moon}</button></div>
+        <div class="xdtop"><a class="xdav avbtn" href="#settings/profile" aria-label="Your profile">${window.RIVL_avatar()}</a><button class="xdtheme" data-xd="theme" data-dark="${dark ? 1 : 0}" aria-label="Switch to ${dark ? 'light' : 'dark'} mode">${dark ? ICO.sun : ICO.moon}</button></div>
         <a class="xdme" href="#settings/profile"><b>${esc(name)}</b><span>Your profile</span></a>
         <div class="xdst"><a href="#teams"><b>${nT}</b> Teams</a><a href="#players"><b>${nP}</b> Players</a></div>
         <div class="xdnav"><a href="#settings/profile">${ICO.me}Profile</a><a href="#teams">${ICO.teams}Teams</a><a href="#players">${ICO.players}Players</a><a href="#settings/alerts">${ICO.bell}Notifications</a><a href="#settings/watch">${ICO.tv}Where you watch</a></div>
         <div class="xdsub"><a href="#settings/home">Display</a><a href="#settings/sync">Sync</a><a href="#settings/app">App</a><a href="#settings">All settings</a><a href="#settings/about">About and sources</a></div></nav>`;
-      document.body.appendChild(el); void el.offsetWidth; el.classList.add('in');
-      el.addEventListener('click', e => { if (e.target.closest('[data-xd="theme"]')) { e.preventDefault(); const t = dark ? 'light' : 'dark'; S.set('v5:theme', t); applyTheme(); close(); return; } if (e.target.closest('a') || e.target.classList.contains('xdbg')) close(); });
-      // swipe it away to the left, following the finger
-      const p = el.querySelector('.xdp'); let x0 = null, dx = 0;
-      p.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; dx = 0; p.style.transition = 'none'; }, { passive: true });
-      p.addEventListener('touchmove', e => { if (x0 == null) return; dx = Math.min(0, e.touches[0].clientX - x0); p.style.transform = `translate3d(${dx}px,0,0)`; }, { passive: true });
-      p.addEventListener('touchend', () => { p.style.transition = ''; if (dx < -70) { p.style.transform = ''; close(); } else p.style.transform = ''; x0 = null; });
+      document.body.appendChild(el); panel = el.querySelector('.xdp'); bg = el.querySelector('.xdbg'); W = panel.offsetWidth || 300;
+      const av = el.querySelector('.xdav'); const j = HW.store.get('v5:jlook', null); av.style.setProperty('--avc', j && j.main || '#1D9BF0');
+      el.addEventListener('click', e => { const t = e.target.closest('[data-xd="theme"]'); if (t) { e.preventDefault(); HW.store.set('v5:theme', t.dataset.dark === '1' ? 'light' : 'dark'); applyTheme(); go(0); return; } if (e.target.closest('a') || e.target === bg) go(0); });
+      // dragging the open panel back to the left
+      let x0 = null, p0 = 1; panel.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; p0 = p; }, { passive: true });
+      panel.addEventListener('touchmove', e => { if (x0 == null) return; set(Math.max(0, Math.min(1, p0 + (e.touches[0].clientX - x0) / W)), false); }, { passive: true });
+      panel.addEventListener('touchend', () => { if (x0 == null) return; x0 = null; go(p > .6 ? 1 : 0); });
+      bg.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; p0 = p; }, { passive: true });
+      bg.addEventListener('touchmove', e => { if (x0 == null) return; set(Math.max(0, Math.min(1, p0 + (e.touches[0].clientX - x0) / W)), false); }, { passive: true });
+      bg.addEventListener('touchend', () => { if (x0 == null) return; const moved = Math.abs(p - p0) > .02; x0 = null; go(moved ? (p > .6 ? 1 : 0) : 0); });
     };
-    btn.addEventListener('click', e => { e.preventDefault(); open(); });
-    window.addEventListener('hashchange', close);
+    // p: 0 shut, 1 open. The panel, the dimming and the pushed page all move from this one number.
+    const set = (v, ease) => { p = v; const tr = ease ? `transform .34s ${EASE}, translate .34s ${EASE}, opacity .34s ${EASE}` : 'none';
+      panel.style.transition = tr; bg.style.transition = tr; panel.style.transform = `translate3d(${(p - 1) * 100}%,0,0)`; bg.style.opacity = String(p * .9);
+      el.style.pointerEvents = p > 0 ? 'auto' : 'none';
+      pushed().forEach(n => { n.style.transition = ease ? `translate .34s ${EASE}` : 'none'; n.style.translate = p ? `${(p * W * .82).toFixed(1)}px 0` : ''; }); };
+    const go = v => { if (!el) build(); set(v, true); if (!v) setTimeout(() => { if (p === 0 && el) { el.remove(); el = null; pushed().forEach(n => { n.style.translate = ''; }); } }, 360); };
+    btn.addEventListener('click', e => { e.preventDefault(); build(); requestAnimationFrame(() => go(1)); });
+    window.addEventListener('hashchange', () => { if (el) go(0); });
+    /* drag the page to the right, from anywhere on it, to pull the panel out (not on a strip that scrolls sideways, and only
+       on the screens that show your icon) */
+    const sideScroller = t => { for (let n = t; n && n !== document.body; n = n.parentElement) { if (n.scrollWidth > n.clientWidth + 2) { const ox = getComputedStyle(n).overflowX; if (ox === 'auto' || ox === 'scroll') return true; } if (n.matches && n.matches('input,textarea,[type=range]')) return true; } return false; };
+    let sx = null, sy = 0, dragging = false, vx = 0, lx = 0, lt = 0;
+    document.addEventListener('touchstart', e => { if (el || document.getElementById('top').hidden || document.documentElement.classList.contains('sheet-open') || e.touches.length > 1) { sx = null; return; }
+      const t = e.touches[0]; if (sideScroller(e.target)) { sx = null; return; } sx = t.clientX; sy = t.clientY; dragging = false; }, { passive: true });
+    document.addEventListener('touchmove', e => { if (sx == null) return; const t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+      if (!dragging) { if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { sx = null; return; } if (dx > 10 && dx > Math.abs(dy) * 1.3) { dragging = true; build(); lx = t.clientX; lt = performance.now(); vx = 0; } else return; }
+      e.preventDefault(); const now = performance.now(); if (now > lt) { vx = vx * .5 + .5 * (t.clientX - lx) / (now - lt); } lx = t.clientX; lt = now;
+      set(Math.max(0, Math.min(1, (t.clientX - sx) / W)), false); }, { passive: false });
+    // a flick counts as much as a long drag: fast enough to the right opens, to the left shuts
+    document.addEventListener('touchend', () => { if (!dragging) { sx = null; return; } dragging = false; sx = null; go(vx > .35 ? 1 : vx < -.35 ? 0 : (p > .4 ? 1 : 0)); });
   })();
   /* the top (your icon, the R, the leagues) behaves like X's: it slides up out of the way as you scroll down, following
      your finger, and slides back down the moment you scroll up. When you stop halfway it settles open or closed. */
