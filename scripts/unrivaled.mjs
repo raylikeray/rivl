@@ -39,7 +39,7 @@ function build(html) {
       if (typeof p.href === 'string' && /^\/game\/[a-z0-9]+$/.test(p.href)) { const id = p.href.split('/').pop(); if (!seenG.has(id)) { seenG.add(id); games.push({ id, ...ctx.cur, w: words(p.children) }); } return; }
       // a date block: its first text is the date, then arena and city
       const w = words(p.children).slice(0, 8); const di = w.findIndex(x => DATE.test(x));
-      if (di === 0 && !ctx.cur.lock) { ctx.cur = { date: w[0], arena: w[1] || '', city: [w[2], w[3], w[4]].filter(x => x && x !== ', ').join(', ').replace(/, ,/g, ',') }; }
+      if (di === 0 && (w[1] || ctx.cur.date !== w[0])) { ctx.cur = { date: w[0], arena: w[1] || '', city: [w[2], w[3], w[4]].filter(x => x && x !== ', ').join(', ').replace(/, ,/g, ',') }; }
       walk(p.children, ctx, seen); return; }
     (Array.isArray(n) ? n : Object.values(n)).forEach(x => walk(x, ctx, seen)); };
   const ctx = { cur: {} }; Object.keys(rows).sort((a, b) => parseInt(a, 16) - parseInt(b, 16)).forEach(k => walk(rows[k], ctx));
