@@ -1,10 +1,9 @@
-/* RIVL worker — one Cloudflare Worker, no dependencies. Three jobs:
+/* RIVL worker — one Cloudflare Worker, no dependencies. Two jobs:
    1. /espn/*   a caching proxy in front of ESPN's public feeds, so the app never sees a throttle and loads faster
    2. /sync     your follows and settings behind a short code, so a second device can pick them up
-   3. push      alerts for your teams and players: tip-off, close game, final, injury changes, breaking news (cron, once a minute)
-   Bindings: KV (KV namespace). Variables: VAPID_PUBLIC, VAPID_PRIVATE_JWK (secret), VAPID_SUBJECT (mailto:…),
-   ALLOWED_ORIGINS (comma list), SELF_URL (this worker's URL), CRON_TOKEN (any word). */
-
+   Push alerts were removed (they ran a cron every minute). There is no scheduled handler any more: delete the Cron Trigger
+   in the Cloudflare dashboard and this worker only works when the app asks it something.
+   Bindings: KV (KV namespace). Variables: ALLOWED_ORIGINS (comma list). */
 const LEAGUES = {
   nba:   { verb: 'tips off', path: 'nba', label: 'NBA', sb: '&limit=50', reg: 4, injuries: true },
   wnba:  { verb: 'tips off', path: 'wnba', label: 'WNBA', sb: '&limit=50', reg: 4, injuries: true },
@@ -24,56 +23,6 @@ const todayCT = () => { const d = new Date(); const h = +new Intl.DateTimeFormat
 const tipCT = iso => new Date(iso).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' });
 const cors = (env, req) => { const o = req.headers.get('Origin') || ''; const ok = (env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean); const allow = ok.includes(o) ? o : ok[0] || '*'; return { 'Access-Control-Allow-Origin': allow, 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Vary': 'Origin' }; };
 const json = (o, status = 200, h = {}) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', ...h } });
-
-/* ---------- Web Push (RFC 8291 / 8188 / 8292) ---------- */
-async function vapidJwt(env, audience) {
-  const key = await crypto.subtle.importKey('jwk', JSON.parse(env.VAPID_PRIVATE_JWK), { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
-  const head = b64u(enc.encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
-  const body = b64u(enc.encode(JSON.stringify({ aud: audience, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: env.VAPID_SUBJECT || 'mailto:tipoff@example.com' })));
-  const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, enc.encode(`${head}.${body}`));
-  return `${head}.${body}.${b64u(sig)}`;
-}
-async function hkdf(salt, ikm, info, len) {
-  const key = await crypto.subtle.importKey('raw', ikm, 'HKDF', false, ['deriveBits']);
-  return new Uint8Array(await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt, info }, key, len * 8));
-}
-async function encryptPayload(sub, text) {
-  const uaPub = unb64u(sub.keys.p256dh), auth = unb64u(sub.keys.auth);
-  const local = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
-  const asPub = new Uint8Array(await crypto.subtle.exportKey('raw', local.publicKey));
-  const uaKey = await crypto.subtle.importKey('raw', uaPub, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
-  const shared = new Uint8Array(await crypto.subtle.deriveBits({ name: 'ECDH', public: uaKey }, local.privateKey, 256));
-  const ikm = await hkdf(auth, shared, concat(enc.encode('WebPush: info\0'), uaPub, asPub), 32);
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const cek = await hkdf(salt, ikm, enc.encode('Content-Encoding: aes128gcm\0'), 16);
-  const nonce = await hkdf(salt, ikm, enc.encode('Content-Encoding: nonce\0'), 12);
-  const record = concat(enc.encode(text), new Uint8Array([2]));
-  const aes = await crypto.subtle.importKey('raw', cek, 'AES-GCM', false, ['encrypt']);
-  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, aes, record));
-  const rs = new Uint8Array([0, 0, 16, 0]); // record size 4096
-  return concat(salt, rs, new Uint8Array([asPub.length]), asPub, ct);
-}
-async function sendPush(env, sub, payload) {
-  const url = new URL(sub.endpoint);
-  const jwt = await vapidJwt(env, url.origin);
-  const body = await encryptPayload(sub, JSON.stringify(payload));
-  const r = await fetch(sub.endpoint, { method: 'POST', headers: { 'Authorization': `vapid t=${jwt}, k=${env.VAPID_PUBLIC}`, 'Content-Encoding': 'aes128gcm', 'Content-Type': 'application/octet-stream', 'TTL': String(payload.ttl || 3600), 'Urgency': payload.urgency || 'normal' }, body });
-  return r.status;
-}
-
-
-/* ---------- ESPN parsing ---------- */
-function parseGame(e) {
-  const c = e.competitions[0]; const st = (c.status || e.status || {}); const t = st.type || {};
-  // each side's scoring leader, for the final's line ("SGA 34 pts")
-  const top = x => { const L1 = (x.leaders || []).find(l => /^points$/i.test(l.name || '')); const a = L1 && L1.leaders && L1.leaders[0]; const v = a && parseFloat(a.displayValue); if (!a || !a.athlete || !isFinite(v) || v <= 0) return ''; const nm = String(a.athlete.shortName || a.athlete.displayName || ''); return `${nm} ${Math.round(v)} pts`; };
-  const side = x => { const tm = x.team || {}; return { id: String(tm.id), abbr: tm.abbreviation || '', short: tm.shortDisplayName || tm.name || '', score: x.score != null && x.score !== '' ? +x.score : null, top: top(x) }; };
-  const comp = c.competitors || [];
-  // the playoff line for the alert: the event's own headline ("WNBA Finals - Game 7") and the series standing, verbatim
-  const note = String((c.notes && c.notes[0] && c.notes[0].headline) || '').replace(/\s+-\s+/g, ', ').trim();
-  const series = c.series && c.series.summary ? String(c.series.summary) : '';
-  return { id: String(e.id), date: e.date, note, series, state: t.state || 'pre', detail: t.shortDetail || '', period: st.period || 0, clock: st.displayClock || '', home: side(comp.find(x => x.homeAway === 'home') || comp[0] || {}), away: side(comp.find(x => x.homeAway === 'away') || comp[1] || {}), tv: (c.broadcasts || []).flatMap(b => b.names || []).slice(0, 2).join(' · ') };
-}
 async function getJson(u) { const r = await fetch(u, { headers: { 'user-agent': 'rivl-worker' }, cf: { cacheTtl: 20 } }); if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); }
 
 /* ---------- the proxy: ESPN's feeds through Cloudflare's cache, with CORS for the app ---------- */
@@ -108,153 +57,6 @@ async function sync(req, env, h) {
    cron tick — spent 1,440 list operations a day against a free-tier cap of 1,000, before any alert had been sent.
    The index is rewritten only when someone subscribes or unsubscribes, or a push endpoint is found dead; and on the
    first run after this change it is built once from the old per-subscriber keys. */
-const SUBS = 'subs:all';
-async function loadSubs(env) {
-  let all = null; try { all = await env.KV.get(SUBS, 'json'); } catch { }
-  if (!all) {   // first run: gather the old per-subscriber keys into the index, once
-    all = {}; let cursor;
-    do { const l = await env.KV.list({ prefix: 'sub:', cursor }); for (const k of l.keys) { const v = await env.KV.get(k.name, 'json'); if (v && v.sub) all[k.name] = v; } cursor = l.list_complete ? null : l.cursor; } while (cursor);
-    try { await env.KV.put(SUBS, JSON.stringify(all)); } catch { }
-  }
-  return Object.entries(all).map(([key, v]) => ({ key, ...v }));
-}
-async function saveSub(env, key, v) { const all = (await env.KV.get(SUBS, 'json')) || {}; if (v) all[key] = v; else delete all[key]; await env.KV.put(SUBS, JSON.stringify(all)); }
-async function deliver(env, subs, matchKey, kind, payload, field = 'teams') {
-  const targets = subs.filter(s => (s[field] || []).includes(matchKey) && (s.prefs || {})[kind] !== false);
-  let n = 0;
-  for (const s of targets) {
-    try { const st = await sendPush(env, s.sub, payload); if (st === 404 || st === 410) await saveSub(env, s.key, null); else if (st < 300) n++; } catch (e) { console.log('push failed', e.message); }
-  }
-  return n;
-}
-const sentKey = k => 'sent:' + k;
-async function once(env, k, fn) { if (await env.KV.get(sentKey(k))) return false; await env.KV.put(sentKey(k), '1', { expirationTtl: 172800 }); await fn(); return true; }
-const ordinal = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 > 10 && n % 100 < 14) ? 0 : n % 10 < 4 ? n % 10 : 0]);
-
-/* ---------- the minute check for one league: tip-off, close game, final ---------- */
-/* ---------- when there is anything to watch ----------
-   The cron fires every minute, but on a night none of your teams play there is nothing to see. Once an hour each league works
-   out its windows — from twenty-five minutes before a followed team's tip until the game should be well over — and keeps them
-   in KV. Outside those windows the cron stays still. A quiet day costs a couple of dozen requests instead of several thousand,
-   and the alerts themselves are unchanged: every one of them happens inside a window by definition.
-   The plan carries the team list it was built from, so following a new team rebuilds it rather than waiting out the hour. */
-const PLAN_TTL = 3600000;        // re-read hourly, so a postponement or a moved tip is picked up
-const PRE_MS = 25 * 60000;       // the tip-off alert goes out twenty minutes before; start watching a little before that
-const RUN_MS = 3.5 * 3600000;    // a game, overtime, and the final box score settling
-async function watchWindows(env, lk, teamIds) {
-  const L = LEAGUES[lk]; const ymd = todayCT(); const key = `plan:${lk}:${ymd}`;
-  const sig = [...teamIds].sort().join(',');
-  let plan = null; try { plan = await env.KV.get(key, 'json'); } catch { }
-  if (plan && plan.sig === sig && Date.now() - plan.at < PLAN_TTL) return plan;
-  let win, on;
-  try {
-    const d = await getJson(`${API(L)}/scoreboard?dates=${ymd.replace(/-/g, '')}${L.sb}`);
-    const games = (d.events || []).map(parseGame);
-    on = games.length > 0;   // the league is playing today at all: its news is worth reading often
-    win = games
-      .filter(g => teamIds.has(g.home.id) || teamIds.has(g.away.id))
-      .map(g => { const t = Date.parse(g.date); return isFinite(t) ? [t - PRE_MS, t + RUN_MS] : null; })
-      .filter(Boolean);
-  } catch (e) {
-    console.log(lk, 'plan', e.message);
-    return { win: [[Date.now() - 1, Date.now() + PLAN_TTL]], on: true };   // the slate could not be read: keep watching rather than go quiet
-  }
-  plan = { at: Date.now(), sig, win, on };
-  try { await env.KV.put(key, JSON.stringify(plan), { expirationTtl: 36 * 3600 }); } catch { }
-  return plan;
-}
-const hourCT = () => +new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: 'numeric', hour12: false }).format(new Date()) % 24;
-
-async function runLeague(env, lk, subs) {
-  const L = LEAGUES[lk]; if (!L) return;
-  const teams = new Set(subs.flatMap(s => (s.teams || []).filter(t => t.startsWith(lk + ':')).map(t => t.slice(lk.length + 1))));
-  if (!teams.size) return;
-  const ymd = todayCT();
-  let games; try { games = ((await getJson(`${API(L)}/scoreboard?dates=${ymd.replace(/-/g, '')}${L.sb}`)).events || []).map(parseGame); } catch (e) { console.log(lk, 'scoreboard', e.message); return; }
-  const now = Date.now();
-  for (const g of games) {
-    const mineH = teams.has(g.home.id), mineA = teams.has(g.away.id); if (!mineH && !mineA) continue;
-    const both = [mineH ? `${lk}:${g.home.id}` : null, mineA ? `${lk}:${g.away.id}` : null].filter(Boolean);
-    const gk = `${lk}:${g.id}`; const url = `#game/${lk}/${g.id}`; const name = `${g.away.short} at ${g.home.short}${g.note ? ` — ${g.note}` : ''}`;
-    const send = (kind, payload, dedupe) => once(env, dedupe, async () => { for (const tk of both) await deliver(env, subs, tk, kind, { ...payload, url, league: lk }); });
-    const mins = (new Date(g.date) - now) / 60000;
-    if (g.state === 'pre' && mins > 0 && mins <= 20) await send('pre', { title: `${name} ${L.verb} in ${Math.round(mins)} min`, body: `${tipCT(g.date)}${g.tv ? ' · ' + g.tv : ''}${g.series ? ' · ' + g.series : ''}`, tag: `pre:${gk}` }, `pre:${gk}`);
-    if (g.state === 'in') {
-      const snap = await env.KV.get('st:' + gk, 'json') || {};
-      const hs = g.home.score || 0, as = g.away.score || 0;
-      const score = `${g.away.abbr} ${as}, ${g.home.abbr} ${hs}`;
-      const last = g.period >= L.reg; const [mm] = String(g.clock || '0:00').split(':').map(Number);
-      if (last && Math.abs(hs - as) <= 5 && (mm || 0) < 3) await send('close', { title: `Close one: ${score}`, body: `${g.detail} · ${name}`, tag: `game:${gk}`, renotify: true }, `close:${gk}:${g.period}`);
-      // one write, the first time the game is seen live: that is all the final alert needs to know. The score was being
-      // rewritten every minute of every followed game — a value nothing read back — and that alone could spend the day's
-      // 1,000 writes before the evening games were over.
-      if (!snap.live) await env.KV.put('st:' + gk, JSON.stringify({ live: 1 }), { expirationTtl: 172800 });
-    }
-    if (g.state === 'post' && g.home.score != null && g.away.score != null) {   // a postponed game is filed as post with no score: nothing to say
-      const snap = await env.KV.get('st:' + gk, 'json');
-      if (snap && snap.live) { const w = (g.home.score || 0) > (g.away.score || 0) ? g.home : g.away, l = w === g.home ? g.away : g.home; await send('final', { title: `Final${/OT/i.test(g.detail) ? ' (' + g.detail.replace(/^Final\/?/, '') + ')' : ''}: ${w.short} ${w.score}, ${l.short} ${l.score}`, body: [w.top, l.top].filter(Boolean).join(' · ') || name, tag: `game:${gk}` }, `final:${gk}`); await env.KV.put('st:' + gk, JSON.stringify({ ...snap, live: 0 }), { expirationTtl: 172800 }); }
-    }
-  }
-}
-
-/* ---------- injuries: your teams (anyone newly out) and your players (any status change) ---------- */
-async function runInjuries(env, lk, subs) {
-  const L = LEAGUES[lk]; if (!L || !L.injuries) return;
-  const teams = [...new Set(subs.flatMap(s => (s.teams || []).filter(t => t.startsWith(lk + ':')).map(t => t.slice(lk.length + 1))))];
-  const players = [...new Set(subs.flatMap(s => (s.players || []).filter(t => t.startsWith(lk + ':')).map(t => t.slice(lk.length + 1))))];
-  if (!teams.length && !players.length) return;
-  let d; try { d = await getJson(`${API(L)}/injuries`); } catch (e) { console.log(lk, 'injuries', e.message); return; }
-  const athId = a => a && (a.id || (String(a.uid || '').match(/~a:(\d+)/) || [])[1] || '') + '';
-  const seen = {};
-  for (const t of (d.injuries || [])) {
-    const tid = String(t.id || ''); const team = (t.displayName || '').split(' ').pop();
-    for (const x of (t.injuries || [])) {
-      const a = x.athlete || {}; const pid = athId(a); if (!pid) continue;
-      const rec = { n: a.displayName, s: x.status || '', d: x.details && (x.details.type || x.details.detail) || '', t: tid };
-      seen[pid] = rec;
-      if (players.includes(pid)) {
-        const prev = await env.KV.get(`pinj:${lk}:${pid}`, 'json');
-        if (prev && (prev.s !== rec.s || prev.d !== rec.d)) await deliver(env, subs, `${lk}:${pid}`, 'inj', { title: `${rec.n}: ${rec.s}`, body: `${rec.d || 'Injury report'}${prev.s !== rec.s ? ` (was ${prev.s})` : ''}`, tag: `inj:${pid}`, url: `#player/${lk}/${pid}`, league: lk }, 'players');
-        if (!prev || prev.s !== rec.s || prev.d !== rec.d) await env.KV.put(`pinj:${lk}:${pid}`, JSON.stringify(rec));
-      }
-    }
-    if (teams.includes(tid)) {
-      const cur = {}; (t.injuries || []).forEach(x => { const pid = athId(x.athlete); if (pid && /out|suspen/i.test(x.status || '')) cur[pid] = { n: x.athlete.displayName, s: x.status, d: x.details && x.details.type || '' }; });
-      const prev = await env.KV.get(`inj:${lk}:${tid}`, 'json');
-      if (prev) {
-        for (const [pid, x] of Object.entries(cur)) if (!prev[pid]) await deliver(env, subs, `${lk}:${tid}`, 'inj', { title: `${team}: ${x.n} out`, body: `${x.d || x.s}${x.d ? ' · ' + x.s : ''}`, tag: `inj:${pid}`, url: `#player/${lk}/${pid}`, league: lk });
-        for (const [pid, x] of Object.entries(prev)) if (!cur[pid]) await deliver(env, subs, `${lk}:${tid}`, 'inj', { title: `${team}: ${x.n} off the injury report`, body: 'No longer listed out', tag: `inj:${pid}`, url: `#player/${lk}/${pid}`, league: lk });
-      }
-      if (JSON.stringify(cur) !== JSON.stringify(prev || null)) await env.KV.put(`inj:${lk}:${tid}`, JSON.stringify(cur));
-    }
-  }
-  // a followed player who dropped off the report entirely is back
-  for (const pid of players) { if (seen[pid]) continue; const prev = await env.KV.get(`pinj:${lk}:${pid}`, 'json'); if (prev) { await deliver(env, subs, `${lk}:${pid}`, 'inj', { title: `${prev.n} is off the injury report`, body: `Was ${prev.s}${prev.d ? ' · ' + prev.d : ''}`, tag: `inj:${pid}`, url: `#player/${lk}/${pid}`, league: lk }, 'players'); await env.KV.delete(`pinj:${lk}:${pid}`); } }
-}
-
-/* ---------- the wire: ESPN's news posts (HeadlineNews under the 'news' topic) about your teams and players, each once ---------- */
-async function runWire(env, lk, subs) {
-  const L = LEAGUES[lk]; if (!L) return;
-  const teams = new Set(subs.flatMap(s => (s.teams || []).filter(t => t.startsWith(lk + ':')).map(t => t.slice(lk.length + 1))));
-  const players = new Set(subs.flatMap(s => (s.players || []).filter(t => t.startsWith(lk + ':')).map(t => t.slice(lk.length + 1))));
-  if (!teams.size && !players.size) return;
-  let d; try { d = await getJson(`${API(L)}/news?limit=25`); } catch (e) { console.log(lk, 'news', e.message); return; }
-  const cutoff = Date.now() - 3 * 3600000;   // the first run after a quiet spell says nothing older than three hours
-  for (const a of (d.articles || [])) {
-    if (!a || a.type !== 'HeadlineNews' || !a.headline || !a.published || new Date(a.published) < cutoff) continue;
-    const cats = a.categories || []; if (!cats.some(c => c.type === 'topic' && /^news\b/i.test(c.description || ''))) continue;
-    const tIds = cats.filter(c => c.type === 'team').map(c => String(c.teamId || (c.team && c.team.id) || '')).filter(id => teams.has(id));
-    const pIds = cats.filter(c => c.type === 'athlete').map(c => String(c.athleteId || (c.athlete && c.athlete.id) || '')).filter(id => players.has(id));
-    if (!tIds.length && !pIds.length) continue;
-    const id = String(a.id); const payload = { title: a.headline, body: String(a.description || '').slice(0, 160), tag: `news:${id}`, url: `#article/${lk}/${id}`, league: lk };
-    await once(env, `news:${lk}:${id}`, async () => {
-      const done = new Set();   // one alert per phone even when both a team and a player of theirs are in it
-      const each = async (key, field) => { for (const s of subs) { if (done.has(s.key) || !(s[field] || []).includes(key) || (s.prefs || {}).news === false) continue; done.add(s.key); try { const st = await sendPush(env, s.sub, payload); if (st === 404 || st === 410) await saveSub(env, s.key, null); } catch (e) { console.log('push failed', e.message); } } };
-      for (const id of pIds) await each(`${lk}:${id}`, 'players');
-      for (const id of tIds) await each(`${lk}:${id}`, 'teams');
-    });
-  }
-}
 
 export default {
   async fetch(req, env, ctx) {
@@ -262,55 +64,7 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
     if (url.pathname.startsWith('/espn/')) return proxy(req, env, h);
     if (url.pathname === '/sync') return sync(req, env, h);
-    if (url.pathname === '/health') return json({ ok: true, publicKey: env.VAPID_PUBLIC || '' }, 200, h);
-    if (url.pathname === '/subscribe' && req.method === 'POST') {
-      let b; try { b = await req.json(); } catch { return json({ error: 'bad json' }, 400, h); }
-      if (!b.sub || !b.sub.endpoint || !b.sub.keys) return json({ error: 'no subscription' }, 400, h);
-      const teams = (b.teams || []).filter(t => /^[a-z]+:\d+$/.test(t)).slice(0, 60); const players = (b.players || []).filter(t => /^[a-z]+:\d+$/.test(t)).slice(0, 60);
-      const id = await sha(b.sub.endpoint);
-      if (!teams.length && !players.length) { await saveSub(env, 'sub:' + id, null); return json({ ok: true, teams: 0, players: 0 }, 200, h); }
-      await saveSub(env, 'sub:' + id, { sub: b.sub, teams, players, prefs: b.prefs || {}, t: Date.now() });
-      return json({ ok: true, teams: teams.length, players: players.length }, 200, h);
-    }
-    if (url.pathname === '/unsubscribe' && req.method === 'POST') {
-      let b; try { b = await req.json(); } catch { return json({ error: 'bad json' }, 400, h); }
-      if (b.endpoint) await saveSub(env, 'sub:' + await sha(b.endpoint), null);
-      return json({ ok: true }, 200, h);
-    }
-    if (url.pathname === '/test' && req.method === 'POST') {
-      let b; try { b = await req.json(); } catch { return json({ error: 'bad json' }, 400, h); }
-      const v = ((await env.KV.get(SUBS, 'json')) || {})['sub:' + await sha(b.endpoint || '')]; if (!v) return json({ error: 'not subscribed' }, 404, h);
-      const st = await sendPush(env, v.sub, { title: 'RIVL alerts are on', body: 'Tip-off, close games, finals, injury changes and breaking news for your teams and players.', tag: 'welcome', url: '#home' });
-      return json({ ok: st < 300, status: st }, 200, h);
-    }
-    if (url.pathname === '/run' && req.headers.get('x-rivl-cron') === (env.CRON_TOKEN || 'rivl')) {
-      const lk = url.searchParams.get('lk'); const what = url.searchParams.get('what') || 'games';
-      const subs = await loadSubs(env);
-      if (what === 'games') await runLeague(env, lk, subs); else if (what === 'wire') await runWire(env, lk, subs); else await runInjuries(env, lk, subs);
-      return json({ ok: true });
-    }
+    if (url.pathname === '/health') return json({ ok: true }, 200, h);
     return json({ error: 'not found' }, 404, h);
-  },
-  async scheduled(event, env, ctx) {
-    const self = env.SELF_URL || ''; if (!self) { console.log('set SELF_URL'); return; }
-    const minute = new Date().getUTCMinutes();
-    const subs = await loadSubs(env);
-    const leagues = [...new Set(subs.flatMap(s => [...(s.teams || []), ...(s.players || [])].map(t => t.split(':')[0])))].filter(lk => LEAGUES[lk]);
-    const H = { headers: { 'x-rivl-cron': env.CRON_TOKEN || 'rivl' } };
-    const now = Date.now(); const awake = (() => { const h = hourCT(); return h >= 7 || h < 1; })();
-    const calls = [];
-    await Promise.all(leagues.map(async lk => {
-      const teamIds = new Set(subs.flatMap(s => (s.teams || []).filter(t => t.startsWith(lk + ':')).map(t => t.slice(lk.length + 1))));
-      const { win, on } = await watchWindows(env, lk, teamIds);
-      const playing = win.some(([a, b]) => now >= a && now <= b);
-      const nearby = win.some(([a, b]) => now >= a - 6 * 3600000 && now <= b);   // injury reports land hours before a tip
-      // breaking news: every five minutes while the league is playing and you are awake, every half hour otherwise — a league
-      // out of season, or the small hours, does not need to be asked twelve times an hour
-      const wireDue = (on && awake) ? minute % 5 === 1 : minute % 30 === 1;
-      if (playing) calls.push(fetch(`${self}/run?lk=${lk}&what=games`, H).catch(() => null));
-      if (nearby && minute % 15 === 3) calls.push(fetch(`${self}/run?lk=${lk}&what=injuries`, H).catch(() => null));
-      if (wireDue) calls.push(fetch(`${self}/run?lk=${lk}&what=wire`, H).catch(() => null));
-    }));
-    ctx.waitUntil(Promise.all(calls));
   }
 };

@@ -137,15 +137,18 @@
      they turned position:fixed and pointer-events:none, and this function deleted them). Keep the names apart. — so the next screen appears through it instead of after a gap */
   function ghost() {
     document.querySelectorAll('.xghost').forEach(g => g.remove());
-    const r = $main.getBoundingClientRect(); if (!r.width || !r.height) return;
-    const g = document.createElement('div'); g.className = 'xghost'; g.setAttribute('aria-hidden', 'true');
+    /* a game, team or player page is fixed to the viewport, so the page box itself has no height: the copy then covers the
+       whole viewport. Otherwise the copy sits exactly over the page, with the page's own padding (no few-pixel shift). */
+    const ent = !!$main.querySelector(':scope > .gxpage'); let r = $main.getBoundingClientRect();
+    if (ent) r = { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight }; if (!r.width || !r.height) return;
+    const g = document.createElement('div'); g.className = 'xghost' + (ent ? ' ent' : ''); g.setAttribute('aria-hidden', 'true');
     g.style.cssText = `left:${r.left}px;width:${r.width}px`;
-    const c = $main.cloneNode(true); c.removeAttribute('id'); c.className = ''; const cs = getComputedStyle($main); c.style.cssText = `transform:translateY(${r.top}px);padding:${cs.padding};margin:0;width:${r.width}px;box-sizing:border-box`;   // the copy keeps the page's own padding, so it sits exactly over the real page (no few-pixel shift)
+    const c = $main.cloneNode(true); c.removeAttribute('id'); c.className = ''; const cs = getComputedStyle($main); c.style.cssText = ent ? `transform:translateY(0);width:${r.width}px;height:${r.height}px;margin:0;padding:0` : `transform:translateY(${r.top}px);padding:${cs.padding};margin:0;width:${r.width}px;box-sizing:border-box`;
     g.appendChild(c); document.body.appendChild(g);
-    /* a copy starts every sideways strip at its left end, so the date strip (and any rail) jumped inside the fading copy.
-       Put each one back where it was. */
+    /* a copy starts every strip and scroll box at its start, so the date strip, a rail or the page's own scroll box jumped
+       inside the fading copy. Put each one back where it was. */
     const src = $main.querySelectorAll('*'), dst = c.querySelectorAll('*');
-    for (let i = 0; i < src.length; i++) { const x = src[i].scrollLeft; if (x && dst[i]) dst[i].scrollLeft = x; }
+    for (let i = 0; i < src.length; i++) { const x = src[i].scrollLeft, y = src[i].scrollTop; if (dst[i]) { if (x) dst[i].scrollLeft = x; if (y) dst[i].scrollTop = y; } }
     g.addEventListener('animationend', () => g.remove()); setTimeout(() => g.remove(), 1500);   // it fades once the new screen is ready (fadeIn adds .out); never outstays its welcome
   }
   window.addEventListener('hashchange', render);
@@ -269,7 +272,7 @@
   document.addEventListener('contextmenu', e => { if (!e.target.closest('.reader .body, input, textarea')) e.preventDefault(); });
 
   /* ---------- delegated actions ---------- */
-  function toast(msg) { $toast.textContent = msg; $toast.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => $toast.classList.remove('on'), Math.min(9000, 1800 + String(msg).length * 55)); }   // a sentence needs longer on screen than a word
+  function toast(msg) { $toast.textContent = msg; $toast.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => $toast.classList.remove('on'), Math.min(4000, 900 + String(msg).length * 30)); }   // short: a follow note is gone in about a second and a half   // a sentence needs longer on screen than a word
   V.toast = toast; V.rerender = () => render(); V.route = () => current;
   V.refreshAll = async () => { try { HW.cache.clear(); } catch { } await render(); poll(); };
   /* your icon, top left (it replaced the settings gear): your own photo when you've added one, otherwise your jersey in your
@@ -306,7 +309,7 @@
         <div class="xdtop"><a class="xdav avbtn" href="#settings/profile" aria-label="Your profile">${window.RIVL_avatar()}</a><button class="xdtheme" data-xd="theme" data-dark="${dark ? 1 : 0}" aria-label="Switch to ${dark ? 'light' : 'dark'} mode">${dark ? ICO.sun : ICO.moon}</button></div>
         <a class="xdme" href="#settings/profile"><b>${esc(name)}</b><span>Your profile</span></a>
         <div class="xdst"><a href="#teams"><b>${nT}</b> Teams</a><a href="#players"><b>${nP}</b> Players</a></div>
-        <div class="xdnav"><a href="#settings/profile">${ICO.me}Profile</a><a href="#teams">${ICO.teams}Teams</a><a href="#players">${ICO.players}Players</a><a href="#settings/alerts">${ICO.bell}Notifications</a><a href="#settings/watch">${ICO.tv}Where you watch</a></div>
+        <div class="xdnav"><a href="#settings/profile">${ICO.me}Profile</a><a href="#teams">${ICO.teams}Teams</a><a href="#players">${ICO.players}Players</a><a href="#settings/watch">${ICO.tv}Where you watch</a></div>
         <div class="xdsub"><a href="#settings/home">Display</a><a href="#settings/sync">Sync</a><a href="#settings/app">App</a><a href="#settings">All settings</a><a href="#settings/about">About and sources</a></div></nav>`;
       document.body.appendChild(el); panel = el.querySelector('.xdp'); bg = el.querySelector('.xdbg'); W = panel.offsetWidth || 300;
       const av = el.querySelector('.xdav'); const j = HW.store.get('v5:jlook', null); av.style.setProperty('--avc', j && j.main || '#1D9BF0');
@@ -401,9 +404,6 @@
     if (a === 'watch') { e.preventDefault(); const id = act.dataset.id; const mine = HW.myServices(); const on = !mine.includes(id); store.set('watch', on ? [...mine, id] : mine.filter(x => x !== id)); act.classList.toggle('on', on); act.setAttribute('aria-pressed', String(on)); if (navigator.vibrate) navigator.vibrate(8); return; }
     if (a === 'theme') { e.preventDefault(); store.set('v5:theme', act.dataset.theme); applyTheme(); $main.querySelectorAll('[data-act="theme"]').forEach(b => { const on = b.dataset.theme === act.dataset.theme; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); }
     if (a === 'onb-restart') { e.preventDefault(); onbLk = 'nba'; onbWelcome(); }   // from the welcome, as a new person sees it; picks are kept
-    if (a === 'alerts') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; (on ? V.alerts.enable() : V.alerts.disable()).catch(err => { try { store.set('v5:alertsWhy', 'Unexpected: ' + (err && err.message || err)); } catch { } toast('Unexpected: ' + (err && err.message || err)); }).then(() => render()); }
-    if (a === 'alert-pref') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; V.alerts.setPref(act.dataset.pref, on); act.setAttribute('aria-checked', String(on)); }
-    if (a === 'alert-test') { e.preventDefault(); V.alerts.test(); }
     if (a === 'sync-up') { e.preventDefault(); V.sync.up().then(code => { toast(`Backed up as ${code}`); render(); }).catch(() => toast("The server didn't answer")); }
     if (a === 'sync-down') { e.preventDefault(); const inp = document.getElementById('syncCode'); const code = inp && inp.value.trim(); if (!code || code.length !== 6) { toast('Enter the six-character code'); return; } V.sync.down(code).then(() => { toast('Restored'); location.hash = '#home'; location.reload(); }).catch(() => toast('No backup under that code')); }
     if (a === 'accent') { e.preventDefault(); store.set('v5:accent', act.dataset.accent); applyAccent(); $main.querySelectorAll('[data-act="accent"]').forEach(b => { const on = b.dataset.accent === act.dataset.accent; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); }

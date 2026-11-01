@@ -3,7 +3,7 @@
    ESPN's feeds go network-first with a short leash: a fresh answer when there is one, the last good copy
    when the network is slow, down, or ESPN is throttling (429/5xx). Logos, headshots and fonts are cached
    on first sight and served from cache after that. */
-const VERSION = 'rivl-v284';   // keep in step with the ?v= stamp in index.html: a new number here is what makes phones take the new app
+const VERSION = 'rivl-v285';   // keep in step with the ?v= stamp in index.html: a new number here is what makes phones take the new app
 const SHELL = `${VERSION}-shell`, DATA = 'rivl-data', MEDIA = 'rivl-media';   // feed copies and media outlive a version: the app reads the feed copies for a warm start
 const Q = `?v=${VERSION.replace(/^rivl-v/, '')}`;   // the same stamp index.html puts on its assets
 const SHELL_FILES = ['./', './index.html', ...['./app.css', './app.js', './views.js', './screens.js', './config.js', './js/core.js', './js/sim.js', './js/hub.js', './js/rating.js', './js/ask.js', './js/stats.js', './more.js'].map(f => f + Q), './manifest.webmanifest', './img/mark.svg', './img/badge-96.png', './img/icon-192.png', './img/icon-512.png', './img/apple-touch-icon.png'];
@@ -71,17 +71,4 @@ self.addEventListener('fetch', e => {
   }
 });
 
-/* ---------- push alerts ---------- */
-self.addEventListener('push', e => {
-  let d = {}; try { d = e.data ? e.data.json() : {}; } catch { d = { title: 'RIVL', body: e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'RIVL', { body: d.body || '', tag: d.tag || undefined, renotify: !!d.renotify, icon: './img/icon-192.png', badge: './img/badge-96.png', data: { url: d.url || '#home' } }));
-});
-self.addEventListener('notificationclick', e => {
-  e.notification.close();
-  const target = new URL('./' + ((e.notification.data && e.notification.data.url) || '#home'), self.registration.scope).href;
-  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
-    const c = cs.find(x => x.url.startsWith(self.registration.scope));
-    if (c) { if ('navigate' in c) return c.navigate(target).then(w => w && w.focus()); return c.focus(); }
-    return self.clients.openWindow(target);
-  }));
-});
+/* push alerts were removed */

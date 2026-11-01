@@ -173,49 +173,10 @@
   }
   V.shareCard = shareCard; V._draw = { drawGame, drawPlayer };
 
-  /* ---------- alerts: web push through the RIVL worker, for your teams and players ---------- */
-  const WORKER = HW.WORKER || ''; const PUSHKEY = HW.PUSH && HW.PUSH.key || '';
-  const unb64u = str => { str = str.replace(/-/g, '+').replace(/_/g, '/'); while (str.length % 4) str += '='; return Uint8Array.from(atob(str), c => c.charCodeAt(0)); };
-  const post = (path, body) => fetch(WORKER + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
-  V.alerts = {
-    available() { return !!WORKER && !!PUSHKEY && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; },
-    on() { return !!store.get('v5:alerts', false); },
-    prefs() { return Object.assign({ pre: true, close: true, final: true, inj: true }, store.get('v5:alertPrefs', {}) || {}); },
-    setPref(k, v) { const a = store.get('v5:alertPrefs', {}) || {}; a[k] = !!v; store.set('v5:alertPrefs', a); this.push(); },
-    why() { return store.get('v5:alertsWhy', '') || ''; },
-    /* every step that can fail says so in words: a silent failure here looks to anyone like a switch that won't stay on */
-    async enable() {
-      const fail = m => { store.set('v5:alertsWhy', m); toast(m); return false; };
-      store.set('v5:alertsWhy', '');
-      if (!WORKER || !PUSHKEY) return fail('Alerts need the RIVL server');
-      if (!('serviceWorker' in navigator)) return fail('This browser has no service worker');
-      if (!('PushManager' in window) || !('Notification' in window)) return fail(V.standalone && V.standalone() ? 'This browser cannot do push' : 'Add RIVL to your home screen first, then turn alerts on from there');
-      if (Notification.permission === 'denied') return fail('Notifications are blocked for RIVL. Allow them for RIVL in your phone\'s settings, then come back.');
-      let perm;
-      try { perm = await Notification.requestPermission(); } catch (e) { return fail('The permission prompt failed: ' + (e && e.message || e)); }
-      if (perm !== 'granted') return fail(perm === 'denied' ? 'You turned the prompt down. Allow notifications for RIVL in your phone\'s settings to change it.' : 'No answer to the permission prompt — tap the switch again');
-      let sub;
-      try {
-        const reg = await navigator.serviceWorker.ready;
-        sub = await reg.pushManager.getSubscription();
-        if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: unb64u(PUSHKEY) });
-      } catch (e) { return fail('Subscribing failed: ' + (e && (e.name ? e.name + ' — ' + e.message : e.message) || e)); }
-      if (!sub) return fail('No push subscription came back');
-      store.set('v5:alerts', true);
-      try { const r = await this.push({ quiet: false, sub }); if (r && r.ok === false) { store.set('v5:alerts', false); return fail('The server refused the subscription' + (r.error ? ': ' + r.error : '')); } }
-      catch (e) { store.set('v5:alerts', false); return fail("Couldn't reach the RIVL server: " + (e && e.message || e)); }
-      toast('Alerts on'); return true;
-    },
-    async disable() { store.set('v5:alerts', false); try { const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (sub) await post('/unsubscribe', { endpoint: sub.endpoint }); } catch { } toast('Alerts off'); },
-    async push({ quiet = true, sub: have = null } = {}) {
-      if (!this.on() || !this.available()) return null;
-      try { let sub = have; if (!sub) { const reg = await navigator.serviceWorker.ready; sub = await reg.pushManager.getSubscription(); } if (!sub) { if (!quiet) throw new Error('the subscription went missing'); return null; } const F = HW.favs.all(); const teams = ORDER.flatMap(k => (F[k] || []).map(id => `${k}:${id}`)); const players = V.fplayers.all().map(p => `${p.lk}:${p.id}`); return await post('/subscribe', { sub: sub.toJSON(), teams, players, prefs: this.prefs() }); }
-      catch (e) { if (!quiet) throw e; return null; }   // the background re-send stays silent; turning alerts on reports what went wrong
-    },
-    async test() { try { const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (!sub) { toast('Turn alerts on first'); return; } const r = await post('/test', { endpoint: sub.endpoint }); toast(r && r.ok ? 'Sent — it should land in a moment' : 'The server could not send it' + (r && r.error ? ': ' + r.error : '')); } catch (e) { toast("Couldn't reach the RIVL server: " + (e && e.message || e)); } },
-  };
-  let pushT = null; const repush = () => { clearTimeout(pushT); pushT = setTimeout(() => V.alerts.push(), 1500); };
-  document.addEventListener('rivl:fav', repush); document.addEventListener('rivl:follow', repush);
+  /* alerts were removed: no push, no subscriptions, nothing sent to the worker. A phone that had them on lets go of its
+     push subscription once, quietly. */
+  V.alerts = { available() { return false; }, on() { return false; } };
+  (async () => { try { if (!store.get('v5:alerts', false)) return; store.set('v5:alerts', false); const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch (e) { } })();
 
   /* ---------- sync: your follows and settings behind a six-character code ---------- */
   const KEYS = ['favs', 'v5:players', 'v5:prefs', 'v5:theme', 'v5:accent', 'v5:alertPrefs', 'v5:injcol'];
