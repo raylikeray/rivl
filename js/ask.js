@@ -105,7 +105,7 @@
       const rs = I.ents.filter(e => e.type === 'r' && e.r.g === g); const classes = [...new Set(rs.map(e => e.r.cls))].sort();
       const cls = cm && classes.includes('20' + cm[1]) ? '20' + cm[1] : classes[0];
       const top = rs.filter(e => e.r.cls === cls).sort((a, b) => (a.r.rank || 999) - (b.r.rank || 999)).slice(0, 10);
-      if (top.length) return { html: `<div class="xans"><span class="xk">Top ${girls ? 'girls' : 'boys'} recruits · Class of ${esc(cls)}</span><div class="xrecs">${top.map(e => `<a class="strow strec" href="#search" data-xq="${esc(e.name)}"><span class="strk">${e.r.rank || ''}</span><span class="stwho"><b>${esc(e.name)}</b><em>${esc([e.r.pos, e.r.ht, e.r.hs].filter(Boolean).join(' · '))}</em></span><span class="strc${e.r.commitTo ? ' on' : ''}">${esc(e.r.commitTo || 'Uncommitted')}</span></a>`).join('')}</div>${page('All recruits', 'Every class, boys and girls, in Stats', '#stats')}<p class="xsrc">Rankings: PrepRanks</p></div>`, kind: 'intent', f, rec: g };
+      if (top.length) return { html: `<div class="xans"><span class="xk">Top ${girls ? 'girls' : 'boys'} recruits · Class of ${esc(cls)}</span><div class="xrecs">${top.map(e => `<a class="strow strec" href="#search" data-xq="${esc(e.name)}"><span class="strk">${e.r.rank || ''}</span>${_.headshot(e.r.img || '', '#5B6B8C', 40, e.name)}<span class="stwho"><b>${esc(e.name)}</b><em>${esc([e.r.pos, e.r.ht, e.r.hs].filter(Boolean).join(' · '))}</em></span><span class="strc${e.r.commitTo ? ' on' : ''}">${esc(e.r.commitTo || 'Uncommitted')}</span></a>`).join('')}</div>${page('All recruits', 'Every class, boys and girls, in Stats', '#stats')}<p class="xsrc">Rankings: PrepRanks</p></div>`, kind: 'intent', f, rec: g };
     }
     if (!f.ps.length && !f.ts.length && !f.rs.length) {
       if (has(/ standing| table/)) return { html: page('Standings', 'Every table in your leagues', '#standings'), kind: 'page' };
@@ -179,10 +179,10 @@
 
   function recruitCard(e) {
     const r = e.r;
-    return card(`<div class="xwho"><span class="xrk">${r.rank ? '#' + r.rank : ''}</span><span><b>${esc(r.n)}</b><em>${esc([`Class of ${r.cls}`, r.pos, r.ht].filter(Boolean).join(' · '))}</em></span></div>`,
+    return card(`<div class="xwho">${_.headshot(r.img || '', '#5B6B8C', 52, r.n)}<span><b>${esc(r.n)}</b><em>${esc([r.rank ? `No. ${r.rank}` : '', `Class of ${r.cls}`, r.pos, r.ht].filter(Boolean).join(' · '))}</em></span></div>`,
       r.commitTo ? `Committed to <b>${esc(r.commitTo)}</b>${r.commitSince ? ` since ${esc(r.commitSince)}` : ''}.` : `${esc(r.status || 'Uncommitted')}${r.top && r.top.length ? `. Top schools: ${esc(r.top.join(', '))}.` : '.'}`,
       [['National rank', r.rank], ['Position', [r.pos, r.posRank ? `No. ${r.posRank} at the position` : ''].filter(Boolean).join(', ')], ['High school', r.hs], ['Hometown', r.home], ['Size', [r.ht, r.wt ? r.wt + ' lbs' : ''].filter(Boolean).join(', ')]],
-      'High-school players are minors: MSHQ shows their basketball only.', 'PrepRanks');
+      '', 'PrepRanks');
   }
 
   /* ---------- compare ---------- */
@@ -287,7 +287,7 @@
   function rowOf(e) {
     if (e.type === 'p') return `<a class="xrow" href="${pHref(e)}">${face(e, 42)}<span><b>${esc(e.name)}</b><em>${esc([e.team ? e.team.short || e.team.name : e.p.teamName, e.p.rookie ? 'Rookie' : e.p.pos, LNAME(e.lk)].filter(Boolean).join(' · '))}</em></span>${_.chev}</a>`;
     if (e.type === 't') return `<a class="xrow" href="${tHref(e)}">${crest(e.t, 38)}<span><b>${esc(e.t.name || e.t.short)}</b><em>${esc(LNAME(e.lk))} · Team</em></span>${_.chev}</a>`;
-    return `<a class="xrow" href="#search" data-xq="${esc(e.name)}"><span class="xrk sm">${e.r.rank ? '#' + e.r.rank : ''}</span><span><b>${esc(e.name)}</b><em>${esc([`Class of ${e.r.cls}`, e.r.pos, e.r.commitTo ? 'Committed: ' + e.r.commitTo : e.r.status].filter(Boolean).join(' · '))}</em></span>${_.chev}</a>`;
+    return `<a class="xrow" href="#search" data-xq="${esc(e.name)}">${_.headshot(e.r.img || "", "#5B6B8C", 42, e.name)}<span><b>${esc(e.name)}</b><em>${esc([e.r.rank ? `No. ${e.r.rank}` : '', `Class of ${e.r.cls}`, e.r.pos, e.r.commitTo ? 'Committed: ' + e.r.commitTo : e.r.status].filter(Boolean).join(' · '))}</em></span>${_.chev}</a>`;
   }
   async function run(q, filter) {
     const my = ++SEQ, res = document.getElementById('xres'), web = document.getElementById('xwebb'), br = document.getElementById('xbrowse'); if (!res) return;
