@@ -99,6 +99,14 @@
   /* ---------- answers from the app's own data ---------- */
   async function answer(I, q) {
     const f = findAll(I.ents, q), nq = f.nq, has = re => re.test(nq);
+    /* "top high school players", "best recruits", "class of 2028 girls": the recruit rankings, basketball only */
+    if (!f.rs.length && has(/high ?school|\bhs\b|recruit|prospect|class of 20\d\d|prep /)) {
+      const girls = has(/girl|women|woman|wbb|female/), cm = nq.match(/20(\d\d)/), g = girls ? 'girls' : 'boys';
+      const rs = I.ents.filter(e => e.type === 'r' && e.r.g === g); const classes = [...new Set(rs.map(e => e.r.cls))].sort();
+      const cls = cm && classes.includes('20' + cm[1]) ? '20' + cm[1] : classes[0];
+      const top = rs.filter(e => e.r.cls === cls).sort((a, b) => (a.r.rank || 999) - (b.r.rank || 999)).slice(0, 10);
+      if (top.length) return { html: `<div class="xans"><span class="xk">Top ${girls ? 'girls' : 'boys'} recruits · Class of ${esc(cls)}</span><div class="xrecs">${top.map(e => `<a class="strow strec" href="#search" data-xq="${esc(e.name)}"><span class="strk">${e.r.rank || ''}</span><span class="stwho"><b>${esc(e.name)}</b><em>${esc([e.r.pos, e.r.ht, e.r.hs].filter(Boolean).join(' · '))}</em></span><span class="strc${e.r.commitTo ? ' on' : ''}">${esc(e.r.commitTo || 'Uncommitted')}</span></a>`).join('')}</div>${page('All recruits', 'Every class, boys and girls, in Stats', '#stats')}<p class="xsrc">Rankings: PrepRanks</p></div>`, kind: 'intent', f, rec: g };
+    }
     if (!f.ps.length && !f.ts.length && !f.rs.length) {
       if (has(/ standing| table/)) return { html: page('Standings', 'Every table in your leagues', '#standings'), kind: 'page' };
       if (has(/ rookie/)) return { html: page('Rookie leaders', 'The new class, every category', '#stats'), kind: 'page' };

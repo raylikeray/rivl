@@ -3764,3 +3764,15 @@ html body .plh .plteam img{width:18px;height:18px;object-fit:contain;filter:drop
 html body .plh .plteam svg{width:13px;height:13px;margin-left:-1px;opacity:.85}
 .plfacts>a.plft{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;color:inherit;text-decoration:none}
 .plfacts>a.plft span{color:var(--accent,#1D9BF0)!important;font-weight:700!important}
+/* recruits board: commitment on the right, green when committed */
+.strec .strc{flex:none;max-width:42%;text-align:right;font-size:13px;font-weight:700;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strec .strc.on{color:#16A34A}
+.strec .stwho{min-width:0}
+/* home sections that hold a white list card are just a heading and the card: no panel, edge or shadow of their own */
+html:root body #main .hsec:has(> .gp),html:root body #main .hsec[data-sec="teams"],html:root body #main .hsec[data-sec="players"],html:root body #main .hsec[data-sec="injuries"],html:root body #main .hsec[data-sec="news"]{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+/* top-right settings button and the stats back button: flat like the rest of the app (the Edit pill look), no drop shadow */
+html:root body .top .ib[href="#settings"],html:root body header .ib[href="#settings"],html:root body .stback{background:var(--card)!important;color:var(--ink)!important;box-shadow:none!important;border:1px solid var(--card-line)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html:root body .ib[href="#settings"]{box-shadow:none!important;border:1px solid var(--card-line)!important;background:var(--card)!important}
+html:root body .ib[href="#settings"] svg{width:21px;height:21px;stroke-width:1.9}
+.xrecs{margin:6px -4px 4px}
+.xrecs .strow{padding-left:4px;padding-right:4px}

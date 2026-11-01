@@ -14,7 +14,8 @@ jobs:
           chunks=re.findall(r'self.__next_f.push\(\[1,"(.*?)"\]\)',s,re.S)
           j=''.join(chunks).encode().decode('unicode_escape',errors='ignore')
           print('RSC len',len(j))
-          for k in ['1eww6736sf9v','homeTeam','home_team','tipoff','startTime','start_time','score','"date"','tinybird','token']:
+          i=j.find('"1eww6736sf9v",{'); print('BLOCK'); print(j[i-2500:i+5000]); print('ENDBLOCK'); i=j.find('"teams":[{'); print(j[i:i+200])
+          for k in []:
             i=j.find(k); print('==',k,i); 
             if i>=0: print(j[max(0,i-600):i+900])
           i=s.find('tinybird'); print('== tinybird raw'); print(s[max(0,i-800):i+800])

@@ -30,7 +30,11 @@
     const maxG = Math.max(1, ...lg.players.map(p => (p.s || {}).gp || 0));
     const qual = p => { const s = p.s || {}; return (s.gp || 0) >= Math.max(1, Math.ceil(maxG * .5)) && (s.min || 0) >= (lk.startsWith('ncaa') ? 10 : 12); };
     let R = null; const getR = () => R ? Promise.resolve(R) : HW.rating.league(L).then(r => (R = r)).catch(() => null);
-    const tabs = [['players', 'Players'], ['teams', 'Teams']].concat(lg.players.some(p => p.rookie) ? [['rookies', 'Rookies']] : []);
+    const REC = await HW.hub.recruits().catch(() => null), recG = (lk === 'wnba' || lk === 'ncaaw') ? 'girls' : 'boys';
+    const recCls = REC && REC[recG] ? Object.keys(REC[recG]).filter(k => (REC[recG][k] || []).length).sort() : [];
+    let rcls = store.get('v5:strcls', recCls[0] || '');
+    if (!recCls.includes(rcls)) rcls = recCls[0] || '';
+    const tabs = [['players', 'Players'], ['teams', 'Teams']].concat(lg.players.some(p => p.rookie) ? [['rookies', 'Rookies']] : []).concat(recCls.length ? [['recruits', 'Recruits']] : []);
     let tab = tabs.some(t => t[0] === tab0) ? tab0 : 'players', board = board0;
     const note = lg.lastSeason ? `<p class="stnote">${esc(lg.label)} season. The new season's numbers take over once it has games.</p>` : '';
 
@@ -84,7 +88,16 @@
       return `<div class="stbar"><button class="gxib stback" data-act="stback" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></button><h1>${esc(c[1])}</h1></div>${pills}${note}${body}
         ${!isT && rows && rows.length > 1 ? `<button class="stcmp" data-xq="${esc(rows.slice(0, 3).map(x => x.p.n).join(' vs '))}">Compare the top three</button>` : ''}`;
     }
+    /* high-school recruits: basketball only (rank, position, size, school, commitment); tapping one opens the search card */
+    function recHTML() {
+      const list = (REC[recG][rcls] || []).slice().sort((a, b) => (a.rank || 999) - (b.rank || 999));
+      const pills = `<div class="chips stpills">${recCls.map(c => `<button class="chip${c === rcls ? ' on' : ''}" data-rcls="${esc(c)}" aria-pressed="${c === rcls}">Class of ${esc(c)}</button>`).join('')}</div>`;
+      const row = r => `<a class="strow strec" href="#search" data-xq="${esc(r.n)}"><span class="strk">${r.rank || ''}</span><span class="stwho"><b>${esc(r.n)}</b><em>${esc([r.pos, r.ht, r.hs].filter(Boolean).join(' · '))}</em></span><span class="strc${r.commitTo ? ' on' : ''}">${esc(r.commitTo ? r.commitTo.replace(/\s+(Hoosiers|Wildcats|Bears|Tigers|Bulldogs|Blue Devils|Tar Heels|Jayhawks|Spartans|Wolverines|Buckeyes|Huskies|Longhorns|Gators|Seminoles|Volunteers|Razorbacks|Crimson Tide|Trojans|Bruins|Ducks|Cardinals|Cougars|Mountaineers|Hurricanes|Gamecocks|Fighting Irish|Golden Eagles|Commodores|Rebels|Aggies|Sooners|Cyclones|Hawkeyes|Badgers|Boilermakers|Fighting Illini|Cornhuskers|Terrapins|Scarlet Knights|Nittany Lions|Orange|Yellow Jackets|Demon Deacons|Cavaliers|Hokies|Wolfpack|Panthers|Red Raiders|Horned Frogs|Mustangs|Buffaloes|Utes|Sun Devils|Wildcats)$/, '') : 'Uncommitted')}</span></a>`;
+      return `<div class="page-h"><h1>Stats</h1><p>Top high school ${recG === 'girls' ? 'girls' : 'boys'} recruits</p></div>${tabsHTML()}${pills}<div class="gxplate stboard">${list.map(row).join('')}</div><p class="stnote">Rankings from PrepRanks, a blend of the major recruiting services.</p>`;
+    }
+    const tabsHTML = () => `<div class="gxtabs sttabs" role="tablist">${tabs.map(([k, l]) => `<button class="chip${k === tab ? ' on' : ''}" data-stt="${k}" aria-pressed="${k === tab}">${l}</button>`).join('')}</div>`;
     function homeHTML() {
+      if (tab === 'recruits') return recHTML();
       const seg = `<div class="gxtabs sttabs" role="tablist">${tabs.map(([k, l]) => `<button class="chip${k === tab ? ' on' : ''}" data-stt="${k}" aria-pressed="${k === tab}">${l}</button>`).join('')}</div>`;
       const body = tab === 'teams' ? TCATS.map(c => tcard(c[0])).join('') || _.empty('No team numbers yet')
         : (tab === 'rookies' ? ROOK : CATS.map(c => c[0])).map(k => pcard(k, tab === 'rookies')).join('');
@@ -98,6 +111,8 @@
     if ($main._stClick) $main.removeEventListener('click', $main._stClick);
     $main.addEventListener('click', $main._stClick = e => {
       if (!$main.querySelector('.stpage')) return;
+      const rc = e.target.closest('[data-rcls]'); if (rc) { rcls = rc.dataset.rcls; store.set('v5:strcls', rcls); paint(); return; }
+      const rr = e.target.closest('.strec[data-xq]'); if (rr) { e.preventDefault(); store.set('v5:xq', rr.dataset.xq); store.set('v5:xf', 'all'); location.hash = '#search'; return; }
       const t = e.target.closest('[data-stt]'); if (t) { tab = t.dataset.stt; store.set('v5:sttab', tab); paint(); return; }
       const b = e.target.closest('[data-stb]'); if (b) { e.preventDefault(); const was = !!board; board = b.dataset.stb; store.set('v5:stboard:' + lk, board); paint(); if (!was) window.scrollTo(0, 0); return; }
       if (e.target.closest('[data-act="stback"]')) { board = ''; store.set('v5:stboard:' + lk, ''); paint(); window.scrollTo(0, 0); return; }
