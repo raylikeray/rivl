@@ -3454,3 +3454,9 @@ html body .plh .plshot{-webkit-mask-image:none!important;mask-image:none!importa
 html body .plh::after{display:none!important}
 html body .plh h1,html body .plh .pltx>p{text-shadow:0 1px 2px rgba(0,0,0,.55),0 4px 18px rgba(0,0,0,.55)}
 html body .plh .plshot.small{height:420px!important;bottom:0!important}
+/* one photo size for every player, small enough that ESPN's smaller photos aren't blown up; set before the photo
+   loads so nothing changes size after */
+html body .plh .plshot,html body .plh .plshot.small{height:430px!important;bottom:0!important}
+.gxpage.plpage{--gxh:calc(var(--gxbar) + 440px)!important}
+/* the Follow pill stays readable over a white jersey */
+.plh .flw{background:rgba(0,0,0,.34)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)!important;text-shadow:none!important}
