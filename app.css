@@ -4131,3 +4131,18 @@ html:root body .xtop .avbtn:has(.avimg){padding:2px!important}
 html:root body .xtop .avbtn .avimg{border:2px solid var(--bg);box-sizing:border-box}
 html:root body .xdav:has(.avimg){padding:2px;border-radius:50%;background:var(--avc,#1D9BF0)}
 html:root body .xdav .avimg{border:2px solid var(--bg);box-sizing:border-box}
+/* profile header, as rich as a team page's: the team colour lit from the top centre and falling to near-black, a lighter
+   and a darker lobe drifting on long loops, and the second colour as a soft glow travelling across. No crest. */
+html:root body .xpban{height:170px;background:radial-gradient(110% 95% at 50% 25%,color-mix(in srgb,var(--aw) 85%,#fff),var(--aw) 40%,color-mix(in srgb,var(--aw) 38%,#030406) 100%)!important}
+html:root body .xpw>i{filter:blur(48px)}
+html:root body .xpw>i:nth-child(1){background:color-mix(in srgb,var(--aw) 60%,#fff);width:75%;height:180%;left:-25%;top:-50%;opacity:.6;animation:sa 22s ease-in-out infinite}
+html:root body .xpw>i:nth-child(2){background:color-mix(in srgb,var(--aw) 40%,#000);width:85%;height:200%;right:-30%;top:-40%;opacity:.7;animation:sb2 26s ease-in-out infinite}
+html:root body .xpw>i:nth-child(3){background:color-mix(in srgb,var(--t2) 70%,transparent);width:55%;height:120%;left:20%;top:30%;opacity:.45;animation:ac2 19s ease-in-out infinite}
+html:root body .xpsb::before{opacity:.75;width:65%;height:150%;right:-20%;top:-10%}
+html:root body .xpban::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.28));pointer-events:none}
+html:root body .xprow{margin-top:-46px}
+/* the ring around your icon stays visible in dark mode even for a very dark team colour */
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) body .xtop .avbtn:has(.avimg),:root:not([data-theme="light"]) body .xdav:has(.avimg){background:color-mix(in srgb,var(--avc,#1D9BF0) 70%,#fff)!important}
+  :root:not([data-theme="light"]) body .xpav{background:color-mix(in srgb,var(--pc) 70%,#fff)!important} }
+:root[data-theme="dark"] body .xtop .avbtn:has(.avimg),:root[data-theme="dark"] body .xdav:has(.avimg){background:color-mix(in srgb,var(--avc,#1D9BF0) 70%,#fff)!important}
+:root[data-theme="dark"] body .xpav{background:color-mix(in srgb,var(--pc) 70%,#fff)!important}

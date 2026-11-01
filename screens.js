@@ -1294,11 +1294,16 @@
          overlapping it in a team-colour ring, your name and team, your counts, then your teams and players. "Edit profile"
          opens a sheet to change the header, the photo, the name and number, and the jersey team. */
       const banner = store.get('v5:banner', ''), tlogo = pick && pick.t.logo || '';
+      /* a very dark team colour (navy, black) is lifted in lightness, keeping its hue, so the moving header glows like a team page's */
+      const vivid = c => { const m = /^#?([0-9a-f]{6})$/i.exec(String(c || '')); if (!m) return c; const n = parseInt(m[1], 16); let r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+        const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let h = 0, sa = 0, l = (mx + mn) / 2; const d = mx - mn;
+        if (d) { sa = d / (1 - Math.abs(2 * l - 1)); h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+        if (l >= .3) return c; l = .34; sa = sa < .05 ? 0 : Math.max(sa, .55); return `hsl(${Math.round(h)} ${Math.round(sa * 100)}% ${Math.round(l * 100)}%)`; };
       const avHTML = photo ? `<img src="${esc(photo)}" alt="Your photo">` : `<span class="xpini" style="background:${esc(main)};color:${esc(ink)}">${esc((name || '').trim().charAt(0).toUpperCase() || '+')}</span>`;
-      const banHTML = banner ? `<img class="xpbimg" src="${esc(banner)}" alt="">` : `<span class="xpw"><i></i><i></i></span><span class="xpsb"></span>${tlogo ? `<img class="xpbwm" src="${esc(tlogo)}" alt="">` : ''}`;   // your team's colour moving, the way a team page's header does
+      const banHTML = banner ? `<img class="xpbimg" src="${esc(banner)}" alt="">` : `<span class="xpw"><i></i><i></i><i></i></span><span class="xpsb"></span>`;   // your team's colour moving, the way a team page's header does
       const cam = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
       $main.innerHTML = `<div class="pfpage xprof" style="--pc:${esc(main)};--pc2:${esc(trim)}">
-        <div class="xpban" style="--aw:${esc(main)};--t2:${esc(trim)}">${banHTML}<a class="xpback" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>
+        <div class="xpban" style="--aw:${esc(vivid(main))};--t2:${esc(trim)}">${banHTML}<a class="xpback" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>
         <div class="xprow"><span class="xpav">${avHTML}</span><button class="xpedit" data-act="xpopen">Edit profile</button></div>
         <div class="xpid"><h1>${esc(name || 'Your name')}</h1><p class="xpteam">${pick ? `${tlogo ? `<img src="${esc(tlogo)}" alt="">` : ''}${esc(pick.t.name || pick.t.short)}${num ? ` · #${esc(num)}` : ''}` : 'Pick your team in Edit profile'}</p>
           <p class="xpst"><a href="#teams"><b>${teams.length}</b> Teams</a><a href="#players"><b>${fp.length}</b> Players</a></p></div>
