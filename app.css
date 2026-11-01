@@ -3710,3 +3710,6 @@ html body .vhero.pic.ready h1{text-shadow:0 2px 12px rgba(0,0,0,.45)}
 html body .vhero .sub{letter-spacing:.06em;opacity:.7}
 html body .vhero:not(.pic) .facts span,html body .vhero.pic:not(.ready) .facts span{background:var(--surf-2)!important;box-shadow:none!important;color:var(--ink)}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .vhero:not(.pic),:root:not([data-theme="dark"]) .vhero.pic:not(.ready){color:var(--ink)} }
+/* top bar buttons app-wide: flat round buttons in the card colour (the game, team and player pages' style), no glass, no glow */
+html body .topbar .ib,html body .topbar .sp .ib{width:40px!important;height:40px!important;background:var(--card)!important;border:1px solid var(--card-line)!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;color:var(--ink)!important}
+html body .topbar .ib svg{width:19px!important;height:19px!important}
