@@ -254,6 +254,7 @@
   function toast(msg) { $toast.textContent = msg; $toast.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => $toast.classList.remove('on'), Math.min(9000, 1800 + String(msg).length * 55)); }   // a sentence needs longer on screen than a word
   V.toast = toast; V.rerender = () => render(); V.route = () => current;
   V.refreshAll = async () => { try { HW.cache.clear(); } catch { } await render(); poll(); };
+  const flwHTML = (on, what) => window.RIVL_flw(on, what);
   document.addEventListener('click', e => {
     const back = e.target.closest('[data-act="back"]');
     if (back) { if (history.length > 1) { e.preventDefault(); history.back(); } return; }
@@ -269,7 +270,8 @@
       act.setAttribute('aria-pressed', String(on)); act.classList.toggle('on', on);
       const star = act.classList.contains('star') ? act : act.querySelector('.star'); if (star && on) { star.classList.add('pop'); setTimeout(() => star.classList.remove('pop'), 450); }   // the star pops as it fills, at the tap
       if (on && navigator.vibrate) { try { navigator.vibrate(8); } catch { } }   // a tick under the thumb on phones that can (Android); iOS ignores it
-      if (act.classList.contains('prow')) { const st = act.querySelector('.star'); if (st) { st.classList.toggle('on', on); st.innerHTML = on ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`; } }   // a setup row: the row is the button, only its star changes
+      if (act.classList.contains('flw')) { act.innerHTML = flwHTML(on, 'player'); act.setAttribute('aria-label', (on ? 'Unfollow ' : 'Follow ') + (snap.name || '')); }
+      else if (act.classList.contains('prow')) { const st = act.querySelector('.star'); if (st) { st.classList.toggle('on', on); st.innerHTML = on ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`; } }   // a setup row: the row is the button, only its star changes
       else if (act.classList.contains('star')) { act.innerHTML = on ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`; act.setAttribute('aria-label', (on ? 'Unfollow ' : 'Follow ') + (snap.name || '')); }
       else act.innerHTML = (on ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`) + (on ? 'Following' : 'Follow');
       toast(on ? `Following ${snap.short || snap.name}` : `Unfollowed ${snap.short || snap.name}`);
@@ -305,7 +307,8 @@
       act.setAttribute('aria-pressed', String(on)); act.classList.toggle('on', on);
       const star = on ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`;
       // a setup tile keeps its logo, name and record; only its check changes. Stars and the hero button redraw.
-      if (!act.classList.contains('onb-team')) act.innerHTML = act.classList.contains('star') ? star : star + (on ? 'Following' : 'Follow');
+      if (act.classList.contains('flw')) act.innerHTML = flwHTML(on, 'team');
+      else if (!act.classList.contains('onb-team')) act.innerHTML = act.classList.contains('star') ? star : star + (on ? 'Following' : 'Follow');
       toast(on ? `Following ${act.dataset.name || 'team'}` : `Unfollowed ${act.dataset.name || 'team'}`);
       $main.dispatchEvent(new CustomEvent('rivl:fav')); $panel.dispatchEvent(new CustomEvent('rivl:fav')); document.dispatchEvent(new CustomEvent('rivl:fav'));
     }
