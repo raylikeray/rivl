@@ -3966,16 +3966,18 @@ html:root body .top.xtop{grid-template-columns:44px 1fr 44px}
   html:root body .tabs.flat5 .tab span{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important}
   html:root body .tabs.flat5 .tab svg{width:27px!important;height:27px!important}
 }
-/* league switch: the page slides sideways, like X's tabs */
-#main.fade[data-dir="r"]{animation:slidein-r .3s cubic-bezier(.25,.8,.25,1) both}
-#main.fade[data-dir="l"]{animation:slidein-l .3s cubic-bezier(.25,.8,.25,1) both}
+/* league switch, like X's tabs: a pager. The old page slides fully off one side while the new one slides in from the
+   other, both solid (no see-through crossfade, so nothing doubles up), on one shared curve. */
+html,body{overflow-x:clip}
+#main.fade[data-dir="r"]{animation:pagein-r .34s cubic-bezier(.32,.72,0,1) both}
+#main.fade[data-dir="l"]{animation:pagein-l .34s cubic-bezier(.32,.72,0,1) both}
 #main.fade[data-dir]>*{animation:none!important}
-.xghost.out[data-dir="r"]{animation:slideout-l .26s cubic-bezier(.4,0,.6,1) both}
-.xghost.out[data-dir="l"]{animation:slideout-r .26s cubic-bezier(.4,0,.6,1) both}
-@keyframes slidein-r{from{opacity:0;transform:translate3d(48px,0,0)}to{opacity:1;transform:none}}
-@keyframes slidein-l{from{opacity:0;transform:translate3d(-48px,0,0)}to{opacity:1;transform:none}}
-@keyframes slideout-l{from{opacity:1;transform:none}to{opacity:0;transform:translate3d(-48px,0,0)}}
-@keyframes slideout-r{from{opacity:1;transform:none}to{opacity:0;transform:translate3d(48px,0,0)}}
+.xghost.out[data-dir="r"]{animation:pageout-l .34s cubic-bezier(.32,.72,0,1) both}
+.xghost.out[data-dir="l"]{animation:pageout-r .34s cubic-bezier(.32,.72,0,1) both}
+@keyframes pagein-r{from{transform:translate3d(100%,0,0)}to{transform:none}}
+@keyframes pagein-l{from{transform:translate3d(-100%,0,0)}to{transform:none}}
+@keyframes pageout-l{from{transform:none}to{transform:translate3d(-100%,0,0)}}
+@keyframes pageout-r{from{transform:none}to{transform:translate3d(100%,0,0)}}
 @media (prefers-reduced-motion:reduce){ #main.fade[data-dir],.xghost.out[data-dir]{animation:none!important} }
 /* X's line under the chosen tab: thin, black, rounded */
 html:root body #pills.pills::after{height:3px!important;bottom:0}

@@ -94,7 +94,7 @@
       $main.classList.remove('fade', 'enter'); $main.classList.add('hold');
       const fadeIn = () => { clearTimeout(render.holdT); $main.classList.remove('hold', 'fade', 'enter'); void $main.offsetWidth; $main.classList.add('fade', 'enter'); document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); }); };   // the snapshot lets go only now, so the two cross
       render.onReal = fadeIn;
-      render.holdT = setTimeout(() => { if (render.onReal === fadeIn && my === seq) { render.onReal = null; V.showSkeleton(); fadeIn(); render.onReal = () => { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); }; } }, 260);
+      render.holdT = setTimeout(() => { if (render.onReal === fadeIn && my === seq) { render.onReal = null; V.showSkeleton(); fadeIn(); render.onReal = () => { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); }; } }, dir ? 110 : 260);   // a league swipe starts moving almost at once, as X's does
     }
     if (leagueChanged) {
       /* A league switch is a new screen, not the old one refreshed: the old league never stays on screen while the new one
@@ -140,7 +140,7 @@
     const r = $main.getBoundingClientRect(); if (!r.width || !r.height) return;
     const g = document.createElement('div'); g.className = 'xghost'; g.setAttribute('aria-hidden', 'true');
     g.style.cssText = `left:${r.left}px;width:${r.width}px`;
-    const c = $main.cloneNode(true); c.removeAttribute('id'); c.className = ''; c.style.cssText = `transform:translateY(${r.top}px)`;
+    const c = $main.cloneNode(true); c.removeAttribute('id'); c.className = ''; const cs = getComputedStyle($main); c.style.cssText = `transform:translateY(${r.top}px);padding:${cs.padding};margin:0;width:${r.width}px;box-sizing:border-box`;   // the copy keeps the page's own padding, so it sits exactly over the real page (no few-pixel shift)
     g.appendChild(c); document.body.appendChild(g);
     /* a copy starts every sideways strip at its left end, so the date strip (and any rail) jumped inside the fading copy.
        Put each one back where it was. */
