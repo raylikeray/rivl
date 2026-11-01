@@ -871,10 +871,21 @@
      rendering, but on the phone the GPU had to raster those layers as the slide began and the tiles it hadn't finished showed
      as the page's white — the flash Ray saw. The slide now stays on the ordinary paint path and the paint is kept cheap
      instead: no grain on anything that moves (the bands, the roster block), layout contained to each card. */
+  /* open and close by animating the measured height (one smooth slide, contents fading with it) instead of a grid-row
+     transition, which stuttered on the phone with a long roster inside */
   function foldToggle(head, open) {
     const fold = head.nextElementSibling; if (!fold || !fold.classList.contains('fold')) return;
-    head.setAttribute('aria-expanded', String(open)); fold.classList.toggle('closed', !open);
-    if (open) { fold.classList.add('opening'); setTimeout(() => fold.classList.remove('opening'), 500); fold.querySelectorAll('img[loading="lazy"]').forEach(i => { i.loading = 'eager'; }); }
+    head.setAttribute('aria-expanded', String(open));
+    if (fold._anim) { fold._anim.cancel(); fold._anim = null; }
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const from = fold.getBoundingClientRect().height;
+    fold.classList.toggle('closed', !open);
+    if (open) fold.querySelectorAll('img[loading="lazy"]').forEach(i => { i.loading = 'eager'; });
+    if (reduce || !fold.animate) return;
+    fold.classList.add('anim');
+    const to = open ? fold.scrollHeight : 0;
+    const a = fold.animate([{ height: from + 'px', opacity: open ? .4 : 1 }, { height: to + 'px', opacity: open ? 1 : .2 }], { duration: open ? 320 : 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    fold._anim = a; a.onfinish = a.oncancel = () => { fold.classList.remove('anim'); if (fold._anim === a) fold._anim = null; };
   }
   function dragOrder(list, onChange) {
     if (!list || list.dataset.drag) return; list.dataset.drag = '1';
@@ -928,6 +939,8 @@
     const sections = rosters.filter(Boolean).map(r => ({ key: r.team.id, team: r.team, rows: r.players.slice().sort(byLine), open: false }));
     const missing = mine.filter((id, i) => !rosters[i]);
     const shown = () => new Set(sections.flatMap(s => s.rows.map(p => p.id)));
+    /* the Following block on its own, so a follow can swap just this block instead of repainting the whole list */
+    const folHTML = () => { const fl = fplayers.all().filter(p => p.lk === lk); return `<div class="ppfol">${fl.length ? sec('Following', `${fl.length}`, fl.length > 1 ? `<button data-pp="order" aria-pressed="${!!paint.order}">${paint.order ? 'Done' : 'Reorder'}</button>` : '') + `<div class="tgrp plain"><div class="rows${paint.order ? ' ordering' : ''}" data-order="players">${fl.map(p => playerRow(p, { sub: p.team || '', on: true, select, order: !!paint.order })).join('')}</div></div>` : ''}</div>`; };
     const paint = (only) => {   // only === 'leaders': swap just the leaders block, the rest of the list stays as it is
       const q = inp.value.trim().toLowerCase();
       const fset = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id));
@@ -942,7 +955,7 @@
         const teams = Object.values(idx).filter(t => `${t.name} ${t.short} ${t.abbr}`.toLowerCase().includes(q) && !sections.some(s => s.key === t.id)).sort((a, b) => (a.short || '').localeCompare(b.short || '')).slice(0, 5);
         if (teams.length) parts.push(sec('Teams', 'tap to see the roster') + `<div class="tgrp plain"><div class="rows">${teams.map(t => `<button class="row" data-pp="browse" data-id="${esc(t.id)}">${logo(t.logo)}<span class="t"><b>${esc(t.name)}</b><span>Show the roster</span></span>${chev}</button>`).join('')}</div></div>`);
       }
-      if (following && !q) { const fl = fplayers.all().filter(p => p.lk === lk); if (fl.length) parts.push(sec('Following', `${fl.length}`, fl.length > 1 ? `<button data-pp="order" aria-pressed="${!!paint.order}">${paint.order ? 'Done' : 'Reorder'}</button>` : '') + `<div class="tgrp plain"><div class="rows${paint.order ? ' ordering' : ''}" data-order="players">${fl.map(p => playerRow(p, { sub: p.team || '', on: true, select, order: !!paint.order })).join('')}</div></div>`); }
+      if (following && !q) parts.push(folHTML());
       sections.forEach(s => {
         const rows = q ? s.rows.filter(p => `${p.name} ${s.team.name} ${s.team.abbr}`.toLowerCase().includes(q)) : s.rows; if (!rows.length) return;
         const folded = !q && !!(store.get('v5:ppcol', {}) || {})[s.key];   // a search always opens every team
@@ -985,7 +998,15 @@
       else if (b.dataset.pp === 'browse') { b.querySelector('.t span').textContent = 'Loading…'; const r = await rosterOf(L, b.dataset.id, idx).catch(() => null); if (r) { sections.push({ key: r.team.id, team: r.team, rows: r.players.slice().sort(byLine), open: true }); inp.value = ''; } paint(); }
     });
     const sync = (e) => { if (!el.isConnected) { document.removeEventListener('rivl:follow', sync); return; } if (e && e.detail && e.detail.reorder) return;
-      const fs = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('.thead.pp-team').forEach(h => { const body = h.nextElementSibling; const all = body ? [...body.querySelectorAll('[data-act="follow-player"]')] : []; const picked = all.map(b => { try { return JSON.parse(b.dataset.snap); } catch { return null; } }).filter(x => x && fs.has(String(x.id))); const sm = h.querySelector('.tt small'); if (sm) sm.innerHTML = bandLine(all.length, picked.length); const old = h.querySelector('.faces'); const fresh = faces(picked); if (old) old.remove(); if (fresh) h.querySelector('.chev').insertAdjacentHTML('beforebegin', fresh); }); const fset = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('[data-act="follow-player"]').forEach(b => { let id = ''; try { id = JSON.parse(b.dataset.snap).id; } catch { } const on = fset.has(String(id)), was = b.classList.contains('on'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); const st = b.classList.contains('star') ? b : b.querySelector('.star'); if (st) { st.classList.toggle('on', on); st.innerHTML = on ? starSvg : starLine; if (on && !was) { st.classList.add('pop'); setTimeout(() => st.classList.remove('pop'), 450); } } }); if (following && !inp.value) paint(); };
+      const fs = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('.thead.pp-team').forEach(h => { const body = h.nextElementSibling; const all = body ? [...body.querySelectorAll('[data-act="follow-player"]')] : []; const picked = all.map(b => { try { return JSON.parse(b.dataset.snap); } catch { return null; } }).filter(x => x && fs.has(String(x.id))); const sm = h.querySelector('.tt small'); if (sm) sm.innerHTML = bandLine(all.length, picked.length); const old = h.querySelector('.faces'); const fresh = faces(picked); if (old) old.remove(); if (fresh) h.querySelector('.chev').insertAdjacentHTML('beforebegin', fresh); }); const fset = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('[data-act="follow-player"]').forEach(b => { let id = ''; try { id = JSON.parse(b.dataset.snap).id; } catch { } const on = fset.has(String(id)), was = b.classList.contains('on'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); const st = b.classList.contains('star') ? b : b.querySelector('.star'); if (st) { st.classList.toggle('on', on); st.innerHTML = on ? starSvg : starLine; if (on && !was) { st.classList.add('pop'); setTimeout(() => st.classList.remove('pop'), 450); } } }); if (following && !inp.value) {
+        /* swap only the Following block, and hold the row you tapped where it was: the block above it growing or
+           shrinking by a row used to shove the whole list down a row under your thumb */
+        const cur = list.querySelector('.ppfol'); if (!cur || paint.order) { paint(); return; }
+        const anchorEl = sync.tap && sync.tap.isConnected && !cur.contains(sync.tap) ? sync.tap : null; const y0 = anchorEl ? anchorEl.getBoundingClientRect().top : 0;
+        const t = document.createElement('div'); t.innerHTML = folHTML(); cur.replaceWith(t.firstElementChild);
+        if (anchorEl) { const d = anchorEl.getBoundingClientRect().top - y0; if (d) window.scrollBy(0, d); }
+      } };
+    el.addEventListener('pointerdown', e => { const b = e.target.closest('[data-act="follow-player"]'); if (b) sync.tap = b; }, true);
     document.addEventListener('rivl:follow', sync);
   }
   async function players(lk) {

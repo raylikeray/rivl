@@ -3204,3 +3204,28 @@ html body .hs.plain{background:var(--disc-plain,#3A3D44)!important}
 html body .hs::after,html body .hs::before,html body .pl .hs::before,html body .pl .hs::after{display:none!important}
 html body .hs i{background:none!important;text-shadow:none!important}
 html body .frow .fface::before,html body .frow .fface::after{display:none!important}
+/* folds slide by a measured height (see foldToggle); while sliding the contents stay laid out and visible */
+.fold{transition:none!important}
+.fold.anim{overflow:hidden;grid-template-rows:1fr!important}
+.fold.anim>*{visibility:visible!important;transition:none!important}
+.fold.opening > .rows,.fold.opening > * > .row{animation:none!important}
+.ppfol .tgrp,.ppfol .row{animation:none!important}
+
+/* Players: team groups as X-style cards. No coloured band: the crest bare, the name, the count in gray, the picked
+   players as flat team-colour discs overlapping, and a chevron. The roster opens inside the same card. */
+html body .pp .tgrp:not(.plain){background:var(--card)!important;border:1px solid var(--card-line)!important;border-radius:22px!important;overflow:hidden;box-shadow:none!important}
+html body .pp .tgrp > .thead.pp-team{background:none!important;background-image:none!important;box-shadow:none!important;border:0!important;color:var(--ink)!important;padding:14px 16px!important;min-height:0;gap:12px;filter:none!important}
+html body .pp .tgrp > .thead.pp-team::before,html body .pp .tgrp > .thead.pp-team::after{display:none!important}
+html body .pp .tgrp > .thead.pp-team .logo{width:32px!important;height:32px!important;background:none!important;box-shadow:none!important;border-radius:0!important;padding:0!important}
+html body .pp .tgrp > .thead.pp-team .tt b{color:var(--ink)!important;font-size:17px;font-weight:700;text-shadow:none!important}
+html body .pp .tgrp > .thead.pp-team .tt small,html body .pp .tgrp > .thead.pp-team .tt small em{color:var(--ink-3)!important;font-style:normal;font-weight:500;font-size:13px;text-shadow:none!important}
+html body .pp .tgrp > .thead.pp-team .faces{display:flex;align-items:center;margin-left:auto}
+html body .pp .tgrp > .thead.pp-team .faces i{width:30px!important;height:30px!important;border-radius:50%;overflow:hidden;position:relative;background:var(--tc,#3A3D44)!important;box-shadow:0 0 0 2px var(--card)!important;margin-left:-8px;display:grid;place-items:center}
+html body .pp .tgrp > .thead.pp-team .faces i:first-child{margin-left:0}
+html body .pp .tgrp > .thead.pp-team .faces i b{font-size:10px;color:#fff;position:absolute}
+html body .pp .tgrp > .thead.pp-team .faces i img{position:relative;z-index:1;width:100%;height:100%;object-fit:cover;object-position:top}
+html body .pp .tgrp > .thead.pp-team .faces u{text-decoration:none;font-size:13px;font-weight:600;color:var(--ink-3)!important;margin-left:6px}
+html body .pp .tgrp > .thead.pp-team .chev{color:var(--ink-3)!important;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+html body .pp .tgrp > .thead.pp-team[aria-expanded=true]{border-bottom:1px solid var(--line)!important}
+html body .pp .tgrp > .thead.pp-team .chev{transform:none!important}
+html body .pp .faces i:has(img) b{display:none}
