@@ -12,7 +12,7 @@
     const hideBar = () => { clearTimeout(barT); if (bar) bar.classList.remove('on'); $main.removeAttribute('aria-busy'); };
     /* real content is on screen: the bar goes, the slow note is off, and a new screen lands at its remembered scroll */
     let pendingSkel = '';
-    const settle = () => { $main.dataset.real = '1'; pendingSkel = ''; clearTimeout(slowT); const sl = $main.querySelector('.slow'); if (sl) sl.remove(); hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; const y = +$main.dataset.y || 0; window.scrollTo(0, y); if (y) requestAnimationFrame(() => window.scrollTo(0, y)); } if (render.onReal) { const f = render.onReal; render.onReal = null; f(); } };
+    const settle = () => { $main.dataset.real = '1'; pendingSkel = ''; clearTimeout(slowT); const sl = $main.querySelector('.slow'); if (sl) sl.remove(); hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; const y = +$main.dataset.y || 0; window.scrollTo(0, y); if (y) requestAnimationFrame(() => window.scrollTo(0, y)); requestAnimationFrame(() => requestAnimationFrame(() => { $main.style.minHeight = ''; })); } if (render.onReal) { const f = render.onReal; render.onReal = null; f(); } };
     /* a slow load: the skeleton that was swallowed while the old screen was kept is painted after all, so the hold never ends in a blank */
     V.showSkeleton = () => { if (!pendingSkel) return false; const s = pendingSkel; pendingSkel = ''; proto.set.call($main, s); $main.dataset.real = '0'; return true; };
     V.busy = on => on ? showBar() : hideBar();   // for views that patch themselves in place and have no paint to hang the bar on
@@ -76,6 +76,10 @@
     // a page that starts at the top goes there now, before its skeleton replaces the old screen — otherwise the old scroll
     // position clamps as the document shrinks and the eye sees two moves instead of one
     const fresh = render.key !== key;
+    /* hold the page's height through the switch: while the new screen loads, a shorter page would clamp the scroll and the
+       header with the league switch would drop in and slide back out (the hitch between tabs). Released once the new
+       screen has landed at its scroll. */
+    if (fresh && render.key) { $main.style.minHeight = $main.offsetHeight + 'px'; clearTimeout(render.mhT); render.mhT = setTimeout(() => { $main.style.minHeight = ''; }, 1500); }
     clearTimeout(render.holdT); render.onReal = null;
     if (fresh && MOTION()) {
       /* a crossfade, not a blink: a snapshot of the old screen is laid over the page and fades out while the new screen, held
@@ -451,7 +455,7 @@
     const cls = /out/i.test(st) ? 'out' : /day|quest|doubt/i.test(st) ? 'q' : /prob|avail/i.test(st) ? 'ok' : '';
     const what = [det.type, det.detail && det.detail !== det.type ? det.detail : '', det.side && det.side !== 'Not Specified' ? det.side.toLowerCase() : '', det.location && det.location !== det.type ? det.location : ''].filter(Boolean).join(', ');
     const ret = V._.retInfo(L, det.returnDate);
-    const rows = [['Status', `<span class="tag ${cls}">${esc(V._.statusWord(st))}</span>`], ['Injury', esc(what || '—')], ['Reported', x.date ? esc(new Date(x.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: HW.TZ })) : ''], ['Expected back', ret ? esc(ret.long) : (/out/i.test(st) ? 'No date given' : '')], ['Fantasy', det.fantasyStatus && det.fantasyStatus.description ? esc(det.fantasyStatus.description) : '']].filter(([, v]) => v);
+    const rows = [['Status', `<span class="tag ${cls}">${esc(String(st || '').replace(/\bDay[- ]To[- ]Day\b/i, 'Day to day').replace(/\bGame Time Decision\b/i, 'Game-time decision'))}</span>`], ['Injury', esc(what || '—')], ['Reported', x.date ? esc(new Date(x.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: HW.TZ })) : ''], ['Expected back', ret ? esc(ret.long) : (/out/i.test(st) ? 'No date given' : '')], ['Fantasy', det.fantasyStatus && det.fantasyStatus.description ? esc(det.fantasyStatus.description) : '']].filter(([, v]) => v);
     const note = x.longComment || x.shortComment || '';
     const ib = V._.injBody(L, x, false); const tl = team.logo || (team.id && HW.S && HW.S.tIdx && HW.S.tIdx[team.id] && HW.S.tIdx[team.id].logo) || '';
     const who = `${V._.headshot(V._.hsUrl(at) || at.headshot || '', V._.teamColor(team, L), 56, at.displayName)}<span><b>${esc(at.displayName || '')}</b><em>${tl ? V._.imgSized(tl, 48, 48) : ''}${esc(team.short || '')}</em></span>`;

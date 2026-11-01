@@ -2468,9 +2468,9 @@ html.gxon body::before{display:none}
 .pld em{font-style:normal;font-size:12.5px;font-weight:600;color:var(--ink-3);white-space:nowrap;background:var(--bg);padding:0 2px}
 .plc{border-radius:18px;padding:14px 16px;background:var(--surf);box-shadow:var(--edge)}
 .gpl.sc .plc{background:linear-gradient(135deg,color-mix(in srgb,var(--pc) 22%,var(--surf)),var(--surf) 70%);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pc) 35%,transparent)}
-.plh{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.plh b{font-size:17px;font-weight:800}
-.plh .logo{width:24px;height:24px}
+.plhd{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.plhd b{font-size:17px;font-weight:800}
+.plhd .logo{width:24px;height:24px}
 .plb{display:flex;align-items:flex-start;gap:12px;margin-top:10px}
 .plb p{margin:0;font-size:15.5px;line-height:1.45;color:var(--ink-2)}
 .pcf{position:relative;flex:none}
@@ -3724,3 +3724,13 @@ html body .rcard .rtx .rij{align-self:flex-start;display:inline-flex;align-items
   background:rgba(0,0,0,.55)!important;color:#fff!important;font-style:normal;font-size:11.5px;font-weight:700;letter-spacing:.01em;white-space:nowrap;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 html body .rcard .rij u{width:7px;height:7px;border-radius:50%;background:#FFB020;flex:none}
 html body .rcard .rij.out u{background:#FF4D55}
+
+/* roster card injury tag sits on the top row next to PPG, off the face */
+html body .rcard .rtop .rij{display:inline-flex;align-items:center;gap:5px;margin:0;padding:4px 9px 4px 7px;border-radius:999px;
+  background:rgba(0,0,0,.42)!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff!important;font-style:normal;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:none}
+/* play timeline dots: solid team colour with a lighter ring and a soft drop shadow so they stand off the page (sized to fit the 48px lane) */
+.gxpage .pld .dot,.pld .dot{width:36px;height:36px;margin-top:2px;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--pc) 72%,#fff),var(--pc) 65%);
+  box-shadow:0 0 0 3px var(--bg),0 0 0 6px color-mix(in srgb,var(--pc) 40%,var(--bg)),0 5px 10px -2px color-mix(in srgb,var(--pc) 55%,transparent)}
+.pld .dot i{width:11px;height:11px;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.gpl.sc .pld .dot{box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--pc),0 5px 12px -2px color-mix(in srgb,var(--pc) 60%,transparent)}
+.pld em{margin-top:2px}

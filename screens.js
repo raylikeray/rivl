@@ -313,7 +313,7 @@
     const altC = V._.teamAlt({ id: String(id), alt: t0.alternateColor }, L) || color;
     const rCard = a => { const p = ppg[a.id]; const pos = posWord(a.position && a.position.abbreviation); const hs = hsUrl(a); const ij = ilBy[String(a.id)]; const ijc = ij ? (/out/i.test(ij) ? 'out' : 'q') : '';
       const nm = a.shortName || ((n => n.length > 1 ? `${n[0][0]}. ${n.slice(1).join(' ')}` : n.join(' '))((a.displayName || '').split(/\s+/))); const ini = (a.displayName || '').split(/\s+/).map(w => w[0] || '').slice(0, 2).join('');
-      return `<a class="rcard" href="${href.player(lk, a.id)}" style="--rc:${esc(color)};--rc2:${esc(altC)}">${lg ? `<img class="rwm" src="${esc(lg)}" alt="" loading="lazy" decoding="async">` : ''}${hs ? `<img class="rhs" src="${esc(hs)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : `<b class="rini">${esc(ini)}</b>`}<span class="rtop">${p && p.pts != null ? `<i class="rppg">${(+p.pts).toFixed(1)}<small>PPG</small></i>` : '<i></i>'}</span><span class="rtx">${ij ? `<i class="rij ${ijc}"><u></u>${esc(V._.statusWord(ij) || 'Injured')}</i>` : ''}<b>${esc(nm)}</b><small>${esc([pos, a.jersey ? `#${a.jersey}` : ''].filter(Boolean).join(' · '))}</small></span></a>`; };
+      return `<a class="rcard" href="${href.player(lk, a.id)}" style="--rc:${esc(color)};--rc2:${esc(altC)}">${lg ? `<img class="rwm" src="${esc(lg)}" alt="" loading="lazy" decoding="async">` : ''}${hs ? `<img class="rhs" src="${esc(hs)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : `<b class="rini">${esc(ini)}</b>`}<span class="rtop">${p && p.pts != null ? `<i class="rppg">${(+p.pts).toFixed(1)}<small>PPG</small></i>` : '<i></i>'}${ij ? `<i class="rij ${ijc}"><u></u>${esc(V._.statusWord(ij) || 'Inj')}</i>` : ''}</span><span class="rtx"><b>${esc(nm)}</b><small>${esc([pos, a.jersey ? `#${a.jersey}` : ''].filter(Boolean).join(' · '))}</small></span></a>`; };
     const rRail = l => `<div class="rrail">${l.map(rCard).join('')}</div>`;
     const groups = [['Guard', 'Guards'], ['Forward', 'Forwards'], ['Center', 'Centers'], ['', 'Others']].map(([k, h]) => [h, sorted.filter(a => (posWord2(a.position && a.position.abbreviation) || '') === k)]).filter(([, l]) => l.length);
     // schedule rows: when, vs or at, the crest and name, then the time, the clock or the result
@@ -615,7 +615,7 @@
     const face = who ? `<a class="pcf" href="${href.player(lk, aid)}">${headshot(who.hs, c, 48, who.name)}${who.jersey ? `<i style="background:${esc(c)}">${esc(who.jersey)}</i>` : ''}</a>` : '';
     const clock = `${p.period && p.period.number ? (p.period.number <= L.periods ? (L.periods === 2 ? `H${p.period.number}` : `Q${p.period.number}`) : 'OT') : ''} ${p.clock && p.clock.displayValue || ''}`.trim();
     return `<div class="gpl${p.scoringPlay ? ' sc' : ''}" style="--pc:${esc(c)};--pcl:${esc(V._.lift(c))}"><div class="pld"><span class="dot"><i></i></span><em>${esc(clock)}</em></div>
-      <div class="plc"><div class="plh"><b>${esc(title)}</b>${t ? logo(t.logo, 's') : ''}</div><div class="plb">${face}<p>${esc(p.text || '')}</p></div>
+      <div class="plc"><div class="plhd"><b>${esc(title)}</b>${t ? logo(t.logo, 's') : ''}</div><div class="plb">${face}<p>${esc(p.text || '')}</p></div>
       ${p.awayScore != null ? `<div class="plf"><span>${esc(g.away.abbr)} ${p.awayScore}</span><span>${esc(g.home.abbr)} ${p.homeScore}</span></div>` : ''}</div></div>`;
   }
   /* true when the coordinates and the written distances tell the same story (or nothing is written to check against) */
