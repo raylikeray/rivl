@@ -376,34 +376,37 @@
       // your teams playing right now: the hero
       const live = games.filter(g => isLive(g) && isFav(g)).sort((a, b) => rankGame(b) - rankGame(a));
       if (live.length && P.live) secs.live = sec('Live now') + `<div class="heroes">${live.map(g => heroCard(L, g, ctx)).join('')}</div>`; else delete secs.live;
+      const clk = g => { const per = +g.period || 0, d = String(g.detail || ''), st = String(g.status || ''); if (!per) return d || 'Live'; if (/HALFTIME/.test(st) || /^half/i.test(d)) return 'Halftime'; const reg = L.periods === 2 ? 2 : 4; const ord = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`; const nm = per <= reg ? (reg === 2 ? `${ord(per)} half` : ord(per)) : (per - reg > 1 ? `${per - reg}OT` : 'OT'); if (/END_PERIOD/.test(st) || /^end/i.test(d)) return `End of ${nm}`; const c = String(g.clock || '').trim(); return c && !/^0{1,2}(?::00)?(?:\.0)?$/.test(c) ? `${nm} ${c}` : nm; };
       // my teams: record, what's next or how it's going, win chance
       if (P.teams) {
+        /* v7's rows: the team's colour as a thin edge, the crest, the name and league; on the right one status and one line under it */
         const rows = teams.map(t => {
-          const g = byTeam.get(t.id) || t.next || t.last; const f = g ? safeF(L, g, ctx) : null;
-          const us = g ? (g.home.id === t.id ? g.home : g.away) : null, them = g ? (g.home.id === t.id ? g.away : g.home) : null;
-          let line = t.standing || (S0.teams ? 'No game scheduled' : ''), right = '';
+          const g = byTeam.get(t.id) || t.next || t.last;
+          let st = `<span class="sl"><b class="dim">Next</b></span><em>${esc(t.standing || 'No game scheduled')}</em>`;
           if (g) {
-            const home = g.home.id === t.id; const vs = `${home ? 'vs' : 'at'} ${esc(them.short)}`;
-            if (g.state === 'in') { const lead = us.score - them.score; line = `${lead > 0 ? `Leading ${esc(them.short)} by ${lead}` : lead < 0 ? `Trailing ${esc(them.short)} by ${-lead}` : `Tied with ${esc(them.short)}`}, ${esc(g.detail)}`; }
-            else if (g.off) line = `${esc(g.off)} ${vs}`;
-            else if (g.state === 'post') line = `${us.score > them.score ? 'Won' : 'Lost'} ${esc(String(us.score))}-${esc(String(them.score))} ${vs}`;
-            else line = `<em>${esc(relDay(HW.ymdOf(g.date)))} ${vs}, ${esc(tipOf(g))}</em>${tvLabel(g) ? `<i class="tvt">${esc(tvLabel(g))}</i>` : ''}`;
-            if (f && g.state !== 'post') { const p = home ? f.pHome : 1 - f.pHome; right = `<span class="r"><b>${pct(p)}</b><span>to win</span></span>`; }
-            else if (g.state === 'post' && !g.off) right = `<span class="r"><b class="${us.score > them.score ? 'res w' : 'res l'}" style="font-size:22px">${us.score > them.score ? 'W' : 'L'}</b></span>`;
+            const home = g.home.id === t.id, us = home ? g.home : g.away, them = home ? g.away : g.home, vs = `${home ? 'vs' : 'at'} ${esc(them.short)}`;
+            if (g.state === 'in') st = `<span class="sl"><span class="fpill"><i></i>${esc(clk(g))}</span><b class="num">${us.score}–${them.score}</b></span><em>${vs}</em>`;
+            else if (g.state === 'post' && !g.off) { const w = +us.score > +them.score; st = `<span class="sl"><b class="${w ? 'w' : 'l'}">${w ? 'W' : 'L'} ${us.score}–${them.score}</b></span><em>Final · ${vs}</em>`; }
+            else if (g.off) st = `<span class="sl"><b class="dim">${esc(g.off)}</b></span><em>${vs}</em>`;
+            else st = `<span class="sl"><b>${esc(tipOf(g))}</b></span><em>${esc(relDay(HW.ymdOf(g.date)))} · ${vs}</em>`;
           }
-          const to = g ? href.game(lk, g.id) : href.team(lk, t.id);
-          return `<div class="row prow teamrow"><a class="go" href="${href.team(lk, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, '', teamColor(t, L))}</a><a class="t2" href="${to}"><span class="t"><b>${esc(t.short)}<small>${esc(t.rec)}</small></b><span class="${line.includes('<em>') ? 'sub2' : ''}">${line || '&nbsp;'}</span></span>${right || chev}</a></div>`;
+          return `<a class="frow" href="${href.team(lk, t.id)}" style="--tc:${esc(teamColor(t, L))}"><i class="edge"></i><span class="fcrest">${t.logo ? imgSized(t.logo, 128, 128) : ''}</span><span class="nm"><b>${esc(t.short)}</b><small>${esc(L.label)}${t.rec ? ` · ${esc(t.rec)}` : ''}</small></span><span class="fs">${st}</span></a>`;
         });
-        secs.teams = sec('My teams', '', `<a href="#teams">Edit</a>`) + (rows.length ? `<div class="rows">${rows.join('')}</div>` : mine.length ? skeleton(mine.length, 'row') : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`));
+        secs.teams = sec('My teams', '', `<a href="#teams">Edit</a>`) + (rows.length ? `<div class="gp frows">${rows.join('')}</div>` : mine.length ? skeleton(mine.length, 'row') : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`));
       } else delete secs.teams;
       // my players
       if (P.players) {
         const ppgOf = p => { const r = ctx && ctx.ppg && ctx.ppg[(p.name || '').toLowerCase()]; return r && r.pts != null ? `${(+r.pts).toFixed(1)} ppg` : ''; };
         secs.players = sec('My players', '', `<a href="#players">${fp.length ? 'Edit' : 'Find players'}</a>`) + (fp.length
-          ? `<div class="rail">${fp.map(p => { const is = teamOf(p); const g = games.find(g => is(g.home) || is(g.away)); const us = g ? (is(g.home) ? g.home : g.away) : null, them = g ? (is(g.home) ? g.away : g.home) : null;
-            // under the average: the game tonight, short (on now, the tip, or the result); last night's line lives in the Last night block above
-            const now = g && !g.off ? (g.state === 'in' ? `<i class="on">${us.score}–${them.score}</i> ${esc(g.detail)}` : g.state === 'post' ? `${us.score > them.score ? 'W' : 'L'} ${us.score}–${them.score}` : `${esc(tipOf(g))} ${g.neutral ? 'vs' : is(g.home) ? 'vs' : 'at'} ${esc(them.abbr)}`) : '';
-            return `<a class="pl" href="${href.player(lk, p.id)}" style="${tcv(playerColor(p, L))}">${headshot(p.img, playerColor(p, L), 64, p.name)}<b>${esc(p.short || p.name)}</b><span>${esc(ppgOf(p) || p.team || '')}</span>${now ? `<em class="nx">${now}</em>` : ''}</a>`; }).join('')}</div>`
+          ? `<div class="gp frows">${fp.map(p => { const is = teamOf(p); const g = games.find(g => is(g.home) || is(g.away)); const us = g ? (is(g.home) ? g.home : g.away) : null, them = g ? (is(g.home) ? g.away : g.home) : null;
+            const ti = (p.teamId && S0.tIdx && S0.tIdx[p.teamId]) || us || {}; const c = playerColor(p, L);
+            let st = `<span class="sl"><b class="dim">${esc(ppgOf(p) ? 'Season' : 'Next')}</b></span><em>${esc(ppgOf(p) || 'No game today')}</em>`;
+            if (g && !g.off) { const vs = `${is(g.home) ? 'vs' : 'at'} ${esc(them.short)}`;
+              if (g.state === 'in') st = `<span class="sl"><i class="ldot"></i><b class="num">${us.score}–${them.score}</b></span><em>${esc(clk(g))} · ${vs}</em>`;
+              else if (g.state === 'post') { const w = +us.score > +them.score; st = `<span class="sl"><b class="${w ? 'w' : 'l'}">${w ? 'W' : 'L'} ${us.score}–${them.score}</b></span><em>Final · ${vs}</em>`; }
+              else st = `<span class="sl"><b>${esc(tipOf(g))}</b></span><em>${esc(relDay(HW.ymdOf(g.date)))} · ${vs}</em>`; }
+            const sub = [ti.abbr || p.team, p.pos, L.label].filter(Boolean).join(' · ');
+            return `<a class="frow" href="${href.player(lk, p.id)}"><span class="fface">${headshot(p.img, c, 42, p.name)}${ti.logo ? `<span class="fcr">${imgSized(ti.logo, 64, 64)}</span>` : ''}</span><span class="nm"><b>${esc(p.name || p.short)}</b><small>${esc(sub)}</small></span><span class="fs">${st}</span></a>`; }).join('')}</div>`
           : empty('Follow the players you watch', '<p style="margin:6px 0 0">They show up here with their scoring line, and their profile is one tap away.</p>', `<a class="btn" href="#players">Find players</a>`));
       } else delete secs.players;
       // injuries: one list grouped by team. Your teams show every report, with your players marked; a team you don't
@@ -412,14 +415,14 @@
       if (inj && P.injuries) {
         S.injuries = S.injuries || {};
         const pById = new Map(fp.map(p => [p.id, p]));
-        const row = (x, i, t, p) => { const a = x.athlete || {}; const id = athId(a) || (p && p.id) || ''; const key = `h:${t.id}:${id}:${x.id || i}`; S.injuries[key] = { x, id, team: t }; const st = x.status || ''; const cls = /out/i.test(st) ? 'out' : /day|quest|doubt/i.test(st) ? 'q' : /prob|avail/i.test(st) ? 'ok' : ''; const det = x.details || {}; const ret = retInfo(L, det.returnDate); const why = [det.type || det.detail, ret ? ret.short : ''].filter(Boolean).join(', '); const name = a.displayName || (p && p.name) || ''; return `<button class="row${p ? ' fav' : ''}" data-act="injury" data-key="${esc(key)}">${headshot(hsUrl(a) || (p && p.img) || '', teamColor(t, L), 44, name)}<span class="t"><b>${esc(name)}${p ? `<i class="fstar" title="You follow them">${starSvg}</i>` : ''}</b><span>${esc(why || (x.shortComment || '').slice(0, 80))}</span></span><span class="tag ${cls}">${esc(statusWord(st))}</span></button>`; };
+        const row = (x, i, t, p) => { const a = x.athlete || {}; const id = athId(a) || (p && p.id) || ''; const key = `h:${t.id}:${id}:${x.id || i}`; S.injuries[key] = { x, id, team: t }; const st = x.status || ''; const cls = /out/i.test(st) ? 'out' : /day|quest|doubt/i.test(st) ? 'q' : /prob|avail/i.test(st) ? 'ok' : ''; const det = x.details || {}; const ret = retInfo(L, det.returnDate); const part = [det.side, det.type].filter(Boolean).join(' ') || det.detail || ''; const name = a.displayName || (p && p.name) || ''; return `<button class="frow ijrow" data-act="injury" data-key="${esc(key)}"><span class="fface">${headshot(hsUrl(a) || (p && p.img) || '', teamColor(t, L), 42, name)}${t.logo ? `<span class="fcr">${imgSized(t.logo, 64, 64)}</span>` : ''}</span><span class="nm"><b>${esc(name)}</b><small>${esc([t.abbr || t.short, part].filter(Boolean).join(' · '))}</small></span><span class="fs"><span class="tag ${cls}">${esc(statusWord(st) || 'Listed')}</span><em>${esc(ret ? ret.short.replace(/^back around /, 'Back around ') : (x.shortComment || ''))}</em></span></button>`; };
         const groups = [];
         teams.forEach(t => { const b = inj.byTeam[t.id]; if (b && b.list.length) groups.push({ t, rows: b.list.map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })) }); });
         const have = new Set(groups.map(g => g.t.id));
         if (fp.length) (inj.teams || []).forEach(tt => { const tid = String(tt.id || ''); if (!tid || have.has(tid)) return; const rows = (tt.injuries || []).map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })).filter(r => r.p); if (!rows.length) return; const ti = S0.tIdx[tid] || {}; groups.push({ t: { id: tid, short: ti.short || tt.displayName || rows[0].p.team || '', logo: ti.logo || '', color: ti.color || playerColor(rows[0].p, L) }, rows, only: true }); });
         const folds = store.get('v5:injcol', {}) || {};
-        const blocks = groups.map(({ t, rows, only }) => `<div class="injgrp"><button class="injhd" data-act="injcol" data-id="${esc(t.id)}" aria-expanded="${!folds[t.id]}" style="${tcv(teamColor(t, L))}"><i class="bar"></i>${logo(t.logo, 's')}<b>${esc(t.short)}</b><span class="n">${only ? 'your players' : `${rows.length} listed`}</span>${chev}</button>${foldWrap(`<div class="injbody">${rows.map(({ x, i, p }) => row(x, i, t, p)).join('')}</div>`, !!folds[t.id])}</div>`);
-        if (blocks.length) secs.injuries = sec('Injuries', 'your teams and players') + `<div class="rows">${blocks.join('')}</div>`; else delete secs.injuries;
+        const blocks = groups.flatMap(({ t, rows }) => rows.map(({ x, i, p }) => row(x, i, t, p)));
+        if (blocks.length) secs.injuries = sec('Injuries', 'your teams and players') + `<div class="gp frows">${blocks.join('')}</div>`; else delete secs.injuries;
       } else delete secs.injuries;
       // news about my teams and players: ESPN tags every story with the teams and athletes it covers; full names are the fallback
       const news = S0.news;

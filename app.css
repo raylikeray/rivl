@@ -2672,3 +2672,34 @@ html.gxon body::before{display:none}
   :root:not([data-theme="dark"]) .tab.on{color:#0A0B0E!important}
   :root:not([data-theme="dark"]) .tab.mid .mb{color:#fff}
 }
+
+/* Home lists, as v7: one card per list, a row per team, player or injury, one status on the right */
+.gp.frows{margin:0 var(--gut-r) 0 var(--gut);padding:0;border-radius:20px;border:1px solid var(--line);overflow:hidden;
+  background:linear-gradient(rgba(255,255,255,.055),transparent 56px),var(--surf)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .gp.frows{background:linear-gradient(rgba(255,255,255,.9),transparent 56px),var(--surf)} }
+.frows .frow{position:relative;display:flex;align-items:center;gap:12px;min-height:66px;padding:11px 16px 11px 18px;border-top:1px solid var(--line);color:inherit;text-decoration:none;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;font:inherit;cursor:pointer}
+.frows .frow:first-child{border-top:0}
+.frows .frow:active{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.frow .edge{position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0;background:var(--tc)}
+.frow .fcrest{flex:none;width:36px;height:36px;display:grid;place-items:center}
+.frow .fcrest img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 1px 1.2px rgba(0,0,0,.28)) drop-shadow(0 3px 7px rgba(0,0,0,.2))}
+.frow .nm{flex:1;min-width:0}
+.frow .nm b{display:block;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow .nm small{display:block;font-size:13px;color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow .fs{flex:0 1 auto;min-width:0;max-width:52%;display:flex;flex-direction:column;align-items:flex-end;gap:3px;text-align:right}
+.frow .sl{display:flex;align-items:center;gap:7px}
+.frow .sl b{font-size:16px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.frow .sl b.l{color:var(--ink-3)}
+.frow .sl b.dim{color:var(--ink-3);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.frow .fs em{font-style:normal;font-size:13px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.frow .fpill{display:inline-flex;align-items:center;gap:5px;padding:4px 9px 4px 8px;border-radius:999px;background:var(--surf-2);border:1px solid var(--line-2);font-size:12.5px;font-weight:700;white-space:nowrap}
+.frow .fpill i,.frow .ldot{width:6px;height:6px;border-radius:999px;background:#FF375F;flex:none;display:inline-block}
+.frow .fface{position:relative;flex:none}
+.frow .fface .hs{box-shadow:0 3px 8px rgba(0,0,0,.22)}
+.frow .fcr{position:absolute;right:-4px;bottom:-3px;width:20px;height:20px;border-radius:999px;background:var(--surf);display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.frow .fcr img{width:15px;height:15px;object-fit:contain}
+.frow .fs .tag{font-size:12px}
+.frows .injgrp,.frows .injhd{display:none}
+/* those three lists sit straight on the page under their heading, as in v7: no card around the card */
+.hsec[data-sec="teams"],.hsec[data-sec="players"],.hsec[data-sec="injuries"]{background:none!important;box-shadow:none!important;border:0!important;padding-left:0!important;padding-right:0!important;margin-left:0!important;margin-right:0!important}
+.hsec[data-sec="teams"]::before,.hsec[data-sec="players"]::before,.hsec[data-sec="injuries"]::before,.hsec[data-sec="teams"]::after,.hsec[data-sec="players"]::after,.hsec[data-sec="injuries"]::after{display:none!important}
