@@ -74,13 +74,15 @@
     hits.sort((a, b) => a.pos - b.pos);
     return { ps: hits.filter(h => h.e.type === 'p').map(h => h.e), ts: hits.filter(h => h.e.type === 't').map(h => h.e), rs: hits.filter(h => h.e.type === 'r').map(h => h.e), nq: ' ' + norm(q) + ' ', hits };
   }
+  /* who you follow ranks first among equal matches: "jalen" means your Jalen before the league's */
+  const followed = e => { try { if (e.type === 't') return HW.favs.has(e.lk, e.id); if (e.type === 'p') return !!(V.fplayers && V.fplayers.all().some(p => String(p.id) === e.id)); } catch { } return false; };
   function suggest(ents, q, filter) {
     const nq = norm(q); if (!nq) return []; const last = nq.split(' ').pop(), out = []; const lastOk = nq.split(' ').length === 1 || !COMMON.has(last);
     const ok = e => filter === 'all' || (filter === 'players' && e.type === 'p') || (filter === 'teams' && e.type === 't') || (filter === 'rookies' && e.type === 'p' && e.p.rookie) || (filter === 'college' && (e.lk === 'ncaam' || e.lk === 'ncaaw') && e.type !== 'r') || (filter === 'recruits' && e.type === 'r');
     for (const e of ents) { if (!ok(e)) continue; let sc = 0;
       for (const a of e.al) { if (a.startsWith(nq)) sc = Math.max(sc, 3); if (lastOk) for (const w of a.split(' ')) {
         if (w.startsWith(last)) sc = Math.max(sc, 2); else if (last.length >= 4 && lev(last, w) <= (last.length >= 7 ? 2 : 1)) sc = Math.max(sc, 1); } }
-      if (sc) out.push({ e, sc: sc + (e.type === 'p' ? Math.min(.4, ((e.p.s || {}).pts || 0) / 80) + (e.lk === 'nba' ? .2 : 0) : e.type === 't' ? (e.lk === 'nba' ? .3 : .1) : 0) }); }
+      if (sc) out.push({ e, sc: sc + (e.type === 'p' ? Math.min(.4, ((e.p.s || {}).pts || 0) / 80) + (e.lk === 'nba' ? .2 : 0) : e.type === 't' ? (e.lk === 'nba' ? .3 : .1) : 0) + (followed(e) ? .8 : 0) }); }
     // every name the query spells out comes first (all of them in "A vs B vs C"), then what the last word is starting to spell
     const named = findAll(ents, q).hits.map(h => h.e).filter(ok);
     return [...named, ...out.sort((a, b) => b.sc - a.sc).map(x => x.e).filter(e => !named.includes(e))].slice(0, 8);
@@ -444,8 +446,14 @@
     // never list again what the answer already shows (the team itself, its men's or women's twin)
     const shownSet = new Set([...(A.shown || []), ...(A.html ? A.f.hits.map(h => h.e) : [])]);
     const rest = (onlyName || A.html ? sug.filter(e => !shownSet.has(e)) : sug);
-    res.innerHTML = (A.html || '') + (rest.length && (filter !== 'all' || onlyName || !A.html) ? `${A.html ? '<p class="xmore">More matches</p>' : ''}<div class="xlist">${rest.map(rowOf).join('')}</div>` : '')
-      || (A.kind === 'web' ? '' : `<div class="xnone"><b>Nothing found</b><p>Try a player, a team, a school, or a question like "Maxey drafted" or "Thunder schedule".</p></div>`);
+    /* a corrected spelling is said out loud: the top row came from a typo match, not from the letters typed */
+    const last = nq.split(' ').pop(); const top = sug[0];
+    const typed = e => e.al.some(a => a.startsWith(nq) || a === nq || a.split(' ').some(w => w.startsWith(last)));
+    const dym = top && !typed(top) && (A.html ? A.f.hits.some(h => h.e === top) : true) ? `<p class="xdym">Showing <b>${esc(top.name)}</b></p>` : '';
+    res.innerHTML = dym + (A.html || '') + (rest.length && (filter !== 'all' || onlyName || !A.html) ? `${A.html ? '<p class="xmore">More matches</p>' : ''}<div class="xlist">${rest.map(rowOf).join('')}</div>` : '')
+      || (A.kind === 'web' ? '' : noResults(I, q));
+    XS.result(q, !!(res.querySelector('.xnone')));
+    enrich(res);
     // past the app's own data: only when the question asks something the app's cards didn't answer
     if (!web) return; web.innerHTML = '';
     const isRecruit = A.f.rs.length && !A.f.ps.length && !A.f.ts.length;
@@ -463,32 +471,98 @@
     web.innerHTML = html || (A.html ? '' : `<div class="xans xweb"><span class="xk">Nothing found</span><p class="xline dim">No public source answers that yet. Try different words, or a player or team name.</p></div>`);
   }
 
+  /* nothing matched: the closest names at a wider typo distance, then questions that work, so the screen is never a dead end */
+  function noResults(I, q) {
+    const nq = norm(q), toks = nq.split(' ').filter(t => t.length >= 3 && !STOP.has(t) && !COMMON.has(t));
+    const near = []; if (toks.length) for (const e of I.ents) { let d = 9; for (const a of e.al) for (const w of a.split(' ')) for (const t of toks) { if (Math.abs(w.length - t.length) <= 3) d = Math.min(d, lev(t, w)); } if (d <= 3) near.push({ e, d, pop: (e.p && e.p.s && e.p.s.pts) || 0 }); }
+    near.sort((a, b) => a.d - b.d || b.pop - a.pop); const rows = near.slice(0, 3).map(x => x.e);
+    const chips = TRY.flatMap(([, qs]) => qs).slice(0, 6);
+    return `<div class="xnone"><b>Nothing found for “${esc(q.trim())}”</b>${rows.length ? `<p>Did you mean</p><div class="xlist">${rows.map(rowOf).join('')}</div>` : '<p>Try a player, a team, a school, or a question.</p>'}<div class="xtry xtry2">${chips.map(t => `<button class="chip" data-xq="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>`;
+  }
+  /* the rows carry their own facts: a team's game tonight or live score, a player's scoring and injury tag */
+  async function enrich(res) {
+    const rows = [...res.querySelectorAll('.xlist a.xrow[href^="#team/"], .xlist a.xrow[href^="#player/"]')].slice(0, 8); if (!rows.length) return;
+    const my = SEQ, today = HW.todayCT(); const inj = {};
+    await Promise.all(rows.map(async a => {
+      const m = a.getAttribute('href').match(/^#(team|player)\/(\w+)\/([^/]+)/); if (!m) return; const [, kind, lk, id] = m; const L = LEAGUES[lk]; if (!L) return;
+      let txt = '', cls = '';
+      if (kind === 'team') { const day = await HW.scoreboard(L, today, 60000).catch(() => []); const g = (day || []).find(g => g.home.id === id || g.away.id === id); if (!g) return;
+        const us = g.home.id === id ? g.home : g.away, them = us === g.home ? g.away : g.home;
+        if (g.state === 'in') { txt = `${us.score}-${them.score} ${esc(String(g.detail || 'Live'))}`; cls = 'live'; } else if (g.state === 'post') txt = `${+us.score > +them.score ? 'W' : 'L'} ${us.score}-${them.score} ${us === g.home ? 'vs' : 'at'} ${esc(them.abbr || them.short)}`; else if (!g.off) txt = `${us === g.home ? 'vs' : 'at'} ${esc(them.abbr || them.short)} ${esc(new Date(g.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))}`; }
+      else { if (!L.hasInjuries) return; const d = inj[lk] || (inj[lk] = await HW.injuries(L).catch(() => null)); if (!d || !d.byTeam) return;
+        let st = ''; Object.values(d.byTeam).some(t => (t.list || []).some(x => { if (String((x.athlete || {}).id || _.athId(x.athlete || {})) === id) { st = x.status || ''; return true; } })); if (!st || /active/i.test(st)) return;
+        txt = _.statusWord(st) || st; cls = /out/i.test(st) ? 'tag out' : 'tag q'; }
+      if (my !== SEQ || !txt || !document.body.contains(a)) return;
+      let em = a.querySelector('.xrt'); if (!em) { em = document.createElement('em'); em.className = 'xrt'; a.insertBefore(em, a.lastElementChild); }
+      em.className = 'xrt ' + cls; em.innerHTML = txt;
+    }));
+  }
+  /* the empty screen on a game night: your teams playing today, as one-tap questions */
+  async function tonightChips() {
+    const box = document.getElementById('xtonight'); if (!box) return; const today = HW.todayCT(); const chips = [];
+    for (const lk of ['nba', 'wnba', 'ncaam', 'ncaaw']) { const L = LEAGUES[lk]; if (!L) continue; const day = await HW.scoreboard(L, today, 120000).catch(() => []); if (!document.getElementById('xtonight')) return;
+      (day || []).forEach(g => { ['home', 'away'].forEach(side => { const t = g[side]; if (!HW.favs.has(lk, t.id) || chips.some(c => c.id === t.id)) return; chips.push({ id: t.id, live: g.state === 'in', done: g.state === 'post', q: `${t.short || t.name} ${g.state === 'post' ? 'last game' : 'tonight'}`, label: `${t.short || t.name}${g.state === 'in' ? ' · live' : g.state === 'post' ? ' · final' : ''}` }); }); }); }
+    if (!chips.length) { box.innerHTML = ''; return; }
+    chips.sort((a, b) => (b.live - a.live) || (a.done - b.done));
+    box.innerHTML = `<div class="sec"><h2>${chips.some(c => c.live) ? 'On now' : 'Your teams today'}</h2></div><div class="xtry">${chips.slice(0, 6).map(c => `<button class="chip${c.live ? ' xlive' : ''}" data-xq="${esc(c.q)}">${c.live ? '<i></i>' : ''}${esc(c.label)}</button>`).join('')}</div>`;
+  }
+  /* speak a search: the phone's own recognizer, when it has one (Chrome on Android; Safari partly) */
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  function listen(inp, done) {
+    if (!SR) return; const r = new SR(); r.lang = 'en-US'; r.interimResults = true; r.maxAlternatives = 1; const btn = document.querySelector('.xmic'); if (btn) btn.classList.add('on'); inp.placeholder = 'Listening…';
+    const stop = () => { if (btn) btn.classList.remove('on'); inp.placeholder = 'Players, teams, schools, questions'; };
+    r.onresult = ev => { const t = [...ev.results].map(x => x[0].transcript).join(' ').trim(); inp.value = t; if (ev.results[ev.results.length - 1].isFinal) { stop(); done(t); } };
+    r.onerror = stop; r.onend = stop; try { r.start(); } catch { stop(); }
+  }
+  /* search stats, on this phone only: how often nothing is found, where taps land, how often a search is rewritten.
+     Counts, never the words typed; nothing leaves the device. Long-press the Search title to read them. */
+  const XS = (() => {
+    const K = 'v5:xstats'; const get = () => store.get(K, null) || { searches: 0, zero: 0, taps: { 1: 0, 2: 0, 3: 0, more: 0, answer: 0 }, rewrites: 0, ttSum: 0, ttN: 0, since: HW.todayCT() };
+    let cur = '', t0 = 0, lastAt = 0, tapped = false, counted = '';
+    return {
+      key(v) { if (!t0 && norm(v)) t0 = Date.now(); },
+      result(q, zero) { const nq = norm(q); if (!nq || nq === counted) return; const S = get(); S.searches++; if (zero) S.zero++; if (counted && lastAt && Date.now() - lastAt < 30000 && !tapped) S.rewrites++; counted = nq; lastAt = Date.now(); tapped = false; store.set(K, S); cur = nq; },
+      tap(el) { const S = get(); tapped = true; if (t0) { S.ttSum += Date.now() - t0; S.ttN++; t0 = 0; } const row = el.closest('.xlist a.xrow'); if (row) { const i = [...row.parentElement.children].indexOf(row) + 1; S.taps[i <= 3 ? i : 'more']++; } else S.taps.answer++; store.set(K, S); },
+      text() { const S = get(); const tt = S.ttN ? (S.ttSum / S.ttN / 1000).toFixed(1) + 's' : '–'; const pc = n => S.searches ? Math.round(n / S.searches * 100) + '%' : '–'; const rt = S.taps[1] + S.taps[2] + S.taps[3] + S.taps.more;
+        return `Search stats since ${S.since}\nSearches: ${S.searches}\nNothing found: ${S.zero} (${pc(S.zero)})\nRewritten within 30s: ${S.rewrites} (${pc(S.rewrites)})\nTaps on row 1 / 2 / 3 / lower: ${S.taps[1]} / ${S.taps[2]} / ${S.taps[3]} / ${S.taps.more}${rt ? ` (row 1 = ${Math.round(S.taps[1] / rt * 100)}% of row taps)` : ''}\nTaps on an answer card: ${S.taps.answer}\nFirst key to first tap: ${tt}`; },
+      reset() { store.set(K, null); }
+    };
+  })();
   async function searchV() {
     const $main = document.getElementById('main');
-    const q0 = store.get('v5:xq', '') || '', f0 = store.get('v5:xf', 'all') || 'all';
+    const q0 = store.get('v5:xq', '') || '', f0 = 'all';
     const recent = (store.get('v5:xrecent', []) || []).slice(0, 6);
     $main.innerHTML = `<div class="xpage"><h1 class="xtitle">Search</h1>
-      <label class="xbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input id="xq" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Players, teams, schools, questions" value="${esc(q0)}" aria-label="Search"><button class="xclr" data-act="xclear" aria-label="Clear"${q0 ? '' : ' hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></label>
-      <div class="xchips">${FILTERS.map(([k, l]) => `<button class="chip${k === f0 ? ' on' : ''}" data-xf="${k}" aria-pressed="${k === f0}">${l}</button>`).join('')}</div>
+      <label class="xbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input id="xq" type="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Players, teams, schools, questions" value="${esc(q0)}" aria-label="Search">${SR ? `<button class="xmic" data-act="xmic" aria-label="Speak your search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>` : ''}<button class="xclr" data-act="xclear" aria-label="Clear"${q0 ? '' : ' hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></label>
       <div id="xres"></div><div id="xwebb"></div>
-      <div id="xbrowse"${q0 ? ' hidden' : ''}>${recent.length ? `<div class="sec"><h2>Recent</h2><button data-act="xrclear">Clear</button></div><div class="xlist">${recent.map(r => `<button class="xrow xrq" data-xq="${esc(r)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg><span><b>${esc(r)}</b></span></button>`).join('')}</div>` : ''}
+      <div id="xbrowse"${q0 ? ' hidden' : ''}>${recent.length ? `<div class="sec"><h2>Recent</h2><button data-act="xrclear">Clear</button></div><div class="xlist">${recent.map(r => `<div class="xrow xrq"><button class="xrqb" data-xq="${esc(r)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg><span><b>${esc(r)}</b></span></button><button class="xrdel" data-act="xrdel" data-q="${esc(r)}" aria-label="Remove ${esc(r)} from recent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>`).join('')}</div>` : ''}
+        <div id="xtonight"></div>
         <div class="sec"><h2>Try asking</h2></div>${TRY.map(([h, qs]) => `<div class="xtryg"><p class="xtryh">${esc(h)}</p><div class="xtry">${qs.map(t => `<button class="chip" data-xq="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>`).join('')}
         <p class="xfoot">Answers come from RIVL's own data first, then Wikidata, Wikipedia and ESPN. Every card names its source, and when no source has the answer it says so.</p></div></div>`;
     const inp = $main.querySelector('#xq'); let t = null, filter = f0;
     const go = v => { store.set('v5:xq', v); clearTimeout(t); t = setTimeout(() => run(v, filter), 140); };
     const remember = v => { v = String(v || '').trim(); if (v.length < 2) return; const a = (store.get('v5:xrecent', []) || []).filter(x => x.toLowerCase() !== v.toLowerCase()); a.unshift(v); store.set('v5:xrecent', a.slice(0, 8)); };
-    inp.addEventListener('input', () => go(inp.value));
+    /* the five name rows come with the keystroke itself when the index is ready; only the answer and the web wait for the pause */
+    inp.addEventListener('input', () => { const v = inp.value; if (IDX && norm(v)) { const res = document.getElementById('xres'), br = document.getElementById('xbrowse'); if (br) br.hidden = true; const sug = suggest(IDX.ents, v, filter).slice(0, 5); if (res && sug.length) res.innerHTML = `<div class="xlist">${sug.map(rowOf).join('')}</div>`; } XS.key(v); go(v); });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') { remember(inp.value); inp.blur(); } });
+    if (!q0 && !searchV.noFocus) { try { inp.focus({ preventScroll: true }); } catch { } }   // the Search tab opens ready to type
+    searchV.noFocus = false;
+    tonightChips();
     if ($main._xClick) $main.removeEventListener('click', $main._xClick);
     $main.addEventListener('click', $main._xClick = e => {
       if (!document.getElementById('xq')) return;
       const qb = e.target.closest('[data-xq]'); if (qb) { e.preventDefault(); inp.value = qb.dataset.xq; remember(inp.value); go(inp.value); return; }
       const fb = e.target.closest('[data-xf]'); if (fb) { filter = fb.dataset.xf; store.set('v5:xf', filter); $main.querySelectorAll('[data-xf]').forEach(b => { const on = b === fb; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); run(inp.value, filter); return; }
       if (e.target.closest('[data-act="xclear"]')) { e.preventDefault(); inp.value = ''; store.set('v5:xq', ''); run('', filter); inp.focus(); return; }
-      if (e.target.closest('[data-act="xrclear"]')) { e.preventDefault(); store.set('v5:xrecent', []); searchV(); return; }
-      if (e.target.closest('a.xrow, a.xans, a.xwho, a.xgo') && inp.value) remember(inp.value);
+      if (e.target.closest('[data-act="xrclear"]')) { e.preventDefault(); store.set('v5:xrecent', []); searchV.noFocus = true; searchV(); return; }
+      const rd = e.target.closest('[data-act="xrdel"]'); if (rd) { e.preventDefault(); store.set('v5:xrecent', (store.get('v5:xrecent', []) || []).filter(x => x !== rd.dataset.q)); rd.closest('.xrq').remove(); if (!$main.querySelector('.xrq')) { const sec = $main.querySelector('#xbrowse .sec'); if (sec && /Recent/.test(sec.textContent)) sec.remove(); } return; }
+      if (e.target.closest('[data-act="xmic"]')) { e.preventDefault(); listen(inp, v => { inp.value = v; remember(v); go(v); }); return; }
+      const hit = e.target.closest('a.xrow, a.xans, a.xwho, a.xgo, a.xinj, a.xtp, .xans a'); if (hit && inp.value) { remember(inp.value); XS.tap(hit); }
     });
-    if (q0) run(q0, filter); else index();   // build the index while the person starts typing
+    { const h1 = $main.querySelector('.xtitle'); let pt = 0; const show = () => { let c = $main.querySelector('.xstats'); if (c) { c.remove(); return; } c = document.createElement('div'); c.className = 'xans xstats'; c.innerHTML = `<span class="xk">Search stats · this phone only</span><pre>${esc(XS.text())}</pre><div class="xsorts"><button class="chip" data-act="xscopy">Copy</button><button class="chip" data-act="xsreset">Reset</button></div>`; h1.after(c); };
+      h1.addEventListener('pointerdown', () => { pt = setTimeout(show, 650); }); ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => h1.addEventListener(ev, () => clearTimeout(pt)));
+      $main.addEventListener('click', e => { if (e.target.closest('[data-act="xscopy"]')) { try { navigator.clipboard.writeText(XS.text()); } catch { } V.toast && V.toast("Copied"); } if (e.target.closest('[data-act="xsreset"]')) { XS.reset(); const c = $main.querySelector('.xstats pre'); if (c) c.textContent = XS.text(); } }); }
+    if (q0) run(q0, filter); else index().then(() => { if (IDX && inp.value && document.body.contains(inp)) run(inp.value, filter); });   // build the index while the person starts typing
     document.title = 'Search · RIVL';
   }
 
