@@ -544,7 +544,7 @@
       <div id="xbrowse"${q0 ? ' hidden' : ''}>${recent.length ? `<div class="sec"><h2>Recent</h2><button data-act="xrclear">Clear</button></div><div class="xlist">${recent.map(r => `<div class="xrow xrq"><button class="xrqb" data-xq="${esc(r)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg><span><b>${esc(r)}</b></span></button><button class="xrdel" data-act="xrdel" data-q="${esc(r)}" aria-label="Remove ${esc(r)} from recent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>`).join('')}</div>` : ''}
         <div id="xtonight"></div>
         <div class="sec"><h2>Try asking</h2></div>${TRY.map(([h, qs]) => `<div class="xtryg"><p class="xtryh">${esc(h)}</p><div class="xtry">${qs.map(t => `<button class="chip" data-xq="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>`).join('')}
-        <p class="xfoot">Answers come from RIVL's own data first, then Wikidata, Wikipedia and ESPN. Every card names its source, and when no source has the answer it says so.</p></div></div>`;
+        </div></div>`;
     const inp = $main.querySelector('#xq'); let t = null, filter = f0;
     const go = v => { store.set('v5:xq', v); clearTimeout(t); t = setTimeout(() => run(v, filter), 140); };
     const remember = v => { v = String(v || '').trim(); if (v.length < 2) return; const a = (store.get('v5:xrecent', []) || []).filter(x => x.toLowerCase() !== v.toLowerCase()); a.unshift(v); store.set('v5:xrecent', a.slice(0, 8)); };
