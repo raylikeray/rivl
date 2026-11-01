@@ -1213,7 +1213,7 @@
       const sum = { home: `${PREFS.filter(([k]) => P[k] !== false).length} of ${PREFS.length} sections on`, alerts: V.alerts && V.alerts.available() ? (V.alerts.on() ? 'On' : 'Off') : 'Needs the RIVL server', sync: V.sync && V.sync.available() ? (V.sync.code() ? `Code ${V.sync.code()}` : 'Not backed up') : 'Needs the RIVL server', app: standalone ? 'Installed' : 'Add to home screen' };
       const row = (href, ico, t, sub) => `<a class="srow" href="${href}"><span class="sico">${ico}</span><span class="t"><b>${esc(t)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</span>${chev}</a>`;
       $main.innerHTML = bar('Settings', '#home') + `<div class="setv7">
-        <a class="sprof" href="#settings/profile"><span class="sav">${esc((name || 'You').trim().charAt(0).toUpperCase())}</span><span class="t"><b>${esc(name || 'Add your name')}</b><span>${fav ? `Jersey: ${esc(fav)}` : 'Your profile and jersey'}</span></span>${chev}</a>
+        <a class="sprof" href="#settings/profile"><span class="sav avbtn">${window.RIVL_avatar ? window.RIVL_avatar() : esc((name || 'You').trim().charAt(0).toUpperCase())}</span><span class="t"><b>${esc(name || 'Add your name')}</b><span>${fav ? `Jersey: ${esc(fav)}` : 'Your profile and jersey'}</span></span>${chev}</a>
         <h2 class="sgh">Following</h2><div class="sgrp">${row('#teams', SICO.teams, 'Teams', `${nTeams} team${nTeams === 1 ? '' : 's'}`)}${row('#players', SICO.players, 'Players', `${fp.length} player${fp.length === 1 ? '' : 's'}`)}</div>
         <h2 class="sgh">App</h2><div class="sgrp">${row('#settings/alerts', ICONS.alerts, 'Notifications', sum.alerts)}${row('#settings/home', SICO.display, 'Display', `Following page: ${sum.home}`)}${row('#settings/watch', ICONS.watch, 'Where you watch', nSvc ? `${nSvc} service${nSvc === 1 ? '' : 's'}` : 'None picked yet')}${row('#settings/sync', ICONS.sync, 'Sync', sum.sync)}${row('#settings/app', ICONS.app, 'App', sum.app)}${row('#settings/about', ICONS.about, 'About and sources', 'Where the numbers come from')}</div></div>`;
       return;
@@ -1233,6 +1233,8 @@
       let trim = pick ? (V._.teamAlt({ id: pick.t.id, abbr: pick.t.abbr, alt: pick.t.alt }, LEAGUES[pick.k]) || '') : '#9AA0AA';
       if (!trim || trim.toLowerCase() === String(main).toLowerCase()) trim = lum(main) > .5 ? '#0A0B0E' : '#FFFFFF';
       const ink = lum(main) > .45 ? '#0A0B0E' : '#FFFFFF';
+      store.set('v5:jlook', { main, trim, ink, num }); if (window.RIVL_paintAv) window.RIVL_paintAv();
+      const photo = store.get('v5:avatar', '');
       const back = (name || 'YOU').toUpperCase().slice(0, 12), fs = back.length > 9 ? 9 : back.length > 6 ? 11 : 13;
       const jersey = `<svg class="pfjer" viewBox="0 0 120 140" role="img" aria-label="Your jersey"><defs>
           <linearGradient id="jsh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".22"/><stop offset=".22" stop-color="#000" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
@@ -1254,10 +1256,10 @@
       const jg0 = pick ? grpOf(pick.k) : (JG[0] || [''])[0];
       $main.innerHTML = `<div class="pfpage" style="--pc:${esc(main)}"><div class="pfband"><span class="pfw"><i></i><i></i><i></i></span>
           <div class="pftop"><a class="ib" href="#settings" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>
-          <div class="pfid"><button class="pfjbtn" data-act="pfjer" aria-label="Choose your jersey">${jersey}</button>
+          <div class="pfid"><button class="pfjbtn${photo ? ' pfph' : ''}" data-act="pfjer" aria-label="Choose your jersey">${photo ? `<img class="pfphoto" src="${esc(photo)}" alt="Your photo">` : jersey}</button>
             <div class="pft"><h1>${esc(name || 'Your name')}</h1><p class="pfteam">${pick ? `${pick.t.logo ? `<img src="${esc(pick.t.logo)}" alt="">` : ''}${esc(pick.t.name || pick.t.short)}` : 'Tap the jersey to pick your team'}</p>
             <p class="pfst"><span><b>${teams.length}</b> teams</span><span><b>${fp.length}</b> players</span></p></div></div>
-          <button class="pfedit" data-act="pfedit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Edit name and number</button>
+          <div class="pfbtns"><label class="pfedit pfadd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>${photo ? 'Change photo' : 'Add a photo'}<input type="file" accept="image/*" id="pfpic" hidden></label>${photo ? '<button class="pfedit" data-act="pfnopic">Use my jersey</button>' : ''}</div><button class="pfedit" data-act="pfedit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Edit name and number</button>
           <div class="pfname" hidden><input id="pname" type="text" maxlength="12" autocomplete="given-name" autocapitalize="words" placeholder="Name" value="${esc(name)}"><input id="pnum" type="text" inputmode="numeric" maxlength="2" placeholder="#" value="${esc(num)}"><button data-act="pfdone">Done</button></div>
         </div>
         <div class="pfjgrid" hidden><div class="pfsec"><h2>Your jersey</h2><span>Pick the team</span></div>${teams.length ? `<div class="chips pfjtabs">${JG.map(([g, l]) => `<button class="chip${g === jg0 ? ' on' : ''}" data-jg="${g}" aria-pressed="${g === jg0}">${l}</button>`).join('')}</div>${JG.map(([g]) => `<div class="pfpicks" data-jgp="${g}"${g === jg0 ? '' : ' hidden'}>${teams.filter(x => grpOf(x.k) === g).map(choose).join('')}</div>`).join('')}` : `<a class="pfcta" href="#teams"><span class="t"><b>Follow a team first</b><span>Then its jersey can be yours</span></span>${chev}</a>`}</div>
@@ -1272,6 +1274,12 @@
       $main.querySelectorAll('[data-jg]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); const g = b.dataset.jg;
         $main.querySelectorAll('[data-jg]').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
         $main.querySelectorAll('[data-jgp]').forEach(x => { x.hidden = x.dataset.jgp !== g; }); }));
+      /* your photo: cropped square from the middle, shrunk to 192px and kept on this phone only */
+      const pic = $main.querySelector('#pfpic'); if (pic) pic.addEventListener('change', () => { const f = pic.files && pic.files[0]; if (!f) return; const img = new Image(), url = URL.createObjectURL(f);
+        img.onload = () => { const n = 192, c = document.createElement('canvas'); c.width = c.height = n; const sz = Math.min(img.width, img.height); c.getContext('2d').drawImage(img, (img.width - sz) / 2, (img.height - sz) / 2, sz, sz, 0, 0, n, n); URL.revokeObjectURL(url);
+          try { store.set('v5:avatar', c.toDataURL('image/jpeg', .86)); } catch (e) { } if (window.RIVL_paintAv) window.RIVL_paintAv(); settingsV('profile'); };
+        img.src = url; });
+      const nop = $main.querySelector('[data-act="pfnopic"]'); if (nop) nop.addEventListener('click', e => { e.preventDefault(); store.set('v5:avatar', ''); if (window.RIVL_paintAv) window.RIVL_paintAv(); settingsV('profile'); });
       $main.querySelectorAll('[data-jk]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); store.set('v5:jersey', { ...(store.get('v5:jersey', null) || {}), k: b.dataset.jk, id: b.dataset.jid }); settingsV('profile').then(() => window.scrollTo(0, 0)); }));
       return;
     }

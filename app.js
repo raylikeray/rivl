@@ -51,6 +51,8 @@
     if ($pills.children.length !== ORDER.length) $pills.innerHTML = ORDER.map(k => `<a class="pill" href="#${k}" data-lk="${k}"><span>${esc(LEAGUES[k].label)}</span></a>`).join('');
     ORDER.forEach((k, i) => { const el = $pills.children[i]; const on = k === lk; el.classList.toggle('on', on); if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); const n = S.today[k].filter(isLive).length; let ct = el.querySelector('.ct'); if (n && !ct) { ct = document.createElement('span'); ct.className = 'ct live'; el.appendChild(ct); } if (ct) { if (!n) ct.remove(); else if (ct.textContent !== String(n)) ct.textContent = n; } });
     $pills.style.setProperty('--n', ORDER.length); $pills.style.setProperty('--i', Math.max(0, ORDER.indexOf(lk)));   // the knob slides to the chosen league
+    // X-style: the line sits under the chosen league's word, as wide as the word, and slides to the next one
+    requestAnimationFrame(() => { const on = $pills.querySelector('.pill.on'), sp = on && on.querySelector('span'); if (!sp) return; $pills.style.setProperty('--ux', (on.offsetLeft + sp.offsetLeft) + 'px'); $pills.style.setProperty('--uw', sp.offsetWidth + 'px'); });
   }
   function paintTabs(name) {
     $tabs.querySelectorAll('.tab').forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('on', on); if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
@@ -265,6 +267,15 @@
   function toast(msg) { $toast.textContent = msg; $toast.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => $toast.classList.remove('on'), Math.min(9000, 1800 + String(msg).length * 55)); }   // a sentence needs longer on screen than a word
   V.toast = toast; V.rerender = () => render(); V.route = () => current;
   V.refreshAll = async () => { try { HW.cache.clear(); } catch { } await render(); poll(); };
+  /* your icon, top left (it replaced the settings gear): your own photo when you've added one, otherwise your jersey in your
+     team's colours with your number. Tapping it opens your profile and settings. */
+  window.RIVL_avatar = () => {
+    const photo = HW.store.get('v5:avatar', ''); if (photo) return `<img class="avimg" src="${esc(photo)}" alt="">`;
+    const j = HW.store.get('v5:jlook', null) || { main: '#5B6170', trim: '#FFFFFF', ink: '#FFFFFF', num: '1' };
+    return `<svg class="avjer" viewBox="0 0 120 140" aria-hidden="true"><path d="M30 6C38 4 42 3 46 3C50 10 70 10 74 3C78 3 82 4 90 6L92 9C93 27 100 36 113 40V131C113 135.5 110.5 138 106 138H14C9.5 138 7 135.5 7 131V40C20 36 27 27 28 9Z" fill="${esc(j.main)}"/><path d="M46 3C50 10 70 10 74 3M28 9C27 27 20 36 7 40M92 9C93 27 100 36 113 40" fill="none" stroke="${esc(j.trim)}" stroke-width="5" stroke-linecap="round"/><text x="60" y="${String(j.num).length > 1 ? 104 : 108}" font-family="Inter,system-ui,sans-serif" font-weight="900" font-size="${String(j.num).length > 1 ? 54 : 62}" fill="${esc(j.ink)}" text-anchor="middle" letter-spacing="-3">${esc(String(j.num))}</text></svg>`;
+  };
+  window.RIVL_paintAv = () => { const b = document.getElementById('avbtn'); if (b) b.innerHTML = window.RIVL_avatar(); };
+  window.RIVL_paintAv();
   const flwHTML = (on, what) => window.RIVL_flw(on, what);
   document.addEventListener('click', e => {
     const back = e.target.closest('[data-act="back"]');
