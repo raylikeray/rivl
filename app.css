@@ -3773,7 +3773,7 @@ html body .plh .plteam svg{width:13px;height:13px;margin-left:-1px;opacity:.85}
 .strec .strc.on{color:#16A34A}
 .strec .stwho{min-width:0}
 /* home sections that hold a white list card are just a heading and the card: no panel, edge or shadow of their own */
-html:root body #main .hsec:has(> .gp),html:root body #main .hsec[data-sec="teams"],html:root body #main .hsec[data-sec="players"],html:root body #main .hsec[data-sec="injuries"],html:root body #main .hsec[data-sec="news"]{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+html:root body :is(#main,.xpeek) .hsec:has(> .gp),html:root body :is(#main,.xpeek) .hsec[data-sec="teams"],html:root body :is(#main,.xpeek) .hsec[data-sec="players"],html:root body :is(#main,.xpeek) .hsec[data-sec="injuries"],html:root body :is(#main,.xpeek) .hsec[data-sec="news"]{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
 /* top-right settings button and the stats back button: flat like the rest of the app (the Edit pill look), no drop shadow */
 html:root body .top .ib[href="#settings"],html:root body header .ib[href="#settings"],html:root body .stback{background:var(--card)!important;color:var(--ink)!important;box-shadow:none!important;border:1px solid var(--card-line)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 html:root body .ib[href="#settings"]{box-shadow:none!important;border:1px solid var(--card-line)!important;background:var(--card)!important}
@@ -3852,9 +3852,9 @@ html body .hexsvg{max-width:400px}
 /* Players / Teams edit pages: a back button and title, the search box and the last-season note in the app's card style */
 .edbar{margin-top:6px}
 .edsub{margin:-4px var(--pg-r,16px) 12px var(--pg,16px);font-size:14.5px;line-height:1.4;color:var(--ink-3)}
-html:root body #main .search{display:flex;align-items:center;gap:10px;height:50px;padding:0 14px;border-radius:16px!important;background:var(--card)!important;border:1px solid var(--card-line)!important;box-shadow:none!important}
-html:root body #main .search>svg{width:20px;height:20px;color:var(--ink-3);flex:none}
-html:root body #main .search input{flex:1;min-width:0;border:0;outline:0;background:none!important;box-shadow:none!important;color:var(--ink);font:500 17px/1.2 var(--ui,inherit)}
+html:root body :is(#main,.xpeek) .search{display:flex;align-items:center;gap:10px;height:50px;padding:0 14px;border-radius:16px!important;background:var(--card)!important;border:1px solid var(--card-line)!important;box-shadow:none!important}
+html:root body :is(#main,.xpeek) .search>svg{width:20px;height:20px;color:var(--ink-3);flex:none}
+html:root body :is(#main,.xpeek) .search input{flex:1;min-width:0;border:0;outline:0;background:none!important;box-shadow:none!important;color:var(--ink);font:500 17px/1.2 var(--ui,inherit)}
 html:root body .legend.lastyear{display:flex;gap:12px;align-items:flex-start;padding:14px 16px!important;border-radius:18px!important;background:var(--card)!important;border:1px solid var(--card-line)!important;box-shadow:none!important}
 html:root body .legend.lastyear>svg{flex:none;width:36px;height:36px;padding:8px;border-radius:11px;background:var(--surf-2);color:var(--ink-2)}
 html:root body .legend.lastyear b{display:block;font-size:15px;font-weight:800;margin:1px 0 3px}
@@ -4341,7 +4341,7 @@ html:root body .grow .tm.fav .cr::after{content:'★';position:absolute;right:-6
 html:root body .gxpage .flw svg.fs,html:root body .gxpage .flw svg.fs path{fill:none!important;stroke:currentColor!important;stroke-width:2.8!important;stroke-linecap:round}
 html:root body .gxpage .flw svg.fs.on,html:root body .gxpage .flw svg.fs.on path{fill:none!important;stroke:#fff!important;stroke-width:3!important}
 /* Following: the Now card leads (your live game, else the next tip, else today's final) with a small word over it */
-html:root body #main .hsec[data-sec="now"]{background:none!important;box-shadow:none!important;padding:0!important;border-radius:0;overflow:visible;border:0!important;--gut:var(--pg);--gut-r:var(--pg-r)}
+html:root body :is(#main,.xpeek) .hsec[data-sec="now"]{background:none!important;box-shadow:none!important;padding:0!important;border-radius:0;overflow:visible;border:0!important;--gut:var(--pg);--gut-r:var(--pg-r)}
 .nowh{display:flex;align-items:center;gap:8px;padding:14px var(--pg) 8px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
 .hsec[data-sec="now"] .hero{margin:0 var(--pg)}
 /* Tonight as a rail list: a dot ahead, a pulse while on, a check when done; rows in tip order */
@@ -4468,8 +4468,8 @@ html:root body .tabs.flat5{border-top:0!important;box-shadow:none!important;-web
 html:root body .livebar .lb-in,html:root body .livebar{-webkit-mask-image:none!important;mask-image:none!important}
 
 /* v325: the Breaking card is its own card, not a card inside a card */
-html:root body #main .hsec[data-sec="wire"]{background:none!important;box-shadow:none!important;padding:0!important;border-radius:0;overflow:visible;border:0!important}
-html:root body #main .hsec[data-sec="wire"] .wire{margin:0 0 14px!important}
+html:root body :is(#main,.xpeek) .hsec[data-sec="wire"]{background:none!important;box-shadow:none!important;padding:0!important;border-radius:0;overflow:visible;border:0!important}
+html:root body :is(#main,.xpeek) .hsec[data-sec="wire"] .wire{margin:0 0 14px!important}
 /* the live bar loses its progress line */
 html:root body .livebar .lg .lpr{display:none!important}
 
@@ -4549,7 +4549,7 @@ html:root body .nowc.nhero:active{transform:scale(.985)}
 .nowc.nhero .nhfoot{display:block;margin-top:10px;text-align:center;font-size:13px;font-weight:600;color:rgba(255,255,255,.82)}
 
 /* the Breaking strip (Ray's pick C): one line, the newest story; "+N" opens the rest in place */
-html:root body #main .hsec[data-sec="wire"] .wire2{margin:0 0 14px}
+html:root body :is(#main,.xpeek) .hsec[data-sec="wire"] .wire2{margin:0 0 14px}
 .wire2{border-radius:14px;background:color-mix(in srgb,#E0245E 16%,var(--card,#16171a));overflow:hidden}
 .w2row{display:flex;align-items:center;min-height:48px;padding:0 4px 0 14px;gap:6px}
 .w2main{flex:1;min-width:0;display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none;align-self:stretch}
