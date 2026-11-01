@@ -1247,8 +1247,10 @@
         <text font-family="Inter,system-ui,sans-serif" font-weight="800" font-size="${fs}" letter-spacing="1.2" fill="${ink}" text-anchor="middle"><textPath href="#jarc" startOffset="50%">${esc(back)}</textPath></text>
         <text x="60" y="${num.length > 1 ? 104 : 106}" font-family="Inter,system-ui,sans-serif" font-weight="900" font-size="${num.length > 1 ? 50 : 56}" fill="${ink}" stroke="${esc(trim)}" stroke-width="2.4" paint-order="stroke" text-anchor="middle" letter-spacing="-2">${esc(num)}</text>
       </svg>`;
-      const crest = x => `<a class="pfcr" href="${href.team(x.k, x.t.id)}" aria-label="${esc(x.t.name)}">${x.t.logo ? `<img src="${esc(x.t.logo)}" alt="" loading="lazy">` : ''}<span>${esc(x.t.abbr || x.t.short || '')}</span></a>`;
-      const face = p => `<a class="pfpl" href="${href.player(p.lk, p.id)}">${headshot(p.img, playerColor(p, LEAGUES[p.lk]), 60, p.name)}<span>${esc(p.short || p.name || '')}</span></a>`;
+      /* your teams and players as small cards in the style of the roster cards: the team's colour, its crest large and
+         faint behind, and the crest or the player's cut-out photo in front with the name across the bottom */
+      const crest = x => { const c = teamColor({ id: x.t.id, abbr: x.t.abbr }, LEAGUES[x.k]); return `<a class="pfcr pfcard" href="${href.team(x.k, x.t.id)}" aria-label="${esc(x.t.name)}" style="--rc:${esc(c)}">${x.t.logo ? `<img class="pfwm" src="${esc(x.t.logo)}" alt="" loading="lazy"><img class="pflogo" src="${esc(x.t.logo)}" alt="" loading="lazy">` : ''}<span>${esc(x.t.short || x.t.abbr || '')}</span></a>`; };
+      const face = p => { const c = playerColor(p, LEAGUES[p.lk]); return `<a class="pfpl pfcard" href="${href.player(p.lk, p.id)}" style="--rc:${esc(c)}">${p.img ? `<img class="pfshot" src="${esc(p.img)}" alt="" loading="lazy" onerror="this.remove()">` : `<b class="pfini">${esc((p.name || '').split(' ').map(w => w[0]).join('').slice(0, 2))}</b>`}<span>${esc(p.short || p.name || '')}</span></a>`; };
       const choose = x => `<button class="pfpick${pick === x ? ' on' : ''}" data-jk="${x.k}" data-jid="${esc(x.t.id)}">${x.t.logo ? `<img src="${esc(x.t.logo)}" alt="" loading="lazy">` : ''}<span>${esc(x.t.short || x.t.name)}</span><em>${esc(LEAGUES[x.k].label)}</em></button>`;
       /* the jersey picker is split by league (NBA, WNBA, College) so you scroll a short list from the top */
       const grpOf = k => k.startsWith('ncaa') ? 'college' : k;

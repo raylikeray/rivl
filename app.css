@@ -4026,3 +4026,19 @@ html:root body .pfjbtn.pfph .pfphoto{width:100%;height:100%;border-radius:50%;ob
 html:root body .xtop .avbtn .avimg{box-shadow:none}
 html:root body .xtop .avbtn:has(.avimg){padding:2px;background:var(--avc,#1D9BF0)!important}
 html:root body .xtop .avbtn .avimg{border-radius:50%}
+/* profile rails: team and player cards like the roster cards */
+html:root body .pfcard{position:relative;overflow:hidden;width:104px;height:132px;padding:0;gap:0;justify-content:flex-end;border:0;border-radius:18px;color:#fff;text-decoration:none;
+  background:linear-gradient(165deg,color-mix(in srgb,var(--rc) 82%,#fff 18%),var(--rc) 45%,color-mix(in srgb,var(--rc) 62%,#000) 100%)!important;box-shadow:none}
+.pfcard .pfwm{position:absolute;right:-26px;top:-18px;width:110px;height:110px;object-fit:contain;opacity:.16;filter:saturate(0) brightness(3)}
+.pfcard .pflogo{position:absolute;left:50%;top:22px;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+.pfcard .pfshot{position:absolute;left:50%;bottom:0;transform:translateX(-50%);height:112px;width:auto;max-width:none;object-fit:contain;object-position:bottom}
+.pfcard .pfini{position:absolute;left:0;right:0;top:34px;text-align:center;font-size:30px;font-weight:800;color:rgba(255,255,255,.55)}
+.pfcard::after{content:"";position:absolute;left:0;right:0;bottom:0;height:52%;background:linear-gradient(180deg,transparent,rgba(0,0,0,.55));pointer-events:none}
+html:root body .pfcard>span{position:relative;z-index:2;width:100%;padding:0 8px 10px;text-align:center;font-size:13px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+/* the colour band ends cleanly in the page colour: no hairline where its two layers meet */
+html:root body .pfband::before{bottom:2px!important}
+html:root body .pfband::after{bottom:-1px!important;height:calc(100% + 1px)!important}
+/* the team badge on a face: small and tucked outside the bottom-right edge so the face shows; the crest fills its disc */
+html:root body .frow .fface{position:relative;overflow:visible}
+html:root body .frow .fcr{width:22px!important;height:22px!important;right:-7px!important;bottom:-5px!important;box-shadow:0 0 0 1.5px var(--card),0 1px 3px rgba(0,0,0,.2)!important}
+html:root body .frow .fcr img{width:18px!important;height:18px!important}
