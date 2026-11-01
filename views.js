@@ -367,9 +367,14 @@
     const right = fin && ctx ? (() => { const f0 = safeF(L, g, ctx); return f0 && f0.pHome != null ? `Had ${esc((f0.pHome >= .5 ? h : a).short)} ${Math.round(Math.max(f0.pHome, 1 - f0.pHome) * 100)}%` : ''; })() : pre ? fav : '';
     const sub = pre ? [g.venue && g.venue.name, tv].filter(Boolean).join(' · ') : [tv, g.venue && g.venue.name].filter(Boolean).join(' · ');
     const sc = pre ? `<span class="nsc rec"><b>${esc(a.rec || '')}</b><b>${esc(h.rec || '')}</b></span>` : `<span class="nsc"><b class="${as >= hs ? '' : 'lo'}">${as}</b><b class="${hs >= as ? '' : 'lo'}">${hs}</b></span>`;
-    return `<a class="nowc${live ? ' nlive' : ''}" href="${href.game(lk, g.id)}" style="--stripe:${esc(stripe)}">
-      <div class="nhd"><span>${live ? '<i class="dot"></i>' : ''}${esc(st)}</span><span>${right}</span></div>
-      <div class="nln"><span class="ncr">${logo(a.logo, '', teamColor(a, L))}${logo(h.logo, '', teamColor(h, L))}</span><span class="nwho"><b>${head}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span>${sc}</div></a>`;
+    /* the game page's hero, shrunk (Ray's pick A): both teams' colours, crest and name either side, the score big in the middle */
+    const ca = teamColor(a, L) || '#333', ch = teamColor(h, L) || '#333';
+    const big = pre ? `<span class="nhs pre">${esc(tip)}</span>` : `<span class="nhs"><b class="${as >= hs ? '' : 'lo'}">${as}</b><b class="${hs >= as ? '' : 'lo'}">${hs}</b></span>`;
+    const side = t => `<span class="nht">${logo(t.logo, '', teamColor(t, L))}<b>${esc(t.short)}</b></span>`;
+    return `<a class="nowc nhero${live ? ' nlive' : ''}" href="${href.game(lk, g.id)}" style="--ca:${esc(ca)};--ch:${esc(ch)}">
+      <span class="nhtop"><span>${live ? '<i class="dot"></i>' : ''}${esc(st)}</span><span>${esc(tv || right || '')}</span></span>
+      <span class="nhmid">${side(a)}${big}${side(h)}</span>
+      <span class="nhfoot">${head}</span></a>`;
   }
   /* Duolingo's "jump here": a pill that brings you back to the Now card once it has scrolled away */
   function backNow() {
@@ -529,7 +534,9 @@
         const items = news.articles.filter(a => HW.readable(a) && HW.isWire(a) && tagged(a) && !seen.has(String(a.id)) && a.published && new Date(a.published) > cutoff).sort((a, b) => new Date(b.published) - new Date(a.published)).slice(0, 3);
         if (items.length) {
           const who = a => { const t = HW.wireTeams(a).map(id => (S0.tIdx[id] || {}).short).filter(Boolean); const p = (a.categories || []).filter(c => c.type === 'athlete' && pIds.has(String(c.athleteId || (c.athlete && c.athlete.id) || ''))).map(c => c.description).filter(Boolean); return [...new Set([...p, ...t])].slice(0, 2).join(' · '); };
-          secs.wire = `<div class="wire"><div class="wh"><i class="dot"></i><b>Breaking</b><span>${esc(ago(items[0].published))}</span><button class="x" data-act="wire-x" data-ids="${esc(items.map(a => a.id).join(','))}" aria-label="Dismiss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>${items.map(a => { (S.news = S.news || {})[String(a.id)] = a; return `<a class="wr" href="#article/${lk}/${esc(String(a.id))}"><b>${esc(a.headline)}</b><span>${esc([who(a), items.length > 1 ? ago(a.published) : ''].filter(Boolean).join(' · '))}</span></a>`; }).join('')}</div>`;
+          const more = items.slice(1);
+          secs.wire = `<div class="wire2"><div class="w2row"><a class="w2main" href="#article/${lk}/${esc(String(items[0].id))}"><span class="w2k"><i class="dot"></i>Breaking</span><span class="w2h">${esc(items[0].headline)}</span></a>${more.length ? `<button class="w2more" data-act="wire-more" aria-expanded="false" aria-label="${more.length} more">+${more.length}</button>` : ''}<button class="w2x" data-act="wire-x" data-ids="${esc(items.map(a => a.id).join(','))}" aria-label="Dismiss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>${more.length ? `<div class="w2list"><div>${more.map(a => `<a class="w2it" href="#article/${lk}/${esc(String(a.id))}"><span class="w2h">${esc(a.headline)}</span><small>${esc(ago(a.published))}</small></a>`).join('')}</div></div>` : ''}</div>`;
+          items.forEach(a => { (S.news = S.news || {})[String(a.id)] = a; });
         } else delete secs.wire;
       } else delete secs.wire;
       if (P.news && news) {
