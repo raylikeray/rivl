@@ -329,7 +329,13 @@
     if (a === 'injury') { e.preventDefault(); openInjury(act.dataset.key); }
     if (a === 'bsheet-close') { e.preventDefault(); closeSheet7(); const to = act.getAttribute('href'); if (to && to.startsWith('#')) location.hash = to; }
     if (a === 'ijtoggle') { e.preventDefault(); const c = act.closest('.ijc'); if (c) { const min = !c.classList.contains('min'); c.classList.toggle('min', min); const m = store.get('ij:min', {}) || {}; if (min) m[c.dataset.pid] = 1; else delete m[c.dataset.pid]; store.set('ij:min', m); } }
-    if (act.dataset.ijopen) { const m = store.get('ij:min', {}) || {}; delete m[act.dataset.ijopen]; store.set('ij:min', m); }
+    if (act.dataset.ijopen) { const m = store.get('ij:min', {}) || {}; delete m[act.dataset.ijopen]; store.set('ij:min', m);
+      /* opening a player from an injury report lands on their injury write-up, not the top of the page */
+      const pid = act.dataset.ijopen, t0 = Date.now();
+      const seek = () => { const card = document.querySelector(`#injury[data-pid="${CSS.escape(pid)}"]`), box = document.getElementById('gxscroll');
+        if (card && box) { requestAnimationFrame(() => box.scrollTo({ top: Math.max(0, box.scrollTop + card.getBoundingClientRect().top - 150), behavior: 'smooth' })); return; }
+        if (Date.now() - t0 < 6000) setTimeout(seek, 120); };
+      setTimeout(seek, 250); }
     if (a === 'official') { e.preventDefault(); openOfficial(act.dataset.key); }
     if (a === 'gifold') { e.preventDefault(); V._.foldToggle(act, act.getAttribute('aria-expanded') !== 'true'); return; }
     if (a === 'injcol') { e.preventDefault(); const open = act.getAttribute('aria-expanded') !== 'true'; V._.foldToggle(act, open); const c = store.get('v5:injcol', {}) || {}; if (open) delete c[act.dataset.id]; else c[act.dataset.id] = true; store.set('v5:injcol', c); }

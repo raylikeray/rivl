@@ -3776,3 +3776,55 @@ html:root body .ib[href="#settings"]{box-shadow:none!important;border:1px solid 
 html:root body .ib[href="#settings"] svg{width:21px;height:21px;stroke-width:1.9}
 .xrecs{margin:6px -4px 4px}
 .xrecs .strow{padding-left:4px;padding-right:4px}
+/* Tonight tiles: two stacked team lines and the time on the right */
+html:root body .bchip.st2{display:inline-grid!important;grid-template-columns:auto auto;grid-template-rows:auto auto;align-items:center;column-gap:18px;row-gap:6px;height:auto!important;min-width:170px;padding:11px 14px 11px 12px!important;border-radius:16px!important}
+.bchip.st2 .sr{grid-column:1;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800}
+.bchip.st2 .sr .logo{width:24px;height:24px}
+.bchip.st2 .sr em{font-style:normal;margin-left:auto;padding-left:12px;font:800 15px var(--num,inherit)}
+.bchip.st2 .sr.lo b,.bchip.st2 .sr.lo em{color:var(--ink-3)}
+.bchip.st2 .ss{grid-column:2;grid-row:1/3;justify-self:end;display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding-left:14px;border-left:1px solid var(--card-line);align-self:stretch;justify-content:center;font-size:14px;font-weight:800;color:var(--ink)}
+.bchip.st2 .ss small{font-size:11px;font-weight:700;color:var(--ink-3)}
+.bchip.st2 .ss .on{color:#E5484D}
+.bchip.st2 .ss .po{font-style:normal;font-size:11px;font-weight:700;color:var(--ink-3)}
+/* Player traits, refined: no divider under the title, a soft hexagon with hairline rings, one even team colour,
+   clear labels, and the detail as a clean row (name left, big percent right) instead of a grey box */
+html body .hxcard{padding:0 0 16px!important}
+html body .hxh{padding:18px 18px 4px;border-bottom:0}
+html body .hxh b{font-size:19px;letter-spacing:-.01em}
+html body .hxh span{display:flex;align-items:center;margin-top:4px;font-size:13.5px}
+html body .hxq{width:18px;height:18px;font-size:11.5px;background:transparent;color:var(--ink-3);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ink) 28%,transparent)}
+html body .hxq.on{background:var(--ink);color:var(--card);box-shadow:none}
+html body .hexsvg{margin:0 auto}
+html body .hexsvg .hxbg{fill:color-mix(in srgb,var(--ink) 4%,transparent)}
+html body .hexsvg .hxr,html body .hexsvg .hxr.d{stroke:color-mix(in srgb,var(--ink) 11%,transparent)!important;stroke-dasharray:none!important;stroke-width:1}
+html body .hexsvg .hxedge{stroke:color-mix(in srgb,var(--ink) 16%,transparent);stroke-width:1}
+html body .hexsvg .hxw{fill:var(--tf,var(--ink));fill-opacity:.82;stroke:var(--card)!important;stroke-width:2!important}
+html body .hexsvg .hxw.on{fill-opacity:1;filter:none}
+html body .hexsvg .hxo,html body .hexsvg .hxo.d{stroke:rgba(255,255,255,.38);stroke-width:1;stroke-dasharray:none}
+html body .hexsvg .hxn{font:600 12.5px/1 var(--ui,inherit);fill:var(--ink-3);opacity:1;letter-spacing:.01em}
+html body .hexsvg .hxp{font:800 16px/1 var(--num,inherit);fill:var(--ink)}
+html body .hexsvg .hxl.on .hxn{fill:var(--ink);font-weight:700}
+html body .hexsvg .hxl.on .hxp{fill:var(--tf,var(--ink))}
+html body .hxdet{margin:4px 18px 0;padding:14px 0 0;border-radius:0;background:none!important;border-top:1px solid var(--line);font-size:14px;line-height:1.5;color:var(--ink-2)}
+html body .hxdh{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px}
+html body .hxdh b{display:block;margin:0;font-size:16px;font-weight:800;color:var(--ink)}
+html body .hxdh em{font-style:normal;font:800 22px/1 var(--num,inherit);color:var(--tf,var(--ink))}
+html body .hxdh em small{font-size:13px;margin-left:1px}
+html body .hxnote{margin:12px 18px 0;font-size:12px}
+/* scores: full team names fit. The followed star moves onto the crest's corner, and the score columns are a little narrower */
+html body .grow{grid-template-columns:minmax(0,1fr) 42px 86px 42px minmax(0,1fr)}
+html body .grow .tm .cr{position:relative}
+html body .grow .tm .nm{gap:0}
+html body .grow .tm b{font-size:13px;letter-spacing:-.01em}
+html body .grow .tm .nm .star{position:absolute!important;top:-3px;right:calc(50% - 30px);width:16px;height:16px;display:grid;place-items:center;border-radius:50%;background:var(--card);font-size:10px;color:#F5B915;box-shadow:0 0 0 1px var(--card-line)}
+html body .grow{grid-template-columns:minmax(0,1fr) 50px 78px 50px minmax(0,1fr)}
+html body .grow .tm b{white-space:normal;text-align:center;line-height:1.15;font-size:12.5px;letter-spacing:-.02em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:clip}
+html body .grow{grid-template-columns:minmax(0,1fr) 50px 72px 50px minmax(0,1fr)}
+/* injury status everywhere uses the new pill: a flat grey pill with a coloured dot (red out, amber DTD / Quest, green probable) */
+html:root body .tag:is(.out,.q,.ok){display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;border-radius:999px;background:var(--surf-2)!important;color:var(--ink)!important;box-shadow:none!important;font-size:12.5px;font-weight:800;letter-spacing:.01em}
+html:root body .tag:is(.out,.q,.ok)::before{content:"";width:7px;height:7px;border-radius:50%;background:#FFB020;flex:none}
+html:root body .tag.out::before{background:#FF4D55}
+html:root body .tag.ok::before{background:#22C55E}
+/* injury rows: the name gets the room; the return note is short and sits under the pill */
+html body .frow.ijrow .fs{max-width:40%}
+html body .frow.ijrow .fs em{font-size:12.5px}

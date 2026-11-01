@@ -232,7 +232,7 @@
     let s = `<svg class="hexsvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Six traits compared to other ${R.posWord}"><defs><clipPath id="${uid}">${R.traits.map((t, i) => `<path d="${wedge(i, wr[i])}"/>`).join('')}</clipPath></defs>`;
     // under the colour: the full hexagon, its rings and spokes, so an empty trait still shows its slice
     s += `<polygon class="hxbg" points="${ring(1)}"/>` + grid('hxr');
-    R.traits.forEach((t, i) => { s += `<path class="hxw${t.key === sel ? ' on' : ''}" data-hex="${t.key}" style="--d:${i * 45}ms;fill-opacity:${(.55 + .45 * t.pct / 100).toFixed(2)}" d="${wedge(i, wr[i])}"/>`; });
+    R.traits.forEach((t, i) => { s += `<path class="hxw${t.key === sel ? ' on' : ''}" data-hex="${t.key}" style="--d:${i * 45}ms" d="${wedge(i, wr[i])}"/>`; });
     // over the colour, as FotMob does: the same rings and spokes in light dashes, only where a trait is filled in
     s += `<g class="hxover" clip-path="url(#${uid})">${grid('hxo')}</g><polygon class="hxedge" points="${ring(1)}"/>`;
     R.traits.forEach((t, i) => { const A = P(i, Rr + 30), B = P(i + 1, Rr + 30); s += `<path class="hxt" data-hex="${t.key}" d="M${cx},${cy}L${f(A[0])},${f(A[1])}L${f(B[0])},${f(B[1])}Z"/>`; });
@@ -241,19 +241,20 @@
       s += `<g class="hxl${t.key === sel ? ' on' : ''}" data-hex="${t.key}"><text x="${f(x)}" y="${f(y)}" text-anchor="${anc}" class="hxn">${t.label}</text><text x="${f(x)}" y="${f(y + 19)}" text-anchor="${anc}" class="hxp">${t.pct}%</text></g>`; });
     return s + '</svg>';
   }
+  const detHead = t => `<div class="hxdh"><b>${esc(t.label)}</b><em>${t.pct}<small>%</small></em></div>`;
   function cards(R, opts = {}) {
     const best = R.traits.slice().sort((a, b) => b.pct - a.pct)[0].key;
     const g = R.raw, season = R.season ? esc(String(R.season).replace(/ Regular Season$/i, '')) : 'This season';
     const early = R.early ? `<p class="hxnote">Early estimate: ${Math.round(R.sample)} minutes played so far, so this leans on what a typical bench player does and firms up as he plays.</p>` : '';
     return `<div class="gxplate rtcard"><div class="rth"><span class="rtl">${esc(opts.league || 'NBA')}</span><b>${season}</b></div><div class="rtrow"><div><b>${g.gp}</b><span>Games</span></div><div><b>${(Math.round(g.pts * 10) / 10).toFixed(1)}</b><span>Points</span></div><div><b class="rtb ${tier(R.ovr)}">${R.ovr}</b><span>RIVL rating</span></div></div><p class="rtsum">${esc(summary(R))}</p></div>`
-      + `<div class="gxplate hxcard" data-rid="${esc(R.id)}"><div class="hxh"><b>Player traits</b><span>Compared to other ${R.posWord}<button class="hxq" data-act="rthow" aria-label="How the rating works">?</button></span></div>${hexSVG(R, best)}<div class="hxdet" aria-live="polite"><b>${R.traits.find(t => t.key === best).label} ${R.traits.find(t => t.key === best).pct}%</b><span>${esc(detail(R, best))}</span></div>${early}</div>`;
+      + `<div class="gxplate hxcard" data-rid="${esc(R.id)}"><div class="hxh"><b>Player traits</b><span>Compared to other ${R.posWord}<button class="hxq" data-act="rthow" aria-label="How the rating works">?</button></span></div>${hexSVG(R, best)}<div class="hxdet" aria-live="polite">${detHead(R.traits.find(t => t.key === best))}<span>${esc(detail(R, best))}</span></div>${early}</div>`;
   }
   const live = {};   // the rating behind each card on screen, for the taps
   function mount(el, R, opts) { live[R.id] = R; el.innerHTML = cards(R, opts); }
   if (typeof document !== 'undefined') document.addEventListener('click', e => {
     const h = e.target.closest && e.target.closest('[data-hex]'); if (h) { const card = h.closest('.hxcard'); const R = card && live[card.dataset.rid]; if (!R) return; const k = h.dataset.hex, t = R.traits.find(x => x.key === k);
       card.querySelectorAll('.hxw,.hxl').forEach(x => x.classList.toggle('on', x.dataset.hex === k));
-      const d = card.querySelector('.hxdet'); d.innerHTML = `<b>${t.label} ${t.pct}%</b><span>${esc(detail(R, k))}</span>`; return; }
+      const d = card.querySelector('.hxdet'); d.innerHTML = `${detHead(t)}<span>${esc(detail(R, k))}</span>`; return; }
     const how = e.target.closest && e.target.closest('[data-act="rthow"]'); if (how) { e.preventDefault(); const card = how.closest('.hxcard'); let p = card.querySelector('.hxexp'); if (p) { p.remove(); how.classList.remove('on'); return; }
       card.insertAdjacentHTML('beforeend', `<div class="hxexp"><p><b>Built only from his stats.</b> Every stat is turned into a rate per 36 minutes and compared with players at his position. Six traits come from those rates, and the percentage is the share of ${R.posWord} he beats.</p><p><b>Small samples are held back.</b> A few hot games barely move a player until the minutes back them up. Last season counts too, fading out as this season fills in.</p><p><b>The overall</b> weights impact most, then scoring, playmaking, shooting, defense and rebounding, plus the minutes his coach gives him, and is placed on the 2K scale: a 74 is a typical rotation player, 82 is the top 15%, 90 the top 3%, and the league's best is a 99.</p><p><b>Defense is the hardest to measure</b> from a box score: steals, blocks, defensive rebounds, fouls and his team's defense while he plays.</p><p>Tap any trait on the chart for the numbers behind it.</p></div>`); how.classList.add('on'); }
   });
