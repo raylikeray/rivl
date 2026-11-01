@@ -1254,7 +1254,7 @@
       const grpOf = k => k.startsWith('ncaa') ? 'college' : k;
       const JG = [['nba', 'NBA'], ['wnba', 'WNBA'], ['college', 'College']].filter(([g]) => teams.some(x => grpOf(x.k) === g));
       const jg0 = pick ? grpOf(pick.k) : (JG[0] || [''])[0];
-      $main.innerHTML = `<div class="pfpage" style="--pc:${esc(main)}"><div class="pfband"><span class="pfw"><i></i><i></i><i></i></span>
+      $main.innerHTML = `<div class="pfpage" style="--pc:${esc(main)};--pc2:${esc(trim)}"><div class="pfband"><span class="pfw"><i></i><i></i><i></i></span>
           <div class="pftop"><a class="ib" href="#settings" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>
           <div class="pfid"><button class="pfjbtn${photo ? ' pfph' : ''}" data-act="pfjer" aria-label="Choose your jersey">${photo ? `<img class="pfphoto" src="${esc(photo)}" alt="Your photo">` : jersey}</button>
             <div class="pft"><h1>${esc(name || 'Your name')}</h1><p class="pfteam">${pick ? `${pick.t.logo ? `<img src="${esc(pick.t.logo)}" alt="">` : ''}${esc(pick.t.name || pick.t.short)}` : 'Tap the jersey to pick your team'}</p>

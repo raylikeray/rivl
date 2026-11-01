@@ -281,7 +281,7 @@
     // no photo: your first initial (or your number) in your team's colour, ringed in its second colour, so it reads as you
     return `<span class="avini" style="background:${esc(j.main)};color:${esc(j.ink)};box-shadow:inset 0 0 0 2px ${esc(j.trim)}">${esc(ch || String(j.num || '') || '+')}</span>`;
   };
-  window.RIVL_paintAv = () => { const b = document.getElementById('avbtn'); if (b) b.innerHTML = window.RIVL_avatar(); };
+  window.RIVL_paintAv = () => { const b = document.getElementById('avbtn'); if (!b) return; b.innerHTML = window.RIVL_avatar(); const j = HW.store.get('v5:jlook', null); b.style.setProperty('--avc', j && j.main || '#1D9BF0'); };
   window.RIVL_paintAv();
   /* the top (your icon, the R, the leagues) behaves like X's: it slides up out of the way as you scroll down, following
      your finger, and slides back down the moment you scroll up. When you stop halfway it settles open or closed. */

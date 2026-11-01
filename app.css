@@ -4014,3 +4014,13 @@ html.entity body .tabs{display:none!important}
 /* leagues spread evenly across the full width, each its own equal slot; the line still sits under the word */
 html:root body #pills.pills{padding:0!important}
 html:root body #pills .pill{flex:1 1 0!important;padding:0 4px!important;justify-content:center}
+/* your photo on the profile: a ring in your team's colour (its second colour just inside), sized so it never runs into
+   the buttons below */
+html:root body .pfjbtn.pfph{width:118px!important;height:118px!important;margin:6px 0 18px!important;border-radius:50%!important;padding:4px!important;filter:none!important;
+  background:var(--pc)!important;box-shadow:0 10px 28px rgba(0,0,0,.28)!important;overflow:visible!important}
+html:root body .pfjbtn.pfph .pfphoto{width:100%;height:100%;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--pc2,#fff)}
+.pfbtns{margin-top:4px!important}
+/* the icon at the top: your photo ringed in your team's colour too */
+html:root body .xtop .avbtn .avimg{box-shadow:none}
+html:root body .xtop .avbtn:has(.avimg){padding:2px;background:var(--avc,#1D9BF0)!important}
+html:root body .xtop .avbtn .avimg{border-radius:50%}
