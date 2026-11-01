@@ -84,7 +84,11 @@
        screen has landed at its scroll. */
     if (fresh && render.key) { $main.style.minHeight = $main.offsetHeight + 'px'; clearTimeout(render.mhT); render.mhT = setTimeout(() => { $main.style.minHeight = ''; }, 1500); }
     clearTimeout(render.holdT); render.onReal = null;
-    if (fresh && MOTION()) {
+    /* the phone's own back swipe (or its back button) already animates the move with a snapshot of the screen you are
+       going back to: our crossfade on top of that showed the old page a second time, fading out over the new one (the hitch
+       on swiping back). So the fade runs only for a move started by a tap inside the app. */
+    const byTap = render.tapAt && performance.now() - render.tapAt < 1500; render.tapAt = 0;
+    if (fresh && MOTION() && (byTap || !render.key)) {
       /* a crossfade, not a blink: a snapshot of the old screen is laid over the page and fades out while the new screen, held
          invisible until its real content has painted, fades in beneath it. If the content takes longer than a beat, the skeleton
          is shown instead so the hold never ends in a blank. */
@@ -366,6 +370,7 @@
   })();
   const flwHTML = (on, what) => window.RIVL_flw(on, what);
   document.addEventListener('click', e => {
+    render.tapAt = performance.now();   // a move that follows a tap is ours to animate; one without a tap was the phone's own swipe
     const back = e.target.closest('[data-act="back"]');
     if (back) { if (history.length > 1) { e.preventDefault(); history.back(); } return; }
     const row = e.target.closest('tr.click[data-href]');
