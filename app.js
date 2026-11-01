@@ -14,13 +14,13 @@
     let pendingSkel = '';
     const settle = () => { $main.dataset.real = '1'; pendingSkel = ''; clearTimeout(slowT); const sl = $main.querySelector('.slow'); if (sl) sl.remove(); hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; const y = +$main.dataset.y || 0; window.scrollTo(0, y); if (y) requestAnimationFrame(() => window.scrollTo(0, y)); requestAnimationFrame(() => requestAnimationFrame(() => { $main.style.minHeight = ''; })); } if (render.onReal) { const f = render.onReal; render.onReal = null; f(); } };
     /* a slow load: the skeleton that was swallowed while the old screen was kept is painted after all, so the hold never ends in a blank */
-    V.showSkeleton = () => { if (!pendingSkel) return false; const s = pendingSkel; pendingSkel = ''; proto.set.call($main, s); $main.dataset.real = '0'; return true; };
+    V.showSkeleton = () => { if (!pendingSkel) return false; const s = pendingSkel; pendingSkel = ''; if (render.parkKey && $main.dataset.real === '1' && V._kept) { V._kept.put(render.parkKey, $main); render.parkKey = ''; } proto.set.call($main, s); $main.dataset.real = '0'; return true; };
     V.busy = on => on ? showBar() : hideBar();   // for views that patch themselves in place and have no paint to hang the bar on
     V.soft = el => { if (!el || !MOTION()) return; el.classList.remove('soft'); void el.offsetWidth; el.classList.add('soft'); };   // a block repainted in place eases in instead of popping
     V.settled = settle;   // for a view whose first real paint went into a part of the screen (Scores' list, a standings table) rather than the whole
     Object.defineProperty($main, 'innerHTML', {
       get() { return proto.get.call($main); },
-      set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { pendingSkel = s; showBar(); return; } proto.set.call($main, s); clearTimeout(slowT); if (!s.includes('<!--skel-->')) settle(); else { $main.dataset.real = '0'; slowT = setTimeout(() => { if ($main.dataset.real === '0' && !$main.querySelector('.slow')) $main.insertAdjacentHTML('beforeend', '<p class="legend slow">The feed is slow to answer. It usually clears within a minute; pull down to try again.</p>'); }, 7000); } }
+      set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { pendingSkel = s; showBar(); return; } if (render.parkKey && $main.dataset.real === '1' && V._kept) { V._kept.put(render.parkKey, $main); render.parkKey = ''; } proto.set.call($main, s); clearTimeout(slowT); if (!s.includes('<!--skel-->')) settle(); else { $main.dataset.real = '0'; slowT = setTimeout(() => { if ($main.dataset.real === '0' && !$main.querySelector('.slow')) $main.insertAdjacentHTML('beforeend', '<p class="legend slow">The feed is slow to answer. It usually clears within a minute; pull down to try again.</p>'); }, 7000); } }
     }); }
   S.today = S.today || {}; ORDER.forEach(k => { S.today[k] = S.today[k] || []; });
 
@@ -69,12 +69,15 @@
      (polling repaints, crest fitting, building the next league's copy). It all waits for the hand to lift. */
   let touching = false; const later = [];
   V.gesturing = () => touching || !!render.swiping || !!render.gliding;
-  V.whenIdle = fn => { if (!V.gesturing()) { fn(); return; } if (!later.includes(fn)) later.push(fn); };
-  V.flushIdle = () => { if (V.gesturing() || !later.length) return; const q = later.splice(0); q.forEach(f => { try { f(); } catch (e) { console.error(e); } }); };
+  const ric = window.requestIdleCallback || (f => setTimeout(() => f({ timeRemaining: () => 8, didTimeout: true }), 60));
+  let ricId = 0;
+  V.whenIdle = fn => { if (!later.includes(fn)) later.push(fn); if (!ricId) ricId = ric(V.flushIdle, { timeout: 1200 }); };
+  V.flushIdle = dl => { ricId = 0; if (!later.length) return; if (V.gesturing()) { ricId = ric(V.flushIdle, { timeout: 1200 }); return; }
+    while (later.length && (!dl || dl.didTimeout || dl.timeRemaining() > 4)) { const f = later.shift(); try { f(); } catch (e) { console.error(e); } }   // one job at a time, between frames
+    if (later.length) ricId = ric(V.flushIdle, { timeout: 1200 }); };
   document.addEventListener('touchstart', () => { touching = true; clearTimeout(V.flushT); }, { passive: true, capture: true });
-  const lift = () => { touching = false; clearTimeout(V.flushT); V.flushT = setTimeout(V.flushIdle, 320); };
+  const lift = () => { touching = false; if (later.length && !ricId) ricId = ric(V.flushIdle, { timeout: 1200 }); };
   document.addEventListener('touchend', lift, { passive: true, capture: true }); document.addEventListener('touchcancel', lift, { passive: true, capture: true });
-  setInterval(() => V.flushIdle(), 1500);
   const scrollMem = new Map();
   /* pages are kept as the very nodes they were drawn with, not as text: a screen you leave is parked offscreen (still in the
      document) and comes back by moving those nodes into place. Nothing is serialised, parsed or decoded again, which is
@@ -85,11 +88,11 @@
   /* moving nodes resets every scroll box inside them, so a move reads the few that scroll (strips, the page's own box) and
      puts them back: one layout read, a few writes, nothing rebuilt */
   const SCROLLERS = '.dates,.brief-row,.chips,.rail,.media,.tw,.onb-picked-row,#gxscroll,.xsorts,.gxtabs';
-  const moveNodes = (from, to) => { const st = []; from.querySelectorAll(SCROLLERS).forEach(el => { const x = el.scrollLeft, y = el.scrollTop; if (x || y) st.push([el, x, y]); }); to.replaceChildren(...from.childNodes); st.forEach(([el, x, y]) => { if (x) el.scrollLeft = x; if (y) el.scrollTop = y; }); return to; };
+  const moveNodes = (from, to, st0) => { const st = st0 || []; if (!st0) from.querySelectorAll(SCROLLERS).forEach(el => { const x = el.scrollLeft, y = el.scrollTop; if (x || y) st.push([el, x, y]); }); to.replaceChildren(...from.childNodes); st.forEach(([el, x, y]) => { if (x) el.scrollLeft = x; if (y) el.scrollTop = y; }); return st; };   // a parked box skips layout, so its scroll state travels as a list and is applied on the way back in
   V._moveNodes = moveNodes;
-  const keepPut = (key, from, box) => { const old = kept.get(key); if (old && old !== box) old.remove(); kept.delete(key); const b = box || keepBox(); b.className = 'xpeek xkeep'; b.style.cssText = KEEP_CSS; if (from) moveNodes(from, b); b.dataset.key = key; kept.set(key, b);
+  const keepPut = (key, from, box) => { const old = kept.get(key); if (old && old !== box) old.remove(); kept.delete(key); const b = box || keepBox(); b.className = 'xpeek xkeep'; b.style.cssText = KEEP_CSS; if (from) b._st = moveNodes(from, b); b.querySelectorAll('[id]').forEach(el => { el.dataset.xid = el.id; el.removeAttribute('id'); }); b.dataset.key = key; kept.set(key, b);   // a parked page answers to no id: lookups only ever find the live screen
     while (kept.size > 28) { const k0 = kept.keys().next().value; const b0 = kept.get(k0); kept.delete(k0); b0.remove(); } return b; };
-  const keepTake = key => { const b = kept.get(key); if (!b) return null; kept.delete(key); return b; };
+  const keepTake = key => { const b = kept.get(key); if (!b) return null; kept.delete(key); b.querySelectorAll('[data-xid]').forEach(el => { el.id = el.dataset.xid; delete el.dataset.xid; }); return b; };
   const keepHas = key => kept.has(key);
   V._kept = { put: keepPut, take: keepTake, has: keepHas, map: kept };
   /* every sideways strip (last night's results, a rail of players, the date row) remembers how far you moved it, per
@@ -102,7 +105,8 @@
   const keyOf = r => r ? `${r.name}/${(r.args || []).join('/')}` : '';
   document.addEventListener('scroll', e => { const t = e.target; if (render.swiping || !t || t.nodeType !== 1 || !t.matches(STRIP_SEL) || !$main.contains(t)) return; const k = keyOf(current); if (k) stripMem.set(k, stripsOf($main)); }, true);
   // sections that arrive after the first paint get their place back too
-  new MutationObserver(() => { if (render.swiping) return; J('mo:strips', () => { const k = keyOf(current); const m = k && stripMem.get(k); if (m && Object.keys(m).length) stripsTo($main, m); }); }).observe($main, { childList: true, subtree: true });
+  const stripFix = () => J('mo:strips', () => { if (render.swiping || $main.querySelector(':scope > #gpage')) return; const k = keyOf(current); const m = k && stripMem.get(k); if (m && Object.keys(m).length) stripsTo($main, m); });
+  new MutationObserver(() => { if (!render.swiping && !$main.querySelector(':scope > #gpage')) V.whenIdle(stripFix); }).observe($main, { childList: true, subtree: true });
   let navN = 0;   // each history entry is numbered the first time it is shown; an entry numbered below the one we left is a step back
   async function render() {
     const r = route(); const my = ++seq; current = r; V.refresh = null; closeSheet();
@@ -132,21 +136,14 @@
        on swiping back). So the fade runs only for a move started by a tap inside the app. */
     const byTap = render.tapAt && performance.now() - render.tapAt < 1500; render.tapAt = 0;
     const swiped = render.swipe; render.swipe = false; if (swiped) { $main.classList.remove('enter', 'fade', 'hold'); $main.classList.add('noanim'); }
-    if (fresh && MOTION() && !swiped && !light && (byTap || !render.key)) {
-      /* a crossfade, not a blink: a snapshot of the old screen is laid over the page and fades out while the new screen, held
-         invisible until its real content has painted, fades in beneath it. If the content takes longer than a beat, the skeleton
-         is shown instead so the hold never ends in a blank. */
-      if (render.key) ghost(render.key);
-      /* switching leagues slides like X's tabs: the new league comes in from the side of the tab you tapped, the old one leaves the other way */
-      const dir = leagueChanged ? (ORDER.indexOf(r.lk) > ORDER.indexOf(render.lk) ? 'r' : 'l') : '';
-      if (dir) $main.dataset.dir = dir; else delete $main.dataset.dir; const gh = document.querySelector('.xghost:not(.out)'); if (gh && dir) gh.dataset.dir = dir;
-      $main.classList.remove('fade', 'enter'); $main.classList.add('hold');
-      const fadeIn = () => { clearTimeout(render.holdT); $main.classList.remove('hold', 'fade', 'enter'); void $main.offsetWidth; $main.classList.add('fade', 'enter'); document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => parkGhost(g), 500); }); };   // the snapshot lets go only now, so the two cross
-      render.onReal = fadeIn;
-      render.holdT = setTimeout(() => { if (render.onReal === fadeIn && my === seq) { render.onReal = null; V.showSkeleton(); fadeIn(); render.onReal = () => { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); }; } }, dir ? 110 : 260);   // a league swipe starts moving almost at once, as X's does
-    }
-    /* the screen being left is parked as it stands (unless the crossfade took it, or a swipe already moved it) */
-    if (fresh && render.key && !light && $main.dataset.real === '1' && !document.querySelector('.xghost.mv[data-key="' + render.key + '"]')) { keepPut(render.key, $main); $main.dataset.real = '0'; }
+    if (fresh && !swiped && !light && render.key && $main.dataset.real === '1') {
+      /* X's way, not a crossfade: the old screen stays exactly as it is while the new one loads (its skeleton is swallowed), and
+         on the new screen's first real paint the old nodes are parked and the new ones fade in. Nothing is copied or laid
+         out twice. If the load takes longer than a beat the skeleton shows after all, so it never ends in a blank. */
+      render.parkKey = render.key;
+      if (MOTION() && byTap) { const fadeIn = () => { clearTimeout(render.holdT); $main.classList.remove('fade', 'enter', 'hold'); void $main.offsetWidth; $main.classList.add('fade', 'enter'); };
+        render.onReal = fadeIn; render.holdT = setTimeout(() => { if (render.onReal === fadeIn && my === seq) { render.onReal = null; V.showSkeleton(); render.onReal = () => { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); }; } }, 260); }
+    } else render.parkKey = '';
     if (leagueChanged && !light) {
       /* A league switch is a new screen, not the old one refreshed: the old league never stays on screen while the new one
          loads (its skeleton paints instead), and a scroll still coasting from a flick is stopped before the jump to the top,
@@ -173,8 +170,8 @@
     paintTabs(TABS.includes(tabOf(r.name)) ? tabOf(r.name) : (render.tab || (r.name === 'game' ? 'scores' : 'home')));
     document.title = leagueScreen ? `${TITLES[r.name]} · ${LEAGUES[r.lk].label} · RIVL` : `${TITLES[r.name] || ''} RIVL`.trim();
     $main.dataset.top = '1';   // scroll to the top with the new screen's first real paint, not before it
-    if (fresh && !light) { const kb = keepTake(key); if (kb) { if (render.key && $main.dataset.real === '1' && !document.querySelector('.xghost.mv[data-key="' + render.key + '"]')) keepPut(render.key, $main);   // the page being left is parked (unless the crossfade has it)
-        moveNodes(kb, $main); kb.remove(); $main.dataset.real = '1'; if (ENT.includes(r.name) && V._ && V._.gxAttach) V._.gxAttach(); if (r.name === 'home') $main.dataset.hlk = r.lk; const y = +$main.dataset.y || 0; if (y) window.scrollTo(0, y); if (render.onReal) { const f = render.onReal; render.onReal = null; f(); } } }
+    if (fresh && !light) { const kb = keepTake(key); if (kb) { if (render.key && $main.dataset.real === '1' && !document.querySelector('.xghost.mv[data-key="' + render.key + '"]')) keepPut(render.key, $main);   // the page being left is parked
+        render.parkKey = ''; moveNodes(kb, $main, kb._st); kb.remove(); $main.dataset.real = '1'; if (ENT.includes(r.name) && V._ && V._.gxAttach) V._.gxAttach(); if (r.name === 'home') $main.dataset.hlk = r.lk; const y = +$main.dataset.y || 0; if (y) window.scrollTo(0, y); if (render.onReal) { const f = render.onReal; render.onReal = null; f(); } } }
     if (sp) sp.end();
     if (light) { const run = () => { if (my !== seq) return; Promise.resolve((V[r.name] || V.home)(...r.args)).catch(err => console.error(err)); }; V.whenIdle(() => setTimeout(run, 320)); }
     else try { await (V[r.name] || V.home)(...r.args); }
@@ -345,7 +342,7 @@
     if (home && $live.parentNode !== home) home.appendChild($live);
   }
   new MutationObserver(() => { if (!document.contains($live)) placeLive(); else if (!$live.closest('.lb-slot') && $main.querySelector('.lb-slot')) placeLive(); }).observe($main, { childList: true, subtree: true });
-  document.addEventListener('rivl:rendered', () => { placeLive(); paintLive(); });
+  document.addEventListener('rivl:rendered', () => { placeLive(); V.whenIdle(paintLive); });
   document.addEventListener('rivl:polled', paintLive);
   V.paintLive = paintLive;
   /* Spotify's open and close. A tap on the live bar: the card grows into the full screen in the game's colours, the game
@@ -384,7 +381,7 @@
       const wrap = document.createElement('div'); wrap.className = 'barclose'; document.body.appendChild(wrap);
       const gs = gp.querySelector('#gxscroll'), st = gs ? gs.scrollTop : 0; const kids = [...$main.childNodes]; const gy = window.scrollY;
       gp.style.transform = ''; wrap.appendChild(gp); if (gs) gs.scrollTop = st;
-      moveNodes(kb, $main); kb.remove(); $main.dataset.real = '1'; if (trip.name === 'home') $main.dataset.hlk = trip.lk; stripsTo($main, stripMem.get(trip.name + '/' + trip.lk)); de.classList.remove('entity', 'gxon'); document.getElementById('top').hidden = false; window.scrollTo(0, trip.y);
+      moveNodes(kb, $main, kb._st); kb.remove(); $main.dataset.real = '1'; if (trip.name === 'home') $main.dataset.hlk = trip.lk; stripsTo($main, stripMem.get(trip.name + '/' + trip.lk)); de.classList.remove('entity', 'gxon'); document.getElementById('top').hidden = false; window.scrollTo(0, trip.y);
       held = { wrap, gp, kids, gs, st, gy, t: trip }; return held;
     };
     const unlift = () => {   // let go short: everything goes back exactly as it was
@@ -539,18 +536,18 @@
     /* carry on to league k: the page leaves, the next slides fully in, then the real nodes change places */
     const slideTo = (k, dirL, ms, fromX = null, v0 = 0) => { const r0 = current || route(); from = from || r0.lk; to = k; makePeek(k); W2 = window.innerWidth;
       render.swipe = true; render.swiping = true; render.gliding = true; render.tapAt = performance.now(); peek.style.visibility = '';
-      const finish = () => { requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; clearTrack(); $pills.classList.remove('gliding'); render.gliding = false; V.flushIdle(); })); };
+      const finish = () => { requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; clearTrack(); $pills.classList.remove('gliding'); render.gliding = false; if (later.length && !ricId) ricId = ric(V.flushIdle, { timeout: 1200 }); })); };
       const land = () => J('land', () => { $m.style.transition = 'none'; $m.style.transform = ''; $m.style.willChange = '';
         const fromKey = r0.name + '/' + r0.lk, toKey = r0.name + '/' + k;
         scrollMem.set(fromKey, window.scrollY); const ny = scrollMem.get(toKey) || 0; render.memDone = true; render.keepHdr = ny > 4; render.hdrHold = true; if (ny <= 4 && V.showTop) V.showTop(); setTimeout(() => { render.hdrHold = false; }, 400);
         if (peekKey) {
           /* the real nodes change places: the page you were on is parked, the one that slid in becomes the page */
           if ($m.dataset.real === '1') keepPut(fromKey, $m);
-          moveNodes(peek, $m); peek.remove(); peek = null; peekKey = ''; peekFor = null; $m.dataset.real = '1';
+          moveNodes(peek, $m, peek._st); peek.remove(); peek = null; peekKey = ''; peekFor = null; $m.dataset.real = '1';
           window.scrollTo(0, ny); if (r0.name === 'home') $m.dataset.hlk = k;
           render.light = true; location.hash = '#' + k; finish(); return; }
         // a league never seen: the skeleton stays up while the real screen paints under it
-        $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { requestAnimationFrame(() => { $m.style.visibility = ''; dropPeek(); render.swiping = false; clearTrack(); $pills.classList.remove('gliding'); render.gliding = false; V.flushIdle(); }); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); });
+        $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { requestAnimationFrame(() => { $m.style.visibility = ''; dropPeek(); render.swiping = false; clearTrack(); $pills.classList.remove('gliding'); render.gliding = false; if (later.length && !ricId) ricId = ric(V.flushIdle, { timeout: 1200 }); }); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); });
       if (fromX != null) { $m.style.transition = 'none'; peek.style.transition = 'none'; $pills.classList.remove('dragging');
         spring(fromX, v0, dirL ? -W2 : W2, x => { $m.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`; peek.style.transform = `translate3d(${(x + (dirL ? W2 : -W2)).toFixed(2)}px,0,0)`; track(Math.min(1, Math.abs(x) / W2)); }, land); return; }
       const T = `transform ${ms}ms cubic-bezier(.25,.8,.25,1)`; if (!dirL) peek.style.transform = `translate3d(${-W2}px,0,0)`; void peek.offsetWidth; $m.style.transition = T; peek.style.transition = T; $pills.classList.remove('dragging'); $pills.classList.add('gliding');

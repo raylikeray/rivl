@@ -94,7 +94,7 @@
     for (const img of document.querySelectorAll(':is(#main,#livebar,.panel,.sheet,#bsheet) .logo img:not(.fitted)')) { if (img.closest('.onb-team,.thead,.injhd,.pp-team,.hero,.ehero,.gxpage')) { img.classList.add('fitted'); continue; } one(img, m => discScale(img, m)); }
   }
 
-  document.addEventListener('rivl:rendered', fitLogos); setTimeout(fitLogos, 1200);
+  document.addEventListener('rivl:rendered', () => V.whenIdle(fitLogos)); setTimeout(() => V.whenIdle(fitLogos), 1200);
 
   /* ---------- strips fade at the edge that still has more to show ---------- */
   const STRIPS = '.dates,.brief-row,.chips,.rail,.media,.tw,.onb-picked-row,.livebar .lb-in';
@@ -112,7 +112,7 @@
   const edges = () => J('edges', () => edgeNow([...document.querySelectorAll(SCOPE)]));
   V.edges = edges;
   document.addEventListener('scroll', e => { const t = e.target; if (t && t.nodeType === 1 && t.matches && t.matches(STRIPS) && !t.closest('.xkeep')) edge(t); }, true);
-  document.addEventListener('rivl:rendered', () => { edges(); setTimeout(edges, 300); });
+  document.addEventListener('rivl:rendered', () => { V.whenIdle(edges); setTimeout(() => V.whenIdle(edges), 300); });
   window.addEventListener('resize', edges);
   new MutationObserver(() => { V.whenIdle(fitLogos); clearTimeout(edges.t); edges.t = setTimeout(() => V.whenIdle(edges), 60); }).observe(document.getElementById('main'), { childList: true, subtree: true });
 
