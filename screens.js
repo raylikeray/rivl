@@ -1274,10 +1274,37 @@
       $main.querySelectorAll('[data-jg]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); const g = b.dataset.jg;
         $main.querySelectorAll('[data-jg]').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
         $main.querySelectorAll('[data-jgp]').forEach(x => { x.hidden = x.dataset.jgp !== g; }); }));
-      /* your photo: cropped square from the middle, shrunk to 192px and kept on this phone only */
-      const pic = $main.querySelector('#pfpic'); if (pic) pic.addEventListener('change', () => { const f = pic.files && pic.files[0]; if (!f) return; const img = new Image(), url = URL.createObjectURL(f);
-        img.onload = () => { const n = 192, c = document.createElement('canvas'); c.width = c.height = n; const sz = Math.min(img.width, img.height); c.getContext('2d').drawImage(img, (img.width - sz) / 2, (img.height - sz) / 2, sz, sz, 0, 0, n, n); URL.revokeObjectURL(url);
-          try { store.set('v5:avatar', c.toDataURL('image/jpeg', .86)); } catch (e) { } if (window.RIVL_paintAv) window.RIVL_paintAv(); settingsV('profile'); };
+      /* your photo: an editor opens first. Drag to move it, pinch or use the slider to zoom, and see it as the round icon
+         it will be at the top of the app; Save keeps exactly what's in the circle (192px, on this phone only). */
+      const pic = $main.querySelector('#pfpic'); if (pic) pic.addEventListener('change', () => { const f = pic.files && pic.files[0]; pic.value = ''; if (!f) return; const url = URL.createObjectURL(f); const img = new Image();
+        img.onload = () => {
+          const D = Math.min(300, window.innerWidth - 64); let z = 1, x = 0, y = 0; const base = D / Math.min(img.width, img.height);
+          const ov = document.createElement('div'); ov.className = 'pcrop';
+          ov.innerHTML = `<div class="pcbox"><div class="pch"><button data-pc="no">Cancel</button><b>Move and scale</b><button data-pc="ok" class="on">Save</button></div>
+            <div class="pcstage" style="width:${D}px;height:${D}px"><img src="${url}" alt="" draggable="false"><i class="pcring"></i></div>
+            <input class="pczoom" type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom">
+            <div class="pcprev"><span class="pcav"><img src="${url}" alt=""></span><span>How it looks at the top of the app</span></div></div>`;
+          document.body.appendChild(ov); requestAnimationFrame(() => ov.classList.add('in'));
+          const st = ov.querySelector('.pcstage'), im = st.querySelector('img'), pv = ov.querySelector('.pcav img'), zr = ov.querySelector('.pczoom');
+          const clamp = () => { const w = img.width * base * z, h = img.height * base * z; x = Math.min(0, Math.max(D - w, x)); y = Math.min(0, Math.max(D - h, y)); };
+          const draw = () => { clamp(); const w = img.width * base * z, h = img.height * base * z; im.style.cssText = `width:${w}px;height:${h}px;transform:translate(${x}px,${y}px)`; const k = 40 / D; pv.style.cssText = `width:${w * k}px;height:${h * k}px;transform:translate(${x * k}px,${y * k}px)`; };
+          const zoomTo = (nz, cx = D / 2, cy = D / 2) => { nz = Math.min(4, Math.max(1, nz)); x = cx - (cx - x) * nz / z; y = cy - (cy - y) * nz / z; z = nz; zr.value = z; draw(); };
+          x = (D - img.width * base) / 2; y = (D - img.height * base) / 2; draw();
+          const pts = new Map(); let last = null, pinch = null;
+          st.addEventListener('pointerdown', e => { st.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); last = [e.clientX, e.clientY]; if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z }; } });
+          st.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, [e.clientX, e.clientY]);
+            if (pts.size === 2 && pinch) { const [a, b] = [...pts.values()], r = st.getBoundingClientRect(); zoomTo(pinch.z * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d, (a[0] + b[0]) / 2 - r.left, (a[1] + b[1]) / 2 - r.top); return; }
+            if (pts.size === 1 && last) { x += e.clientX - last[0]; y += e.clientY - last[1]; last = [e.clientX, e.clientY]; draw(); } });
+          const up = e => { pts.delete(e.pointerId); pinch = null; last = pts.size ? [...pts.values()][0] : null; };
+          st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
+          st.addEventListener('wheel', e => { e.preventDefault(); const r = st.getBoundingClientRect(); zoomTo(z * (e.deltaY < 0 ? 1.08 : 1 / 1.08), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+          zr.addEventListener('input', () => zoomTo(+zr.value));
+          const close = () => { ov.classList.remove('in'); setTimeout(() => { ov.remove(); URL.revokeObjectURL(url); }, 260); };
+          ov.addEventListener('click', e => { const b = e.target.closest('[data-pc]'); if (!b) return;
+            if (b.dataset.pc === 'ok') { const n = 192, c = document.createElement('canvas'); c.width = c.height = n; const sc = n / D; c.getContext('2d').drawImage(img, x * sc, y * sc, img.width * base * z * sc, img.height * base * z * sc);
+              try { store.set('v5:avatar', c.toDataURL('image/jpeg', .88)); } catch (err) { } if (window.RIVL_paintAv) window.RIVL_paintAv(); close(); settingsV('profile'); }
+            else close(); });
+        };
         img.src = url; });
       const nop = $main.querySelector('[data-act="pfnopic"]'); if (nop) nop.addEventListener('click', e => { e.preventDefault(); store.set('v5:avatar', ''); if (window.RIVL_paintAv) window.RIVL_paintAv(); settingsV('profile'); });
       $main.querySelectorAll('[data-jk]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); store.set('v5:jersey', { ...(store.get('v5:jersey', null) || {}), k: b.dataset.jk, id: b.dataset.jid }); settingsV('profile').then(() => window.scrollTo(0, 0)); }));

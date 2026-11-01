@@ -52,7 +52,7 @@
     ORDER.forEach((k, i) => { const el = $pills.children[i]; const on = k === lk; el.classList.toggle('on', on); if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); const n = S.today[k].filter(isLive).length; let ct = el.querySelector('.ct'); if (n && !ct) { ct = document.createElement('span'); ct.className = 'ct live'; el.appendChild(ct); } if (ct) { if (!n) ct.remove(); else if (ct.textContent !== String(n)) ct.textContent = n; } });
     $pills.style.setProperty('--n', ORDER.length); $pills.style.setProperty('--i', Math.max(0, ORDER.indexOf(lk)));   // the knob slides to the chosen league
     // X-style: the line sits under the chosen league's word, as wide as the word, and slides to the next one
-    requestAnimationFrame(() => { const on = $pills.querySelector('.pill.on'), sp = on && on.querySelector('span'); if (!sp) return; $pills.style.setProperty('--ux', (on.offsetLeft + sp.offsetLeft - 6) + 'px'); $pills.style.setProperty('--uw', (sp.offsetWidth + 12) + 'px'); });
+    requestAnimationFrame(() => { const on = $pills.querySelector('.pill.on'), sp = on && on.querySelector('span'); if (!sp) return; $pills.style.setProperty('--ux', (on.offsetLeft + sp.offsetLeft - 10) + 'px'); $pills.style.setProperty('--uw', (sp.offsetWidth + 20) + 'px'); });
   }
   function paintTabs(name) {
     $tabs.querySelectorAll('.tab').forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('on', on); if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
@@ -88,6 +88,9 @@
          invisible until its real content has painted, fades in beneath it. If the content takes longer than a beat, the skeleton
          is shown instead so the hold never ends in a blank. */
       if (render.key) ghost();
+      /* switching leagues slides like X's tabs: the new league comes in from the side of the tab you tapped, the old one leaves the other way */
+      const dir = leagueChanged ? (ORDER.indexOf(r.lk) > ORDER.indexOf(render.lk) ? 'r' : 'l') : '';
+      if (dir) $main.dataset.dir = dir; else delete $main.dataset.dir; const gh = document.querySelector('.xghost:not(.out)'); if (gh && dir) gh.dataset.dir = dir;
       $main.classList.remove('fade', 'enter'); $main.classList.add('hold');
       const fadeIn = () => { clearTimeout(render.holdT); $main.classList.remove('hold', 'fade', 'enter'); void $main.offsetWidth; $main.classList.add('fade', 'enter'); document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); }); };   // the snapshot lets go only now, so the two cross
       render.onReal = fadeIn;
