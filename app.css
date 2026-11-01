@@ -2635,3 +2635,27 @@ html.gxon body::before{display:none}
 /* pickers switch at once (no fade for a redraw to freeze halfway), and play cards off screen aren't drawn until you reach them */
 .gxseg button,.gxtsw button{transition:none!important}
 .gxpage .gpl{content-visibility:auto;contain-intrinsic-size:auto 170px}
+
+/* the bottom bar, as the MLS app draws it: a dark rounded bar on every screen, icons over words, Home raised in a round button in the middle */
+@media (max-width:1039px){
+  .tabs{left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);max-width:560px;margin:0 auto;border-radius:30px;padding:6px 8px;overflow:visible;
+    display:grid;grid-template-columns:repeat(5,1fr);align-items:end;
+    background:#0B0C0E!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(255,255,255,.06),0 18px 40px -16px rgba(0,0,0,.8)!important}
+  .tab,.tab.on{height:58px;border-radius:0;background:none!important;box-shadow:none!important;opacity:1;color:rgba(255,255,255,.62)!important;gap:4px;font-size:12px;font-weight:600}
+  .tab span,.tab.on span{color:inherit!important;text-shadow:none!important}
+  .tab svg{width:25px;height:25px}
+  .tab.on{color:#fff!important;font-weight:700}
+  .tab:active{transform:none}
+  .tab:active svg{transform:scale(.9)}
+  /* Home: the raised button */
+  .tab.mid{position:relative;justify-content:flex-end;padding-bottom:7px}
+  .tab.mid .mb{position:absolute;left:50%;top:-30px;transform:translateX(-50%);width:64px;height:64px;border-radius:999px;display:grid;place-items:center;color:#fff;
+    background:radial-gradient(120% 120% at 30% 20%,#5BB8FF,#2F8FF0 55%,#1F6FD1);box-shadow:0 0 0 5px #0B0C0E,0 10px 22px -6px rgba(47,143,240,.65);transition:transform .14s ease}
+  .tab.mid .mb svg{width:28px;height:28px}
+  .tab.mid .mb .f{display:none}.tab.mid.on .mb .o{display:none}.tab.mid.on .mb .f{display:block}
+  .tab.mid:active .mb{transform:translateX(-50%) scale(.94)}
+  .tab.mid:active svg{transform:none}
+  .tab.mid span{font-size:12px}
+}
+@media (max-width:1039px){ .tabs .tab:not(.on){opacity:1} }
