@@ -2703,3 +2703,9 @@ html.gxon body::before{display:none}
 /* those three lists sit straight on the page under their heading, as in v7: no card around the card */
 .hsec[data-sec="teams"],.hsec[data-sec="players"],.hsec[data-sec="injuries"]{background:none!important;box-shadow:none!important;border:0!important;padding-left:0!important;padding-right:0!important;margin-left:0!important;margin-right:0!important}
 .hsec[data-sec="teams"]::before,.hsec[data-sec="players"]::before,.hsec[data-sec="injuries"]::before,.hsec[data-sec="teams"]::after,.hsec[data-sec="players"]::after,.hsec[data-sec="injuries"]::after{display:none!important}
+.hsec[data-sec="injuries"]{--gut:max(16px,env(safe-area-inset-left,0px))!important;--gut-r:max(16px,env(safe-area-inset-right,0px))!important}
+.hsec[data-sec="injuries"] .sec{padding-left:var(--gut)!important;padding-right:var(--gut-r)!important}
+/* the team badge sits on top of the face, never under it */
+.frow .fface .hs{position:relative;z-index:0}
+.frow .fcr{z-index:3;overflow:hidden}
+.frow .fcr img{position:static;transform:none}
