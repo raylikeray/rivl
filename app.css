@@ -2631,3 +2631,7 @@ html.gxon body::before{display:none}
   animation:gxdots 14s linear infinite}
 @keyframes gxdots{from{transform:translate3d(0,0,0)}to{transform:translate3d(6px,6px,0)}}
 @media (prefers-reduced-motion:reduce){.gx .veil::after{animation:none}}
+
+/* pickers switch at once (no fade for a redraw to freeze halfway), and play cards off screen aren't drawn until you reach them */
+.gxseg button,.gxtsw button{transition:none!important}
+.gxpage .gpl{content-visibility:auto;contain-intrinsic-size:auto 170px}

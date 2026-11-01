@@ -864,7 +864,7 @@
           if (!pan) { pan = document.createElement('div'); pan.dataset.p = tab; bodyEl.appendChild(pan); }
           if (pan.dataset.h !== bhh) { if (pan.firstChild) gxPatch(pan, body); else pan.innerHTML = body; pan.dataset.h = bhh; }
           if (tabChanged) { bodyEl.querySelectorAll(':scope > [data-p]').forEach(x => { x.hidden = x !== pan; }); bodyEl.dataset.tab = tab; gxPin(); }
-          gxFit(); if (gxScroll.run) gxScroll.run();
+          if (!local) gxFit(); if (gxScroll.run) gxScroll.run();
         } else {
           $main.innerHTML = `<div id="gpage" class="gxpage${f && !g.off ? '' : ' nowp'}" data-gid="${esc(String(id))}">`
             + `<section class="gx" id="gxhero" data-v="${esc(vars)}" style="${vars}">${LOBES}<div class="gxin" id="gxin" data-h="${hashOf(inner)}">${inner}</div></section>`
