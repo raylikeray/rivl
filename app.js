@@ -283,6 +283,38 @@
   };
   window.RIVL_paintAv = () => { const b = document.getElementById('avbtn'); if (!b) return; b.innerHTML = window.RIVL_avatar(); const j = HW.store.get('v5:jlook', null); b.style.setProperty('--avc', j && j.main || '#1D9BF0'); };
   window.RIVL_paintAv();
+  /* the side panel, like X's: your icon opens it from the left over a dimmed page. Your photo and name open your profile;
+     the list holds what Settings holds. Tap outside or swipe it left to close. */
+  (() => {
+    const btn = document.getElementById('avbtn'); if (!btn) return;
+    const I = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+    const ICO = { me: I('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>'), teams: I('<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'),
+      players: I('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.7c2 .7 3.5 2.4 3.5 5.3"/>'), bell: I('<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>'),
+      eye: I('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'), tv: I('<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/>'), sync: I('<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/>'),
+      sun: I('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'), moon: I('<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>') };
+    let el = null;
+    const close = () => { if (!el) return; const d = el; el = null; d.classList.remove('in'); setTimeout(() => d.remove(), 330); };
+    const open = () => {
+      if (el) return; const S = HW.store, name = S.get('v5:name', '') || 'Add your name', F = HW.favs.all(), nT = Object.values(F).reduce((a, x) => a + (x || []).length, 0), nP = V.fplayers ? V.fplayers.all().length : 0;
+      const theme = S.get('v5:theme', 'system'), dark = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+      el = document.createElement('div'); el.className = 'xdrawer';
+      el.innerHTML = `<div class="xdbg"></div><nav class="xdp" aria-label="You and settings">
+        <div class="xdtop"><a class="xdav avbtn" href="#settings/profile" aria-label="Your profile">${window.RIVL_avatar()}</a><button class="xdtheme" data-xd="theme" aria-label="Switch to ${dark ? 'light' : 'dark'} mode">${dark ? ICO.sun : ICO.moon}</button></div>
+        <a class="xdme" href="#settings/profile"><b>${esc(name)}</b><span>Your profile</span></a>
+        <div class="xdst"><a href="#teams"><b>${nT}</b> Teams</a><a href="#players"><b>${nP}</b> Players</a></div>
+        <div class="xdnav"><a href="#settings/profile">${ICO.me}Profile</a><a href="#teams">${ICO.teams}Teams</a><a href="#players">${ICO.players}Players</a><a href="#settings/alerts">${ICO.bell}Notifications</a><a href="#settings/watch">${ICO.tv}Where you watch</a></div>
+        <div class="xdsub"><a href="#settings/home">Display</a><a href="#settings/sync">Sync</a><a href="#settings/app">App</a><a href="#settings">All settings</a><a href="#settings/about">About and sources</a></div></nav>`;
+      document.body.appendChild(el); void el.offsetWidth; el.classList.add('in');
+      el.addEventListener('click', e => { if (e.target.closest('[data-xd="theme"]')) { e.preventDefault(); const t = dark ? 'light' : 'dark'; S.set('v5:theme', t); applyTheme(); close(); return; } if (e.target.closest('a') || e.target.classList.contains('xdbg')) close(); });
+      // swipe it away to the left, following the finger
+      const p = el.querySelector('.xdp'); let x0 = null, dx = 0;
+      p.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; dx = 0; p.style.transition = 'none'; }, { passive: true });
+      p.addEventListener('touchmove', e => { if (x0 == null) return; dx = Math.min(0, e.touches[0].clientX - x0); p.style.transform = `translate3d(${dx}px,0,0)`; }, { passive: true });
+      p.addEventListener('touchend', () => { p.style.transition = ''; if (dx < -70) { p.style.transform = ''; close(); } else p.style.transform = ''; x0 = null; });
+    };
+    btn.addEventListener('click', e => { e.preventDefault(); open(); });
+    window.addEventListener('hashchange', close);
+  })();
   /* the top (your icon, the R, the leagues) behaves like X's: it slides up out of the way as you scroll down, following
      your finger, and slides back down the moment you scroll up. When you stop halfway it settles open or closed. */
   (() => {

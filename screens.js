@@ -1196,6 +1196,40 @@
     app: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10 18h4"/></svg>',
     about: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>'
   };
+  /* the photo editor: drag to move, pinch or the slider to zoom, inside a frame of the given shape (a circle for your
+     photo with a preview of the icon, a 3:1 strip for your header); Save hands back exactly what's in the frame */
+  function cropImage(file, o, done) {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const W = Math.min(320, window.innerWidth - 56), H = Math.round(W * o.h / o.w); let z = 1, x = 0, y = 0; const base = Math.max(W / img.width, H / img.height);
+      const ov = document.createElement('div'); ov.className = 'pcrop';
+      ov.innerHTML = `<div class="pcbox"><div class="pch"><button data-pc="no">Cancel</button><b>${o.title}</b><button data-pc="ok" class="on">Save</button></div>
+        <div class="pcstage${o.round ? ' round' : ''}" style="width:${W}px;height:${H}px"><img src="${url}" alt="" draggable="false"><i class="pcring"></i></div>
+        <input class="pczoom" type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom">
+        ${o.round ? `<div class="pcprev"><span class="pcav"><img src="${url}" alt=""></span><span>How it looks at the top of the app</span></div>` : '<p class="pcnote">Drag to choose what shows across the top of your profile</p>'}</div>`;
+      document.body.appendChild(ov); requestAnimationFrame(() => ov.classList.add('in'));
+      const st = ov.querySelector('.pcstage'), im = st.querySelector('img'), pv = ov.querySelector('.pcav img'), zr = ov.querySelector('.pczoom');
+      const dims = () => [img.width * base * z, img.height * base * z];
+      const draw = () => { const [w, h] = dims(); x = Math.min(0, Math.max(W - w, x)); y = Math.min(0, Math.max(H - h, y)); im.style.cssText = `width:${w}px;height:${h}px;transform:translate(${x}px,${y}px)`; if (pv) { const k = 40 / W; pv.style.cssText = `width:${w * k}px;height:${h * k}px;transform:translate(${x * k}px,${y * k}px)`; } };
+      const zoomTo = (nz, cx = W / 2, cy = H / 2) => { nz = Math.min(4, Math.max(1, nz)); x = cx - (cx - x) * nz / z; y = cy - (cy - y) * nz / z; z = nz; zr.value = z; draw(); };
+      { const [w, h] = dims(); x = (W - w) / 2; y = (H - h) / 2; } draw();
+      const pts = new Map(); let last = null, pinch = null;
+      st.addEventListener('pointerdown', e => { st.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); last = [e.clientX, e.clientY]; if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z }; } });
+      st.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, [e.clientX, e.clientY]);
+        if (pts.size === 2 && pinch) { const [a, b] = [...pts.values()], r = st.getBoundingClientRect(); zoomTo(pinch.z * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d, (a[0] + b[0]) / 2 - r.left, (a[1] + b[1]) / 2 - r.top); return; }
+        if (pts.size === 1 && last) { x += e.clientX - last[0]; y += e.clientY - last[1]; last = [e.clientX, e.clientY]; draw(); } });
+      const up = e => { pts.delete(e.pointerId); pinch = null; last = pts.size ? [...pts.values()][0] : null; };
+      st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
+      st.addEventListener('wheel', e => { e.preventDefault(); const r = st.getBoundingClientRect(); zoomTo(z * (e.deltaY < 0 ? 1.08 : 1 / 1.08), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+      zr.addEventListener('input', () => zoomTo(+zr.value));
+      const close = () => { ov.classList.remove('in'); setTimeout(() => { ov.remove(); URL.revokeObjectURL(url); }, 260); };
+      ov.addEventListener('click', e => { const b = e.target.closest('[data-pc]'); if (!b) return;
+        if (b.dataset.pc === 'ok') { const ow = o.out, oh = Math.round(o.out * o.h / o.w), c = document.createElement('canvas'); c.width = ow; c.height = oh; const sc = ow / W; const [w, h] = dims(); c.getContext('2d').drawImage(img, x * sc, y * sc, w * sc, h * sc);
+          let data = ''; try { data = c.toDataURL('image/jpeg', o.round ? .88 : .8); } catch (err) { } close(); if (data) { try { done(data); } catch (err) { } } }
+        else close(); });
+    };
+    img.src = url;
+  }
   async function settingsV(cat = '') {
     const P = prefs.all(); const theme = store.get('v5:theme', 'system'); const accent = store.get('v5:accent', 'mono');
     const F = favs.all(); const fp = fplayers.all();
@@ -1256,60 +1290,53 @@
       const grpOf = k => k.startsWith('ncaa') ? 'college' : k;
       const JG = [['nba', 'NBA'], ['wnba', 'WNBA'], ['college', 'College']].filter(([g]) => teams.some(x => grpOf(x.k) === g));
       const jg0 = pick ? grpOf(pick.k) : (JG[0] || [''])[0];
-      $main.innerHTML = `<div class="pfpage" style="--pc:${esc(main)};--pc2:${esc(trim)}"><div class="pfband"><span class="pfw"><i></i><i></i><i></i></span>
-          <div class="pftop"><a class="ib" href="#settings" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>
-          <div class="pfid"><button class="pfjbtn${photo ? ' pfph' : ''}" data-act="pfjer" aria-label="Choose your jersey">${photo ? `<img class="pfphoto" src="${esc(photo)}" alt="Your photo">` : jersey}</button>
-            <div class="pft"><h1>${esc(name || 'Your name')}</h1><p class="pfteam">${pick ? `${pick.t.logo ? `<img src="${esc(pick.t.logo)}" alt="">` : ''}${esc(pick.t.name || pick.t.short)}` : 'Tap the jersey to pick your team'}</p>
-            <p class="pfst"><span><b>${teams.length}</b> teams</span><span><b>${fp.length}</b> players</span></p></div></div>
-          <div class="pfbtns"><label class="pfedit pfadd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>${photo ? 'Change photo' : 'Add a photo'}<input type="file" accept="image/*" id="pfpic" hidden></label>${photo ? '<button class="pfedit" data-act="pfnopic">Use my jersey</button>' : ''}</div><button class="pfedit" data-act="pfedit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Edit name and number</button>
-          <div class="pfname" hidden><input id="pname" type="text" maxlength="12" autocomplete="given-name" autocapitalize="words" placeholder="Name" value="${esc(name)}"><input id="pnum" type="text" inputmode="numeric" maxlength="2" placeholder="#" value="${esc(num)}"><button data-act="pfdone">Done</button></div>
-        </div>
-        <div class="pfjgrid" hidden><div class="pfsec"><h2>Your jersey</h2><span>Pick the team</span></div>${teams.length ? `<div class="chips pfjtabs">${JG.map(([g, l]) => `<button class="chip${g === jg0 ? ' on' : ''}" data-jg="${g}" aria-pressed="${g === jg0}">${l}</button>`).join('')}</div>${JG.map(([g]) => `<div class="pfpicks" data-jgp="${g}"${g === jg0 ? '' : ' hidden'}>${teams.filter(x => grpOf(x.k) === g).map(choose).join('')}</div>`).join('')}` : `<a class="pfcta" href="#teams"><span class="t"><b>Follow a team first</b><span>Then its jersey can be yours</span></span>${chev}</a>`}</div>
+      /* X-style profile: your header picture across the top (or your team's colours with its crest), your photo
+         overlapping it in a team-colour ring, your name and team, your counts, then your teams and players. "Edit profile"
+         opens a sheet to change the header, the photo, the name and number, and the jersey team. */
+      const banner = store.get('v5:banner', ''), tlogo = pick && pick.t.logo || '';
+      const avHTML = photo ? `<img src="${esc(photo)}" alt="Your photo">` : `<span class="xpini" style="background:${esc(main)};color:${esc(ink)}">${esc((name || '').trim().charAt(0).toUpperCase() || '+')}</span>`;
+      const banHTML = banner ? `<img class="xpbimg" src="${esc(banner)}" alt="">` : `<span class="xpbdef"></span>${tlogo ? `<img class="xpbwm" src="${esc(tlogo)}" alt="">` : ''}`;
+      const cam = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+      $main.innerHTML = `<div class="pfpage xprof" style="--pc:${esc(main)};--pc2:${esc(trim)}">
+        <div class="xpban">${banHTML}<a class="xpback" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>
+        <div class="xprow"><span class="xpav">${avHTML}</span><button class="xpedit" data-act="xpopen">Edit profile</button></div>
+        <div class="xpid"><h1>${esc(name || 'Your name')}</h1><p class="xpteam">${pick ? `${tlogo ? `<img src="${esc(tlogo)}" alt="">` : ''}${esc(pick.t.name || pick.t.short)}${num ? ` · #${esc(num)}` : ''}` : 'Pick your team in Edit profile'}</p>
+          <p class="xpst"><a href="#teams"><b>${teams.length}</b> Teams</a><a href="#players"><b>${fp.length}</b> Players</a></p></div>
         <div class="pfsec"><h2>Your teams</h2><a href="#teams">Edit</a></div>${teams.length ? `<div class="pfrail">${teams.map(crest).join('')}</div>` : `<a class="pfcta" href="#teams"><span class="t"><b>Pick your teams</b><span>They lead Following and get your updates</span></span>${chev}</a>`}
         <div class="pfsec"><h2>Your players</h2><a href="#players">Edit</a></div>${fp.length ? `<div class="pfrail">${fp.map(face).join('')}</div>` : `<a class="pfcta" href="#players"><span class="t"><b>Follow some players</b><span>Their lines show up on Following</span></span>${chev}</a>`}
       </div>`;
-      const box = $main.querySelector('.pfname'), eb = $main.querySelector('.pfedit');
-      const save = () => { store.set('v5:name', $main.querySelector('#pname').value.trim()); const n = $main.querySelector('#pnum').value.replace(/\D/g, '').slice(0, 2); store.set('v5:jersey', { ...(store.get('v5:jersey', null) || {}), num: n }); };
-      $main.querySelector('[data-act="pfedit"]').addEventListener('click', e => { e.preventDefault(); box.hidden = false; eb.hidden = true; $main.querySelector('#pname').focus(); });
-      $main.querySelector('[data-act="pfdone"]').addEventListener('click', e => { e.preventDefault(); save(); settingsV('profile'); });
-      $main.querySelector('[data-act="pfjer"]').addEventListener('click', e => { e.preventDefault(); const g = $main.querySelector('.pfjgrid'); g.hidden = !g.hidden; if (!g.hidden) window.scrollTo({ top: window.scrollY + g.getBoundingClientRect().top - 12, behavior: 'smooth' }); });
-      $main.querySelectorAll('[data-jg]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); const g = b.dataset.jg;
-        $main.querySelectorAll('[data-jg]').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
-        $main.querySelectorAll('[data-jgp]').forEach(x => { x.hidden = x.dataset.jgp !== g; }); }));
-      /* your photo: an editor opens first. Drag to move it, pinch or use the slider to zoom, and see it as the round icon
-         it will be at the top of the app; Save keeps exactly what's in the circle (192px, on this phone only). */
-      const pic = $main.querySelector('#pfpic'); if (pic) pic.addEventListener('change', () => { const f = pic.files && pic.files[0]; pic.value = ''; if (!f) return; const url = URL.createObjectURL(f); const img = new Image();
-        img.onload = () => {
-          const D = Math.min(300, window.innerWidth - 64); let z = 1, x = 0, y = 0; const base = D / Math.min(img.width, img.height);
-          const ov = document.createElement('div'); ov.className = 'pcrop';
-          ov.innerHTML = `<div class="pcbox"><div class="pch"><button data-pc="no">Cancel</button><b>Move and scale</b><button data-pc="ok" class="on">Save</button></div>
-            <div class="pcstage" style="width:${D}px;height:${D}px"><img src="${url}" alt="" draggable="false"><i class="pcring"></i></div>
-            <input class="pczoom" type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom">
-            <div class="pcprev"><span class="pcav"><img src="${url}" alt=""></span><span>How it looks at the top of the app</span></div></div>`;
-          document.body.appendChild(ov); requestAnimationFrame(() => ov.classList.add('in'));
-          const st = ov.querySelector('.pcstage'), im = st.querySelector('img'), pv = ov.querySelector('.pcav img'), zr = ov.querySelector('.pczoom');
-          const clamp = () => { const w = img.width * base * z, h = img.height * base * z; x = Math.min(0, Math.max(D - w, x)); y = Math.min(0, Math.max(D - h, y)); };
-          const draw = () => { clamp(); const w = img.width * base * z, h = img.height * base * z; im.style.cssText = `width:${w}px;height:${h}px;transform:translate(${x}px,${y}px)`; const k = 40 / D; pv.style.cssText = `width:${w * k}px;height:${h * k}px;transform:translate(${x * k}px,${y * k}px)`; };
-          const zoomTo = (nz, cx = D / 2, cy = D / 2) => { nz = Math.min(4, Math.max(1, nz)); x = cx - (cx - x) * nz / z; y = cy - (cy - y) * nz / z; z = nz; zr.value = z; draw(); };
-          x = (D - img.width * base) / 2; y = (D - img.height * base) / 2; draw();
-          const pts = new Map(); let last = null, pinch = null;
-          st.addEventListener('pointerdown', e => { st.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); last = [e.clientX, e.clientY]; if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z }; } });
-          st.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, [e.clientX, e.clientY]);
-            if (pts.size === 2 && pinch) { const [a, b] = [...pts.values()], r = st.getBoundingClientRect(); zoomTo(pinch.z * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d, (a[0] + b[0]) / 2 - r.left, (a[1] + b[1]) / 2 - r.top); return; }
-            if (pts.size === 1 && last) { x += e.clientX - last[0]; y += e.clientY - last[1]; last = [e.clientX, e.clientY]; draw(); } });
-          const up = e => { pts.delete(e.pointerId); pinch = null; last = pts.size ? [...pts.values()][0] : null; };
-          st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
-          st.addEventListener('wheel', e => { e.preventDefault(); const r = st.getBoundingClientRect(); zoomTo(z * (e.deltaY < 0 ? 1.08 : 1 / 1.08), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
-          zr.addEventListener('input', () => zoomTo(+zr.value));
-          const close = () => { ov.classList.remove('in'); setTimeout(() => { ov.remove(); URL.revokeObjectURL(url); }, 260); };
-          ov.addEventListener('click', e => { const b = e.target.closest('[data-pc]'); if (!b) return;
-            if (b.dataset.pc === 'ok') { const n = 192, c = document.createElement('canvas'); c.width = c.height = n; const sc = n / D; c.getContext('2d').drawImage(img, x * sc, y * sc, img.width * base * z * sc, img.height * base * z * sc);
-              try { store.set('v5:avatar', c.toDataURL('image/jpeg', .88)); } catch (err) { } if (window.RIVL_paintAv) window.RIVL_paintAv(); close(); settingsV('profile'); }
-            else close(); });
-        };
-        img.src = url; });
-      const nop = $main.querySelector('[data-act="pfnopic"]'); if (nop) nop.addEventListener('click', e => { e.preventDefault(); store.set('v5:avatar', ''); if (window.RIVL_paintAv) window.RIVL_paintAv(); settingsV('profile'); });
-      $main.querySelectorAll('[data-jk]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); store.set('v5:jersey', { ...(store.get('v5:jersey', null) || {}), k: b.dataset.jk, id: b.dataset.jid }); settingsV('profile').then(() => window.scrollTo(0, 0)); }));
+      /* the editor sheet */
+      const openEdit = () => {
+        const ov = document.createElement('div'); ov.className = 'xpsheet';
+        const sheet = () => { const ph = store.get('v5:avatar', ''), bn = store.get('v5:banner', '');
+          return `<div class="xpsbox"><div class="pch"><button data-xp="no">Cancel</button><b>Edit profile</b><button data-xp="ok" class="on">Save</button></div><div class="xpsbody">
+            <div class="xpsban">${bn ? `<img src="${esc(bn)}" alt="">` : `<span class="xpbdef"></span>`}<label class="xpcam">${cam}<input type="file" accept="image/*" data-up="banner" hidden></label>${bn ? '<button class="xpx" data-xp="nobanner" aria-label="Remove header">×</button>' : ''}</div>
+            <div class="xpsav"><span class="xpav">${ph ? `<img src="${esc(ph)}" alt="">` : `<span class="xpini" style="background:${esc(main)};color:${esc(ink)}">${esc((name || '').trim().charAt(0).toUpperCase() || '+')}</span>`}</span><label class="xpcam sm">${cam}<input type="file" accept="image/*" data-up="avatar" hidden></label></div>
+            ${ph ? '<button class="xplink" data-xp="nophoto">Remove photo</button>' : ''}
+            <label class="xpf"><span>Name</span><input id="xpname" type="text" maxlength="12" autocomplete="given-name" autocapitalize="words" value="${esc(store.get('v5:name', '') || '')}"></label>
+            <label class="xpf"><span>Jersey number</span><input id="xpnum" type="text" inputmode="numeric" maxlength="2" value="${esc(num)}"></label>
+            <div class="xpf"><span>Your team</span>${teams.length ? `<div class="chips pfjtabs">${JG.map(([g, l]) => `<button class="chip${g === jg0 ? ' on' : ''}" data-jg="${g}" aria-pressed="${g === jg0}">${l}</button>`).join('')}</div>${JG.map(([g]) => `<div class="pfpicks" data-jgp="${g}"${g === jg0 ? '' : ' hidden'}>${teams.filter(x => grpOf(x.k) === g).map(choose).join('')}</div>`).join('')}` : '<p class="xpnote">Follow a team first; then its colours can be yours.</p>'}</div>
+          </div></div>`; };
+        ov.innerHTML = sheet(); document.body.appendChild(ov); document.documentElement.classList.add('sheet-open'); requestAnimationFrame(() => ov.classList.add('in'));
+        let jk = J.k, jid = J.id;
+        const close = done => { ov.classList.remove('in'); document.documentElement.classList.remove('sheet-open'); setTimeout(() => ov.remove(), 280); if (done) settingsV('profile'); };
+        const keepFields = () => ({ n: (ov.querySelector('#xpname') || {}).value, u: (ov.querySelector('#xpnum') || {}).value });
+        const repaint = () => { const k = keepFields(); ov.innerHTML = sheet(); ov.querySelector('#xpname').value = k.n || ''; ov.querySelector('#xpnum').value = k.u || ''; mark(); };
+        const mark = () => ov.querySelectorAll('[data-jk]').forEach(b => b.classList.toggle('on', b.dataset.jk === jk && String(b.dataset.jid) === String(jid)));
+        ov.addEventListener('click', e => { const b = e.target.closest('[data-xp],[data-jk],[data-jg]'); if (!b) { if (e.target === ov) close(); return; } e.preventDefault();
+          if (b.dataset.jg) { const g = b.dataset.jg; ov.querySelectorAll('[data-jg]').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); ov.querySelectorAll('[data-jgp]').forEach(x => { x.hidden = x.dataset.jgp !== g; }); return; }
+          if (b.dataset.jk) { jk = b.dataset.jk; jid = b.dataset.jid; mark(); return; }
+          const a = b.dataset.xp;
+          if (a === 'no') close();
+          else if (a === 'nobanner') { store.set('v5:banner', ''); repaint(); }
+          else if (a === 'nophoto') { store.set('v5:avatar', ''); if (window.RIVL_paintAv) window.RIVL_paintAv(); repaint(); }
+          else if (a === 'ok') { store.set('v5:name', (ov.querySelector('#xpname').value || '').trim()); store.set('v5:jersey', { ...(store.get('v5:jersey', null) || {}), num: (ov.querySelector('#xpnum').value || '').replace(/\D/g, '').slice(0, 2), k: jk, id: jid }); close(true); }
+        });
+        ov.addEventListener('change', e => { const inp = e.target.closest('[data-up]'); if (!inp) return; const f = inp.files && inp.files[0]; inp.value = ''; if (!f) return; const ban = inp.dataset.up === 'banner';
+          cropImage(f, ban ? { w: 3, h: 1, out: 1200, round: false, title: 'Move and scale your header' } : { w: 1, h: 1, out: 192, round: true, title: 'Move and scale your photo' }, data => { store.set(ban ? 'v5:banner' : 'v5:avatar', data); if (!ban && window.RIVL_paintAv) window.RIVL_paintAv(); repaint(); }); });
+        mark();
+      };
+      $main.querySelector('[data-act="xpopen"]').addEventListener('click', e => { e.preventDefault(); openEdit(); });
       return;
     }
     let body = '';
