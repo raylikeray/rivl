@@ -73,9 +73,9 @@
     const st = history.state; const back = !!(st && st.n != null && st.n < navN);
     if (st && st.n != null) navN = st.n; else { navN += 1; try { history.replaceState({ n: navN }, ''); } catch { } }
     const leagueScreen = SCREENS.includes(r.name);
-    if (render.key && render.key !== key) scrollMem.set(render.key, window.scrollY);
+    if (render.key && render.key !== key && !render.memDone) scrollMem.set(render.key, window.scrollY); render.memDone = false;   // a swipe already saved where you were
     const leagueChanged = leagueScreen && render.lk && render.lk !== r.lk;   // a tap on the league switch starts the new league at the top
-    $main.dataset.y = render.key !== key ? ((back || (leagueScreen && !leagueChanged)) ? String(scrollMem.get(key) || 0) : '0') : '';
+    $main.dataset.y = render.key !== key ? ((back || leagueScreen) ? String(scrollMem.get(key) || 0) : '0') : '';
     // a page that starts at the top goes there now, before its skeleton replaces the old screen — otherwise the old scroll
     // position clamps as the document shrinks and the eye sees two moves instead of one
     const fresh = render.key !== key;
@@ -107,8 +107,8 @@
          loads (its skeleton paints instead), and a scroll still coasting from a flick is stopped before the jump to the top,
          so iOS cannot carry the page on down or bounce it back after the new league lands. */
       if (!swiped) $main.dataset.real = '0';   // after a swipe the page already holds that league's last screen; it updates in place
-      const de = document.documentElement; de.style.overflow = 'hidden'; window.scrollTo(0, 0); void de.offsetHeight;
-      requestAnimationFrame(() => { de.style.overflow = ''; window.scrollTo(0, 0); });
+      const de = document.documentElement, y0 = +$main.dataset.y || 0; de.style.overflow = 'hidden'; window.scrollTo(0, y0); void de.offsetHeight;   // each league comes back where you left it
+      requestAnimationFrame(() => { de.style.overflow = ''; window.scrollTo(0, y0); });
     } else if ($main.dataset.y === '0' && fresh) window.scrollTo(0, 0);
     render.lk = r.lk;
     if (r.name !== 'game') document.documentElement.classList.remove('gxon');
@@ -465,7 +465,8 @@
       peek = ready[k] && ready[k].dataset.for === k + ':' + r.name ? ready[k] : null; peekFor = k;
       if (!peek) { peek = $m.cloneNode(false); peek.removeAttribute('id'); peek.classList.remove('hold', 'fade', 'enter', 'noanim'); peek.classList.add('xpeek'); peek.innerHTML = snaps[k + ':' + r.name] || (V._ && V._.skeleton ? V._.skeleton(1, 'card') + V._.skeleton(4, 'row') : ''); $m.parentNode.insertBefore(peek, $m.nextSibling); }
       const pageTop = Math.max(0, document.getElementById('hdr').getBoundingClientRect().bottom, rc.top);   // the next page shows from its top, just under the leagues
-      peek.style.cssText = `position:fixed;left:${rc.left}px;width:${rc.width}px;top:${pageTop}px;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;will-change:transform;contain:layout paint;transform:translate3d(${rc.width}px,0,0)`; };
+      peek.style.cssText = `position:fixed;left:${rc.left}px;width:${rc.width}px;top:${pageTop}px;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;will-change:transform;contain:layout paint;transform:translate3d(${rc.width}px,0,0)`;
+      const mainTop = rc.top + window.scrollY; peek.scrollTop = Math.max(0, (scrollMem.get(r.name + '/' + k) || 0) + pageTop - mainTop); };   // the next league shows where you left it
     /* a critically damped spring, the physics X and iOS use: it starts at the finger's own speed (px/ms) and settles on
        the target without overshoot, so letting go never changes the speed the page was moving at */
     let springRaf = 0;
@@ -484,7 +485,8 @@
     const slideTo = (k, dirL, ms, fromX = null, v0 = 0) => { const r0 = current || route(); from = from || r0.lk; to = k; if ($m.dataset.real === '1') snaps[r0.lk + ':' + r0.name] = $m.innerHTML; makePeek(k); W2 = window.innerWidth;
       render.swipe = true; render.swiping = true; render.tapAt = performance.now(); peek.style.visibility = '';
       const land = () => { $m.style.transition = 'none'; $m.style.transform = ''; $m.style.willChange = ''; const snap = snaps[k + ':' + r0.name];
-        if (snap) { window.scrollTo(0, 0); $m.innerHTML = snap; $m.dataset.hlk = k; location.hash = '#' + k; requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; if (peek) { peek.remove(); Object.keys(ready).forEach(q => { if (ready[q] === peek) delete ready[q]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); })); return; }
+        scrollMem.set(r0.name + '/' + r0.lk, window.scrollY); render.memDone = true; render.keepHdr = true; render.hdrHold = true; setTimeout(() => { render.hdrHold = false; }, 400); const ny = scrollMem.get(r0.name + '/' + k) || 0;
+        if (snap) { $m.innerHTML = snap; window.scrollTo(0, ny); $m.dataset.hlk = k; location.hash = '#' + k; requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; if (peek) { peek.remove(); Object.keys(ready).forEach(q => { if (ready[q] === peek) delete ready[q]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); })); return; }
         $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { requestAnimationFrame(() => { render.swiping = false; $m.style.visibility = ''; if (peek) { peek.remove(); Object.keys(ready).forEach(k => { if (ready[k] === peek) delete ready[k]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); }); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); };
       if (fromX != null) { $m.style.transition = 'none'; peek.style.transition = 'none'; $pills.classList.remove('dragging');
         spring(fromX, v0, dirL ? -W2 : W2, x => { $m.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`; peek.style.transform = `translate3d(${(x + (dirL ? W2 : -W2)).toFixed(2)}px,0,0)`; track(Math.min(1, Math.abs(x) / W2)); }, land); return; }
@@ -527,14 +529,14 @@
       /* the bottom bar and the live bar above it stay put while you scroll; only the top slides away */ };
     window.addEventListener('scroll', () => {
       if (!phone.matches) { if (off) set(0); return; }
-      if (document.querySelector('#bsheet.on, .xpsheet.in, .xdrawer.in')) { lastY = window.scrollY; return; }   // a sheet or the side panel is open: the bars stay put
+      if (render.hdrHold || document.querySelector('#bsheet.on, .xpsheet.in, .xdrawer.in')) { lastY = window.scrollY; return; }   // a swipe landing at the league's own scroll is not you scrolling   // a sheet or the side panel is open: the bars stay put
       if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) { lastY = window.scrollY; return; }   // the bottom bounce never counts as scrolling up
       const y = Math.max(0, window.scrollY), H = hdr.offsetHeight, dy = y - lastY; lastY = y;
       set(Math.min(H, Math.max(0, Math.min(off + dy, y))), false);
       clearTimeout(idle); idle = setTimeout(() => { const h = hdr.offsetHeight; if (off > 0 && off < h) set(off > h / 2 && window.scrollY > h ? h : 0, true); }, 140);
     }, { passive: true });
     // a new screen always starts with the top showing
-    document.addEventListener('rivl:rendered', () => { lastY = window.scrollY; set(0, true); });
+    let hk = ''; document.addEventListener('rivl:rendered', () => { lastY = window.scrollY; const r = V.route && V.route(); const k = r ? r.name + '/' + (r.args || []).join('/') : ''; const keep = render.keepHdr; render.keepHdr = false; if (k === hk || keep) { hk = k; return; } hk = k; set(0, true); });   // a refresh of the same screen, or a league swipe, leaves the top where it is
   })();
   const flwHTML = (on, what) => window.RIVL_flw(on, what);
   document.addEventListener('click', e => {

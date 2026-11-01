@@ -4583,3 +4583,5 @@ html:root body #main.fade:not([data-dir]){animation:tabfade 160ms linear both!im
 html:root body .xghost.out:not([data-dir]){animation:screenout 160ms linear both!important}
 @keyframes tabfade{from{opacity:0}to{opacity:1}}
 html:root body #main.enter>.gxpage,html:root body #main.fade>.gxpage{animation:none!important}
+/* the page and its swipe copy lay out the same: the first section's top margin never collapses through one and not the other */
+html:root body #main{display:flow-root}
