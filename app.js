@@ -242,7 +242,7 @@
   const $live = document.getElementById('livebar');
   function liveList() {
     const r = current || route(); const out = [];
-    const onToday = r.name === 'scores' && (store.get('v5:date', todayCT()) || todayCT()) === todayCT();   // Scores on today already lists this league's live games
+    const onToday = false;   // the bar stays, whichever league and screen you are on
     [r.lk, ...ORDER.filter(k => k !== r.lk)].forEach(k => {
       if (onToday && k === r.lk) return;
       if (r.name === 'game') return;   // the game page carries the day's games in its own bar
@@ -263,7 +263,7 @@
   function paintLive() {
     if (!$live) return;
     const r = current || route();
-    const show = r && !['settings', 'search'].includes(r.name) && !document.body.classList.contains('onboarding') && !(r.name === 'home' && document.querySelector('.hsec[data-sec="now"]') && window.scrollY < window.innerHeight * .6);
+    const show = r && !['settings', 'search'].includes(r.name) && !document.body.classList.contains('onboarding');
     const list = show ? liveList() : [];
     const inner = $live.querySelector('.lb-in');
     if (!list.length) { if (!$live.hidden) { $live.hidden = true; inner.innerHTML = ''; } document.documentElement.classList.remove('lbon'); return; }
@@ -281,7 +281,6 @@
     if (V.edges) V.edges();
   }
   document.addEventListener('rivl:rendered', () => { if ($live && $live.hidden) document.documentElement.classList.remove('lbon'); });
-  window.addEventListener('scroll', () => { const r = current || route(); if (r && r.name === 'home') paintLive(); }, { passive: true });
   /* the strip lives under the pills; an entity screen's top bar offers a slot of its own and the strip moves there */
   function placeLive() {
     if (!$live) return;
@@ -487,7 +486,7 @@
     const bar = document.getElementById('tabs');
     // the bottom bar moves with the top, the same share of its own height, so both leave and come back together
     const set = (v, ease) => { off = v; const tr = ease ? 'transform .22s cubic-bezier(.3,.7,.2,1)' : 'none'; hdr.style.transition = tr; hdr.style.transform = off ? `translate3d(0,${-off}px,0)` : '';
-      if (bar) { const H = hdr.offsetHeight || 1, b = bar.offsetHeight + 24; bar.style.transition = tr; bar.style.transform = off ? `translate3d(0,${(off / H * b).toFixed(1)}px,0)` : ''; const lb = document.getElementById('lbhome'); if (lb) { lb.style.transition = tr; lb.style.transform = off ? `translate3d(0,${(off / H * (b + 56)).toFixed(1)}px,0)` : ''; } } };
+      /* the bottom bar and the live bar above it stay put while you scroll; only the top slides away */ };
     window.addEventListener('scroll', () => {
       if (!phone.matches) { if (off) set(0); return; }
       if (document.querySelector('#bsheet.on, .xpsheet.in, .xdrawer.in')) { lastY = window.scrollY; return; }   // a sheet or the side panel is open: the bars stay put
