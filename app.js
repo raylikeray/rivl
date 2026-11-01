@@ -410,6 +410,10 @@
       $main.querySelectorAll('[data-act="mix"]').forEach(b => { const on = b.dataset.mix === want; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-selected', String(on)); });
       $main.querySelectorAll('[data-mix-panel]').forEach(p => { const on = p.dataset.mixPanel === want; if (on && p.hidden) { p.classList.remove('swap'); void p.offsetWidth; p.classList.add('swap'); } p.hidden = !on; });   // the new panel slides in
     }
+    /* Add to calendar: a plain .ics file the phone opens in its own calendar; no account, nothing sent anywhere */
+    if (a === 'ics') { e.preventDefault(); const st = new Date(act.dataset.start); if (isNaN(st)) return; const en = new Date(st.getTime() + 150 * 60000); const f = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+      const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//RIVL//EN', 'BEGIN:VEVENT', `UID:${Date.now()}@rivl`, `DTSTAMP:${f(new Date())}`, `DTSTART:${f(st)}`, `DTEND:${f(en)}`, `SUMMARY:${act.dataset.title}`, act.dataset.loc ? `LOCATION:${act.dataset.loc.replace(/,/g, '\\,')}` : '', `URL:${location.href}`, 'END:VEVENT', 'END:VCALENDAR'].filter(Boolean).join('\r\n');
+      const blob = new Blob([ics], { type: 'text/calendar' }); const url = URL.createObjectURL(blob); const a2 = document.createElement('a'); a2.href = url; a2.download = `${act.dataset.title.replace(/[^\w]+/g, '-')}.ics`; document.body.appendChild(a2); a2.click(); a2.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); return; }
     if (a === 'share') {
       e.preventDefault();
       const url = location.href, title = act.dataset.title || 'RIVL';
