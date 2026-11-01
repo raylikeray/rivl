@@ -3673,3 +3673,27 @@ html body .plpage .pltx{opacity:1!important;transform:none!important;will-change
 .pfcta .t b{color:var(--ink)!important;font-size:17px;font-weight:800}.pfcta .t span{color:var(--ink-3)}
 /* Last night's "Show all" matches the others: a full-width button */
 html body .brief .capbtn{display:block;width:100%!important;margin:10px 0 2px!important;padding:11px 0!important;border-radius:14px;text-align:center;font-size:14.5px;font-weight:700}
+/* no gray boxes behind the team names over the "Why" comparison (beats the in-card gray rule) */
+html body :is(.hsec,.card,.gp,.giplate,.gxplate,.glplate,.gxrows,.gxser,.plc,.zones,.ijc,.tsch,.pfocus,.five,.feat,.wire,.vabout,.lkc,.ijs,.panel-in,.bpanel,.why,div) .why-h .wt{background:none!important;box-shadow:none!important}
+
+/* ===== Profile, second pass: the band fades into the page, the jersey is the avatar ===== */
+.pfband{padding-bottom:30px!important;background:none!important}
+.pfband::before{content:"";position:absolute;inset:0;z-index:-2;background:radial-gradient(120% 90% at 50% 0%,color-mix(in srgb,var(--pc) 80%,#fff),var(--pc) 40%,color-mix(in srgb,var(--pc) 55%,#000) 75%)}
+.pfband::after{height:100%!important;background:linear-gradient(180deg,transparent 0%,transparent 35%,color-mix(in srgb,var(--bg) 55%,transparent) 70%,var(--bg) 100%)!important}
+.pfw i:nth-child(3){width:60%;height:120%;left:20%;top:-50%;background:color-mix(in srgb,var(--pc) 30%,#fff);opacity:.25;animation:sa 22s ease-in-out infinite reverse}
+.pfid{align-items:center!important;margin-top:20px!important}
+.pfjbtn{flex:none;padding:0;background:none;border:0;filter:drop-shadow(0 14px 22px rgba(0,0,0,.4)) drop-shadow(0 2px 4px rgba(0,0,0,.25));transition:transform .2s}
+.pfjbtn:active{transform:scale(.96)}
+.pfjer{display:block;width:118px;height:138px}
+.pfteam{display:flex;align-items:center;gap:7px;color:rgba(255,255,255,.9)!important;font-weight:600}
+.pfteam img{width:20px;height:20px;object-fit:contain}
+.pfst{gap:18px!important;margin-top:10px!important;font-size:15.5px!important;color:rgba(255,255,255,.72)!important}
+.pfst b{font-size:17px;color:#fff;margin-right:5px!important}
+.pfedit{background:rgba(255,255,255,.1)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+.pfname{display:flex}.pfname[hidden]{display:none!important}
+.pfname #pnum{flex:0 0 64px;text-align:center}
+.pfsec>span{font-size:14px;color:var(--ink-3)}
+.pfpicks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 var(--gut-r) 0 var(--gut)}
+.pfpick{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px 12px;border-radius:18px;background:var(--card);border:1px solid var(--card-line);color:var(--ink)}
+.pfpick.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.pfpick img{width:44px;height:44px;object-fit:contain}.pfpick span{font-size:14px;font-weight:700;text-align:center}.pfpick em{font-style:normal;font-size:12px;color:var(--ink-3)}

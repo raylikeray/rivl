@@ -1196,44 +1196,65 @@
     if (!here && cat !== 'profile') {   // the index, v7 style: a profile card, then Following and App groups
       const nSvc = HW.myServices().length;
       const name = store.get('v5:name', '') || '';
-      let fav = ''; for (const k of ORDER) { const id = (F[k] || [])[0]; if (id) { const idx = await teamsIndex(LEAGUES[k]).catch(() => ({})); const t = idx[String(id)]; if (t) { fav = t.loc || t.short || t.name; break; } } }
+      let fav = ''; { const J = store.get('v5:jersey', null); if (J && J.k && LEAGUES[J.k]) { const idx = await teamsIndex(LEAGUES[J.k]).catch(() => ({})); const t = idx[String(J.id)]; if (t) fav = t.name || t.short; } }
       const SICO = { teams: ICONS.following, players: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.7c2 .7 3.5 2.4 3.5 5.3"/></svg>',
         display: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>' };
       const sum = { home: `${PREFS.filter(([k]) => P[k] !== false).length} of ${PREFS.length} sections on`, alerts: V.alerts && V.alerts.available() ? (V.alerts.on() ? 'On' : 'Off') : 'Needs the RIVL server', sync: V.sync && V.sync.available() ? (V.sync.code() ? `Code ${V.sync.code()}` : 'Not backed up') : 'Needs the RIVL server', app: standalone ? 'Installed' : 'Add to home screen' };
       const row = (href, ico, t, sub) => `<a class="srow" href="${href}"><span class="sico">${ico}</span><span class="t"><b>${esc(t)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</span>${chev}</a>`;
       $main.innerHTML = bar('Settings', '#home') + `<div class="setv7">
-        <a class="sprof" href="#settings/profile"><span class="sav">${esc((name || 'You').trim().charAt(0).toUpperCase())}</span><span class="t"><b>${esc(name || 'Add your name')}</b><span>${fav ? `Favorite: ${esc(fav)}` : 'Pick a favorite team in Teams'}</span></span>${chev}</a>
+        <a class="sprof" href="#settings/profile"><span class="sav">${esc((name || 'You').trim().charAt(0).toUpperCase())}</span><span class="t"><b>${esc(name || 'Add your name')}</b><span>${fav ? `Jersey: ${esc(fav)}` : 'Your profile and jersey'}</span></span>${chev}</a>
         <h2 class="sgh">Following</h2><div class="sgrp">${row('#teams', SICO.teams, 'Teams', `${nTeams} team${nTeams === 1 ? '' : 's'}`)}${row('#players', SICO.players, 'Players', `${fp.length} player${fp.length === 1 ? '' : 's'}`)}</div>
         <h2 class="sgh">App</h2><div class="sgrp">${row('#settings/alerts', ICONS.alerts, 'Notifications', sum.alerts)}${row('#settings/home', SICO.display, 'Display', `Following page: ${sum.home}`)}${row('#settings/watch', ICONS.watch, 'Where you watch', nSvc ? `${nSvc} service${nSvc === 1 ? '' : 's'}` : 'None picked yet')}${row('#settings/sync', ICONS.sync, 'Sync', sum.sync)}${row('#settings/app', ICONS.app, 'App', sum.app)}${row('#settings/about', ICONS.about, 'About and sources', 'Where the numbers come from')}</div></div>`;
       return;
     }
     if (cat === 'profile') {
-      /* a real profile: a band of the favorite team's moving colour, the face (initial) and name large, what you follow in
-         one line, an Edit button that opens the name field in place, then your teams and players as rows of crests and faces */
+      /* the profile: your jersey (your name across the back, your number, your team's colours) on that team's moving colour,
+         which fades down into the page. You pick the jersey's team from the teams you follow; nothing is assumed. */
       const name = store.get('v5:name', '') || '';
+      const J = store.get('v5:jersey', null) || {};
       const lks = ORDER.filter(k => (F[k] || []).length || fp.some(p => p.lk === k));
       const idxs = {}; await Promise.all(lks.map(async k => { idxs[k] = await teamsIndex(LEAGUES[k]).catch(() => ({})); }));
-      let favT = null, favL = null; for (const k of ORDER) { const id = (F[k] || [])[0]; if (id && idxs[k] && idxs[k][String(id)]) { favT = idxs[k][String(id)]; favL = LEAGUES[k]; break; } }
-      const col = favT ? teamColor({ id: favT.id, abbr: favT.abbr }, favL) : '#2F7FD0';
       const teams = lks.flatMap(k => (F[k] || []).map(id => ({ k, t: idxs[k][String(id)] })).filter(x => x.t));
+      const pick = teams.find(x => x.k === J.k && String(x.t.id) === String(J.id)) || null;
+      const num = String(J.num == null || J.num === '' ? '1' : J.num).slice(0, 2);
+      const lum = c => { const m = /^#?([0-9a-f]{6})$/i.exec(String(c || '')); if (!m) return .5; const n = parseInt(m[1], 16); const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(n >> 16 & 255) + .7152 * f(n >> 8 & 255) + .0722 * f(n & 255); };
+      const main = pick ? teamColor({ id: pick.t.id, abbr: pick.t.abbr }, LEAGUES[pick.k]) : '#3A3D44';
+      let trim = pick ? (V._.teamAlt({ id: pick.t.id, abbr: pick.t.abbr, alt: pick.t.alt }, LEAGUES[pick.k]) || '') : '#9AA0AA';
+      if (!trim || trim.toLowerCase() === String(main).toLowerCase()) trim = lum(main) > .5 ? '#0A0B0E' : '#FFFFFF';
+      const ink = lum(main) > .45 ? '#0A0B0E' : '#FFFFFF';
+      const back = (name || 'YOU').toUpperCase().slice(0, 12), fs = back.length > 9 ? 9 : back.length > 6 ? 11 : 13;
+      const jersey = `<svg class="pfjer" viewBox="0 0 120 140" role="img" aria-label="Your jersey"><defs>
+          <linearGradient id="jsh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".22"/><stop offset=".22" stop-color="#000" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
+          <linearGradient id="jhi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/></linearGradient>
+          <path id="jarc" d="M28 40 Q60 30 92 40"/></defs>
+        <path d="M30 6C38 4 42 3 46 3C50 10 70 10 74 3C78 3 82 4 90 6L92 9C93 27 100 36 113 40V131C113 135.5 110.5 138 106 138H14C9.5 138 7 135.5 7 131V40C20 36 27 27 28 9Z" fill="${esc(main)}"/>
+        <path d="M30 6C38 4 42 3 46 3C50 10 70 10 74 3C78 3 82 4 90 6L92 9C93 27 100 36 113 40V131C113 135.5 110.5 138 106 138H14C9.5 138 7 135.5 7 131V40C20 36 27 27 28 9Z" fill="url(#jsh)"/>
+        <path d="M30 6C38 4 42 3 46 3C50 10 70 10 74 3C78 3 82 4 90 6L92 9C93 27 100 36 113 40V131C113 135.5 110.5 138 106 138H14C9.5 138 7 135.5 7 131V40C20 36 27 27 28 9Z" fill="url(#jhi)"/>
+        <path d="M46 3C50 10 70 10 74 3M28 9C27 27 20 36 7 40M92 9C93 27 100 36 113 40" fill="none" stroke="${esc(trim)}" stroke-width="3.2" stroke-linecap="round"/>
+        <text font-family="Inter,system-ui,sans-serif" font-weight="800" font-size="${fs}" letter-spacing="1.2" fill="${ink}" text-anchor="middle"><textPath href="#jarc" startOffset="50%">${esc(back)}</textPath></text>
+        <text x="60" y="${num.length > 1 ? 104 : 106}" font-family="Inter,system-ui,sans-serif" font-weight="900" font-size="${num.length > 1 ? 50 : 56}" fill="${ink}" stroke="${esc(trim)}" stroke-width="2.4" paint-order="stroke" text-anchor="middle" letter-spacing="-2">${esc(num)}</text>
+      </svg>`;
       const crest = x => `<a class="pfcr" href="${href.team(x.k, x.t.id)}" aria-label="${esc(x.t.name)}">${x.t.logo ? `<img src="${esc(x.t.logo)}" alt="" loading="lazy">` : ''}<span>${esc(x.t.abbr || x.t.short || '')}</span></a>`;
-      const face = p => `<a class="pfpl" href="${href.player(p.lk, p.id)}">${headshot(p.img, playerColor(p, LEAGUES[p.lk]), 60, p.name)}<span>${esc((p.short || p.name || '').replace(/^\w+\.?\s/, m => m))}</span></a>`;
-      $main.innerHTML = `<div class="pfpage" style="--pc:${esc(col)}"><div class="pfband"><span class="pfw"><i></i><i></i></span>
+      const face = p => `<a class="pfpl" href="${href.player(p.lk, p.id)}">${headshot(p.img, playerColor(p, LEAGUES[p.lk]), 60, p.name)}<span>${esc(p.short || p.name || '')}</span></a>`;
+      const choose = x => `<button class="pfpick${pick === x ? ' on' : ''}" data-jk="${x.k}" data-jid="${esc(x.t.id)}">${x.t.logo ? `<img src="${esc(x.t.logo)}" alt="" loading="lazy">` : ''}<span>${esc(x.t.short || x.t.name)}</span><em>${esc(LEAGUES[x.k].label)}</em></button>`;
+      $main.innerHTML = `<div class="pfpage" style="--pc:${esc(main)}"><div class="pfband"><span class="pfw"><i></i><i></i><i></i></span>
           <div class="pftop"><a class="ib" href="#settings" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>
-          <div class="pfid"><span class="pfav">${favT && favT.logo ? `<img src="${esc(favT.logo)}" alt="">` : ''}<b>${esc((name || 'Y').charAt(0).toUpperCase())}</b></span>
-            <div class="pft"><h1 id="pfName">${esc(name || 'Your name')}</h1><p>${favT ? `Favorite: ${esc(favT.loc || favT.short || favT.name)}` : 'No favorite team yet'}</p>
-            <p class="pfst"><span><b>${teams.length}</b> team${teams.length === 1 ? '' : 's'}</span><span><b>${fp.length}</b> player${fp.length === 1 ? '' : 's'}</span><span><b>${lks.length}</b> league${lks.length === 1 ? '' : 's'}</span></p></div></div>
-          <button class="pfedit" data-act="pfedit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Edit name</button>
-          <label class="pfname" hidden><input id="pname" type="text" maxlength="24" autocomplete="given-name" autocapitalize="words" placeholder="Your first name" value="${esc(name)}"><button data-act="pfdone">Done</button></label>
+          <div class="pfid"><button class="pfjbtn" data-act="pfjer" aria-label="Choose your jersey">${jersey}</button>
+            <div class="pft"><h1>${esc(name || 'Your name')}</h1><p class="pfteam">${pick ? `${pick.t.logo ? `<img src="${esc(pick.t.logo)}" alt="">` : ''}${esc(pick.t.name || pick.t.short)}` : 'Tap the jersey to pick your team'}</p>
+            <p class="pfst"><span><b>${teams.length}</b> teams</span><span><b>${fp.length}</b> players</span></p></div></div>
+          <button class="pfedit" data-act="pfedit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Edit name and number</button>
+          <div class="pfname" hidden><input id="pname" type="text" maxlength="12" autocomplete="given-name" autocapitalize="words" placeholder="Name" value="${esc(name)}"><input id="pnum" type="text" inputmode="numeric" maxlength="2" placeholder="#" value="${esc(num)}"><button data-act="pfdone">Done</button></div>
         </div>
+        <div class="pfjgrid" hidden><div class="pfsec"><h2>Your jersey</h2><span>Pick the team</span></div>${teams.length ? `<div class="pfpicks">${teams.map(choose).join('')}</div>` : `<a class="pfcta" href="#teams"><span class="t"><b>Follow a team first</b><span>Then its jersey can be yours</span></span>${chev}</a>`}</div>
         <div class="pfsec"><h2>Your teams</h2><a href="#teams">Edit</a></div>${teams.length ? `<div class="pfrail">${teams.map(crest).join('')}</div>` : `<a class="pfcta" href="#teams"><span class="t"><b>Pick your teams</b><span>They lead Following and get your updates</span></span>${chev}</a>`}
         <div class="pfsec"><h2>Your players</h2><a href="#players">Edit</a></div>${fp.length ? `<div class="pfrail">${fp.map(face).join('')}</div>` : `<a class="pfcta" href="#players"><span class="t"><b>Follow some players</b><span>Their lines show up on Following</span></span>${chev}</a>`}
-        ${!name ? `<a class="pfcta" href="#" data-act="pfedit"><span class="t"><b>Add your name</b><span>It shows here and greets you on Following</span></span>${chev}</a>` : ''}
       </div>`;
-      const box = $main.querySelector('.pfname'), inp = $main.querySelector('#pname'), h1 = $main.querySelector('#pfName'), av = $main.querySelector('.pfav b');
-      inp.addEventListener('input', () => { const v = inp.value.trim(); store.set('v5:name', v); h1.textContent = v || 'Your name'; av.textContent = (v || 'Y').charAt(0).toUpperCase(); });
-      $main.querySelectorAll('[data-act="pfedit"]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); box.hidden = false; $main.querySelector('.pfedit').hidden = true; inp.focus(); }));
-      $main.querySelector('[data-act="pfdone"]').addEventListener('click', e => { e.preventDefault(); box.hidden = true; $main.querySelector('.pfedit').hidden = false; });
+      const box = $main.querySelector('.pfname'), eb = $main.querySelector('.pfedit');
+      const save = () => { store.set('v5:name', $main.querySelector('#pname').value.trim()); const n = $main.querySelector('#pnum').value.replace(/\D/g, '').slice(0, 2); store.set('v5:jersey', { ...(store.get('v5:jersey', null) || {}), num: n }); };
+      $main.querySelector('[data-act="pfedit"]').addEventListener('click', e => { e.preventDefault(); box.hidden = false; eb.hidden = true; $main.querySelector('#pname').focus(); });
+      $main.querySelector('[data-act="pfdone"]').addEventListener('click', e => { e.preventDefault(); save(); settingsV('profile'); });
+      $main.querySelector('[data-act="pfjer"]').addEventListener('click', e => { e.preventDefault(); const g = $main.querySelector('.pfjgrid'); g.hidden = !g.hidden; if (!g.hidden) g.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+      $main.querySelectorAll('[data-jk]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); store.set('v5:jersey', { ...(store.get('v5:jersey', null) || {}), k: b.dataset.jk, id: b.dataset.jid }); settingsV('profile').then(() => window.scrollTo(0, 0)); }));
       return;
     }
     let body = '';
