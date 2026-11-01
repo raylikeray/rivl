@@ -2846,3 +2846,31 @@ html.gxon body::before{display:none}
 @keyframes tmd{0%,100%{transform:translate3d(30%,0,0) scale(1.2)}50%{transform:translate3d(-120%,8%,0) scale(.8)}}
 .tmpage .gx.solo .w::before{opacity:.7!important;animation-duration:5s!important}
 .tmpage .gx.solo .w::after{opacity:.55!important;animation-duration:7s!important}
+
+/* team stats: the four tiles become one plate of four cells (numbers sized to fit), the four factors a plate of rows */
+.tmpage .tstats .stats.tsg,.tmpage .outlook .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;padding:0;margin:0 var(--gut-r) 0 var(--gut);border-radius:18px;overflow:hidden;border:1px solid var(--line);background:var(--line)}
+.tmpage .tstats .stats.tsg>div,.tmpage .outlook .stats>div{background:var(--surf)!important;box-shadow:none!important;border-radius:0!important;padding:14px 4px 12px!important;text-align:center;min-width:0}
+.tmpage .tstats .stats.tsg b,.tmpage .outlook .stats b{display:block;font-size:clamp(17px,5.4vw,22px)!important;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
+.tmpage .tstats .stats.tsg span,.tmpage .outlook .stats span{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--ink-3);margin-top:4px}
+.tmpage .tstats .stats.tsg .rk{display:block;margin-top:3px;font-size:11.5px}
+.tmpage .tstats .tbl.ff{display:block;margin:12px var(--gut-r) 0 var(--gut);width:auto;border-radius:18px;border:1px solid var(--line);overflow:hidden;background:linear-gradient(rgba(255,255,255,.055),transparent 56px),var(--surf)}
+.tmpage .tstats .tbl.ff thead,.tmpage .tstats .tbl.ff tbody{display:table;width:100%;table-layout:fixed}
+.tmpage .tstats .tbl.ff th:first-child,.tmpage .tstats .tbl.ff td:first-child{padding-left:16px;width:46%}
+.tmpage .tstats .tbl.ff th:last-child,.tmpage .tstats .tbl.ff td:last-child{padding-right:16px}
+.tmpage .tstats .tbl.ff tr:last-child td{border-bottom:0}
+.tmpage .tstats .legend{margin-left:var(--gut);margin-right:var(--gut-r)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .tmpage .tstats .tbl.ff{background:linear-gradient(rgba(255,255,255,.9),transparent 56px),var(--surf)} }
+/* schedule rows, as v7: taller, the crest bare, vs/at plain and bold */
+.tsch{padding:0!important}
+.tsr{grid-template-columns:92px 26px 30px 1fr auto;gap:10px;padding:16px 18px;min-height:62px}
+.tsr .d{font-size:14.5px;font-weight:500}
+.tsr .va{font-size:15px;font-weight:700;color:var(--ink)}
+.tcr{width:30px;height:30px;display:grid;place-items:center}
+.tcr img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 1px 1.2px rgba(0,0,0,.28)) drop-shadow(0 3px 6px rgba(0,0,0,.18))}
+.tsr .o{font-size:16.5px}
+.tsr .r b{font-size:16.5px}
+.tsx+.tsx .tsr{border-top:1px solid var(--line)}
+.tmore{border-top:1px solid var(--line)}
+/* a slight shadow where the sheet meets the colour, on the team and game pages */
+.gxpage .gxtabw{box-shadow:0 -8px 22px -6px rgba(0,0,0,.28)}
+.tsr{grid-template-columns:84px 24px 30px minmax(0,1fr) auto}
