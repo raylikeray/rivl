@@ -1193,13 +1193,26 @@
     const nTeams = ORDER.reduce((n, k) => n + (F[k] || []).length, 0);
     const standalone = V.standalone ? V.standalone() : false;
 
-    if (!here) {   // the index
+    if (!here && cat !== 'profile') {   // the index, v7 style: a profile card, then Following and App groups
       const nSvc = HW.myServices().length;
-      const summary = { watch: nSvc ? `${nSvc} service${nSvc === 1 ? '' : 's'}` : 'None picked yet', following: `${nTeams} team${nTeams === 1 ? '' : 's'} · ${fp.length} player${fp.length === 1 ? '' : 's'}`, home: `${PREFS.filter(([k]) => P[k] !== false).length} of ${PREFS.length} sections on`, look: `${({ system: 'Match my phone', dark: 'Dark', light: 'Light' })[theme] || 'Match my phone'} · ${V.ACCENTS && V.ACCENTS[accent] ? V.ACCENTS[accent][1] : 'black and white'}`, alerts: V.alerts && V.alerts.available() ? (V.alerts.on() ? 'On' : 'Off') : 'Needs the RIVL server', sync: V.sync && V.sync.available() ? (V.sync.code() ? `Code ${V.sync.code()}` : 'Not backed up') : 'Needs the RIVL server', app: standalone ? 'Installed' : 'Add to home screen', about: '' };
-      $main.innerHTML = bar('Settings', '#home') + `<div class="rows setidx">${SETTINGS.map(([k, t, b]) => `<a class="row" href="#settings/${k}"><span class="sico">${ICONS[k]}</span><span class="t"><b>${esc(t)}</b><span>${esc(summary[k] || b)}</span></span>${chev}</a>`).join('')}</div>`;
+      const name = store.get('v5:name', '') || '';
+      let fav = ''; for (const k of ORDER) { const id = (F[k] || [])[0]; if (id) { const idx = await teamsIndex(LEAGUES[k]).catch(() => ({})); const t = idx[String(id)]; if (t) { fav = t.loc || t.short || t.name; break; } } }
+      const SICO = { teams: ICONS.following, players: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.7c2 .7 3.5 2.4 3.5 5.3"/></svg>',
+        display: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>' };
+      const sum = { home: `${PREFS.filter(([k]) => P[k] !== false).length} of ${PREFS.length} sections on`, alerts: V.alerts && V.alerts.available() ? (V.alerts.on() ? 'On' : 'Off') : 'Needs the RIVL server', sync: V.sync && V.sync.available() ? (V.sync.code() ? `Code ${V.sync.code()}` : 'Not backed up') : 'Needs the RIVL server', app: standalone ? 'Installed' : 'Add to home screen' };
+      const row = (href, ico, t, sub) => `<a class="srow" href="${href}"><span class="sico">${ico}</span><span class="t"><b>${esc(t)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</span>${chev}</a>`;
+      $main.innerHTML = bar('Settings', '#home') + `<div class="setv7">
+        <a class="sprof" href="#settings/profile"><span class="sav">${esc((name || 'You').trim().charAt(0).toUpperCase())}</span><span class="t"><b>${esc(name || 'Add your name')}</b><span>${fav ? `Favorite: ${esc(fav)}` : 'Pick a favorite team in Teams'}</span></span>${chev}</a>
+        <h2 class="sgh">Following</h2><div class="sgrp">${row('#teams', SICO.teams, 'Teams', `${nTeams} team${nTeams === 1 ? '' : 's'}`)}${row('#players', SICO.players, 'Players', `${fp.length} player${fp.length === 1 ? '' : 's'}`)}</div>
+        <h2 class="sgh">App</h2><div class="sgrp">${row('#settings/alerts', ICONS.alerts, 'Notifications', sum.alerts)}${row('#settings/home', SICO.display, 'Display', `Following page: ${sum.home}`)}${row('#settings/watch', ICONS.watch, 'Where you watch', nSvc ? `${nSvc} service${nSvc === 1 ? '' : 's'}` : 'None picked yet')}${row('#settings/sync', ICONS.sync, 'Sync', sum.sync)}${row('#settings/app', ICONS.app, 'App', sum.app)}${row('#settings/about', ICONS.about, 'About and sources', 'Where the numbers come from')}</div></div>`;
       return;
     }
-
+    if (cat === 'profile') {
+      const name = store.get('v5:name', '') || '';
+      $main.innerHTML = bar('Profile', '#settings') + `<div class="setv7"><h2 class="sgh">Your name</h2><div class="sgrp"><label class="sname"><input id="pname" type="text" maxlength="24" autocomplete="given-name" placeholder="First name" value="${esc(name)}"></label></div><p class="legend" style="margin:10px 2px">Shown on your profile. It stays on this phone.</p></div>`;
+      const inp = $main.querySelector('#pname'); inp.addEventListener('input', () => store.set('v5:name', inp.value.trim()));
+      return;
+    }
     let body = '';
     if (cat === 'following') {
       $main.innerHTML = bar('Following', '#settings') + skeleton(6, 'row');
