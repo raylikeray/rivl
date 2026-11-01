@@ -4573,3 +4573,6 @@ html:root body :is(#main,.xpeek) .hsec[data-sec="wire"] .wire2{margin:0 0 14px}
 .nowc.nhero .nhclk .dot{width:7px;height:7px;border-radius:50%;background:#ff4d73;box-shadow:0 0 0 3px rgba(255,77,115,.25);flex:none}
 .nowc.nhero .nhc small{font-size:12px;font-weight:600;color:rgba(255,255,255,.7)}
 html:root body .nowc.nhero{padding:16px 14px!important}
+/* v333: the phone owns vertical scrolling; a sideways drag on a page is left to the app (league swipe, profile pull).
+   Strips that scroll sideways are their own scroll boxes, so they keep their sideways scroll. */
+html:root body #main,html:root body .xpeek,html:root body #hdr{touch-action:pan-y pinch-zoom}

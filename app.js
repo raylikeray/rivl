@@ -357,8 +357,11 @@
     // a swipe down on the hero of a game opened from the bar: the page follows the finger, the screen you came from under it
     let y0 = null, dy = 0, vy = 0, ly = 0, lt = 0;
     document.addEventListener('touchstart', e => { const gp = document.getElementById('gpage'); y0 = null; if (!trip || !gp || e.touches.length > 1) return; const sc = document.getElementById('gxscroll'); if (sc && sc.scrollTop > 2) return; if (!e.target.closest('#gxhero, .gxbar, .gxspace')) return; y0 = e.touches[0].clientY; dy = 0; vy = 0; ly = y0; lt = performance.now(); }, { passive: true });
-    document.addEventListener('touchmove', e => { if (y0 == null) return; const y = e.touches[0].clientY; dy = Math.max(0, y - y0); const now = performance.now(); if (now > lt) vy = vy * .5 + .5 * (y - ly) / (now - lt); ly = y; lt = now;
-      if (dy > 4) { e.preventDefault(); const h = held || lift(); const el = h ? h.wrap : document.getElementById('gpage'); if (el) { el.style.transition = 'none'; el.style.transform = `translate3d(0,${dy}px,0)`; } } }, { passive: false });
+    const onMove = e => { if (y0 == null) return; const y = e.touches[0].clientY; dy = Math.max(0, y - y0); const now = performance.now(); if (now > lt) vy = vy * .5 + .5 * (y - ly) / (now - lt); ly = y; lt = now;
+      if (dy > 4) { e.preventDefault(); const h = held || lift(); const el = h ? h.wrap : document.getElementById('gpage'); if (el) { el.style.transition = 'none'; el.style.transform = `translate3d(0,${dy}px,0)`; } } };
+    /* a listener that can stop scrolling makes every scroll wait on it, so it is only attached while a game opened from the bar is on screen */
+    let hooked = false; const hook = on => { if (on === hooked) return; hooked = on; if (on) document.addEventListener('touchmove', onMove, { passive: false }); else document.removeEventListener('touchmove', onMove, { passive: false }); };
+    window.addEventListener('hashchange', () => hook(!!trip && /^#game\//.test(location.hash)));
     const end = () => { if (y0 == null) return; y0 = null;
       if (dy > 120 || (vy > .5 && dy > 20)) { close(dy, vy); return; }
       const h = held; const el = h ? h.wrap : document.getElementById('gpage'); if (!el) return;
@@ -468,7 +471,7 @@
     let springRaf = 0;
     const spring = (x0, v0, target, onStep, onDone) => { cancelAnimationFrame(springRaf); const d = target - x0, sgn = Math.sign(d) || 1, sp = Math.max(0, v0 * sgn);
       // the duration that lets the page leave the finger at its own speed and come to rest with no lurch: slower fingers get a little longer, never past 420 ms
-      const T = Math.max(200, Math.min(420, Math.abs(d) / Math.max(sp, .4) * 1.5)), t0 = performance.now();
+      const T = Math.max(170, Math.min(300, Math.abs(d) / Math.max(sp, .6) * 1.25)), t0 = performance.now();
       const step = now => { const u = Math.min(1, (now - t0) / T), u2 = u * u, u3 = u2 * u;
         const x = (2 * u3 - 3 * u2 + 1) * x0 + (u3 - 2 * u2 + u) * T * v0 + (-2 * u3 + 3 * u2) * target;   // a cubic that starts at the finger's place and speed, ends still on the target
         if (u >= 1) { onStep(target); onDone && onDone(); return; } onStep(x); springRaf = requestAnimationFrame(step); };
@@ -490,17 +493,17 @@
       setTimeout(land, ms); };
     document.addEventListener('touchstart', e => { if (el || render.swiping || document.getElementById('top').hidden || document.documentElement.classList.contains('sheet-open') || e.touches.length > 1) { sx = null; return; }
       const t = e.touches[0]; if (sideScroller(e.target)) { sx = null; return; } sx = t.clientX; sy = t.clientY; mode = ''; W2 = window.innerWidth; }, { passive: true });
-    document.addEventListener('touchmove', e => { if (sx == null) return; const t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    document.addEventListener('touchmove', e => { if (sx == null) return; let t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
       if (!mode) { if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { sx = null; return; } if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
         const r = current || route(); from = r.lk; const i = ORDER.indexOf(from);
         if (dx > 0 && i <= 0) { mode = 'drawer'; build(); }
         else { mode = 'league'; to = null; if ($m.dataset.real === '1') snaps[from + ':' + r.name] = $m.innerHTML; $pills.classList.add('dragging'); $m.classList.remove('fade', 'enter'); delete $m.dataset.dir; $m.style.transition = 'none'; $m.style.willChange = 'transform'; }
-        lx = t.clientX; lt = performance.now(); vx = 0; }
-      e.preventDefault(); const now = performance.now(); if (now > lt) { vx = vx * .5 + .5 * (t.clientX - lx) / (now - lt); } lx = t.clientX; lt = now;
+        lx = t.clientX; lt = performance.now(); vx = 0; sx = t.clientX - Math.sign(dx); dx = t.clientX - sx; }   // the drag starts from where it was recognised, so nothing jumps to catch up
+      const now = performance.now(); if (now > lt) { vx = vx * .5 + .5 * (t.clientX - lx) / (now - lt); } lx = t.clientX; lt = now;
       if (mode === 'drawer') { set(Math.max(0, Math.min(1, dx / W)), false); return; }
       const i = ORDER.indexOf(from), want = ORDER[i + (dx < 0 ? 1 : -1)] || null;
       if (want !== to) { to = want; if (to) makePeek(to); else if (peek) { if (Object.values(ready).includes(peek)) { peek.style.visibility = 'hidden'; peek.style.transform = 'translate3d(200vw,0,0)'; } else peek.remove(); peek = null; } if (peek) { peek.style.transition = 'none'; peek.style.visibility = ''; } }
-      const x = to ? dx : dx / 4; curX = x; place(x); track(to ? Math.min(1, Math.abs(dx) / W2) : (dx < 0 ? 1 : -1) * Math.min(1, Math.abs(dx) / W2) * .5); }, { passive: false });
+      const x = to ? dx : dx / 4; curX = x; place(x); track(to ? Math.min(1, Math.abs(dx) / W2) : (dx < 0 ? 1 : -1) * Math.min(1, Math.abs(dx) / W2) * .5); }, { passive: true });   // passive: the phone scrolls on its own and never waits on this (touch-action in the CSS keeps a sideways drag from scrolling)
     document.addEventListener('touchend', () => { if (!mode) { sx = null; return; } const m0 = mode; mode = ''; sx = null;
       if (m0 === 'drawer') { go(vx > .35 ? 1 : vx < -.35 ? 0 : (p > .4 ? 1 : 0)); return; }
       const cur = curX; curX = 0; const dirL = cur < 0;
