@@ -2874,3 +2874,15 @@ html.gxon body::before{display:none}
 /* a slight shadow where the sheet meets the colour, on the team and game pages */
 .gxpage .gxtabw{box-shadow:0 -8px 22px -6px rgba(0,0,0,.28)}
 .tsr{grid-template-columns:84px 24px 30px minmax(0,1fr) auto}
+
+/* team page: every card is the same inset list: one solid rounded card, tall rows, a thin divider between rows */
+.tmpage .gxplate,.tmpage .gp.frows,.tmpage .gxrows,.tmpage .tstats .tbl.ff,.tmpage .tstats .stats.tsg{background:var(--surf)!important;border:1px solid var(--line);border-radius:22px!important;box-shadow:none!important}
+.tmpage .gp.frows .frow{min-height:72px;padding:14px 18px}
+.tmpage .gp.frows .frow+.frow{border-top:1px solid var(--line)}
+.tmpage .gxrows{padding:0 18px}
+.tmpage .gxrows .row{min-height:72px;padding:14px 0}
+.tmpage .tgm{padding:18px!important}
+.tkv .tkr{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:0 18px}
+.tkv .tkr+.tkr{border-top:1px solid var(--line)}
+.tkv .tkr span{font-size:15.5px;color:var(--ink-2)}
+.tkv .tkr b{font-size:16.5px;font-weight:700;text-align:right}
