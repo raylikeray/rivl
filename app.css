@@ -3758,3 +3758,9 @@ html body .plh .pltx .plact .flw{margin-top:0!important}
 html body .plh .plij{display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 15px 0 13px;border-radius:999px;background:rgba(10,12,16,.42);box-shadow:inset 0 0 0 1px rgba(255,255,255,.32);color:#fff;font-size:15px;font-weight:800;white-space:nowrap;text-decoration:none;pointer-events:auto}
 html body .plh .plij u{width:8px;height:8px;border-radius:50%;background:#FFB020;flex:none}
 html body .plh .plij.out u{background:#FF4D55}
+/* player hero: the team in the subtitle opens the team page */
+html body .plh .pltx>p .plteam{display:inline-flex;align-items:center;gap:5px;color:inherit;text-decoration:none;font-weight:800;pointer-events:auto}
+html body .plh .plteam img{width:18px;height:18px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+html body .plh .plteam svg{width:13px;height:13px;margin-left:-1px;opacity:.85}
+.plfacts>a.plft{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;color:inherit;text-decoration:none}
+.plfacts>a.plft span{color:var(--accent,#1D9BF0)!important;font-weight:700!important}

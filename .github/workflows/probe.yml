@@ -5,10 +5,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          mkdir out; cd out
           B=https://www.unrivaled.basketball
-          for p in schedule standings stats clubs game/1eww6736sf9v; do curl -sSL -m 30 -A "Mozilla/5.0" "$B/$p" -o "$(echo $p | tr / _).html"; done
-          G=$(grep -o 'href="/game/[^"]*"' schedule.html | head -1 | cut -d'"' -f2); echo $G
-          ls -la
-      - uses: actions/upload-artifact@v4
-        with: { name: out, path: out }
+          curl -sSL -m 30 -A "Mozilla/5.0" "$B/schedule" -o s.html
+          G=$(grep -o 'href="/game/[^"]*"' s.html | head -1 | cut -d'"' -f2)
+          python3 - <<'PY'
+          import re
+          s=open('s.html').read()
+          chunks=re.findall(r'self.__next_f.push\(\[1,"(.*?)"\]\)',s,re.S)
+          j=''.join(chunks).encode().decode('unicode_escape',errors='ignore')
+          print('RSC len',len(j))
+          for k in ['1eww6736sf9v','homeTeam','home_team','tipoff','startTime','start_time','score','"date"','tinybird','token']:
+            i=j.find(k); print('==',k,i); 
+            if i>=0: print(j[max(0,i-600):i+900])
+          i=s.find('tinybird'); print('== tinybird raw'); print(s[max(0,i-800):i+800])
+          PY
+          echo "== game page"; curl -sSL -m 30 -A "Mozilla/5.0" "$B$G" -o g.html
+          python3 - <<'PY'
+          import re
+          s=open('g.html').read()
+          chunks=re.findall(r'self.__next_f.push\(\[1,"(.*?)"\]\)',s,re.S)
+          j=''.join(chunks).encode().decode('unicode_escape',errors='ignore')
+          for k in ['points','"score"','player','minutes']:
+            i=j.find(k); print('==',k,i)
+            if i>=0: print(j[max(0,i-500):i+900])
+          PY
