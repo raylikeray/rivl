@@ -887,11 +887,11 @@
           const involves = (p, pid) => (p.participants || []).some(x => x && x.athlete && String(x.athlete.id) === pid) || (pname2[pid] && String(p.text || '').includes(pname2[pid]));
           const counts = {}; plays.forEach(p => { (p.participants || []).forEach(x => { const id = x && x.athlete && String(x.athlete.id); if (id && pname2[id]) counts[id] = (counts[id] || 0) + 1; }); });
           const who = Object.entries(counts).filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]).slice(0, 12);
-          const pid = pf.pid && pname2[pf.pid] ? pf.pid : '';
+          const pid = '';   // the player filter chips are gone; plays always show everyone
           const filt = plays.map((p, i) => [p, i]).filter(([p]) => (pick === 'all' || (p.period && p.period.number) === pick) && (!pv.scoring || p.scoringPlay) && (!pid || involves(p, pid)));
           const ctl = `<div class="gxseg"><button data-act="pscoring" data-v="1" aria-pressed="${!!pv.scoring}">Key plays</button><button data-act="pscoring" data-v="0" aria-pressed="${!pv.scoring}">All plays</button></div>`
             + `<div class="gxseg q"><button data-act="pq" data-q="all" aria-pressed="${pick === 'all'}">All</button>${periods.map(n => `<button data-act="pq" data-q="${n}" aria-pressed="${pick === n}">${pname(n)}</button>`).join('')}</div>`
-            + (who.length ? `<div class="chips pchips pfchips">${who.map(([id, n]) => `<button class="chip${pid === id ? ' on' : ''}" data-act="pf" data-pid="${esc(id)}" aria-pressed="${pid === id}">${esc(V.lastName(pname2[id]))} <small>${n}</small></button>`).join('')}</div>` : '');
+            ;
           const more = filt.length > pv.n; const groups = []; filt.reverse().slice(0, pv.n).forEach(([p, i]) => { const k = p.period && p.period.number; const grp = groups[groups.length - 1]; if (!grp || grp.k !== k) groups.push({ k, label: p.period && p.period.displayValue || '', list: [[p, i]] }); else grp.list.push([p, i]); });
           const nRuns = [...runs.keys()].filter(i => filt.some(([, j]) => j === i)).length;
           body = `<div class="gxctl">${ctl}</div>` + '<div class="gxout">' + (groups.length ? groups.map(gr => sec(gr.label.replace(/(\d)(st|nd|rd|th) Quarter/, 'Quarter $1'), pick === 'all' && nRuns && gr === groups[0] ? `${runs.size} run${runs.size === 1 ? '' : 's'} of 8–0 or more marked` : '') + `<div class="gpls">${gr.list.map(([p, i]) => runMark(i) + playCard(L, lk, g, p, ppl)).join('')}</div>`).join('') : empty(pid ? `Nothing for ${esc(V.lastName(pname2[pid]))} in that span` : 'No scoring plays in that span')) + (more ? `<button class="gxmore" data-act="pmore">Show more plays</button>` : '') + '</div>';
