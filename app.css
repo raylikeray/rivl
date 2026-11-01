@@ -3154,3 +3154,10 @@ html body .why-h .wt{background:none!important}
   :root[data-theme="light"] .tabs .tab.on{background:#07090B!important;color:#fff!important}
 }
 @media (max-width:1039px){ html body .tabs .tab.mid .mb{color:inherit!important} }
+/* the chosen tab's pill always wraps its whole word: it takes the width its label needs, the others share the rest */
+@media (max-width:1039px){
+  .tabs .tab,.tabs .tab.mid{flex:1 1 0!important;min-width:0!important;white-space:nowrap}
+  .tabs .tab span{white-space:nowrap;overflow:hidden;text-overflow:clip;max-width:100%}
+  .tabs .tab.on{flex:0 0 auto!important;padding:0 16px!important;min-width:64px!important}
+  .tabs .tab.on span{overflow:visible;max-width:none}
+}
