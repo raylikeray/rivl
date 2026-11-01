@@ -3380,3 +3380,10 @@ html body .tbl.stand:has(thead th:nth-child(6)) td:first-child,html body .tbl.st
 html body .tbl.stand:has(thead th:nth-child(6)) td:not(:first-child),html body .tbl.stand:has(thead th:nth-child(6)) th:not(:first-child){width:auto!important;white-space:nowrap}
 html body .tbl.stand .nm small{white-space:normal;overflow:hidden}
 html body .tbl.stand td:first-child{overflow:hidden}
+/* the standings card scrolls sideways when the numbers don't fit (it was clipping them) */
+html body .tw:has(> .tbl.stand){overflow-x:auto!important;overflow-y:hidden!important;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+html body .tw:has(> .tbl.stand)::-webkit-scrollbar{display:none}
+html body .tbl.stand:has(thead th:nth-child(6)) td:first-child,html body .tbl.stand:has(thead th:nth-child(6)) th:first-child{min-width:150px!important;max-width:172px!important}
+html body .tbl.stand:has(thead th:nth-child(6)) td:not(:first-child){font-size:15px}
+html body .tbl.stand:has(thead th:nth-child(6)) td:not(:first-child),html body .tbl.stand:has(thead th:nth-child(6)) th:not(:first-child){padding-left:6px!important;padding-right:6px!important}
+html body .tbl.stand:has(thead th:nth-child(6)) td:last-child,html body .tbl.stand:has(thead th:nth-child(6)) th:last-child{padding-right:16px!important}
