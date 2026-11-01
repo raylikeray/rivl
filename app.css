@@ -2886,3 +2886,20 @@ html.gxon body::before{display:none}
 .tkv .tkr+.tkr{border-top:1px solid var(--line)}
 .tkv .tkr span{font-size:15.5px;color:var(--ink-2)}
 .tkv .tkr b{font-size:16.5px;font-weight:700;text-align:right}
+
+/* game page: the same inset list as the team page: one solid rounded card, tall rows, thin dividers */
+.gxpage:not(.tmpage) :is(.gxplate,.glplate,.gxrows,.giplate,.gxser,.plc,.zones,.tracker svg){background:var(--surf)!important;border:1px solid var(--line)!important;border-radius:22px!important;box-shadow:none!important}
+.gxpage:not(.tmpage) .gpl.sc .plc{background:linear-gradient(135deg,color-mix(in srgb,var(--pc) 14%,var(--surf)),var(--surf) 70%)!important}
+.gxpage:not(.tmpage) .gxplate{padding:6px 18px}
+.gxpage:not(.tmpage) .glplate{padding:0 18px}
+.gxpage:not(.tmpage) .gxrows{padding:0 18px}
+.gxpage:not(.tmpage) .gxrows .row{min-height:68px;padding:14px 0}
+.gxpage:not(.tmpage) .gxls td{padding:14px 0}
+.gxpage:not(.tmpage) .gxcmp{padding:16px 0}
+.gxpage:not(.tmpage) .glrow{padding:16px 0}
+.gxpage:not(.tmpage) .gxkv .kvr{min-height:56px;padding:0;align-items:center}
+.gxpage:not(.tmpage) .gxser{padding:18px 20px}
+.gxpage:not(.tmpage) .giplate{padding:4px 18px}
+.gxpage:not(.tmpage) .giplate .row{min-height:64px}
+.gxpage:not(.tmpage) .zones{padding:8px 18px 4px}
+.gxpage:not(.tmpage) .gxfloor{padding:0 18px}
