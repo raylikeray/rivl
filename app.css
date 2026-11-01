@@ -3240,3 +3240,33 @@ html body .star.pop svg{animation:starpop .36s cubic-bezier(.2,.8,.2,1)}
 @keyframes starpop{0%{transform:scale(.6)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
 html body .gxib.star.on{color:#F5B915}
 html body .row .star svg path{stroke:currentColor;stroke-width:2;stroke-linejoin:round}
+/* ===== Player page (v8): tall moving-colour hero, crest large and faint behind a high-definition cut-out, the name
+   over a soft shade at the bottom. The facts sit in one plate at the top of Overview. */
+.gxpage.plpage{--gxh:calc(var(--gxbar) + 318px)}
+.plpage .gxin{position:absolute!important;inset:0;padding:0!important}
+.plh{position:absolute;inset:0;overflow:hidden}
+.plh .plwm{position:absolute;right:-8%;top:calc(var(--gxbar) + 2px);width:78%;max-width:340px;aspect-ratio:1;object-fit:contain;opacity:.2;filter:saturate(.6) brightness(1.15);pointer-events:none}
+.plh .plshot{position:absolute;left:50%;bottom:0;transform:translateX(-50%);height:88%;max-height:330px;width:auto;max-width:none;object-fit:contain;object-position:bottom;pointer-events:none;filter:drop-shadow(0 12px 24px rgba(0,0,0,.25))}
+.plh .plini{position:absolute;left:0;right:0;top:40%;text-align:center;font-size:80px;font-weight:800;color:rgba(255,255,255,.4)}
+.plh::after{content:"";position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(180deg,transparent,rgba(0,0,0,.28) 50%,rgba(0,0,0,.58));pointer-events:none}
+.plh .pltx{position:absolute;left:var(--gut);right:var(--gut-r);bottom:40px;z-index:2;color:#fff}
+.plh .pltm{display:inline-block;margin-bottom:4px}
+.plh .pltm img{width:34px;height:34px;object-fit:contain;display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))}
+.plh h1{margin:0;font-size:clamp(30px,9vw,40px);font-weight:800;letter-spacing:-.025em;line-height:1.02;text-shadow:0 2px 14px rgba(0,0,0,.25);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plh p{margin:6px 0 0;font-size:15px;font-weight:600;color:rgba(255,255,255,.86)}
+.plmn{display:flex;align-items:center;gap:9px;min-width:0}
+.plmn>span{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.plmn b{font-size:16px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plmn small{font-size:12px;font-weight:600;opacity:.8}
+.plfacts{display:grid!important;grid-template-columns:repeat(3,1fr);gap:16px 6px;padding:18px 10px!important;margin-top:14px}
+.plfacts>div{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.plfacts b{font-size:20px;font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+.plfacts span{font-size:12.5px;font-weight:500;color:var(--ink-3)}
+.plpage [data-ptab-panel] > .ijc{margin-top:14px}
+
+/* the follow star in the top bar (players and teams): the flat star from the lists, no disc. White outline when not
+   following, solid gold when following, a soft shadow so it reads on any team colour. */
+.gxpage .gxbar .gxib.star{background:none!important;box-shadow:none!important;border:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;color:#fff!important}
+.gxpage .gxbar .gxib.star svg{width:27px!important;height:27px!important;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))}
+.gxpage .gxbar .gxib.star svg path{stroke:currentColor;stroke-width:2;stroke-linejoin:round}
+.gxpage .gxbar .gxib.star.on,.gxpage .gxbar .gxib.star[aria-pressed="true"]{color:#F5B915!important}

@@ -358,6 +358,15 @@
     if (simOk) outlookFill(L, tid, r, { feed: HW.sim.ready(L) });
     V.refresh = today && today.state === 'in' ? async () => { const g2 = await liveOf(today, 15000); const host = $main.querySelector('[data-tp="overview"] .tgm'); if (!host || !g2) return; const h = gamePlate(g2); if (host.outerHTML !== h) host.outerHTML = h; if (g2.state === 'post') V.refresh = null; } : null;
   }
+  /* the shared hero page (team and player): fixed page, moving colour hero, a clear bar on top, a sheet that scrolls up
+     over the hero with sticky tabs */
+  V._.heroShell = ({ cls, color, c2, inner, bar, act, attr, tab, tabs, panels }) => {
+    $main.innerHTML = `<div id="gpage" class="gxpage tmpage ${cls || ''}"><section class="gx solo" id="gxhero" style="--aw:${esc(color)};--ha:${esc(c2 || color)}">${LOBES}<div class="gxin" id="gxin">${inner}</div></section>`
+      + `<div class="gxbar" id="gxbar">${bar}</div>`
+      + `<div class="gxscroll" id="gxscroll"><div class="gxspace"></div><div class="gxsheet"><div id="gtabs" class="gxtabw"><div class="gxtabs" role="tablist">${tabs.map(([k, l]) => `<button class="chip${k === tab ? ' on' : ''}" data-act="${act}" data-tab="${k}" aria-pressed="${k === tab}">${l}</button>`).join('')}</div></div>`
+      + `<div id="tbody">${tabs.map(([k]) => `<div ${attr}="${k}"${k === tab ? '' : ' hidden'}>${panels[k] || ''}</div>`).join('')}</div></div></div></div>`;
+    gxFit(); gxScroll(); if (gxScroll.run) gxScroll.run();
+  };
   /* a team's line from the simulation: odds, projected record, the run left */
   async function outlookFill(L, id, r, { feed = false } = {}) {
     const box = $main.querySelector(`.outlook[data-lk="${L.key}"][data-id="${id}"]`); if (!box) return;
