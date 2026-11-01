@@ -12,9 +12,9 @@
   const job = (name, fn) => {
     const t0 = performance.now(); stack.push(name); depth++;
     try { return fn(); }
-    finally { depth--; stack.pop(); const t1 = performance.now(); recent.push([name, t0, t1]); if (recent.length > 80) recent.shift(); if (t1 - t0 >= 16 && !depth) push({ t: Math.round(t0), k: 'job', n: name, ms: Math.round(t1 - t0), g: gest || '', h: location.hash }); }
+    finally { depth--; stack.pop(); const t1 = performance.now(); recent.push([name, t0, t1]); if (recent.length > 80) recent.shift(); if (t1 - t0 >= HW.perf.min && !depth) push({ t: Math.round(t0), k: 'job', n: name, ms: Math.round(t1 - t0), g: gest || '', h: location.hash }); }
   };
-  const span = name => { const t0 = performance.now(); return { end() { const t1 = performance.now(); recent.push([name, t0, t1]); if (recent.length > 80) recent.shift(); if (t1 - t0 >= 16) push({ t: Math.round(t0), k: 'job', n: name, ms: Math.round(t1 - t0), g: gest || '', h: location.hash }); } }; };
+  const span = name => { const t0 = performance.now(); return { end() { const t1 = performance.now(); recent.push([name, t0, t1]); if (recent.length > 80) recent.shift(); if (t1 - t0 >= HW.perf.min) push({ t: Math.round(t0), k: 'job', n: name, ms: Math.round(t1 - t0), g: gest || '', h: location.hash }); } }; };
   const inside = (a, b) => [...new Set(recent.filter(r => r[1] < b && r[2] > a).map(r => r[0]))].join('+');
   /* long tasks, as the browser sees them */
   try { new PerformanceObserver(list => { for (const en of list.getEntries()) { const a = en.startTime, b = a + en.duration; push({ t: Math.round(a), k: 'long', ms: Math.round(en.duration), in: inside(a, b) || (stack[stack.length - 1] || '?'), g: gest || '', h: location.hash }); } }).observe({ type: 'longtask', buffered: true }); } catch { }
@@ -40,5 +40,5 @@
     return lines.join('\n');
   };
   const reset = () => { log = []; store.set(KEY, log); };
-  HW.perf = { job, span, busy, text, reset, get log() { return log; } };
+  HW.perf = { job, span, busy, text, reset, min: 16, get log() { return log; } };
 })();

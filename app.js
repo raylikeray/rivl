@@ -68,15 +68,30 @@
   /* the gesture gate: while a finger is on the screen or a slide is settling, nothing that could take a frame runs
      (polling repaints, crest fitting, building the next league's copy). It all waits for the hand to lift. */
   let touching = false; const later = [];
-  V.busy = () => touching || !!render.swiping || !!render.gliding;
-  V.whenIdle = fn => { if (!V.busy()) { fn(); return; } if (!later.includes(fn)) later.push(fn); };
-  V.flushIdle = () => { if (V.busy() || !later.length) return; const q = later.splice(0); q.forEach(f => { try { f(); } catch (e) { console.error(e); } }); };
+  V.gesturing = () => touching || !!render.swiping || !!render.gliding;
+  V.whenIdle = fn => { if (!V.gesturing()) { fn(); return; } if (!later.includes(fn)) later.push(fn); };
+  V.flushIdle = () => { if (V.gesturing() || !later.length) return; const q = later.splice(0); q.forEach(f => { try { f(); } catch (e) { console.error(e); } }); };
   document.addEventListener('touchstart', () => { touching = true; clearTimeout(V.flushT); }, { passive: true, capture: true });
   const lift = () => { touching = false; clearTimeout(V.flushT); V.flushT = setTimeout(V.flushIdle, 320); };
   document.addEventListener('touchend', lift, { passive: true, capture: true }); document.addEventListener('touchcancel', lift, { passive: true, capture: true });
   setInterval(() => V.flushIdle(), 1500);
   const scrollMem = new Map();
-  const entSnaps = new Map();   // the last few game, team and player pages, as they stood when you left them
+  /* pages are kept as the very nodes they were drawn with, not as text: a screen you leave is parked offscreen (still in the
+     document) and comes back by moving those nodes into place. Nothing is serialised, parsed or decoded again, which is
+     what made every landing and every tap cost a few frames. */
+  const kept = new Map();
+  const KEEP_CSS = 'position:fixed;left:0;width:100%;top:0;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;visibility:hidden;transform:translate3d(200vw,0,0);contain:layout paint;content-visibility:hidden';
+  const keepBox = () => { const b = document.createElement('div'); b.className = 'xpeek xkeep'; b.style.cssText = KEEP_CSS; document.body.appendChild(b); return b; };
+  /* moving nodes resets every scroll box inside them, so a move reads the few that scroll (strips, the page's own box) and
+     puts them back: one layout read, a few writes, nothing rebuilt */
+  const SCROLLERS = '.dates,.brief-row,.chips,.rail,.media,.tw,.onb-picked-row,#gxscroll,.xsorts,.gxtabs';
+  const moveNodes = (from, to) => { const st = []; from.querySelectorAll(SCROLLERS).forEach(el => { const x = el.scrollLeft, y = el.scrollTop; if (x || y) st.push([el, x, y]); }); to.replaceChildren(...from.childNodes); st.forEach(([el, x, y]) => { if (x) el.scrollLeft = x; if (y) el.scrollTop = y; }); return to; };
+  V._moveNodes = moveNodes;
+  const keepPut = (key, from, box) => { const old = kept.get(key); if (old && old !== box) old.remove(); kept.delete(key); const b = box || keepBox(); b.className = 'xpeek xkeep'; b.style.cssText = KEEP_CSS; if (from) moveNodes(from, b); b.dataset.key = key; kept.set(key, b);
+    while (kept.size > 28) { const k0 = kept.keys().next().value; const b0 = kept.get(k0); kept.delete(k0); b0.remove(); } return b; };
+  const keepTake = key => { const b = kept.get(key); if (!b) return null; kept.delete(key); return b; };
+  const keepHas = key => kept.has(key);
+  V._kept = { put: keepPut, take: keepTake, has: keepHas, map: kept };
   /* every sideways strip (last night's results, a rail of players, the date row) remembers how far you moved it, per
      screen, so coming back by a league swipe, a tab or a refresh finds it exactly where you left it */
   const STRIP_SEL = '.dates,.brief-row,.chips,.rail,.media,.tw,.onb-picked-row,.frows-x';
@@ -105,39 +120,41 @@
     /* a game, team or player page you leave is kept as it stood (its scroll included), so coming back to it, by the arrow or
        the phone's own back swipe, shows it at once exactly as you left it; its numbers then refresh in place */
     const ENT = ['game', 'team', 'player'];
-    if (fresh && render.key && ENT.includes(render.screen) && $main.querySelector('#gpage') && $main.dataset.real === '1') { const gs = $main.querySelector('#gxscroll'); entSnaps.delete(render.key); entSnaps.set(render.key, { html: $main.innerHTML, st: gs ? gs.scrollTop : 0 }); while (entSnaps.size > 8) entSnaps.delete(entSnaps.keys().next().value); }
+    const light = !!render.light; render.light = false;   // a swipe landing: the page is already in place, the bookkeeping runs now and the data check waits for idle
     render.screen = r.name;
     /* hold the page's height through the switch: while the new screen loads, a shorter page would clamp the scroll and the
        header with the league switch would drop in and slide back out (the hitch between tabs). Released once the new
        screen has landed at its scroll. */
-    if (fresh && render.key) { $main.style.minHeight = $main.offsetHeight + 'px'; clearTimeout(render.mhT); render.mhT = setTimeout(() => { $main.style.minHeight = ''; }, 1500); }
+    if (fresh && render.key && !light) { $main.style.minHeight = $main.offsetHeight + 'px'; clearTimeout(render.mhT); render.mhT = setTimeout(() => { $main.style.minHeight = ''; }, 1500); }
     clearTimeout(render.holdT); render.onReal = null;
     /* the phone's own back swipe (or its back button) already animates the move with a snapshot of the screen you are
        going back to: our crossfade on top of that showed the old page a second time, fading out over the new one (the hitch
        on swiping back). So the fade runs only for a move started by a tap inside the app. */
     const byTap = render.tapAt && performance.now() - render.tapAt < 1500; render.tapAt = 0;
     const swiped = render.swipe; render.swipe = false; if (swiped) { $main.classList.remove('enter', 'fade', 'hold'); $main.classList.add('noanim'); }
-    if (fresh && MOTION() && !swiped && (byTap || !render.key)) {
+    if (fresh && MOTION() && !swiped && !light && (byTap || !render.key)) {
       /* a crossfade, not a blink: a snapshot of the old screen is laid over the page and fades out while the new screen, held
          invisible until its real content has painted, fades in beneath it. If the content takes longer than a beat, the skeleton
          is shown instead so the hold never ends in a blank. */
-      if (render.key) ghost();
+      if (render.key) ghost(render.key);
       /* switching leagues slides like X's tabs: the new league comes in from the side of the tab you tapped, the old one leaves the other way */
       const dir = leagueChanged ? (ORDER.indexOf(r.lk) > ORDER.indexOf(render.lk) ? 'r' : 'l') : '';
       if (dir) $main.dataset.dir = dir; else delete $main.dataset.dir; const gh = document.querySelector('.xghost:not(.out)'); if (gh && dir) gh.dataset.dir = dir;
       $main.classList.remove('fade', 'enter'); $main.classList.add('hold');
-      const fadeIn = () => { clearTimeout(render.holdT); $main.classList.remove('hold', 'fade', 'enter'); void $main.offsetWidth; $main.classList.add('fade', 'enter'); document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); }); };   // the snapshot lets go only now, so the two cross
+      const fadeIn = () => { clearTimeout(render.holdT); $main.classList.remove('hold', 'fade', 'enter'); void $main.offsetWidth; $main.classList.add('fade', 'enter'); document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => parkGhost(g), 500); }); };   // the snapshot lets go only now, so the two cross
       render.onReal = fadeIn;
       render.holdT = setTimeout(() => { if (render.onReal === fadeIn && my === seq) { render.onReal = null; V.showSkeleton(); fadeIn(); render.onReal = () => { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); }; } }, dir ? 110 : 260);   // a league swipe starts moving almost at once, as X's does
     }
-    if (leagueChanged) {
+    /* the screen being left is parked as it stands (unless the crossfade took it, or a swipe already moved it) */
+    if (fresh && render.key && !light && $main.dataset.real === '1' && !document.querySelector('.xghost.mv[data-key="' + render.key + '"]')) { keepPut(render.key, $main); $main.dataset.real = '0'; }
+    if (leagueChanged && !light) {
       /* A league switch is a new screen, not the old one refreshed: the old league never stays on screen while the new one
          loads (its skeleton paints instead), and a scroll still coasting from a flick is stopped before the jump to the top,
          so iOS cannot carry the page on down or bounce it back after the new league lands. */
       if (!swiped) $main.dataset.real = '0';   // after a swipe the page already holds that league's last screen; it updates in place
       const de = document.documentElement, y0 = +$main.dataset.y || 0; de.style.overflow = 'hidden'; window.scrollTo(0, y0); void de.offsetHeight;   // each league comes back where you left it
       requestAnimationFrame(() => { de.style.overflow = ''; window.scrollTo(0, y0); });
-    } else if ($main.dataset.y === '0' && fresh) window.scrollTo(0, 0);
+    } else if ($main.dataset.y === '0' && fresh && !light) window.scrollTo(0, 0);
     render.lk = r.lk;
     if (r.name !== 'game') document.documentElement.classList.remove('gxon');
     if (!['team', 'player', 'game'].includes(r.name) && V._.tint) V._.tint('');   // only a team's, a player's or a game's page wears a team colour
@@ -156,9 +173,11 @@
     paintTabs(TABS.includes(tabOf(r.name)) ? tabOf(r.name) : (render.tab || (r.name === 'game' ? 'scores' : 'home')));
     document.title = leagueScreen ? `${TITLES[r.name]} · ${LEAGUES[r.lk].label} · RIVL` : `${TITLES[r.name] || ''} RIVL`.trim();
     $main.dataset.top = '1';   // scroll to the top with the new screen's first real paint, not before it
-    { const es = fresh && ENT.includes(r.name) ? entSnaps.get(key) : null; if (es) { $main.innerHTML = es.html; const gs = $main.querySelector('#gxscroll'); if (gs) gs.scrollTop = es.st; if (V._ && V._.gxAttach) V._.gxAttach(); } }
+    if (fresh && !light) { const kb = keepTake(key); if (kb) { if (render.key && $main.dataset.real === '1' && !document.querySelector('.xghost.mv[data-key="' + render.key + '"]')) keepPut(render.key, $main);   // the page being left is parked (unless the crossfade has it)
+        moveNodes(kb, $main); kb.remove(); $main.dataset.real = '1'; if (ENT.includes(r.name) && V._ && V._.gxAttach) V._.gxAttach(); if (r.name === 'home') $main.dataset.hlk = r.lk; const y = +$main.dataset.y || 0; if (y) window.scrollTo(0, y); if (render.onReal) { const f = render.onReal; render.onReal = null; f(); } } }
     if (sp) sp.end();
-    try { await (V[r.name] || V.home)(...r.args); }
+    if (light) { const run = () => { if (my !== seq) return; Promise.resolve((V[r.name] || V.home)(...r.args)).catch(err => console.error(err)); }; V.whenIdle(() => setTimeout(run, 320)); }
+    else try { await (V[r.name] || V.home)(...r.args); }
     catch (err) { if (my === seq) $main.innerHTML = `<div class="empty"><b>Something went wrong</b><p style="margin:6px 0 0">${esc(err && err.message || 'Try again in a moment.')}</p></div>`; console.error(err); }
     if (my !== seq) return;
     V.settled();   // a view that painted into part of the screen (Scores' list, a standings chip, a refreshed game) made no full paint to clear the bar, the dimming and the slow note, or to land at its scroll
@@ -167,28 +186,30 @@
     if (swiped) { $main.classList.remove('enter', 'fade', 'hold'); $main.classList.add('noanim'); clearTimeout(render.naT); render.naT = setTimeout(() => $main.classList.remove('noanim'), 1200); }   // a swipe already moved the page: it lands still, no fade, no rise
     else if (key !== render.key) { if (!$main.classList.contains('enter')) { void $main.offsetWidth; $main.classList.add('enter'); } } else $main.classList.remove('enter');
     render.key = key;
-    $main.classList.remove('hold'); clearTimeout(render.holdT); render.onReal = null; document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); });   // whatever happened, nothing stays held once the view has returned
+    $main.classList.remove('hold'); clearTimeout(render.holdT); render.onReal = null; document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => parkGhost(g), 500); });   // whatever happened, nothing stays held once the view has returned
     document.dispatchEvent(new CustomEvent('rivl:rendered'));
   }
   /* the old screen, as it stood, laid over the page and fading. NOTE the class is `xghost`, never `ghost`:
      `.btn.ghost` is the secondary-button style, and a bare `.ghost` rule captured every one of them (v86 regression —
      they turned position:fixed and pointer-events:none, and this function deleted them). Keep the names apart. — so the next screen appears through it instead of after a gap */
-  function ghost() {
-    document.querySelectorAll('.xghost').forEach(g => g.remove());
+  /* a fading copy is done: its nodes go back under their screen's key (ids restored) rather than being thrown away */
+  const parkGhost = g => { if (!g || !g.isConnected) return; const c = g.querySelector('.xgbody'); if (g.classList.contains('mv') && c) { c.querySelectorAll('[data-xid]').forEach(el => { el.id = el.dataset.xid; delete el.dataset.xid; }); if (g.dataset.key && c.childNodes.length) keepPut(g.dataset.key, c); } g.remove(); };
+  function ghost(key) {
+    document.querySelectorAll('.xghost').forEach(parkGhost);
     /* a game, team or player page is fixed to the viewport, so the page box itself has no height: the copy then covers the
        whole viewport. Otherwise the copy sits exactly over the page, with the page's own padding (no few-pixel shift). */
     const ent = !!$main.querySelector(':scope > .gxpage'); let r = $main.getBoundingClientRect();
     if (ent) r = { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight }; if (!r.width || !r.height) return;
-    const g = document.createElement('div'); g.className = 'xghost' + (ent ? ' ent' : ''); g.setAttribute('aria-hidden', 'true');
+    const g = document.createElement('div'); g.className = 'xghost mv' + (ent ? ' ent' : ''); g.setAttribute('aria-hidden', 'true'); if (key) g.dataset.key = key;
     g.style.cssText = `left:${r.left}px;width:${r.width}px`;
-    const c = $main.cloneNode(true); c.removeAttribute('id'); c.className = ''; const cs = getComputedStyle($main); c.style.cssText = ent ? `transform:translateY(0);width:${r.width}px;height:${r.height}px;margin:0;padding:0` : `transform:translateY(${r.top}px);padding:${cs.padding};margin:0;width:${r.width}px;box-sizing:border-box`;
-    g.appendChild(c); document.body.appendChild(g);
-    /* a copy starts every strip and scroll box at its start, so the date strip, a rail or the page's own scroll box jumped
-       inside the fading copy. Put each one back where it was. */
-    const src = $main.querySelectorAll('*'), dst = c.querySelectorAll('*');
-    for (let i = 0; i < src.length; i++) { const x = src[i].scrollLeft, y = src[i].scrollTop; if (dst[i]) { if (x) dst[i].scrollLeft = x; if (y) dst[i].scrollTop = y; } }
-    g.addEventListener('animationend', () => g.remove()); setTimeout(() => g.remove(), 1500);   // it fades once the new screen is ready (fadeIn adds .out); never outstays its welcome
+    /* the page's own nodes move into the fading copy (no deep clone, no second page to lay out); when the fade ends they are
+       parked under the screen's key, so coming back finds them as they were */
+    const c = $main.cloneNode(false); c.removeAttribute('id'); c.className = 'xgbody'; const cs = getComputedStyle($main); c.style.cssText = ent ? `transform:translateY(0);width:${r.width}px;height:${r.height}px;margin:0;padding:0` : `transform:translateY(${r.top}px);padding:${cs.padding};margin:0;width:${r.width}px;box-sizing:border-box`;
+    g.appendChild(c); document.body.appendChild(g); moveNodes($main, c); $main.dataset.real = '0';
+    c.querySelectorAll('[id]').forEach(el => { el.dataset.xid = el.id; el.removeAttribute('id'); });   // the ids belong to the live page while the copy fades
+    setTimeout(() => parkGhost(g), 900);   // whatever else happens, the copy never outlives the fade
   }
+
   window.addEventListener('hashchange', render);
 
   /* ---------- polling: today's slate for every league, faster while something is live ---------- */
@@ -343,7 +364,6 @@
     document.getElementById('livebar').addEventListener('click', e => {
       const a = e.target.closest('a.lg'); if (!a || !MOTION()) return; e.preventDefault(); e.stopPropagation(); warm(a);
       const r = current || route(); const rc = a.getBoundingClientRect(); const ca = a.style.getPropertyValue('--ca'), ch = a.style.getPropertyValue('--ch');
-      if ($main.dataset.real === '1' && V._snaps) V._snaps[r.lk + ':' + r.name] = $main.innerHTML;
       trip = { hash: location.hash || '#home', lk: r.lk, name: r.name, y: window.scrollY };
       const H = window.innerHeight;
       const dim = document.createElement('div'); dim.className = 'bardim'; document.body.appendChild(dim);
@@ -360,15 +380,16 @@
     let held = null;
     const lift = () => {
       if (held) return held; const gp = document.getElementById('gpage'); if (!trip || !gp) return null;
-      const snap = V._snaps && V._snaps[trip.lk + ':' + trip.name]; if (!snap) return null;
+      const kb = keepTake(trip.name + '/' + trip.lk); if (!kb) return null;
       const wrap = document.createElement('div'); wrap.className = 'barclose'; document.body.appendChild(wrap);
       const gs = gp.querySelector('#gxscroll'), st = gs ? gs.scrollTop : 0; const kids = [...$main.childNodes]; const gy = window.scrollY;
       gp.style.transform = ''; wrap.appendChild(gp); if (gs) gs.scrollTop = st;
-      $main.innerHTML = snap; stripsTo($main, stripMem.get(trip.name + '/' + trip.lk)); de.classList.remove('entity', 'gxon'); document.getElementById('top').hidden = false; window.scrollTo(0, trip.y);
+      moveNodes(kb, $main); kb.remove(); $main.dataset.real = '1'; if (trip.name === 'home') $main.dataset.hlk = trip.lk; stripsTo($main, stripMem.get(trip.name + '/' + trip.lk)); de.classList.remove('entity', 'gxon'); document.getElementById('top').hidden = false; window.scrollTo(0, trip.y);
       held = { wrap, gp, kids, gs, st, gy, t: trip }; return held;
     };
     const unlift = () => {   // let go short: everything goes back exactly as it was
       const h = held; held = null; if (!h) return;
+      if ($main.childNodes.length) keepPut(h.t.name + '/' + h.t.lk, $main);   // the screen underneath goes back to its parking place
       $main.replaceChildren(...h.kids.map(n => n === h.gp ? h.gp : n)); if (!h.gp.isConnected) $main.appendChild(h.gp);
       de.classList.add('entity', 'gxon'); document.getElementById('top').hidden = true; window.scrollTo(0, h.gy); if (h.gs) h.gs.scrollTop = h.st; h.wrap.remove();
     };
@@ -377,7 +398,7 @@
       if (!h) { const gp = document.getElementById('gpage'); if (!trip || !gp) return false; trip = null; history.back(); return true; }
       held = null; const t = h.t; trip = null; const H = window.innerHeight; const wrap = h.wrap;
       wrap.style.transform = `translate3d(0,${dy0}px,0)`;
-      render.swipe = true; render.tapAt = performance.now(); $main.dataset.hlk = t.lk;
+      render.swipe = true; render.light = true; render.tapAt = performance.now(); $main.dataset.hlk = t.lk;   // the screen is already in place: no re-render, the data check waits for idle
       history.back();
       const ms = Math.round(Math.max(180, Math.min(340, v0 > .3 ? (H - dy0) / v0 : 320)));   // a flick keeps its speed
       requestAnimationFrame(() => { window.scrollTo(0, t.y); wrap.style.transition = `transform ${ms}ms ${v0 > .3 ? 'cubic-bezier(.25,.6,.4,1)' : EASE}`; wrap.style.transform = `translate3d(0,${H}px,0)`; setTimeout(() => wrap.remove(), ms + 30); });
@@ -403,7 +424,8 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
   /* the performance log: hold the Settings title for a moment. Copy puts it on the clipboard for Ray. */
   (() => { let pt = 0; const open = () => { if (!HW.perf) return; const txt = HW.perf.text(); openPanel(`<div class="grab"></div><h2 style="margin:0 0 10px">Performance log</h2><p class="legend" style="margin:0 0 10px">Kept on this phone only. Long tasks, dropped frames during gestures, slow jobs.</p><div style="display:flex;gap:8px;margin:0 0 12px"><button class="btn" data-act="perfcopy">Copy</button><button class="btn" data-act="perfreset">Reset</button></div><pre class="perfpre" style="font:11px/1.4 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word;color:var(--ink-2);margin:0">${esc(txt)}</pre>`, { full: true }); };
-    document.addEventListener('click', e => { if (e.target.closest('[data-act="perfopen"]')) { e.preventDefault(); open(); } });
+    document.addEventListener('pointerdown', e => { const t = e.target.closest('.topbar .ttl, .topbar .t, .topbar h1'); clearTimeout(pt); if (!t || !/^Settings$/.test(t.textContent.trim())) return; pt = setTimeout(open, 650); }, true);
+    ['pointerup', 'pointercancel', 'pointermove'].forEach(ev => document.addEventListener(ev, () => clearTimeout(pt), true));
     document.addEventListener('click', e => { const a = e.target.closest('[data-act="perfcopy"],[data-act="perfreset"]'); if (!a) return; e.preventDefault(); if (a.dataset.act === 'perfreset') { HW.perf.reset(); closePanel(); toast('Log cleared'); return; } try { navigator.clipboard.writeText(HW.perf.text()).then(() => toast('Copied')); } catch { toast("Couldn't copy"); } });
   })();
   /* long-pressing a name or a card is not a link to share: no context menu on the app's own controls */
@@ -476,18 +498,14 @@
        league names cross-fade with the finger and the line under them travels and stretches 1:1. Past a quarter of the
        screen, or with a flick, it carries on; short of that both spring back. On the first league a drag to the right
        pulls out your profile instead. A tap on a league runs the same slide. */
-    let sx = null, sy = 0, mode = '', vx = 0, lx = 0, lt = 0, W2 = window.innerWidth, from = null, to = null, curX = 0, peek = null, peekFor = null;
-    const $m = document.getElementById('main'); const snaps = {}; V._snaps = snaps;
-    const ready = {};   // copies of the leagues either side, built while the phone is idle so a drag never has to build one
+    let sx = null, sy = 0, mode = '', vx = 0, lx = 0, lt = 0, W2 = window.innerWidth, from = null, to = null, curX = 0, peek = null, peekFor = null, peekKey = '';
+    const $m = document.getElementById('main');
     const idle = f => (window.requestIdleCallback || (g => setTimeout(g, 120)))(f, { timeout: 800 });
-    const prebuild = () => { const r = current || route(); if (!r || !SCREENS.includes(r.name)) return; const i = ORDER.indexOf(r.lk);
-      Object.keys(ready).forEach(k => { if (ready[k] && ready[k] !== peek) { ready[k].remove(); } delete ready[k]; });
-      [ORDER[i - 1], ORDER[i + 1]].filter(Boolean).forEach(k => idle(() => { if (V.busy() || mode) { V.whenIdle(prebuild); return; } const r2 = current || route(); if (!r2 || r2.lk !== r.lk || r2.name !== r.name) return;
-        const el2 = $m.cloneNode(false); el2.removeAttribute('id'); el2.classList.remove('hold', 'fade', 'enter', 'noanim'); el2.classList.add('xpeek'); el2.dataset.for = k + ':' + r.name;
-        el2.innerHTML = snaps[k + ':' + r.name] || (V._ && V._.skeleton ? V._.skeleton(1, 'card') + V._.skeleton(4, 'row') : '');
-        el2.style.cssText = 'position:fixed;left:0;width:100%;top:0;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;visibility:hidden;transform:translate3d(200vw,0,0);will-change:transform;contain:layout paint';
-        $m.parentNode.insertBefore(el2, $m.nextSibling); ready[k] = el2; })); };
-    document.addEventListener('rivl:rendered', () => { const r = current || route(); if (r && SCREENS.includes(r.name) && $m.dataset.real !== '0') snaps[r.lk + ':' + r.name] = $m.innerHTML; if (peek && !render.swiping) { peek.remove(); peek = null; } if (!render.swiping) setTimeout(prebuild, 400); });
+    /* the league beside you is the real page you last saw there, parked offscreen; a drag borrows it and slides it in.
+       Nothing is copied, built or parsed during the gesture. A league never seen yet slides in as a skeleton. */
+    const prebuild = () => { };   // nothing to build: kept pages are the pages
+    V._dbg = () => ({ swiping: !!render.swiping, gliding: !!render.gliding, mode, sx, peek: !!peek, peekKey, touching: V.gesturing() });
+    document.addEventListener('rivl:rendered', () => { if (peek && !render.swiping) dropPeek(); });
     const pillOf = k => $pills.querySelector(`.pill[data-lk="${k}"]`);
     const geo = k => { const pl = pillOf(k), sp = pl && pl.querySelector('span'); return sp ? { x: pl.offsetLeft + sp.offsetLeft - 10, w: sp.offsetWidth + 20 } : null; };
     const track = t => {   // t: 0 at the league you are on, 1 at the one the finger is heading to
@@ -496,18 +514,20 @@
       $pills.style.setProperty('--ux', (a.x + (b.x - a.x) * t).toFixed(1) + 'px'); $pills.style.setProperty('--uw', (a.w + (b.w - a.w) * t).toFixed(1) + 'px');
       const pa = pillOf(from), pb = pillOf(to); if (pa) pa.style.setProperty('--on', (1 - t).toFixed(3)); if (pb) pb.style.setProperty('--on', t.toFixed(3)); };
     const clearTrack = () => { $pills.classList.remove('dragging'); $pills.querySelectorAll('.pill').forEach(p => p.style.removeProperty('--on')); };
-    const makePeek = k => { if (peek && peekFor === k) return; if (peek && peek !== ready[peekFor]) peek.remove(); else if (peek) { peek.style.visibility = 'hidden'; peek.style.transform = 'translate3d(200vw,0,0)'; }
-      const r = current || route(); const rc = $m.getBoundingClientRect();
-      peek = ready[k] && ready[k].dataset.for === k + ':' + r.name ? ready[k] : null; peekFor = k;
-      if (!peek) { peek = $m.cloneNode(false); peek.removeAttribute('id'); peek.classList.remove('hold', 'fade', 'enter', 'noanim'); peek.classList.add('xpeek'); const sn = snaps[k + ':' + r.name]; peek.innerHTML = sn || (V._ && V._.skeleton ? V._.skeleton(1, 'card') + V._.skeleton(4, 'row') : ''); if (sn) peek.dataset.for = k + ':' + r.name; else delete peek.dataset.for; $m.parentNode.insertBefore(peek, $m.nextSibling); }
-      const mainTop = rc.top + window.scrollY, ny = scrollMem.get(r.name + '/' + k) || 0;   // where the next league will sit once it lands: its own scroll, the top bar drawn over it as on the real page
-      peek.style.cssText = `position:fixed;left:${rc.left}px;width:${rc.width}px;top:${Math.max(0, mainTop - ny)}px;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;will-change:transform;contain:layout paint;transform:translate3d(${rc.width}px,0,0)`;
-      peek.scrollTop = Math.max(0, ny - mainTop); stripsTo(peek, stripMem.get(r.name + '/' + k)); };   // the next league shows where you left it, or its top
+    /* the borrowed page goes back to its parking place (a short drag), or the skeleton is thrown away */
+    const dropPeek = () => { if (!peek) return; if (peekKey) keepPut(peekKey, null, peek); else peek.remove(); peek = null; peekKey = ''; peekFor = null; };
+    const makePeek = k => { if (peek && peekFor === k) return; dropPeek();
+      const r = current || route(); const rc = $m.getBoundingClientRect(); const key = r.name + '/' + k;
+      const box = keepTake(key);
+      if (box) { peek = box; peekKey = key; } else { peek = document.createElement('div'); peek.className = 'xpeek'; peek.innerHTML = V._ && V._.skeleton ? V._.skeleton(1, 'card') + V._.skeleton(4, 'row') : ''; document.body.appendChild(peek); peekKey = ''; }
+      peekFor = k;
+      const mainTop = rc.top + window.scrollY, ny = scrollMem.get(key) || 0;   // where the next league will sit once it lands: its own scroll, the top bar drawn over it as on the real page
+      peek.className = 'xpeek'; peek.style.cssText = `position:fixed;left:${rc.left}px;width:${rc.width}px;top:${Math.max(0, mainTop - ny)}px;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;will-change:transform;contain:layout paint;transform:translate3d(${rc.width}px,0,0)`;
+      peek.scrollTop = Math.max(0, ny - mainTop); };   // the next league shows where you left it, or its top
     /* a critically damped spring, the physics X and iOS use: it starts at the finger's own speed (px/ms) and settles on
        the target without overshoot, so letting go never changes the speed the page was moving at */
     let springRaf = 0;
     const spring = (x0, v0, target, onStep, onDone) => { cancelAnimationFrame(springRaf); const d = target - x0, sgn = Math.sign(d) || 1, sp = Math.max(0, v0 * sgn);
-      // the duration that lets the page leave the finger at its own speed and come to rest with no lurch: slower fingers get a little longer, never past 420 ms
       const T = Math.max(170, Math.min(300, Math.abs(d) / Math.max(sp, .6) * 1.25)), t0 = performance.now();
       const step = now => { const u = Math.min(1, (now - t0) / T), u2 = u * u, u3 = u2 * u;
         const x = (2 * u3 - 3 * u2 + 1) * x0 + (u3 - 2 * u2 + u) * T * v0 + (-2 * u3 + 3 * u2) * target;   // a cubic that starts at the finger's place and speed, ends still on the target
@@ -516,16 +536,22 @@
     const place = x => { $m.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`; if (peek) peek.style.transform = `translate3d(${(x + (x < 0 ? W2 : -W2)).toFixed(1)}px,0,0)`; };
     const springBack = (x0, v0) => { $m.style.transition = 'none'; if (peek) peek.style.transition = 'none'; $pills.classList.remove('dragging'); const pk = peek;
       spring(x0 || 0, v0 || 0, 0, x => { $m.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`; if (pk) pk.style.transform = `translate3d(${(x + (x0 < 0 ? W2 : -W2)).toFixed(2)}px,0,0)`; track(Math.min(1, Math.abs(x) / W2)); },
-        () => { peek = null; $m.style.transform = ''; $m.style.willChange = ''; if (pk) { if (Object.values(ready).includes(pk)) { pk.style.visibility = 'hidden'; pk.style.transform = 'translate3d(200vw,0,0)'; } else pk.remove(); } clearTrack(); const r = current || route(); paintPills(r.lk, true); }); };
-    /* carry on to league k: the page leaves, the next slides fully in, then the real screen takes the copy's place */
-    const slideTo = (k, dirL, ms, fromX = null, v0 = 0) => { const r0 = current || route(); from = from || r0.lk; to = k; if ($m.dataset.real === '1') snaps[r0.lk + ':' + r0.name] = $m.innerHTML; makePeek(k); W2 = window.innerWidth;
+        () => { $m.style.transform = ''; $m.style.willChange = ''; dropPeek(); clearTrack(); const r = current || route(); paintPills(r.lk, true); }); };
+    /* carry on to league k: the page leaves, the next slides fully in, then the real nodes change places */
+    const slideTo = (k, dirL, ms, fromX = null, v0 = 0) => { const r0 = current || route(); from = from || r0.lk; to = k; makePeek(k); W2 = window.innerWidth;
       render.swipe = true; render.swiping = true; render.gliding = true; render.tapAt = performance.now(); peek.style.visibility = '';
-      const land = () => J('land', () => { $m.style.transition = 'none'; $m.style.transform = ''; $m.style.willChange = ''; const snap = snaps[k + ':' + r0.name];
-        scrollMem.set(r0.name + '/' + r0.lk, window.scrollY); const ny = scrollMem.get(r0.name + '/' + k) || 0; render.memDone = true; render.keepHdr = ny > 4; render.hdrHold = true; if (ny <= 4 && V.showTop) V.showTop(); setTimeout(() => { render.hdrHold = false; }, 400);
-        stripMem.set(r0.name + '/' + r0.lk, stripsOf($m));
-        if (snap) { if (peek && peek.dataset.for === k + ':' + r0.name && peek.childNodes.length) $m.replaceChildren(...peek.childNodes); else $m.innerHTML = snap;   // the very nodes you were looking at slide into place: nothing is rebuilt or decoded again
-          stripsTo($m, stripMem.get(r0.name + '/' + k)); window.scrollTo(0, ny); $m.dataset.hlk = k; location.hash = '#' + k; requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; if (peek) { peek.remove(); Object.keys(ready).forEach(q => { if (ready[q] === peek) delete ready[q]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); render.gliding = false; V.flushIdle(); setTimeout(prebuild, 500); })); return; }
-        $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { requestAnimationFrame(() => { render.swiping = false; $m.style.visibility = ''; if (peek) { peek.remove(); Object.keys(ready).forEach(k => { if (ready[k] === peek) delete ready[k]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); render.gliding = false; V.flushIdle(); setTimeout(prebuild, 500); }); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); });
+      const finish = () => { requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; clearTrack(); $pills.classList.remove('gliding'); render.gliding = false; V.flushIdle(); })); };
+      const land = () => J('land', () => { $m.style.transition = 'none'; $m.style.transform = ''; $m.style.willChange = '';
+        const fromKey = r0.name + '/' + r0.lk, toKey = r0.name + '/' + k;
+        scrollMem.set(fromKey, window.scrollY); const ny = scrollMem.get(toKey) || 0; render.memDone = true; render.keepHdr = ny > 4; render.hdrHold = true; if (ny <= 4 && V.showTop) V.showTop(); setTimeout(() => { render.hdrHold = false; }, 400);
+        if (peekKey) {
+          /* the real nodes change places: the page you were on is parked, the one that slid in becomes the page */
+          if ($m.dataset.real === '1') keepPut(fromKey, $m);
+          moveNodes(peek, $m); peek.remove(); peek = null; peekKey = ''; peekFor = null; $m.dataset.real = '1';
+          window.scrollTo(0, ny); if (r0.name === 'home') $m.dataset.hlk = k;
+          render.light = true; location.hash = '#' + k; finish(); return; }
+        // a league never seen: the skeleton stays up while the real screen paints under it
+        $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { requestAnimationFrame(() => { $m.style.visibility = ''; dropPeek(); render.swiping = false; clearTrack(); $pills.classList.remove('gliding'); render.gliding = false; V.flushIdle(); }); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); });
       if (fromX != null) { $m.style.transition = 'none'; peek.style.transition = 'none'; $pills.classList.remove('dragging');
         spring(fromX, v0, dirL ? -W2 : W2, x => { $m.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`; peek.style.transform = `translate3d(${(x + (dirL ? W2 : -W2)).toFixed(2)}px,0,0)`; track(Math.min(1, Math.abs(x) / W2)); }, land); return; }
       const T = `transform ${ms}ms cubic-bezier(.25,.8,.25,1)`; if (!dirL) peek.style.transform = `translate3d(${-W2}px,0,0)`; void peek.offsetWidth; $m.style.transition = T; peek.style.transition = T; $pills.classList.remove('dragging'); $pills.classList.add('gliding');
@@ -537,12 +563,12 @@
       if (!mode) { if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { sx = null; return; } if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
         const r = current || route(); from = r.lk; const i = ORDER.indexOf(from);
         if (dx > 0 && i <= 0) { mode = 'drawer'; build(); }
-        else { mode = 'league'; to = null; if ($m.dataset.real === '1') snaps[from + ':' + r.name] = $m.innerHTML; $pills.classList.add('dragging'); $m.classList.remove('fade', 'enter'); delete $m.dataset.dir; $m.style.transition = 'none'; $m.style.willChange = 'transform'; }
+        else { mode = 'league'; to = null; $pills.classList.add('dragging'); $m.classList.remove('fade', 'enter'); delete $m.dataset.dir; $m.style.transition = 'none'; $m.style.willChange = 'transform'; }
         lx = t.clientX; lt = performance.now(); vx = 0; sx = t.clientX - Math.sign(dx); dx = t.clientX - sx; }   // the drag starts from where it was recognised, so nothing jumps to catch up
       const now = performance.now(); if (now > lt) { vx = vx * .5 + .5 * (t.clientX - lx) / (now - lt); } lx = t.clientX; lt = now;
       if (mode === 'drawer') { set(Math.max(0, Math.min(1, dx / W)), false); return; }
       const i = ORDER.indexOf(from), want = ORDER[i + (dx < 0 ? 1 : -1)] || null;
-      if (want !== to) { to = want; if (to) makePeek(to); else if (peek) { if (Object.values(ready).includes(peek)) { peek.style.visibility = 'hidden'; peek.style.transform = 'translate3d(200vw,0,0)'; } else peek.remove(); peek = null; } if (peek) { peek.style.transition = 'none'; peek.style.visibility = ''; } }
+      if (want !== to) { to = want; if (to) makePeek(to); else dropPeek(); if (peek) { peek.style.transition = 'none'; peek.style.visibility = ''; } }
       const x = to ? dx : dx / 4; curX = x; place(x); track(to ? Math.min(1, Math.abs(dx) / W2) : (dx < 0 ? 1 : -1) * Math.min(1, Math.abs(dx) / W2) * .5); }, { passive: true });   // passive: the phone scrolls on its own and never waits on this (touch-action in the CSS keeps a sideways drag from scrolling)
     document.addEventListener('touchend', () => { if (!mode) { sx = null; return; } const m0 = mode; mode = ''; sx = null;
       if (m0 === 'drawer') { go(vx > .35 ? 1 : vx < -.35 ? 0 : (p > .4 ? 1 : 0)); return; }

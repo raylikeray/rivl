@@ -90,8 +90,8 @@
     const one = (img, scaleOf) => { img.classList.add('fitted'); const src = img.getAttribute('src') || ''; const k = known[src];
       if (k !== undefined) { if (k) apply(img, scaleOf(k), k); return; }
       measure(src).then(m => { if (m && img.isConnected) apply(img, scaleOf(m), m); }); };
-    for (const img of document.querySelectorAll('.ehero .biglogo:not(.fitted), .hero .tm .logo img:not(.fitted)')) one(img, bigScale);
-    for (const img of document.querySelectorAll('.logo img:not(.fitted)')) { if (img.closest('.onb-team,.thead,.injhd,.pp-team,.hero,.ehero,.gxpage')) { img.classList.add('fitted'); continue; } one(img, m => discScale(img, m)); }
+    for (const img of document.querySelectorAll(':is(#main,#livebar,.panel,.sheet,#bsheet) :is(.ehero .biglogo:not(.fitted), .hero .tm .logo img:not(.fitted))')) one(img, bigScale);
+    for (const img of document.querySelectorAll(':is(#main,#livebar,.panel,.sheet,#bsheet) .logo img:not(.fitted)')) { if (img.closest('.onb-team,.thead,.injhd,.pp-team,.hero,.ehero,.gxpage')) { img.classList.add('fitted'); continue; } one(img, m => discScale(img, m)); }
   }
 
   document.addEventListener('rivl:rendered', fitLogos); setTimeout(fitLogos, 1200);
@@ -101,15 +101,17 @@
   /* the fade on each side grows with the scroll — 0 at the end of travel, full 48px once there is that much behind it —
      so the haze eases in instead of switching on at the first few pixels */
   const FADE = 48;
-  const edge = el => {
-    const max = el.scrollWidth - el.clientWidth; const more = max > 4;
-    const fl = more ? Math.round(Math.min(FADE, Math.max(0, el.scrollLeft))) : 0, fr = more ? Math.round(Math.min(FADE, Math.max(0, max - el.scrollLeft))) : 0;
-    const v = fl + '|' + fr; if (el.dataset.edge === v) return; el.dataset.edge = v;
-    el.style.setProperty('--fl', fl + 'px'); el.style.setProperty('--fr', fr + 'px'); el.classList.toggle('fades', fl > 0 || fr > 0);
-  };
-  const edges = () => J('edges', () => document.querySelectorAll(STRIPS).forEach(edge));
+  /* strips are measured together, once per frame, every read before any write: a strip scrolled by a refresh or a landing
+     used to force a layout for each one in turn. Only strips on the live screen count, never the parked pages. */
+  const dirty = new Set(); let edgeRaf = 0;
+  const edgeNow = els => { const reads = els.map(el => [el, el.scrollWidth - el.clientWidth, el.scrollLeft]);
+    reads.forEach(([el, max, left]) => { const more = max > 4; const fl = more ? Math.round(Math.min(FADE, Math.max(0, left))) : 0, fr = more ? Math.round(Math.min(FADE, Math.max(0, max - left))) : 0;
+      const v = fl + '|' + fr; if (el.dataset.edge === v) return; el.dataset.edge = v; el.style.setProperty('--fl', fl + 'px'); el.style.setProperty('--fr', fr + 'px'); el.classList.toggle('fades', fl > 0 || fr > 0); }); };
+  const edge = el => { dirty.add(el); if (!edgeRaf) edgeRaf = requestAnimationFrame(() => { edgeRaf = 0; const els = [...dirty].filter(e => e.isConnected && !e.closest('.xkeep')); dirty.clear(); if (els.length) J('edges', () => edgeNow(els)); }); };
+  const SCOPE = ':is(#main,#livebar,.panel,.sheet,#bsheet) :is(' + STRIPS + ')';
+  const edges = () => J('edges', () => edgeNow([...document.querySelectorAll(SCOPE)]));
   V.edges = edges;
-  document.addEventListener('scroll', e => { const t = e.target; if (t && t.nodeType === 1 && t.matches && t.matches(STRIPS)) edge(t); }, true);
+  document.addEventListener('scroll', e => { const t = e.target; if (t && t.nodeType === 1 && t.matches && t.matches(STRIPS) && !t.closest('.xkeep')) edge(t); }, true);
   document.addEventListener('rivl:rendered', () => { edges(); setTimeout(edges, 300); });
   window.addEventListener('resize', edges);
   new MutationObserver(() => { V.whenIdle(fitLogos); clearTimeout(edges.t); edges.t = setTimeout(() => V.whenIdle(edges), 60); }).observe(document.getElementById('main'), { childList: true, subtree: true });
