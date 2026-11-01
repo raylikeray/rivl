@@ -3460,3 +3460,17 @@ html body .plh .plshot,html body .plh .plshot.small{height:430px!important;botto
 .gxpage.plpage{--gxh:calc(var(--gxbar) + 440px)!important}
 /* the Follow pill stays readable over a white jersey */
 .plh .flw{background:rgba(0,0,0,.34)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)!important;text-shadow:none!important}
+/* ===== player card, crisp pass =====
+   - The Follow pill had a backdrop blur; when the name block fades on scroll, phones redraw a blurred layer under a
+     fading one differently, so the pill changed colour mid-scroll. It is now a plain tinted pill: same look, no blur.
+   - The name's wide soft shadow was drawn into a box while it faded, which showed as a bar behind the name. It is now a
+     tight shadow that stays on the letters.
+   - ESPN's sharpest photo is 1040 by 760; on a phone screen any bigger than about 400px tall it is being stretched. 400
+     keeps it crisp, and the browser is told to scale it for sharpness, not smoothness.
+   - The player lifts off the colour with a soft shadow under him and a tighter one at his edges. */
+html body .plh .flw,html body .plh .flw.on,html body .plh .flw[aria-pressed="true"]{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(10,12,16,.42)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.32)!important;color:#fff!important}
+html body .plh h1,html body .plh .pltx>p{text-shadow:0 1px 2px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.28)!important}
+html body .plh .pltx{will-change:opacity;isolation:auto}
+html body .plh .plshot,html body .plh .plshot.small{height:400px!important;bottom:0!important;image-rendering:-webkit-optimize-contrast;
+  filter:drop-shadow(0 22px 34px rgba(0,0,0,.42)) drop-shadow(0 3px 6px rgba(0,0,0,.28)) drop-shadow(0 0 1px rgba(0,0,0,.35))!important}
+.gxpage.plpage{--gxh:calc(var(--gxbar) + 420px)!important}
