@@ -560,7 +560,7 @@
       const hero = document.getElementById('gxhero'); if (!hero || !document.body.contains(box)) { document.documentElement.classList.remove('gxon'); gxScroll.box = null; gxScroll.run = null; return; }
       document.documentElement.classList.add('gxon');
       const p = Math.min(1, Math.max(0, box.scrollTop / (gxFit.span || 300)));
-      const fade = document.getElementById('gxin'), strip = document.getElementById('gxstrip'), mini = document.getElementById('gxmini');
+      const fade = document.querySelector('#gpage.plpage .pltx') || document.getElementById('gxin'), strip = document.getElementById('gxstrip'), mini = document.getElementById('gxmini');
       const f = Math.min(1, p / .6); set(fade, 'opacity', (1 - f).toFixed(3)); set(fade, 'transform', `translateY(${(-18 * f).toFixed(1)}px) scale(${(1 - .06 * f).toFixed(3)})`);
       const so = Math.max(0, 1 - p / .35); set(strip, 'opacity', so.toFixed(3)); set(strip, 'pointerEvents', so < .2 ? 'none' : '');
       const c = Math.min(1, Math.max(0, (p - .45) / .4)); set(mini, 'opacity', c.toFixed(3)); set(mini, 'transform', `translateY(${(8 * (1 - c)).toFixed(1)}px)`); set(mini, 'pointerEvents', c > .5 ? '' : 'none');

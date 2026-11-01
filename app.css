@@ -3345,3 +3345,8 @@ html body .plpage .gx.solo .w>i:nth-child(2){width:95%!important;height:75%!impo
 .gxpage.plpage{--gxh:calc(var(--gxbar) + 474px)}
 .plh .pltx{bottom:42px!important}
 .plh .plshot{bottom:22px!important}
+/* player hero, fourth pass: the picture never shrinks or fades as you scroll (only the name and the button fade); the
+   photo's bottom melts into the colour, so the sheet's rounded corners read as a clean U over the background */
+.plpage #gxin{opacity:1!important;transform:none!important}
+.plh .plshot{bottom:22px!important;-webkit-mask-image:linear-gradient(180deg,#000 62%,transparent 96%);mask-image:linear-gradient(180deg,#000 62%,transparent 96%)}
+.plh::after{height:42%;background:linear-gradient(180deg,transparent,rgba(0,0,0,.18) 45%,rgba(0,0,0,.42))!important}
