@@ -4466,3 +4466,9 @@ html:root body .tabs.flat5{border-top:0!important;box-shadow:none!important;-web
 .barclose{position:fixed;inset:0;z-index:200;pointer-events:none;will-change:transform;overflow:hidden;border-radius:0 0 0 0}
 .barclose>*{position:absolute!important;inset:0!important}
 html:root body .livebar .lb-in,html:root body .livebar{-webkit-mask-image:none!important;mask-image:none!important}
+
+/* v325: the Breaking card is its own card, not a card inside a card */
+html:root body #main .hsec[data-sec="wire"]{background:none!important;box-shadow:none!important;padding:0!important;border-radius:0;overflow:visible;border:0!important}
+html:root body #main .hsec[data-sec="wire"] .wire{margin:0 0 14px!important}
+/* the live bar loses its progress line */
+html:root body .livebar .lg .lpr{display:none!important}
