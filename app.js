@@ -52,7 +52,7 @@
     ORDER.forEach((k, i) => { const el = $pills.children[i]; const on = k === lk; el.classList.toggle('on', on); if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); const n = S.today[k].filter(isLive).length; let ct = el.querySelector('.ct'); if (n && !ct) { ct = document.createElement('span'); ct.className = 'ct live'; el.appendChild(ct); } if (ct) { if (!n) ct.remove(); else if (ct.textContent !== String(n)) ct.textContent = n; } });
     $pills.style.setProperty('--n', ORDER.length); $pills.style.setProperty('--i', Math.max(0, ORDER.indexOf(lk)));   // the knob slides to the chosen league
     // X-style: the line sits under the chosen league's word, as wide as the word, and slides to the next one
-    requestAnimationFrame(() => { const on = $pills.querySelector('.pill.on'), sp = on && on.querySelector('span'); if (!sp) return; $pills.style.setProperty('--ux', (on.offsetLeft + sp.offsetLeft) + 'px'); $pills.style.setProperty('--uw', sp.offsetWidth + 'px'); });
+    requestAnimationFrame(() => { const on = $pills.querySelector('.pill.on'), sp = on && on.querySelector('span'); if (!sp) return; $pills.style.setProperty('--ux', (on.offsetLeft + sp.offsetLeft - 6) + 'px'); $pills.style.setProperty('--uw', (sp.offsetWidth + 12) + 'px'); });
   }
   function paintTabs(name) {
     $tabs.querySelectorAll('.tab').forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('on', on); if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
@@ -276,6 +276,21 @@
   };
   window.RIVL_paintAv = () => { const b = document.getElementById('avbtn'); if (b) b.innerHTML = window.RIVL_avatar(); };
   window.RIVL_paintAv();
+  /* the top (your icon, the R, the leagues) behaves like X's: it slides up out of the way as you scroll down, following
+     your finger, and slides back down the moment you scroll up. When you stop halfway it settles open or closed. */
+  (() => {
+    const hdr = document.getElementById('hdr'); if (!hdr) return; const phone = matchMedia('(max-width:1039px)');
+    let off = 0, lastY = window.scrollY, idle = 0;
+    const set = (v, ease) => { off = v; hdr.style.transition = ease ? 'transform .22s cubic-bezier(.3,.7,.2,1)' : 'none'; hdr.style.transform = off ? `translate3d(0,${-off}px,0)` : ''; };
+    window.addEventListener('scroll', () => {
+      if (!phone.matches) { if (off) set(0); return; }
+      const y = Math.max(0, window.scrollY), H = hdr.offsetHeight, dy = y - lastY; lastY = y;
+      set(Math.min(H, Math.max(0, Math.min(off + dy, y))), false);
+      clearTimeout(idle); idle = setTimeout(() => { const h = hdr.offsetHeight; if (off > 0 && off < h) set(off > h / 2 && window.scrollY > h ? h : 0, true); }, 140);
+    }, { passive: true });
+    // a new screen always starts with the top showing
+    document.addEventListener('rivl:rendered', () => { lastY = window.scrollY; set(0, true); });
+  })();
   const flwHTML = (on, what) => window.RIVL_flw(on, what);
   document.addEventListener('click', e => {
     const back = e.target.closest('[data-act="back"]');

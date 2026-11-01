@@ -3941,3 +3941,13 @@ html:root body #pills .pill.on{color:var(--ink)!important;font-weight:800!import
 .xtopic .xsents li{position:relative;padding-left:14px;font-size:16px;line-height:1.5;color:var(--ink)}
 .xtopic .xsents li::before{content:"";position:absolute;left:0;top:.62em;width:5px;height:5px;border-radius:50%;background:var(--ink-3)}
 .xtopic .xsents b{font-weight:800}
+/* the top as one frosted block, like X: the page shows through it blurred, fading from nearly solid at the top; no hard
+   line under it. It moves as one piece (see app.js). A little room between the tabs and the first card. */
+@media (max-width:1039px){
+  html:root body .hdr{display:block!important;position:sticky;top:0;z-index:40;padding-top:env(safe-area-inset-top,0px);margin:0 0 14px;will-change:transform;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 96%,transparent),color-mix(in srgb,var(--bg) 82%,transparent));-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6)}
+  html:root body .hdr #pills.pills{position:relative!important;top:auto!important;margin:0!important;background:transparent!important;border-bottom:1px solid color-mix(in srgb,var(--ink) 8%,transparent)!important}
+  html:root body .hdr .top.xtop{background:transparent!important}
+}
+html:root body #pills .pill,html:root body #pills .pill.on{font-weight:700!important}
+html:root body #pills.pills::after{transition:left .34s cubic-bezier(.25,.8,.25,1),width .34s cubic-bezier(.25,.8,.25,1)!important}
