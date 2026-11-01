@@ -384,17 +384,31 @@
       if (!peek) { peek = $m.cloneNode(false); peek.removeAttribute('id'); peek.classList.remove('hold', 'fade', 'enter', 'noanim'); peek.classList.add('xpeek'); peek.innerHTML = snaps[k + ':' + r.name] || (V._ && V._.skeleton ? V._.skeleton(1, 'card') + V._.skeleton(4, 'row') : ''); $m.parentNode.insertBefore(peek, $m.nextSibling); }
       const pageTop = Math.max(0, document.getElementById('hdr').getBoundingClientRect().bottom, rc.top);   // the next page shows from its top, just under the leagues
       peek.style.cssText = `position:fixed;left:${rc.left}px;width:${rc.width}px;top:${pageTop}px;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;will-change:transform;contain:layout paint;transform:translate3d(${rc.width}px,0,0)`; };
+    /* a critically damped spring, the physics X and iOS use: it starts at the finger's own speed (px/ms) and settles on
+       the target without overshoot, so letting go never changes the speed the page was moving at */
+    let springRaf = 0;
+    const spring = (x0, v0, target, onStep, onDone) => { cancelAnimationFrame(springRaf); const d = target - x0, sgn = Math.sign(d) || 1, sp = Math.max(0, v0 * sgn);
+      // the duration that lets the page leave the finger at its own speed and come to rest with no lurch: slower fingers get a little longer, never past 420 ms
+      const T = Math.max(200, Math.min(420, Math.abs(d) / Math.max(sp, .4) * 1.5)), t0 = performance.now();
+      const step = now => { const u = Math.min(1, (now - t0) / T), u2 = u * u, u3 = u2 * u;
+        const x = (2 * u3 - 3 * u2 + 1) * x0 + (u3 - 2 * u2 + u) * T * v0 + (-2 * u3 + 3 * u2) * target;   // a cubic that starts at the finger's place and speed, ends still on the target
+        if (u >= 1) { onStep(target); onDone && onDone(); return; } onStep(x); springRaf = requestAnimationFrame(step); };
+      springRaf = requestAnimationFrame(step); };
     const place = x => { $m.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`; if (peek) peek.style.transform = `translate3d(${(x + (x < 0 ? W2 : -W2)).toFixed(1)}px,0,0)`; };
-    const springBack = () => { const T = `transform var(--t-move) var(--e-in)`; $m.style.transition = T; if (peek) peek.style.transition = T; $pills.classList.remove('dragging'); place(0.001); track(0); const pk = peek; peek = null;
-      setTimeout(() => { $m.style.transition = ''; $m.style.transform = ''; $m.style.willChange = ''; if (pk) { if (Object.values(ready).includes(pk)) { pk.style.visibility = 'hidden'; pk.style.transform = 'translate3d(200vw,0,0)'; } else pk.remove(); } clearTrack(); const r = current || route(); paintPills(r.lk, true); }, 280); };
+    const springBack = (x0, v0) => { $m.style.transition = 'none'; if (peek) peek.style.transition = 'none'; $pills.classList.remove('dragging'); const pk = peek;
+      spring(x0 || 0, v0 || 0, 0, x => { $m.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`; if (pk) pk.style.transform = `translate3d(${(x + (x0 < 0 ? W2 : -W2)).toFixed(2)}px,0,0)`; track(Math.min(1, Math.abs(x) / W2)); },
+        () => { peek = null; $m.style.transform = ''; $m.style.willChange = ''; if (pk) { if (Object.values(ready).includes(pk)) { pk.style.visibility = 'hidden'; pk.style.transform = 'translate3d(200vw,0,0)'; } else pk.remove(); } clearTrack(); const r = current || route(); paintPills(r.lk, true); }); };
     /* carry on to league k: the page leaves, the next slides fully in, then the real screen takes the copy's place */
-    const slideTo = (k, dirL, ms) => { const r0 = current || route(); from = from || r0.lk; to = k; if ($m.dataset.real === '1') snaps[r0.lk + ':' + r0.name] = $m.innerHTML; makePeek(k); W2 = window.innerWidth;
-      const T = `transform ${ms}ms cubic-bezier(.25,.8,.25,1)`; peek.style.visibility = ''; if (!dirL) peek.style.transform = `translate3d(${-W2}px,0,0)`; void peek.offsetWidth; $m.style.transition = T; peek.style.transition = T; $pills.classList.remove('dragging'); $pills.classList.add('gliding');
-      requestAnimationFrame(() => { $m.style.transform = `translate3d(${dirL ? -W2 : W2}px,0,0)`; peek.style.transform = 'translate3d(0,0,0)'; track(1); });
-      render.swipe = true; render.swiping = true; render.tapAt = performance.now();
-      setTimeout(() => { $m.style.transition = 'none'; $m.style.transform = ''; $m.style.willChange = ''; const snap = snaps[k + ':' + r0.name];
+    const slideTo = (k, dirL, ms, fromX = null, v0 = 0) => { const r0 = current || route(); from = from || r0.lk; to = k; if ($m.dataset.real === '1') snaps[r0.lk + ':' + r0.name] = $m.innerHTML; makePeek(k); W2 = window.innerWidth;
+      render.swipe = true; render.swiping = true; render.tapAt = performance.now(); peek.style.visibility = '';
+      const land = () => { $m.style.transition = 'none'; $m.style.transform = ''; $m.style.willChange = ''; const snap = snaps[k + ':' + r0.name];
         if (snap) { window.scrollTo(0, 0); $m.innerHTML = snap; $m.dataset.hlk = k; location.hash = '#' + k; requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; if (peek) { peek.remove(); Object.keys(ready).forEach(q => { if (ready[q] === peek) delete ready[q]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); })); return; }
-        $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { requestAnimationFrame(() => { render.swiping = false; $m.style.visibility = ''; if (peek) { peek.remove(); Object.keys(ready).forEach(k => { if (ready[k] === peek) delete ready[k]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); }); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); }, ms); };
+        $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { requestAnimationFrame(() => { render.swiping = false; $m.style.visibility = ''; if (peek) { peek.remove(); Object.keys(ready).forEach(k => { if (ready[k] === peek) delete ready[k]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); }); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); };
+      if (fromX != null) { $m.style.transition = 'none'; peek.style.transition = 'none'; $pills.classList.remove('dragging');
+        spring(fromX, v0, dirL ? -W2 : W2, x => { $m.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`; peek.style.transform = `translate3d(${(x + (dirL ? W2 : -W2)).toFixed(2)}px,0,0)`; track(Math.min(1, Math.abs(x) / W2)); }, land); return; }
+      const T = `transform ${ms}ms cubic-bezier(.25,.8,.25,1)`; if (!dirL) peek.style.transform = `translate3d(${-W2}px,0,0)`; void peek.offsetWidth; $m.style.transition = T; peek.style.transition = T; $pills.classList.remove('dragging'); $pills.classList.add('gliding');
+      requestAnimationFrame(() => { $m.style.transform = `translate3d(${dirL ? -W2 : W2}px,0,0)`; peek.style.transform = 'translate3d(0,0,0)'; track(1); });
+      setTimeout(land, ms); };
     document.addEventListener('touchstart', e => { if (el || render.swiping || document.getElementById('top').hidden || document.documentElement.classList.contains('sheet-open') || e.touches.length > 1) { sx = null; return; }
       const t = e.touches[0]; if (sideScroller(e.target)) { sx = null; return; } sx = t.clientX; sy = t.clientY; mode = ''; W2 = window.innerWidth; }, { passive: true });
     document.addEventListener('touchmove', e => { if (sx == null) return; const t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
@@ -412,10 +426,10 @@
       if (m0 === 'drawer') { go(vx > .35 ? 1 : vx < -.35 ? 0 : (p > .4 ? 1 : 0)); return; }
       const cur = curX; curX = 0; const dirL = cur < 0;
       const commit = to && (Math.abs(cur) > W2 * .25 || (dirL ? vx < -.3 : vx > .3));
-      if (!commit) { springBack(); return; }
-      // the rest of the way at the finger's own speed, never slower than a quick settle
-      const left = W2 - Math.abs(cur), v = Math.max(1.2, Math.abs(vx)); slideTo(to, dirL, Math.round(Math.max(140, Math.min(300, left / v)))); });
-    document.addEventListener('touchcancel', () => { if (mode === 'league') springBack(); mode = ''; sx = null; });
+      if (!commit) { springBack(cur, vx); return; }
+      // the rest of the way starts at exactly the finger's speed and settles, so release is seamless
+      slideTo(to, dirL, 0, cur, vx); });
+    document.addEventListener('touchcancel', () => { if (mode === 'league') springBack(curX, 0); mode = ''; sx = null; });
     /* a tap on another league: the same slide, from the side that league sits on */
     $pills.addEventListener('click', e => { const a = e.target.closest('.pill:not(.on)'); if (!a || render.swiping || !MOTION()) return; const r = current || route(); if (!r || !SCREENS.includes(r.name)) return;
       e.preventDefault(); from = r.lk; slideTo(a.dataset.lk, ORDER.indexOf(a.dataset.lk) > ORDER.indexOf(r.lk), 300); }, true);
