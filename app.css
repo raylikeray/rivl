@@ -3297,3 +3297,47 @@ html body .row .star svg path{stroke:currentColor;stroke-width:2;stroke-linejoin
 .gxpage .flw svg.fs,.gxpage .flw svg.fs path{fill:none!important;stroke:currentColor!important;stroke-width:2!important;stroke-linejoin:round}
 .gxpage .flw svg.fs.on,.gxpage .flw svg.fs.on path{fill:#F5B915!important;stroke:#F5B915!important}
 .gxpage .flw.on,.gxpage .flw[aria-pressed="true"]{background:rgba(255,255,255,.22)!important;color:#fff!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)!important}
+/* ===== Team and player heroes, copied from v7's single-team hero (the Lakers card): the team colour lit from the top
+   centre and falling to near-black at the bottom, one lighter and one darker lobe of it drifting on long loops, and the
+   second colour as a soft glow travelling across (a satin sheen when the second colour is white or gray). The crest
+   floats up and down a few pixels. */
+html body .tmpage .gx.solo .w{background:radial-gradient(110% 85% at 50% 30%,color-mix(in srgb,var(--aw) 88%,#fff),var(--aw) 42%,color-mix(in srgb,var(--aw) 40%,#030406) 100%)!important}
+html body .tmpage .gx.solo .w::before,html body .tmpage .gx.solo .w::after{display:none!important}
+html body .tmpage .gx.solo .w>i{border-radius:50%!important;filter:blur(52px)!important;scale:1}
+html body .tmpage .gx.solo .w>i:nth-child(1){background:color-mix(in srgb,var(--aw) 70%,#fff)!important;width:80%!important;height:220%!important;left:-30%!important;top:-60%!important;right:auto!important;opacity:.55!important;animation:sa 28s ease-in-out infinite!important}
+html body .tmpage .gx.solo .w>i:nth-child(2){background:color-mix(in srgb,var(--aw) 45%,#000)!important;width:90%!important;height:240%!important;right:-35%!important;left:auto!important;top:-50%!important;opacity:.7!important;animation:sb2 32s ease-in-out infinite!important}
+html body .tmpage .gx.solo .w>i:nth-child(3),html body .tmpage .gx.solo .w>i:nth-child(4){display:none!important}
+html body .plpage .gx.solo .w>i:nth-child(1){width:90%!important;height:70%!important;left:-30%!important;top:-10%!important;background:color-mix(in srgb,var(--aw) 55%,#fff)!important;animation-duration:24s!important}
+html body .plpage .gx.solo .w>i:nth-child(2){width:95%!important;height:75%!important;right:-40%!important;top:20%!important;opacity:.6!important;animation-duration:28s!important}
+@keyframes sa{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(40%,8%,0)}}
+@keyframes sb2{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(-35%,-6%,0)}}
+.tmpage .gx .sb{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.tmpage .gx.accent .sb::before{content:"";position:absolute;width:70%;height:110%;right:-24%;top:10%;border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--t2) 80%,transparent),transparent);filter:blur(24px);opacity:.78;animation:ac 16s ease-in-out infinite;will-change:transform}
+.tmpage .gx.accent .sb::after{content:"";position:absolute;width:50%;height:80%;left:-18%;top:-34%;border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--t2) 60%,transparent),transparent);filter:blur(28px);opacity:.32;animation:ac2 21s ease-in-out infinite;will-change:transform}
+@keyframes ac{0%,100%{transform:translate3d(0,0,0) scale(1)}33%{transform:translate3d(-26%,-22%,0) scale(1.2)}66%{transform:translate3d(-8%,14%,0) scale(.9)}}
+@keyframes ac2{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(30%,18%,0) scale(1.15)}}
+.tmpage .gx.sheen .sb::before{content:"";position:absolute;top:-30%;bottom:-30%;left:-60%;right:-60%;
+  background:repeating-linear-gradient(118deg,transparent 0 96px,rgba(255,255,255,.13) 132px,rgba(255,255,255,.2) 146px,rgba(255,255,255,.13) 160px,transparent 196px,transparent 270px);filter:blur(9px);animation:sh 18s linear infinite;will-change:transform}
+.tmpage .gx.sheen .sb::after{content:"";position:absolute;top:-30%;bottom:-30%;left:-60%;right:-60%;
+  background:repeating-linear-gradient(118deg,transparent 0 160px,rgba(255,255,255,.08) 200px,transparent 240px,transparent 420px);filter:blur(16px);animation:sh2 29s linear infinite reverse;will-change:transform}
+@keyframes sh{to{transform:translate3d(305.8px,0,0)}}
+@keyframes sh2{to{transform:translate3d(475.7px,0,0)}}
+.tmpage .gxin,.tmpage .plh{z-index:1}
+/* the crest floats */
+.tmpage .tmcrest{filter:drop-shadow(0 3px 4px rgba(0,0,0,.3)) drop-shadow(0 14px 22px rgba(0,0,0,.4));animation:lift 7s ease-in-out infinite}
+.plh .plwm{animation:wmfloat 9s ease-in-out infinite}
+@keyframes lift{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-4px,0)}}
+@keyframes wmfloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(-6px,-8px,0)}}
+@media (prefers-reduced-motion:reduce){ .tmpage .tmcrest,.plh .plwm{animation:none} }
+
+/* player hero, third pass: taller, the photo larger so the face sits high; under it the name, the team line, then the
+   Follow pill, all over the chest */
+.gxpage.plpage{--gxh:calc(var(--gxbar) + 452px)}
+.plh .plshot{height:490px!important;bottom:0;filter:drop-shadow(0 24px 34px rgba(0,0,0,.38)) drop-shadow(0 4px 8px rgba(0,0,0,.18))}
+.plh .pltx{bottom:18px}
+.plh .pltx>p{margin:4px 0 0}
+.plh .pltx .flw{margin-top:12px}
+.plh::after{height:40%}
+.plh .plwm{top:calc(var(--gxbar) + 10px)}

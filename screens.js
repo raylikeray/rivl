@@ -341,7 +341,7 @@
     if (!panels[ttab]) ttab = 'overview';
     const inner = `<div class="tmhead">${V._.imgSized(lg, 160, 160, 'class="tmcrest"')}<div><p class="tmlg">${esc(L.label)}${rank ? ` · No. ${rank}` : ''}</p><h1>${esc(tname)}</h1><p class="tmsen">${sentence}</p><button class="flw${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tid)}" data-name="${esc(tname)}" aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(tname)}">${window.RIVL_flw ? window.RIVL_flw(on, 'team') : (on ? 'Following' : 'Follow team')}</button></div></div>`;
     const bar = `<a class="gxib" href="#teams" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><div class="gxmid2"><div class="gxctr" id="gxmini"><span class="gxmn">${lg ? V._.imgSized(lg, 64, 64, 'class="tmmini"') : ''}<b>${esc(tname)}</b></span></div></div><span class="gxib ghost" aria-hidden="true"></span>`;
-    $main.innerHTML = `<div id="gpage" class="gxpage tmpage" data-tid="${esc(tid)}"><section class="gx solo" id="gxhero" style="--aw:${esc(color)};--ha:${esc(c2)}">${LOBES}<div class="gxin" id="gxin">${inner}</div></section>`
+    $main.innerHTML = `<div id="gpage" class="gxpage tmpage" data-tid="${esc(tid)}"><section class="gx solo ${soloLayer(c2).cls}" id="gxhero" style="--aw:${esc(color)};--ha:${esc(c2)};--t2:${esc(c2)}">${LOBES}${soloLayer(c2).html}<div class="gxin" id="gxin">${inner}</div></section>`
       + `<div class="gxbar" id="gxbar">${bar}</div>`
       + `<div class="gxscroll" id="gxscroll"><div class="gxspace"></div><div class="gxsheet"><div id="gtabs" class="gxtabw"><div class="gxtabs" role="tablist">${tabsT.map(([k, l]) => `<button class="chip${k === ttab ? ' on' : ''}" data-act="ttab" data-tab="${k}" aria-pressed="${k === ttab}">${l}</button>`).join('')}</div></div>`
       + `<div id="tbody">${tabsT.map(([k]) => `<div data-tp="${k}"${k === ttab ? '' : ' hidden'}>${panels[k]}</div>`).join('')}</div></div></div></div>`;
@@ -361,7 +361,7 @@
   /* the shared hero page (team and player): fixed page, moving colour hero, a clear bar on top, a sheet that scrolls up
      over the hero with sticky tabs */
   V._.heroShell = ({ cls, color, c2, inner, bar, act, attr, tab, tabs, panels }) => {
-    $main.innerHTML = `<div id="gpage" class="gxpage tmpage ${cls || ''}"><section class="gx solo" id="gxhero" style="--aw:${esc(color)};--ha:${esc(c2 || color)}">${LOBES}<div class="gxin" id="gxin">${inner}</div></section>`
+    $main.innerHTML = `<div id="gpage" class="gxpage tmpage ${cls || ''}"><section class="gx solo ${soloLayer(c2).cls}" id="gxhero" style="--aw:${esc(color)};--ha:${esc(c2 || color)};--t2:${esc(c2 || color)}">${LOBES}${soloLayer(c2).html}<div class="gxin" id="gxin">${inner}</div></section>`
       + `<div class="gxbar" id="gxbar">${bar}</div>`
       + `<div class="gxscroll" id="gxscroll"><div class="gxspace"></div><div class="gxsheet"><div id="gtabs" class="gxtabw"><div class="gxtabs" role="tablist">${tabs.map(([k, l]) => `<button class="chip${k === tab ? ' on' : ''}" data-act="${act}" data-tab="${k}" aria-pressed="${k === tab}">${l}</button>`).join('')}</div></div>`
       + `<div id="tbody">${tabs.map(([k]) => `<div ${attr}="${k}"${k === tab ? '' : ' hidden'}>${panels[k] || ''}</div>`).join('')}</div></div></div></div>`;
@@ -474,6 +474,9 @@
      The hero is pinned; the page slides up over it. A clear bar at the top carries back and share; as the page rises the
      big score fades away and a compact score fades in inside the bar. The bar holds an in-step copy of the moving colour
      (with the two rounded corners cut out of it) so whatever slides beneath it is hidden. */
+  /* v7's single-team colour: tones of the team colour drifting, and the second colour as a glow that travels (or, when the
+     second colour is white or gray, a slow satin sheen instead) */
+  const soloLayer = c2 => { const m = /^#?([0-9a-f]{6})$/i.exec(String(c2 || '')); let light = true; if (m) { const n = parseInt(m[1], 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn, sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1)); light = l > .8 || sat < .12; } return { cls: light ? 'sheen' : 'accent', html: '<span class="sb"></span>' }; };
   const LOBES = '<span class="w"><i></i><i></i><i></i><i></i></span><span class="veil"></span>';
   function gxColors(L, g) { const [ca, ch] = V._.pairColors(L, g.away, g.home); return { ca, ch, la: V._.lift(ca), lh: V._.lift(ch) }; }
   function gxLead(g) { const a = +g.away.score, h = +g.home.score; if (!isFinite(a) || !isFinite(h) || g.state === 'pre') return ''; const sh = Math.max(.3, Math.min(.7, .5 + (a - h) / 40)); return `;--split:${Math.round(sh * 100)}%;--sa:${(.82 + sh * .5).toFixed(2)};--sh:${(.82 + (1 - sh) * .5).toFixed(2)}`; }
