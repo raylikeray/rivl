@@ -2995,3 +2995,4 @@ html,body,:root[data-tint] body{background:var(--bg)!important;background-image:
 .hsec .gp.grows{background:var(--card)!important;border:1px solid var(--card-line)!important;margin-left:16px!important;margin-right:16px!important}
 .hsec[data-sec="live"] .sec{padding-left:0!important}
 .hsec[data-sec="live"] .gp.grows{margin-left:0!important;margin-right:0!important}
+#lbhome,#livebar,.livebar{display:none!important}
