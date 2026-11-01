@@ -4273,3 +4273,7 @@ html:root body .gxpage .gxplate .tw .tbl th:first-child,html:root body .gxpage .
 .xshot .court{display:block;width:100%;height:auto}
 .xshot .zones{margin-top:8px}
 .xtops .strk{width:22px;flex:none;text-align:center;font-size:13px;font-weight:700;color:var(--ink-3)}
+/* live card: the clock pill ("1st half 10:46") sized the middle column so it no longer covers a score */
+html:root body .grow{grid-template-columns:minmax(0,1fr) minmax(42px,auto) minmax(86px,auto) minmax(42px,auto) minmax(0,1fr)}
+html:root body .grow .sc{padding:0 4px}
+html:root body .grow .lv{font-size:11px;padding:3px 8px;max-width:118px;overflow:hidden;text-overflow:ellipsis}

@@ -5,6 +5,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 mkdirSync('data', { recursive: true });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const athId = a => String(a.id || (String(a.uid || '').match(/a:(\d+)/) || [])[1] || ((a.links || []).map(l => (String(l.href || '').match(/\/id\/(\d+)/) || [])[1]).find(Boolean)) || (String(a.$ref || '').match(/athletes\/(\d+)/) || [])[1] || '');
 async function J(url, tries = 3) { for (let i = 0; i < tries; i++) { try { const r = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 (RIVL personal app)' }, signal: AbortSignal.timeout(20000) }); console.log('GET', url.slice(-30), r.status); if (r.ok) return r.json(); if (r.status === 404) return null; } catch (e) { console.log('fetch failed', e.message); } await sleep(800 * (i + 1)); } return null; }
 const LEAGUES = { nba: 'nba', wnba: 'wnba' };
 const FILE = 'data/injuries.json';
@@ -17,11 +18,11 @@ for (const [lk, path] of Object.entries(LEAGUES)) {
   const d = await J(`https://site.api.espn.com/apis/site/v2/sports/basketball/${path}/injuries`);
   console.log(lk, 'feed teams', d && d.injuries ? d.injuries.length : 'none', d && d.injuries && d.injuries[0] ? JSON.stringify(d.injuries[0]).slice(0, 300) : '');
   if (!d || !d.injuries) { out.leagues[lk] = old.leagues && old.leagues[lk] || { all: prev, current: [] }; console.log(lk, 'feed did not answer; kept'); continue; }
-  const all = { ...prev }, current = [];
+  const all = { ...prev }, current = []; let skipped = 0;
   for (const t of d.injuries) {
     const team = { id: String(t.id || ''), name: t.displayName || '', abbr: '' };
     for (const x of t.injuries || []) {
-      const a = x.athlete || {}; const pid = String(a.id || ''); if (!pid) continue;
+      const a = x.athlete || {}; const pid = athId(a); if (!pid) { if (!skipped++) console.log('no id', JSON.stringify(a).slice(0, 300)); continue; }
       const det = x.details || {}; const status = x.status || ''; const what = [det.side && det.side !== 'Not Specified' ? det.side : '', det.type || det.detail || ''].filter(Boolean).join(' ').trim();
       const key = `${pid}:${(det.type || det.detail || x.type?.description || 'injury').toLowerCase().replace(/[^a-z]+/g, '-')}`;
       const seenBefore = all[key];
