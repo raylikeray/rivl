@@ -157,7 +157,10 @@
     const d = await summary(L, g.id); const T = teamTotals(d, g, side), O = teamTotals(d, g, side === 'home' ? 'away' : 'home');
     const won = +us.score > +them.score; const wantsShots = /\b(shot chart|shots|shooting|missed|misses|made|makes|field goal|fg|three|3)/.test(nq);
     const miss = T && T.fg ? T.fg[1] - T.fg[0] : null;
-    const line = `${esc(us.short)} ${won ? 'beat' : 'lost to'} the ${esc(them.short)} <b>${us.score}–${them.score}</b> ${esc(dayWord(HW.ymdOf(g.date)))}${T && T.fg ? `, shooting <b>${T.fg[0]} of ${T.fg[1]}</b> (${esc(T.fgPct)}%)${miss != null ? `, ${miss} misses` : ''}` : ''}${T && T.tp ? `, ${T.tp[0]} of ${T.tp[1]} from three` : ''}.`;
+    const live = g.state === 'in', tied = +us.score === +them.score;
+    const verb = live ? (tied ? 'are tied with' : won ? 'lead' : 'trail') : (won ? 'beat' : 'lost to');
+    const clk = live && HW.clockOf ? HW.clockOf(g, L) : '';
+    const line = `${esc(us.short)} ${verb} the ${esc(them.short)} <b>${us.score}–${them.score}</b>${live ? (clk ? `, ${esc(clk)}` : '') : ' ' + esc(dayWord(HW.ymdOf(g.date)))}${T && T.fg ? `, shooting <b>${T.fg[0]} of ${T.fg[1]}</b> (${esc(T.fgPct)}%)${miss != null ? `, ${miss} misses` : ''}` : ''}${T && T.tp ? `, ${T.tp[0]} of ${T.tp[1]} from three` : ''}.`;
     const facts = T ? [['Field goals', T.fg ? `${T.fg[0]}-${T.fg[1]}` : ''], ['Missed', miss != null ? String(miss) : ''], ['Threes', T.tp ? `${T.tp[0]}-${T.tp[1]}` : ''], ['Free throws', T.ft ? `${T.ft[0]}-${T.ft[1]}` : ''], ['Rebounds', T.reb], ['Assists', T.ast], ['Turnovers', T.to], ['Points in paint', T.pip], ['Fast break', T.fb], ['Bench', T.bench]].filter(x => x[1]) : [];
     const cmp = O && T ? `<div class="xcmp2"><div><span></span><b>${esc(us.abbr)}</b><b>${esc(them.abbr)}</b></div>${[['FG', T.fg && `${T.fg[0]}-${T.fg[1]}`, O.fg && `${O.fg[0]}-${O.fg[1]}`], ['3PT', T.tp && `${T.tp[0]}-${T.tp[1]}`, O.tp && `${O.tp[0]}-${O.tp[1]}`], ['FT', T.ft && `${T.ft[0]}-${T.ft[1]}`, O.ft && `${O.ft[0]}-${O.ft[1]}`], ['REB', T.reb, O.reb], ['AST', T.ast, O.ast], ['TO', T.to, O.to]].filter(r => r[1] && r[2]).map(r => `<div><span>${r[0]}</span><b>${esc(String(r[1]))}</b><b>${esc(String(r[2]))}</b></div>`).join('')}</div>` : '';
     const shots = wantsShots ? await shotCard(L, lk, d, g, { side }) : '';

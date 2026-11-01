@@ -133,6 +133,12 @@
   const chev = `<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>`;
   const sec = (title, small, action) => `<div class="sec"><h2>${esc(title)}${small ? `<small>${esc(small)}</small>` : ''}</h2>${action || ''}</div>`;
   const empty = (title, body, cta) => `<div class="empty"><b>${esc(title)}</b>${body || ''}${cta || ''}</div>`;
+  /* lists show five at a time; "Show all" opens the rest in place. Decided while the HTML is written, never after the paint,
+     so a list is born folded instead of painting long and snapping shut a moment later. The choice is kept for the visit. */
+  const capOpen = (() => { try { return JSON.parse(sessionStorage.getItem('rivl:open') || '{}') || {}; } catch { return {}; } })();
+  const capSave = () => { try { sessionStorage.setItem('rivl:open', JSON.stringify(capOpen)); } catch { } };
+  const capList = (cls, rows, key) => { const n = rows.length; if (n <= 5) return `<div class="${cls}">${rows.join('')}</div>`; const on = !!capOpen[key];
+    return `<div class="${cls} capped${on ? ' capopen' : ''}" data-cap="${esc(key)}">${rows.join('')}<button class="capbtn capin" type="button">${on ? 'Show fewer' : `Show all ${n}`}</button></div>`; };
   /* the placeholder while a screen loads: an outline of what is coming — a disc and two lines per row, two discs and a score line for a
      card — faint and breathing, never slabs. The marker lets the screen keep what it has while the next one loads. */
   const skeleton = (n = 3, kind = 'row') => '<!--skel-->' + Array.from({ length: n }, (_, i) => kind === 'card' ? `<div class="skel card"><i></i><b></b><i></i></div>` : `<div class="skel row"><i></i><b style="width:${[58, 44, 66, 50, 38, 62][i % 6]}%"></b><b style="width:${[34, 26, 40, 30, 22, 36][i % 6]}%"></b></div>`).join('');
@@ -513,13 +519,13 @@
         if (mineLast.length || lines.length) {
           const res = mineLast.map(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = us.score > them.score; return `<a class="bchip res" href="${href.game(lk, g.id)}">${logo(us.logo, 's', teamColor(us, L))}<b class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</b><span>${us.score}–${them.score} ${us === g.home ? 'vs' : 'at'} ${esc(them.abbr || them.short)}</span></a>`; });
           const rows = lines.map(x => `<a class="row" href="${href.game(lk, x.g.id)}/p/${esc(String(x.p.id))}">${headshot(x.p.img, x.us ? teamColor(x.us, L) : playerColor(x.p, L), 44, x.p.name)}<span class="t"><b>${esc(x.p.short || x.p.name)}</b><span>${x.dnp ? esc(x.dnp) : `${esc(x.pts)} pts, ${esc(x.reb)} reb, ${esc(x.ast)} ast in a ${x.won ? 'win' : 'loss'} ${x.us === x.g.home ? 'vs' : 'at'} ${esc(x.them.short)}`}</span></span>${x.dnp ? '' : `<span class="r"><b>${esc(x.pts)}</b><span>pts</span></span>`}</a>`);
-          secs.last = `<div class="brief"><div class="brief-h"><b>Last night</b><span>${esc(dayLabel(yday, { weekday: 'long' }))}</span></div>${res.length ? `<div class="brief-row">${res.join('')}</div>` : ''}${rows.length ? `<div class="rows brief-rows">${rows.join('')}</div>` : ''}</div>`;
+          secs.last = `<div class="brief"><div class="brief-h"><b>Last night</b><span>${esc(dayLabel(yday, { weekday: 'long' }))}</span></div>${res.length ? `<div class="brief-row">${res.join('')}</div>` : ''}${rows.length ? capList('rows brief-rows', rows, 'last') : ''}</div>`;
         } else delete secs.last;
       }
       }
       // your teams playing right now: the hero
       if (need('games', 'ctx')) { const live = games.filter(g => isLive(g) && isFav(g)).sort((a, b) => rankGame(b) - rankGame(a));
-      const more = live.filter(g => g !== nowG); if (more.length && P.live) secs.live = sec(nowG && isLive(nowG) ? 'Also on' : 'Live now') + `<div class="gp grows">${more.map(g => gameRow(L, g, ctx)).join('')}</div>`; else delete secs.live; }
+      const more = live.filter(g => g !== nowG); if (more.length && P.live) secs.live = sec(nowG && isLive(nowG) ? 'Also on' : 'Live now') + capList('gp grows', more.map(g => gameRow(L, g, ctx)), 'live'); else delete secs.live; }
       const clk = g => { const per = +g.period || 0, d = String(g.detail || ''), st = String(g.status || ''); if (!per) return d || 'Live'; if (/HALFTIME/.test(st) || /^half/i.test(d)) return 'Halftime'; const reg = L.periods === 2 ? 2 : 4; const ord = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`; const nm = per <= reg ? (reg === 2 ? `${ord(per)} half` : ord(per)) : (per - reg > 1 ? `${per - reg}OT` : 'OT'); if (/END_PERIOD/.test(st) || /^end/i.test(d)) return `End of ${nm}`; const c = String(g.clock || '').trim(); return c && !/^0{1,2}(?::00)?(?:\.0)?$/.test(c) ? `${nm} ${c}` : nm; };
       // my teams: record, what's next or how it's going, win chance
       if (need('games', 'teams', 'st')) {
@@ -546,7 +552,7 @@
           }
           return `<a class="frow" href="${href.team(lk, t.id)}" style="--tc:${esc(teamColor(t, L))}"><i class="edge"></i><span class="fcrest">${t.logo ? imgSized(t.logo, 128, 128) : ''}</span><span class="nm"><b>${esc(t.short)}</b><small>${esc(L.label)}${t.rec ? ` · ${esc(t.rec)}` : ''}</small></span><span class="fs">${st}</span></a>`;
         });
-        secs.teams = sec('My teams', '', `<a href="#teams">Edit</a>`) + (rows.length ? `<div class="gp frows">${rows.join('')}</div>` : mine.length ? skeleton(mine.length, 'row') : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`));
+        secs.teams = sec('My teams', '', `<a href="#teams">Edit</a>`) + (rows.length ? capList('gp frows', rows, 'teams') : mine.length ? skeleton(mine.length, 'row') : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`));
       } else delete secs.teams;
       }
       // my players
@@ -554,7 +560,7 @@
       if (P.players) {
         const ppgOf = p => { const r = ctx && ctx.ppg && ctx.ppg[(p.name || '').toLowerCase()]; return r && r.pts != null ? `${(+r.pts).toFixed(1)} ppg` : ''; };
         secs.players = sec('My players', '', `<a href="#players">${fp.length ? 'Edit' : 'Find players'}</a>`) + (fp.length
-          ? `<div class="gp frows">${fp.map(p => { const is = teamOf(p); const g = games.find(g => is(g.home) || is(g.away)); const us = g ? (is(g.home) ? g.home : g.away) : null, them = g ? (is(g.home) ? g.away : g.home) : null;
+          ? capList('gp frows', fp.map(p => { const is = teamOf(p); const g = games.find(g => is(g.home) || is(g.away)); const us = g ? (is(g.home) ? g.home : g.away) : null, them = g ? (is(g.home) ? g.away : g.home) : null;
             const ti = (p.teamId && S0.tIdx && S0.tIdx[p.teamId]) || us || {}; const c = playerColor(p, L);
             let st = `<span class="sl"><b class="dim">${esc(ppgOf(p) ? 'Season' : 'Next')}</b></span><em>${esc(ppgOf(p) || 'No game today')}</em>`;
             if (g && !g.off) { const vs = `${is(g.home) ? 'vs' : 'at'} ${esc(them.short)}`;
@@ -562,7 +568,7 @@
               else if (g.state === 'post') { const w = +us.score > +them.score; st = `<span class="sl"><b class="${w ? 'w' : 'l'}">${w ? 'W' : 'L'} ${us.score}–${them.score}</b></span><em>Final · ${vs}</em>`; }
               else st = `<span class="sl"><b>${esc(tipOf(g))}</b></span><em>${esc(relDay(HW.ymdOf(g.date)))} · ${vs}</em>`; }
             const sub = [ti.abbr || p.team, p.pos, L.label].filter(Boolean).join(' · ');
-            return `<a class="frow" href="${href.player(lk, p.id)}"><span class="fface">${headshot(p.img, c, 42, p.name)}${ti.logo ? `<span class="fcr">${imgSized(ti.logo, 64, 64)}</span>` : ''}</span><span class="nm"><b>${esc(p.name || p.short)}</b><small>${esc(sub)}</small></span><span class="fs">${st}</span></a>`; }).join('')}</div>`
+            return `<a class="frow" href="${href.player(lk, p.id)}"><span class="fface">${headshot(p.img, c, 42, p.name)}${ti.logo ? `<span class="fcr">${imgSized(ti.logo, 64, 64)}</span>` : ''}</span><span class="nm"><b>${esc(p.name || p.short)}</b><small>${esc(sub)}</small></span><span class="fs">${st}</span></a>`; }), 'players')
           : empty('Follow the players you watch', '<p style="margin:6px 0 0">They show up here with their scoring line, and their profile is one tap away.</p>', `<a class="btn" href="#players">Find players</a>`));
       } else delete secs.players;
       }
@@ -580,7 +586,7 @@
         if (fp.length) (inj.teams || []).forEach(tt => { const tid = String(tt.id || ''); if (!tid || have.has(tid)) return; const rows = (tt.injuries || []).map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })).filter(r => r.p); if (!rows.length) return; const ti = S0.tIdx[tid] || {}; groups.push({ t: { id: tid, short: ti.short || tt.displayName || rows[0].p.team || '', logo: ti.logo || '', color: ti.color || playerColor(rows[0].p, L) }, rows, only: true }); });
         const folds = store.get('v5:injcol', {}) || {};
         const blocks = groups.flatMap(({ t, rows }) => rows.map(({ x, i, p }) => row(x, i, t, p)));
-        if (blocks.length) secs.injuries = sec('Injuries', 'your teams and players') + `<div class="gp frows">${blocks.join('')}</div>`; else delete secs.injuries;
+        if (blocks.length) secs.injuries = sec('Injuries', 'your teams and players') + capList('gp frows', blocks, 'injuries'); else delete secs.injuries;
       } else delete secs.injuries;
       }
       // news about my teams and players: ESPN tags every story with the teams and athletes it covers; full names are the fallback
@@ -775,9 +781,9 @@
     const list = Object.values(days).sort((a, b) => a.y < b.y ? -1 : a.y > b.y ? 1 : 0); const ahead = list.filter(x => x.y >= today), done = list.filter(x => x.y < today).reverse();
     const show = (ahead.length ? ahead : done).slice(0, 12); if (!show.length) return '';
     const line = g => { const tms = g.teams && g.teams.length === 2 ? `${esc(g.teams[0])} vs ${esc(g.teams[1])}` : 'Teams to be set'; const sc = g.score ? `<b>${g.score[0]}–${g.score[1]}</b>` : `<b>${esc(ct(g.time))}</b>`; return `<span class="ug"><span>${tms}</span>${sc}</span>`; };
-    const rows = show.map(x => `<div class="frow urow"><span class="nm"><b>${esc(dayLabel(x.y, { weekday: 'short', month: 'short', day: 'numeric' }))}</b><small>${esc([x.arena, x.city].filter(Boolean).join(' · ') || 'Arena to be announced')}</small>${x.games.some(g => g.teams && g.teams.length === 2 || g.score) ? `<span class="ugs">${x.games.map(line).join('')}</span>` : `<span class="utimes">${x.games.map(g => `<i>${esc(ct(g.time).replace(' CT', ''))}</i>`).join('')}<em>CT</em></span>`}</span></div>`).join('');
+    const rows = show.map(x => `<div class="frow urow"><span class="nm"><b>${esc(dayLabel(x.y, { weekday: 'short', month: 'short', day: 'numeric' }))}</b><small>${esc([x.arena, x.city].filter(Boolean).join(' · ') || 'Arena to be announced')}</small>${x.games.some(g => g.teams && g.teams.length === 2 || g.score) ? `<span class="ugs">${x.games.map(line).join('')}</span>` : `<span class="utimes">${x.games.map(g => `<i>${esc(ct(g.time).replace(' CT', ''))}</i>`).join('')}<em>CT</em></span>`}</span></div>`);
     const first = ahead[0] ? dayLabel(ahead[0].y, { month: 'long', day: 'numeric' }) : '';
-    return `<section class="hsec unrv" data-sec="unrivaled">${sec('Unrivaled', ahead.length ? `season opens ${esc(first)}` : 'latest results')}<p class="unote">The 3-on-3 league where WNBA stars play in the offseason. Games on TNT and truTV.</p><div class="gp frows">${rows}</div><p class="unote src">Schedule from <a href="${esc(d.url || 'https://www.unrivaled.basketball/schedule')}" target="_blank" rel="noopener">unrivaled.basketball</a></p></section>`;
+    return `<section class="hsec unrv" data-sec="unrivaled">${sec('Unrivaled', ahead.length ? `season opens ${esc(first)}` : 'latest results')}<p class="unote">The 3-on-3 league where WNBA stars play in the offseason. Games on TNT and truTV.</p>${capList('gp frows', rows, 'unrivaled')}<p class="unote src">Schedule from <a href="${esc(d.url || 'https://www.unrivaled.basketball/schedule')}" target="_blank" rel="noopener">unrivaled.basketball</a></p></section>`;
   }
   /* what else the scoreboard says: the league's game-day calendar and the part of the season it is (regular season, playoffs) */
   async function sbMeta(L, ymd) {
@@ -1192,5 +1198,5 @@
   }
 
   HW.v5 = Object.assign(HW.v5 || {}, { unrivaledCard, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { morph, patch, centerX, teamNow: (L, id) => L && ((teamIdx[L.key] || {})[String(id)] || pool(L.key)[String(id)] || null), gameRow, injBody, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
+    _: { morph, patch, centerX, capOpen, capSave, teamNow: (L, id) => L && ((teamIdx[L.key] || {})[String(id)] || pool(L.key)[String(id)] || null), gameRow, injBody, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

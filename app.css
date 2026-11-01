@@ -450,8 +450,6 @@ button.row:last-child{border-bottom:0}
 .legend{padding:12px var(--gut-r) 0 var(--gut);font-size:12.5px;color:var(--ink-3);line-height:1.5}
 .stats.four{grid-template-columns:repeat(4,1fr)}
 .ehero.team .biglogo{position:absolute;right:18px;top:50%;width:124px;height:124px;object-fit:contain;filter:drop-shadow(0 8px 18px rgba(0,0,0,.4));transform:translateY(-50%);transform-origin:center}
-.ehero.team .biglogo.fit{transform:translate(var(--fx,0),calc(-50% + var(--fy,0))) scale(var(--fit,1))}
-.hero .tm .logo img.fit{transform:translate(var(--fx,0),var(--fy,0)) scale(var(--fit,1))}
 .ehero.team .in{max-width:60%}
 .sched .row .d{flex:none;width:34px;font-size:12px;color:var(--ink-3);font-weight:700;line-height:1.15;text-align:center}
 .sched .row{gap:10px}
@@ -1260,7 +1258,6 @@ button.thead{width:calc(100% - var(--gut) - var(--gut-r));border:0;font:inherit;
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .pills{background:color-mix(in srgb,#fff 62%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px rgba(10,11,14,.09),0 2px 6px -4px rgba(16,24,40,.25),0 14px 30px -18px rgba(16,24,40,.4)} :root:not([data-theme="dark"]) .pill{text-shadow:none} }
 
 /* disc logos: the artwork centred and sized by its own box (see more.js), not the file's */
-.logo img.fit{transform:translate(var(--fx,0),var(--fy,0)) scale(var(--fit,1));transform-origin:50% 50%}
 /* rails snap to the padded edge, so the first item never slides under the gutter */
 .rail,.brief-row,.media,.dates{scroll-padding-left:var(--gut);scroll-padding-right:var(--gut-r)}
 .rail .pl:first-child{scroll-snap-align:start}
@@ -4620,3 +4617,20 @@ html:root body .calrow .chip.mine:active{transform:scale(.96)!important}
 
 /* a block repainted in place only fades in (no rise), quickly */
 html:root body .soft{animation:soft 160ms linear both}
+
+/* ---------- v347: strip fades drawn by the browser, nothing measured after paint ----------
+   The haze on each side of a sideways strip follows its own scroll position through a scroll-driven animation: 0 at the
+   end of travel, full 48px once there is that much behind it. A strip that does not overflow has no timeline, so no haze. */
+@property --fl{syntax:'<length>';inherits:false;initial-value:0px}
+@property --fr{syntax:'<length>';inherits:false;initial-value:0px}
+@keyframes fadl{from{--fl:0px}to{--fl:48px}}
+@keyframes fadr{from{--fr:48px}to{--fr:0px}}
+@supports (animation-timeline:scroll()){
+  html:root body :is(.dates,.brief-row,.chips,.rail,.media,.tw,.onb-picked-row,.livebar .lb-in):not(:has(> .tbl.stand)){
+    animation:fadl linear both,fadr linear both;animation-timeline:scroll(self inline),scroll(self inline);animation-range:0 48px,calc(100% - 48px) 100%;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.28) calc(var(--fl) * .3),rgba(0,0,0,.72) calc(var(--fl) * .62),#000 var(--fl),#000 calc(100% - var(--fr)),rgba(0,0,0,.72) calc(100% - var(--fr) * .62),rgba(0,0,0,.28) calc(100% - var(--fr) * .3),transparent 100%);
+    mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.28) calc(var(--fl) * .3),rgba(0,0,0,.72) calc(var(--fl) * .62),#000 var(--fl),#000 calc(100% - var(--fr)),rgba(0,0,0,.72) calc(100% - var(--fr) * .62),rgba(0,0,0,.28) calc(100% - var(--fr) * .3),transparent 100%)}
+  html:root body .gxpage .bxcard .tw{animation:none;-webkit-mask-image:none!important;mask-image:none!important}
+}
+/* the "Show all" button inside the Last night list sits like the card ones */
+html:root body .brief-rows > .capbtn.capin{display:block;width:100%!important;margin:10px 0 2px!important}

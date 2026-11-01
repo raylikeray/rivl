@@ -66,55 +66,7 @@
     try { if (n) navigator.setAppBadge(n); else navigator.clearAppBadge && navigator.clearAppBadge(); } catch { }
   });
 
-  /* ---------- logos sized by their artwork, not their file: ESPN's PNGs carry different padding ---------- */
-  const fitCache = new Map();
-  /* measurements kept on the phone, so a crest is sized before it is ever drawn instead of snapping to size a moment later */
-  const known = (() => { try { return JSON.parse(localStorage.getItem('hw:v5:logofit') || '{}') || {}; } catch { return {}; } })();
-  let saveT = 0; const saveKnown = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { const ks = Object.keys(known); if (ks.length > 1500) ks.slice(0, ks.length - 1500).forEach(k => delete known[k]); localStorage.setItem('hw:v5:logofit', JSON.stringify(known)); } catch { } }, 1500); };
-  function measure(src) {
-    if (fitCache.has(src)) return fitCache.get(src);
-    if (known[src] !== undefined) return Promise.resolve(known[src]);
-    const p = new Promise(res => {
-      const im = new Image(); im.crossOrigin = 'anonymous';
-      im.onload = () => { try { const S = 72; const c = document.createElement('canvas'); c.width = S; c.height = S; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, S, S); const d = x.getImageData(0, 0, S, S).data; let x0 = S, y0 = S, x1 = -1, y1 = -1; for (let y = 0; y < S; y++) for (let xx = 0; xx < S; xx++) if (d[(y * S + xx) * 4 + 3] > 30) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; } if (x1 < 0) return res(null); res({ w: (x1 - x0 + 1) / S, h: (y1 - y0 + 1) / S, cx: ((x0 + x1 + 1) / 2) / S, cy: ((y0 + y1 + 1) / 2) / S }); } catch { res(null); } };
-      im.onerror = () => res(null); im.src = src + (src.includes('?') ? '&' : '?') + 'fit';   // its own URL, so the cache never hands a no-CORS copy to a CORS load
-    });
-    p.then(m => { if (m) { known[src] = m; saveKnown(); } }); fitCache.set(src, p); return p;   // a failed read is not remembered: it is tried again next time
-  }
-  const apply = (img, scale, m) => { img.style.setProperty('--fit', scale.toFixed(3)); img.style.setProperty('--fx', (-(m.cx - .5) * 100).toFixed(1) + '%'); img.style.setProperty('--fy', (-(m.cy - .5) * 100).toFixed(1) + '%'); img.classList.add('fit'); };
-  const bigScale = m => Math.min(1.45, Math.max(1, Math.min(1 / m.w, 1 / m.h) * 0.94));
-  const discScale = (img, m) => { const base = parseFloat(getComputedStyle(img).width) / Math.max(1, parseFloat(getComputedStyle(img.parentElement).width)) || .74; return Math.min(1.4, Math.max(.7, (0.68 / base) / Math.max(m.w, m.h))); };
-  /* runs in the same frame the crest is added (known artwork is applied at once), unknown artwork is measured in parallel */
-  const fitLogos = () => J('fitLogos', fitLogos0);
-  function fitLogos0() {
-    const one = (img, scaleOf) => { img.classList.add('fitted'); const src = img.getAttribute('src') || ''; const k = known[src];
-      if (k !== undefined) { if (k) apply(img, scaleOf(k), k); return; }
-      measure(src).then(m => { if (m && img.isConnected) apply(img, scaleOf(m), m); }); };
-    for (const img of document.querySelectorAll(':is(#main,#livebar,.panel,.sheet,#bsheet) :is(.ehero .biglogo:not(.fitted), .hero .tm .logo img:not(.fitted))')) one(img, bigScale);
-    for (const img of document.querySelectorAll(':is(#main,#livebar,.panel,.sheet,#bsheet) .logo img:not(.fitted)')) { if (img.closest('.onb-team,.thead,.injhd,.pp-team,.hero,.ehero,.gxpage')) { img.classList.add('fitted'); continue; } one(img, m => discScale(img, m)); }
-  }
-
-  document.addEventListener('rivl:rendered', () => V.whenIdle(fitLogos)); setTimeout(() => V.whenIdle(fitLogos), 1200);
-
-  /* ---------- strips fade at the edge that still has more to show ---------- */
-  const STRIPS = '.dates,.brief-row,.chips,.rail,.media,.tw,.onb-picked-row,.livebar .lb-in';
-  /* the fade on each side grows with the scroll — 0 at the end of travel, full 48px once there is that much behind it —
-     so the haze eases in instead of switching on at the first few pixels */
-  const FADE = 48;
-  /* strips are measured together, once per frame, every read before any write: a strip scrolled by a refresh or a landing
-     used to force a layout for each one in turn. Only strips on the live screen count, never the parked pages. */
-  const dirty = new Set(); let edgeRaf = 0;
-  const edgeNow = els => { const reads = els.map(el => [el, el.scrollWidth - el.clientWidth, el.scrollLeft]);
-    reads.forEach(([el, max, left]) => { const more = max > 4; const fl = more ? Math.round(Math.min(FADE, Math.max(0, left))) : 0, fr = more ? Math.round(Math.min(FADE, Math.max(0, max - left))) : 0;
-      const v = fl + '|' + fr; if (el.dataset.edge === v) return; el.dataset.edge = v; el.style.setProperty('--fl', fl + 'px'); el.style.setProperty('--fr', fr + 'px'); el.classList.toggle('fades', fl > 0 || fr > 0); }); };
-  const edge = el => { dirty.add(el); if (!edgeRaf) edgeRaf = requestAnimationFrame(() => { edgeRaf = 0; const els = [...dirty].filter(e => e.isConnected && !e.closest('.xkeep')); dirty.clear(); if (els.length) J('edges', () => edgeNow(els)); }); };
-  const SCOPE = ':is(#main,#livebar,.panel,.sheet,#bsheet) :is(' + STRIPS + ')';
-  const edges = () => J('edges', () => edgeNow([...document.querySelectorAll(SCOPE)]));
-  V.edges = edges;
-  document.addEventListener('scroll', e => { const t = e.target; if (t && t.nodeType === 1 && t.matches && t.matches(STRIPS) && !t.closest('.xkeep')) edge(t); }, true);
-  document.addEventListener('rivl:rendered', () => { V.whenIdle(edges); setTimeout(() => V.whenIdle(edges), 300); });
-  window.addEventListener('resize', edges);
-  new MutationObserver(() => { V.whenIdle(fitLogos); clearTimeout(edges.t); edges.t = setTimeout(() => V.whenIdle(edges), 60); }).observe(document.getElementById('main'), { childList: true, subtree: true });
+  V.edges = () => { };   // strip fades are drawn by CSS (scroll-driven), nothing to measure
 
   /* ---------- share cards: a picture of the result or the line, not a link ---------- */
   const loadImg = src => new Promise(res => { if (!src) return res(null); const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
@@ -243,31 +195,14 @@
   q();
 })();
 
-/* Home lists show five at a time: teams, players, last night's lines, games. "Show all" opens the rest in place and
-   "Show fewer" folds them again; the choice is kept for the visit. Works on whatever the list holds, so live updates that
-   redraw the rows keep the same cap. */
+/* "Show all" on the five-at-a-time lists. The fold itself is written into the HTML (views.js capList); this only flips it.
+   The button stays under your finger: closing the list scrolls the page up by what was removed. */
 (() => {
-  const J = (n, f) => HW.perf ? HW.perf.job(n, f) : f();
-  const SEL = '#main .hsec .gp.frows, #main .hsec .gp.grows, #main .brief-rows';
-  const open = (() => { try { return JSON.parse(sessionStorage.getItem('rivl:open') || '{}'); } catch { return {}; } })();
-  const keyOf = el => { const h = el.closest('.hsec,.brief'); return (h && (h.dataset.sec || (h.classList.contains('brief') ? 'brief' : ''))) + ':' + [...(h ? h.querySelectorAll(SEL) : [])].indexOf(el); };
-  const apply = () => J('cap', () => document.querySelectorAll(SEL).forEach(el => {
-    const n = [...el.children].filter(c => !c.hidden && !c.classList.contains('capbtn')).length, k = keyOf(el);
-    /* on the white cards the button sits inside the card, under the last row; the brief keeps it after its list */
-    const inside = el.classList.contains('gp');
-    let b = inside ? el.querySelector(':scope > .capbtn') : (el.nextElementSibling && el.nextElementSibling.classList.contains('capbtn') ? el.nextElementSibling : null);
-    if (n <= 5) { el.classList.remove('capped', 'capopen'); if (b) b.remove(); return; }
-    el.classList.add('capped'); el.classList.toggle('capopen', !!open[k]);
-    if (b && inside && b !== el.lastElementChild) el.appendChild(b);
-    if (!b) { b = document.createElement('button'); b.className = 'capbtn' + (inside ? ' capin' : ''); if (inside) el.appendChild(b); else el.after(b);
-      b.addEventListener('click', () => {
-        /* the button stays under your finger: closing the list scrolls the page up by what was removed, so you land on the
-           five rows you kept instead of whatever sat further down the page */
-        const y0 = b.getBoundingClientRect().top; open[k] = !open[k]; try { sessionStorage.setItem('rivl:open', JSON.stringify(open)); } catch { } apply();
-        const d = b.getBoundingClientRect().top - y0; if (d) window.scrollBy(0, d); }); }
-    const txt = open[k] ? 'Show fewer' : `Show all ${n}`; if (b.textContent !== txt) b.textContent = txt;
-  }));
-  let q = false; const run = () => { if (!q) { q = true; requestAnimationFrame(() => { q = false; apply(); }); } };
-  const m = document.getElementById('main'); if (m) new MutationObserver(run).observe(m, { childList: true, subtree: true });
-  run();
+  const V = HW.v5;
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.capbtn'); if (!b) return; const el = b.parentElement; const k = el && el.dataset.cap; if (!k) return;
+    const open = V._.capOpen; const y0 = b.getBoundingClientRect().top; open[k] = !open[k]; V._.capSave();
+    el.classList.toggle('capopen', !!open[k]); b.textContent = open[k] ? 'Show fewer' : `Show all ${el.children.length - 1}`;
+    const d = b.getBoundingClientRect().top - y0; if (d) window.scrollBy(0, d);
+  });
 })();
