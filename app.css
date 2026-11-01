@@ -4042,3 +4042,5 @@ html:root body .pfband::after{bottom:-1px!important;height:calc(100% + 1px)!impo
 html:root body .frow .fface{position:relative;overflow:visible}
 html:root body .frow .fcr{width:22px!important;height:22px!important;right:-7px!important;bottom:-5px!important;box-shadow:0 0 0 1.5px var(--card),0 1px 3px rgba(0,0,0,.2)!important}
 html:root body .frow .fcr img{width:18px!important;height:18px!important}
+/* no team badge on faces in lists: the face alone (the team is named in the line under the name) */
+html:root body .frow .fcr{display:none!important}
