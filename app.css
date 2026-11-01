@@ -4415,3 +4415,31 @@ html:root body .livebar .lg .tm{padding:0!important;background:none!important;bo
 .nsc{display:flex;gap:8px;align-items:baseline;flex:none}.nsc b{font-size:30px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}.nsc b.lo{color:var(--ink-3);font-weight:600}
 .nsc.rec b{font-size:14px;font-weight:700;color:var(--ink-3)}
 .nowc:active{transform:scale(.99)}
+/* ===== the hero, aurora: both teams' colours as soft lights drifting over a near-black base, under film grain and a
+   dark edge. The colours never sit flat on the screen, nothing races, and a basket washes the scorer's colour in from
+   their side. The same layer runs the one-colour hero on team and player pages. ===== */
+html:root body .gx .w{background:linear-gradient(180deg,color-mix(in srgb,var(--mid) 16%,#07090d) 0%,#07090d 100%)!important;inset:-2px}
+html:root body .gx .w>i{filter:blur(56px) saturate(1.05)!important;border-radius:50%;opacity:.9;transition:scale var(--t-hero) var(--e-in)}
+html:root body .gx .w>i:nth-child(1){background:var(--aw)!important;width:60%!important;height:115%!important;left:-18%!important;top:-30%!important;animation:gxau1 26s ease-in-out infinite alternate!important;opacity:.72!important}
+html:root body .gx .w>i:nth-child(2){background:var(--ha)!important;width:60%!important;height:115%!important;right:-18%!important;left:auto!important;top:-10%!important;animation:gxau2 32s ease-in-out infinite alternate!important;opacity:.72!important}
+html:root body .gx .w>i:nth-child(3){background:color-mix(in srgb,var(--aw) 55%,#fff)!important;width:42%!important;height:90%!important;left:18%!important;top:10%!important;animation:gxau3 38s ease-in-out infinite alternate!important;opacity:.22!important}
+html:root body .gx .w>i:nth-child(4){background:color-mix(in srgb,var(--ha) 55%,#fff)!important;width:42%!important;height:90%!important;right:14%!important;left:auto!important;top:-20%!important;animation:gxau4 44s ease-in-out infinite alternate!important;opacity:.18!important}
+@keyframes gxau1{to{transform:translate3d(22%,20%,0) scale(1.12)}}
+@keyframes gxau2{to{transform:translate3d(-20%,-16%,0) scale(1.08)}}
+@keyframes gxau3{to{transform:translate3d(-30%,18%,0) scale(.85)}}
+@keyframes gxau4{to{transform:translate3d(26%,24%,0) scale(1.15)}}
+/* grain and the dark edge replace the light streaks */
+html:root body .gx .w::before{inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") repeat!important;filter:none!important;opacity:.16!important;mix-blend-mode:overlay;animation:none!important}
+html:root body .gx .w::after{display:none!important}
+html:root body .gx .veil{background:radial-gradient(130% 95% at 50% 35%,transparent 45%,rgba(0,0,0,.5) 100%),linear-gradient(rgba(0,0,0,.18),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 60%,rgba(0,0,0,.3))!important}
+/* one-colour heroes (team, player): the colour and its lighter self */
+html:root body .tmpage .gx.solo .w{background:linear-gradient(180deg,color-mix(in srgb,var(--aw) 22%,#07090d),#07090d)!important}
+html:root body .tmpage .gx.solo .w>i:nth-child(1){background:var(--aw)!important;opacity:.9!important}
+html:root body .tmpage .gx.solo .w>i:nth-child(2){background:color-mix(in srgb,var(--ha) 70%,var(--aw))!important;opacity:.7!important}
+html:root body .tmpage .gx.solo .w>i:nth-child(3){background:color-mix(in srgb,var(--aw) 55%,#fff)!important;opacity:.22!important}
+/* a basket: the scorer's colour washes in from their side and settles */
+html:root body .gx .pz.pa{background:radial-gradient(75% 110% at 8% 50%,color-mix(in srgb,var(--aw) 80%,#fff),transparent 65%)}
+html:root body .gx .pz.ph{background:radial-gradient(75% 110% at 92% 50%,color-mix(in srgb,var(--ha) 80%,#fff),transparent 65%)}
+html:root body .gx .pz.go{animation:gxwash 1.8s var(--e-in)}
+@keyframes gxwash{0%{opacity:0;transform:translateX(-6%) scale(1.05)}25%{opacity:.75;transform:none}100%{opacity:0;transform:scale(1.12)}}
+@media (prefers-reduced-motion:reduce){html:root body .gx .w>i{animation:none!important}}
