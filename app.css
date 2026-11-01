@@ -3183,3 +3183,9 @@ html body .why-h .wt{background:none!important}
 @media (max-width:1039px){ :root[data-theme="light"] .tabs .tab.on{color:#07090B!important;background:none!important} }
 @media (max-width:1039px){ html body .tabs .tab.mid{position:relative!important} html body .tabs .tab.mid .mb{top:calc(50% - 4px)!important;bottom:auto!important} }
 @media (max-width:1039px){ html body .tabs{padding:0 8px!important} html body .tabs .tab.mid .mb{top:calc(50% - 6px)!important} }
+/* game and team tabs: equal gaps between the words (not equal boxes), first and last flush with the card edges.
+   The chosen one is made heavier with a stroke, not a bolder weight, so the words never shift when you switch. */
+.gxtabs{display:flex!important;justify-content:space-between;align-items:stretch}
+.gxtabs .chip,.gxtabs .chip.on{flex:none;justify-self:auto;font-weight:600!important;-webkit-text-stroke:0}
+.gxtabs .chip.on{-webkit-text-stroke:.7px currentColor}
+.gxtabs .chip.on::after{left:0;right:0}
