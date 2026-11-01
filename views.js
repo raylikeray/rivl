@@ -904,7 +904,10 @@
     if (reduce || !fold.animate) return;
     fold.classList.add('anim');
     const to = open ? fold.scrollHeight : 0;
-    const a = fold.animate([{ height: from + 'px', opacity: open ? .4 : 1 }, { height: to + 'px', opacity: open ? 1 : .2 }], { duration: open ? 320 : 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    /* closing: the contents are fully faded before the height reaches zero, so no sliver of the card (its top edge) is left
+       showing as a thin line under the heading */
+    const frames = open ? [{ height: from + 'px', opacity: .4 }, { height: to + 'px', opacity: 1 }] : [{ height: from + 'px', opacity: 1 }, { opacity: 0, offset: .65 }, { height: '0px', opacity: 0 }];
+    const a = fold.animate(frames, { duration: open ? 320 : 260, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'none' });
     fold._anim = a; a.onfinish = a.oncancel = () => { fold.classList.remove('anim'); if (fold._anim === a) fold._anim = null; };
   }
   function dragOrder(list, onChange) {

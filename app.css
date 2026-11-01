@@ -3387,3 +3387,5 @@ html body .tbl.stand:has(thead th:nth-child(6)) td:first-child,html body .tbl.st
 html body .tbl.stand:has(thead th:nth-child(6)) td:not(:first-child){font-size:15px}
 html body .tbl.stand:has(thead th:nth-child(6)) td:not(:first-child),html body .tbl.stand:has(thead th:nth-child(6)) th:not(:first-child){padding-left:6px!important;padding-right:6px!important}
 html body .tbl.stand:has(thead th:nth-child(6)) td:last-child,html body .tbl.stand:has(thead th:nth-child(6)) th:last-child{padding-right:16px!important}
+.thead.conf{transition:margin-bottom .26s cubic-bezier(.2,.8,.2,1)}
+.fold.closed{opacity:0}
