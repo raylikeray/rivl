@@ -3606,3 +3606,9 @@ html body .plpage .pltx{opacity:1!important;transform:none!important;will-change
 .xwho .chev,.xrow .chev,.xgo .chev,.xans .chev{flex:none;display:grid;place-items:center;width:20px;height:20px}
 .xwho .chev svg,.xrow .chev svg,.xgo .chev svg,.xans .chev svg,.sth .chev svg{width:18px!important;height:18px!important}
 .sth .chev{display:inline-grid;width:18px;height:18px}
+/* leader card: the full name and team sit at the top right with room to wrap; the number sits under them, bottom right */
+.sthero{flex-direction:column;align-items:flex-end;justify-content:space-between;padding:12px 14px 12px!important;height:150px!important}
+.sthero .stwho{margin-left:0!important;width:calc(100% - 150px);text-align:right;align-items:flex-end}
+.sthero.team .stwho{width:calc(100% - 124px)}
+.sthero .stwho b{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;font-size:16px!important;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.sthero .stshot{height:140px!important}

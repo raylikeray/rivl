@@ -47,7 +47,7 @@
       if (!rows.length) return '';
       const top = rows[0], t = byAbbr[top.p.team] || {}, col = _.teamColor({ abbr: top.p.team, id: t.id }, L);
       return `<div class="gxplate stcard" data-cat="${key}"><button class="sth" data-stb="${key}"><b>${esc(c[1])}</b><span>View all ${_.chev}</span></button>
-        <a class="sthero" href="${_.href.player(lk, top.p.id)}" style="${_.tcv(col)}">${t.logo ? `<img class="stwm" src="${esc(t.logo)}" alt="" loading="lazy">` : ''}${top.p.img ? `<img class="stshot" src="${esc(top.p.img)}" alt="" loading="lazy">` : ''}<span class="strk">1</span><span class="stwho"><b>${esc(top.p.sn || top.p.n)}</b><em>${esc(t.short || top.p.teamName || top.p.team)}</em></span><span class="stv">${fmt(key, top.v)}<i>${esc(c[2])}</i></span></a>
+        <a class="sthero" href="${_.href.player(lk, top.p.id)}" style="${_.tcv(col)}">${t.logo ? `<img class="stwm" src="${esc(t.logo)}" alt="" loading="lazy">` : ''}${top.p.img ? `<img class="stshot" src="${esc(top.p.img)}" alt="" loading="lazy">` : ''}<span class="strk">1</span><span class="stwho"><b>${esc(top.p.n)}</b><em>${esc(t.short || top.p.teamName || top.p.team)}</em></span><span class="stv">${fmt(key, top.v)}<i>${esc(c[2])}</i></span></a>
         ${rows.slice(1, 3).map((x, i) => srow(x, i + 2, key)).join('')}</div>`;
     }
     function srow(x, n, key) { const t = byAbbr[x.p.team] || {};
