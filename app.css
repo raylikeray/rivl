@@ -3012,3 +3012,7 @@ html,body,:root[data-tint] body{background:var(--bg)!important;background-image:
 :root[data-theme="light"]{--bg:#F2F3F5;--card:#FFFFFF;--surf:#FFFFFF;--surf-2:#ECEDF0}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .gxpage .gxtabs .chip{background:none!important} }
 :root[data-theme] .gxpage .gxtabs .chip{background:none!important}
+
+/* anything inside a card is filled with the gray, never the card's own colour, so white never sits on white */
+html body :is(.hsec,.card,.gp,.giplate,.gxplate,.glplate,.gxrows,.gxser,.plc,.zones,.ijc,.tsch,.pfocus,.five,.feat,.wire,.vabout,.lkc,.ijs,.panel-in,.bpanel) :is(.stats>div,.ijgrid>div,.chip:not(.on),.bchip,.pip,.tpill,.lv,.fpill,.off,button.off,.oc,.oft,.why-h .wt,.stale){background:var(--surf-2)!important;border-color:transparent!important}
+html body :is(.hsec,.card,.gp,.giplate,.gxplate,.glplate,.gxrows,.pfocus,.ijs,.bpanel) .ijgrid{background:var(--line)!important}
