@@ -20,7 +20,7 @@
     const L = LEAGUES[lk], $main = document.getElementById('main');
     const tab0 = store.get('v5:sttab', 'players'), board0 = store.get('v5:stboard:' + lk, '');
     // the title and tabs paint at once, so the screen is never blank while the numbers load
-    $main.innerHTML = `<div class="stpage"><div class="page-h"><h1>Stats</h1><p>${esc(L.label)}</p></div>${(_.skeleton(1, 'card') + _.skeleton(3, 'card')).replace(/<!--skel-->/g, '')}</div>`;
+    { const up = $main.querySelector('.stpage'); if (!up || up.dataset.lk !== lk) $main.innerHTML = `<div class="stpage" data-lk="${lk}"><div class="page-h"><h1>Stats</h1><p>${esc(L.label)}</p></div>${(_.skeleton(1, 'card') + _.skeleton(3, 'card')).replace(/<!--skel-->/g, '')}</div>`; }   // the league's stats already up stay up while fresh numbers load
     const [lg, idx, st0, TS] = await Promise.all([HW.hub.league(L).catch(() => null), V.teamsIndex(L).catch(() => ({})), HW.standings(L).catch(() => null), HW.teamStats ? HW.teamStats(L).catch(() => null) : null]);
     /* team numbers come from the same season as the player numbers: when the league is showing last season (college before
        its games start), the team boards read last season's final standings, not this season's 0-0 table */
@@ -30,7 +30,7 @@
     const byAbbr = {}; Object.values(idx || {}).forEach(t => { if (t && t.abbr) byAbbr[t.abbr] = t; });
     const maxG = Math.max(1, ...lg.players.map(p => (p.s || {}).gp || 0));
     const qual = p => { const s = p.s || {}; return (s.gp || 0) >= Math.max(1, Math.ceil(maxG * .5)) && (s.min || 0) >= (lk.startsWith('ncaa') ? 10 : 12); };
-    let R = null; const getR = () => R ? Promise.resolve(R) : HW.rating.league(L).then(r => (R = r)).catch(() => null);
+    let R = HW.rating.leagueNow ? HW.rating.leagueNow(L) : null; const getR = () => R ? Promise.resolve(R) : HW.rating.league(L).then(r => (R = r)).catch(() => null);   // a league rated earlier paints with its rating at once
     const REC = lk.startsWith('ncaa') ? await HW.hub.recruits().catch(() => null) : null, recG = lk === 'ncaaw' ? 'girls' : 'boys';   // high-school recruits live under college only: boys on NCAA M, girls on NCAA W
     const recCls = REC && REC[recG] ? Object.keys(REC[recG]).filter(k => (REC[recG][k] || []).length).sort() : [];
     let rcls = store.get('v5:strcls', recCls[0] || '');
@@ -105,7 +105,7 @@
       const extra = tab === 'rookies' ? (() => { const top = list('pts', true).slice(0, 3); return top.length > 1 ? `<button class="stcmp" data-xq="${esc(top.map(x => x.p.n).join(' vs '))}">Compare the top rookies</button>` : ''; })() : '';
       return `<div class="page-h"><h1>Stats</h1><p>${esc(lg.label || '')}${lg.lastSeason ? ', last season' : ''}</p></div>${seg}${note}${extra}${body}`;
     }
-    const paint = () => { $main.innerHTML = `<div class="stpage">${board ? boardHTML() : homeHTML()}</div>`; };
+    const paint = () => { const html = `<div class="stpage" data-lk="${lk}">${board ? boardHTML() : homeHTML()}</div>`; const up = $main.querySelector('.stpage'); if (up && up.dataset.lk === lk && _.patch) _.patch(up, html.slice(html.indexOf('>') + 1, -6)); else $main.innerHTML = html; };
     paint();
     // the RIVL rating board needs the whole league worked out; it fills in when ready
     getR().then(() => { if (document.querySelector('.stpage') && (board === 'rating' || !board)) { const y = window.scrollY; paint(); window.scrollTo(0, y); } });

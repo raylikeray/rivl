@@ -3330,9 +3330,9 @@ html body .plpage .gx.solo .w>i:nth-child(2){width:95%!important;height:75%!impo
 @keyframes sh2{to{transform:translate3d(475.7px,0,0)}}
 .tmpage .gxin,.tmpage .plh{z-index:1}
 /* the crest floats */
-.tmpage .tmcrest{filter:drop-shadow(0 3px 4px rgba(0,0,0,.3)) drop-shadow(0 14px 22px rgba(0,0,0,.4));animation:lift 7s ease-in-out infinite}
+.tmpage .tmcrest{filter:drop-shadow(0 3px 4px rgba(0,0,0,.3)) drop-shadow(0 14px 22px rgba(0,0,0,.4));animation:crestfloat 7s ease-in-out infinite}
 .plh .plwm{animation:wmfloat 9s ease-in-out infinite}
-@keyframes lift{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-4px,0)}}
+@keyframes crestfloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-4px,0)}}
 @keyframes wmfloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(-6px,-8px,0)}}
 @media (prefers-reduced-motion:reduce){ .tmpage .tmcrest,.plh .plwm{animation:none} }
 
@@ -4585,3 +4585,32 @@ html:root body .xghost.out:not([data-dir]){animation:screenout 160ms linear both
 html:root body #main.enter>.gxpage,html:root body #main.fade>.gxpage{animation:none!important}
 /* the page and its swipe copy lay out the same: the first section's top margin never collapses through one and not the other */
 html:root body #main{display:flow-root}
+
+/* v339: the injury report is one list, the way My teams is: a flat row per team (bar, crest, name, how many, chevron), a
+   hairline between them, the players folding out underneath. No card inside a card, no plate, no shadow. */
+html:root body .injrep .injgrp{background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
+html:root body .injrep .injgrp + .injgrp{border-top:1px solid var(--line)!important}
+html:root body .injrep button.injhd{margin:0!important;padding:0!important;min-height:64px;width:100%;border-radius:0!important;background:none!important;box-shadow:none!important;border:0!important;gap:12px;font-size:16px;font-weight:700}
+html:root body .injrep button.injhd:active{transform:none;background:none!important}
+html:root body .injrep .injhd .bar{width:4px;height:28px;border-radius:2px;box-shadow:none;margin-left:-6px}
+html:root body .injrep .injhd .logo{width:36px!important;height:36px!important;flex:none}
+html:root body .injrep .injhd .logo img{filter:none}
+html:root body .injrep .injhd b{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html:root body .injrep .injhd span.n{margin-left:2px;font-size:12px;font-weight:600;color:var(--ink-2);padding:4px 9px;background:var(--surf-2);box-shadow:none;border-radius:999px}
+html:root body .injrep .injhd .chev{margin-left:auto;color:var(--ink-3)}
+html:root body .injrep .injhd .chev svg{width:20px;height:20px}
+html:root body .injrep .injgrp .injbody{padding:0 0 4px!important}
+html:root body .injrep .injgrp .injbody .row{border-top:1px solid var(--line);padding:12px 0!important;min-height:0!important}
+html:root body .injrep .injgrp .injbody .row:last-child{border-bottom:0}
+html:root body .injrep .injgrp .injbody .row .t b{font-size:15px}
+
+/* v339: sheets and full panels slide up solid, the way iOS and Spotify do it. Nothing fades while text sits under it,
+   so two layers of words never show at once. The dimming behind a sheet fades on its own. */
+html:root body .sheet.in .sheet-in,html:root body .panel.in:not(.full) .panel-in{animation:sheetup .36s cubic-bezier(.2,.9,.25,1) both}
+html:root body .sheet.out .sheet-in,html:root body .panel.out:not(.full) .panel-in{animation:sheetdown .26s cubic-bezier(.4,0,.8,.4) both}
+html:root body .panel.full.in{animation:sheetup .36s cubic-bezier(.2,.9,.25,1) both}
+html:root body .panel.full.out{animation:sheetdown .26s cubic-bezier(.4,0,.8,.4) both}
+html:root body .panel.full.in .panel-in,html:root body .panel.full.out .panel-in{animation:none}
+@keyframes sheetup{from{transform:translate3d(0,100%,0)}to{transform:translate3d(0,0,0)}}
+@keyframes sheetdown{from{transform:translate3d(0,0,0)}to{transform:translate3d(0,100%,0)}}
+@media (prefers-reduced-motion:reduce){html:root body .sheet.in .sheet-in,html:root body .panel.in .panel-in,html:root body .panel.full.in,html:root body .panel.full.out,html:root body .sheet.out .sheet-in,html:root body .panel.out .panel-in{animation:none}}

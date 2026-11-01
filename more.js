@@ -189,6 +189,8 @@
   (async () => { try { if (!store.get('v5:alerts', false)) return; store.set('v5:alerts', false); const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch (e) { } })();
 
   /* ---------- sync: your follows and settings behind a six-character code ---------- */
+  const WORKER = HW.WORKER || '';
+  const post = (path, body) => fetch(WORKER + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
   const KEYS = ['favs', 'v5:players', 'v5:prefs', 'v5:theme', 'v5:accent', 'v5:alertPrefs', 'v5:injcol'];
   V.sync = {
     available() { return !!WORKER; },

@@ -346,6 +346,29 @@
      while the app is open never repaint what hasn't changed, and never move the page under your thumb. */
   const rankGame = g => (isFav(g) ? 1000 : 0) + (g.tv.national.length ? 100 : 0) + interest(g) / 1000;
   const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+  /* a section changes in place: text and attributes are patched where the shape matches, so a score ticking over does not
+     rebuild the whole card (crests reloading, strips resetting). Children are matched by kind (tag, id, class, a game or
+     section id), so a row added or dropped moves its neighbours instead of rebuilding them. */
+  const keyOf = n => n.nodeType === 1 ? `${n.nodeName}|${n.id || ''}|${n.getAttribute('data-sec') || n.getAttribute('data-gid') || n.getAttribute('data-lk') || n.getAttribute('href') || ''}|${n.className && n.className.baseVal !== undefined ? n.className.baseVal : (n.className || '')}` : '#' + n.nodeType;
+  const morphKids = (el, bc) => {
+    const ac = [...el.childNodes];
+    if (ac.length === bc.length && ac.every((n, i) => keyOf(n) === keyOf(bc[i]))) { ac.forEach((n, i) => morph(n, bc[i])); return; }
+    const used = new Set(); const out = bc.map(b => { const k = keyOf(b); const x = ac.find(y => !used.has(y) && keyOf(y) === k); if (x) { used.add(x); morph(x, b); return x; } return b; });
+    ac.forEach(x => { if (!used.has(x)) x.remove(); });
+    out.forEach((n, i) => { const cur = el.childNodes[i]; if (cur !== n) el.insertBefore(n, cur || null); });   // only a node out of place moves; nothing that stayed is rebuilt
+  };
+  const morph = (a, b) => {
+    if (a.nodeType !== b.nodeType || a.nodeName !== b.nodeName) { a.replaceWith(b); return; }
+    if (a.nodeType === 3) { if (a.data !== b.data) a.data = b.data; return; }
+    if (a.nodeType !== 1) return;
+    if (a.tagName === 'IMG' && a.getAttribute('src') !== b.getAttribute('src') && a.dataset.o === b.getAttribute('src')) b.setAttribute('src', a.getAttribute('src'));   // a crest that fell back to its plain file keeps it
+    for (const at of [...a.attributes]) if (!b.hasAttribute(at.name) && at.name !== 'style' && !(at.name === 'class' && a.tagName === 'IMG')) a.removeAttribute(at.name);
+    for (const at of [...b.attributes]) if (a.getAttribute(at.name) !== at.value) { if (at.name === 'class' && a.tagName === 'IMG' && a.classList.contains('fitted')) continue; a.setAttribute(at.name, at.value); }
+    if (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'IMG' || a.tagName === 'VIDEO') return;
+    morphKids(a, [...b.childNodes]);
+  };
+  /* new HTML into a box that already shows the old */
+  const patch = (el, html) => { const t = document.createElement('div'); t.innerHTML = html; morphKids(el, [...t.childNodes]); };
   const SECS = ['wire', 'now', 'live', 'tonight', 'last', 'teams', 'players', 'injuries', 'news'];   // the one thing that matters right now leads   // the wire first when it has something, then a game on now
   let homeToken = 0;
   /* the Now card: a headline sentence with a colour stripe on the edge, the crests side by side, the score large.
@@ -411,14 +434,19 @@
       SECS.forEach(k => {
         const cur = $main.querySelector(`section[data-sec="${k}"]`);
         if (!secs[k]) { if (cur) cur.remove(); return; }
-        if (cur) { if (cur.dataset.h !== hashOf(secs[k])) cur.outerHTML = wrap(k, quiet); return; }
+        if (cur) { if (cur.dataset.h !== hashOf(secs[k])) { const t = document.createElement('div'); t.innerHTML = wrap(k, quiet); morph(cur, t.firstElementChild); } return; }
         const after = SECS.slice(SECS.indexOf(k) + 1).filter(j => SIDE.has(j) === SIDE.has(k)).map(j => $main.querySelector(`section[data-sec="${j}"]`)).find(Boolean);
         if (after) after.insertAdjacentHTML('beforebegin', wrap(k, quiet)); else col(k).insertAdjacentHTML('beforeend', wrap(k, quiet));
       });
     };
 
     // ----- what everything is built from -----
-    const S0 = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null };
+    /* what this league's Home was last built from stays with the league: a return (a swipe back, the tab, a refresh) builds
+       the first paint from the full data it had, so the screen you land on is the one you left, not a thinner version that
+       fills back in section by section (the reload look). Fresh data then replaces only what actually changed. */
+    const HS = home.states || (home.states = {});
+    const S0 = HS[lk] || (HS[lk] = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null });
+    if (S0.teams && S0.teams.filter(Boolean).map(t => String(t.id)).sort().join() !== mine.map(String).sort().join()) S0.teams = null;   // the follows changed since: the list is rebuilt
     const favTeam = t => mine.includes(String(t.id));
     const teamOf = p => { const k = String(p.team || '').toLowerCase(); return t => (p.teamId && String(t.id) === String(p.teamId)) || (k && [t.abbr, t.short, t.name].some(x => String(x || '').toLowerCase() === k)); };
     /* tonight's games as small stacked tiles: away team on top, home team under it, the time or score at the right */
@@ -568,20 +596,25 @@
       standings(L).catch(() => null)
     ]);
     if (!alive()) return;
-    Object.assign(S0, { tIdx, games, last, ctx, st, inj: ctx && ctx.inj ? ctx.inj : null });
+    Object.assign(S0, { tIdx, games, last, ctx, st, inj: ctx && ctx.inj ? ctx.inj : S0.inj });
     S.today[lk] = games;
-    build(); paint();
+    /* the same data draws the same screen: when what came back matches what the screen was already built from, nothing
+       is redrawn (no crest reloads, no rows blinking, no strips resetting). Only new data touches the page. */
+    const fpOf = v => { try { return hashOf(JSON.stringify(v)); } catch { return String(Math.random()); } };
+    const fresh = key => { const f = fpOf(S0[key]); if (S0.fp && S0.fp[key] === f) return false; (S0.fp = S0.fp || {})[key] = f; return true; };
+    S0.base = { games, last, inj: S0.inj, st: st && st.byId ? Object.keys(st.byId).length : 0 };
+    if (fresh('base') || !painted) { build(); paint(); }
 
     // ----- phase 2: schedules, box scores, news — each patches its section as it lands -----
     const later = [];
-    if (mine.length) later.push((async () => { const teams = await Promise.all(mine.map(id => teamInfo(L, id, { idx: tIdx, st }).catch(() => null))); if (!alive()) return; S0.teams = teams; build(); paint(true); })());
+    if (mine.length) later.push((async () => { const teams = await Promise.all(mine.map(id => teamInfo(L, id, { idx: tIdx, st }).catch(() => null))); if (!alive()) return; S0.teams = teams; if (fresh('teams')) { build(); paint(true); } })());
     if (P.brief && fp.length) later.push((async () => {
       const ids = [...new Set(fp.map(p => { const is = teamOf(p); const g = last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? g.id : null; }).filter(Boolean))];
       await Promise.all(ids.map(async id => { S0.sums[id] = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 3600000); }));
-      if (!alive()) return; build(); paint();
+      if (!alive()) return; if (fresh('sums')) { build(); paint(); }
     })());
-    if (P.news || P.wire) later.push((async () => { S0.news = await jSoft(`${API(L)}/news?limit=25`, 600000); if (!alive()) return; build(); paint(true); })());
-    if (!S0.inj && mine.length && P.injuries) later.push((async () => { S0.inj = await injuries(L).catch(() => null); if (!alive()) return; build(); paint(true); })());
+    if (P.news || P.wire) later.push((async () => { S0.news = await jSoft(`${API(L)}/news?limit=25`, 600000); if (!alive()) return; if (fresh('news')) { build(); paint(true); } })());
+    if (!S0.inj && mine.length && P.injuries) later.push((async () => { S0.inj = await injuries(L).catch(() => null); if (!alive()) return; if (fresh('inj')) { build(); paint(true); } })());
     Promise.all(later).catch(() => { });
 
     // ----- while the app sits on Home: scores every pass, the rest every few minutes, patched quietly -----
@@ -629,12 +662,12 @@
           if (same) {   // the same window of days: move the highlight, and refresh the small row above it (month, Mine) in place
             dates.querySelectorAll('.day').forEach(b => { const on = b.dataset.ymd === ymd; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
             const cr = hd.querySelector('.calrow'); if (cr) { const tmp = document.createElement('div'); tmp.innerHTML = calPill; cr.replaceWith(tmp.firstElementChild); }
-          } else hd.innerHTML = head;
+          } else patch(hd, head);
           hd.dataset.h = hh;
         }
-        const bd = page.querySelector('#scbody'); const bh = hashOf(body); if (bd.dataset.h !== bh) { const dayChanged = bd.dataset.d !== ymd; bd.innerHTML = body; bd.dataset.h = bh; bd.dataset.d = ymd; if (dayChanged && HW.v5.soft) HW.v5.soft(bd); }
+        const bd = page.querySelector('#scbody'); const bh = hashOf(body); if (bd.dataset.h !== bh) { const dayChanged = bd.dataset.d !== ymd; if (dayChanged) bd.innerHTML = body; else patch(bd, body); bd.dataset.h = bh; bd.dataset.d = ymd; if (dayChanged && HW.v5.soft) HW.v5.soft(bd); }
         if (HW.v5.busy) HW.v5.busy(false);
-      } else $main.innerHTML = `<div id="scpage" data-lk="${lk}"><div id="schead" data-h="${hashOf(head)}">${head}</div><div id="scbody">${body}</div></div>`;
+      } else $main.innerHTML = `<div id="scpage" data-lk="${lk}"><div id="schead" data-h="${hashOf(head)}">${head}</div><div id="scbody" data-h="${hashOf(body)}" data-d="${esc(ymd)}">${body}</div></div>`;
     };
     if (inPlace) { paint($main.querySelector("#scbody").innerHTML); if (HW.v5.busy) HW.v5.busy(true); } else $main.innerHTML = `<div id="scpage" data-lk="${lk}"><div id="schead" data-h="${hashOf(head)}">${head}</div><div id="scbody">${skeleton(4, 'card')}</div></div>`;
     const [games, ctx, meta] = await Promise.all([ymd === today && S.today[lk] && S.today[lk].length ? S.today[lk] : scoreboard(L, ymd).catch(() => null), forecastCtx(L, ymd).catch(() => null), sbMeta(L, ymd)]);
@@ -1130,5 +1163,5 @@
   }
 
   HW.v5 = Object.assign(HW.v5 || {}, { unrivaledCard, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { gameRow, injBody, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
+    _: { morph, patch, teamNow: (L, id) => L && ((teamIdx[L.key] || {})[String(id)] || pool(L.key)[String(id)] || null), gameRow, injBody, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

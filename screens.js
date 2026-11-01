@@ -33,7 +33,7 @@
   /* ================= STANDINGS ================= */
   async function standingsV(lk) {
     const L = LEAGUES[lk];
-    $main.innerHTML = skeleton(10, 'row');
+    { const pg = $main.querySelector('#stpage'); if (!pg || pg.dataset.lk !== lk) $main.innerHTML = skeleton(10, 'row'); }   // the league's table already up stays up while fresh numbers load
     const [st, R, idx] = await Promise.all([standings(L).catch(() => null), rankings(L), teamsIndex(L).catch(() => ({}))]);
     if (!st || !st.groups.length) { $main.innerHTML = empty('Standings unavailable', '<p style="margin:6px 0 0">The feed didn\'t answer. It usually comes back within a minute.</p>'); return; }
     const conf = L.standingsMode === 'conferences';
@@ -158,7 +158,7 @@
       const have = [...page.querySelectorAll('#stchips .chip')].map(c => c.dataset.tab).join();
       if (have !== items.map(([k]) => k).join()) page.querySelector('#stchips').innerHTML = chips(items, tab, 'stab', 'tab');
       else page.querySelectorAll('#stchips .chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); c.setAttribute('aria-selected', String(on)); });
-      const sb = page.querySelector('#stbody'); sb.innerHTML = body; if (V.soft) V.soft(sb);
+      const sb = page.querySelector('#stbody'); if (V._.patch) V._.patch(sb, body); else sb.innerHTML = body; if (V.soft) V.soft(sb);
     } else $main.innerHTML = `<div id="stpage" data-lk="${esc((V.route && V.route() || {}).lk || '')}"><div id="stchips">${chips(items, tab, 'stab', 'tab')}</div><div id="stbody">${body}</div></div>`;
     const on = $main.querySelector('#stchips .chip.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
   }
@@ -220,7 +220,21 @@
   /* ================= TEAM ================= */
   async function teamV(lk, id) {
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Team not found'); return; }
-    if (!$main.querySelector(`#gpage[data-pid="team:${CSS.escape(String(id))}"]`)) $main.innerHTML = topbar('') + skeleton(1, 'card') + skeleton(6, 'row');   // the same team already up stays up through a refresh
+    if (!$main.querySelector(`#gpage[data-pid="team:${CSS.escape(String(id))}"]`)) {
+      /* the page opens at once with what is already known about the team (name, crest, colour, from the league list), the
+         numbers filling in underneath; only a team the app has never listed starts from a bare skeleton */
+      const kn = V._.teamNow && V._.teamNow(L, id);
+      if (kn && (kn.short || kn.name)) {
+        const tid = String(id), tname = kn.short || kn.name; const color = teamColor({ id: tid, abbr: kn.abbr, color: kn.color }, L); V._.tint(color);
+        const alt = V._.teamAlt ? V._.teamAlt({ id: tid, abbr: kn.abbr, alt: kn.alt }, L) : ''; const c2 = alt && alt.toLowerCase() !== String(color).toLowerCase() ? alt : V._.deep(color);
+        const lg = kn.logo || HW.logoUrl(L, kn.abbr); const on = favs.has(lk, id);
+        const inner = `<div class="tmhead">${V._.imgSized(lg, 160, 160, 'class="tmcrest"')}<div><p class="tmlg">${esc(L.label)}</p><h1>${esc(tname)}</h1><p class="tmsen"></p><button class="flw${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tid)}" data-name="${esc(tname)}" aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(tname)}">${window.RIVL_flw ? window.RIVL_flw(on, 'team') : (on ? 'Following' : 'Follow team')}</button></div></div>`;
+        const bar = `<a class="gxib" href="#teams" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><div class="gxmid2"><div class="gxctr" id="gxmini"><span class="gxmn">${lg ? V._.imgSized(lg, 64, 64, 'class="tmmini"') : ''}<b>${esc(tname)}</b></span></div></div><span class="gxib ghost" aria-hidden="true"></span>`;
+        const tkey = `tm:${lk}:${tid}`; let ttab = (() => { try { return localStorage.getItem(tkey) || 'overview'; } catch { return 'overview'; } })(); if (!['overview', 'schedule', 'roster', 'stats'].includes(ttab)) ttab = 'overview';
+        const sk = skeleton(1, 'card') + skeleton(4, 'row');
+        V._.heroShell({ pid: `team:${tid}`, cls: '', color, c2, inner, bar, act: 'ttab', attr: 'data-tp', tab: ttab, tabs: [['overview', 'Overview'], ['schedule', 'Schedule'], ['roster', 'Roster'], ['stats', 'Stats']], panels: { overview: sk, schedule: sk, roster: sk, stats: sk } });
+      } else $main.innerHTML = topbar('') + skeleton(1, 'card') + skeleton(6, 'row');
+    }
     const [roster, sched, st, inj, lp, news, R] = await Promise.all([jSoft(`${API(L)}/teams/${id}/roster`, 900000), jSoft(`${API(L)}/teams/${id}/schedule`, 300000), standings(L).catch(() => null), injuries(L), L.sport === 'basketball' ? leaguePlayers(L).catch(() => null) : null, jSoft(`${API(L)}/news?limit=10&team=${id}`, 600000), rankings(L), teamsIndex(L).catch(() => null)]);
     const t0 = (roster && roster.team) || (sched && sched.team);
     if (!t0) { $main.innerHTML = topbar('Team') + empty("Couldn't load this team", '<p style="margin:6px 0 0">The feed didn\'t answer. Pull down to try again.</p>'); return; }
@@ -590,6 +604,8 @@
        tabs pin, for the fades */
     const sp = document.querySelector('#gpage .gxspace'); gxFit.span = Math.max(80, sp ? sp.offsetHeight : 240);
   }
+  /* a page put back as it stood (the arrow, the phone's back swipe): its hero and scroll box are wired up again */
+  V._.gxAttach = () => { try { gxFit(); } catch { } gxScroll(); if (gxScroll.run) gxScroll.run(); };
   function gxScroll() {
     const box = document.getElementById('gxscroll'); if (!box) return;
     if (gxScroll.box === box) return; gxScroll.box = box;
