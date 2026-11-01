@@ -65,6 +65,17 @@
   /* where each screen was scrolled to, by screen key: going BACK to a screen lands where you were; a tab lands where you left it;
      a link to a player, team, game or story always opens at the top, however far down it you were last time */
   const scrollMem = new Map();
+  /* every sideways strip (last night's results, a rail of players, the date row) remembers how far you moved it, per
+     screen, so coming back by a league swipe, a tab or a refresh finds it exactly where you left it */
+  const STRIP_SEL = '.dates,.brief-row,.chips,.rail,.media,.tw,.onb-picked-row,.frows-x';
+  const stripMem = new Map();
+  const stripKeys = root => { const cnt = {}; return [...root.querySelectorAll(STRIP_SEL)].map(el => { const sec = el.closest('[data-sec]'); const b = (sec ? sec.dataset.sec : '') + '|' + (el.classList[0] || ''); cnt[b] = (cnt[b] || 0) + 1; return [b + '|' + cnt[b], el]; }); };
+  const stripsOf = root => { const m = {}; stripKeys(root).forEach(([k, el]) => { if (el.scrollLeft > 0) m[k] = el.scrollLeft; }); return m; };
+  const stripsTo = (root, m) => { if (!root || !m) return; stripKeys(root).forEach(([k, el]) => { const v = m[k] || 0; if (Math.abs(el.scrollLeft - v) > 1) el.scrollLeft = v; }); };
+  const keyOf = r => r ? `${r.name}/${(r.args || []).join('/')}` : '';
+  document.addEventListener('scroll', e => { const t = e.target; if (render.swiping || !t || t.nodeType !== 1 || !t.matches(STRIP_SEL) || !$main.contains(t)) return; const k = keyOf(current); if (k) stripMem.set(k, stripsOf($main)); }, true);
+  // sections that arrive after the first paint get their place back too
+  new MutationObserver(() => { if (render.swiping) return; const k = keyOf(current); const m = k && stripMem.get(k); if (m && Object.keys(m).length) stripsTo($main, m); }).observe($main, { childList: true, subtree: true });
   let navN = 0;   // each history entry is numbered the first time it is shown; an entry numbered below the one we left is a step back
   async function render() {
     const r = route(); const my = ++seq; current = r; V.refresh = null; closeSheet();
@@ -73,7 +84,7 @@
     const st = history.state; const back = !!(st && st.n != null && st.n < navN);
     if (st && st.n != null) navN = st.n; else { navN += 1; try { history.replaceState({ n: navN }, ''); } catch { } }
     const leagueScreen = SCREENS.includes(r.name);
-    if (render.key && render.key !== key && !render.memDone) scrollMem.set(render.key, window.scrollY); render.memDone = false;   // a swipe already saved where you were
+    if (render.key && render.key !== key && !render.memDone) { scrollMem.set(render.key, window.scrollY); stripMem.set(render.key, stripsOf($main)); } render.memDone = false;   // a swipe already saved where you were
     const leagueChanged = leagueScreen && render.lk && render.lk !== r.lk;   // a tap on the league switch starts the new league at the top
     $main.dataset.y = render.key !== key ? ((back || leagueScreen) ? String(scrollMem.get(key) || 0) : '0') : '';
     // a page that starts at the top goes there now, before its skeleton replaces the old screen — otherwise the old scroll
@@ -333,7 +344,7 @@
       const wrap = document.createElement('div'); wrap.className = 'barclose'; document.body.appendChild(wrap);
       const gs = gp.querySelector('#gxscroll'), st = gs ? gs.scrollTop : 0; const kids = [...$main.childNodes]; const gy = window.scrollY;
       gp.style.transform = ''; wrap.appendChild(gp); if (gs) gs.scrollTop = st;
-      $main.innerHTML = snap; de.classList.remove('entity', 'gxon'); document.getElementById('top').hidden = false; window.scrollTo(0, trip.y);
+      $main.innerHTML = snap; stripsTo($main, stripMem.get(trip.name + '/' + trip.lk)); de.classList.remove('entity', 'gxon'); document.getElementById('top').hidden = false; window.scrollTo(0, trip.y);
       held = { wrap, gp, kids, gs, st, gy, t: trip }; return held;
     };
     const unlift = () => {   // let go short: everything goes back exactly as it was
@@ -466,7 +477,7 @@
       if (!peek) { peek = $m.cloneNode(false); peek.removeAttribute('id'); peek.classList.remove('hold', 'fade', 'enter', 'noanim'); peek.classList.add('xpeek'); peek.innerHTML = snaps[k + ':' + r.name] || (V._ && V._.skeleton ? V._.skeleton(1, 'card') + V._.skeleton(4, 'row') : ''); $m.parentNode.insertBefore(peek, $m.nextSibling); }
       const mainTop = rc.top + window.scrollY, ny = scrollMem.get(r.name + '/' + k) || 0;   // where the next league will sit once it lands: its own scroll, the top bar drawn over it as on the real page
       peek.style.cssText = `position:fixed;left:${rc.left}px;width:${rc.width}px;top:${Math.max(0, mainTop - ny)}px;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;will-change:transform;contain:layout paint;transform:translate3d(${rc.width}px,0,0)`;
-      peek.scrollTop = Math.max(0, ny - mainTop); };   // the next league shows where you left it, or its top
+      peek.scrollTop = Math.max(0, ny - mainTop); stripsTo(peek, stripMem.get(r.name + '/' + k)); };   // the next league shows where you left it, or its top
     /* a critically damped spring, the physics X and iOS use: it starts at the finger's own speed (px/ms) and settles on
        the target without overshoot, so letting go never changes the speed the page was moving at */
     let springRaf = 0;
@@ -486,7 +497,8 @@
       render.swipe = true; render.swiping = true; render.tapAt = performance.now(); peek.style.visibility = '';
       const land = () => { $m.style.transition = 'none'; $m.style.transform = ''; $m.style.willChange = ''; const snap = snaps[k + ':' + r0.name];
         scrollMem.set(r0.name + '/' + r0.lk, window.scrollY); const ny = scrollMem.get(r0.name + '/' + k) || 0; render.memDone = true; render.keepHdr = ny > 4; render.hdrHold = true; if (ny <= 4 && V.showTop) V.showTop(); setTimeout(() => { render.hdrHold = false; }, 400);
-        if (snap) { $m.innerHTML = snap; window.scrollTo(0, ny); $m.dataset.hlk = k; location.hash = '#' + k; requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; if (peek) { peek.remove(); Object.keys(ready).forEach(q => { if (ready[q] === peek) delete ready[q]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); })); return; }
+        stripMem.set(r0.name + '/' + r0.lk, stripsOf($m));
+        if (snap) { $m.innerHTML = snap; stripsTo($m, stripMem.get(r0.name + '/' + k)); window.scrollTo(0, ny); $m.dataset.hlk = k; location.hash = '#' + k; requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; if (peek) { peek.remove(); Object.keys(ready).forEach(q => { if (ready[q] === peek) delete ready[q]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); })); return; }
         $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { requestAnimationFrame(() => { render.swiping = false; $m.style.visibility = ''; if (peek) { peek.remove(); Object.keys(ready).forEach(k => { if (ready[k] === peek) delete ready[k]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); }); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); };
       if (fromX != null) { $m.style.transition = 'none'; peek.style.transition = 'none'; $pills.classList.remove('dragging');
         spring(fromX, v0, dirL ? -W2 : W2, x => { $m.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`; peek.style.transform = `translate3d(${(x + (dirL ? W2 : -W2)).toFixed(2)}px,0,0)`; track(Math.min(1, Math.abs(x) / W2)); }, land); return; }
