@@ -223,7 +223,7 @@
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const tier = o => o >= 90 ? 't5' : o >= 80 ? 't4' : o >= 70 ? 't3' : o >= 60 ? 't2' : 't1';
   function hexSVG(R, sel) {
-    const W = 360, H = 318, cx = W / 2, cy = H / 2 + 4, Rr = 96, uid = 'hx' + R.id;
+    const W = 384, H = 318, cx = W / 2, cy = H / 2 + 4, Rr = 96, uid = 'hx' + R.id;
     const ang = i => (-90 + i * 60) * Math.PI / 180, P = (i, r) => [cx + r * Math.cos(ang(i)), cy + r * Math.sin(ang(i))], f = n => n.toFixed(1);
     const ring = k => [0, 1, 2, 3, 4, 5].map(i => P(i, Rr * k).map(f).join(',')).join(' ');
     const wedge = (i, r) => { const a = P(i, r), b = P(i + 1, r); return `M${cx},${cy}L${f(a[0])},${f(a[1])}L${f(b[0])},${f(b[1])}Z`; };
@@ -237,7 +237,7 @@
     s += `<g class="hxover" clip-path="url(#${uid})">${grid('hxo')}</g><polygon class="hxedge" points="${ring(1)}"/>`;
     R.traits.forEach((t, i) => { const A = P(i, Rr + 30), B = P(i + 1, Rr + 30); s += `<path class="hxt" data-hex="${t.key}" d="M${cx},${cy}L${f(A[0])},${f(A[1])}L${f(B[0])},${f(B[1])}Z"/>`; });
     R.traits.forEach((t, i) => { const m = (ang(i) + ang(i + 1)) / 2, c = Math.cos(m); let x = cx + (Rr + 22) * c, anc = c > .3 ? 'start' : c < -.3 ? 'end' : 'middle'; const y = cy + (Rr + 30) * Math.sin(m) - 4;
-      if (Math.abs(c) > .9) { anc = c > 0 ? 'end' : 'start'; x = c > 0 ? W - 4 : 4; }
+      if (Math.abs(c) > .9) { anc = c > 0 ? 'start' : 'end'; x = cx + (Rr + 14) * (c > 0 ? 1 : -1); }   // the side labels sit just off the hexagon's corners, not at the card's edges
       s += `<g class="hxl${t.key === sel ? ' on' : ''}" data-hex="${t.key}"><text x="${f(x)}" y="${f(y)}" text-anchor="${anc}" class="hxn">${t.label}</text><text x="${f(x)}" y="${f(y + 19)}" text-anchor="${anc}" class="hxp">${t.pct}%</text></g>`; });
     return s + '</svg>';
   }

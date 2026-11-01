@@ -591,6 +591,7 @@
       const next = meta.cal.find(d => d > ymd), last = meta.cal.filter(d => d < ymd).slice(-1)[0];
       const when = next ? (next === addDays(today, 1) ? 'tomorrow' : next === today ? 'today' : `on ${dayLabel(next, { weekday: 'long', month: 'short', day: 'numeric' })}`) : '';
       const body = next ? `<p style="margin:6px 0 0">Next ${esc(L.label)} games are ${esc(when)}.</p>` : meta.cal.length ? `<p style="margin:6px 0 0">The season is over${last ? `; the last games were ${esc(dayLabel(last, { month: 'long', day: 'numeric' }))}` : ''}. Next season shows here once the schedule is posted.</p>` : '';
+      if (L.key === 'wnba' && !next) unrivaledCard().then(h => { if (h && !$main.querySelector('.unrv')) { const host = $main.querySelector('.empty') || $main.lastElementChild; (host && host.parentElement || $main).insertAdjacentHTML('beforeend', h); } });
       paint(phase + empty(`No ${L.label} games ${ymd === today ? 'today' : 'on ' + dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, body, next ? `<button class="btn" data-act="date" data-ymd="${esc(next)}">Jump to ${esc(dayLabel(next, { weekday: 'short', month: 'short', day: 'numeric' }))}</button>` : ''));
       setPhase(); return;
     }
@@ -642,6 +643,21 @@
     const v = { days, counted, truncated };
     if (counted || Object.keys(days).length) monthCache[key] = { t: Date.now(), v };
     return v;
+  }
+  /* Unrivaled, the 3-on-3 league WNBA players play in their offseason: its schedule from data/unrivaled.json (read off the
+     league's own site by a job), shown on the WNBA scores page once the WNBA season is over. Times come in Eastern. */
+  async function unrivaledCard() {
+    const d = HW.hub ? await HW.hub.file('unrivaled.json').catch(() => null) : null; if (!d || !d.games || !d.games.length) return '';
+    const toYmd = s => { const t = new Date(s + ' 12:00'); return isNaN(t) ? '' : `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };
+    const ct = tm => { const m = /^(\d{1,2}):(\d{2}) (AM|PM)$/.exec(tm || ''); if (!m) return tm || ''; let h = (+m[1] % 12) + (m[3] === 'PM' ? 12 : 0) - 1; if (h < 0) h += 24; const ap = h >= 12 ? 'PM' : 'AM'; return `${h % 12 || 12}:${m[2]} ${ap} CT`; };
+    const today = todayCT(); const days = {};
+    d.games.forEach(g => { const y = toYmd(g.date); if (!y) return; const k = y + '|' + (g.arena || ''); (days[k] = days[k] || { y, date: g.date, arena: g.arena, city: g.city, games: [] }).games.push(g); });
+    const list = Object.values(days).sort((a, b) => a.y < b.y ? -1 : a.y > b.y ? 1 : 0); const ahead = list.filter(x => x.y >= today), done = list.filter(x => x.y < today).reverse();
+    const show = (ahead.length ? ahead : done).slice(0, 12); if (!show.length) return '';
+    const line = g => { const tms = g.teams && g.teams.length === 2 ? `${esc(g.teams[0])} vs ${esc(g.teams[1])}` : 'Teams to be set'; const sc = g.score ? `<b>${g.score[0]}–${g.score[1]}</b>` : `<b>${esc(ct(g.time))}</b>`; return `<span class="ug"><span>${tms}</span>${sc}</span>`; };
+    const rows = show.map(x => `<div class="frow urow"><span class="nm"><b>${esc(dayLabel(x.y, { weekday: 'short', month: 'short', day: 'numeric' }))}</b><small>${esc([x.arena, x.city].filter(Boolean).join(' · ') || 'Arena to be announced')}</small>${x.games.some(g => g.teams && g.teams.length === 2 || g.score) ? `<span class="ugs">${x.games.map(line).join('')}</span>` : `<span class="utimes">${x.games.map(g => `<i>${esc(ct(g.time).replace(' CT', ''))}</i>`).join('')}<em>CT</em></span>`}</span></div>`).join('');
+    const first = ahead[0] ? dayLabel(ahead[0].y, { month: 'long', day: 'numeric' }) : '';
+    return `<section class="hsec unrv" data-sec="unrivaled">${sec('Unrivaled', ahead.length ? `season opens ${esc(first)}` : 'latest results')}<p class="unote">The 3-on-3 league where WNBA stars play in the offseason. Games on TNT and truTV.</p><div class="gp frows">${rows}</div><p class="unote src">Schedule from <a href="${esc(d.url || 'https://www.unrivaled.basketball/schedule')}" target="_blank" rel="noopener">unrivaled.basketball</a></p></section>`;
   }
   /* what else the scoreboard says: the league's game-day calendar and the part of the season it is (regular season, playoffs) */
   async function sbMeta(L, ymd) {
@@ -1049,10 +1065,10 @@
   }
   async function players(lk) {
     const L = LEAGUES[lk];
-    $main.innerHTML = `<div class="page-h"><h1>Players</h1><p>From the teams you follow. Search any team to see its roster.</p></div><div id="ppick"></div>`;
+    $main.innerHTML = `<div class="stbar edbar"><a class="gxib stback" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><h1>Players</h1></div><p class="edsub">From the teams you follow. Search any team to see its roster.</p><div id="ppick"></div>`;
     await playerPicker($main.querySelector('#ppick'), L, { following: true, leaders: true });
   }
 
-  HW.v5 = Object.assign(HW.v5 || {}, { home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
+  HW.v5 = Object.assign(HW.v5 || {}, { unrivaledCard, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
     _: { gameRow, injBody, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

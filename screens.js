@@ -195,7 +195,7 @@
       }).filter(Boolean).join('');
       const el = $main.querySelector('#tlist'); if (el) el.innerHTML = blocks || empty(tab === 'following' ? 'No followed teams yet' : 'No team matches', tab === 'following' ? '<p style="margin:6px 0 0">Tap the star on any team to follow it.</p>' : '');
     };
-    $main.innerHTML = `<div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input id="tq" type="search" placeholder="Search teams" value="${esc(q0)}" autocomplete="off" aria-label="Search teams"></div>` + chips([['all', 'All'], ['following', 'Following']], tab0, 'ttab', 'tab') + `<div id="tlist"></div>`;
+    $main.innerHTML = `<div class="stbar edbar"><a class="gxib stback" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><h1>Teams</h1></div><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input id="tq" type="search" placeholder="Search teams" value="${esc(q0)}" autocomplete="off" aria-label="Search teams"></div>` + chips([['all', 'All'], ['following', 'Following']], tab0, 'ttab', 'tab') + `<div id="tlist"></div>`;
     paint();
     const inp = $main.querySelector('#tq'); let t = null;
     inp.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { store.set('v5:tq', inp.value); paint(); }, 120); });
@@ -1248,6 +1248,10 @@
       const crest = x => `<a class="pfcr" href="${href.team(x.k, x.t.id)}" aria-label="${esc(x.t.name)}">${x.t.logo ? `<img src="${esc(x.t.logo)}" alt="" loading="lazy">` : ''}<span>${esc(x.t.abbr || x.t.short || '')}</span></a>`;
       const face = p => `<a class="pfpl" href="${href.player(p.lk, p.id)}">${headshot(p.img, playerColor(p, LEAGUES[p.lk]), 60, p.name)}<span>${esc(p.short || p.name || '')}</span></a>`;
       const choose = x => `<button class="pfpick${pick === x ? ' on' : ''}" data-jk="${x.k}" data-jid="${esc(x.t.id)}">${x.t.logo ? `<img src="${esc(x.t.logo)}" alt="" loading="lazy">` : ''}<span>${esc(x.t.short || x.t.name)}</span><em>${esc(LEAGUES[x.k].label)}</em></button>`;
+      /* the jersey picker is split by league (NBA, WNBA, College) so you scroll a short list from the top */
+      const grpOf = k => k.startsWith('ncaa') ? 'college' : k;
+      const JG = [['nba', 'NBA'], ['wnba', 'WNBA'], ['college', 'College']].filter(([g]) => teams.some(x => grpOf(x.k) === g));
+      const jg0 = pick ? grpOf(pick.k) : (JG[0] || [''])[0];
       $main.innerHTML = `<div class="pfpage" style="--pc:${esc(main)}"><div class="pfband"><span class="pfw"><i></i><i></i><i></i></span>
           <div class="pftop"><a class="ib" href="#settings" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>
           <div class="pfid"><button class="pfjbtn" data-act="pfjer" aria-label="Choose your jersey">${jersey}</button>
@@ -1256,7 +1260,7 @@
           <button class="pfedit" data-act="pfedit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Edit name and number</button>
           <div class="pfname" hidden><input id="pname" type="text" maxlength="12" autocomplete="given-name" autocapitalize="words" placeholder="Name" value="${esc(name)}"><input id="pnum" type="text" inputmode="numeric" maxlength="2" placeholder="#" value="${esc(num)}"><button data-act="pfdone">Done</button></div>
         </div>
-        <div class="pfjgrid" hidden><div class="pfsec"><h2>Your jersey</h2><span>Pick the team</span></div>${teams.length ? `<div class="pfpicks">${teams.map(choose).join('')}</div>` : `<a class="pfcta" href="#teams"><span class="t"><b>Follow a team first</b><span>Then its jersey can be yours</span></span>${chev}</a>`}</div>
+        <div class="pfjgrid" hidden><div class="pfsec"><h2>Your jersey</h2><span>Pick the team</span></div>${teams.length ? `<div class="chips pfjtabs">${JG.map(([g, l]) => `<button class="chip${g === jg0 ? ' on' : ''}" data-jg="${g}" aria-pressed="${g === jg0}">${l}</button>`).join('')}</div>${JG.map(([g]) => `<div class="pfpicks" data-jgp="${g}"${g === jg0 ? '' : ' hidden'}>${teams.filter(x => grpOf(x.k) === g).map(choose).join('')}</div>`).join('')}` : `<a class="pfcta" href="#teams"><span class="t"><b>Follow a team first</b><span>Then its jersey can be yours</span></span>${chev}</a>`}</div>
         <div class="pfsec"><h2>Your teams</h2><a href="#teams">Edit</a></div>${teams.length ? `<div class="pfrail">${teams.map(crest).join('')}</div>` : `<a class="pfcta" href="#teams"><span class="t"><b>Pick your teams</b><span>They lead Following and get your updates</span></span>${chev}</a>`}
         <div class="pfsec"><h2>Your players</h2><a href="#players">Edit</a></div>${fp.length ? `<div class="pfrail">${fp.map(face).join('')}</div>` : `<a class="pfcta" href="#players"><span class="t"><b>Follow some players</b><span>Their lines show up on Following</span></span>${chev}</a>`}
       </div>`;
@@ -1264,7 +1268,10 @@
       const save = () => { store.set('v5:name', $main.querySelector('#pname').value.trim()); const n = $main.querySelector('#pnum').value.replace(/\D/g, '').slice(0, 2); store.set('v5:jersey', { ...(store.get('v5:jersey', null) || {}), num: n }); };
       $main.querySelector('[data-act="pfedit"]').addEventListener('click', e => { e.preventDefault(); box.hidden = false; eb.hidden = true; $main.querySelector('#pname').focus(); });
       $main.querySelector('[data-act="pfdone"]').addEventListener('click', e => { e.preventDefault(); save(); settingsV('profile'); });
-      $main.querySelector('[data-act="pfjer"]').addEventListener('click', e => { e.preventDefault(); const g = $main.querySelector('.pfjgrid'); g.hidden = !g.hidden; if (!g.hidden) g.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+      $main.querySelector('[data-act="pfjer"]').addEventListener('click', e => { e.preventDefault(); const g = $main.querySelector('.pfjgrid'); g.hidden = !g.hidden; if (!g.hidden) window.scrollTo({ top: window.scrollY + g.getBoundingClientRect().top - 12, behavior: 'smooth' }); });
+      $main.querySelectorAll('[data-jg]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); const g = b.dataset.jg;
+        $main.querySelectorAll('[data-jg]').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+        $main.querySelectorAll('[data-jgp]').forEach(x => { x.hidden = x.dataset.jgp !== g; }); }));
       $main.querySelectorAll('[data-jk]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); store.set('v5:jersey', { ...(store.get('v5:jersey', null) || {}), k: b.dataset.jk, id: b.dataset.jid }); settingsV('profile').then(() => window.scrollTo(0, 0)); }));
       return;
     }

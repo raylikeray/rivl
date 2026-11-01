@@ -3828,3 +3828,43 @@ html:root body .tag.ok::before{background:#22C55E}
 /* injury rows: the name gets the room; the return note is short and sits under the pill */
 html body .frow.ijrow .fs{max-width:40%}
 html body .frow.ijrow .fs em{font-size:12.5px}
+/* headshots: the initials only show when there is no photo (they were showing through transparent cut-outs) */
+html body .hs:not(.noimg) > i{visibility:hidden}
+/* the team badge on a face: bigger, on a white disc in both modes so every crest reads */
+html:root body .frow .fcr{width:26px!important;height:26px!important;right:-6px;bottom:-4px;padding:0!important;background:#fff!important;border-radius:50%!important;box-shadow:0 0 0 2px var(--card),0 1px 4px rgba(0,0,0,.18)!important;display:grid;place-items:center}
+html:root body .frow .fcr img{width:19px!important;height:19px!important;object-fit:contain}
+/* profile: the back button over the colour band is dark glass with a white arrow, never a blank white disc */
+html:root body .pftop .ib{background:rgba(10,12,16,.38)!important;color:#fff!important;border:0!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)!important}
+.pfjtabs{margin:0 0 12px;padding:0 var(--pg-r,16px) 0 var(--pg,16px)}
+/* traits: the chosen slice stands out, the rest step back; numbers in plain ink so a pale team colour never washes them out */
+html body .hexsvg .hxw{fill-opacity:.55!important}
+html body .hexsvg .hxw.on{fill-opacity:1!important}
+html body .hexsvg .hxl.on .hxp,html body .hxdh em{fill:var(--ink)!important;color:var(--ink)!important}
+html body .hexsvg .hxl .hxp{font-size:17px}
+html body .hexsvg .hxl:not(.on) .hxp{fill:color-mix(in srgb,var(--ink) 78%,transparent)}
+html body .hxdh b::before{content:"";display:inline-block;width:10px;height:10px;margin-right:8px;border-radius:3px;background:var(--tf,var(--ink));vertical-align:1px}
+html body .hexsvg .hxw{transform-origin:192px 163px}
+html body .hexsvg{max-width:400px}
+/* Players / Teams edit pages: a back button and title, the search box and the last-season note in the app's card style */
+.edbar{margin-top:6px}
+.edsub{margin:-4px var(--pg-r,16px) 12px var(--pg,16px);font-size:14.5px;line-height:1.4;color:var(--ink-3)}
+html:root body #main .search{display:flex;align-items:center;gap:10px;height:50px;padding:0 14px;border-radius:16px!important;background:var(--card)!important;border:1px solid var(--card-line)!important;box-shadow:none!important}
+html:root body #main .search>svg{width:20px;height:20px;color:var(--ink-3);flex:none}
+html:root body #main .search input{flex:1;min-width:0;border:0;outline:0;background:none!important;box-shadow:none!important;color:var(--ink);font:500 17px/1.2 var(--ui,inherit)}
+html:root body .legend.lastyear{display:flex;gap:12px;align-items:flex-start;padding:14px 16px!important;border-radius:18px!important;background:var(--card)!important;border:1px solid var(--card-line)!important;box-shadow:none!important}
+html:root body .legend.lastyear>svg{flex:none;width:36px;height:36px;padding:8px;border-radius:11px;background:var(--surf-2);color:var(--ink-2)}
+html:root body .legend.lastyear b{display:block;font-size:15px;font-weight:800;margin:1px 0 3px}
+html:root body .legend.lastyear span{font-size:13.5px;line-height:1.45;color:var(--ink-3)}
+/* Unrivaled schedule card */
+.unrv .unote{margin:-4px var(--gut-r,16px) 12px var(--gut,16px);font-size:14px;line-height:1.45;color:var(--ink-3)}
+.unrv .unote.src{margin-top:10px;font-size:12.5px}.unrv .unote a{color:inherit;text-decoration:underline}
+.unrv .urow{display:block;padding:14px 16px}
+.unrv .urow .nm{display:block}
+.unrv .urow .nm>b{font-size:16px;font-weight:800}
+.unrv .urow .nm>small{display:block;margin-top:2px;font-size:13px;color:var(--ink-3)}
+.unrv .utimes{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px}
+.unrv .utimes i{font-style:normal;padding:5px 10px;border-radius:999px;background:var(--surf-2);font-size:13px;font-weight:700;color:var(--ink)}
+.unrv .utimes em{font-style:normal;font-size:12px;font-weight:700;color:var(--ink-3);margin-left:2px}
+.unrv .ugs{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.unrv .ug{display:flex;justify-content:space-between;gap:10px;font-size:14.5px}
+.unrv .ug span{color:var(--ink-2)}.unrv .ug b{font-weight:800}
