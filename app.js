@@ -64,6 +64,17 @@
   let seq = 0, current = null;
   /* where each screen was scrolled to, by screen key: going BACK to a screen lands where you were; a tab lands where you left it;
      a link to a player, team, game or story always opens at the top, however far down it you were last time */
+  const J = (n, f) => HW.perf ? HW.perf.job(n, f) : f();
+  /* the gesture gate: while a finger is on the screen or a slide is settling, nothing that could take a frame runs
+     (polling repaints, crest fitting, building the next league's copy). It all waits for the hand to lift. */
+  let touching = false; const later = [];
+  V.busy = () => touching || !!render.swiping || !!render.gliding;
+  V.whenIdle = fn => { if (!V.busy()) { fn(); return; } if (!later.includes(fn)) later.push(fn); };
+  V.flushIdle = () => { if (V.busy() || !later.length) return; const q = later.splice(0); q.forEach(f => { try { f(); } catch (e) { console.error(e); } }); };
+  document.addEventListener('touchstart', () => { touching = true; clearTimeout(V.flushT); }, { passive: true, capture: true });
+  const lift = () => { touching = false; clearTimeout(V.flushT); V.flushT = setTimeout(V.flushIdle, 320); };
+  document.addEventListener('touchend', lift, { passive: true, capture: true }); document.addEventListener('touchcancel', lift, { passive: true, capture: true });
+  setInterval(() => V.flushIdle(), 1500);
   const scrollMem = new Map();
   const entSnaps = new Map();   // the last few game, team and player pages, as they stood when you left them
   /* every sideways strip (last night's results, a rail of players, the date row) remembers how far you moved it, per
@@ -76,12 +87,12 @@
   const keyOf = r => r ? `${r.name}/${(r.args || []).join('/')}` : '';
   document.addEventListener('scroll', e => { const t = e.target; if (render.swiping || !t || t.nodeType !== 1 || !t.matches(STRIP_SEL) || !$main.contains(t)) return; const k = keyOf(current); if (k) stripMem.set(k, stripsOf($main)); }, true);
   // sections that arrive after the first paint get their place back too
-  new MutationObserver(() => { if (render.swiping) return; const k = keyOf(current); const m = k && stripMem.get(k); if (m && Object.keys(m).length) stripsTo($main, m); }).observe($main, { childList: true, subtree: true });
+  new MutationObserver(() => { if (render.swiping) return; J('mo:strips', () => { const k = keyOf(current); const m = k && stripMem.get(k); if (m && Object.keys(m).length) stripsTo($main, m); }); }).observe($main, { childList: true, subtree: true });
   let navN = 0;   // each history entry is numbered the first time it is shown; an entry numbered below the one we left is a step back
   async function render() {
     const r = route(); const my = ++seq; current = r; V.refresh = null; closeSheet();
     if (r.name !== 'scores' && V.todayPill) V.todayPill(false);   // the Scores screen's back-to-today pill goes with it
-    const key = `${r.name}/${r.args.join('/')}`;
+    const key = `${r.name}/${r.args.join('/')}`; const sp = HW.perf && HW.perf.span('render ' + key);
     const st = history.state; const back = !!(st && st.n != null && st.n < navN);
     if (st && st.n != null) navN = st.n; else { navN += 1; try { history.replaceState({ n: navN }, ''); } catch { } }
     const leagueScreen = SCREENS.includes(r.name);
@@ -146,6 +157,7 @@
     document.title = leagueScreen ? `${TITLES[r.name]} · ${LEAGUES[r.lk].label} · RIVL` : `${TITLES[r.name] || ''} RIVL`.trim();
     $main.dataset.top = '1';   // scroll to the top with the new screen's first real paint, not before it
     { const es = fresh && ENT.includes(r.name) ? entSnaps.get(key) : null; if (es) { $main.innerHTML = es.html; const gs = $main.querySelector('#gxscroll'); if (gs) gs.scrollTop = es.st; if (V._ && V._.gxAttach) V._.gxAttach(); } }
+    if (sp) sp.end();
     try { await (V[r.name] || V.home)(...r.args); }
     catch (err) { if (my === seq) $main.innerHTML = `<div class="empty"><b>Something went wrong</b><p style="margin:6px 0 0">${esc(err && err.message || 'Try again in a moment.')}</p></div>`; console.error(err); }
     if (my !== seq) return;
@@ -200,7 +212,7 @@
     }
     if (!failed) lastOk = Date.now();
     stale(failed);
-    document.dispatchEvent(new CustomEvent('rivl:polled'));
+    V.whenIdle(() => J('polled', () => document.dispatchEvent(new CustomEvent('rivl:polled'))));
     if (SCREENS.includes((current || route()).name)) paintPills((current || route()).lk, true);
     if (anyLive && current && (current.name === 'home' || current.name === 'scores')) refreshCards();
     if (V.refresh) { try { await V.refresh(); } catch { } }
@@ -282,7 +294,8 @@
     const row = t => `<span class="lr${lo(t)}">${V._.logo(t.logo || '', 's', tc(t))}<span class="nm">${nm(t)}</span><i class="sc">${sc(t)}</i></span>`;
     return `<a class="lg sb${HW.isFav(g) ? ' fav' : ''}" href="#game/${L.key}/${esc(g.id)}" data-lid="${L.key}:${esc(g.id)}" style="--ca:${esc(tc(a) || '#333')};--ch:${esc(tc(h) || '#333')};--cb:${esc(base)};--pl:${(played * 100).toFixed(1)}%"><span class="lrows">${row(a)}${row(h)}</span><span class="lside"><span class="st"><span class="dot"></span>${esc(HW.clockOf ? HW.clockOf(g, L) : g.detail)}</span>${g.tv && g.tv.label ? `<small>${esc(g.tv.label)}</small>` : ''}</span></a>`;
   }
-  function paintLive() {
+  const paintLive = () => J('paintLive', paintLive0);
+  function paintLive0() {
     if (!$live) return;
     const r = current || route();
     const show = r && !['settings', 'search'].includes(r.name) && !document.body.classList.contains('onboarding');
@@ -388,6 +401,12 @@
     document.addEventListener('touchend', end); document.addEventListener('touchcancel', end);
   })();
   document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+  /* the performance log: hold the Settings title for a moment. Copy puts it on the clipboard for Ray. */
+  (() => { let pt = 0; const open = () => { if (!HW.perf) return; const txt = HW.perf.text(); openPanel(`<div class="grab"></div><h2 style="margin:0 0 10px">Performance log</h2><p class="legend" style="margin:0 0 10px">Kept on this phone only. Long tasks, dropped frames during gestures, slow jobs.</p><div style="display:flex;gap:8px;margin:0 0 12px"><button class="btn" data-act="perfcopy">Copy</button><button class="btn" data-act="perfreset">Reset</button></div><pre class="perfpre" style="font:11px/1.4 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word;color:var(--ink-2);margin:0">${esc(txt)}</pre>`, { full: true }); };
+    document.addEventListener('pointerdown', e => { const t = e.target.closest('.topbar .ttl, .topbar .t, .topbar h1'); clearTimeout(pt); if (!t || !/^Settings$/.test(t.textContent.trim())) return; pt = setTimeout(open, 650); }, true);
+    ['pointerup', 'pointercancel', 'pointermove'].forEach(ev => document.addEventListener(ev, () => clearTimeout(pt), true));
+    document.addEventListener('click', e => { const a = e.target.closest('[data-act="perfcopy"],[data-act="perfreset"]'); if (!a) return; e.preventDefault(); if (a.dataset.act === 'perfreset') { HW.perf.reset(); closePanel(); toast('Log cleared'); return; } try { navigator.clipboard.writeText(HW.perf.text()).then(() => toast('Copied')); } catch { toast("Couldn't copy"); } });
+  })();
   /* long-pressing a name or a card is not a link to share: no context menu on the app's own controls */
   document.addEventListener('contextmenu', e => { if (!e.target.closest('.reader .body, input, textarea')) e.preventDefault(); });
 
@@ -464,7 +483,7 @@
     const idle = f => (window.requestIdleCallback || (g => setTimeout(g, 120)))(f, { timeout: 800 });
     const prebuild = () => { const r = current || route(); if (!r || !SCREENS.includes(r.name)) return; const i = ORDER.indexOf(r.lk);
       Object.keys(ready).forEach(k => { if (ready[k] && ready[k] !== peek) { ready[k].remove(); } delete ready[k]; });
-      [ORDER[i - 1], ORDER[i + 1]].filter(Boolean).forEach(k => idle(() => { if (render.swiping || mode) return; const r2 = current || route(); if (!r2 || r2.lk !== r.lk || r2.name !== r.name) return;
+      [ORDER[i - 1], ORDER[i + 1]].filter(Boolean).forEach(k => idle(() => { if (V.busy() || mode) { V.whenIdle(prebuild); return; } const r2 = current || route(); if (!r2 || r2.lk !== r.lk || r2.name !== r.name) return;
         const el2 = $m.cloneNode(false); el2.removeAttribute('id'); el2.classList.remove('hold', 'fade', 'enter', 'noanim'); el2.classList.add('xpeek'); el2.dataset.for = k + ':' + r.name;
         el2.innerHTML = snaps[k + ':' + r.name] || (V._ && V._.skeleton ? V._.skeleton(1, 'card') + V._.skeleton(4, 'row') : '');
         el2.style.cssText = 'position:fixed;left:0;width:100%;top:0;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;visibility:hidden;transform:translate3d(200vw,0,0);will-change:transform;contain:layout paint';
@@ -501,13 +520,13 @@
         () => { peek = null; $m.style.transform = ''; $m.style.willChange = ''; if (pk) { if (Object.values(ready).includes(pk)) { pk.style.visibility = 'hidden'; pk.style.transform = 'translate3d(200vw,0,0)'; } else pk.remove(); } clearTrack(); const r = current || route(); paintPills(r.lk, true); }); };
     /* carry on to league k: the page leaves, the next slides fully in, then the real screen takes the copy's place */
     const slideTo = (k, dirL, ms, fromX = null, v0 = 0) => { const r0 = current || route(); from = from || r0.lk; to = k; if ($m.dataset.real === '1') snaps[r0.lk + ':' + r0.name] = $m.innerHTML; makePeek(k); W2 = window.innerWidth;
-      render.swipe = true; render.swiping = true; render.tapAt = performance.now(); peek.style.visibility = '';
-      const land = () => { $m.style.transition = 'none'; $m.style.transform = ''; $m.style.willChange = ''; const snap = snaps[k + ':' + r0.name];
+      render.swipe = true; render.swiping = true; render.gliding = true; render.tapAt = performance.now(); peek.style.visibility = '';
+      const land = () => J('land', () => { $m.style.transition = 'none'; $m.style.transform = ''; $m.style.willChange = ''; const snap = snaps[k + ':' + r0.name];
         scrollMem.set(r0.name + '/' + r0.lk, window.scrollY); const ny = scrollMem.get(r0.name + '/' + k) || 0; render.memDone = true; render.keepHdr = ny > 4; render.hdrHold = true; if (ny <= 4 && V.showTop) V.showTop(); setTimeout(() => { render.hdrHold = false; }, 400);
         stripMem.set(r0.name + '/' + r0.lk, stripsOf($m));
         if (snap) { if (peek && peek.dataset.for === k + ':' + r0.name && peek.childNodes.length) $m.replaceChildren(...peek.childNodes); else $m.innerHTML = snap;   // the very nodes you were looking at slide into place: nothing is rebuilt or decoded again
-          stripsTo($m, stripMem.get(r0.name + '/' + k)); window.scrollTo(0, ny); $m.dataset.hlk = k; location.hash = '#' + k; requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; if (peek) { peek.remove(); Object.keys(ready).forEach(q => { if (ready[q] === peek) delete ready[q]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); })); return; }
-        $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { requestAnimationFrame(() => { render.swiping = false; $m.style.visibility = ''; if (peek) { peek.remove(); Object.keys(ready).forEach(k => { if (ready[k] === peek) delete ready[k]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); }); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); };
+          stripsTo($m, stripMem.get(r0.name + '/' + k)); window.scrollTo(0, ny); $m.dataset.hlk = k; location.hash = '#' + k; requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; if (peek) { peek.remove(); Object.keys(ready).forEach(q => { if (ready[q] === peek) delete ready[q]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); render.gliding = false; V.flushIdle(); setTimeout(prebuild, 500); })); return; }
+        $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { requestAnimationFrame(() => { render.swiping = false; $m.style.visibility = ''; if (peek) { peek.remove(); Object.keys(ready).forEach(k => { if (ready[k] === peek) delete ready[k]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); render.gliding = false; V.flushIdle(); setTimeout(prebuild, 500); }); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); });
       if (fromX != null) { $m.style.transition = 'none'; peek.style.transition = 'none'; $pills.classList.remove('dragging');
         spring(fromX, v0, dirL ? -W2 : W2, x => { $m.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`; peek.style.transform = `translate3d(${(x + (dirL ? W2 : -W2)).toFixed(2)}px,0,0)`; track(Math.min(1, Math.abs(x) / W2)); }, land); return; }
       const T = `transform ${ms}ms cubic-bezier(.25,.8,.25,1)`; if (!dirL) peek.style.transform = `translate3d(${-W2}px,0,0)`; void peek.offsetWidth; $m.style.transition = T; peek.style.transition = T; $pills.classList.remove('dragging'); $pills.classList.add('gliding');
@@ -556,6 +575,7 @@
   (() => {
     const hdr = document.getElementById('hdr'); if (!hdr) return; const phone = matchMedia('(max-width:1039px)');
     let off = 0, lastY = window.scrollY, idle = 0;
+    let hH = 0; const hdrH = () => hH || (hH = hdr.offsetHeight); window.addEventListener('resize', () => { hH = 0; }); document.addEventListener('rivl:rendered', () => { hH = 0; });   // measured once, not on every scroll event
     const bar = document.getElementById('tabs');
     // the bottom bar moves with the top, the same share of its own height, so both leave and come back together
     const set = (v, ease) => { off = v; const tr = ease ? 'transform .22s cubic-bezier(.3,.7,.2,1)' : 'none'; hdr.style.transition = tr; hdr.style.transform = off ? `translate3d(0,${-off}px,0)` : '';
@@ -564,9 +584,9 @@
       if (!phone.matches) { if (off) set(0); return; }
       if (render.hdrHold || document.querySelector('#bsheet.on, .xpsheet.in, .xdrawer.in')) { lastY = window.scrollY; return; }   // a swipe landing at the league's own scroll is not you scrolling   // a sheet or the side panel is open: the bars stay put
       if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) { lastY = window.scrollY; return; }   // the bottom bounce never counts as scrolling up
-      const y = Math.max(0, window.scrollY), H = hdr.offsetHeight, dy = y - lastY; lastY = y;
+      const y = Math.max(0, window.scrollY), H = hdrH(), dy = y - lastY; lastY = y;
       set(Math.min(H, Math.max(0, Math.min(off + dy, y))), false);
-      clearTimeout(idle); idle = setTimeout(() => { const h = hdr.offsetHeight; if (off > 0 && off < h) set(off > h / 2 && window.scrollY > h ? h : 0, true); }, 140);
+      clearTimeout(idle); idle = setTimeout(() => { const h = hdrH(); if (off > 0 && off < h) set(off > h / 2 && window.scrollY > h ? h : 0, true); }, 140);
     }, { passive: true });
     // a new screen always starts with the top showing
     V.showTop = () => set(0, true);

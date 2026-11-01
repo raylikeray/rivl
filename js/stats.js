@@ -4,6 +4,7 @@
 (function () {
   'use strict';
   const V = HW.v5, _ = V._, esc = HW.esc, store = HW.store, LEAGUES = HW.LEAGUES, ORDER = HW.ORDER;
+  const J = (n, f) => HW.perf ? HW.perf.job(n, f) : f();
   const one = v => v == null || isNaN(v) ? '-' : (Math.round(v * 10) / 10).toFixed(1);
   const pct = v => v == null || isNaN(v) ? '-' : (+v).toFixed(1);
   /* per-game categories need real games; percentages need real attempts. The bars follow the NBA's own idea (a share of
@@ -105,7 +106,7 @@
       const extra = tab === 'rookies' ? (() => { const top = list('pts', true).slice(0, 3); return top.length > 1 ? `<button class="stcmp" data-xq="${esc(top.map(x => x.p.n).join(' vs '))}">Compare the top rookies</button>` : ''; })() : '';
       return `<div class="page-h"><h1>Stats</h1><p>${esc(lg.label || '')}${lg.lastSeason ? ', last season' : ''}</p></div>${seg}${note}${extra}${body}`;
     }
-    const paint = () => { const html = `<div class="stpage" data-lk="${lk}">${board ? boardHTML() : homeHTML()}</div>`; const up = $main.querySelector('.stpage'); if (up && up.dataset.lk === lk && _.patch) _.patch(up, html.slice(html.indexOf('>') + 1, -6)); else $main.innerHTML = html; };
+    const paint = () => J('stats:paint', () => paint0()); const paint0 = () => { const html = `<div class="stpage" data-lk="${lk}">${board ? boardHTML() : homeHTML()}</div>`; const up = $main.querySelector('.stpage'); if (up && up.dataset.lk === lk && _.patch) _.patch(up, html.slice(html.indexOf('>') + 1, -6)); else $main.innerHTML = html; };
     paint();
     // the RIVL rating board needs the whole league worked out; it fills in when ready
     getR().then(() => { if (document.querySelector('.stpage') && (board === 'rating' || !board)) { const y = window.scrollY; paint(); window.scrollTo(0, y); } });

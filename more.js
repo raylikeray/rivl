@@ -2,7 +2,7 @@
    the app-icon badge and share cards. Loaded last; everything here is optional and fails quietly. */
 (() => {
   'use strict';
-  const { LEAGUES, ORDER, S, esc, store, isLive, isFav } = HW;
+  const { LEAGUES, ORDER, S, esc, store, isLive, isFav } = HW; const J = (n, f) => HW.perf ? HW.perf.job(n, f) : f();
   const V = HW.v5;
   const toast = m => V.toast && V.toast(m);
 
@@ -85,7 +85,8 @@
   const bigScale = m => Math.min(1.45, Math.max(1, Math.min(1 / m.w, 1 / m.h) * 0.94));
   const discScale = (img, m) => { const base = parseFloat(getComputedStyle(img).width) / Math.max(1, parseFloat(getComputedStyle(img.parentElement).width)) || .74; return Math.min(1.4, Math.max(.7, (0.68 / base) / Math.max(m.w, m.h))); };
   /* runs in the same frame the crest is added (known artwork is applied at once), unknown artwork is measured in parallel */
-  function fitLogos() {
+  const fitLogos = () => J('fitLogos', fitLogos0);
+  function fitLogos0() {
     const one = (img, scaleOf) => { img.classList.add('fitted'); const src = img.getAttribute('src') || ''; const k = known[src];
       if (k !== undefined) { if (k) apply(img, scaleOf(k), k); return; }
       measure(src).then(m => { if (m && img.isConnected) apply(img, scaleOf(m), m); }); };
@@ -106,12 +107,12 @@
     const v = fl + '|' + fr; if (el.dataset.edge === v) return; el.dataset.edge = v;
     el.style.setProperty('--fl', fl + 'px'); el.style.setProperty('--fr', fr + 'px'); el.classList.toggle('fades', fl > 0 || fr > 0);
   };
-  const edges = () => document.querySelectorAll(STRIPS).forEach(edge);
+  const edges = () => J('edges', () => document.querySelectorAll(STRIPS).forEach(edge));
   V.edges = edges;
   document.addEventListener('scroll', e => { const t = e.target; if (t && t.nodeType === 1 && t.matches && t.matches(STRIPS)) edge(t); }, true);
   document.addEventListener('rivl:rendered', () => { edges(); setTimeout(edges, 300); });
   window.addEventListener('resize', edges);
-  new MutationObserver(() => { fitLogos(); clearTimeout(edges.t); edges.t = setTimeout(edges, 60); }).observe(document.getElementById('main'), { childList: true, subtree: true });
+  new MutationObserver(() => { V.whenIdle(fitLogos); clearTimeout(edges.t); edges.t = setTimeout(() => V.whenIdle(edges), 60); }).observe(document.getElementById('main'), { childList: true, subtree: true });
 
   /* ---------- share cards: a picture of the result or the line, not a link ---------- */
   const loadImg = src => new Promise(res => { if (!src) return res(null); const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
@@ -244,10 +245,11 @@
    "Show fewer" folds them again; the choice is kept for the visit. Works on whatever the list holds, so live updates that
    redraw the rows keep the same cap. */
 (() => {
+  const J = (n, f) => HW.perf ? HW.perf.job(n, f) : f();
   const SEL = '#main .hsec .gp.frows, #main .hsec .gp.grows, #main .brief-rows';
   const open = (() => { try { return JSON.parse(sessionStorage.getItem('rivl:open') || '{}'); } catch { return {}; } })();
   const keyOf = el => { const h = el.closest('.hsec,.brief'); return (h && (h.dataset.sec || (h.classList.contains('brief') ? 'brief' : ''))) + ':' + [...(h ? h.querySelectorAll(SEL) : [])].indexOf(el); };
-  const apply = () => document.querySelectorAll(SEL).forEach(el => {
+  const apply = () => J('cap', () => document.querySelectorAll(SEL).forEach(el => {
     const n = [...el.children].filter(c => !c.hidden && !c.classList.contains('capbtn')).length, k = keyOf(el);
     /* on the white cards the button sits inside the card, under the last row; the brief keeps it after its list */
     const inside = el.classList.contains('gp');
@@ -262,7 +264,7 @@
         const y0 = b.getBoundingClientRect().top; open[k] = !open[k]; try { sessionStorage.setItem('rivl:open', JSON.stringify(open)); } catch { } apply();
         const d = b.getBoundingClientRect().top - y0; if (d) window.scrollBy(0, d); }); }
     const txt = open[k] ? 'Show fewer' : `Show all ${n}`; if (b.textContent !== txt) b.textContent = txt;
-  });
+  }));
   let q = false; const run = () => { if (!q) { q = true; requestAnimationFrame(() => { q = false; apply(); }); } };
   const m = document.getElementById('main'); if (m) new MutationObserver(run).observe(m, { childList: true, subtree: true });
   run();

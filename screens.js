@@ -1,6 +1,7 @@
 /* RIVL v5 — the rest of the screens: standings, teams, team, game, article reader, search.
    Loaded after views.js; shares its helpers through HW.v5. */
 (() => {
+  const J = (n, f) => HW.perf ? HW.perf.job(n, f) : f();
   'use strict';
   const { LEAGUES, ORDER, esc, j, jSoft, todayCT, addDays, dayLabel, relDay, tip, tipOf, dateShort, ago, pct, ordinal, sign, hx, store, API, WEB,
     favs, parseEvent, isLive, isDone, finalWord, isFav, interest, scoreboard, standings, rankings, injuries, forecast, forecastCtx, leaguePlayers, watchFor, S, ymdOf } = HW;
@@ -152,7 +153,8 @@
     stPaint(items, tab, groups.map(table).join('') + legend);
   }
   /* standings: the chips stay put and only toggle; the table below them swaps */
-  function stPaint(items, tab, body) {
+  const stPaint = (items, tab, body) => J('standings:paint', () => stPaint0(items, tab, body));
+  function stPaint0(items, tab, body) {
     const page = $main.querySelector('#stpage');
     if (page && page.dataset.lk === (V.route && V.route() || {}).lk) {
       const have = [...page.querySelectorAll('#stchips .chip')].map(c => c.dataset.tab).join();

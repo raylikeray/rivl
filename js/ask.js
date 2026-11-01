@@ -75,6 +75,9 @@
     /* a typo match is only trusted next to something spelled right: in a sentence with no exact or started name anywhere
        ("testing if this works correctly"), a word that merely resembles a name is not that name */
     if (toks.length >= 3 && !hits.some(h => h.score >= 2)) hits.length = 0;
+    /* a second name found only by typo distance in a sentence ("curry's middle name" is not Curry and Dame) is dropped;
+       a question about one person is answered about that person */
+    if (toks.length >= 3 && hits.length >= 2) { const strong = hits.filter(h => h.score >= 2); if (strong.length) { for (let i = hits.length - 1; i >= 0; i--) if (hits[i].score < 2) hits.splice(i, 1); } }
     return { ps: hits.filter(h => h.e.type === 'p').map(h => h.e), ts: hits.filter(h => h.e.type === 't').map(h => h.e), rs: hits.filter(h => h.e.type === 'r').map(h => h.e), nq: ' ' + norm(q) + ' ', hits };
   }
   /* who you follow ranks first among equal matches: "jalen" means your Jalen before the league's */

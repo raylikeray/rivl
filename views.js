@@ -345,6 +345,7 @@
      moment later. Each section is patched in place by a content hash, so later data and the quiet refresh that runs
      while the app is open never repaint what hasn't changed, and never move the page under your thumb. */
   const rankGame = g => (isFav(g) ? 1000 : 0) + (g.tv.national.length ? 100 : 0) + interest(g) / 1000;
+  const J = (n, f) => HW.perf ? HW.perf.job(n, f) : f();
   const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
   /* a section changes in place: text and attributes are patched where the shape matches, so a score ticking over does not
      rebuild the whole card (crests reloading, strips resetting). Children are matched by kind (tag, id, class, a game or
@@ -422,7 +423,8 @@
     // two columns on a wide screen (the games and your people on the left, injuries and news on the right); one stack on a phone
     const SIDE = new Set(['injuries', 'news']);
     const col = k => $main.querySelector(SIDE.has(k) ? '.hcol.side' : '.hcol.main') || $main;
-    const paint = (quiet = false) => {
+    const paint = (quiet = false) => J('home:paint', () => paint0(quiet));
+    const paint0 = (quiet = false) => {
       if (!alive()) return; if (keep) quiet = true;
       if (!painted) {
         painted = true;
@@ -653,7 +655,8 @@
     const page0 = $main.querySelector('#scpage');
     const inPlace = page0 && page0.dataset.lk === lk;
     const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
-    const paint = body => {
+    const paint = body => J('scores:paint', () => paint0(body));
+    const paint0 = body => {
       const page = $main.querySelector('#scpage');
       if (page && page.dataset.lk === lk) {
         const hd = page.querySelector('#schead'); const hh = hashOf(head);
