@@ -510,7 +510,7 @@ async function statCategory(L, cat, sort, limit = 50, season) {
 const lpMem = {};
 async function leaguePlayers(L, season) {
   // the season's list is kept on the device for six hours: stats move nightly, and every page is a request the feed may refuse
-  const key = `v5:lp:${L.key}${season ? ':' + season : ''}`;
+  const key = `v5:lp2:${L.key}${season ? ':' + season : ''}`;
   if (lpMem[key] && Date.now() - lpMem[key].t < 6 * 3600000) return lpMem[key].v;
   const kept = store.get(key, null); if (kept && kept.t && Date.now() - kept.t < 6 * 3600000 && kept.v && kept.v.rows && kept.v.rows.length) { lpMem[key] = kept; return kept.v; }
   const base = `${WEB(L)}/statistics/byathlete?region=us&lang=en&contentorigin=espn&isqualified=false&limit=100&sort=offensive.avgPoints:desc${season ? `&season=${season}&seasontype=2` : ''}`;
@@ -525,7 +525,10 @@ async function leaguePlayers(L, season) {
     const pts = v.avgPoints || 0, fga = v.avgFieldGoalsAttempted || 0, fta = v.avgFreeThrowsAttempted || 0;
     rows.push({ id: String(at.id), name: at.displayName, short: at.shortName, team: at.teamShortName || at.teamName || '', teamId: String(at.teamId || ''), pos: at.position && at.position.abbreviation || '', img: at.headshot && at.headshot.href,
       gp: v.gamesPlayed || 0, min: v.avgMinutes || 0, pts, reb: v.avgRebounds || 0, ast: v.avgAssists || 0, stl: v.avgSteals || 0, blk: v.avgBlocks || 0, tov: v.avgTurnovers || 0,
-      fg: v.fieldGoalPct || 0, tp: v.threePointFieldGoalPct || 0, ft: v.freeThrowPct || 0, tpm: v.avgThreePointFieldGoalsMade || 0, ts: (fga + 0.44 * fta) > 0 ? pts / (2 * (fga + 0.44 * fta)) * 100 : 0 });
+      fg: v.fieldGoalPct || 0, tp: v.threePointFieldGoalPct || 0, ft: v.freeThrowPct || 0, tpm: v.avgThreePointFieldGoalsMade || 0, ts: (fga + 0.44 * fta) > 0 ? pts / (2 * (fga + 0.44 * fta)) * 100 : 0,
+      /* the rest of the box line, for the RIVL rating; null when the feed doesn't carry it, so the rating can tell "zero" from "unknown" */
+      fga, fta, fgm: v.avgFieldGoalsMade ?? null, ftm: v.avgFreeThrowsMade ?? null, tpa: v.avgThreePointFieldGoalsAttempted ?? null,
+      oreb: v.avgOffensiveRebounds ?? null, dreb: v.avgDefensiveRebounds ?? null, pf: v.avgFouls ?? null, gs: v.gamesStarted ?? null });
   }));
   /* Which season these numbers actually describe. Before a season tips off the feed keeps serving the last completed one,
      so a college list in October is last year's — a player drafted in June is still listed with his old school and his old

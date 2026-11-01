@@ -3391,3 +3391,39 @@ html body .tbl.stand:has(thead th:nth-child(6)) td:last-child,html body .tbl.sta
 .fold.closed{opacity:0}
 /* some players only have a small or tightly cropped photo: show it smaller instead of blowing it up blurry */
 .plh .plshot.small{height:340px!important;bottom:60px!important}
+/* ===== RIVL rating cards (player page) ===== */
+.rtcard{margin-top:14px;padding:16px 16px 14px!important}
+.rth{display:flex;align-items:center;gap:10px}
+.rth b{font-size:18px;font-weight:800;letter-spacing:-.01em}
+.rtl{display:inline-grid;place-items:center;min-width:30px;height:24px;padding:0 6px;border-radius:7px;background:var(--surf-2);font-size:10.5px;font-weight:800;letter-spacing:.02em;color:var(--ink-2)}
+.rtrow{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;margin-top:14px}
+.rtrow>div{display:flex;flex-direction:column;align-items:center;gap:4px}
+.rtrow b{font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.rtrow span{font-size:13px;color:var(--ink-3);font-weight:500}
+.rtb{display:inline-block;min-width:46px;padding:1px 9px;border-radius:9px;color:#fff;font-variant-numeric:tabular-nums}
+.rtb.t5{background:#16A34A}.rtb.t4{background:#4CAF50}.rtb.t3{background:#E2B203;color:#1A1400}.rtb.t2{background:#F08A24}.rtb.t1{background:#E5484D}
+.rtsum{margin:14px 2px 0;font-size:14.5px;line-height:1.4;color:var(--ink-2);text-align:center}
+.hxcard{margin-top:14px;padding:0 0 14px!important;overflow:hidden}
+.hxh{padding:16px 16px 12px;border-bottom:1px solid var(--line)}
+.hxh b{display:block;font-size:18px;font-weight:800}
+.hxh span{display:block;margin-top:3px;font-size:13.5px;color:var(--ink-3)}
+.hexsvg{display:block;width:100%;max-width:380px;height:auto;margin:6px auto 0;overflow:visible;color:var(--ink)}
+.hexsvg .hxr{fill:none;stroke:color-mix(in srgb,var(--ink) 16%,transparent);stroke-width:1}
+.hexsvg .hxr.d{stroke-dasharray:4 4}
+.hexsvg .hxw{fill:var(--tf,var(--ink));stroke:var(--tf,var(--ink));stroke-width:1;stroke-linejoin:round;transform-box:view-box;transform-origin:180px 163px;animation:hexgrow .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d);transition:fill-opacity .2s}
+.hexsvg .hxw.on{fill-opacity:1!important;stroke-width:2}
+.hexsvg .hxt{fill:transparent;cursor:pointer}
+.hexsvg .hxl{cursor:pointer}
+.hexsvg .hxn{font:600 13.5px/1 var(--ui,inherit);fill:currentColor;opacity:.78}
+.hexsvg .hxp{font:700 13px/1 var(--ui,inherit);fill:var(--ink-3)}
+.hexsvg .hxl.on .hxn{opacity:1;font-weight:800}
+.hexsvg .hxl.on .hxp{fill:currentColor}
+@keyframes hexgrow{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){ .hexsvg .hxw{animation:none} }
+.hxdet{margin:8px 14px 0;padding:12px 14px;border-radius:14px;background:var(--surf-2);font-size:14px;line-height:1.45;color:var(--ink-2)}
+.hxdet b{display:block;font-size:15px;color:var(--ink);margin-bottom:2px}
+.hxnote{margin:10px 16px 0;font-size:12.5px;line-height:1.4;color:var(--ink-3)}
+.hxhow{display:block;margin:12px auto 0;padding:7px 14px;border-radius:999px;background:var(--surf-2);font-size:13px;font-weight:600;color:var(--ink-2)}
+.hxexp{margin:12px 16px 0;font-size:13.5px;line-height:1.5;color:var(--ink-2)}
+.hxexp p{margin:0 0 9px}.hxexp b{color:var(--ink)}
+.hexsvg text,.hexsvg .hxt,.hexsvg .hxw{pointer-events:all}
