@@ -3719,3 +3719,8 @@ html body .vhero:not(.ready){background:
   radial-gradient(90% 70% at 50% 0%,color-mix(in srgb,var(--a,#5B6B8C) 55%,var(--card)),var(--card) 85%)!important}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .vhero:not(.ready){background:radial-gradient(90% 70% at 50% 0%,color-mix(in srgb,var(--a,#5B6B8C) 30%,var(--card)),var(--card) 85%)!important} }
 html body .vhero.pic.ready{border:0}
+/* roster card injury status: a small dark tag over the name with a coloured dot, one line, never a big yellow bubble */
+html body .rcard .rtx .rij{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;margin-bottom:5px;padding:3px 9px 3px 7px;border-radius:999px;
+  background:rgba(0,0,0,.55)!important;color:#fff!important;font-style:normal;font-size:11.5px;font-weight:700;letter-spacing:.01em;white-space:nowrap;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+html body .rcard .rij u{width:7px;height:7px;border-radius:50%;background:#FFB020;flex:none}
+html body .rcard .rij.out u{background:#FF4D55}
