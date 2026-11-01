@@ -3900,3 +3900,11 @@ html body .card.avg .bars div b{font-family:var(--ui)}
 html,body,button,input,select,textarea{font-family:var(--ui)}
 html:root body .card.avg .chips .chip{background:var(--surf-2)!important;color:var(--ink)!important;border:0!important;box-shadow:none!important;font:700 14px/1 var(--ui)}
 html:root body .card.avg .chips .chip.on{background:var(--ink)!important;color:var(--card)!important}
+/* Tonight tiles: the time in the viewer's own clock on one line, and the pick under the teams */
+.bchip.st2 .ss{white-space:nowrap;font-size:15px}
+html:root body .bchip.st2.haspk{grid-template-rows:auto auto auto}
+.bchip.st2 .pk{grid-column:1/-1;grid-row:3;display:flex;align-items:center;gap:8px;margin-top:4px;padding-top:8px;border-top:1px solid var(--card-line)}
+.bchip.st2 .pkbar{flex:1;display:flex;gap:2px;height:5px;border-radius:999px;overflow:hidden;min-width:60px}
+.bchip.st2 .pkbar i{display:block;min-width:4px}
+.bchip.st2 .pk em{font-style:normal;font-size:12px;font-weight:800;color:var(--ink-2);white-space:nowrap}
+.bchip.st2.haspk .ss{grid-row:1/3}
