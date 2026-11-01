@@ -3374,3 +3374,9 @@ html body .tbl.stand th,html body .tbl.stand td{border-color:var(--line)!importa
 /* team hero: room under the Follow pill so the sheet's rounded top never touches it */
 .gxpage.tmpage:not(.plpage){--gxh:calc(var(--gxbar) + 196px)}
 .tmpage:not(.plpage) .gxin{padding-bottom:48px!important;display:flex;flex-direction:column;justify-content:flex-end;height:100%;box-sizing:border-box}
+/* wide standings tables (odds, team stats): the team column keeps room for the crest and the name instead of being
+   squeezed to nothing, and the numbers scroll sideways under it */
+html body .tbl.stand:has(thead th:nth-child(6)) td:first-child,html body .tbl.stand:has(thead th:nth-child(6)) th:first-child{max-width:none!important;width:auto!important;min-width:150px}
+html body .tbl.stand:has(thead th:nth-child(6)) td:not(:first-child),html body .tbl.stand:has(thead th:nth-child(6)) th:not(:first-child){width:auto!important;white-space:nowrap}
+html body .tbl.stand .nm small{white-space:normal;overflow:hidden}
+html body .tbl.stand td:first-child{overflow:hidden}
