@@ -88,7 +88,7 @@
        going back to: our crossfade on top of that showed the old page a second time, fading out over the new one (the hitch
        on swiping back). So the fade runs only for a move started by a tap inside the app. */
     const byTap = render.tapAt && performance.now() - render.tapAt < 1500; render.tapAt = 0;
-    const swiped = render.swipe; render.swipe = false;
+    const swiped = render.swipe; render.swipe = false; if (swiped) { $main.classList.remove('enter', 'fade', 'hold'); $main.classList.add('noanim'); }
     if (fresh && MOTION() && !swiped && (byTap || !render.key)) {
       /* a crossfade, not a blink: a snapshot of the old screen is laid over the page and fades out while the new screen, held
          invisible until its real content has painted, fades in beneath it. If the content takes longer than a beat, the skeleton
@@ -106,7 +106,7 @@
       /* A league switch is a new screen, not the old one refreshed: the old league never stays on screen while the new one
          loads (its skeleton paints instead), and a scroll still coasting from a flick is stopped before the jump to the top,
          so iOS cannot carry the page on down or bounce it back after the new league lands. */
-      $main.dataset.real = '0';
+      if (!swiped) $main.dataset.real = '0';   // after a swipe the page already holds that league's last screen; it updates in place
       const de = document.documentElement; de.style.overflow = 'hidden'; window.scrollTo(0, 0); void de.offsetHeight;
       requestAnimationFrame(() => { de.style.overflow = ''; window.scrollTo(0, 0); });
     } else if ($main.dataset.y === '0' && fresh) window.scrollTo(0, 0);
@@ -134,7 +134,9 @@
     V.settled();   // a view that painted into part of the screen (Scores' list, a standings chip, a refreshed game) made no full paint to clear the bar, the dimming and the slow note, or to land at its scroll
     paintPills(r.lk, leagueScreen);   // live counts may have arrived while the view loaded
     // the rise plays for a new screen; a screen repainting itself (another day on Scores, another conference) keeps still
-    if (key !== render.key) { if (!$main.classList.contains('enter')) { void $main.offsetWidth; $main.classList.add('enter'); } } else $main.classList.remove('enter'); render.key = key;
+    if (swiped) { $main.classList.remove('enter', 'fade', 'hold'); $main.classList.add('noanim'); clearTimeout(render.naT); render.naT = setTimeout(() => $main.classList.remove('noanim'), 1200); }   // a swipe already moved the page: it lands still, no fade, no rise
+    else if (key !== render.key) { if (!$main.classList.contains('enter')) { void $main.offsetWidth; $main.classList.add('enter'); } } else $main.classList.remove('enter');
+    render.key = key;
     $main.classList.remove('hold'); clearTimeout(render.holdT); render.onReal = null; document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); });   // whatever happened, nothing stays held once the view has returned
     document.dispatchEvent(new CustomEvent('rivl:rendered'));
   }
@@ -358,7 +360,16 @@
        pulls out your profile instead. A tap on a league runs the same slide. */
     let sx = null, sy = 0, mode = '', vx = 0, lx = 0, lt = 0, W2 = window.innerWidth, from = null, to = null, curX = 0, peek = null, peekFor = null;
     const $m = document.getElementById('main'); const snaps = {};
-    document.addEventListener('rivl:rendered', () => { const r = current || route(); if (r && SCREENS.includes(r.name) && $m.dataset.real !== '0') snaps[r.lk + ':' + r.name] = $m.innerHTML; if (peek && !render.swiping) { peek.remove(); peek = null; } });
+    const ready = {};   // copies of the leagues either side, built while the phone is idle so a drag never has to build one
+    const idle = f => (window.requestIdleCallback || (g => setTimeout(g, 120)))(f, { timeout: 800 });
+    const prebuild = () => { const r = current || route(); if (!r || !SCREENS.includes(r.name)) return; const i = ORDER.indexOf(r.lk);
+      Object.keys(ready).forEach(k => { if (ready[k] && ready[k] !== peek) { ready[k].remove(); } delete ready[k]; });
+      [ORDER[i - 1], ORDER[i + 1]].filter(Boolean).forEach(k => idle(() => { if (render.swiping || mode) return; const r2 = current || route(); if (!r2 || r2.lk !== r.lk || r2.name !== r.name) return;
+        const el2 = $m.cloneNode(false); el2.removeAttribute('id'); el2.classList.remove('hold', 'fade', 'enter', 'noanim'); el2.classList.add('xpeek'); el2.dataset.for = k + ':' + r.name;
+        el2.innerHTML = snaps[k + ':' + r.name] || (V._ && V._.skeleton ? V._.skeleton(1, 'card') + V._.skeleton(4, 'row') : '');
+        el2.style.cssText = 'position:fixed;left:0;width:100%;top:0;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;visibility:hidden;transform:translate3d(200vw,0,0);will-change:transform;contain:layout paint';
+        $m.parentNode.insertBefore(el2, $m.nextSibling); ready[k] = el2; })); };
+    document.addEventListener('rivl:rendered', () => { const r = current || route(); if (r && SCREENS.includes(r.name) && $m.dataset.real !== '0') snaps[r.lk + ':' + r.name] = $m.innerHTML; if (peek && !render.swiping) { peek.remove(); peek = null; } if (!render.swiping) setTimeout(prebuild, 400); });
     const pillOf = k => $pills.querySelector(`.pill[data-lk="${k}"]`);
     const geo = k => { const pl = pillOf(k), sp = pl && pl.querySelector('span'); return sp ? { x: pl.offsetLeft + sp.offsetLeft - 10, w: sp.offsetWidth + 20 } : null; };
     const track = t => {   // t: 0 at the league you are on, 1 at the one the finger is heading to
@@ -367,32 +378,35 @@
       $pills.style.setProperty('--ux', (a.x + (b.x - a.x) * t).toFixed(1) + 'px'); $pills.style.setProperty('--uw', (a.w + (b.w - a.w) * t).toFixed(1) + 'px');
       const pa = pillOf(from), pb = pillOf(to); if (pa) pa.style.setProperty('--on', (1 - t).toFixed(3)); if (pb) pb.style.setProperty('--on', t.toFixed(3)); };
     const clearTrack = () => { $pills.classList.remove('dragging'); $pills.querySelectorAll('.pill').forEach(p => p.style.removeProperty('--on')); };
-    const makePeek = k => { if (peek && peekFor === k) return; if (peek) peek.remove(); const r = current || route();
-      peek = $m.cloneNode(false); peek.removeAttribute('id'); peek.classList.remove('hold', 'fade', 'enter'); peek.classList.add('xpeek'); peekFor = k;
-      peek.innerHTML = snaps[k + ':' + r.name] || (V._ && V._.skeleton ? V._.skeleton(1, 'card') + V._.skeleton(4, 'row') : '');
-      const rc = $m.getBoundingClientRect(), top = Math.max(0, rc.top + window.scrollY - 0); peek.style.cssText = `position:fixed;left:${rc.left}px;width:${rc.width}px;top:${Math.max(document.getElementById('hdr').getBoundingClientRect().bottom, top - window.scrollY)}px;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;will-change:transform`;
-      $m.parentNode.insertBefore(peek, $m.nextSibling); };
+    const makePeek = k => { if (peek && peekFor === k) return; if (peek && peek !== ready[peekFor]) peek.remove(); else if (peek) { peek.style.visibility = 'hidden'; peek.style.transform = 'translate3d(200vw,0,0)'; }
+      const r = current || route(); const rc = $m.getBoundingClientRect();
+      peek = ready[k] && ready[k].dataset.for === k + ':' + r.name ? ready[k] : null; peekFor = k;
+      if (!peek) { peek = $m.cloneNode(false); peek.removeAttribute('id'); peek.classList.remove('hold', 'fade', 'enter', 'noanim'); peek.classList.add('xpeek'); peek.innerHTML = snaps[k + ':' + r.name] || (V._ && V._.skeleton ? V._.skeleton(1, 'card') + V._.skeleton(4, 'row') : ''); $m.parentNode.insertBefore(peek, $m.nextSibling); }
+      const pageTop = Math.max(0, document.getElementById('hdr').getBoundingClientRect().bottom, rc.top);   // the next page shows from its top, just under the leagues
+      peek.style.cssText = `position:fixed;left:${rc.left}px;width:${rc.width}px;top:${pageTop}px;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;will-change:transform;contain:layout paint;transform:translate3d(${rc.width}px,0,0)`; };
     const place = x => { $m.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`; if (peek) peek.style.transform = `translate3d(${(x + (x < 0 ? W2 : -W2)).toFixed(1)}px,0,0)`; };
     const springBack = () => { const T = `transform var(--t-move) var(--e-in)`; $m.style.transition = T; if (peek) peek.style.transition = T; $pills.classList.remove('dragging'); place(0.001); track(0); const pk = peek; peek = null;
-      setTimeout(() => { $m.style.transition = ''; $m.style.transform = ''; if (pk) pk.remove(); clearTrack(); const r = current || route(); paintPills(r.lk, true); }, 280); };
+      setTimeout(() => { $m.style.transition = ''; $m.style.transform = ''; $m.style.willChange = ''; if (pk) { if (Object.values(ready).includes(pk)) { pk.style.visibility = 'hidden'; pk.style.transform = 'translate3d(200vw,0,0)'; } else pk.remove(); } clearTrack(); const r = current || route(); paintPills(r.lk, true); }, 280); };
     /* carry on to league k: the page leaves, the next slides fully in, then the real screen takes the copy's place */
-    const slideTo = (k, dirL, ms) => { from = from || (current || route()).lk; to = k; makePeek(k); W2 = window.innerWidth;
-      const T = `transform ${ms}ms cubic-bezier(.25,.8,.25,1)`; $m.style.transition = T; peek.style.transition = T; $pills.classList.remove('dragging'); $pills.classList.add('gliding');
+    const slideTo = (k, dirL, ms) => { const r0 = current || route(); from = from || r0.lk; to = k; if ($m.dataset.real === '1') snaps[r0.lk + ':' + r0.name] = $m.innerHTML; makePeek(k); W2 = window.innerWidth;
+      const T = `transform ${ms}ms cubic-bezier(.25,.8,.25,1)`; peek.style.visibility = ''; if (!dirL) peek.style.transform = `translate3d(${-W2}px,0,0)`; void peek.offsetWidth; $m.style.transition = T; peek.style.transition = T; $pills.classList.remove('dragging'); $pills.classList.add('gliding');
       requestAnimationFrame(() => { $m.style.transform = `translate3d(${dirL ? -W2 : W2}px,0,0)`; peek.style.transform = 'translate3d(0,0,0)'; track(1); });
       render.swipe = true; render.swiping = true; render.tapAt = performance.now();
-      setTimeout(() => { $m.style.transition = 'none'; $m.style.transform = ''; $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { render.swiping = false; $m.style.visibility = ''; if (peek) { peek.remove(); peek = null; } clearTrack(); $pills.classList.remove('gliding'); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); }, ms); };
+      setTimeout(() => { $m.style.transition = 'none'; $m.style.transform = ''; $m.style.willChange = ''; const snap = snaps[k + ':' + r0.name];
+        if (snap) { window.scrollTo(0, 0); $m.innerHTML = snap; $m.dataset.hlk = k; location.hash = '#' + k; requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; if (peek) { peek.remove(); Object.keys(ready).forEach(q => { if (ready[q] === peek) delete ready[q]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); })); return; }
+        $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { requestAnimationFrame(() => { render.swiping = false; $m.style.visibility = ''; if (peek) { peek.remove(); Object.keys(ready).forEach(k => { if (ready[k] === peek) delete ready[k]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); }); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); }, ms); };
     document.addEventListener('touchstart', e => { if (el || render.swiping || document.getElementById('top').hidden || document.documentElement.classList.contains('sheet-open') || e.touches.length > 1) { sx = null; return; }
       const t = e.touches[0]; if (sideScroller(e.target)) { sx = null; return; } sx = t.clientX; sy = t.clientY; mode = ''; W2 = window.innerWidth; }, { passive: true });
     document.addEventListener('touchmove', e => { if (sx == null) return; const t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
       if (!mode) { if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { sx = null; return; } if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
         const r = current || route(); from = r.lk; const i = ORDER.indexOf(from);
         if (dx > 0 && i <= 0) { mode = 'drawer'; build(); }
-        else { mode = 'league'; to = null; $pills.classList.add('dragging'); $m.classList.remove('fade', 'enter'); delete $m.dataset.dir; $m.style.transition = 'none'; }
+        else { mode = 'league'; to = null; if ($m.dataset.real === '1') snaps[from + ':' + r.name] = $m.innerHTML; $pills.classList.add('dragging'); $m.classList.remove('fade', 'enter'); delete $m.dataset.dir; $m.style.transition = 'none'; $m.style.willChange = 'transform'; }
         lx = t.clientX; lt = performance.now(); vx = 0; }
       e.preventDefault(); const now = performance.now(); if (now > lt) { vx = vx * .5 + .5 * (t.clientX - lx) / (now - lt); } lx = t.clientX; lt = now;
       if (mode === 'drawer') { set(Math.max(0, Math.min(1, dx / W)), false); return; }
       const i = ORDER.indexOf(from), want = ORDER[i + (dx < 0 ? 1 : -1)] || null;
-      if (want !== to) { to = want; if (to) makePeek(to); else if (peek) { peek.remove(); peek = null; } if (peek) peek.style.transition = 'none'; }
+      if (want !== to) { to = want; if (to) makePeek(to); else if (peek) { if (Object.values(ready).includes(peek)) { peek.style.visibility = 'hidden'; peek.style.transform = 'translate3d(200vw,0,0)'; } else peek.remove(); peek = null; } if (peek) { peek.style.transition = 'none'; peek.style.visibility = ''; } }
       const x = to ? dx : dx / 4; curX = x; place(x); track(to ? Math.min(1, Math.abs(dx) / W2) : (dx < 0 ? 1 : -1) * Math.min(1, Math.abs(dx) / W2) * .5); }, { passive: false });
     document.addEventListener('touchend', () => { if (!mode) { sx = null; return; } const m0 = mode; mode = ''; sx = null;
       if (m0 === 'drawer') { go(vx > .35 ? 1 : vx < -.35 ? 0 : (p > .4 ? 1 : 0)); return; }

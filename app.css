@@ -4457,3 +4457,5 @@ html:root body #pills.gliding::after{transition:left 300ms cubic-bezier(.25,.8,.
 html:root body #pills.gliding .pill[style*="--on"]{transition:color 300ms cubic-bezier(.25,.8,.25,1)!important}
 .xpeek{background:var(--bg)}
 .xpeek *{animation:none!important}
+/* the page a swipe lands on: no fade, no rise, nothing animates in */
+#main.noanim,#main.noanim *{animation:none!important}
