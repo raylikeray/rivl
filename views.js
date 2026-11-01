@@ -250,6 +250,20 @@
       ${side(L, g, g.home, g.away)}
       ${forecastRow(L, g, f)}</a>`;
   }
+  /* the score row, as v7 drew it (Apple's grammar on fixed columns): crest over name, score, the status in the middle, score,
+     crest over name. Your teams carry a small star. The winner's number is dark; the loser's side fades. No team colours. */
+  function gameRow(L, g, ctx) {
+    if (g.tbd) return gameCard(L, g, ctx, false, true);
+    const live = g.state === 'in', fin = g.state === 'post' && !g.off, pre = !live && !fin;
+    const a = +g.away.score, h = +g.home.score;
+    const aUp = (live || fin) && a > h, hUp = (live || fin) && h > a, aLose = fin && !aUp && a !== h, hLose = fin && !hUp && a !== h;
+    const side = (t, lose) => `<span class="tm${lose ? ' lo' : ''}">${HW.favs.has(L.key, t.id) ? '<em class="star" aria-label="Following">★</em>' : ''}<span class="cr">${t.logo ? imgSized(t.logo, 128, 128) : ''}</span><b>${esc(t.short)}</b></span>`;
+    const score = (t, up, lose) => pre || t.score == null ? `<span class="sc rec">${esc(t.rec || '')}</span>` : `<span class="sc${up ? '' : ' tr'}${lose ? ' lo' : ''}">${t.score}</span>`;
+    const f = !fin && prefs.get('forecast') ? safeF(L, g, ctx) : null; const pr = f && !g.off ? `<small>${esc((f.pHome >= .5 ? g.home : g.away).abbr)} ${pct(Math.max(f.pHome, 1 - f.pHome))}</small>` : '';
+    const clk = () => { const per = +g.period || 0, d = String(g.detail || ''), st = String(g.status || ''); if (!per) return d || 'Live'; if (/HALFTIME/.test(st) || /^half/i.test(d)) return 'Halftime'; const reg = L.periods === 2 ? 2 : 4; const ord = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`; const nm = per <= reg ? (reg === 2 ? `${ord(per)} half` : ord(per)) : (per - reg > 1 ? `${per - reg}OT` : 'OT'); if (/END_PERIOD/.test(st) || /^end/i.test(d)) return `End of ${nm}`; const c = String(g.clock || '').trim(); return c && !/^0{1,2}(?::00)?(?:\.0)?$/.test(c) ? `${nm} ${c}` : nm; };
+    const mid = live ? `<span class="lv"><i></i>${esc(clk())}</span>${pr}` : fin ? `<span class="ft">${esc(finalWord(g))}</span>` : g.off ? `<span class="ft">${esc(g.off)}</span>` : `<b class="tt">${esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT)$/, ''))}</b>${pr}`;
+    return `<a class="grow" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}">${side(g.away, aLose)}${score(g.away, aUp, aLose)}<span class="mid">${mid}</span>${score(g.home, hUp, hLose)}${side(g.home, hLose)}</a>`;
+  }
   /* the hero: on Home it is one link to the game; on the game page each team is a link to its own page */
   function heroCard(L, g, ctx, { page = false } = {}) {
     const f = prefs.get('forecast') && !g.tbd ? safeF(L, g, ctx) : null;
@@ -573,7 +587,7 @@
     const shown = mineOnly ? games.filter(g => isFav(g) || g.tbd) : games;   // your teams always sort first; Mine hides the rest (a game whose teams aren't set yet stays: it could be yours)
     const by = st => shown.filter(g => g.state === st && !g.off).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
     const live = by('in'), pre = by('pre'), post = by('post'), off = shown.filter(g => g.off);
-    const block = (title, list) => list.length ? sec(title, `${list.length}`) + `<div class="games">${list.map(g => gameCard(L, g, ctx, false, true)).join('')}</div>` : '';
+    const block = (title, list) => list.length ? sec(title, `${list.length}`) + `<div class="gp grows">${list.map(g => gameRow(L, g, ctx)).join('')}</div>` : '';
     const none = mineOnly && !shown.length ? empty(`None of your teams play ${ymd === today ? 'today' : dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, `<p style="margin:6px 0 0">${games.length} game${games.length === 1 ? '' : 's'} on the slate.</p>`, `<button class="btn ghost" data-act="scmine">Show all</button>`) : '';
     paint(phase + none + block('Live', live) + block(ymd === today ? 'Upcoming' : 'Scheduled', pre) + block('Final', post) + block('Not played', off));
     setPhase();
