@@ -168,7 +168,7 @@
     let anyLive = ORDER.some(k => k !== r.lk && S.today[k].some(isLive)), failed = false;
     for (const k of order) {
       try {
-        const g = await scoreboard(LEAGUES[k], today, k === r.lk ? 20000 : 120000);
+        const g = await scoreboard(LEAGUES[k], today, k === r.lk || S.today[k].some(isLive) ? 15000 : 120000);   // a league with a game on refreshes fast whichever tab you are on (the live bar shows it)
         /* a game in play never loses its score: when the feed sends a live game with the score missing (it has done so at
            the half), the last score it gave stands until a new one comes */
         const was = new Map((S.today[k] || []).map(x => [x.id, x]));

@@ -4415,31 +4415,34 @@ html:root body .livebar .lg .tm{padding:0!important;background:none!important;bo
 .nsc{display:flex;gap:8px;align-items:baseline;flex:none}.nsc b{font-size:30px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}.nsc b.lo{color:var(--ink-3);font-weight:600}
 .nsc.rec b{font-size:14px;font-weight:700;color:var(--ink-3)}
 .nowc:active{transform:scale(.99)}
-/* ===== the hero, aurora: both teams' colours as soft lights drifting over a near-black base, under film grain and a
-   dark edge. The colours never sit flat on the screen, nothing races, and a basket washes the scorer's colour in from
-   their side. The same layer runs the one-colour hero on team and player pages. ===== */
-html:root body .gx .w{background:linear-gradient(180deg,color-mix(in srgb,var(--mid) 16%,#07090d) 0%,#07090d 100%)!important;inset:-2px}
-html:root body .gx .w>i{filter:blur(56px) saturate(1.05)!important;border-radius:50%;opacity:.9;transition:scale var(--t-hero) var(--e-in)}
-html:root body .gx .w>i:nth-child(1){background:var(--aw)!important;width:60%!important;height:115%!important;left:-18%!important;top:-30%!important;animation:gxau1 26s ease-in-out infinite alternate!important;opacity:.72!important}
-html:root body .gx .w>i:nth-child(2){background:var(--ha)!important;width:60%!important;height:115%!important;right:-18%!important;left:auto!important;top:-10%!important;animation:gxau2 32s ease-in-out infinite alternate!important;opacity:.72!important}
-html:root body .gx .w>i:nth-child(3){background:color-mix(in srgb,var(--aw) 55%,#fff)!important;width:42%!important;height:90%!important;left:18%!important;top:10%!important;animation:gxau3 38s ease-in-out infinite alternate!important;opacity:.22!important}
-html:root body .gx .w>i:nth-child(4){background:color-mix(in srgb,var(--ha) 55%,#fff)!important;width:42%!important;height:90%!important;right:14%!important;left:auto!important;top:-20%!important;animation:gxau4 44s ease-in-out infinite alternate!important;opacity:.18!important}
-@keyframes gxau1{to{transform:translate3d(22%,20%,0) scale(1.12)}}
-@keyframes gxau2{to{transform:translate3d(-20%,-16%,0) scale(1.08)}}
-@keyframes gxau3{to{transform:translate3d(-30%,18%,0) scale(.85)}}
-@keyframes gxau4{to{transform:translate3d(26%,24%,0) scale(1.15)}}
-/* grain and the dark edge replace the light streaks */
-html:root body .gx .w::before{inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") repeat!important;filter:none!important;opacity:.16!important;mix-blend-mode:overlay;animation:none!important}
-html:root body .gx .w::after{display:none!important}
-html:root body .gx .veil{background:radial-gradient(130% 95% at 50% 35%,transparent 45%,rgba(0,0,0,.5) 100%),linear-gradient(rgba(0,0,0,.18),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 60%,rgba(0,0,0,.3))!important}
-/* one-colour heroes (team, player): the colour and its lighter self */
-html:root body .tmpage .gx.solo .w{background:linear-gradient(180deg,color-mix(in srgb,var(--aw) 22%,#07090d),#07090d)!important}
-html:root body .tmpage .gx.solo .w>i:nth-child(1){background:var(--aw)!important;opacity:.9!important}
-html:root body .tmpage .gx.solo .w>i:nth-child(2){background:color-mix(in srgb,var(--ha) 70%,var(--aw))!important;opacity:.7!important}
-html:root body .tmpage .gx.solo .w>i:nth-child(3){background:color-mix(in srgb,var(--aw) 55%,#fff)!important;opacity:.22!important}
+/* ===== the hero, the way Apple Sports lights a live game: black, with each team's colour as a bright cloud on its own
+   side that fades toward the middle, a smoky texture over it, and the clouds billowing slowly all the time. Two layers a
+   side (a bright core by the crest, a wide soft body behind it) on different cycles, so the light never settles. A basket
+   washes the scorer's colour in from their side. Team and player pages run the same layer in one colour. ===== */
+html:root body .gx{--core-a:color-mix(in srgb,var(--aw) 80%,#fff);--core-h:color-mix(in srgb,var(--ha) 80%,#fff)}
+html:root body .gx .w{background:#06070a!important;inset:-2px}
+html:root body .gx .w>i{border-radius:50%;filter:blur(40px) saturate(1.3)!important;transition:scale var(--t-hero) var(--e-in);will-change:transform}
+html:root body .gx .w>i:nth-child(1){background:var(--aw)!important;width:58%!important;height:135%!important;left:-26%!important;top:-18%!important;opacity:.88!important;animation:gxs1 13s ease-in-out infinite alternate!important}
+html:root body .gx .w>i:nth-child(2){background:var(--ha)!important;width:58%!important;height:135%!important;right:-26%!important;left:auto!important;top:-18%!important;opacity:.88!important;animation:gxs2 15s ease-in-out infinite alternate!important}
+html:root body .gx .w>i:nth-child(3){background:var(--core-a)!important;width:28%!important;height:62%!important;left:-2%!important;top:16%!important;opacity:.5!important;animation:gxs3 9s ease-in-out infinite alternate!important}
+html:root body .gx .w>i:nth-child(4){background:var(--core-h)!important;width:28%!important;height:62%!important;right:-2%!important;left:auto!important;top:16%!important;opacity:.5!important;animation:gxs4 11s ease-in-out infinite alternate!important}
+@keyframes gxs1{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(10%,-10%,0) scale(1.12)}100%{transform:translate3d(-6%,12%,0) scale(.96)}}
+@keyframes gxs2{0%{transform:translate3d(0,0,0) scale(1.04)}50%{transform:translate3d(-10%,10%,0) scale(.94)}100%{transform:translate3d(6%,-12%,0) scale(1.14)}}
+@keyframes gxs3{0%{transform:translate3d(0,0,0) scale(1)}100%{transform:translate3d(28%,-18%,0) scale(1.3)}}
+@keyframes gxs4{0%{transform:translate3d(0,0,0) scale(1.2)}100%{transform:translate3d(-26%,20%,0) scale(.9)}}
+/* the smoke: a drifting fractal-noise sheet, and a still fine grain */
+html:root body .gx .w::after{display:block!important;inset:-30%!important;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E") repeat!important;background-size:600px 600px;filter:none!important;opacity:.38!important;mix-blend-mode:soft-light!important;animation:gxsmoke 40s linear infinite!important}
+@keyframes gxsmoke{from{transform:translate3d(0,0,0)}to{transform:translate3d(-300px,-200px,0)}}
+html:root body .gx .w::before{inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") repeat!important;filter:none!important;opacity:.14!important;mix-blend-mode:overlay;animation:none!important}
+html:root body .gx .veil{background:linear-gradient(90deg,transparent 22%,rgba(0,0,0,.38) 50%,transparent 78%),radial-gradient(120% 90% at 50% 40%,transparent 40%,rgba(0,0,0,.4) 100%),linear-gradient(rgba(0,0,0,.22),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 65%,rgba(0,0,0,.35))!important}
+/* one colour (team, player): the colour and its lighter self, the body on the left, the core by the crest */
+html:root body .tmpage .gx.solo .w>i:nth-child(1){background:var(--aw)!important;opacity:.95!important;width:95%!important;left:-25%!important}
+html:root body .tmpage .gx.solo .w>i:nth-child(2){background:color-mix(in srgb,var(--ha) 75%,var(--aw))!important;opacity:.75!important}
+html:root body .tmpage .gx.solo .w>i:nth-child(3){background:color-mix(in srgb,var(--aw) 70%,#fff)!important;opacity:.4!important}
+html:root body .tmpage .gx.solo .w>i:nth-child(4){display:none!important}
 /* a basket: the scorer's colour washes in from their side and settles */
-html:root body .gx .pz.pa{background:radial-gradient(75% 110% at 8% 50%,color-mix(in srgb,var(--aw) 80%,#fff),transparent 65%)}
-html:root body .gx .pz.ph{background:radial-gradient(75% 110% at 92% 50%,color-mix(in srgb,var(--ha) 80%,#fff),transparent 65%)}
+html:root body .gx .pz.pa{background:radial-gradient(75% 110% at 8% 50%,var(--core-a),transparent 65%)}
+html:root body .gx .pz.ph{background:radial-gradient(75% 110% at 92% 50%,var(--core-h),transparent 65%)}
 html:root body .gx .pz.go{animation:gxwash 1.8s var(--e-in)}
-@keyframes gxwash{0%{opacity:0;transform:translateX(-6%) scale(1.05)}25%{opacity:.75;transform:none}100%{opacity:0;transform:scale(1.12)}}
-@media (prefers-reduced-motion:reduce){html:root body .gx .w>i{animation:none!important}}
+@keyframes gxwash{0%{opacity:0;transform:translateX(-6%) scale(1.05)}25%{opacity:.8;transform:none}100%{opacity:0;transform:scale(1.12)}}
+@media (prefers-reduced-motion:reduce){html:root body .gx .w>i,html:root body .gx .w::after{animation:none!important}}
