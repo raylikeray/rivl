@@ -857,7 +857,7 @@
         }
         const bsw = `<div class="gxtsw">${[['away', g.away], ['home', g.home]].map(([k, t]) => `<button data-act="bside" data-team="${k}" aria-pressed="${bv.side === k}">${gxL(t.logo)}<b>${esc(t.abbr)}</b></button>`).join('')}</div>`;
         const bt = table(bv.side === 'away' ? g.away : g.home);
-        body = `<div class="gxctl">${bsw}</div><div class="gxout">` + lead + (bt || empty('No box score yet')) + unitsT + '</div>';
+        body = lead + `<div class="gxctl">${bsw}</div><div class="gxout">` + (bt || empty('No box score yet')) + unitsT + '</div>';
       } else if (tab === 'plays') {
         if (!plays.length) body = empty('No plays yet');
         else {

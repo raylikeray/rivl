@@ -3016,3 +3016,10 @@ html,body,:root[data-tint] body{background:var(--bg)!important;background-image:
 /* anything inside a card is filled with the gray, never the card's own colour, so white never sits on white */
 html body :is(.hsec,.card,.gp,.giplate,.gxplate,.glplate,.gxrows,.gxser,.plc,.zones,.ijc,.tsch,.pfocus,.five,.feat,.wire,.vabout,.lkc,.ijs,.panel-in,.bpanel) :is(.stats>div,.ijgrid>div,.chip:not(.on),.bchip,.pip,.tpill,.lv,.fpill,.off,button.off,.oc,.oft,.why-h .wt,.stale){background:var(--surf-2)!important;border-color:transparent!important}
 html body :is(.hsec,.card,.gp,.giplate,.gxplate,.glplate,.gxrows,.pfocus,.ijs,.bpanel) .ijgrid{background:var(--line)!important}
+
+/* the box score: no gray bands across the table; only the name column keeps a light gray so names are easy to follow */
+.gxpage .tbl.box tr.sub td,.gxpage .tbl.box thead th,.gxpage .tbl.box tr.tot td{background:none!important}
+.gxpage .tbl.box td:not(:first-child),.gxpage .tbl.box th:not(:first-child){background:none!important}
+.gxpage .tbl.box td:first-child,.gxpage .tbl.box th:first-child{background:var(--surf-2)!important}
+.gxpage .tbl.box tr.sub td{background:none!important;padding-top:16px;font-weight:700;color:var(--ink-3)}
+.gxpage .pfocus+.gxctl .gxtsw{margin-top:16px}
