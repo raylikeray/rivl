@@ -3062,3 +3062,20 @@ html body :is(.hsec,.card,.gp,.giplate,.gxplate,.glplate,.gxrows,.pfocus,.ijs,.b
 :root[data-theme="dark"] .gxpage :is(.gxseg,.gxtsw){background:#262626!important}
 :root[data-theme="dark"] .gxpage :is(.gxseg,.gxtsw) button[aria-pressed=true]{background:#fff!important;color:#000!important}
 :root[data-theme="dark"] .glplate{background:#141414!important}
+/* Players: the list was a card inside a card inside a sheet. One card per group now: the list holder is plain, the rows
+   inside a group card carry no card of their own. */
+.pp .pp-list,div.pp-list{background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+.tgrp .rows:not(.gxrows),.tgrp .fold > .rows:not(.gxrows){background:none!important;border:0!important;margin:0!important;padding:0 16px!important;border-radius:0!important}
+/* Teams: a little room between a conference head and its list */
+.thead.conf{margin-bottom:10px}
+.thead.conf[aria-expanded=false]{margin-bottom:0}
+/* the follow star sits after the team name with room to breathe, not pinned to the corner of the logo */
+.grow .tm .nm{display:flex;align-items:center;justify-content:center;gap:5px;max-width:100%;min-width:0}
+.grow .tm .nm b{min-width:0}
+.grow .tm .star,.grow .tm .nm .star{position:static!important;flex:none;font-size:11px;line-height:1;color:var(--ink-3)}
+/* no gray boxes behind the team names over a comparison */
+html body .why-h .wt{background:none!important}
+/* box score: the name column never fades or gets shadowed while the table swipes */
+.gxpage .bxcard .tw,.gxpage .bxcard .tw.fades{-webkit-mask-image:none!important;mask-image:none!important}
+.gxpage .tbl.bx7 :is(td,th):first-child{box-shadow:none!important;filter:none}
+.gxpage .tbl.bx7 :is(td,th):first-child::before,.gxpage .tbl.bx7 :is(td,th):first-child::after{display:none!important}
