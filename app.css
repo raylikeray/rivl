@@ -3350,3 +3350,4 @@ html body .plpage .gx.solo .w>i:nth-child(2){width:95%!important;height:75%!impo
 .plpage #gxin{opacity:1!important;transform:none!important}
 .plh .plshot{bottom:22px!important;-webkit-mask-image:linear-gradient(180deg,#000 62%,transparent 96%);mask-image:linear-gradient(180deg,#000 62%,transparent 96%)}
 .plh::after{height:42%;background:linear-gradient(180deg,transparent,rgba(0,0,0,.18) 45%,rgba(0,0,0,.42))!important}
+.plpage .pltx{transform:none!important}
