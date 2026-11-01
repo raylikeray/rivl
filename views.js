@@ -434,8 +434,8 @@
     const build = () => {
       const { games, last, ctx } = S0; const teams = teamList();
       const byTeam = new Map(); games.forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
-      // the Now card: your live game, else the next of your games today, else today's last final; a hero, first on the screen
-      const favAll = games.filter(isFav); const nowG = favAll.find(isLive) || favAll.filter(g => g.state === 'pre' && !g.off).sort((a, b) => new Date(a.date) - new Date(b.date))[0] || favAll.filter(g => g.state === 'post').sort((a, b) => new Date(b.date) - new Date(a.date))[0] || null;
+      // the Now card is for a game that is on; before tip-off and after the final, the rail list is the whole story
+      const favAll = games.filter(isFav); const nowG = favAll.filter(isLive).sort((a, b) => rankGame(b) - rankGame(a))[0] || null;
       if (nowG && P.brief) secs.now = nowCard(L, lk, nowG, ctx); else delete secs.now;
       // tonight: your games as a rail list in tip order (a dot ahead, a pulse while on, a check when done), or the next ones on the calendar
       const liveMine = games.filter(g => isLive(g) && isFav(g));
