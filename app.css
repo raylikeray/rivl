@@ -3198,3 +3198,9 @@ html body .why-h .wt{background:none!important}
 .gxtabs .gxind{position:absolute;left:0;bottom:-1px;height:4px;width:0;border-radius:999px;background:var(--ink);pointer-events:none;
   transition:transform .32s cubic-bezier(.2,.8,.2,1),width .32s cubic-bezier(.2,.8,.2,1);will-change:transform}
 @media (prefers-reduced-motion:reduce){ .gxtabs .gxind{transition:none} }
+/* Player photos, as on X: a flat disc in the team colour, no ring, no glow, no gloss, no shadow. */
+html body .hs,html body .pl .hs,html body .frow .fface .hs{background:var(--tc,var(--disc-plain,#3A3D44))!important;box-shadow:none!important;border:0!important;outline:0!important}
+html body .hs.plain{background:var(--disc-plain,#3A3D44)!important}
+html body .hs::after,html body .hs::before,html body .pl .hs::before,html body .pl .hs::after{display:none!important}
+html body .hs i{background:none!important;text-shadow:none!important}
+html body .frow .fface::before,html body .frow .fface::after{display:none!important}
