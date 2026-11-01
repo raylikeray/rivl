@@ -483,8 +483,8 @@
     /* the same picture (by file name: phi.png, 3059318.png) keeps its element as is, even after it fell back to another copy */
     const pic = u => { const m = /([\w-]+)\.(?:png|jpe?g|webp|svg)/i.exec(String(u || '')); return m ? m[1] : u; };
     const sameImg = a.nodeName === 'IMG' && pic(a.getAttribute('src')) === pic(b.getAttribute('src'));
-    for (const at of [...a.attributes]) if (!b.hasAttribute(at.name) && at.name !== 'style' && at.name !== 'hidden' && !(sameImg && at.name === 'data-o')) a.removeAttribute(at.name);
-    for (const at of [...b.attributes]) if (a.getAttribute(at.name) !== at.value) { if (sameImg && (at.name === 'src' || at.name === 'data-o' || at.name === 'onerror')) continue; a.setAttribute(at.name, at.value); }
+    for (const at of [...a.attributes]) if (!b.hasAttribute(at.name) && at.name !== 'style' && at.name !== 'hidden' && !(sameImg && (at.name === 'data-o' || at.name === 'class'))) a.removeAttribute(at.name);
+    for (const at of [...b.attributes]) if (a.getAttribute(at.name) !== at.value) { if (sameImg && (at.name === 'src' || at.name === 'data-o' || at.name === 'onerror' || at.name === 'class')) continue; a.setAttribute(at.name, at.value); }
     const ak = [...a.childNodes], bk = [...b.childNodes];
     for (let i = 0; i < bk.length; i++) { if (i < ak.length) gxMorph(ak[i], bk[i]); else a.appendChild(bk[i].cloneNode(true)); }
     for (let i = bk.length; i < ak.length; i++) ak[i].remove();
@@ -594,8 +594,8 @@
     const pf = Object.assign({ pid: '' }, mem.pf || {});
     /* everything you chose on this game, kept for this visit: a refresh lands exactly where you were */
     const save = () => { try { const box = document.getElementById('gxscroll'); sessionStorage.setItem('gx:' + id, JSON.stringify({ tab, pv, sv, bv, pf, y: box ? Math.round(box.scrollTop) : (mem.y || 0) })); } catch { } };   // the plays tab's player filter
-    const paint = async (ttl) => {
-      const d = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, ttl);
+    const paint = async (ttl, local) => {
+      const d = local && paint.d ? paint.d : await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, ttl); if (d) paint.d = d;
       const hc = d && d.header && d.header.competitions && d.header.competitions[0];
       if (!hc) { $main.innerHTML = topbar('Game', '#scores') + empty("Couldn't load this game", '<p style="margin:6px 0 0">The feed didn\'t answer. Pull down to try again.</p>'); return null; }
       const ev = { id, competitions: [{ ...hc, venue: d.gameInfo && d.gameInfo.venue, status: hc.status, broadcasts: hc.broadcasts, geoBroadcasts: hc.geoBroadcasts }], date: hc.date, status: hc.status, season: d.header.season, pickcenter: d.pickcenter };   // the summary keeps the market line in pickcenter, not on the competition
@@ -610,7 +610,7 @@
       /* the series and the headline ("WNBA Finals - Game 7") are on the day's scoreboard for certain; the summary's header
          may or may not carry them. When this page's own feed lacks them, take them from the scoreboard entry for the
          same game — the same feed, the same facts, never a guess */
-      if (!g.series && !g.note) { try { const d = await HW.scoreboard(L, ymdOf(g.date), 60000); const sb = (d || []).find(x => x.id === g.id); if (sb) { if (sb.series) g.series = sb.series; if (sb.note) g.note = sb.note; } } catch { } }
+      if (!g.series && !g.note && !local) { try { const d = await HW.scoreboard(L, ymdOf(g.date), 60000); const sb = (d || []).find(x => x.id === g.id); if (sb) { if (sb.series) g.series = sb.series; if (sb.note) g.note = sb.note; } } catch { } }
       if (!ctx) ctx = await forecastCtx(L, ymdOf(g.date)).catch(() => null);
       if (sched === undefined) sched = HW.sim && (lk === 'nba' || lk === 'wnba') ? await HW.sim.schedule(L, { feed: false }).catch(() => null) : null;
       const f = safeF(L, g, ctx);
@@ -679,7 +679,7 @@
       if (d.gameInfo && d.gameInfo.attendance) giRows.push(['Attendance', d.gameInfo.attendance.toLocaleString()]);
       const gi = giRows.length ? sec('Game info') + `<div class="giplate"><div class="rows">${giRows.map(([k, v, det, link]) => link ? `<a class="row" href="${link}"><span class="t"><b>${k}</b><span>${v}</span></span>${chev}</a>` : `<div class="row"><span class="t"><b>${k}</b><span>${v}</span></span></div>`).join('')}</div></div>` : '';
       // who's on the floor now (live), and every five-man unit's minutes and margin
-      const lu = g.state !== 'pre' && plays.length ? lineupsOf(d, g, L) : null;
+      const lu = g.state !== 'pre' && plays.length ? (paint.lu && paint.lu.d === d ? paint.lu.v : (paint.lu = { d, v: lineupsOf(d, g, L) }).v) : null;
       const ptsOf = (side, id) => { const st = statOf(boxOf(side), 'PTS'); const a = st && (st.s.athletes || []).find(x => String(x.athlete.id) === id); return a && a.stats ? a.stats[st.i] : ''; };
       const floor = g.state === 'in' && lu && lu.on ? sec('On the floor', `as of ${g.detail}`) + `<div class="gxplate gxfloor">${[['away', g.away], ['home', g.home]].map(([side, t]) => `<div class="fl"><div class="fh">${gxCr(t.logo)}<b>${esc(t.short)}</b></div><div class="fr">${lu.on[side].map(id => { const n = lu.names[id] || {}; const pts = ptsOf(t, id); return `<a href="${href.player(lk, id)}">${headshot(n.hs || '', V._.teamColor(t, L), 44, n.name || '')}<b>${esc(V.lastName(n.name || n.short || ''))}</b><span>${pts !== '' ? `${esc(pts)} pts` : ''}</span></a>`; }).join('')}</div></div>`).join('')}</div>` : '';
       const unitsT = lu && lu.units && lu.units.length ? (() => { const mm = sx => `${Math.floor(sx / 60)}:${String(Math.round(sx % 60)).padStart(2, '0')}`; const table = (side, t) => { const rows = lu.units.filter(u => u.side === side && u.secs >= 60).sort((a, b) => b.secs - a.secs).slice(0, 6); if (!rows.length) return ''; return sec(`${esc(t.short)} units`, 'five-man groups, by minutes') + `<div class="rows units">${rows.map(u => { const onNow = g.state === 'in' && lu.on && u.ids.slice().sort().join() === lu.on[side].slice().sort().join(); return `<div class="row unit${onNow ? ' now' : ''}" style="${tcv(V._.teamColor(t, L))}"><span class="t"><b class="wrap">${u.ids.map(id => esc((lu.names[id] || {}).short || '')).join(' · ')}</b><span>${mm(u.secs)} min${onNow ? ' · on the floor now' : ''}</span></span><span class="pm ${u.pm > 0 ? 'up' : u.pm < 0 ? 'dn' : ''}">${u.pm > 0 ? '+' : u.pm < 0 ? '−' : ''}${Math.abs(u.pm)}</span></div>`; }).join('')}</div>`; }; return table('away', g.away) + table('home', g.home); })() : '';
@@ -694,7 +694,7 @@
         const dOf = x => dayLabel(x.d, { month: 'short', day: 'numeric' });
         const rows = played.map(x => { const w = tOf(x.hs > x.as ? x.h : x.a), l = tOf(x.hs > x.as ? x.a : x.h); const ws = Math.max(x.hs, x.as), ls = Math.min(x.hs, x.as); return `<a class="row" href="${href.game(lk, x.id)}">${logo(w.logo, 's', V._.teamColor(w, L))}<span class="t"><b>${esc(w.short)} ${ws}, ${esc(l.short)} ${ls}</b><span>${esc(dOf(x))} · at ${esc(tOf(x.h).short)}</span></span>${chev}</a>`; }).join('');
         const next = ahead.length ? `<p class="legend">${ahead.length === 1 ? 'One more meeting' : `${ahead.length} more meetings`}: ${ahead.slice(0, 3).map(x => `${esc(dOf(x))} at ${esc(tOf(x.h).short)}`).join(', ')}${ahead.length > 3 ? `, and ${ahead.length - 3} more` : ''}.</p>` : '';
-        if (played.length || ahead.length) series = sec('Season series', played.length ? lead : 'First meeting this season') + (rows ? `<div class="rows">${rows}</div>` : '') + next;
+        if (played.length || ahead.length) series = sec('Season series', played.length ? lead : 'First meeting this season') + (rows ? `<div class="rows gxrows">${rows}</div>` : '') + next;
       }
       // the injury report for both sides, before tip; each row opens the report
       let report = '';
@@ -702,7 +702,7 @@
         S.injuries = S.injuries || {};
         const side = t => { const il = ctx.inj.byTeam[t.id] && ctx.inj.byTeam[t.id].list || []; if (!il.length) return ''; const tc = V._.teamColor(t, L); const rows = il.map((x, i) => { const a = x.athlete || {}; const aid = athId(a); const key = `g:${t.id}:${aid}:${x.id || i}`; S.injuries[key] = { x, id: aid, team: { id: t.id, short: t.short, color: tc } }; const stt = x.status || ''; const cls = /out/i.test(stt) ? 'out' : /day|quest|doubt/i.test(stt) ? 'q' : 'ok'; const det = x.details || {}; const ret = retInfo(L, det.returnDate); const why = [det.type || det.detail, ret ? ret.short : ''].filter(Boolean).join(', '); return `<button class="row" data-act="injury" data-key="${esc(key)}">${headshot(hsUrl(a), tc, 44, a.displayName)}<span class="t"><b>${esc(a.displayName || '')}</b><span>${esc(why || (x.shortComment || '').slice(0, 80))}</span></span><span class="tag ${cls}">${esc(statusWord(stt))}</span></button>`; }).join(''); return `<div class="injgrp"><button class="injhd" data-act="injcol" data-id="g:${esc(t.id)}" aria-expanded="true" style="${tcv(tc)}"><i class="bar"></i>${logo(t.logo, 's')}<b>${esc(t.short)}</b><span class="n">${il.length} listed</span>${chev}</button><div class="fold"><div class="injbody">${rows}</div></div></div>`; };
         const both = side(g.away) + side(g.home);
-        report = sec('Injury report') + (both ? `<div class="rows injrep">${both}</div>` : `<p class="legend">Nobody listed on either side.</p>`);
+        report = sec('Injury report') + (both ? `<div class="rows injrep gxrows">${both}</div>` : `<p class="legend">Nobody listed on either side.</p>`);
       }
       let body = '';
       if (tab === 'summary') {
@@ -757,7 +757,7 @@
           const head = t => `<span class="wt" style="${tcv(V._.teamColor(t, L))}">${logo(t.logo, 's', V._.teamColor(t, L))}<b>${esc(t.abbr || t.short)}</b></span>`;
           const grid = `<div class="why"><div class="why-h"><span></span>${head(g.away)}${head(g.home)}</div>${rows.map(r => `<div class="why-r"><span>${r.label}</span><b class="${r.better < 0 ? 'up' : ''} ${r.cls}">${r.av}</b><b class="${r.better > 0 ? 'up' : ''} ${r.cls}">${r.hv}</b></div>`).join('')}</div>`;
           const lines = [];
-          if (g.state === 'in') lines.push(['Score and time', `${esc((g.home.score > g.away.score ? g.home : g.away).short)} up ${Math.abs(g.home.score - g.away.score)}, ${esc(g.detail)}`]);
+          if (g.state === 'in') lines.push(['Score and time', `${esc((g.home.score > g.away.score ? g.home : g.away).short)} up ${Math.abs(g.home.score - g.away.score)}, ${esc(gxDet(g, L))}`]);
           lines.push(['Home court', g.neutral ? 'Neutral floor' : `${esc(g.home.short)} +${f.hca.toFixed(1)}`]);
           const byLine = m => `${esc((m >= 0 ? g.home : g.away).short)} by ${Math.abs(m).toFixed(1)}`;
           if (f.mkt != null) { lines.push(['Market line', `${byLine(f.mkt)}${f.odds && f.odds.total ? ` · total ${f.odds.total}` : ''}`]); lines.push(['RIVL alone', byLine(f.own)]); }
@@ -766,12 +766,12 @@
           lines.push([g.state === 'pre' ? 'Win chance' : 'Pregame chance', `${esc(fav.short)} ${pct(p)}`]);
           const ratingNote = (f.source === 'elo' ? 'RIVL\'s rating is an Elo built from scoring margin, rebuilt every night.' : 'RIVL\'s rating is this season\'s scoring margin blended with last season\'s, weighted by games played.') + (f.soH || f.soA ? ' A missing player costs what he produces above his team\'s own bench, scaled by his minutes; a ? marks a status short of out, counted in part.' : '');
           const note = (f.mkt != null ? `The forecast starts from the market line and lets RIVL's rating, rest and injuries pull it (${Math.round((1 - f.w) * 100)}% RIVL). ` : '') + ratingNote + ` <a href="#record">How the calls have done</a>`;
-          body += sec(g.state === 'post' ? `Had ${esc(fav.short)} ${pct(p)}` : `Why ${esc(fav.short)} ${pct(p)}`) + grid + `<table class="tbl kv why-kv"><tbody>${lines.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</tbody></table><p class="why-n">${note}</p>`;
+          body += sec(g.state === 'post' ? `Had ${esc(fav.short)} ${pct(p)}` : `Why ${esc(fav.short)} ${pct(p)}`) + `<div class="gxplate gxwhy">${grid}</div><div class="gxplate gxkv">${lines.map(([k, v]) => `<div class="kvr"><span>${k}</span><b>${v}</b></div>`).join('')}</div><p class="why-n">${note}</p>`;
         }
         if (report) body += report;
         if (plays.length && g.state !== 'pre') body += sec(g.state === 'in' ? 'Last plays' : 'Final plays', '', `<button data-act="gtab" data-tab="plays">All plays</button>`) + `<div class="gpls">${plays.map((p, i) => [p, i]).slice(-5).reverse().map(([p, i]) => runMark(i) + playCard(L, lk, g, p, ppl)).join('')}</div>`;
         if (series) body += series;
-        if (g.state !== 'post') { const ws = watchFor(g, L); const list = ws.length ? ws.map(w => `<a class="row" href="${esc(w.href)}" target="_blank" rel="noopener"><span class="t"><b>${esc(w.label || w.short)}</b><span>${esc(w.bundle ? `Through ${w.bundle}` : tvLabel(g) || 'Opens in the app')}</span></span>${chev}</a>`).join('') : (tvLabel(g) ? `<div class="row"><span class="t"><b>${esc(tvLabel(g))}</b><span><a href="#settings/watch">Pick your services</a> to get a direct link here.</span></span></div>` : ''); if (list) body += sec('Where to watch') + `<div class="rows">${list}</div>`; }
+        if (g.state !== 'post') { const ws = watchFor(g, L); const list = ws.length ? ws.map(w => `<a class="row" href="${esc(w.href)}" target="_blank" rel="noopener"><span class="t"><b>${esc(w.label || w.short)}</b><span>${esc(typeof w.bundle === 'string' ? `Through ${w.bundle}` : tvLabel(g) ? `Live on ${tvLabel(g)}` : 'Opens in the app')}</span></span>${chev}</a>`).join('') : (tvLabel(g) ? `<div class="row"><span class="t"><b>${esc(tvLabel(g))}</b><span><a href="#settings/watch">Pick your services</a> to get a direct link here.</span></span></div>` : ''); if (list) body += sec('Where to watch') + `<div class="rows gxrows">${list}</div>`; }
         if (gi) body += gi;
       } else if (tab === 'box') {
         // tap a column to sort by it (most first, again for least); minutes is the order the feed gives
@@ -849,7 +849,7 @@
       if (!g.tbd) {
         const c = gxColors(L, g); const vars = `--aw:${esc(c.ca)};--ha:${esc(c.ch)}${gxLead(g)}`;
         const inner = gxInner(L, lk, g, f, venue);
-        const day = await scoreboard(L, ymdOf(g.date), g.state === 'in' ? 15000 : 60000).catch(() => null);
+        const day = local && paint.day ? paint.day : await scoreboard(L, ymdOf(g.date), g.state === 'in' ? 15000 : 60000).catch(() => null); if (day) paint.day = day;
         const barHtml = gxBar(L, g, title, card, gxStrip(L, g, day)), page = $main.querySelector('#gpage');
         if (page && page.dataset.gid === String(id) && page.querySelector('#gxhero')) {
           const hero = page.querySelector('#gxhero'), bar = page.querySelector('#gxbar');
@@ -894,7 +894,10 @@
     const g = await paint();
     V.refresh = async () => { if (!g || g.state === 'post') return; await paint(15000); };
     if (V._gtabL) $main.removeEventListener('click', V._gtabL);
-    V._gtabL = e => { const b = e.target.closest('[data-act="gtab"],[data-act="pq"],[data-act="pscoring"],[data-act="sv-team"],[data-act="sv-pid"],[data-act="sv-q"],[data-act="bsort"],[data-act="pf"],[data-act="bside"],[data-act="pmore"]'); if (!b) return; const a = b.dataset.act; if (a === 'pq' || a === 'pscoring' || a === 'pf') pv.n = 30; if (a === 'pmore') pv.n += 40; else if (a === 'bside') bv.side = b.dataset.team; else if (a === 'gtab') tab = b.dataset.tab; else if (a === 'pq') pv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'pscoring') pv.scoring = b.dataset.v != null ? b.dataset.v === '1' : !pv.scoring; else if (a === 'sv-team') { sv.team = b.dataset.team; sv.pid = ''; } else if (a === 'sv-pid') sv.pid = b.dataset.pid; else if (a === 'sv-q') sv.q = +b.dataset.q || 0; else if (a === 'bsort') { const c = b.dataset.col; if (bv.col === c) { if (bv.dir === 'desc') bv.dir = 'asc'; else { bv.col = ''; bv.dir = 'desc'; } } else { bv.col = c; bv.dir = 'desc'; } } else if (a === 'pf') pf.pid = b.dataset.pid === pf.pid ? '' : b.dataset.pid; save(); paint(); };
+    V._gtabL = e => { const b = e.target.closest('[data-act="gtab"],[data-act="pq"],[data-act="pscoring"],[data-act="sv-team"],[data-act="sv-pid"],[data-act="sv-q"],[data-act="bsort"],[data-act="pf"],[data-act="bside"],[data-act="pmore"]'); if (!b) return; const a = b.dataset.act; if (a === 'pq' || a === 'pscoring' || a === 'pf') pv.n = 30; if (a === 'pmore') pv.n += 40; else if (a === 'bside') bv.side = b.dataset.team; else if (a === 'gtab') tab = b.dataset.tab; else if (a === 'pq') pv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'pscoring') pv.scoring = b.dataset.v != null ? b.dataset.v === '1' : !pv.scoring; else if (a === 'sv-team') { sv.team = b.dataset.team; sv.pid = ''; } else if (a === 'sv-pid') sv.pid = b.dataset.pid; else if (a === 'sv-q') sv.q = +b.dataset.q || 0; else if (a === 'bsort') { const c = b.dataset.col; if (bv.col === c) { if (bv.dir === 'desc') bv.dir = 'asc'; else { bv.col = ''; bv.dir = 'desc'; } } else { bv.col = c; bv.dir = 'desc'; } } else if (a === 'pf') pf.pid = b.dataset.pid === pf.pid ? '' : b.dataset.pid; save();
+      /* show the choice now; draw the rest on the next frame from what is already loaded */
+      const grp = b.parentElement; if (grp && (grp.classList.contains('gxseg') || grp.classList.contains('gxtsw'))) grp.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      requestAnimationFrame(() => setTimeout(() => paint(undefined, true), 0)); };
     $main.addEventListener('click', V._gtabL);
   }
 

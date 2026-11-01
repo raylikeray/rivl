@@ -77,7 +77,7 @@
     for (const img of document.querySelectorAll('.ehero .biglogo:not(.fitted), .hero .tm .logo img:not(.fitted)')) { img.classList.add('fitted'); const m = await measure(img.getAttribute('src') || ''); if (!m) continue; apply(img, Math.min(1.45, Math.max(1, Math.min(1 / m.w, 1 / m.h) * 0.94)), m); }
     // the discs: the artwork's longer side lands at 68% of the disc, whatever the file's padding, and sits on the disc's centre
     for (const img of document.querySelectorAll('.logo img:not(.fitted)')) {
-      img.classList.add('fitted'); if (img.closest('.onb-team,.thead,.injhd,.pp-team,.hero,.ehero')) continue;
+      img.classList.add('fitted'); if (img.closest('.onb-team,.thead,.injhd,.pp-team,.hero,.ehero,.gxpage')) continue;
       const m = await measure(img.getAttribute('src') || ''); if (!m) continue;
       const base = parseFloat(getComputedStyle(img).width) / Math.max(1, parseFloat(getComputedStyle(img.parentElement).width)) || .74;
       apply(img, Math.min(1.4, Math.max(.7, (0.68 / base) / Math.max(m.w, m.h))), m);

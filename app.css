@@ -2594,3 +2594,40 @@ html.gxon body::before{display:none}
 .gxpage .gxst.on i{animation:gxp 2s cubic-bezier(.2,.8,.2,1) infinite!important}
 #main.fade:has(>.gxpage){animation:none!important}
 #main.hold:has(>.gxpage){opacity:1!important}
+
+/* every card on the game page is the Game leaders card: the same soft plate, line and corner */
+.gxpage .gxrows,.gxpage .giplate,.gxpage .plc,.gxpage .gxser,.gxpage .tracker svg,.gxpage .zones,.gxpage .why-n+.gxplate{
+  border-radius:18px;border:1px solid var(--line);box-shadow:none!important;background:linear-gradient(rgba(255,255,255,.055),transparent 56px),var(--surf)!important}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) :is(.gxpage .gxrows,.gxpage .giplate,.gxpage .plc,.gxpage .gxser,.gxpage .tracker svg,.gxpage .zones){background:linear-gradient(rgba(255,255,255,.9),transparent 56px),var(--surf)!important} }
+.gxpage .gxrows{margin:0 var(--gut-r) 0 var(--gut);padding:0 14px}
+.gxpage .gxrows>*{--gut:0px;--gut-r:0px}
+.gxpage .gxrows .row:last-child{border-bottom:0}
+.gxpage .gxrows .row:active{border-radius:0}
+.gxpage .giplate{padding:2px 14px}
+.gxpage .zones{padding:6px 14px 2px}
+.gxpage .gpl.sc .plc{background:linear-gradient(135deg,color-mix(in srgb,var(--pc) 16%,var(--surf)),var(--surf) 70%)!important;border-color:color-mix(in srgb,var(--pc) 30%,var(--line))}
+.gxpage .gxwhy{padding:12px 14px 2px;margin-bottom:12px}
+.gxpage .gxwhy .why{margin:0;padding:0}
+.gxpage .gxwhy .why-r:last-child{border-bottom:0}
+.gxpage .gxwhy .wt .logo{width:22px;height:22px}
+.gxkv{padding:2px 14px!important}
+.gxkv .kvr{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 0;font-size:14.5px}
+.gxkv .kvr+.kvr{border-top:1px solid var(--line)}
+.gxkv .kvr span{color:var(--ink-2)}
+.gxkv .kvr b{font-weight:700;text-align:right;color:var(--ink)}
+.gxpage .why-n{margin:10px var(--gut-r) 0 var(--gut);font-size:13px;line-height:1.45;color:var(--ink-3)}
+
+/* the header colour, deeper and livelier: more of each team's colour, faster drift, and a fine dot screen that slides over it */
+.gx .w{background:linear-gradient(101deg,color-mix(in srgb,var(--aw) 70%,#04050a) 0%,color-mix(in srgb,var(--mid) 35%,#06070c) var(--split,50%),color-mix(in srgb,var(--ha) 70%,#04050a) 100%)!important}
+.gx .w>i:nth-child(1){animation-duration:9s!important;filter:blur(40px) saturate(1.25)}
+.gx .w>i:nth-child(2){animation-duration:11s!important;filter:blur(40px) saturate(1.25)}
+.gx .w>i:nth-child(3){animation-duration:7s!important;opacity:.62!important}
+.gx .w>i:nth-child(4){animation-duration:8s!important;opacity:.62!important}
+.gx .w::before{animation-duration:6s!important}
+.gx .w::after{animation-duration:8s!important}
+.gx .veil::after{content:"";position:absolute;inset:-12px;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(0,0,0,.34) 1.15px,transparent 1.35px);background-size:6px 6px;mix-blend-mode:multiply;opacity:.55;
+  -webkit-mask-image:linear-gradient(rgba(0,0,0,.95),rgba(0,0,0,.35) 70%,rgba(0,0,0,.15));mask-image:linear-gradient(rgba(0,0,0,.95),rgba(0,0,0,.35) 70%,rgba(0,0,0,.15));
+  animation:gxdots 14s linear infinite}
+@keyframes gxdots{from{transform:translate3d(0,0,0)}to{transform:translate3d(6px,6px,0)}}
+@media (prefers-reduced-motion:reduce){.gx .veil::after{animation:none}}
