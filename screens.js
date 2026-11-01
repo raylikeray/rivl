@@ -307,6 +307,14 @@
     // players: by scoring, as rows
     const posWord2 = p => ({ G: 'Guard', F: 'Forward', C: 'Center', 'G-F': 'Guard', 'F-G': 'Forward', 'F-C': 'Forward', 'C-F': 'Center', PG: 'Guard', SG: 'Guard', SF: 'Forward', PF: 'Forward' }[p] || '');
     const pRow = a => { const p = ppg[a.id]; const pos = a.position && a.position.abbreviation; return `<a class="frow" href="${href.player(lk, a.id)}"><span class="fface">${headshot(hsUrl(a), color, 44, a.displayName)}</span><span class="nm"><b>${esc(a.displayName)}</b><small>${esc([posWord(pos), a.jersey ? `No. ${a.jersey}` : ''].filter(Boolean).join(' · '))}</small></span><span class="fs">${p && p.pts != null ? `<span class="sl"><b>${(+p.pts).toFixed(1)}</b></span><em>ppg</em>` : ''}</span></a>`; };
+    /* roster cards, after the MLS app: a tall card in the team's colour with the crest faint behind the player's photo,
+       the name and position over a dark fade at the bottom, scoring and any injury in small tags at the top. */
+    const ilBy = {}; il.forEach(x => { const aid = athId(x.athlete || {}); if (aid) ilBy[aid] = x.status || ''; });
+    const altC = V._.teamAlt({ id: String(id), alt: t0.alternateColor }, L) || color;
+    const rCard = a => { const p = ppg[a.id]; const pos = posWord(a.position && a.position.abbreviation); const hs = hsUrl(a); const ij = ilBy[String(a.id)]; const ijc = ij ? (/out/i.test(ij) ? 'out' : 'q') : '';
+      const nm = a.shortName || ((n => n.length > 1 ? `${n[0][0]}. ${n.slice(1).join(' ')}` : n.join(' '))((a.displayName || '').split(/\s+/))); const ini = (a.displayName || '').split(/\s+/).map(w => w[0] || '').slice(0, 2).join('');
+      return `<a class="rcard" href="${href.player(lk, a.id)}" style="--rc:${esc(color)};--rc2:${esc(altC)}">${lg ? `<img class="rwm" src="${esc(lg)}" alt="" loading="lazy" decoding="async">` : ''}${hs ? `<img class="rhs" src="${esc(hs)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : `<b class="rini">${esc(ini)}</b>`}<span class="rtop">${p && p.pts != null ? `<i class="rppg">${(+p.pts).toFixed(1)}<small>PPG</small></i>` : '<i></i>'}${ij ? `<i class="rij ${ijc}">${esc(V._.statusWord(ij) || 'Injured')}</i>` : ''}</span><span class="rtx"><b>${esc(nm)}</b><small>${esc([pos, a.jersey ? `#${a.jersey}` : ''].filter(Boolean).join(' · '))}</small></span></a>`; };
+    const rRail = l => `<div class="rrail">${l.map(rCard).join('')}</div>`;
     const groups = [['Guard', 'Guards'], ['Forward', 'Forwards'], ['Center', 'Centers'], ['', 'Others']].map(([k, h]) => [h, sorted.filter(a => (posWord2(a.position && a.position.abbreviation) || '') === k)]).filter(([, l]) => l.length);
     // schedule rows: when, vs or at, the crest and name, then the time, the clock or the result
     const sch = g => { const { home, me, op } = opp(g); const res = isDone(g) ? `<b class="${+me.score > +op.score ? 'w' : 'l'}">${+me.score > +op.score ? 'W' : 'L'} ${me.score}-${op.score}</b>` : g.off ? `<b class="dim">${esc(g.off)}</b>` : g.state === 'in' ? `<span class="tpill on sm"><i></i>${esc(gxDet(g, L))}</span>` : `<b>${esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT)$/, ''))}</b>`;
@@ -323,11 +331,11 @@
       overview: (today ? sec(today.state === 'in' ? 'Live now' : 'Today') + gamePlate(today) : nextUp ? sec('Next up', esc(when(nextUp))) + gamePlate(nextUp) : '')
         + (lastG ? sec('Last game', esc(when(lastG))) + gamePlate(lastG) : '')
         + (form ? `<div class="tform">${form}</div>` : '')
-        + (sorted.length ? sec('Players', '', `<button data-act="ttab" data-tab="roster">Full roster</button>`) + `<div class="gp frows">${sorted.slice(0, 5).map(pRow).join('')}</div>` : '')
+        + (sorted.length ? sec('Players', '', `<button data-act="ttab" data-tab="roster">Full roster</button>`) + rRail(sorted.slice(0, 8)) : '')
         + (injRows ? sec('Injuries') + injRows : '')
         + (newsHtml ? newsHtml.replace('<div class="rows">', '<div class="rows gxrows">') : ''),
       schedule: (upAll.length ? sec('Coming up', `${upAll.length} to play`) + plateList(upAll, 6, 'up') : '') + (doneAll.length ? sec('Results', r ? `${r.w}-${r.l}, newest first` : 'newest first') + plateList(doneAll, 6, 'done') : '') || empty('No games listed'),
-      roster: groups.length ? groups.map(([h, l]) => sec(h, String(l.length)) + `<div class="gp frows">${l.map(pRow).join('')}</div>`).join('') + `<p class="legend tleg">Points per game this season, from ESPN.</p>` : empty('No roster listed'),
+      roster: groups.length ? groups.map(([h, l]) => sec(h, String(l.length)) + rRail(l)).join('') + `<p class="legend tleg">Points per game this season, from ESPN.</p>` : empty('No roster listed'),
       stats: ((seasonGrid ? sec('Season') + `<div class="gxplate tseason">${seasonGrid}</div>` : '') + outlook + (statsHtml ? `<div class="tstats">${statsHtml}</div>` : '')) || empty('No season numbers yet', '<p style="margin:6px 0 0">They show up once the team has played.</p>')
     };
     if (!panels[ttab]) ttab = 'overview';

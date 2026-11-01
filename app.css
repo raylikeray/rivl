@@ -3102,3 +3102,27 @@ html body .why-h .wt{background:none!important}
 }
 :root[data-theme="light"] .tabs{background:#FFFFFF!important}
 @media (max-width:1039px){ .tabs .tab svg.f{display:none!important} .tabs .tab svg.o{display:block!important} }
+/* Team roster cards (MLS style, refined): a swipeable row of tall cards in the team colour. The crest sits faint and
+   large behind the player, a soft light from the top-left and a second-colour glow lift the flat fill, and a dark fade at
+   the bottom keeps the name readable on any colour. Scoring and injury ride as small tags on top. */
+.rrail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 var(--gut);padding:2px var(--gut-r) 6px var(--gut);scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.rrail::-webkit-scrollbar{display:none}
+.rcard{position:relative;flex:none;width:148px;height:212px;border-radius:20px;overflow:hidden;scroll-snap-align:start;isolation:isolate;color:#fff;text-decoration:none;
+  background:radial-gradient(120% 70% at 20% 0%,rgba(255,255,255,.28),transparent 60%),radial-gradient(90% 60% at 100% 100%,color-mix(in srgb,var(--rc2) 55%,transparent),transparent 70%),var(--rc);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.rcard:active{transform:scale(.97)}
+.rcard .rwm{position:absolute;left:50%;top:22px;width:128px;height:128px;transform:translateX(-50%);object-fit:contain;opacity:.16;filter:grayscale(1) brightness(1.6);z-index:0;pointer-events:none}
+.rcard .rhs{position:absolute;left:50%;bottom:44px;width:210px;max-width:none;height:auto;transform:translateX(-50%);z-index:1;pointer-events:none}
+.rcard .rini{position:absolute;left:0;right:0;top:56px;text-align:center;font-size:44px;font-weight:800;opacity:.55;z-index:1}
+.rcard::after{content:"";position:absolute;left:0;right:0;bottom:0;height:96px;z-index:2;background:linear-gradient(180deg,transparent,rgba(0,0,0,.42) 45%,rgba(0,0,0,.72));pointer-events:none}
+.rcard .rtx{position:absolute;left:12px;right:10px;bottom:11px;z-index:3;display:flex;flex-direction:column;gap:2px;min-width:0}
+.rcard .rtx b{font-size:17px;font-weight:800;letter-spacing:-.01em;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcard .rtx small{font-size:12.5px;font-weight:500;color:rgba(255,255,255,.82);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcard .rtop{position:absolute;left:8px;right:8px;top:8px;z-index:3;display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+.rcard .rtop i{font-style:normal}
+.rcard .rppg{display:inline-flex;align-items:baseline;gap:3px;padding:4px 8px;border-radius:999px;background:rgba(0,0,0,.38);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-size:12.5px;font-weight:800}
+.rcard .rppg small{font-size:9.5px;font-weight:700;opacity:.8;letter-spacing:.03em}
+.rcard .rij{padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;background:#FFB020;color:#1A1200}
+.rcard .rij.out{background:#E5484D;color:#fff}
+.gxpage .rrail{margin-top:2px}
+.rcard .rhs{bottom:0;width:224px}
