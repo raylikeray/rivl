@@ -653,7 +653,12 @@
   /* ================= PLAYER ================= */
   async function player(lk, id) {
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Player not found'); return; }
-    $main.innerHTML = `<div class="topbar"><a class="ib" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>` + skeleton(1, 'card') + skeleton(6, 'row');
+    /* a refresh of the player already on screen keeps the page up while the new numbers load, then swaps it in place at the
+       same scroll and tab, so the face never blinks out and back */
+    const same = $main.querySelector(`#gpage.plpage[data-pid="${String(id)}"]`);
+    const keep = same ? { y: (document.getElementById('gxscroll') || {}).scrollTop || 0, tab: (($main.querySelector('#gtabs .chip.on') || {}).dataset || {}).tab } : null;
+    player.keep = keep;
+    if (!same) $main.innerHTML = `<div class="topbar"><a class="ib" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>` + skeleton(1, 'card') + skeleton(6, 'row');
     const bioUrl = `${WEB(L)}/athletes/${id}`;
     const coreUrl = `${HW.ESPN.core}sports/basketball/leagues/${L.path.split('/')[1]}/athletes/${id}`;
     // two sources for the bio: the site feed (team, headshot, injuries) and the core record (birthplace, hand, class, debut), merged field by field
@@ -848,12 +853,12 @@
       const teamName = tm.shortDisplayName || tm.name || tm.displayName || '';
       const subBits = [teamName, pos, a.jersey ? `#${a.jersey}` : ''].filter(Boolean).map(esc).join(' · ');
       const flwBtn = `<button class="flw${following ? ' on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${following}" aria-label="${following ? 'Unfollow' : 'Follow'} ${esc(a.displayName || '')}">${window.RIVL_flw ? window.RIVL_flw(following, 'player') : (following ? 'Following' : 'Follow player')}</button>`;
-      const inner = `<div class="plh">${tlogo ? `<img class="plwm" src="${esc(tlogo)}" alt="" ${hide}>` : ''}${hsBig ? `<img class="plshot" src="${esc(hsBig)}" alt="" onload="if(this.naturalHeight&&this.naturalHeight<560)this.classList.add('small')" ${hide}>` : `<b class="plini">${esc(initials(a.displayName || ''))}</b>`}<div class="pltx"><h1>${esc(a.displayName || '')}</h1><p>${subBits}</p>${flwBtn}</div></div>`;
+      const inner = `<div class="plh">${tlogo ? `<img class="plwm" src="${esc(tlogo)}" alt="" ${hide}>` : ''}${hsBig ? `<img class="plshot" src="${esc(hsBig)}" alt="" decoding="sync" fetchpriority="high" ${hide}>` : `<b class="plini">${esc(initials(a.displayName || ''))}</b>`}<div class="pltx"><h1>${esc(a.displayName || '')}</h1><p>${subBits}</p>${flwBtn}</div></div>`;
       const bar = `<a class="gxib" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><div class="gxmid2"><div class="gxctr" id="gxmini"><span class="gxmn plmn">${headshot(a.headshot && a.headshot.href, color, 40, a.displayName)}<span><b>${esc(a.displayName || '')}</b><small>${tlogo ? `<img src="${esc(tlogo)}" alt="" ${hide}>` : ''}${esc(tm.displayName && tm.displayName.length <= 18 ? tm.displayName : teamName)}</small></span></span></div></div><span class="gxib ghost" aria-hidden="true"></span>`;
       const factRows = [['Jersey', a.jersey ? `#${a.jersey}` : ''], ['Position', pos], ['Height', a.displayHeight], ['Weight', a.displayWeight], [college ? 'Class' : 'Age', college ? classWord : (a.age ? `${a.age}` : '')], ['Team', tm.abbreviation || '']].filter(([, v]) => v);
       const factsT = factRows.length ? `<div class="gxplate plfacts">${factRows.map(([k, v]) => `<div><b>${esc(String(v))}</b><span>${esc(k)}</span></div>`).join('')}</div>` : '';
       const pan = { ...panels, summary: factsT + (L.sport === 'basketball' && HW.rating ? `<div class="prate" data-pid="${esc(String(id))}" style="${tcv(color)}"></div>` : '') + injStrip + panels.summary };
-      shell({ cls: 'plpage', color, c2: teamAlt({ id: String(tm.id || ''), abbr: tm.abbreviation, alt: tm.alternateColor }, L) || color, inner, bar, act: 'ptab', attr: 'data-ptab-panel', tab: ptab, tabs: [['summary', 'Overview'], ['stats', 'Stats'], ['bio', 'Bio'], ['news', 'News']], panels: pan });
+      const kp = player.keep || {}; shell({ pid: String(id), keepY: kp.y, cls: 'plpage', color, c2: teamAlt({ id: String(tm.id || ''), abbr: tm.abbreviation, alt: tm.alternateColor }, L) || color, inner, bar, act: 'ptab', attr: 'data-ptab-panel', tab: kp.tab && pan[kp.tab] ? kp.tab : ptab, tabs: [['summary', 'Overview'], ['stats', 'Stats'], ['bio', 'Bio'], ['news', 'News']], panels: pan });
       if (HW.rating) HW.rating.get(L, id).then(R => { const el = $main.querySelector(`.prate[data-pid="${String(id)}"]`); if (el && R) HW.rating.mount(el, R, { league: L.short || L.label }); }).catch(() => { });
     } else $main.innerHTML = legacyHTML;
     if (HW.v5._ptabL) $main.removeEventListener('click', HW.v5._ptabL);

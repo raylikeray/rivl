@@ -360,12 +360,12 @@
   }
   /* the shared hero page (team and player): fixed page, moving colour hero, a clear bar on top, a sheet that scrolls up
      over the hero with sticky tabs */
-  V._.heroShell = ({ cls, color, c2, inner, bar, act, attr, tab, tabs, panels }) => {
-    $main.innerHTML = `<div id="gpage" class="gxpage tmpage ${cls || ''}"><section class="gx solo ${soloLayer(c2).cls}" id="gxhero" style="--aw:${esc(color)};--ha:${esc(c2 || color)};--t2:${esc(c2 || color)}">${LOBES}${soloLayer(c2).html}<div class="gxin" id="gxin">${inner}</div></section>`
+  V._.heroShell = ({ cls, color, c2, inner, bar, act, attr, tab, tabs, panels, pid, keepY }) => {
+    $main.innerHTML = `<div id="gpage" class="gxpage tmpage ${cls || ''}"${pid ? ` data-pid="${esc(pid)}"` : ''}><section class="gx solo ${soloLayer(c2).cls}" id="gxhero" style="--aw:${esc(color)};--ha:${esc(c2 || color)};--t2:${esc(c2 || color)}">${LOBES}${soloLayer(c2).html}<div class="gxin" id="gxin">${inner}</div></section>`
       + `<div class="gxbar" id="gxbar">${bar}</div>`
       + `<div class="gxscroll" id="gxscroll"><div class="gxspace"></div><div class="gxsheet"><div id="gtabs" class="gxtabw"><div class="gxtabs" role="tablist">${tabs.map(([k, l]) => `<button class="chip${k === tab ? ' on' : ''}" data-act="${act}" data-tab="${k}" aria-pressed="${k === tab}">${l}</button>`).join('')}</div></div>`
       + `<div id="tbody">${tabs.map(([k]) => `<div ${attr}="${k}"${k === tab ? '' : ' hidden'}>${panels[k] || ''}</div>`).join('')}</div></div></div></div>`;
-    gxFit(); gxScroll(); if (gxScroll.run) gxScroll.run();
+    gxFit(); if (keepY) { const b = document.getElementById('gxscroll'); if (b) b.scrollTop = keepY; } gxScroll(); if (gxScroll.run) gxScroll.run();
   };
   /* the hero sits under the scroll box (the sheet scrolls up over it), so a tap on the hero lands on the box's empty top.
      Pass it through to whatever is drawn there: the Follow pill, the team crest link. */
