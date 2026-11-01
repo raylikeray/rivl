@@ -34,6 +34,7 @@
     const h = (location.hash || '#home').slice(1);
     let m;
     if ((m = h.match(/^(player|team|game|article|venue)\/([a-z]+)\/([A-Za-z0-9]+)(?:\/p\/(\d+))?$/))) return { name: m[1], lk: lkOf(m[2]), args: m[4] ? [lkOf(m[2]), m[3], m[4]] : [lkOf(m[2]), m[3]] };   // a game can open on one player: #game/nba/401/p/1966
+    let rc; if ((rc = h.match(/^recruit\/(boys|girls)\/(\d{4})\/([a-z0-9-]+)$/))) return { name: 'recruit', lk: rc[1] === 'girls' ? 'ncaaw' : 'ncaam', args: [rc[1], rc[2], rc[3]] };
     if (LEAGUES[h]) { if (store.get('v5:lk') !== h) { store.set('v5:lk', h); if (V.applyAccent) V.applyAccent(); } return { name: store.get('v5:screen', 'home'), lk: h, args: [h] }; }
     if (h === 'search') return { name: 'search', lk: lkOf(store.get('v5:lk', 'nba')), args: [] };
     let rm; if ((rm = h.match(/^record(?:\/([a-z]+))?$/))) { const k = rm[1] && LEAGUES[rm[1]] ? rm[1] : lkOf(store.get('v5:lk', 'nba')); return { name: 'record', lk: k, args: [k] }; }
@@ -114,7 +115,7 @@
     if (leagueScreen && r.name !== 'scores') store.set('v5:date', todayCT());
     document.getElementById('top').hidden = !leagueScreen;
     // a game, team or player page is full screen, like X's game page: no bottom bar; the back button takes you out
-    document.documentElement.classList.toggle('entity', ['game', 'team', 'player', 'venue'].includes(r.name));
+    document.documentElement.classList.toggle('entity', ['game', 'team', 'player', 'venue', 'recruit'].includes(r.name));
     paintPills(r.lk, leagueScreen);
     /* the bar lights the tab you are in; a player, team or game page keeps lit the tab you opened it from */
     const TABS = ['scores', 'standings', 'home', 'stats', 'search'], tabOf = n => n === 'players' || n === 'teams' ? 'home' : n;

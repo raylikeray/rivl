@@ -4219,3 +4219,30 @@ html:root body .tw .tbl thead th:first-child{z-index:3}
 html:root body .gxpage .tw .tbl th:first-child,html:root body .gxpage .tw .tbl td:first-child{background:var(--bg)}
 html:root body .gxpage .gxplate .tw .tbl th:first-child,html:root body .gxpage .gxplate .tw .tbl td:first-child,html:root body .card .tw .tbl th:first-child,html:root body .card .tw .tbl td:first-child,html:root body .bxcard .tw .tbl th:first-child,html:root body .bxcard .tw .tbl td:first-child{background:var(--card)}
 .clegend .missx{font-style:normal;font-weight:900;font-size:13px;line-height:1}
+/* ===== recruit page ===== */
+.rcpage .plh .rcshot{height:360px!important;max-width:88%;object-fit:cover;object-position:top;border-radius:0}
+.rcpage .plh .pltx .plact .rcun{display:inline-flex;align-items:center;height:42px;padding:0 16px;border-radius:999px;background:rgba(10,12,16,.42);box-shadow:inset 0 0 0 1px rgba(255,255,255,.32);color:#fff;font-size:15px;font-weight:800}
+.rcpage .plh .rcteam{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border-radius:999px;background:rgba(10,12,16,.42);box-shadow:inset 0 0 0 1px rgba(255,255,255,.32);color:#fff;font-size:15px;font-weight:800;text-decoration:none;pointer-events:auto}
+.rcpage .plh .rcteam img{width:22px;height:22px;object-fit:contain}
+.rcwhere{margin-top:12px;padding:4px 16px!important}
+.rcwhere>div{display:flex;flex-direction:column;gap:2px;padding:12px 0;border-top:1px solid var(--line)}
+.rcwhere>div:first-child{border-top:0}
+.rcwhere span{font-size:12.5px;font-weight:600;color:var(--ink-3)}.rcwhere b{font-size:16px;font-weight:800}
+.rccommit{display:flex;align-items:center;gap:14px;padding:14px 16px!important;color:var(--ink);text-decoration:none}
+.rccommit img{width:48px;height:48px;object-fit:contain}
+.rccommit>span{flex:1;display:flex;flex-direction:column;gap:2px}.rccommit b{font-size:17px;font-weight:800}.rccommit em{font-style:normal;font-size:13.5px;color:var(--ink-3)}
+.rccommit .chev{color:var(--ink-3)}
+.rctop{display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px!important}
+.rctop span{padding:8px 14px;border-radius:999px;background:var(--surf-2);font-size:14.5px;font-weight:700}
+.rcsvc{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 12px!important}
+.rcsvc>div{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border-radius:14px;background:var(--surf-2)}
+.rcsvc span{font-size:11.5px;font-weight:800;letter-spacing:.04em;color:var(--ink-3)}.rcsvc b{font-size:22px;font-weight:800}.rcsvc em{font-style:normal;font-size:11.5px;color:var(--ink-3)}
+.rcsvc>div.all{background:var(--ink);color:var(--card)}.rcsvc>div.all span,.rcsvc>div.all em{color:color-mix(in srgb,var(--card) 75%,transparent)}
+.rcnews{padding:4px 16px!important}
+.rcst{display:block;padding:14px 0;border-top:1px solid var(--line);color:var(--ink);text-decoration:none}
+.rcst:first-child{border-top:0}
+.rcst b{display:block;font-size:16px;font-weight:800;line-height:1.3}.rcst em{display:block;margin-top:3px;font-style:normal;font-size:12.5px;color:var(--ink-3)}
+.rcst p{margin:8px 0 0;font-size:14px;line-height:1.5;color:var(--ink-2)}
+.rcothers{padding:4px 12px!important}
+.rcsrc{margin:16px var(--gut-r,16px) 0 var(--gut,16px);font-size:12.5px;line-height:1.45;color:var(--ink-3)}
+.rcsrc a{color:inherit}
