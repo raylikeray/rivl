@@ -2913,3 +2913,35 @@ html.gxon body::before{display:none}
 .gxpage .pfchips .chip.on,.gxpage .chips .chip.on{background:var(--ink)!important;color:var(--bg)!important;border-color:var(--ink)!important}
 .gxpage .pfchips .chip.on small{color:color-mix(in srgb,var(--bg) 70%,transparent)}
 .gxpage .sec a,.gxpage .sec button{background:var(--surf)!important;background-image:none!important;box-shadow:none!important;border:1px solid var(--line)!important}
+
+/* ================= one look everywhere: every card is the flat inset list, every pill is flat =================
+   card: the solid surface, a thin line, rounded 22px, no gloss, grain, gradient or shadow. pill: the same surface and line,
+   the chosen one solid ink. */
+:root{--card:var(--surf);--card-line:var(--line)}
+.hsec,.card,.game,.giplate,.five,.feat,.chart,.wire,.vabout,.pfocus,.tgrp,.lkc,.mu,.stale,.brief,.rows:not(.gxrows):not(.injrep),.stats>div,.why,.injgrp,.zones,.tracker svg,.gp,.pp-list,.cmp,.ijc,.plc{
+  background:var(--card)!important;background-image:none!important;background-blend-mode:normal!important;box-shadow:none!important;border:1px solid var(--card-line)!important}
+.hsec,.card,.giplate,.five,.feat,.chart,.wire,.vabout,.pfocus,.lkc,.brief,.gp,.pp-list,.ijc,.zones{border-radius:22px!important}
+.game{border-radius:20px!important}
+.hsec::before,.hsec::after,.card::before,.game::before,.game::after,.feat::before,.wire::before{display:none!important}
+/* lists of rows: rows inside one card */
+.rows:not(.gxrows):not(.injrep){margin-left:var(--gut);margin-right:var(--gut-r);padding:0 16px!important;border-radius:22px!important}
+.rows:not(.gxrows) > .row:last-child{border-bottom:0}
+.hsec .rows,.giplate .rows,.card .rows,.hsec .gp,.gp .rows{border:0!important;margin-left:0;margin-right:0;padding:0!important;background:none!important}
+.stats>div{border-radius:16px!important}
+/* the stretch sections that are a list themselves sit on the page; their list is the card */
+.hsec[data-sec="teams"],.hsec[data-sec="players"],.hsec[data-sec="injuries"],.hsec[data-sec="live"],.hsec[data-sec="wire"]{background:none!important;border:0!important}
+/* pills */
+.chip,.bchip,.day,.pick,.pip,.off,.sec a,.sec button,.btn.ghost,.swatch{background:var(--card)!important;background-image:none!important;box-shadow:none!important;border:1px solid var(--card-line)!important;text-shadow:none!important}
+.chip::before,.chip::after,.bchip::before,.day::before,.pip::before{display:none!important}
+.chip.on,.chip[aria-pressed="true"],.day.on,.pick.on{background:var(--ink)!important;color:var(--bg)!important;border-color:var(--ink)!important}
+.chip.on small,.day.on *{color:inherit!important}
+/* the league switch: the same pill track as the game page */
+.pills{background:var(--card)!important;background-image:none!important;border:1px solid var(--card-line)!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+:root.scrolled .pills{box-shadow:0 8px 20px -12px rgba(0,0,0,.5)!important}
+.pills::before{background:var(--ink)!important;box-shadow:none!important}
+.pill,.pill.on{text-shadow:none!important}
+.pill.on{color:var(--bg)!important}
+/* the tabs on other screens */
+.ptabs .chip:not(.on),.stchips .chip:not(.on){color:var(--ink-2)}
+.hsec .gp.frows{background:var(--card)!important;border:1px solid var(--card-line)!important;margin-left:16px!important;margin-right:16px!important}
+.hsec .brief{border:0!important;background:none!important;padding-left:0;padding-right:0}
