@@ -1507,7 +1507,7 @@ button.injhd,.injgrp button.injhd{margin:9px 0 9px}
 .xghost *{animation:none!important;transition:none!important}
 @keyframes screenout{from{opacity:1}to{opacity:0}}
 .soft{animation:soft .32s var(--ease) both}
-@keyframes soft{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes soft{from{opacity:0}to{opacity:1}}
 .sheet,.panel{will-change:opacity}
 .sheet.in,.panel.in{animation:veil .32s var(--ease) both}
 .sheet.out,.panel.out{animation:veil .22s var(--ease) reverse both}
@@ -4614,3 +4614,9 @@ html:root body .panel.full.in .panel-in,html:root body .panel.full.out .panel-in
 @keyframes sheetup{from{transform:translate3d(0,100%,0)}to{transform:translate3d(0,0,0)}}
 @keyframes sheetdown{from{transform:translate3d(0,0,0)}to{transform:translate3d(0,100%,0)}}
 @media (prefers-reduced-motion:reduce){html:root body .sheet.in .sheet-in,html:root body .panel.in .panel-in,html:root body .panel.full.in,html:root body .panel.full.out,html:root body .sheet.out .sheet-in,html:root body .panel.out .panel-in{animation:none}}
+/* v345: the Mine chip sat 18px low on the Scores calendar row (a leftover top:50% on a chip that is no longer absolute) */
+html:root body .calrow .chip.mine{position:static!important;top:auto!important;transform:none!important;justify-self:end}
+html:root body .calrow .chip.mine:active{transform:scale(.96)!important}
+
+/* a block repainted in place only fades in (no rise), quickly */
+html:root body .soft{animation:soft 160ms linear both}

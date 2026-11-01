@@ -418,8 +418,15 @@
     if (!keep) { $main.innerHTML = skeleton(1, 'card') + skeleton(4, 'row'); $main.dataset.hlk = lk; }
     const P = prefs.all(); const yday = addDays(today, -1);
     const alive = () => { if (token !== homeToken) return false; const r = HW.v5.route && HW.v5.route(); return !r || (r.name === 'home' && r.lk === lk); };   // still the screen being shown, even while the old one is kept on screen during the load
-    const secs = {}; let painted = keep;
-    const wrap = (k, quiet) => `<section class="hsec${quiet ? ' quiet' : ''}" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;
+    /* what this league's Home was last built from stays with the league: a return (a swipe back, the tab, a refresh) builds
+       the first paint from the full data it had, so the screen you land on is the one you left, not a thinner version that
+       fills back in section by section (the reload look). Fresh data then replaces only what actually changed. */
+    const HS = home.states || (home.states = {});
+    const S0 = HS[lk] || (HS[lk] = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null });
+    if (S0.teams && S0.teams.filter(Boolean).map(t => String(t.id)).sort().join() !== mine.map(String).sort().join()) S0.teams = null;   // the follows changed since: the list is rebuilt
+    const secs = S0.secs || (S0.secs = {}); let painted = keep;   // the section strings live with the league's data: unchanged inputs mean unchanged strings, found again without rebuilding
+    const hmemo = S0.hmemo || (S0.hmemo = new Map()); const hashS = str => { let h = hmemo.get(str); if (h === undefined) { if (hmemo.size > 40) hmemo.clear(); h = hashOf(str); hmemo.set(str, h); } return h; };   // a string seen before is not hashed again
+    const wrap = (k, quiet) => `<section class="hsec${quiet ? ' quiet' : ''}" data-sec="${k}" data-h="${hashS(secs[k])}">${secs[k]}</section>`;
     // two columns on a wide screen (the games and your people on the left, injuries and news on the right); one stack on a phone
     const SIDE = new Set(['injuries', 'news']);
     const col = k => $main.querySelector(SIDE.has(k) ? '.hcol.side' : '.hcol.main') || $main;
@@ -436,19 +443,13 @@
       SECS.forEach(k => {
         const cur = $main.querySelector(`section[data-sec="${k}"]`);
         if (!secs[k]) { if (cur) cur.remove(); return; }
-        if (cur) { if (cur.dataset.h !== hashOf(secs[k])) { const t = document.createElement('div'); t.innerHTML = wrap(k, quiet); morph(cur, t.firstElementChild); } return; }
+        if (cur) { if (cur.dataset.h !== hashS(secs[k])) { const t = document.createElement('div'); t.innerHTML = wrap(k, quiet); morph(cur, t.firstElementChild); } return; }
         const after = SECS.slice(SECS.indexOf(k) + 1).filter(j => SIDE.has(j) === SIDE.has(k)).map(j => $main.querySelector(`section[data-sec="${j}"]`)).find(Boolean);
         if (after) after.insertAdjacentHTML('beforebegin', wrap(k, quiet)); else col(k).insertAdjacentHTML('beforeend', wrap(k, quiet));
       });
     };
 
     // ----- what everything is built from -----
-    /* what this league's Home was last built from stays with the league: a return (a swipe back, the tab, a refresh) builds
-       the first paint from the full data it had, so the screen you land on is the one you left, not a thinner version that
-       fills back in section by section (the reload look). Fresh data then replaces only what actually changed. */
-    const HS = home.states || (home.states = {});
-    const S0 = HS[lk] || (HS[lk] = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null });
-    if (S0.teams && S0.teams.filter(Boolean).map(t => String(t.id)).sort().join() !== mine.map(String).sort().join()) S0.teams = null;   // the follows changed since: the list is rebuilt
     const favTeam = t => mine.includes(String(t.id));
     const teamOf = p => { const k = String(p.team || '').toLowerCase(); return t => (p.teamId && String(t.id) === String(p.teamId)) || (k && [t.abbr, t.short, t.name].some(x => String(x || '').toLowerCase() === k)); };
     /* tonight's games as small stacked tiles: away team on top, home team under it, the time or score at the right */
@@ -466,9 +467,16 @@
 
     const build = () => {
       const { games, last, ctx } = S0; const teams = teamList();
+      /* only the sections whose inputs changed are built again: a score ticking over rebuilds the games and the team rows, not
+         the news, the injuries or the players' lines. Inputs are compared by identity, which the data loaders change only
+         when they bring something new. */
+      const refs = S0.refs || (S0.refs = {}); const ch = (k, v) => { const d = refs[k] !== v; refs[k] = v; return d; };
+      const D = { games: ch('games', games), last: ch('last', last), sums: ch('sums', Object.keys(S0.sums).length), teams: ch('teams', S0.teams), inj: ch('inj', S0.inj), news: ch('news', S0.news), ctx: ch('ctx', ctx), st: ch('st', S0.st), prefs: ch('prefs', JSON.stringify(P)), fp: ch('fp', fp.map(p => p.id).join()) };
+      const first = !Object.keys(secs).length; const need = (...ks) => first || D.prefs || ks.some(k => D[k]);
       const byTeam = new Map(); games.forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
       // the Now card is for a game that is on; before tip-off and after the final, the rail list is the whole story
       const favAll = games.filter(isFav); const nowG = favAll.filter(isLive).sort((a, b) => rankGame(b) - rankGame(a))[0] || null;
+      if (need('games', 'ctx', 'teams', 'st')) {
       if (nowG && P.brief) secs.now = nowCard(L, lk, nowG, ctx); else delete secs.now;
       // tonight: your games as a rail list in tip order (a dot ahead, a pulse while on, a check when done), or the next ones on the calendar
       const liveMine = games.filter(g => isLive(g) && isFav(g));
@@ -489,7 +497,9 @@
         }
         if (body || !nowG) secs.tonight = `<div class="brief"><div class="brief-h"><b>${title}</b><span>${note}</span></div>${body}</div>`; else delete secs.tonight;
       } else delete secs.tonight;
+      }
       // last night: results, then your players' lines once the box scores are in
+      if (need('last', 'sums', 'fp')) {
       const pGames = fp.map(p => { const is = teamOf(p); const g = last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? { p, g } : null; }).filter(Boolean);
       const lines = pGames.map(({ p, g }) => { const d = S0.sums[g.id]; const bx = d && d.boxscore && d.boxscore.players || []; for (const side of bx) { const st = side.statistics && side.statistics[0]; if (!st) continue; const labels = st.labels || st.names || []; const a = (st.athletes || []).find(x => x.athlete && String(x.athlete.id) === p.id); if (!a) continue; if (a.didNotPlay || !a.stats || !a.stats.length) return { p, g, dnp: a.reason || 'Did not play' }; const get = l => { const i = labels.indexOf(l); return i >= 0 ? a.stats[i] : ''; }; const is = teamOf(p); const us = is(g.home) ? g.home : g.away, them = is(g.home) ? g.away : g.home; return { p, g, pts: get('PTS'), reb: get('REB'), ast: get('AST'), min: get('MIN'), won: us.score > them.score, us, them }; } return null; }).filter(Boolean);
       const lineBy = {}; lines.forEach(x => { lineBy[x.p.id] = x; });
@@ -501,11 +511,13 @@
           secs.last = `<div class="brief"><div class="brief-h"><b>Last night</b><span>${esc(dayLabel(yday, { weekday: 'long' }))}</span></div>${res.length ? `<div class="brief-row">${res.join('')}</div>` : ''}${rows.length ? `<div class="rows brief-rows">${rows.join('')}</div>` : ''}</div>`;
         } else delete secs.last;
       }
+      }
       // your teams playing right now: the hero
-      const live = games.filter(g => isLive(g) && isFav(g)).sort((a, b) => rankGame(b) - rankGame(a));
-      { const more = live.filter(g => g !== nowG); if (more.length && P.live) secs.live = sec(nowG && isLive(nowG) ? 'Also on' : 'Live now') + `<div class="gp grows">${more.map(g => gameRow(L, g, ctx)).join('')}</div>`; else delete secs.live; }
+      if (need('games', 'ctx')) { const live = games.filter(g => isLive(g) && isFav(g)).sort((a, b) => rankGame(b) - rankGame(a));
+      const more = live.filter(g => g !== nowG); if (more.length && P.live) secs.live = sec(nowG && isLive(nowG) ? 'Also on' : 'Live now') + `<div class="gp grows">${more.map(g => gameRow(L, g, ctx)).join('')}</div>`; else delete secs.live; }
       const clk = g => { const per = +g.period || 0, d = String(g.detail || ''), st = String(g.status || ''); if (!per) return d || 'Live'; if (/HALFTIME/.test(st) || /^half/i.test(d)) return 'Halftime'; const reg = L.periods === 2 ? 2 : 4; const ord = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`; const nm = per <= reg ? (reg === 2 ? `${ord(per)} half` : ord(per)) : (per - reg > 1 ? `${per - reg}OT` : 'OT'); if (/END_PERIOD/.test(st) || /^end/i.test(d)) return `End of ${nm}`; const c = String(g.clock || '').trim(); return c && !/^0{1,2}(?::00)?(?:\.0)?$/.test(c) ? `${nm} ${c}` : nm; };
       // my teams: record, what's next or how it's going, win chance
+      if (need('games', 'teams', 'st')) {
       if (P.teams) {
         /* v7's rows: the team's colour as a thin edge, the crest, the name and league; on the right one status and one line under it */
         /* in the order you'd want them: playing now first, then games that ended today, then the soonest game coming up,
@@ -531,7 +543,9 @@
         });
         secs.teams = sec('My teams', '', `<a href="#teams">Edit</a>`) + (rows.length ? `<div class="gp frows">${rows.join('')}</div>` : mine.length ? skeleton(mine.length, 'row') : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`));
       } else delete secs.teams;
+      }
       // my players
+      if (need('games', 'ctx', 'teams', 'fp')) {
       if (P.players) {
         const ppgOf = p => { const r = ctx && ctx.ppg && ctx.ppg[(p.name || '').toLowerCase()]; return r && r.pts != null ? `${(+r.pts).toFixed(1)} ppg` : ''; };
         secs.players = sec('My players', '', `<a href="#players">${fp.length ? 'Edit' : 'Find players'}</a>`) + (fp.length
@@ -546,9 +560,11 @@
             return `<a class="frow" href="${href.player(lk, p.id)}"><span class="fface">${headshot(p.img, c, 42, p.name)}${ti.logo ? `<span class="fcr">${imgSized(ti.logo, 64, 64)}</span>` : ''}</span><span class="nm"><b>${esc(p.name || p.short)}</b><small>${esc(sub)}</small></span><span class="fs">${st}</span></a>`; }).join('')}</div>`
           : empty('Follow the players you watch', '<p style="margin:6px 0 0">They show up here with their scoring line, and their profile is one tap away.</p>', `<a class="btn" href="#players">Find players</a>`));
       } else delete secs.players;
+      }
       // injuries: one list grouped by team. Your teams show every report, with your players marked; a team you don't
       // follow appears only for the players you follow on it. Rows are keyed by the report, so two reports on one player never collide.
       const inj = S0.inj;
+      if (need('inj', 'teams', 'fp')) {
       if (inj && P.injuries) {
         S.injuries = S.injuries || {};
         const pById = new Map(fp.map(p => [p.id, p]));
@@ -561,7 +577,9 @@
         const blocks = groups.flatMap(({ t, rows }) => rows.map(({ x, i, p }) => row(x, i, t, p)));
         if (blocks.length) secs.injuries = sec('Injuries', 'your teams and players') + `<div class="gp frows">${blocks.join('')}</div>`; else delete secs.injuries;
       } else delete secs.injuries;
+      }
       // news about my teams and players: ESPN tags every story with the teams and athletes it covers; full names are the fallback
+      if (need('news', 'teams', 'fp')) {
       const news = S0.news;
       const tIds = new Set(mine.map(String)), pIds = new Set(fp.map(p => p.id));
       const tagged = a => (a.categories || []).some(c => (c.type === 'team' && tIds.has(String(c.teamId || (c.team && c.team.id) || ''))) || (c.type === 'athlete' && pIds.has(String(c.athleteId || (c.athlete && c.athlete.id) || ''))));
@@ -587,6 +605,7 @@
         const arts = mineA.concat(rest);
         if (arts.length) secs.news = sec('News', mineA.length && !rest.length ? 'your teams and players' : mineA.length ? 'yours first, then the league' : 'around the league') + `<div class="rows">${arts.map(a => HW.v5.newsRow(lk, a)).join('')}</div>`; else delete secs.news;
       } else delete secs.news;
+      }
     };
 
     // ----- phase 1: one round trip, then paint -----
@@ -675,6 +694,8 @@
     if (inPlace) { paint($main.querySelector("#scbody").innerHTML); if (HW.v5.busy) HW.v5.busy(true); } else $main.innerHTML = `<div id="scpage" data-lk="${lk}"><div id="schead" data-h="${hashOf(head)}">${head}</div><div id="scbody">${skeleton(4, 'card')}</div></div>`;
     const [games, ctx, meta] = await Promise.all([ymd === today && S.today[lk] && S.today[lk].length ? S.today[lk] : scoreboard(L, ymd).catch(() => null), forecastCtx(L, ymd).catch(() => null), sbMeta(L, ymd)]);
     if (ymd === today && games) S.today[lk] = games;
+    /* the days either side are fetched while the phone is idle, so a tap on a neighbouring date paints from memory at once */
+    { const near = [-1, 1, -2, 2, -3, 3].map(i => addDays(ymd, i)); let i = 0; const step = () => { if (i >= near.length) return; const r = HW.v5.route && HW.v5.route(); if (!r || r.name !== 'scores' || r.lk !== lk) return; const d = near[i++]; Promise.all([scoreboard(L, d).catch(() => null), forecastCtx(L, d).catch(() => null), sbMeta(L, d).catch(() => null)]).finally(() => setTimeout(() => HW.v5.whenIdle(step), 150)); }; setTimeout(() => HW.v5.whenIdle(step), 1200); }
     const el = $main.querySelector('#dates .on'); if (el) el.scrollIntoView({ inline: 'center', block: 'nearest' });
     todayPill(ymd !== today, today);
     const phase = ''; const phaseTag = meta.phase ? `<span class="phase">${esc(meta.phase)}</span>` : '';
