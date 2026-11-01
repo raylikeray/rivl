@@ -2945,3 +2945,22 @@ html.gxon body::before{display:none}
 .ptabs .chip:not(.on),.stchips .chip:not(.on){color:var(--ink-2)}
 .hsec .gp.frows{background:var(--card)!important;border:1px solid var(--card-line)!important;margin-left:16px!important;margin-right:16px!important}
 .hsec .brief{border:0!important;background:none!important;padding-left:0;padding-right:0}
+
+/* nothing draws a second box inside a card */
+:is(.gxplate,.glplate,.hsec,.card,.gp,.giplate,.ijc) :is(.why,.cmp,.rows,.zones,.stats>div,.tbl){border:0!important;background:none!important}
+.gxwhy .why-h{border-bottom:1px solid var(--line)}
+
+/* logos everywhere, as X draws them: the crest alone, no disc and no ring, sized inside its box so nothing spills */
+.logo,.logo.tint,.logo.s,.logo.m,.logo.l,.logo.xl,.gxcr,.fcr,.tcr,.gxp .logo{background:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;overflow:visible}
+.logo::before,.logo::after,.logo.tint::before{display:none!important}
+.logo img,.gxcr img{width:100%!important;height:100%!important;object-fit:contain!important;transform:none!important;filter:none!important}
+.frow .fcr{background:var(--bg)!important;border-radius:999px!important;padding:2px;box-shadow:0 0 0 1.5px var(--bg)!important}
+
+/* light mode as X: a white page, light gray cards */
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){--bg:#FFFFFF;--card:#F2F3F5;--card-line:rgba(10,11,14,.06);--surf-2:#ECEDF0} }
+:root[data-theme="light"]{--bg:#FFFFFF;--card:#F2F3F5;--card-line:rgba(10,11,14,.06);--surf-2:#ECEDF0}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) :is(.gxplate,.glplate,.gxrows,.giplate,.gxser,.plc,.zones,.gp.frows,.tstats .tbl.ff,.tstats .stats.tsg,.ijc,.gxseg,.gxtsw,.gxpage .chip,.gxpage .sec a,.gxpage .sec button){background:var(--card)!important;border-color:var(--card-line)!important}
+  :root:not([data-theme="dark"]) .tmpage .tstats .stats.tsg>div,:root:not([data-theme="dark"]) .gxpage .tsch{background:var(--card)!important}
+  :root:not([data-theme="dark"]) .gxpage .gxseg button[aria-pressed=true]{background:#0A0B0E!important;color:#fff!important}
+  :root:not([data-theme="dark"]) .gxpage .gxtsw button[aria-pressed=true]{background:#0A0B0E!important;color:#fff!important} }
+html body :is(.gxplate,.glplate,.hsec,.card,.gp,.giplate,.ijc) .rows:not(.x){border:0!important;background:none!important;margin-left:0!important;margin-right:0!important;padding:0!important}
