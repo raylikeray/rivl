@@ -3023,3 +3023,42 @@ html body :is(.hsec,.card,.gp,.giplate,.gxplate,.glplate,.gxrows,.pfocus,.ijs,.b
 .gxpage .tbl.box td:first-child,.gxpage .tbl.box th:first-child{background:var(--surf-2)!important}
 .gxpage .tbl.box tr.sub td{background:none!important;padding-top:16px;font-weight:700;color:var(--ink-3)}
 .gxpage .pfocus+.gxctl .gxtsw{margin-top:16px}
+/* Box score as one card, like X: the team switch sits at the top of the card, then Starters and Bench each with their own
+   column labels, no row lines, no gray name column. Selected switch side is white in dark mode so it shows. */
+.gxpage .gxtsw button[aria-pressed=true]{background:#fff!important;color:#0A0B0E!important}
+.gxpage .gxctl.bxtop{margin:16px var(--gut-r) 0 var(--gut);padding:14px 14px 0;background:var(--card);border:1px solid var(--card-line);border-bottom:0;border-radius:22px 22px 0 0}
+.gxpage .gxctl.bxtop .gxtsw{margin:0!important;background:var(--surf-2)!important;border:0!important}
+.gxpage .bxcard{margin:0 var(--gut-r) 0 var(--gut);padding:6px 0 12px 14px;background:var(--card);border:1px solid var(--card-line);border-top:0;border-radius:0 0 22px 22px;overflow:hidden}
+.gxpage .bxcard .tw{margin:0!important;padding:0!important;border:0!important;overflow-x:auto;scrollbar-width:none}
+.gxpage .bxcard .tw::-webkit-scrollbar{display:none}
+.gxpage .tbl.bx7{border:0!important;background:none!important}
+.gxpage .tbl.bx7 :is(td,th),.gxpage .tbl.bx7 :is(td,th):first-child{background:none!important;border:0!important;box-shadow:none!important;padding:9px 10px;font-size:15px;white-space:nowrap}
+.gxpage .tbl.bx7 :is(td,th):first-child{position:sticky;left:0;z-index:1;background:var(--card)!important;padding-left:0;max-width:128px;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.gxpage .tbl.bx7 td:first-child a{color:var(--ink);font-weight:500}
+.gxpage .tbl.bx7 tr.bxh th{color:var(--ink-3);font-weight:600;font-size:14px;padding-top:16px;padding-bottom:6px;text-align:center}
+.gxpage .tbl.bx7 tr.bxh:first-child th{padding-top:8px}
+.gxpage .tbl.bx7 tr.bxh th:first-child{font-weight:700;color:var(--ink-3)}
+.gxpage .tbl.bx7 tr.bxh th button{color:inherit;font:inherit;padding:0;background:none}
+.gxpage .tbl.bx7 td{text-align:center;color:var(--ink)}
+.gxpage .tbl.bx7 tr.tot td{padding-top:14px;font-weight:700}
+.gxpage .tbl.bx7 tr.hl td,.gxpage .tbl.bx7 tr.hl td:first-child{background:var(--surf-2)!important}
+.gxpage .tbl.bx7 td.mut{text-align:left;color:var(--ink-3)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .gxpage .gxctl.bxtop .gxtsw{background:#ECEDF0!important}
+  :root:not([data-theme="dark"]) .gxpage .gxtsw button[aria-pressed=true]{background:#0A0B0E!important;color:#fff!important} }
+:root[data-theme="light"] .gxpage .gxtsw button[aria-pressed=true]{background:#0A0B0E!important;color:#fff!important}
+/* X sizing and colors. Pills: about 30px tall, flat track, no border, selected side solid. Dark mode: near-black page
+   (#030303), cards #0D0D0D with no outline, game leaders a step lighter (#141414), pill track #262626, selected white. */
+.gxpage :is(.gxseg,.gxtsw){padding:3px!important;border:0!important;border-radius:999px}
+.gxpage :is(.gxseg,.gxtsw) button{padding:0 6px!important;height:26px;min-height:0;font-size:14px!important;font-weight:600;gap:6px}
+.gxpage :is(.gxseg,.gxtsw) button b{font-size:14px;font-weight:600;letter-spacing:0}
+.gxpage .gxtsw button .logo,.gxpage .gxtsw button img{width:18px!important;height:18px!important}
+.gxpage :is(.gxseg,.gxtsw) button[aria-pressed=true]{font-weight:700}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){--bg:#030303;--card:#0D0D0D;--surf:#0D0D0D;--card-line:transparent;--surf-2:#262626}
+  :root:not([data-theme="light"]) .gxpage :is(.gxseg,.gxtsw){background:#262626!important}
+  :root:not([data-theme="light"]) .gxpage :is(.gxseg,.gxtsw) button{color:var(--ink)!important}
+  :root:not([data-theme="light"]) .gxpage :is(.gxseg,.gxtsw) button[aria-pressed=true]{background:#fff!important;color:#000!important}
+  :root:not([data-theme="light"]) .glplate{background:#141414!important} }
+:root[data-theme="dark"]{--bg:#030303;--card:#0D0D0D;--surf:#0D0D0D;--card-line:transparent;--surf-2:#262626}
+:root[data-theme="dark"] .gxpage :is(.gxseg,.gxtsw){background:#262626!important}
+:root[data-theme="dark"] .gxpage :is(.gxseg,.gxtsw) button[aria-pressed=true]{background:#fff!important;color:#000!important}
+:root[data-theme="dark"] .glplate{background:#141414!important}
