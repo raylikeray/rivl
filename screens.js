@@ -845,12 +845,6 @@
       }
       let body = '';
       if (tab === 'summary') {
-        /* Luma's event page: one line that says where the game stands, then three equal actions */
-        const mins = Math.round((new Date(g.date) - Date.now()) / 60000);
-        const when = g.state === 'in' ? `<b class="on">${esc(gxDet(g, L))}</b>` : g.state === 'post' ? `<b>${esc(finalWord(g))}</b>` : g.off ? `<b>${esc(g.off)}</b>` : mins > 0 && mins < 90 ? `<b>Tips in ${mins} min</b>` : mins <= 0 && mins > -30 ? '<b>Tipping off</b>' : `<b>${esc(dayLabel(ymdOf(g.date), { weekday: 'long' }))} · ${esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT)$/, ''))}</b>`;
-        const tv = tvLabel(g); const titleT = `${g.away.short} at ${g.home.short}`;
-        body += `<div class="gxwhen">${when}${tv ? `<span>${esc(tv)}</span>` : ''}</div>
-          <div class="gxacts">${g.state === 'pre' ? `<button class="gxact" data-act="ics" data-title="${esc(titleT)}" data-start="${esc(g.date)}" data-loc="${esc(venue || '')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Calendar</button>` : `<button class="gxact" data-act="gtab" data-tab="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>Box score</button>`}<button class="gxact" data-act="gtab" data-tab="${g.state === 'pre' ? 'stats' : 'plays'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h7"/></svg>${g.state === 'pre' ? 'Team stats' : 'Plays'}</button><button class="gxact" data-act="share" data-title="${esc(titleT)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>Share</button></div>`;
         /* v7's order: the clips, the line score, the game leaders, the team stats; then everything the working app knows */
         const sp = V._.seriesLine(g) ? V._.seriesLine(g).split(' · ') : [];
         if (!g.tbd && sp.length) { const st = sp.length > 1 ? sp.pop() : ''; body += `<div class="gxser"><b>${esc(sp.join(', '))}</b>${st ? `<span>${esc(st)}</span>` : ''}${spick ? `<em>${esc(spick)}</em>` : ''}</div>`; }
