@@ -260,7 +260,9 @@
     const tv = g.tv && g.tv.label ? ` · ${esc(g.tv.label)}` : '';
     const mine = HW.favs && HW.favs.has(L.key, a.id) ? a : HW.favs && HW.favs.has(L.key, h.id) ? h : null;   // the card takes your team's color, like Spotify takes the cover's
     const base = tc(mine || h) || tc(a) || '#333';
-    return `<a class="lg sp${HW.isFav(g) ? ' fav' : ''}" href="#game/${L.key}/${esc(g.id)}" data-lid="${L.key}:${esc(g.id)}" style="--ca:${esc(tc(a) || '#333')};--ch:${esc(tc(h) || '#333')};--cb:${esc(base)};--pl:${(played * 100).toFixed(1)}%"><span class="lart">${V._.logo(a.logo || '', 's', tc(a))}${V._.logo(h.logo || '', 's', tc(h))}</span><span class="lt"><b>${nm(a)} <span class="vs">at</span> ${nm(h)}</b><span class="st"><span class="dot"></span>${esc(g.detail)}${tv}</span></span><span class="lsc"><i class="sc">${sc(a)}</i><span class="dash">-</span><i class="sc">${sc(h)}</i></span></a>`;
+    const as = Number(a.score), hs = Number(h.score), lo = t => (isFinite(as) && isFinite(hs) && as !== hs && (t === a ? as < hs : hs < as)) ? ' lo' : '';
+    const row = t => `<span class="lr${lo(t)}">${V._.logo(t.logo || '', 's', tc(t))}<span class="nm">${nm(t)}</span><i class="sc">${sc(t)}</i></span>`;
+    return `<a class="lg sb${HW.isFav(g) ? ' fav' : ''}" href="#game/${L.key}/${esc(g.id)}" data-lid="${L.key}:${esc(g.id)}" style="--ca:${esc(tc(a) || '#333')};--ch:${esc(tc(h) || '#333')};--cb:${esc(base)};--pl:${(played * 100).toFixed(1)}%"><span class="lrows">${row(a)}${row(h)}</span><span class="lside"><span class="st"><span class="dot"></span>${esc(g.detail)}</span>${g.tv && g.tv.label ? `<small>${esc(g.tv.label)}</small>` : ''}</span></a>`;
   }
   function paintLive() {
     if (!$live) return;
@@ -275,6 +277,7 @@
     else list.forEach(({ g, L }, i) => {   // same games: touch only the numbers, the clock and the line
       const el = inner.children[i]; const t = document.createElement('div'); t.innerHTML = liveChip(g, L); const n = t.firstElementChild; if (!n) return;
       el.querySelectorAll('.sc').forEach((x, j) => { const y = n.querySelectorAll('.sc')[j]; if (y && x.textContent !== y.textContent) x.textContent = y.textContent; });
+      el.querySelectorAll('.lr').forEach((x, j) => { const y = n.querySelectorAll('.lr')[j]; if (y) x.classList.toggle('lo', y.classList.contains('lo')); });   // who leads can change between polls
       const st = el.querySelector('.st'), st2 = n.querySelector('.st'); if (st && st2 && st.innerHTML !== st2.innerHTML) st.innerHTML = st2.innerHTML;
       el.style.setProperty('--pl', n.style.getPropertyValue('--pl'));
     });
