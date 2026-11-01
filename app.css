@@ -3908,12 +3908,21 @@ html:root body .bchip.st2.haspk{grid-template-rows:auto auto auto}
 .bchip.st2 .pkbar i{display:block;min-width:4px}
 .bchip.st2 .pk em{font-style:normal;font-size:12px;font-weight:800;color:var(--ink-2);white-space:nowrap}
 .bchip.st2.haspk .ss{grid-row:1/3}
-/* league pills: the same frosted glass bar as the bottom tabs, only as wide as the leagues need, centred. The chosen
-   league is bold ink like the chosen bottom tab; the others are grey. No sliding black pill. */
-html:root body #pills.pills{display:flex!important;width:max-content!important;max-width:calc(100% - 32px);margin-left:auto!important;margin-right:auto!important;gap:2px;padding:4px 6px!important;height:auto!important;border-radius:999px!important;
-  background:rgba(255,255,255,.72)!important;border:1px solid rgba(0,0,0,.15)!important;box-shadow:0 10px 30px rgba(0,0,0,.14)!important;-webkit-backdrop-filter:blur(40px) saturate(1.9);backdrop-filter:blur(40px) saturate(1.9)}
+/* leagues as X-style tabs: plain words across the full width, the chosen one in bold ink, one short line under it that
+   slides from league to league; a hairline under the row and the page colour behind it (frosted) when it sticks */
+html:root body #pills.pills{display:flex!important;width:auto!important;max-width:none!important;margin:0 0 6px!important;gap:0;padding:0!important;height:48px!important;border-radius:0!important;position:relative;
+  background:color-mix(in srgb,var(--bg) 86%,transparent)!important;border:0!important;border-bottom:1px solid var(--line)!important;box-shadow:none!important;-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6)}
 html:root body #pills.pills::before{display:none!important}
-html:root body #pills .pill{flex:none!important;width:auto!important;height:38px!important;padding:0 14px!important;background:none!important;box-shadow:none!important;color:var(--ink-3)!important;font-size:14.5px!important;font-weight:600!important}
+html:root body #pills.pills::after{content:"";position:absolute;bottom:-1px;height:4px;border-radius:999px;background:var(--ink);width:44px;left:calc((var(--i,0) + .5) * (100% / var(--n,4)) - 22px);transition:left .32s cubic-bezier(.3,.7,.2,1);pointer-events:none}
+html:root body #pills .pill{flex:1 1 0!important;width:auto!important;height:48px!important;padding:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;color:var(--ink-3)!important;font-size:15.5px!important;font-weight:600!important}
 html:root body #pills .pill.on{color:var(--ink)!important;font-weight:800!important}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) body #pills.pills{background:rgba(16,18,20,.72)!important;border-color:rgba(255,255,255,.16)!important;box-shadow:0 14px 40px rgba(0,0,0,.5)!important} }
-:root[data-theme="dark"] body #pills.pills{background:rgba(16,18,20,.72)!important;border-color:rgba(255,255,255,.16)!important;box-shadow:0 14px 40px rgba(0,0,0,.5)!important}
+@media (prefers-reduced-motion:reduce){ html:root body #pills.pills::after{transition:none} }
+/* search topic answers: people as chips (with ages), then the article's own sentences as a clean list */
+.xtopic .xppl{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.xtopic .xppl span{display:flex;flex-direction:column;gap:2px;padding:10px 14px;border-radius:14px;background:var(--surf-2)}
+.xtopic .xppl b{font-size:15px;font-weight:800;color:var(--ink)}
+.xtopic .xppl em{font-style:normal;font-size:12.5px;font-weight:600;color:var(--ink-3)}
+.xtopic .xsents{list-style:none;margin:10px 0 2px;padding:0;display:flex;flex-direction:column;gap:10px}
+.xtopic .xsents li{position:relative;padding-left:14px;font-size:16px;line-height:1.5;color:var(--ink)}
+.xtopic .xsents li::before{content:"";position:absolute;left:0;top:.62em;width:5px;height:5px;border-radius:50%;background:var(--ink-3)}
+.xtopic .xsents b{font-weight:800}
