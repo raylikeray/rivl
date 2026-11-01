@@ -257,6 +257,8 @@
   /* the score row, as v7 drew it (Apple's grammar on fixed columns): crest over name, score, the status in the middle, score,
      crest over name. Your teams carry a small star. The winner's number is dark; the loser's side fades. No team colours. */
   function gameRow(L, g, ctx) {
+    /* the live poll repaints a card without the forecast context: the last one this league's cards were drawn with stands in, so the pick under the clock never drops out */
+    gameRow.ctx = gameRow.ctx || {}; if (ctx) gameRow.ctx[L.key] = ctx; else ctx = gameRow.ctx[L.key] || null;
     if (g.tbd) return gameCard(L, g, ctx, false, true);
     const live = g.state === 'in', fin = g.state === 'post' && !g.off, pre = !live && !fin;
     const a = +g.away.score, h = +g.home.score;
