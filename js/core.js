@@ -109,7 +109,7 @@ const TZLABEL = (() => {
   return /^(GMT|UTC)?[+-]/.test(v) ? '' : v;
 })();
 /* a game's tip, or 'Time TBD' when the feed says the time isn't set (timeValid false — a Cup knockout, a playoff game not yet scheduled) */
-const tipOf = g => g && g.timeValid === false ? 'Time TBD' : TZLABEL ? `${tip(g.date)} ${TZLABEL}` : tip(g.date);
+const tipOf = g => g && g.timeValid === false ? 'Time TBD' : tip(g.date);   // in the phone's own time zone, no zone label
 const dateShort = iso => new Date(iso).toLocaleDateString('en-US', { timeZone: TZ, month: 'short', day: 'numeric' });
 const timeCT = (d = new Date()) => d.toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit', second: '2-digit' });
 function ago(iso) { const s = (Date.now() - new Date(iso)) / 1000; if (s < 3600) return Math.max(1, Math.round(s / 60)) + 'm ago'; if (s < 86400) return Math.round(s / 3600) + 'h ago'; return dateShort(iso); }
