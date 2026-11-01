@@ -251,10 +251,14 @@
     });
     return out;
   }
+  /* the live bar, Spotify's mini player: a floating card in both teams' colours, the score on one line, the clock and
+     the channel under it, a thin line along the bottom for how much of the game is played */
   function liveChip(g, L) {
-    const tc = t => V._.teamColor(t, L);
-    const side = (t, o) => { const lead = t.score != null && o.score != null && t.score > o.score; return `<span class="tm"${!tc(t) || /^#(2A2D33|55606e)$/i.test(tc(t)) ? '' : ` style="${V._.tcv(tc(t), V._.teamAlt(t, L))}"`}>${V._.logo(t.logo || '', 's', tc(t))}<b>${esc(t.abbr)}</b><i class="sc${lead ? ' on' : ''}">${t.score ?? ''}</i></span>`; };
-    return `<a class="lg${HW.isFav(g) ? ' fav' : ''}" href="#game/${L.key}/${esc(g.id)}" data-lid="${L.key}:${esc(g.id)}">${side(g.away, g.home)}${side(g.home, g.away)}<span class="st"><span class="dot"></span>${esc(g.detail)}</span></a>`;
+    const tc = t => V._.teamColor(t, L); const a = g.away, h = g.home;
+    const left = HW.fracLeft ? HW.fracLeft(L, g) : null; const played = left == null || !isFinite(left) ? 0 : Math.max(0, Math.min(1, 1 - left));
+    const nm = t => esc(t.short || t.abbr), sc = t => t.score ?? '';
+    const tv = g.tv && g.tv.label ? ` · ${esc(g.tv.label)}` : '';
+    return `<a class="lg${HW.isFav(g) ? ' fav' : ''}" href="#game/${L.key}/${esc(g.id)}" data-lid="${L.key}:${esc(g.id)}" style="--ca:${esc(tc(a) || '#333')};--ch:${esc(tc(h) || '#333')};--pl:${(played * 100).toFixed(1)}%">${V._.logo(a.logo || '', 's', tc(a))}<span class="lt"><b><span class="tm">${nm(a)} <i class="sc">${sc(a)}</i></span><span class="dotsep">·</span><span class="tm">${nm(h)} <i class="sc">${sc(h)}</i></span></b><span class="st"><span class="dot"></span>${esc(g.detail)}${tv}</span></span>${V._.logo(h.logo || '', 's', tc(h))}<span class="lpr"></span></a>`;
   }
   function paintLive() {
     if (!$live) return;
@@ -266,10 +270,11 @@
     const want = list.map(({ g, L }) => `${L.key}:${g.id}`);
     const have = [...inner.children].map(el => el.dataset.lid);
     if (want.join() !== have.join()) { const x = inner.scrollLeft; inner.innerHTML = list.map(({ g, L }) => liveChip(g, L)).join(''); inner.scrollLeft = x; }   // a game starting or ending rebuilds the strip; where you had scrolled it stays put
-    else list.forEach(({ g, L }, i) => {   // same games: touch only the numbers and the clock
-      const el = inner.children[i]; const sc = el.querySelectorAll('.sc'); const st = el.querySelector('.st');
-      [[g.away, g.home], [g.home, g.away]].forEach(([t, o], j) => { const txt = String(t.score ?? ''); if (sc[j].textContent !== txt) { sc[j].textContent = txt; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } sc[j].classList.toggle('on', t.score != null && o.score != null && t.score > o.score); });
-      const d = `${esc(g.detail)}`; if (st.innerHTML !== `<span class="dot"></span>${d}`) st.innerHTML = `<span class="dot"></span>${d}`;
+    else list.forEach(({ g, L }, i) => {   // same games: touch only the numbers, the clock and the line
+      const el = inner.children[i]; const t = document.createElement('div'); t.innerHTML = liveChip(g, L); const n = t.firstElementChild; if (!n) return;
+      el.querySelectorAll('.sc').forEach((x, j) => { const y = n.querySelectorAll('.sc')[j]; if (y && x.textContent !== y.textContent) x.textContent = y.textContent; });
+      const st = el.querySelector('.st'), st2 = n.querySelector('.st'); if (st && st2 && st.innerHTML !== st2.innerHTML) st.innerHTML = st2.innerHTML;
+      el.style.setProperty('--pl', n.style.getPropertyValue('--pl'));
     });
     if ($live.hidden) $live.hidden = false;
     document.documentElement.classList.add('lbon');
@@ -287,6 +292,46 @@
   document.addEventListener('rivl:rendered', () => { placeLive(); paintLive(); });
   document.addEventListener('rivl:polled', paintLive);
   V.paintLive = paintLive;
+  /* Spotify's open and close. A tap on the live bar: the card grows into the full screen in the game's colours, the game
+     page arrives under it and the colour gives way to it. Back (the arrow, or a swipe down on the hero): the page drops
+     away downward and the screen you came from is already there, at the same scroll, with the bar back in its place. */
+  (() => {
+    let trip = null;   // where the game was opened from: the screen, its scroll, the bar's place
+    const deep = c => `color-mix(in srgb,${c} 62%,#0b0b10)`;
+    document.getElementById('livebar').addEventListener('click', e => {
+      const a = e.target.closest('a.lg'); if (!a || !MOTION()) return; e.preventDefault(); e.stopPropagation();
+      const r = current || route(); const rc = a.getBoundingClientRect(); const ca = a.style.getPropertyValue('--ca'), ch = a.style.getPropertyValue('--ch');
+      if ($main.dataset.real === '1' && V._snaps) V._snaps[r.lk + ':' + r.name] = $main.innerHTML;
+      trip = { hash: location.hash || '#home', lk: r.lk, name: r.name, y: window.scrollY, rc, ca, ch };
+      const cv = document.createElement('div'); cv.className = 'barexp';
+      cv.style.cssText = `left:${rc.left}px;top:${rc.top}px;width:${rc.width}px;height:${rc.height}px;border-radius:12px;background:linear-gradient(112deg,${deep(ca)} 0%,${deep(ca)} 34%,${deep(ch)} 76%)`;
+      document.body.appendChild(cv); void cv.offsetWidth;
+      cv.style.transition = 'left 300ms cubic-bezier(.2,.8,.2,1),top 300ms cubic-bezier(.2,.8,.2,1),width 300ms cubic-bezier(.2,.8,.2,1),height 300ms cubic-bezier(.2,.8,.2,1),border-radius 300ms cubic-bezier(.2,.8,.2,1)';
+      cv.style.left = '0px'; cv.style.top = '0px'; cv.style.width = window.innerWidth + 'px'; cv.style.height = window.innerHeight + 'px'; cv.style.borderRadius = '0px';
+      setTimeout(() => { render.swipe = true; render.tapAt = performance.now(); location.hash = a.getAttribute('href');
+        const t0 = performance.now(); const wait = () => { const hero = document.getElementById('gxhero'); if ((hero && $main.dataset.real === '1') || performance.now() - t0 > 3000) { cv.style.transition = 'opacity 220ms ease'; cv.style.opacity = '0'; setTimeout(() => cv.remove(), 240); } else requestAnimationFrame(wait); }; requestAnimationFrame(wait); }, 280);
+    }, true);
+    // back: drop the page away downward into the bar, the screen you were on already under it
+    const close = (dy0 = 0) => {
+      const gp = document.getElementById('gpage'); if (!trip || !gp) return false;
+      const t = trip; trip = null; const H = window.innerHeight;
+      // the game page itself drops away (moved out of the page, styles intact); the screen underneath gets its own copy
+      const wrap = document.createElement('div'); wrap.className = 'barclose'; wrap.style.transform = `translate3d(0,${dy0}px,0)`; document.body.appendChild(wrap);
+      const gs = gp.querySelector('#gxscroll'), st = gs ? gs.scrollTop : 0; gp.style.transform = ''; wrap.appendChild(gp); if (gs) gs.scrollTop = st;
+      const snap = V._snaps && V._snaps[t.lk + ':' + t.name];
+      render.swipe = true; render.tapAt = performance.now();
+      if (snap) { $main.innerHTML = snap; $main.dataset.hlk = t.lk; }
+      history.back();
+      requestAnimationFrame(() => { window.scrollTo(0, t.y); requestAnimationFrame(() => { window.scrollTo(0, t.y); wrap.style.transition = 'transform 320ms cubic-bezier(.3,.7,.2,1)'; wrap.style.transform = `translate3d(0,${H}px,0)`; setTimeout(() => wrap.remove(), 340); }); });
+      return true; };
+    V.barTrip = () => trip; V.barClose = close;
+    window.addEventListener('hashchange', () => { if (trip && !/^#game\//.test(location.hash)) trip = null; });
+    // a swipe down on the hero of a game opened from the bar closes it, following the finger
+    let y0 = null, dy = 0, vy = 0, ly = 0, lt = 0;
+    document.addEventListener('touchstart', e => { const gp = document.getElementById('gpage'); y0 = null; if (!trip || !gp || e.touches.length > 1) return; const sc = document.getElementById('gxscroll'); if (sc && sc.scrollTop > 2) return; if (!e.target.closest('#gxhero, .gxbar, .gxspace')) return; y0 = e.touches[0].clientY; dy = 0; vy = 0; ly = y0; lt = performance.now(); }, { passive: true });
+    document.addEventListener('touchmove', e => { if (y0 == null) return; const y = e.touches[0].clientY; dy = Math.max(0, y - y0); const now = performance.now(); if (now > lt) vy = vy * .5 + .5 * (y - ly) / (now - lt); ly = y; lt = now; const gp = document.getElementById('gpage'); if (gp && dy > 4) { e.preventDefault(); gp.style.transform = `translate3d(0,${dy}px,0)`; } }, { passive: false });
+    document.addEventListener('touchend', () => { if (y0 == null) return; y0 = null; const gp = document.getElementById('gpage'); if (!gp) return; if (dy > 120 || vy > .5) { const d = dy; gp.style.transform = ''; close(d); } else { gp.style.transition = 'transform 260ms cubic-bezier(.2,.8,.2,1)'; gp.style.transform = ''; setTimeout(() => { gp.style.transition = ''; }, 280); } });
+  })();
   document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
   /* long-pressing a name or a card is not a link to share: no context menu on the app's own controls */
   document.addEventListener('contextmenu', e => { if (!e.target.closest('.reader .body, input, textarea')) e.preventDefault(); });
@@ -359,7 +404,7 @@
        screen, or with a flick, it carries on; short of that both spring back. On the first league a drag to the right
        pulls out your profile instead. A tap on a league runs the same slide. */
     let sx = null, sy = 0, mode = '', vx = 0, lx = 0, lt = 0, W2 = window.innerWidth, from = null, to = null, curX = 0, peek = null, peekFor = null;
-    const $m = document.getElementById('main'); const snaps = {};
+    const $m = document.getElementById('main'); const snaps = {}; V._snaps = snaps;
     const ready = {};   // copies of the leagues either side, built while the phone is idle so a drag never has to build one
     const idle = f => (window.requestIdleCallback || (g => setTimeout(g, 120)))(f, { timeout: 800 });
     const prebuild = () => { const r = current || route(); if (!r || !SCREENS.includes(r.name)) return; const i = ORDER.indexOf(r.lk);
@@ -458,7 +503,7 @@
   document.addEventListener('click', e => {
     render.tapAt = performance.now();   // a move that follows a tap is ours to animate; one without a tap was the phone's own swipe
     const back = e.target.closest('[data-act="back"]');
-    if (back) { if (history.length > 1) { e.preventDefault(); history.back(); } return; }
+    if (back) { if (V.barTrip && V.barTrip() && /^#game\//.test(location.hash)) { e.preventDefault(); V.barClose(0); return; } if (history.length > 1) { e.preventDefault(); history.back(); } return; }
     const row = e.target.closest('tr.click[data-href]');
     if (row && !e.target.closest('a')) { location.hash = row.dataset.href; return; }
     const act = e.target.closest('[data-act]'); if (!act) return;
