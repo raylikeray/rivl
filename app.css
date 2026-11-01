@@ -2659,3 +2659,16 @@ html.gxon body::before{display:none}
   .tab.mid span{font-size:12px}
 }
 @media (max-width:1039px){ .tabs .tab:not(.on){opacity:1} }
+
+/* MLS mirror: Home is just the round button, sitting low (only a little of it above the bar); the bar follows the phone's light or dark */
+@media (max-width:1039px){
+  .tab.mid span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .tab.mid .mb{top:-12px;width:62px;height:62px;box-shadow:0 0 0 4px var(--barbg,#0B0C0E),0 8px 18px -6px rgba(47,143,240,.6)}
+  .tabs{--barbg:#0B0C0E}
+}
+@media (max-width:1039px) and (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]) .tabs{--barbg:#FFFFFF;background:#FFFFFF!important;box-shadow:0 0 0 1px rgba(10,11,14,.07),0 10px 30px -12px rgba(16,24,40,.35),0 2px 6px -2px rgba(16,24,40,.12)!important}
+  :root:not([data-theme="dark"]) .tab{color:rgba(10,11,14,.5)!important}
+  :root:not([data-theme="dark"]) .tab.on{color:#0A0B0E!important}
+  :root:not([data-theme="dark"]) .tab.mid .mb{color:#fff}
+}
