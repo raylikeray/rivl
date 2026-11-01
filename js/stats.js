@@ -108,6 +108,9 @@
     paint();
     // the RIVL rating board needs the whole league worked out; it fills in when ready
     getR().then(() => { if (document.querySelector('.stpage') && (board === 'rating' || !board)) { const y = window.scrollY; paint(); window.scrollTo(0, y); } });
+    // the league tab tapped again: out of a board, back to the cards
+    if (document._stRetap) document.removeEventListener('rivl:retap', document._stRetap);
+    document.addEventListener('rivl:retap', document._stRetap = () => { if (!$main.querySelector('.stpage') || !board) return; board = ''; store.set('v5:stboard:' + lk, ''); paint(); });
     if ($main._stClick) $main.removeEventListener('click', $main._stClick);
     $main.addEventListener('click', $main._stClick = e => {
       if (!$main.querySelector('.stpage')) return;

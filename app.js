@@ -283,6 +283,8 @@
   };
   window.RIVL_paintAv = () => { const b = document.getElementById('avbtn'); if (!b) return; b.innerHTML = window.RIVL_avatar(); const j = HW.store.get('v5:jlook', null); b.style.setProperty('--avc', j && j.main || '#1D9BF0'); };
   window.RIVL_paintAv();
+  /* tapping the league you're already on, like tapping X's tab again: back to that screen's start, at the top */
+  $pills.addEventListener('click', e => { const a = e.target.closest('.pill.on'); if (!a) return; e.preventDefault(); document.dispatchEvent(new CustomEvent('rivl:retap', { detail: a.dataset.lk })); window.scrollTo({ top: 0, behavior: 'smooth' }); });
   /* the side panel, like X's: your icon opens it, or drag the page to the right from anywhere. It follows your finger:
      the panel slides in from the left, the page is pushed along to the right and dims, and letting go settles it open or
      shut on the same curve. Your photo and name open your profile; the list holds what Settings holds. */
