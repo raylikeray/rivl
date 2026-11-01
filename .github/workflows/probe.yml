@@ -6,18 +6,12 @@ jobs:
     steps:
       - run: |
           set +e
-          for u in "https://www.nba.com/players" "https://www.wnba.com/players"; do
-            echo "== $u"; curl -sL -m 30 -A "Mozilla/5.0" "$u" -o o.html -w "%{http_code} %{size_download}\n"
-            python3 - <<'PY'
-          import re,json
-          s=open('o.html',errors='ignore').read()
-          m=re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>',s,re.S)
-          print('next', bool(m))
-          if m:
-            d=json.loads(m.group(1)); t=json.dumps(d)
-            i=t.find('PERSON_ID'); print(t[max(0,i-300):i+600])
-          else:
-            for k in ['PERSON_ID','personId','playerId','headshot']:
-              i=s.find(k); print(k,i, s[max(0,i-200):i+300] if i>=0 else '')
-          PY
+          for L in nba wnba; do
+            D=cdn.$L.com
+            curl -sL -m 30 -A "Mozilla/5.0" "https://$D/static/json/staticData/scheduleLeagueV2.json" -o s.json -w "$L sched %{http_code} %{size_download}\n"
+            G=$(python3 -c "
+          import json;d=json.load(open('s.json'));gs=[g for dd in d['leagueSchedule']['gameDates'] for g in dd['games'] if g.get('gameStatus')==3];print(len(gs),gs[-1]['gameId'] if gs else '')" 2>&1); echo "$G"
+            id=$(echo $G | awk '{print $2}')
+            curl -sL -m 30 -A "Mozilla/5.0" "https://$D/static/json/liveData/boxscore/boxscore_$id.json" -o b.json -w "box %{http_code} %{size_download}\n"
+            python3 -c "import json;d=json.load(open('b.json'))['game'];print([(p['personId'],p['name']) for p in d['homeTeam']['players'][:3]])"
           done
