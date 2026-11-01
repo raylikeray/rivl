@@ -1,0 +1,10 @@
+name: probe
+on: workflow_dispatch
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -sI -H "Origin: https://raylikeray.github.io" https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5105700.png | grep -i "access-control\|content-length\|HTTP"
+          curl -sI -H "Origin: https://raylikeray.github.io" "https://a.espncdn.com/combiner/i?img=/i/headshots/mens-college-basketball/players/full/5105700.png&w=1200&h=872" | grep -i "access-control\|content-length\|HTTP"
+          curl -sL "https://a.espncdn.com/combiner/i?img=/i/headshots/mens-college-basketball/players/full/5105700.png&w=1200&h=872" -o c.png; python3 -c "from PIL import Image;print(Image.open('c.png').size)"
