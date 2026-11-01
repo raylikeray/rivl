@@ -3389,3 +3389,5 @@ html body .tbl.stand:has(thead th:nth-child(6)) td:not(:first-child),html body .
 html body .tbl.stand:has(thead th:nth-child(6)) td:last-child,html body .tbl.stand:has(thead th:nth-child(6)) th:last-child{padding-right:16px!important}
 .thead.conf{transition:margin-bottom .26s cubic-bezier(.2,.8,.2,1)}
 .fold.closed{opacity:0}
+/* some players only have a small or tightly cropped photo: show it smaller instead of blowing it up blurry */
+.plh .plshot.small{height:340px!important;bottom:60px!important}

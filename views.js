@@ -842,12 +842,13 @@
        face and the name. Follow is the flat star at the top right, the same star as everywhere else. */
     const shell = HW.v5._ && HW.v5._.heroShell;
     if (shell) {
-      const hsBig = a.headshot && a.headshot.href ? a.headshot.href.replace(/&?[wh]=\d+/g, '') : '';
+      /* the full-size cut-out: a resized "combiner" link is turned back into the original file */
+      const hsBig = (h => { if (!h) return ''; const m = /[?&]img=([^&]+)/.exec(h); return m ? 'https://a.espncdn.com' + decodeURIComponent(m[1]) : h; })(a.headshot && a.headshot.href);
       const pos = a.position && (a.position.abbreviation || a.position.displayName) || '';
       const teamName = tm.shortDisplayName || tm.name || tm.displayName || '';
       const subBits = [teamName, pos, a.jersey ? `#${a.jersey}` : ''].filter(Boolean).map(esc).join(' · ');
       const flwBtn = `<button class="flw${following ? ' on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${following}" aria-label="${following ? 'Unfollow' : 'Follow'} ${esc(a.displayName || '')}">${window.RIVL_flw ? window.RIVL_flw(following, 'player') : (following ? 'Following' : 'Follow player')}</button>`;
-      const inner = `<div class="plh">${tlogo ? `<img class="plwm" src="${esc(tlogo)}" alt="" ${hide}>` : ''}${hsBig ? `<img class="plshot" src="${esc(hsBig)}" alt="" ${hide}>` : `<b class="plini">${esc(initials(a.displayName || ''))}</b>`}<div class="pltx"><h1>${esc(a.displayName || '')}</h1><p>${subBits}</p>${flwBtn}</div></div>`;
+      const inner = `<div class="plh">${tlogo ? `<img class="plwm" src="${esc(tlogo)}" alt="" ${hide}>` : ''}${hsBig ? `<img class="plshot" src="${esc(hsBig)}" alt="" onload="if(this.naturalHeight&&this.naturalHeight<560)this.classList.add('small')" ${hide}>` : `<b class="plini">${esc(initials(a.displayName || ''))}</b>`}<div class="pltx"><h1>${esc(a.displayName || '')}</h1><p>${subBits}</p>${flwBtn}</div></div>`;
       const bar = `<a class="gxib" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><div class="gxmid2"><div class="gxctr" id="gxmini"><span class="gxmn plmn">${headshot(a.headshot && a.headshot.href, color, 40, a.displayName)}<span><b>${esc(a.displayName || '')}</b><small>${tlogo ? `<img src="${esc(tlogo)}" alt="" ${hide}>` : ''}${esc(tm.displayName && tm.displayName.length <= 18 ? tm.displayName : teamName)}</small></span></span></div></div><span class="gxib ghost" aria-hidden="true"></span>`;
       const factRows = [['Jersey', a.jersey ? `#${a.jersey}` : ''], ['Position', pos], ['Height', a.displayHeight], ['Weight', a.displayWeight], [college ? 'Class' : 'Age', college ? classWord : (a.age ? `${a.age}` : '')], ['Team', tm.abbreviation || '']].filter(([, v]) => v);
       const factsT = factRows.length ? `<div class="gxplate plfacts">${factRows.map(([k, v]) => `<div><b>${esc(String(v))}</b><span>${esc(k)}</span></div>`).join('')}</div>` : '';
