@@ -4419,22 +4419,22 @@ html:root body .livebar .lg .tm{padding:0!important;background:none!important;bo
    their brightness and blend into each other on a soft diagonal (no dark middle); the whole thing darkens downward into
    a tinted near-black; and the motion is vertical streaks of light, like folds in a curtain, sliding and shimmering across
    the colour on two layers at different speeds. A basket washes the scorer's colour in from their side. ===== */
-html:root body .gx{--da:color-mix(in srgb,var(--aw) 62%,#000);--dh:color-mix(in srgb,var(--ha) 62%,#000);--ba:color-mix(in srgb,var(--aw) 85%,#fff);--bh:color-mix(in srgb,var(--ha) 85%,#fff)}
+html:root body .gx{--da:color-mix(in srgb,var(--aw) 74%,#000);--dh:color-mix(in srgb,var(--ha) 74%,#000);--ba:color-mix(in srgb,var(--aw) 85%,#fff);--bh:color-mix(in srgb,var(--ha) 85%,#fff)}
 html:root body .gx .w{inset:0!important;background:linear-gradient(112deg,var(--da) 0%,var(--da) 34%,color-mix(in srgb,var(--da) 50%,var(--dh)) 56%,var(--dh) 76%,var(--dh) 100%)!important}
 /* two soft lights at the top, one per side, breathing; the other two layers are not used */
 html:root body .gx .w>i{border-radius:50%;filter:blur(50px)!important;will-change:transform,opacity;transition:none}
-html:root body .gx .w>i:nth-child(1){background:var(--ba)!important;width:70%!important;height:70%!important;left:-10%!important;top:-30%!important;opacity:.32!important;animation:gxl1 8s ease-in-out infinite alternate!important}
-html:root body .gx .w>i:nth-child(2){background:var(--bh)!important;width:70%!important;height:70%!important;right:-10%!important;left:auto!important;top:-34%!important;opacity:.32!important;animation:gxl2 10s ease-in-out infinite alternate!important}
+html:root body .gx .w>i:nth-child(1){background:var(--ba)!important;width:70%!important;height:70%!important;left:-10%!important;top:-30%!important;opacity:.4!important;animation:gxl1 5s ease-in-out infinite alternate!important}
+html:root body .gx .w>i:nth-child(2){background:var(--bh)!important;width:70%!important;height:70%!important;right:-10%!important;left:auto!important;top:-34%!important;opacity:.4!important;animation:gxl2 6.5s ease-in-out infinite alternate!important}
 html:root body .gx .w>i:nth-child(3),html:root body .gx .w>i:nth-child(4){display:none!important}
-@keyframes gxl1{0%{transform:translate3d(-4%,0,0) scale(1);opacity:.24}100%{transform:translate3d(14%,6%,0) scale(1.15);opacity:.4}}
-@keyframes gxl2{0%{transform:translate3d(4%,2%,0) scale(1.1);opacity:.4}100%{transform:translate3d(-14%,-2%,0) scale(.95);opacity:.24}}
+@keyframes gxl1{0%{transform:translate3d(-8%,0,0) scale(1);opacity:.25}100%{transform:translate3d(26%,10%,0) scale(1.25);opacity:.6}}
+@keyframes gxl2{0%{transform:translate3d(8%,2%,0) scale(1.2);opacity:.6}100%{transform:translate3d(-26%,-4%,0) scale(.95);opacity:.25}}
 /* the curtain: vertical bands of light and shade, two layers with different spacing moving opposite ways, so the folds
    never repeat; faded out toward the bottom like Apple's */
-html:root body .gx .w::before,html:root body .gx .w::after{content:""!important;display:block!important;position:absolute!important;inset:0 -25%!important;pointer-events:none;filter:blur(7px)!important;-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 45%,transparent 85%);mask-image:linear-gradient(180deg,#000 0%,#000 45%,transparent 85%);will-change:transform}
-html:root body .gx .w::before{background:repeating-linear-gradient(90deg,rgba(255,255,255,0) 0,rgba(255,255,255,.09) 11px,rgba(255,255,255,0) 26px,rgba(0,0,0,.14) 41px,rgba(0,0,0,0) 58px,rgba(255,255,255,.05) 73px,rgba(255,255,255,0) 90px)!important;opacity:1!important;mix-blend-mode:normal!important;animation:gxcur1 9s ease-in-out infinite alternate!important}
-html:root body .gx .w::after{background:repeating-linear-gradient(90deg,rgba(0,0,0,0) 0,rgba(0,0,0,.12) 19px,rgba(0,0,0,0) 37px,rgba(255,255,255,.07) 60px,rgba(255,255,255,0) 82px,rgba(255,255,255,0) 131px)!important;opacity:1!important;mix-blend-mode:normal!important;animation:gxcur2 13s ease-in-out infinite alternate!important}
-@keyframes gxcur1{from{transform:translate3d(0,0,0)}to{transform:translate3d(-90px,0,0)}}
-@keyframes gxcur2{from{transform:translate3d(-131px,0,0)}to{transform:translate3d(0,0,0)}}
+html:root body .gx .w::before,html:root body .gx .w::after{content:""!important;display:block!important;position:absolute!important;inset:0 -60%!important;pointer-events:none;filter:blur(6px)!important;-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 45%,transparent 85%);mask-image:linear-gradient(180deg,#000 0%,#000 45%,transparent 85%);will-change:transform}
+html:root body .gx .w::before{background:repeating-linear-gradient(90deg,rgba(255,255,255,0) 0,rgba(255,255,255,.2) 12px,rgba(255,255,255,0) 28px,rgba(0,0,0,.26) 44px,rgba(0,0,0,0) 62px,rgba(255,255,255,.1) 78px,rgba(255,255,255,0) 96px)!important;opacity:1!important;mix-blend-mode:normal!important;animation:gxcur1 4.5s ease-in-out infinite alternate!important}
+html:root body .gx .w::after{background:repeating-linear-gradient(90deg,rgba(0,0,0,0) 0,rgba(0,0,0,.24) 20px,rgba(0,0,0,0) 40px,rgba(255,255,255,.15) 64px,rgba(255,255,255,0) 88px,rgba(255,255,255,0) 137px)!important;opacity:1!important;mix-blend-mode:normal!important;animation:gxcur2 6s ease-in-out infinite alternate!important}
+@keyframes gxcur1{from{transform:translate3d(0,0,0)}to{transform:translate3d(-192px,0,0)}}
+@keyframes gxcur2{from{transform:translate3d(-137px,0,0)}to{transform:translate3d(137px,0,0)}}
 /* down the screen into a tinted near-black, and a touch of shade at the very top for the status bar */
 html:root body .gx .veil{background:linear-gradient(180deg,rgba(0,0,0,.12) 0%,rgba(0,0,0,0) 18%,rgba(0,0,0,0) 38%,color-mix(in srgb,var(--dh) 18%,rgba(6,6,10,.72)) 78%,rgba(6,6,10,.9) 100%)!important}
 /* one colour (team, player): the same curtain over the team colour, a little brighter */
@@ -4449,3 +4449,11 @@ html:root body .gx .pz.go{animation:gxwash 1.8s var(--e-in)}
 @media (prefers-reduced-motion:reduce){html:root body .gx .w>i,html:root body .gx .w::before,html:root body .gx .w::after{animation:none!important}}
 /* while a finger drags between leagues the line under them follows it exactly, with no easing lag */
 html:root body #pills.pills.dragging::after{transition:none!important}
+/* X's tabs: while a finger drags (or a tap glides) the two league names cross-fade with it, the line is thin and rides 1:1 */
+html:root body #pills.pills::after{height:3px!important}
+html:root body #pills.dragging .pill,html:root body #pills.gliding .pill{transition:none!important}
+html:root body #pills .pill[style*="--on"]{color:color-mix(in srgb,var(--ink) calc(var(--on) * 100%),var(--ink-3))!important}
+html:root body #pills.gliding::after{transition:left 300ms cubic-bezier(.25,.8,.25,1),width 300ms cubic-bezier(.25,.8,.25,1)!important}
+html:root body #pills.gliding .pill[style*="--on"]{transition:color 300ms cubic-bezier(.25,.8,.25,1)!important}
+.xpeek{background:var(--bg)}
+.xpeek *{animation:none!important}
