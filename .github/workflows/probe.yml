@@ -1,0 +1,12 @@
+name: probe
+on: workflow_dispatch
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          set +e
+          q='SELECT ?p ?pl ?id WHERE { VALUES ?p { wdt:P3685 wdt:P3647 wdt:P8166 wdt:P8159 wdt:P3696 } wd:Q352159 ?p ?id . }'
+          curl -s -G "https://query.wikidata.org/sparql" --data-urlencode "query=$q" -H "Accept: application/sparql-results+json" -A "RIVL/1.0 (personal app)" | head -c 1500; echo
+          q2='SELECT ?prop ?propLabel WHERE { ?prop wikibase:propertyType wikibase:ExternalId . ?prop rdfs:label ?propLabel . FILTER(LANG(?propLabel)="en") FILTER(CONTAINS(LCASE(?propLabel),"wnba") || CONTAINS(LCASE(?propLabel),"nba.com") || CONTAINS(LCASE(?propLabel),"espn.com")) }'
+          curl -s -G "https://query.wikidata.org/sparql" --data-urlencode "query=$q2" -H "Accept: application/sparql-results+json" -A "RIVL/1.0 (personal app)" | python3 -c "import sys,json;[print(b['prop']['value'],b['propLabel']['value']) for b in json.load(sys.stdin)['results']['bindings']]"
