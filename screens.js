@@ -1208,9 +1208,32 @@
       return;
     }
     if (cat === 'profile') {
+      /* a real profile: a band of the favorite team's moving colour, the face (initial) and name large, what you follow in
+         one line, an Edit button that opens the name field in place, then your teams and players as rows of crests and faces */
       const name = store.get('v5:name', '') || '';
-      $main.innerHTML = bar('Profile', '#settings') + `<div class="setv7"><h2 class="sgh">Your name</h2><div class="sgrp"><label class="sname"><input id="pname" type="text" maxlength="24" autocomplete="given-name" placeholder="First name" value="${esc(name)}"></label></div><p class="legend" style="margin:10px 2px">Shown on your profile. It stays on this phone.</p></div>`;
-      const inp = $main.querySelector('#pname'); inp.addEventListener('input', () => store.set('v5:name', inp.value.trim()));
+      const lks = ORDER.filter(k => (F[k] || []).length || fp.some(p => p.lk === k));
+      const idxs = {}; await Promise.all(lks.map(async k => { idxs[k] = await teamsIndex(LEAGUES[k]).catch(() => ({})); }));
+      let favT = null, favL = null; for (const k of ORDER) { const id = (F[k] || [])[0]; if (id && idxs[k] && idxs[k][String(id)]) { favT = idxs[k][String(id)]; favL = LEAGUES[k]; break; } }
+      const col = favT ? teamColor({ id: favT.id, abbr: favT.abbr }, favL) : '#2F7FD0';
+      const teams = lks.flatMap(k => (F[k] || []).map(id => ({ k, t: idxs[k][String(id)] })).filter(x => x.t));
+      const crest = x => `<a class="pfcr" href="${href.team(x.k, x.t.id)}" aria-label="${esc(x.t.name)}">${x.t.logo ? `<img src="${esc(x.t.logo)}" alt="" loading="lazy">` : ''}<span>${esc(x.t.abbr || x.t.short || '')}</span></a>`;
+      const face = p => `<a class="pfpl" href="${href.player(p.lk, p.id)}">${headshot(p.img, playerColor(p, LEAGUES[p.lk]), 60, p.name)}<span>${esc((p.short || p.name || '').replace(/^\w+\.?\s/, m => m))}</span></a>`;
+      $main.innerHTML = `<div class="pfpage" style="--pc:${esc(col)}"><div class="pfband"><span class="pfw"><i></i><i></i></span>
+          <div class="pftop"><a class="ib" href="#settings" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>
+          <div class="pfid"><span class="pfav">${favT && favT.logo ? `<img src="${esc(favT.logo)}" alt="">` : ''}<b>${esc((name || 'Y').charAt(0).toUpperCase())}</b></span>
+            <div class="pft"><h1 id="pfName">${esc(name || 'Your name')}</h1><p>${favT ? `Favorite: ${esc(favT.loc || favT.short || favT.name)}` : 'No favorite team yet'}</p>
+            <p class="pfst"><span><b>${teams.length}</b> team${teams.length === 1 ? '' : 's'}</span><span><b>${fp.length}</b> player${fp.length === 1 ? '' : 's'}</span><span><b>${lks.length}</b> league${lks.length === 1 ? '' : 's'}</span></p></div></div>
+          <button class="pfedit" data-act="pfedit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Edit name</button>
+          <label class="pfname" hidden><input id="pname" type="text" maxlength="24" autocomplete="given-name" autocapitalize="words" placeholder="Your first name" value="${esc(name)}"><button data-act="pfdone">Done</button></label>
+        </div>
+        <div class="pfsec"><h2>Your teams</h2><a href="#teams">Edit</a></div>${teams.length ? `<div class="pfrail">${teams.map(crest).join('')}</div>` : `<a class="pfcta" href="#teams"><span class="t"><b>Pick your teams</b><span>They lead Following and get your updates</span></span>${chev}</a>`}
+        <div class="pfsec"><h2>Your players</h2><a href="#players">Edit</a></div>${fp.length ? `<div class="pfrail">${fp.map(face).join('')}</div>` : `<a class="pfcta" href="#players"><span class="t"><b>Follow some players</b><span>Their lines show up on Following</span></span>${chev}</a>`}
+        ${!name ? `<a class="pfcta" href="#" data-act="pfedit"><span class="t"><b>Add your name</b><span>It shows here and greets you on Following</span></span>${chev}</a>` : ''}
+      </div>`;
+      const box = $main.querySelector('.pfname'), inp = $main.querySelector('#pname'), h1 = $main.querySelector('#pfName'), av = $main.querySelector('.pfav b');
+      inp.addEventListener('input', () => { const v = inp.value.trim(); store.set('v5:name', v); h1.textContent = v || 'Your name'; av.textContent = (v || 'Y').charAt(0).toUpperCase(); });
+      $main.querySelectorAll('[data-act="pfedit"]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); box.hidden = false; $main.querySelector('.pfedit').hidden = true; inp.focus(); }));
+      $main.querySelector('[data-act="pfdone"]').addEventListener('click', e => { e.preventDefault(); box.hidden = true; $main.querySelector('.pfedit').hidden = false; });
       return;
     }
     let body = '';

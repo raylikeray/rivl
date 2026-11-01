@@ -3629,3 +3629,45 @@ html body .plpage .pltx{opacity:1!important;transform:none!important;will-change
 .sname{display:block;padding:4px 16px}.sname input{width:100%;height:52px;border:0;outline:0;background:none;color:var(--ink);font:600 17px/1 var(--ui,inherit)}
 .topbar:has(+ .setv7){position:relative;justify-content:flex-start}
 .topbar:has(+ .setv7) .ttl{position:absolute;left:50%;transform:translateX(-50%);background:none!important;box-shadow:none!important;border:0!important;padding:0!important;font-size:20px;font-weight:800;opacity:1!important}
+/* ===== Profile ===== */
+.pfpage{padding-bottom:24px}
+.pfband{position:relative;overflow:hidden;isolation:isolate;margin:calc(-1 * env(safe-area-inset-top,0px)) 0 0;padding:calc(env(safe-area-inset-top,0px) + 10px) var(--gut-r) 22px var(--gut);
+  background:radial-gradient(110% 85% at 50% 0%,color-mix(in srgb,var(--pc) 85%,#fff),var(--pc) 45%,color-mix(in srgb,var(--pc) 35%,var(--bg)) 100%);color:#fff}
+.pfband::after{content:"";position:absolute;left:0;right:0;bottom:0;height:60%;background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--bg) 70%,transparent));z-index:-1}
+.pfw{position:absolute;inset:0;z-index:-1;overflow:hidden}
+.pfw i{position:absolute;border-radius:50%;filter:blur(46px)}
+.pfw i:nth-child(1){width:80%;height:160%;left:-30%;top:-60%;background:color-mix(in srgb,var(--pc) 65%,#fff);opacity:.55;animation:sa 26s ease-in-out infinite}
+.pfw i:nth-child(2){width:90%;height:170%;right:-35%;top:-40%;background:color-mix(in srgb,var(--pc) 40%,#000);opacity:.6;animation:sb2 30s ease-in-out infinite}
+.pftop{display:flex;justify-content:space-between;height:52px;align-items:center}
+.pftop .ib{background:rgba(0,0,0,.28)!important;color:#fff!important;border:0!important}
+.pfid{display:flex;align-items:center;gap:16px;margin-top:34px}
+.pfav{position:relative;width:96px;height:96px;flex:none;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.16);box-shadow:0 0 0 3px rgba(255,255,255,.55),0 10px 26px rgba(0,0,0,.3)}
+.pfav b{font-size:42px;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+.pfav img{position:absolute;right:-6px;bottom:-4px;width:38px;height:38px;object-fit:contain;padding:4px;border-radius:50%;background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.pft{min-width:0}
+.pft h1{margin:0;font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.05;text-shadow:0 2px 12px rgba(0,0,0,.25);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pft p{margin:5px 0 0;font-size:15px;color:rgba(255,255,255,.86)}
+.pfst{display:flex;gap:4px 14px;flex-wrap:wrap}.pfst b{font-weight:800;color:#fff;margin-right:4px}
+.pfedit{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:48px;margin-top:22px;border-radius:999px;background:rgba(0,0,0,.26);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);color:#fff;font-size:16px;font-weight:700}
+.pfedit svg{width:18px;height:18px}
+.pfname{display:flex;gap:8px;margin-top:22px}.pfname[hidden]{display:none}
+.pfname input{flex:1;min-width:0;height:48px;padding:0 16px;border-radius:999px;border:0;outline:0;background:rgba(0,0,0,.3);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);color:#fff;font:600 17px/1 var(--ui,inherit)}
+.pfname input::placeholder{color:rgba(255,255,255,.6)}
+.pfname button{height:48px;padding:0 20px;border-radius:999px;background:#fff;color:#0A0B0E;font-weight:800}
+.pfsec{display:flex;align-items:baseline;justify-content:space-between;margin:26px var(--gut-r) 12px var(--gut)}
+.pfsec h2{margin:0;font-size:22px;font-weight:800}.pfsec a{font-size:15px;font-weight:700;color:var(--ink-3);text-decoration:none}
+.pfrail{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:2px var(--gut-r) 4px var(--gut)}
+.pfrail::-webkit-scrollbar{display:none}
+.pfcr,.pfpl{flex:none;width:88px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px 12px;border-radius:18px;background:var(--card);border:1px solid var(--card-line);color:var(--ink);text-decoration:none}
+.pfcr img{width:46px;height:46px;object-fit:contain}
+.pfcr span,.pfpl>span{font-size:13px;font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pfcta{display:flex;align-items:center;gap:10px;margin:12px var(--gut-r) 0 var(--gut);padding:16px;border-radius:20px;background:var(--card);border:1px solid var(--card-line);color:var(--ink);text-decoration:none}
+.pfcta b{display:block;font-size:17px}.pfcta span{flex:1;display:block;font-size:14px;color:var(--ink-3)}
+/* setup: the name field on the welcome screen */
+.onb-name{display:block;margin:4px 0 18px}
+.onb-name span{display:block;font-size:15px;font-weight:700;margin-bottom:8px}
+.onb-name input{width:100%;height:52px;padding:0 16px;border-radius:16px;border:1px solid var(--card-line);background:var(--card);color:var(--ink);font:600 17px/1 var(--ui,inherit);outline:0}
+.pfcta .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.pfcta .t span{display:block}
+.pfcta .chev{flex:none;color:var(--ink-3)}.pfcta .chev svg{width:18px!important;height:18px!important}
+.pfst b{margin-right:3px}
+.pfcta .t b{color:var(--ink)!important;font-size:17px;font-weight:800}.pfcta .t span{color:var(--ink-3)}
