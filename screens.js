@@ -162,7 +162,7 @@
       else page.querySelectorAll('#stchips .chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); c.setAttribute('aria-selected', String(on)); });
       const sb = page.querySelector('#stbody'); if (V._.patch) V._.patch(sb, body); else sb.innerHTML = body; if (V.soft) V.soft(sb);
     } else $main.innerHTML = `<div id="stpage" data-lk="${esc((V.route && V.route() || {}).lk || '')}"><div id="stchips">${chips(items, tab, 'stab', 'tab')}</div><div id="stbody">${body}</div></div>`;
-    const on = $main.querySelector('#stchips .chip.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
+    const on = $main.querySelector('#stchips .chip.on'); if (on) V._.centerX(on);
   }
 
   /* ================= TEAMS ================= */

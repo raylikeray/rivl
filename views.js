@@ -346,6 +346,8 @@
      while the app is open never repaint what hasn't changed, and never move the page under your thumb. */
   const rankGame = g => (isFav(g) ? 1000 : 0) + (g.tv.national.length ? 100 : 0) + interest(g) / 1000;
   const J = (n, f) => HW.perf ? HW.perf.job(n, f) : f();
+  /* centre a chip in its strip sideways only: scrollIntoView could also move the page up or down */
+  const centerX = el => { const box = el && el.parentElement; if (!box) return; const x = el.offsetLeft - (box.clientWidth - el.offsetWidth) / 2; if (Math.abs(box.scrollLeft - x) > 1) box.scrollLeft = Math.max(0, x); };
   const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
   /* a section changes in place: text and attributes are patched where the shape matches, so a score ticking over does not
      rebuild the whole card (crests reloading, strips resetting). Children are matched by kind (tag, id, class, a game or
@@ -425,8 +427,9 @@
     const S0 = HS[lk] || (HS[lk] = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null });
     if (S0.teams && S0.teams.filter(Boolean).map(t => String(t.id)).sort().join() !== mine.map(String).sort().join()) S0.teams = null;   // the follows changed since: the list is rebuilt
     const secs = S0.secs || (S0.secs = {}); let painted = keep;   // the section strings live with the league's data: unchanged inputs mean unchanged strings, found again without rebuilding
-    const hmemo = S0.hmemo || (S0.hmemo = new Map()); const hashS = str => { let h = hmemo.get(str); if (h === undefined) { if (hmemo.size > 40) hmemo.clear(); h = hashOf(str); hmemo.set(str, h); } return h; };   // a string seen before is not hashed again
-    const wrap = (k, quiet) => `<section class="hsec${quiet ? ' quiet' : ''}" data-sec="${k}" data-h="${hashS(secs[k])}">${secs[k]}</section>`;
+    const onScreen = S0.onScreen || (S0.onScreen = {});   // the string each section was last drawn from: a section is touched only when its string is a different one
+    const hashS = str => '';
+    const wrap = (k, quiet) => { onScreen[k] = secs[k]; return `<section class="hsec${quiet ? ' quiet' : ''}" data-sec="${k}">${secs[k]}</section>`; };
     // two columns on a wide screen (the games and your people on the left, injuries and news on the right); one stack on a phone
     const SIDE = new Set(['injuries', 'news']);
     const col = k => $main.querySelector(SIDE.has(k) ? '.hcol.side' : '.hcol.main') || $main;
@@ -442,8 +445,8 @@
       if (!$main.querySelector('.hcols')) { painted = false; return paint(quiet); }   // the empty state is on screen and something arrived
       SECS.forEach(k => {
         const cur = $main.querySelector(`section[data-sec="${k}"]`);
-        if (!secs[k]) { if (cur) cur.remove(); return; }
-        if (cur) { if (cur.dataset.h !== hashS(secs[k])) { const t = document.createElement('div'); t.innerHTML = wrap(k, quiet); morph(cur, t.firstElementChild); } return; }
+        if (!secs[k]) { if (cur) cur.remove(); delete onScreen[k]; return; }
+        if (cur) { if (onScreen[k] !== secs[k]) { const t = document.createElement('div'); t.innerHTML = wrap(k, quiet); morph(cur, t.firstElementChild); } return; }
         const after = SECS.slice(SECS.indexOf(k) + 1).filter(j => SIDE.has(j) === SIDE.has(k)).map(j => $main.querySelector(`section[data-sec="${j}"]`)).find(Boolean);
         if (after) after.insertAdjacentHTML('beforebegin', wrap(k, quiet)); else col(k).insertAdjacentHTML('beforeend', wrap(k, quiet));
       });
@@ -471,7 +474,9 @@
          the news, the injuries or the players' lines. Inputs are compared by identity, which the data loaders change only
          when they bring something new. */
       const refs = S0.refs || (S0.refs = {}); const ch = (k, v) => { const d = refs[k] !== v; refs[k] = v; return d; };
-      const D = { games: ch('games', games), last: ch('last', last), sums: ch('sums', Object.keys(S0.sums).length), teams: ch('teams', S0.teams), inj: ch('inj', S0.inj), news: ch('news', S0.news), ctx: ch('ctx', ctx), st: ch('st', S0.st), prefs: ch('prefs', JSON.stringify(P)), fp: ch('fp', fp.map(p => p.id).join()) };
+      const gsig = g => `${g.id}|${g.state}|${g.home.score}|${g.away.score}|${g.detail}|${g.off || ''}`; const gamesSig = games.map(gsig).join('\n');
+      const fpTeams = new Set(fp.map(p => String(p.teamId))); const pSig = games.filter(g => fpTeams.has(String(g.home.id)) || fpTeams.has(String(g.away.id))).map(gsig).join('\n');
+      const D = { games: ch('games', gamesSig), pg: ch('pg', pSig), last: ch('last', last), sums: ch('sums', Object.keys(S0.sums).length), teams: ch('teams', S0.teams), inj: ch('inj', S0.inj), news: ch('news', S0.news), ctx: ch('ctx', ctx), st: ch('st', S0.st), prefs: ch('prefs', JSON.stringify(P)), fp: ch('fp', fp.map(p => p.id).join()) };
       const first = !Object.keys(secs).length; const need = (...ks) => first || D.prefs || ks.some(k => D[k]);
       const byTeam = new Map(); games.forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
       // the Now card is for a game that is on; before tip-off and after the final, the rail list is the whole story
@@ -545,7 +550,7 @@
       } else delete secs.teams;
       }
       // my players
-      if (need('games', 'ctx', 'teams', 'fp')) {
+      if (need('pg', 'ctx', 'teams', 'fp')) {
       if (P.players) {
         const ppgOf = p => { const r = ctx && ctx.ppg && ctx.ppg[(p.name || '').toLowerCase()]; return r && r.pts != null ? `${(+r.pts).toFixed(1)} ppg` : ''; };
         secs.players = sec('My players', '', `<a href="#players">${fp.length ? 'Edit' : 'Find players'}</a>`) + (fp.length
@@ -696,7 +701,7 @@
     if (ymd === today && games) S.today[lk] = games;
     /* the days either side are fetched while the phone is idle, so a tap on a neighbouring date paints from memory at once */
     { const near = [-1, 1, -2, 2, -3, 3].map(i => addDays(ymd, i)); let i = 0; const step = () => { if (i >= near.length) return; const r = HW.v5.route && HW.v5.route(); if (!r || r.name !== 'scores' || r.lk !== lk) return; const d = near[i++]; Promise.all([scoreboard(L, d).catch(() => null), forecastCtx(L, d).catch(() => null), sbMeta(L, d).catch(() => null)]).finally(() => setTimeout(() => HW.v5.whenIdle(step), 150)); }; setTimeout(() => HW.v5.whenIdle(step), 1200); }
-    const el = $main.querySelector('#dates .on'); if (el) el.scrollIntoView({ inline: 'center', block: 'nearest' });
+    const el = $main.querySelector('#dates .on'); if (el) centerX(el);
     todayPill(ymd !== today, today);
     const phase = ''; const phaseTag = meta.phase ? `<span class="phase">${esc(meta.phase)}</span>` : '';
     const setPhase = () => { const el = $main.querySelector('#phase'); if (el) el.innerHTML = phaseTag; };
@@ -717,7 +722,7 @@
     const none = mineOnly && !shown.length ? empty(`None of your teams play ${ymd === today ? 'today' : dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, `<p style="margin:6px 0 0">${games.length} game${games.length === 1 ? '' : 's'} on the slate.</p>`, `<button class="btn ghost" data-act="scmine">Show all</button>`) : '';
     paint(phase + none + block('Live', live) + block(ymd === today ? 'Upcoming' : 'Scheduled', pre) + block('Final', post) + block('Not played', off));
     setPhase();
-    const el2 = $main.querySelector('#dates .on'); if (el2) el2.scrollIntoView({ inline: 'center', block: 'nearest' });
+    const el2 = $main.querySelector('#dates .on'); if (el2) centerX(el2);
   }
   /* a pill that stays put above the tab bar while another day is shown: one tap back to today, wherever the strip is scrolled */
   function todayPill(show, today) {
@@ -1163,7 +1168,7 @@
       else if (b.dataset.pp === 'lcat') {
         const was = list.querySelector('.lchips'); const sl = was ? was.scrollLeft : 0;   // the row is rebuilt; it must not jump back to the start
         paint.lcat = b.dataset.cat; paint.topOpen = false; paint('leaders');
-        const y = list.querySelector('.lchips'); if (y) { y.scrollLeft = sl; const on = y.querySelector('.chip.on'); if (on) on.scrollIntoView({ inline: 'nearest', block: 'nearest' }); if (y.getBoundingClientRect().top < 60) y.scrollIntoView({ block: 'start' }); }
+        const y = list.querySelector('.lchips'); if (y) { y.scrollLeft = sl; const on = y.querySelector('.chip.on'); if (on) centerX(on); if (y.getBoundingClientRect().top < 60) y.scrollIntoView({ block: 'start' }); }
       }
       else if (b.dataset.pp === 'fold') { const f = store.get('v5:ppcol', {}) || {}; const k = b.dataset.id; if (f[k]) delete f[k]; else f[k] = 1; store.set('v5:ppcol', f); foldToggle(b, !f[k]); }
       else if (b.dataset.pp === 'browse') { b.querySelector('.t span').textContent = 'Loading…'; const r = await rosterOf(L, b.dataset.id, idx).catch(() => null); if (r) { sections.push({ key: r.team.id, team: r.team, rows: r.players.slice().sort(byLine), open: true }); inp.value = ''; } paint(); }
@@ -1187,5 +1192,5 @@
   }
 
   HW.v5 = Object.assign(HW.v5 || {}, { unrivaledCard, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { morph, patch, teamNow: (L, id) => L && ((teamIdx[L.key] || {})[String(id)] || pool(L.key)[String(id)] || null), gameRow, injBody, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
+    _: { morph, patch, centerX, teamNow: (L, id) => L && ((teamIdx[L.key] || {})[String(id)] || pool(L.key)[String(id)] || null), gameRow, injBody, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

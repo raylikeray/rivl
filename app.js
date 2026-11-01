@@ -170,10 +170,12 @@
     paintTabs(TABS.includes(tabOf(r.name)) ? tabOf(r.name) : (render.tab || (r.name === 'game' ? 'scores' : 'home')));
     document.title = leagueScreen ? `${TITLES[r.name]} · ${LEAGUES[r.lk].label} · RIVL` : `${TITLES[r.name] || ''} RIVL`.trim();
     $main.dataset.top = '1';   // scroll to the top with the new screen's first real paint, not before it
-    if (fresh && !light) { const kb = keepTake(key); if (kb) { if (render.key && $main.dataset.real === '1' && !document.querySelector('.xghost.mv[data-key="' + render.key + '"]')) keepPut(render.key, $main);   // the page being left is parked
+    let restored = false;
+    if (fresh && !light) { const kb = keepTake(key); if (kb) { restored = true; if (render.key && $main.dataset.real === '1' && !document.querySelector('.xghost.mv[data-key="' + render.key + '"]')) keepPut(render.key, $main);   // the page being left is parked
         render.parkKey = ''; moveNodes(kb, $main, kb._st); kb.remove(); $main.dataset.real = '1'; if (ENT.includes(r.name) && V._ && V._.gxAttach) V._.gxAttach(); if (r.name === 'home') $main.dataset.hlk = r.lk; const y = +$main.dataset.y || 0; if (y) window.scrollTo(0, y); if (render.onReal) { const f = render.onReal; render.onReal = null; f(); } } }
     if (sp) sp.end();
-    if (light) { const run = () => { if (my !== seq) return; Promise.resolve((V[r.name] || V.home)(...r.args)).catch(err => console.error(err)); }; V.whenIdle(() => setTimeout(run, 320)); }
+    /* a page put back as it stood refreshes its numbers once the hand is off the screen, never inside the tap */
+    if (light || restored) { const run = () => { if (my !== seq) return; Promise.resolve((V[r.name] || V.home)(...r.args)).catch(err => console.error(err)); }; V.whenIdle(() => setTimeout(run, 320)); }
     else try { await (V[r.name] || V.home)(...r.args); }
     catch (err) { if (my === seq) $main.innerHTML = `<div class="empty"><b>Something went wrong</b><p style="margin:6px 0 0">${esc(err && err.message || 'Try again in a moment.')}</p></div>`; console.error(err); }
     if (my !== seq) return;
