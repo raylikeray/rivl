@@ -12,7 +12,7 @@
   const ord = n => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
   const dayWord = ymd => { const t = HW.todayCT(); return ymd === t ? 'tonight' : ymd === HW.addDays(t, -1) ? 'last night' : ymd === HW.addDays(t, 1) ? 'tomorrow' : HW.dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' }); };
-  const niceDate = ymd => ymd ? HW.dayLabel(ymd, { month: 'short', day: 'numeric' }) : '';
+  const niceDate = ymd => ymd ? HW.dayLabel(ymd, { month: 'short', day: 'numeric', ...(String(ymd).slice(0, 4) !== String(new Date().getFullYear()) ? { year: 'numeric' } : {}) }) : '';
 
   /* ---------- reading the question ---------- */
   const leagueIn = nq => /\bwnba\b/.test(nq) ? 'wnba' : /\bnba\b/.test(nq) ? 'nba' : /\b(ncaa ?w|womens college|college women|women s college)\b/.test(nq) ? 'ncaaw' : /\b(ncaa ?m|mens college|college men|college basketball|college|ncaa)\b/.test(nq) ? 'ncaam' : null;
