@@ -317,14 +317,19 @@
     const rRail = l => `<div class="rrail">${l.map(rCard).join('')}</div>`;
     const groups = [['Guard', 'Guards'], ['Forward', 'Forwards'], ['Center', 'Centers'], ['', 'Others']].map(([k, h]) => [h, sorted.filter(a => (posWord2(a.position && a.position.abbreviation) || '') === k)]).filter(([, l]) => l.length);
     // schedule rows: when, vs or at, the crest and name, then the time, the clock or the result
-    const sch = g => { const { home, me, op } = opp(g); const res = isDone(g) ? `<b class="${+me.score > +op.score ? 'w' : 'l'}">${+me.score > +op.score ? 'W' : 'L'} ${me.score}-${op.score}</b>` : g.off ? `<b class="dim">${esc(g.off)}</b>` : g.state === 'in' ? `<span class="tpill on sm"><i></i>${esc(gxDet(g, L))}</span>` : `<b>${esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT)$/, ''))}</b>`;
-      return `<a class="tsr" href="${href.game(lk, g.id)}"><span class="d">${esc(when(g))}</span><span class="va">${home ? 'vs' : 'at'}</span><span class="tcr">${op.logo ? V._.imgSized(op.logo, 96, 96) : ''}</span><span class="o">${esc(op.short)}</span><span class="r">${res}</span></a>`; };
+    const sch = (g, abs) => { const { home, me, op } = opp(g); const res = isDone(g) ? `<b class="${+me.score > +op.score ? 'w' : 'l'}">${+me.score > +op.score ? 'W' : 'L'} ${me.score}-${op.score}</b>` : g.off ? `<b class="dim">${esc(g.off)}</b>` : g.state === 'in' ? `<span class="tpill on sm"><i></i>${esc(gxDet(g, L))}</span>` : `<b>${esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT)$/, ''))}</b>`;
+      return `<a class="tsr" href="${href.game(lk, g.id)}"><span class="d">${esc(abs ? dayLabel(ymdOf(g.date), { month: 'short', day: 'numeric' }) : when(g))}</span><span class="va">${home ? 'vs' : 'at'}</span><span class="tcr">${op.logo ? V._.imgSized(op.logo, 96, 96) : ''}</span><span class="o">${esc(op.short)}</span><span class="r">${res}</span></a>`; };
     const upAll = evs.filter(g => !isDone(g)), doneAll = doneG.slice().reverse();
-    const plateList = (list, n, key) => list.length ? `<div class="gxplate tsch${list.length > n ? '' : ' all'}" data-k="${key}">${list.map((g, i) => `<div class="tsx${i >= n ? ' more' : ''}">${sch(g)}</div>`).join('')}${list.length > n ? `<button class="tmore" data-act="tmore">Show all ${list.length}</button>` : ''}</div>` : '';
+    const plateList = (list, n, key, abs) => list.length ? `<div class="gxplate tsch${list.length > n ? '' : ' all'}" data-k="${key}">${list.map((g, i) => `<div class="tsx${i >= n ? ' more' : ''}">${sch(g, abs)}</div>`).join('')}${list.length > n ? `<button class="tmore" data-act="tmore">Show all ${list.length}</button>` : ''}</div>` : '';
     const injRows = il.length ? `<div class="gp frows">${il.map((x, i) => { const a = x.athlete || {}; const aid = athId(a); const key = `t:${id}:${aid}:${x.id || i}`; const stt = x.status || ''; const cls = /out/i.test(stt) ? 'out' : /day|quest|doubt/i.test(stt) ? 'q' : 'ok'; const det = x.details || {}; const ret = V._.retInfo(L, det.returnDate); const part = [det.side && det.side !== 'Not Specified' ? det.side : '', det.location || det.type || ''].filter(Boolean).join(' '); const cap = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
         return `<button class="frow ijrow" data-act="injury" data-key="${esc(key)}"><span class="fface">${headshot(hsUrl(a), color, 42, a.displayName)}</span><span class="nm"><b>${esc(a.displayName || '')}</b><small>${esc(part || det.detail || '')}</small></span><span class="fs"><span class="tag ${cls}">${esc(V._.statusWord(stt) || 'Listed')}</span><em>${esc(cap(ret ? ret.short : (x.shortComment || '')))}</em></span></button>`; }).join('')}</div>` : '';
     il.forEach((x, i) => { const aid = athId(x.athlete || {}); S.injuries[`t:${id}:${aid}:${x.id || i}`] = { x, id: aid, team: { id: tid, short: tname, color, logo: lg } }; });
     const seasonGrid = r ? `<div class="tkv">${[['Record', `${r.w}-${r.l}`], ['Standing', L.standingsMode !== 'conferences' && r.pos ? `${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}` : (r.group || t0.standingSummary || '')], ['Points per game', r.ppg != null ? (+r.ppg).toFixed(1) : ''], ['Points allowed', r.opp != null ? (+r.opp).toFixed(1) : ''], ['Net per game', r.diff != null ? sign(+r.diff) : ''], ['Last 10', r.l10], ['Home', r.home], ['Road', r.road], ['Streak', r.strk], [L.standingsMode === 'conferences' ? 'In conference' : 'vs conference', r.conf]].filter(([, v]) => v).map(([k, v]) => `<div class="tkr"><span>${esc(k)}</span><b>${esc(String(v))}</b></div>`).join('')}</div>` : '';
+    /* past seasons: three chips that load that year's results into the same list. ESPN names a season by the year it ends
+       (2025-26 is 2026); a season that has not started yet is not offered. */
+    const endYear = (() => { const sy = sched && sched.events && sched.events[0] && sched.events[0].season && +sched.events[0].season.year; if (sy) return sy; const d0 = evs[0] && evs[0].date ? new Date(evs[0].date) : new Date(); const y = d0.getFullYear(); return lk === 'wnba' ? y : (d0.getMonth() >= 6 ? y + 1 : y); })();
+    const seasonWord = y => lk === 'wnba' ? String(y) : `${y - 1}-${String(y).slice(2)}`;
+    const pastSeasons = `${sec('Past seasons', 'results')}<div class="gxplate tpast" data-lk="${lk}" data-id="${esc(tid)}"><div class="xsorts tpastc">${[1, 2, 3].map(n => `<button class="chip" data-act="tpast" data-season="${endYear - n}">${seasonWord(endYear - n)}</button>`).join('')}</div><div class="tpastb"></div></div>`;
     const tabsT = [['overview', 'Overview'], ['schedule', 'Schedule'], ['roster', 'Roster'], ['stats', 'Stats']];
     const tkey = `tm:${lk}:${tid}`; let ttab = (() => { try { return localStorage.getItem(tkey) || 'overview'; } catch { return 'overview'; } })();
     const panels = {
@@ -334,7 +339,7 @@
         + (sorted.length ? sec('Players', '', `<button data-act="ttab" data-tab="roster">Full roster</button>`) + rRail(sorted.slice(0, 8)) : '')
         + (injRows ? sec('Injuries') + injRows : '')
         + (newsHtml ? newsHtml.replace('<div class="rows">', '<div class="rows gxrows">') : ''),
-      schedule: (upAll.length ? sec('Coming up', `${upAll.length} to play`) + plateList(upAll, 6, 'up') : '') + (doneAll.length ? sec('Results', r ? `${r.w}-${r.l}, newest first` : 'newest first') + plateList(doneAll, 6, 'done') : '') || empty('No games listed'),
+      schedule: ((upAll.length ? sec('Coming up', `${upAll.length} to play`) + plateList(upAll, 6, 'up') : '') + (doneAll.length ? sec('Results', r ? `${r.w}-${r.l}, newest first` : 'newest first') + plateList(doneAll, 6, 'done') : '') || empty('No games listed')) + pastSeasons,
       roster: groups.length ? groups.map(([h, l]) => sec(h, String(l.length)) + rRail(l)).join('') + `<p class="legend tleg">Points per game this season, from ESPN.</p>` : empty('No roster listed'),
       stats: ((seasonGrid ? sec('Season') + `<div class="gxplate tseason">${seasonGrid}</div>` : '') + outlook + (statsHtml ? `<div class="tstats">${statsHtml}</div>` : '')) || empty('No season numbers yet', '<p style="margin:6px 0 0">They show up once the team has played.</p>')
     };
@@ -344,8 +349,18 @@
     V._.heroShell({ pid: `team:${tid}`, cls: '', color, c2, inner, bar, act: 'ttab', attr: 'data-tp', tab: ttab, tabs: tabsT, panels });
     document.title = `${t0.displayName} · RIVL`;
     if (V._ttabL) $main.removeEventListener('click', V._ttabL);
-    V._ttabL = e => { const b = e.target.closest('[data-act="ttab"],[data-act="tmore"]'); if (!b || !$main.querySelector('.tmpage')) return; e.preventDefault();
+    const loadPast = async b => {
+      const box = b.closest('.tpast'), out = box.querySelector('.tpastb'), yr = b.dataset.season; box.querySelectorAll('.chip').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); });
+      out.innerHTML = skeleton(4, 'row');
+      const d = await jSoft(`${API(L)}/teams/${id}/schedule?season=${yr}`, 3600000).catch(() => null);
+      const past = (d && d.events || []).map(e => { try { return parseEvent(e, L); } catch { return null; } }).filter(g => g && isDone(g)).reverse();
+      if (!past.length) { out.innerHTML = empty('No results for that season'); return; }
+      let w = 0, l = 0; past.forEach(g => { const { me, op } = opp(g); if (+me.score > +op.score) w++; else l++; });
+      out.innerHTML = `<p class="tpasth"><b>${w}-${l}</b> in ${esc(seasonWord(+yr))} · newest first</p>` + plateList(past, 8, 'past' + yr, true);
+    };
+    V._ttabL = e => { const b = e.target.closest('[data-act="ttab"],[data-act="tmore"],[data-act="tpast"]'); if (!b || !$main.querySelector('.tmpage')) return; e.preventDefault();
       if (b.dataset.act === 'tmore') { const p = b.closest('.tsch'); p.classList.add('all'); b.remove(); return; }
+      if (b.dataset.act === 'tpast') { loadPast(b); return; }
       const k = b.dataset.tab; try { localStorage.setItem(tkey, k); } catch { }
       $main.querySelectorAll('#gtabs .chip').forEach(x => { const o = x.dataset.tab === k; x.classList.toggle('on', o); x.setAttribute('aria-pressed', String(o)); });
       $main.querySelectorAll('#tbody > [data-tp]').forEach(x => { x.hidden = x.dataset.tp !== k; });
