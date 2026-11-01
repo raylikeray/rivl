@@ -393,7 +393,11 @@
       if (P.brief && mine.length && !(P.live && liveMine.length && games.filter(isFav).length === liveMine.length)) {   // when every game of yours is on now, the hero says it all
         const tonight = games.filter(g => isFav(g) && !(P.live && isLive(g))).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
         let body = '', note = '', title = 'Tonight';
-        if (tonight.length) { note = `${tonight.length} ${P.live && liveMine.length ? 'more ' : ''}game${tonight.length === 1 ? '' : 's'} for your teams`; body = `<div class="brief-row">${tonight.map(chipOf).join('')}</div>`; }
+        /* a game already over is not "tonight": finished games get their own line, headed Final */
+        const ahead = tonight.filter(g => g.state !== 'post'), over = tonight.filter(g => g.state === 'post');
+        const finalH = over.length ? `<div class="brief-h brief-h2"><b>Final</b><span>${over.length} earlier today</span></div><div class="brief-row">${over.map(chipOf).join('')}</div>` : '';
+        if (ahead.length) { note = `${ahead.length} ${P.live && liveMine.length ? 'more ' : ''}game${ahead.length === 1 ? '' : 's'} for your teams`; body = `<div class="brief-row">${ahead.map(chipOf).join('')}</div>` + finalH; }
+        else if (over.length) { title = 'Final'; note = `today · your teams`; body = `<div class="brief-row">${over.map(chipOf).join('')}</div>`; }
         else {
           // nothing tonight: the block is the next games instead, headed by when they are, so a chip never sits under "no games"
           const seen = new Set(); const next = teams.map(t => t.next).filter(g => g && g.state === 'pre' && !seen.has(g.id) && seen.add(g.id)).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 4);

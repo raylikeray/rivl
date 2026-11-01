@@ -2996,3 +2996,19 @@ html,body,:root[data-tint] body{background:var(--bg)!important;background-image:
 .hsec[data-sec="live"] .sec{padding-left:0!important}
 .hsec[data-sec="live"] .gp.grows{margin-left:0!important;margin-right:0!important}
 #lbhome,#livebar,.livebar{display:none!important}
+
+/* no gray block on a tapped row; a light dip instead */
+.grow:active,.frow:active,.frows .frow:active,.row:active,.gxrows .row:active{background:none!important}
+.grow:active,.frow:active,.row:active{opacity:.6;transition:opacity .08s}
+/* the game and team tabs are words with an underline, never boxes */
+.gxtabs .chip,.gxtabs .chip.on,.gxtabs .chip[aria-pressed="true"]{background:none!important;border:0!important;box-shadow:none!important;color:var(--ink-3)!important}
+.gxtabs .chip.on{color:var(--ink)!important}
+.brief-h2{margin-top:14px}
+
+/* light mode: a light gray page, white cards; pills inside a card are gray, pills on the page white */
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){--bg:#F2F3F5;--card:#FFFFFF;--card-line:rgba(10,11,14,.06);--surf:#FFFFFF;--surf-2:#ECEDF0}
+  :root:not([data-theme="dark"]) :is(.hsec,.card,.gp,.giplate,.gxplate,.glplate,.gxrows,.gxser,.plc,.zones,.ijc,.tsch) :is(.chip,.bchip,.pip,.gxseg,.gxtsw,.tpill,.lv,.fpill){background:#ECEDF0!important}
+  :root:not([data-theme="dark"]) .gxpage :is(.gxseg,.gxtsw){background:#FFFFFF!important} }
+:root[data-theme="light"]{--bg:#F2F3F5;--card:#FFFFFF;--surf:#FFFFFF;--surf-2:#ECEDF0}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .gxpage .gxtabs .chip{background:none!important} }
+:root[data-theme] .gxpage .gxtabs .chip{background:none!important}
