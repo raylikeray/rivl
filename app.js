@@ -271,8 +271,10 @@
      team's colours with your number. Tapping it opens your profile and settings. */
   window.RIVL_avatar = () => {
     const photo = HW.store.get('v5:avatar', ''); if (photo) return `<img class="avimg" src="${esc(photo)}" alt="">`;
-    const j = HW.store.get('v5:jlook', null) || { main: '#5B6170', trim: '#FFFFFF', ink: '#FFFFFF', num: '1' };
-    return `<svg class="avjer" viewBox="0 0 120 140" aria-hidden="true"><path d="M30 6C38 4 42 3 46 3C50 10 70 10 74 3C78 3 82 4 90 6L92 9C93 27 100 36 113 40V131C113 135.5 110.5 138 106 138H14C9.5 138 7 135.5 7 131V40C20 36 27 27 28 9Z" fill="${esc(j.main)}"/><path d="M46 3C50 10 70 10 74 3M28 9C27 27 20 36 7 40M92 9C93 27 100 36 113 40" fill="none" stroke="${esc(j.trim)}" stroke-width="5" stroke-linecap="round"/><text x="60" y="${String(j.num).length > 1 ? 104 : 108}" font-family="Inter,system-ui,sans-serif" font-weight="900" font-size="${String(j.num).length > 1 ? 54 : 62}" fill="${esc(j.ink)}" text-anchor="middle" letter-spacing="-3">${esc(String(j.num))}</text></svg>`;
+    const j = HW.store.get('v5:jlook', null) || { main: '#1D9BF0', trim: '#FFFFFF', ink: '#FFFFFF', num: '' };
+    const nm = String(HW.store.get('v5:name', '') || '').trim(); const ch = (nm.charAt(0) || '').toUpperCase();
+    // no photo: your first initial (or your number) in your team's colour, ringed in its second colour, so it reads as you
+    return `<span class="avini" style="background:${esc(j.main)};color:${esc(j.ink)};box-shadow:inset 0 0 0 2px ${esc(j.trim)}">${esc(ch || String(j.num || '') || '+')}</span>`;
   };
   window.RIVL_paintAv = () => { const b = document.getElementById('avbtn'); if (b) b.innerHTML = window.RIVL_avatar(); };
   window.RIVL_paintAv();
@@ -281,9 +283,13 @@
   (() => {
     const hdr = document.getElementById('hdr'); if (!hdr) return; const phone = matchMedia('(max-width:1039px)');
     let off = 0, lastY = window.scrollY, idle = 0;
-    const set = (v, ease) => { off = v; hdr.style.transition = ease ? 'transform .22s cubic-bezier(.3,.7,.2,1)' : 'none'; hdr.style.transform = off ? `translate3d(0,${-off}px,0)` : ''; };
+    const bar = document.getElementById('tabs');
+    // the bottom bar moves with the top, the same share of its own height, so both leave and come back together
+    const set = (v, ease) => { off = v; const tr = ease ? 'transform .22s cubic-bezier(.3,.7,.2,1)' : 'none'; hdr.style.transition = tr; hdr.style.transform = off ? `translate3d(0,${-off}px,0)` : '';
+      if (bar) { const H = hdr.offsetHeight || 1, b = bar.offsetHeight + 24; bar.style.transition = tr; bar.style.transform = off ? `translate3d(0,${(off / H * b).toFixed(1)}px,0)` : ''; } };
     window.addEventListener('scroll', () => {
       if (!phone.matches) { if (off) set(0); return; }
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) { lastY = window.scrollY; return; }   // the bottom bounce never counts as scrolling up
       const y = Math.max(0, window.scrollY), H = hdr.offsetHeight, dy = y - lastY; lastY = y;
       set(Math.min(H, Math.max(0, Math.min(off + dy, y))), false);
       clearTimeout(idle); idle = setTimeout(() => { const h = hdr.offsetHeight; if (off > 0 && off < h) set(off > h / 2 && window.scrollY > h ? h : 0, true); }, 140);

@@ -3951,3 +3951,18 @@ html:root body #pills .pill.on{color:var(--ink)!important;font-weight:800!import
 }
 html:root body #pills .pill,html:root body #pills .pill.on{font-weight:700!important}
 html:root body #pills.pills::after{transition:left .34s cubic-bezier(.25,.8,.25,1),width .34s cubic-bezier(.25,.8,.25,1)!important}
+/* your icon: bigger, a solid circle in your team's colour with your initial (or your photo), so it reads as a button */
+html:root body .xtop .avbtn{width:40px;height:40px;background:none;box-shadow:none}
+.avbtn .avini{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font:800 17px/1 var(--ui);letter-spacing:-.01em}
+html:root body .xtop .avbtn .avimg{border-radius:50%;box-shadow:0 0 0 2px var(--card)}
+html:root body .top.xtop{grid-template-columns:44px 1fr 44px}
+/* the bottom bar, as X: full width, flush to the bottom edge, frosted, a hairline on top, icons only (the names stay for
+   screen readers). It slides away as you scroll down and comes back as you scroll up, with the top. */
+@media (max-width:1039px){
+  html:root body .tabs.flat5{left:0!important;right:0!important;bottom:0!important;max-width:none!important;margin:0!important;border-radius:0!important;padding:0 0 env(safe-area-inset-bottom,0px)!important;height:auto!important;
+    border:0!important;border-top:1px solid color-mix(in srgb,var(--ink) 10%,transparent)!important;box-shadow:none!important;will-change:transform;
+    background:color-mix(in srgb,var(--bg) 88%,transparent)!important;-webkit-backdrop-filter:blur(22px) saturate(1.6)!important;backdrop-filter:blur(22px) saturate(1.6)!important}
+  html:root body .tabs.flat5 .tab,html:root body .tabs.flat5 .tab.on{height:54px!important;gap:0!important}
+  html:root body .tabs.flat5 .tab span{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important}
+  html:root body .tabs.flat5 .tab svg{width:27px!important;height:27px!important}
+}
