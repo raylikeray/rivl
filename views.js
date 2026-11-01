@@ -346,8 +346,14 @@
      while the app is open never repaint what hasn't changed, and never move the page under your thumb. */
   const rankGame = g => (isFav(g) ? 1000 : 0) + (g.tv.national.length ? 100 : 0) + interest(g) / 1000;
   const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
-  const SECS = ['wire', 'live', 'tonight', 'last', 'teams', 'players', 'injuries', 'news'];   // the wire first when it has something, then a game on now
+  const SECS = ['wire', 'now', 'live', 'tonight', 'last', 'teams', 'players', 'injuries', 'news'];   // the one thing that matters right now leads   // the wire first when it has something, then a game on now
   let homeToken = 0;
+  /* Duolingo's "jump here": a pill that brings you back to the Now card once it has scrolled away */
+  function backNow() {
+    let el = document.querySelector('.backnow'); if (!el) { el = document.createElement('button'); el.className = 'backnow'; el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 6-6 6 6"/></svg>Back to now`; el.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' })); document.body.appendChild(el);
+      window.addEventListener('scroll', () => { const r = HW.v5.route && HW.v5.route(); const on = r && r.name === 'home' && document.querySelector('.hsec[data-sec="now"]') && window.scrollY > window.innerHeight * .9; el.classList.toggle('on', !!on); }, { passive: true });
+      document.addEventListener('rivl:rendered', () => el.classList.remove('on')); }
+  }
   async function home(lk) {
     const L = LEAGUES[lk]; const today = todayCT(); const token = ++homeToken;
     const mine = favs.all()[lk] || [];
@@ -358,7 +364,7 @@
     }
     /* a refresh (pull down, or coming back to the tab) keeps the screen you are looking at and swaps in each section as its
        fresh data lands, with no skeleton and no rise: only a league you have not seen yet starts from the skeleton */
-    const keep = !!$main.querySelector('.hcols') && $main.dataset.hlk === lk;
+    const keep = !!$main.querySelector('.hcols') && $main.dataset.hlk === lk; backNow();
     if (!keep) { $main.innerHTML = skeleton(1, 'card') + skeleton(4, 'row'); $main.dataset.hlk = lk; }
     const P = prefs.all(); const yday = addDays(today, -1);
     const alive = () => { if (token !== homeToken) return false; const r = HW.v5.route && HW.v5.route(); return !r || (r.name === 'home' && r.lk === lk); };   // still the screen being shown, even while the old one is kept on screen during the load
@@ -405,23 +411,27 @@
     const build = () => {
       const { games, last, ctx } = S0; const teams = teamList();
       const byTeam = new Map(); games.forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
-      // tonight: your games, or the next ones on the calendar once the schedules are in
+      // the Now card: your live game, else the next of your games today, else today's last final; a hero, first on the screen
+      const favAll = games.filter(isFav); const nowG = favAll.find(isLive) || favAll.filter(g => g.state === 'pre' && !g.off).sort((a, b) => new Date(a.date) - new Date(b.date))[0] || favAll.filter(g => g.state === 'post').sort((a, b) => new Date(b.date) - new Date(a.date))[0] || null;
+      if (nowG && P.brief) { const w = isLive(nowG) ? 'Live now' : nowG.state === 'post' ? 'Final' : `Next up · ${esc(new Date(nowG.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))}`; secs.now = `<div class="nowh"><span>${w}</span></div>${heroCard(L, nowG, ctx)}`; } else delete secs.now;
+      // tonight: your games as a rail list in tip order (a dot ahead, a pulse while on, a check when done), or the next ones on the calendar
       const liveMine = games.filter(g => isLive(g) && isFav(g));
-      if (P.brief && mine.length && !(P.live && liveMine.length && games.filter(isFav).length === liveMine.length)) {   // when every game of yours is on now, the hero says it all
-        const tonight = games.filter(g => isFav(g) && !(P.live && isLive(g))).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
+      if (P.brief && mine.length) {
+        const tonight = favAll.filter(g => g !== nowG).sort((a, b) => new Date(a.date) - new Date(b.date));
         let body = '', note = '', title = 'Tonight';
-        /* a game already over is not "tonight": finished games get their own line, headed Final */
-        const ahead = tonight.filter(g => g.state !== 'post'), over = tonight.filter(g => g.state === 'post');
-        const finalH = over.length ? `<div class="brief-h brief-h2"><b>Final</b><span>${over.length} earlier today</span></div><div class="brief-row">${over.map(chipOf).join('')}</div>` : '';
-        if (ahead.length) { note = `${ahead.length} ${P.live && liveMine.length ? 'more ' : ''}game${ahead.length === 1 ? '' : 's'} for your teams`; body = `<div class="brief-row">${ahead.map(chipOf).join('')}</div>` + finalH; }
-        else if (over.length) { title = 'Final'; note = `today · your teams`; body = `<div class="brief-row">${over.map(chipOf).join('')}</div>`; }
-        else {
-          // nothing tonight: the block is the next games instead, headed by when they are, so a chip never sits under "no games"
+        const railRow = g => { const showSc = !g.off && g.state !== 'pre'; const side = (t, o) => `<span class="sr${showSc && +t.score < +o.score ? ' lo' : ''}">${logo(t.logo, 's', teamColor(t, L))}<b>${esc(t.abbr || t.short)}</b>${showSc ? `<em>${t.score}</em>` : ''}</span>`;
+          const st = g.off ? esc(g.off) : g.state === 'pre' ? esc(new Date(g.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) : g.state === 'in' ? `<span class="on">${esc(g.detail)}</span>` : esc(finalWord(g));
+          const f = g.state === 'pre' && !g.off ? safeF(L, g, S0.ctx) : null; const pH = f && f.pHome != null ? f.pHome : null; const fav = pH == null ? null : pH >= .5 ? g.home : g.away, fp = pH == null ? 0 : Math.round(Math.max(pH, 1 - pH) * 100);
+          const pick = fav ? `<span class="pk"><span class="pkbar"><i style="flex:${(1 - pH).toFixed(3)} 1 0;background:${esc(teamColor(g.away, L))}"></i><i style="flex:${pH.toFixed(3)} 1 0;background:${esc(teamColor(g.home, L))}"></i></span><em>${esc(fav.abbr || fav.short)} ${fp}%</em></span>` : '';
+          return `<a class="tnr ${g.state === 'in' ? 'in' : g.state === 'post' ? 'done' : 'pre'}" href="${href.game(lk, g.id)}"><span class="rl"><i></i></span><span class="tms">${side(g.away, g.home)}${side(g.home, g.away)}</span><span class="ss">${st}${seriesShort(g) ? `<i class="po">${esc(seriesShort(g))}</i>` : ''}</span>${pick}</a>`; };
+        if (tonight.length) { const ahead = tonight.filter(g => g.state !== 'post').length, over = tonight.length - ahead; note = `${favAll.length} game${favAll.length === 1 ? '' : 's'} for your teams${over && ahead ? ` · ${over} final` : over && !ahead ? ' · all final' : ''}`; if (!ahead) title = 'Today'; body = `<div class="tnl">${tonight.map(railRow).join('')}</div>`; }
+        else if (!nowG) {
+          // nothing today: the block is the next games instead, headed by when they are, so a row never sits under "no games"
           const seen = new Set(); const next = teams.map(t => t.next).filter(g => g && g.state === 'pre' && !seen.has(g.id) && seen.add(g.id)).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 4);
           if (next.length) { const d0 = HW.ymdOf(next[0].date); const w = dayWord(d0, true); title = 'Next up'; note = `${esc(w === 'Tonight' ? 'later tonight' : w === 'Tomorrow' ? 'tomorrow' : w)} · nothing tonight`; body = `<div class="brief-row">${next.map(nextChip).join('')}</div>`; }
           else note = S0.teams ? 'no games for your teams' : 'no games tonight';
         }
-        secs.tonight = `<div class="brief"><div class="brief-h"><b>${title}</b><span>${note}</span></div>${body}</div>`;
+        if (body || !nowG) secs.tonight = `<div class="brief"><div class="brief-h"><b>${title}</b><span>${note}</span></div>${body}</div>`; else delete secs.tonight;
       } else delete secs.tonight;
       // last night: results, then your players' lines once the box scores are in
       const pGames = fp.map(p => { const is = teamOf(p); const g = last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? { p, g } : null; }).filter(Boolean);
@@ -437,7 +447,7 @@
       }
       // your teams playing right now: the hero
       const live = games.filter(g => isLive(g) && isFav(g)).sort((a, b) => rankGame(b) - rankGame(a));
-      if (live.length && P.live) secs.live = sec('Live now') + `<div class="gp grows">${live.map(g => gameRow(L, g, ctx)).join('')}</div>`; else delete secs.live;
+      { const more = live.filter(g => g !== nowG); if (more.length && P.live) secs.live = sec(nowG && isLive(nowG) ? 'Also on' : 'Live now') + `<div class="gp grows">${more.map(g => gameRow(L, g, ctx)).join('')}</div>`; else delete secs.live; }
       const clk = g => { const per = +g.period || 0, d = String(g.detail || ''), st = String(g.status || ''); if (!per) return d || 'Live'; if (/HALFTIME/.test(st) || /^half/i.test(d)) return 'Halftime'; const reg = L.periods === 2 ? 2 : 4; const ord = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`; const nm = per <= reg ? (reg === 2 ? `${ord(per)} half` : ord(per)) : (per - reg > 1 ? `${per - reg}OT` : 'OT'); if (/END_PERIOD/.test(st) || /^end/i.test(d)) return `End of ${nm}`; const c = String(g.clock || '').trim(); return c && !/^0{1,2}(?::00)?(?:\.0)?$/.test(c) ? `${nm} ${c}` : nm; };
       // my teams: record, what's next or how it's going, win chance
       if (P.teams) {

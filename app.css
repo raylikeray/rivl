@@ -4340,3 +4340,28 @@ html:root body .grow .tm.fav .cr::after{content:'★';position:absolute;right:-6
 @keyframes flwpop{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:scale(1)}}
 html:root body .gxpage .flw svg.fs,html:root body .gxpage .flw svg.fs path{fill:none!important;stroke:currentColor!important;stroke-width:2.8!important;stroke-linecap:round}
 html:root body .gxpage .flw svg.fs.on,html:root body .gxpage .flw svg.fs.on path{fill:none!important;stroke:#fff!important;stroke-width:3!important}
+/* Following: the Now card leads (your live game, else the next tip, else today's final) with a small word over it */
+html:root body .hsec[data-sec="now"]{background:none;box-shadow:none;padding:0;border-radius:0;overflow:visible;--gut:var(--pg);--gut-r:var(--pg-r)}
+.nowh{display:flex;align-items:center;gap:8px;padding:14px var(--pg) 8px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.hsec[data-sec="now"] .hero{margin:0 var(--pg)}
+/* Tonight as a rail list: a dot ahead, a pulse while on, a check when done; rows in tip order */
+.tnl{position:relative;display:flex;flex-direction:column;padding:2px 0 6px}
+.tnl::before{content:"";position:absolute;left:9px;top:18px;bottom:18px;width:2px;background:var(--line);border-radius:2px}
+.tnr{position:relative;display:grid;grid-template-columns:20px 1fr auto;grid-template-rows:auto auto;column-gap:12px;row-gap:6px;align-items:center;padding:10px 0;color:inherit;text-decoration:none}
+.tnr .rl{grid-row:1/3;align-self:center;width:20px;height:20px;display:grid;place-items:center}
+.tnr .rl i{width:10px;height:10px;border-radius:50%;background:var(--card);box-shadow:inset 0 0 0 2px var(--ink-3)}
+.tnr.in .rl i{background:#E0245E;box-shadow:0 0 0 4px rgba(224,36,94,.18);animation:tnpulse 1.4s ease-in-out infinite}
+.tnr.done .rl i{width:18px;height:18px;background:var(--ink);box-shadow:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12.5 4 4L18 8'/%3E%3C/svg%3E");background-size:12px;background-position:center;background-repeat:no-repeat}
+@keyframes tnpulse{0%,100%{box-shadow:0 0 0 3px rgba(224,36,94,.18)}50%{box-shadow:0 0 0 7px rgba(224,36,94,.06)}}
+.tnr .tms{display:flex;flex-direction:column;gap:5px;min-width:0}
+.tnr .sr{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800}.tnr .sr .logo{width:24px;height:24px}.tnr .sr em{font-style:normal;margin-left:auto;padding-left:12px;font:800 15px var(--num,inherit)}
+.tnr .sr.lo b,.tnr .sr.lo em{color:var(--ink-3)}
+.tnr .ss{grid-column:3;grid-row:1;justify-self:end;text-align:right;font-size:14px;font-weight:800;white-space:nowrap}.tnr .ss .on{color:#E0245E}.tnr .ss .po{display:block;font-style:normal;font-size:11px;color:var(--ink-3)}
+.tnr .pk{grid-column:2/4;grid-row:2;display:flex;align-items:center;gap:10px}.tnr .pk .pkbar{flex:1;display:flex;height:4px;border-radius:2px;overflow:hidden;gap:2px}.tnr .pk .pkbar i{display:block;height:100%}.tnr .pk em{font-style:normal;font-size:12px;font-weight:700;color:var(--ink-3);white-space:nowrap}
+.tnr.done .pk{display:none}
+.tnr + .tnr{border-top:1px solid var(--line)}
+.tnr.done .tms b,.tnr.done .ss{color:var(--ink-2)}
+/* the way back to the top of Following when you have scrolled past the Now card */
+.backnow{position:fixed;left:50%;transform:translate(-50%,0);bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 14px);z-index:60;display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;background:var(--ink);color:var(--bg);font:700 13px/1 inherit;font-family:inherit;border:0;box-shadow:0 8px 24px -10px rgba(0,0,0,.5);transition:opacity var(--t-quick),transform var(--t-move) var(--e-in);opacity:0;pointer-events:none;transform:translate(-50%,12px)}
+.backnow.on{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+.backnow svg{width:14px;height:14px}
