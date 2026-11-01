@@ -278,7 +278,11 @@
     if (n <= 5) { el.classList.remove('capped', 'capopen'); if (b) b.remove(); return; }
     el.classList.add('capped'); el.classList.toggle('capopen', !!open[k]);
     if (!b) { b = document.createElement('button'); b.className = 'capbtn'; el.after(b);
-      b.addEventListener('click', () => { open[k] = !open[k]; try { sessionStorage.setItem('rivl:open', JSON.stringify(open)); } catch { } apply(); }); }
+      b.addEventListener('click', () => {
+        /* the button stays under your finger: closing the list scrolls the page up by what was removed, so you land on the
+           five rows you kept instead of whatever sat further down the page */
+        const y0 = b.getBoundingClientRect().top; open[k] = !open[k]; try { sessionStorage.setItem('rivl:open', JSON.stringify(open)); } catch { } apply();
+        const d = b.getBoundingClientRect().top - y0; if (d) window.scrollBy(0, d); }); }
     const txt = open[k] ? 'Show fewer' : `Show all ${n}`; if (b.textContent !== txt) b.textContent = txt;
   });
   let q = false; const run = () => { if (!q) { q = true; requestAnimationFrame(() => { q = false; apply(); }); } };
