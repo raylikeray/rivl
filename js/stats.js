@@ -59,9 +59,10 @@
 
     function teamRows(key) {
       const rows = Object.values(st && st.byId || {}).map(r => { const t = idx[r.id] || {}; const ts = TS && TS.teams && TS.teams[String(r.id)] || {};
-        const v = key === 'wp' ? (r.w + r.l ? r.w / (r.w + r.l) : null) : key === 'ortg' || key === 'drtg' || key === 'pace' ? ts[key] : r[key];
-        if (!(r.w + r.l > 0)) return { v: null }; return { r, t: { ...t, id: r.id, logo: r.logo || t.logo, name: t.name || r.name, short: t.short || r.short }, v: v == null ? null : +v }; }).filter(x => x.v != null && !isNaN(x.v));
-      const dir = (TCATS.find(c => c[0] === key) || [])[3] || 1; return rows.sort((a, b) => dir * (b.v - a.v));
+        const rec = (r.ovr || '').split('-').map(Number), W = rec.length === 2 && !isNaN(rec[0]) ? rec[0] : r.w, Lo = rec.length === 2 && !isNaN(rec[1]) ? rec[1] : r.l;
+        const v = key === 'wp' ? (W + Lo ? W / (W + Lo) : null) : key === 'diff' && r.ppg != null && r.opp != null ? r.ppg - r.opp : key === 'ortg' || key === 'drtg' || key === 'pace' ? ts[key] : r[key];
+        if (!(r.w + r.l > 0)) return { v: null }; return { r: { ...r, w: W, l: Lo }, t: { ...t, id: r.id, logo: r.logo || t.logo, name: t.name || r.name, short: t.short || r.short }, v: v == null ? null : +v }; }).filter(x => x.v != null && !isNaN(x.v));
+      const dir = (TCATS.find(c => c[0] === key) || [])[3] || 1; return rows.sort((a, b) => dir * (b.v - a.v) || (b.r.w - b.r.l) - (a.r.w - a.r.l));
     }
     const tfmt = (key, v) => key === 'wp' ? v.toFixed(3).replace(/^0/, '') : key === 'diff' ? HW.sign(+v.toFixed(1)) : one(v);
     function tcard(key) {
