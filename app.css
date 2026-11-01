@@ -4447,3 +4447,5 @@ html:root body .gx .pz.ph{background:radial-gradient(75% 110% at 92% 40%,var(--b
 html:root body .gx .pz.go{animation:gxwash 1.8s var(--e-in)}
 @keyframes gxwash{0%{opacity:0;transform:scale(1.05)}25%{opacity:.6;transform:none}100%{opacity:0;transform:scale(1.12)}}
 @media (prefers-reduced-motion:reduce){html:root body .gx .w>i,html:root body .gx .w::before,html:root body .gx .w::after{animation:none!important}}
+/* while a finger drags between leagues the line under them follows it exactly, with no easing lag */
+html:root body #pills.pills.dragging::after{transition:none!important}

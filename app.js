@@ -92,7 +92,7 @@
       /* a crossfade, not a blink: a snapshot of the old screen is laid over the page and fades out while the new screen, held
          invisible until its real content has painted, fades in beneath it. If the content takes longer than a beat, the skeleton
          is shown instead so the hold never ends in a blank. */
-      if (render.key) ghost();
+      if (render.key && !render.swipe) ghost(); render.swipe = false;
       /* switching leagues slides like X's tabs: the new league comes in from the side of the tab you tapped, the old one leaves the other way */
       const dir = leagueChanged ? (ORDER.indexOf(r.lk) > ORDER.indexOf(render.lk) ? 'r' : 'l') : '';
       if (dir) $main.dataset.dir = dir; else delete $main.dataset.dir; const gh = document.querySelector('.xghost:not(.out)'); if (gh && dir) gh.dataset.dir = dir;
@@ -350,15 +350,37 @@
     /* drag the page to the right, from anywhere on it, to pull the panel out (not on a strip that scrolls sideways, and only
        on the screens that show your icon) */
     const sideScroller = t => { for (let n = t; n && n !== document.body; n = n.parentElement) { if (n.scrollWidth > n.clientWidth + 2) { const ox = getComputedStyle(n).overflowX; if (ox === 'auto' || ox === 'scroll') return true; } if (n.matches && n.matches('input,textarea,[type=range]')) return true; } return false; };
-    let sx = null, sy = 0, dragging = false, vx = 0, lx = 0, lt = 0;
+    /* one sideways drag, two jobs, the way X does it: the page follows your finger to the next or previous league, and on
+       the first league a drag to the right pulls out your profile instead. Past a quarter of the screen, or with a flick,
+       it carries on; short of that it springs back. The line under the leagues travels with your finger. */
+    let sx = null, sy = 0, mode = '', vx = 0, lx = 0, lt = 0, W2 = window.innerWidth, from = null, to = null, curX = 0;
+    const $m = document.getElementById('main');
+    const uline = (t) => { const a = $pills.querySelector(`.pill[data-lk="${from}"] span`), b = to && $pills.querySelector(`.pill[data-lk="${to}"] span`); if (!a) return; const pa = a.parentElement, ax = pa.offsetLeft + a.offsetLeft - 10, aw = a.offsetWidth + 20; if (!b) { $pills.style.setProperty('--ux', (ax + t * 12) + 'px'); return; } const pb = b.parentElement, bx = pb.offsetLeft + b.offsetLeft - 10, bw = b.offsetWidth + 20; $pills.style.setProperty('--ux', (ax + (bx - ax) * t).toFixed(1) + 'px'); $pills.style.setProperty('--uw', (aw + (bw - aw) * t).toFixed(1) + 'px'); };
+    const reset = (ease) => { $m.style.transition = ease ? `transform var(--t-move) var(--e-in)` : 'none'; $m.style.transform = ''; $pills.classList.remove('dragging'); if (from) { const r = current || route(); paintPills(r.lk, true); } setTimeout(() => { $m.style.transition = ''; }, 300); };
     document.addEventListener('touchstart', e => { if (el || document.getElementById('top').hidden || document.documentElement.classList.contains('sheet-open') || e.touches.length > 1) { sx = null; return; }
-      const t = e.touches[0]; if (sideScroller(e.target)) { sx = null; return; } sx = t.clientX; sy = t.clientY; dragging = false; }, { passive: true });
+      const t = e.touches[0]; if (sideScroller(e.target)) { sx = null; return; } sx = t.clientX; sy = t.clientY; mode = ''; W2 = window.innerWidth; }, { passive: true });
     document.addEventListener('touchmove', e => { if (sx == null) return; const t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
-      if (!dragging) { if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { sx = null; return; } if (dx > 10 && dx > Math.abs(dy) * 1.3) { dragging = true; build(); lx = t.clientX; lt = performance.now(); vx = 0; } else return; }
+      if (!mode) { if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { sx = null; return; } if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+        const r = current || route(); from = r.lk; const i = ORDER.indexOf(from);
+        if (dx > 0 && i <= 0) { mode = 'drawer'; build(); }
+        else { mode = 'league'; to = ORDER[i + (dx < 0 ? 1 : -1)] || null; $pills.classList.add('dragging'); $m.classList.remove('fade', 'enter'); delete $m.dataset.dir; $m.style.transition = 'none'; }
+        lx = t.clientX; lt = performance.now(); vx = 0; }
       e.preventDefault(); const now = performance.now(); if (now > lt) { vx = vx * .5 + .5 * (t.clientX - lx) / (now - lt); } lx = t.clientX; lt = now;
-      set(Math.max(0, Math.min(1, (t.clientX - sx) / W)), false); }, { passive: false });
-    // a flick counts as much as a long drag: fast enough to the right opens, to the left shuts
-    document.addEventListener('touchend', () => { if (!dragging) { sx = null; return; } dragging = false; sx = null; go(vx > .35 ? 1 : vx < -.35 ? 0 : (p > .4 ? 1 : 0)); });
+      if (mode === 'drawer') { set(Math.max(0, Math.min(1, dx / W)), false); return; }
+      // league: the page follows the finger; with no league that way it gives a little and stops
+      const i = ORDER.indexOf(from), want = ORDER[i + (dx < 0 ? 1 : -1)] || null; if (want !== to) to = want;
+      const x = to ? dx : dx / 4; curX = x; $m.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`; uline(to ? Math.min(1, Math.abs(dx) / W2) : (dx < 0 ? -1 : 1) * Math.min(1, Math.abs(dx) / W2)); }, { passive: false });
+    document.addEventListener('touchend', () => { if (!mode) { sx = null; return; } const m0 = mode; mode = ''; sx = null;
+      if (m0 === 'drawer') { go(vx > .35 ? 1 : vx < -.35 ? 0 : (p > .4 ? 1 : 0)); return; }
+      const cur = curX; curX = 0; const dirL = cur < 0;
+      const commit = to && (Math.abs(cur) > W2 * .25 || (dirL ? vx < -.35 : vx > .35));
+      if (!commit) { reset(true); return; }
+      // carry on out the same way, then the next league comes in from the side the finger was heading
+      $m.style.transition = `transform 160ms cubic-bezier(.3,.7,.2,1)`; $m.style.transform = `translate3d(${dirL ? -W2 : W2}px,0,0)`; uline(1);
+      render.swipe = true; render.tapAt = performance.now();
+      setTimeout(() => { $m.style.transition = 'none'; $m.style.transform = ''; $pills.classList.remove('dragging'); location.hash = '#' + to; }, 150);
+    });
+    document.addEventListener('touchcancel', () => { if (mode === 'league') reset(true); mode = ''; sx = null; });
   })();
   /* the top (your icon, the R, the leagues) behaves like X's: it slides up out of the way as you scroll down, following
      your finger, and slides back down the moment you scroll up. When you stop halfway it settles open or closed. */
