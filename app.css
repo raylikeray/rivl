@@ -3090,7 +3090,7 @@ html body .why-h .wt{background:none!important}
   .tab.on{color:#999BAE!important}
   .tab.on svg{color:#fff}
   .tab.mid{padding:0!important}
-  .tab.mid .mb{top:-8px!important;width:56px!important;height:56px!important;background:#4DAFFE!important;box-shadow:none!important;color:#07080A!important}
+  .tab.mid .mb{top:-8px!important;width:56px!important;height:56px!important;background:#4DAFFE!important;box-shadow:none!important}
   .tab.mid .mb svg{width:28px!important;height:28px!important}
   .tab.mid .mb::before,.tab.mid .mb::after{display:none!important}
 }
@@ -3098,7 +3098,7 @@ html body .why-h .wt{background:none!important}
   :root:not([data-theme="dark"]) .tabs{background:#FFFFFF!important;box-shadow:0 2px 12px -4px rgba(16,24,40,.18)!important}
   :root:not([data-theme="dark"]) .tab,:root:not([data-theme="dark"]) .tab.on{color:#6B6E7B!important}
   :root:not([data-theme="dark"]) .tab.on svg{color:#07080A}
-  :root:not([data-theme="dark"]) .tab.mid .mb{color:#07080A!important}
+  :root:not([data-theme="dark"]) .tab.mid .mb{}
 }
 :root[data-theme="light"] .tabs{background:#FFFFFF!important}
 @media (max-width:1039px){ .tabs .tab svg.f{display:none!important} .tabs .tab svg.o{display:block!important} }
@@ -3126,3 +3126,31 @@ html body .why-h .wt{background:none!important}
 .rcard .rij.out{background:#E5484D;color:#fff}
 .gxpage .rrail{margin-top:2px}
 .rcard .rhs{bottom:0;width:224px}
+/* Bottom bar, v7 design: a frosted glass pill with a thin line, five equal tabs with the icon over the label; the page
+   you're on gets a solid pill (white in dark, black in light). Home is a tab like the others, in the middle. */
+@media (max-width:1039px){
+  .tabs{left:12px!important;right:12px!important;height:auto!important;max-width:428px;margin:0 auto;padding:6px!important;gap:4px;display:flex!important;align-items:center!important;
+    background:rgba(16,18,20,.52)!important;-webkit-backdrop-filter:blur(40px) saturate(1.9)!important;backdrop-filter:blur(40px) saturate(1.9)!important;
+    border:1px solid rgba(255,255,255,.16)!important;border-radius:999px!important;box-shadow:0 14px 40px rgba(0,0,0,.5)!important;bottom:calc(14px + env(safe-area-inset-bottom,0px))!important}
+  .tabs .tab,.tabs .tab.on,.tabs .tab.mid{flex:1;min-height:56px;height:56px!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center!important;gap:3px!important;
+    border-radius:999px!important;padding:0!important;font-size:12px!important;font-weight:600!important;color:rgba(255,255,255,.70)!important;background:none!important;position:relative;transition:background .25s var(--ease),color .25s var(--ease)}
+  .tabs .tab svg{width:23px!important;height:23px!important;color:inherit!important;transition:fill-opacity .25s}
+  .tabs .tab.on{background:#fff!important;color:#000!important;font-weight:700!important}
+  .tabs .tab.on svg.o{fill:currentColor;fill-opacity:.28;stroke-width:2.2}
+  .tabs .tab span{line-height:1;color:inherit!important}
+  .tabs .tab.mid span{position:static!important;width:auto!important;height:auto!important;overflow:visible!important;clip:auto!important;font-size:12px!important}
+  .tabs .tab.mid .mb{position:static!important;transform:none!important;width:auto!important;height:auto!important;background:none!important;box-shadow:none!important;color:inherit!important;display:grid;place-items:center}
+  .tabs .tab.mid .mb svg{width:23px!important;height:23px!important}
+  .tabs .tab.mid:active .mb{transform:none!important}
+}
+@media (max-width:1039px) and (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]) .tabs{background:rgba(255,255,255,.6)!important;border-color:rgba(0,0,0,.15)!important;box-shadow:0 10px 30px rgba(0,0,0,.14)!important}
+  :root:not([data-theme="dark"]) .tabs .tab,:root:not([data-theme="dark"]) .tabs .tab.mid{color:rgba(7,9,11,.62)!important}
+  :root:not([data-theme="dark"]) .tabs .tab.on{background:#07090B!important;color:#fff!important}
+}
+@media (max-width:1039px){
+  :root[data-theme="light"] .tabs{background:rgba(255,255,255,.6)!important;border-color:rgba(0,0,0,.15)!important;box-shadow:0 10px 30px rgba(0,0,0,.14)!important}
+  :root[data-theme="light"] .tabs .tab{color:rgba(7,9,11,.62)!important}
+  :root[data-theme="light"] .tabs .tab.on{background:#07090B!important;color:#fff!important}
+}
+@media (max-width:1039px){ html body .tabs .tab.mid .mb{color:inherit!important} }
