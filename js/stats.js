@@ -20,7 +20,11 @@
     const L = LEAGUES[lk], $main = document.getElementById('main');
     const tab0 = store.get('v5:sttab', 'players'), board0 = store.get('v5:stboard:' + lk, '');
     $main.innerHTML = _.skeleton(1, 'card') + _.skeleton(3, 'card');
-    const [lg, idx, st, TS] = await Promise.all([HW.hub.league(L).catch(() => null), V.teamsIndex(L).catch(() => ({})), HW.standings(L).catch(() => null), HW.teamStats ? HW.teamStats(L).catch(() => null) : null]);
+    const [lg, idx, st0, TS] = await Promise.all([HW.hub.league(L).catch(() => null), V.teamsIndex(L).catch(() => ({})), HW.standings(L).catch(() => null), HW.teamStats ? HW.teamStats(L).catch(() => null) : null]);
+    /* team numbers come from the same season as the player numbers: when the league is showing last season (college before
+       its games start), the team boards read last season's final standings, not this season's 0-0 table */
+    const played = x => x && Object.values(x.byId || {}).some(r => r.w + r.l > 0);
+    let st = st0; if (lg && (lg.lastSeason || !played(st0))) { const prev = await HW.standings(L, lg.lastSeason ? lg.year : HW.seasonYear() - 1).catch(() => null); if (played(prev)) st = prev; }
     if (!lg || !lg.players || !lg.players.length) { $main.innerHTML = _.empty('No stats yet', '<p style="margin:6px 0 0">The league\'s numbers will show here once its season has games.</p>'); return; }
     const byAbbr = {}; Object.values(idx || {}).forEach(t => { if (t && t.abbr) byAbbr[t.abbr] = t; });
     const maxG = Math.max(1, ...lg.players.map(p => (p.s || {}).gp || 0));
@@ -56,7 +60,7 @@
     function teamRows(key) {
       const rows = Object.values(st && st.byId || {}).map(r => { const t = idx[r.id] || {}; const ts = TS && TS.teams && TS.teams[String(r.id)] || {};
         const v = key === 'wp' ? (r.w + r.l ? r.w / (r.w + r.l) : null) : key === 'ortg' || key === 'drtg' || key === 'pace' ? ts[key] : r[key];
-        return { r, t: { ...t, id: r.id, logo: r.logo || t.logo, name: t.name || r.name, short: t.short || r.short }, v: v == null ? null : +v }; }).filter(x => x.v != null && !isNaN(x.v));
+        if (!(r.w + r.l > 0)) return { v: null }; return { r, t: { ...t, id: r.id, logo: r.logo || t.logo, name: t.name || r.name, short: t.short || r.short }, v: v == null ? null : +v }; }).filter(x => x.v != null && !isNaN(x.v));
       const dir = (TCATS.find(c => c[0] === key) || [])[3] || 1; return rows.sort((a, b) => dir * (b.v - a.v));
     }
     const tfmt = (key, v) => key === 'wp' ? v.toFixed(3).replace(/^0/, '') : key === 'diff' ? HW.sign(+v.toFixed(1)) : one(v);
