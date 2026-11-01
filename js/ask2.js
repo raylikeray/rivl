@@ -249,6 +249,54 @@
       <p class="xnote">An estimate. RIVL's game forecast is team-based (results, margin, rest, home court); it doesn't model who plays. The swing here comes from his RIVL rating and minutes: a ${R ? R.ovr : 74}-rated player at ${Math.round(mins)} minutes is worth about ${one(swing)} points of margin, and ${one(swing)} points moves a ${lk.startsWith('ncaa') ? 'college' : 'pro'} game's chances by about ${Math.round(swing * k * 25)} points of probability near even.</p><p class="xsrc">RIVL forecast and rating, ESPN schedule and injury report</p></div>`, kind: 'intent' };
   }
 
+  /* ---------- champions: who won, when, how often, from RIVL's own list (Wikipedia-sourced, kept in data/champions.json) ---------- */
+  const HIST = { supersonics: 'thunder', sonics: 'thunder', royals: 'kings', nationals: '76ers', sixers: '76ers', bullets: 'wizards', 'oklahoma a m': 'oklahoma state', 'texas western': 'utep', 'memphis state': 'memphis', connecticut: 'uconn', 'nc state': 'north carolina state', unc: 'north carolina', 'la salle': 'lasalle' };
+  const cnorm = s => { let n = String(s || '').toLowerCase().replace(/&/g, ' ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); Object.entries(HIST).forEach(([k, v]) => { if (n === k || n.endsWith(' ' + k) || n.split(' ').includes(k)) n += ' ' + v; }); return n; };
+  const ABBR = { lsu: 'lsu', usc: 'usc', ucla: 'ucla', unlv: 'unlv', uconn: 'uconn', okc: 'thunder', nyk: 'knicks', gsw: 'warriors', lal: 'lakers', bos: 'celtics', sas: 'spurs', 'okla': 'oklahoma', 'bama': 'alabama', 'cuse': 'syracuse', 'nova': 'villanova', 'zags': 'gonzaga' };
+  function teamWords(nq) { return nq.split(' ').map(w => ABBR[w] || w).filter(w => w.length >= 4 || /^(lsu|usc|unc|nyu)$/.test(w)); }
+  const entryMatches = (e, words) => { const c = cnorm(e.champ).split(' '), r = cnorm(e.runnerUp).split(' '); return { won: words.some(w => c.includes(w)), lost: words.some(w => r.includes(w)) }; };
+  async function championsAnswer(nq, f) {
+    const C = await HW.hub.file('champions.json').catch(() => null); if (!C || !C.leagues) return null;
+    const women = /\b(women|womens|wnba|ladies|girls)\b/.test(nq); const college = /\b(college|ncaa|march madness|final four|national (championship|title|champion)|tournament)\b/.test(nq);
+    const yr = (nq.match(/\b(19[3-9]\d|20[0-2]\d)\b/) || [])[1]; const year = yr ? +yr : null;
+    const words = teamWords(nq).filter(w => !/^(nba|wnba|ncaa|finals|final|title|titles|championship|championships|champion|champions|ring|rings|won|win|wins|winner|last|time|many|most|beat|year|season|mvp|college|national|basketball|league|history|list|all|ever|first|team|teams|women|womens|mens)$/.test(w));
+    const want = f.ts[0] ? [...teamWords(K().norm(f.ts[0].t.name)), ...words] : words;
+    let lk = leagueIn(nq) || (women && !college ? 'wnba' : women && college ? 'ncaaw' : college ? 'ncaam' : null);
+    if (!lk) { lk = 'nba'; for (const k of ['nba', 'wnba', 'ncaam', 'ncaaw']) if (C.leagues[k].list.some(e => entryMatches(e, want).won || entryMatches(e, want).lost)) { lk = k; break; } }
+    const Lg = C.leagues[lk], list = Lg.list, latest = list.filter(e => e.champ).slice(-1)[0];
+    const pro = lk === 'nba' || lk === 'wnba'; const idx = await V.teamsIndex(LEAGUES[lk]).catch(() => ({}));
+    const tlink = name => { const n = cnorm(name); const t = Object.values(idx || {}).find(t => t && (cnorm(t.name) === n || n.endsWith(' ' + cnorm(t.short)) || cnorm(t.name).split(' ').every(w => n.split(' ').includes(w)))); return t ? `<a href="${_.href.team(lk, t.id)}">${esc(name)}</a>` : esc(name); };
+    const line = e => pro ? `<b>${tlink(e.champ)}</b> won the ${e.y} ${esc(Lg.title)}, beating ${tlink(e.runnerUp)} ${esc(e.result)}${e.mvp ? `. Finals MVP: <b>${esc(e.mvp)}</b>` : ''}.` : `<b>${tlink(e.champ)}</b> won the ${e.y} ${esc(Lg.title)}, beating ${tlink(e.runnerUp)} ${esc(e.result)}${e.site ? ` in ${esc(e.site.split(',')[0])}` : ''}.${e.note ? ` ${esc(e.note)}.` : ''}`;
+    const nick = n => pro ? String(n).split(' ').slice(-1)[0].replace(/^(Blazers)$/, 'Trail Blazers') : n;
+    const row = e => `<div class="xchr"><b>${e.y}</b><span>${e.champ ? `${tlink(e.champ).replace(`>${esc(e.champ)}<`, `>${esc(nick(e.champ))}<`).replace(esc(e.champ), esc(nick(e.champ)))} <em>${esc(e.result)} over ${esc(nick(e.runnerUp))}</em>${pro && e.mvp ? `<i>Finals MVP ${esc(e.mvp)}</i>` : ''}` : `<em>${esc(e.note || 'No champion')}</em>`}</span></div>`;
+    const src = `<p class="xsrc">${esc(C.source)}.</p>`; const k = `<span class="xk">${esc(Lg.label)} champions</span>`;
+    // a team: how many, which years, the last time, who they beat
+    const teamHits = want.length ? list.filter(e => e.champ && entryMatches(e, want).won) : [];
+    const teamName = teamHits.length ? teamHits[teamHits.length - 1].champ : '';
+    if (teamHits.length && !(year && !/\b(beat|over|against)\b/.test(nq) && !want.length)) {
+      const lostHits = list.filter(e => entryMatches(e, want).lost); const last = teamHits[teamHits.length - 1];
+      const yrs = teamHits.map(e => e.y); const runs = []; yrs.forEach(y => { const r = runs[runs.length - 1]; if (r && r[1] === y - 1) r[1] = y; else runs.push([y, y]); });
+      const yrsTxt = runs.map(([a, b]) => a === b ? String(a) : `${a}-${String(b).slice(2)}`).join(', ');
+      const pick = year ? teamHits.find(e => e.y === year) : null; const lostY = year && !pick ? lostHits.find(e => e.y === year) : null;
+      const head = pick ? line(pick) : lostY ? `<b>${esc(lostY.runnerUp)}</b> lost the ${year} ${pro ? 'Finals' : 'final'} to ${tlink(lostY.champ)} ${esc(lostY.result)}${pro && lostY.mvp ? ` (Finals MVP: ${esc(lostY.mvp)})` : ''}.` : year ? `${esc(teamName)} did not reach the ${year} ${pro ? 'Finals' : 'final'}. ` : '';
+      const head2 = head && (pick || lostY) ? head : head + `<b>${tlink(last.champ)}</b> have won <b>${teamHits.length}</b> ${esc(Lg.label)} ${teamHits.length === 1 ? 'title' : 'titles'}${teamHits.length > 1 ? ` (${yrsTxt})` : ` (${last.y})`}, most recently in <b>${last.y}</b>${pro && last.mvp ? `, when ${esc(last.mvp)} was Finals MVP` : ''}.${lostHits.length ? ` They lost the final ${lostHits.length} time${lostHits.length === 1 ? '' : 's'}, last in ${lostHits[lostHits.length - 1].y}.` : ''}`;
+      return { html: `<div class="xans">${k}<p class="xline">${head2}</p><div class="xchamps">${teamHits.slice().reverse().slice(0, 12).map(row).join('')}</div>${src}</div>`, kind: 'intent' };
+    }
+    if (want.length && !teamHits.length && list.some(e => entryMatches(e, want).lost)) { const l = list.filter(e => entryMatches(e, want).lost); const lastL = l[l.length - 1]; return { html: `<div class="xans">${k}<p class="xline"><b>${esc(lastL.runnerUp)}</b> have never won the ${esc(Lg.title)}. They reached the final ${l.length} time${l.length === 1 ? '' : 's'}, last in ${lastL.y}, losing to ${tlink(lastL.champ)} ${esc(lastL.result)}.</p>${src}</div>`, kind: 'intent' }; }
+    // a year
+    if (year) { const e = list.find(x => x.y === year); if (!e) return { html: `<div class="xans">${k}<p class="xline dim">RIVL's list of ${esc(Lg.label)} champions runs from ${list[0].y} to ${latest.y}; ${year} is outside it.</p>${src}</div>`, kind: 'intent' };
+      if (!e.champ) return { html: `<div class="xans">${k}<p class="xline">There was no ${year} ${esc(Lg.title)}: ${esc(e.note || 'the tournament was canceled')}.</p>${src}</div>`, kind: 'intent' };
+      const near = list.filter(x => Math.abs(x.y - year) <= 3 && x.y !== year);
+      return { html: `<div class="xans">${k}<p class="xline">${line(e)}</p><div class="xchamps">${near.slice().reverse().map(row).join('')}</div>${src}</div>`, kind: 'intent' };
+    }
+    // finals mvp without a year: the latest
+    const asksMvp = /\bmvp\b/.test(nq);
+    const recent = list.filter(e => e.champ).slice(-8).reverse();
+    const headline = asksMvp && pro ? `<b>${esc(latest.mvp)}</b> was the ${latest.y} Finals MVP, when ${tlink(latest.champ)} beat ${esc(latest.runnerUp)} ${esc(latest.result)}.` : line(latest);
+    const others = ['nba', 'wnba', 'ncaam', 'ncaaw'].filter(x => x !== lk).map(x => `<button class="chip" data-xq="${esc(C.leagues[x].label + ' champions')}">${esc(C.leagues[x].label)}</button>`).join('');
+    return { html: `<div class="xans">${k}<p class="xline">${headline}</p><p class="xk2">Recent champions</p><div class="xchamps">${recent.map(row).join('')}</div><div class="xsorts">${others}</div>${src}</div>`, kind: 'intent' };
+  }
+
   /* ---------- the dispatcher ---------- */
   V.ask2 = async function (I, q, f, has) {
     const nq = f.nq; const K0 = K(); if (!K0) return null;
@@ -256,6 +304,7 @@
     const injQ = /\b(injur|hurt|dtd|day to day|questionable|quest|doubtful|probable|gtd|game time decision|out for|sidelined|miss(ing)? (the )?game|health|returns? (soonest|first|next)|returning|back soonest|comes? back|coming back)/.test(nq);
     const whatIf = (/\bwhat if\b/.test(nq) || /\bif\b.*\b(hurt|injured|out|healthy|plays?|played|playing|wasn t|weren t|isn t|was|were|without|sits|misses)\b/.test(nq) || /\bwithout\b/.test(nq)) && f.ps.length === 1 && /\b(predict|prediction|chance|chances|odds|win|forecast|tonight|game|line|spread)\b/.test(nq);
     if (whatIf) { const r = await whatIfAnswer(f.ps[0], nq); if (r) return r; }
+    if ((/\b(champion|champions|championship|championships|title|titles|ring|rings|finals|march madness|final four|banner|banners)\b/.test(nq) || (f.ts.length && /\b(beat|beaten|lose to|lost to)\b/.test(nq) && /\b(19|20)\d\d\b/.test(nq))) && !f.ps.length && !injQ) { const r = await championsAnswer(nq, f); if (r) return r; }
     if (injQ && !(f.ps.length === 1 && !f.ts.length && !/\b(team|teams|report|list|all|most|every)\b/.test(nq))) return injuryAnswer(f, nq, has);
     // a game: a team or a player, and a time ("last night", "tonight", "last game", a date) or a game-stat word
     const gameQ = when || /\b(score|box score|shot chart|shots|missed|misses|made|field goals|fg|threes|rebounds|assists|turnovers|box)\b/.test(nq) && /\b(game|last|tonight|today|yesterday|vs|against|at)\b/.test(nq);
