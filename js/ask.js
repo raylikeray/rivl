@@ -145,7 +145,7 @@
       if (which === 1) { const hs = a.highSchool && (a.highSchool.name || a.highSchool); return { html: hs ? card(who(e), `${esc(e.name)} went to ${esc(hs)}.`, [['High school', hs], ['Hometown', a.birthPlace && [a.birthPlace.city, a.birthPlace.state].filter(Boolean).join(', ')]], '', src) : null, kind: hs ? 'intent' : 'web' }; }
       if (which === 2) { const c = a.college && a.college.name; return { html: card(who(e), c ? `${esc(e.name)} ${e.lk.startsWith('ncaa') ? 'plays' : 'played'} college basketball at ${esc(c)}.` : `${esc(e.name)} did not play college basketball.`, [['College', c], ['Class', a.experience && a.experience.displayValue]], '', src), kind: 'intent' }; }
       if (which === 3) { const b = a.birthPlace; const s = b && [b.city, b.state, b.country && !/^(USA|United States)$/i.test(b.country) ? b.country : ''].filter(Boolean).join(', '); return { html: s ? card(who(e), `${esc(e.name)} is from ${esc(s)}.`, [['Born in', s], ['Born', a.dateOfBirth ? new Date(a.dateOfBirth).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '']], '', src) : null, kind: s ? 'intent' : 'web' }; }
-      if (which === 4) { return { html: a.age ? card(who(e), `${esc(e.name)} is ${a.age}.`, [['Born', a.dateOfBirth ? new Date(a.dateOfBirth).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '']], '', src) : card(who(e), NOPE, [], 'None of MSHQ\'s sources list a birth date, so it won\'t guess.'), kind: 'intent' }; }
+      if (which === 4) { return { html: a.age ? card(who(e), `${esc(e.name)} is ${a.age}.`, [['Born', a.dateOfBirth ? new Date(a.dateOfBirth).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '']], '', src) : card(who(e), NOPE, [], 'None of RIVL\'s sources list a birth date, so it won\'t guess.'), kind: 'intent' }; }
       if (which === 5) { return { html: card(who(e), `${esc(e.name)} is ${esc(a.displayHeight || '?')}${a.displayWeight ? `, ${esc(a.displayWeight)}` : ''}.`, [['Height', a.displayHeight], ['Weight', a.displayWeight], ['Position', a.position && a.position.displayName]], '', src), kind: 'intent' }; }
     }
     if (PERSONAL.test(nq)) return { html: playerCard(e), kind: 'web' };
@@ -237,22 +237,22 @@
     return { name: title, rows };
   }
   function factCard(r, topic) {
-    if (!r.rows.length) return `<div class="xans xweb"><span class="xk">Wikidata</span><p class="xline dim">No public record lists ${esc(topic.toLowerCase())} for ${esc(r.name)}. MSHQ won't guess.</p></div>`;
+    if (!r.rows.length) return `<div class="xans xweb"><span class="xk">Wikidata</span><p class="xline dim">No public record lists ${esc(topic.toLowerCase())} for ${esc(r.name)}. RIVL won't guess.</p></div>`;
     const g = {}; r.rows.forEach(x => { (g[x.p] = g[x.p] || []).push(x); });
     return `<div class="xans xweb"><span class="xk">Wikidata · ${esc(r.name)}</span>${Object.keys(g).map(P => `<div class="xfg"><span>${esc(PLBL[P] || P)}</span><div>${g[P].map(x => `<i>${esc(x.text)}${x.when ? ` <em>${esc(x.when)}</em>` : ''}</i>`).join('')}</div></div>`).join('')}<p class="xsrc">Wikidata, the open database behind Wikipedia (CC0)</p></div>`;
   }
   const splitWiki = text => { const out = []; let sec = ''; String(text).split('\n').forEach(l => { const m = l.match(/^=+\s*(.+?)\s*=+$/); if (m) { sec = m[1]; return; } if (l.trim().length > 40) out.push({ sec, p: l.trim() }); }); return out; };
   function bestPara(text, terms) {
     if (!text || !terms.length) return null;
-    const paras = splitWiki(text), stems = terms.map(t => t.length > 5 ? t.slice(0, 5) : t), personal = terms.some(t => PERSONAL.test(t)); let best = null;
+    const paras = splitWiki(text), stems = terms.map(t => t.replace(/(s|es|ed|ing)$/, '')), personal = terms.some(t => PERSONAL.test(t)); let best = null;
     paras.forEach(x => { const low = x.p.toLowerCase(); let sc = 0;
-      stems.forEach(st => { const m = low.match(new RegExp('\\b' + st.replace(/[^a-z0-9]/g, ''), 'g')); if (m) sc += 2 + Math.min(m.length, 3); });
-      if (personal && /personal life|family|early life/i.test(x.sec)) sc += 3; if (stems.some(st => x.sec.toLowerCase().includes(st))) sc += 3; if (!stems.some(st => low.includes(st))) sc /= 4;
+      stems.forEach(st => { const m = low.match(new RegExp('\\b' + st.replace(/[^a-z0-9]/g, '') + '(s|es|ed|ing|d)?\\b', 'g')); if (m) sc += 2 + Math.min(m.length, 3); });
+      if (personal && /personal life|family|early life/i.test(x.sec)) sc += 3; if (stems.some(st => x.sec.toLowerCase().includes(st))) sc += 3; if (!stems.some(st => new RegExp('\\b' + st.replace(/[^a-z0-9]/g, '') + '(s|es|ed|ing|d)?\\b').test(low))) sc /= 4;
       if (sc > 0 && (!best || sc > best.sc)) best = { sc, sec: x.sec, p: x.p }; });
     if (!best) return null;
-    const sents = best.p.match(/[^.!?]+[.!?]+(\s|$)/g) || [best.p], keep = []; sents.forEach((s, i) => { if (stems.some(st => s.toLowerCase().includes(st))) keep.push(i); });
+    const sents = best.p.match(/[^.!?]+[.!?]+(\s|$)/g) || [best.p], keep = []; sents.forEach((s, i) => { if (stems.some(st => new RegExp('\\b' + st.replace(/[^a-z0-9]/g, '') + '(s|es|ed|ing|d)?\\b').test(s.toLowerCase()))) keep.push(i); });
     const idx = keep.length ? keep : [0], from = idx[0], to = Math.min(sents.length - 1, idx[idx.length - 1] + (idx.length === 1 ? 1 : 0));
-    let html = esc(sents.slice(from, to + 1).join(' ').trim()); stems.forEach(st => { html = html.replace(new RegExp('(\\b' + st.replace(/[^a-z0-9]/g, '') + '[a-z]*)', 'gi'), '<b>$1</b>'); });
+    let html = esc(sents.slice(from, to + 1).join(' ').trim()); stems.forEach(st => { html = html.replace(new RegExp('(\\b' + st.replace(/[^a-z0-9]/g, '') + '(s|es|ed|ing|d)?\\b)', 'gi'), '<b>$1</b>'); });
     return { sec: best.sec, html };
   }
   const WSTOP = new Set([...STOP].filter(w => !/^(son|sons|daughter|daughters|kid|kids|child|children|dating|girlfriend|boyfriend|partner|family|mother|father|mom|dad|parents|brother|sister|worth|salary|contract|nickname|won|win|finals|championship|married|wife|husband|born|trade|traded|injury|draft|drafted|college|school|high)$/.test(w)).concat(['name', 'named', 'whats', 'tell', 'about', 'his', 'her', 'their', 'he', 'she', 'they', 'have', 'has', 'had', 'it', 'any', 'much']));
@@ -271,6 +271,68 @@
     const x = await jget(WAPI + 'action=query&prop=extracts&explaintext=1&exsectionformat=wiki&redirects=1&titles=' + encodeURIComponent(pick.title), 864e5); const pg = x && x.query && x.query.pages[Object.keys(x.query.pages)[0]];
     const best = bestPara(pg && pg.extract || '', W.terms); const clean = s => String(s || '').replace(/<span class="searchmatch">/g, '<b>').replace(/<\/span>/g, '</b>').replace(/<(?!\/?b>)[^>]+>/g, '');
     return `<div class="xans xweb"><span class="xk">Wikipedia${best && best.sec ? ' · ' + esc(best.sec) : ''}</span><p class="xline">${best ? best.html : clean(pick.snippet) + '…'}</p><p class="xsrc">From the article “${esc(pg ? pg.title : pick.title)}” (CC BY-SA 4.0)</p></div>`;
+  }
+  /* ---------- questions about a person's life: one topic per question, answered from the right part of the article ----------
+     Each topic names the words that must appear in a sentence for it to count (whole words only, so "children" never
+     matches "childlike fans"), the sections of the article it lives in, and the Wikidata fields that hold it exactly.
+     The card shows those sentences, in the article's order, plus any named people with their ages. Nothing is written by
+     the app; when the article doesn't say, the card says so. */
+  const TOPICS = [
+    { k: 'children', t: 'Children', re: /\b(kids?|children|child|sons?|daughters?|baby|babies)\b/, need: /\b(sons?|daughters?|children|child|kids?|baby|babies)\b/i, sec: /personal life|family/i, ps: ['P40', 'P1971'] },
+    { k: 'spouse', t: 'Marriage', re: /\b(wife|husband|married|spouse|marry|wedding)\b/, need: /\b(married|marry|marriage|wife|husband|spouse|wed|wedding)\b/i, sec: /personal life/i, ps: ['P26'] },
+    { k: 'partner', t: 'Relationship', re: /\b(dating|girlfriend|boyfriend|partner|engaged|fiance|fiancee|relationship)\b/, need: /\b(dating|dated|girlfriend|boyfriend|partner|engaged|engagement|fianc[eé]e?|relationship|married)\b/i, sec: /personal life/i, ps: ['P451', 'P26'] },
+    { k: 'parents', t: 'Parents', re: /\b(parents?|father|dad|mother|mom)\b/, need: /\b(father|mother|parents?|dad|mom)\b/i, sec: /early life|personal life|family|background/i, ps: ['P22', 'P25'] },
+    { k: 'siblings', t: 'Siblings', re: /\b(brothers?|sisters?|siblings?)\b/, need: /\b(brothers?|sisters?|siblings?)\b/i, sec: /early life|personal life|family/i, ps: ['P3373'] },
+    { k: 'money', t: 'Contract', re: /\b(salary|contract|worth|paid|earn|earns|earnings|money|extension|max deal)\b/, need: /\b(contract|salary|extension|million|billion|net worth|signed|max)\b/i, sec: /contract|free agency|career|personal|business/i, ps: [] },
+    { k: 'shoes', t: 'Shoes and sponsors', re: /\b(shoe|shoes|sneaker|sneakers|nike|adidas|puma|under armour|jordan brand|endorse\w*|sponsor\w*|brand)\b/, need: /\b(shoes?|sneakers?|nike|adidas|puma|under armour|jordan brand|endorse\w*|sponsor\w*|signature)\b/i, sec: /endorse|business|personal|sponsor/i, ps: [] },
+    { k: 'faith', t: 'Faith', re: /\b(religion|religious|christian|faith|muslim|god|church)\b/, need: /\b(christian\w*|faith|religio\w*|muslim|islam|god|church|jesus)\b/i, sec: /personal/i, ps: [] },
+    { k: 'awards', t: 'Awards', re: /\b(awards?|honou?rs|accolades|mvp|all ?star|championships?|rings?|titles?|trophies)\b/, need: /\b(mvp|most valuable|all-stars?|all-nba|champion\w*|awards?|titles?|finals|rookie of the year)\b/i, sec: /awards|honou?rs|accomplishments|achievements|career/i, ps: ['P166'] },
+    { k: 'nickname', t: 'Nickname', re: /\b(nickname|nicknamed|called|known as)\b/, need: /\b(nicknamed?|known as|dubbed)\b/i, sec: /.*/, ps: ['P1449'] },
+    { k: 'pets', t: 'Pets', re: /\b(dogs?|pets?|cats?|puppy)\b/, need: /\b(dogs?|pets?|cats?|puppy|puppies)\b/i, sec: /personal/i, ps: [] },
+    { k: 'tattoo', t: 'Tattoos', re: /\b(tattoos?|ink)\b/, need: /\b(tattoos?|tattooed)\b/i, sec: /personal/i, ps: [] },
+    { k: 'charity', t: 'Charity', re: /\b(charity|foundation|donat\w*|philanthrop\w*|gives back)\b/, need: /\b(charit\w*|foundation|donat\w*|philanthrop\w*)\b/i, sec: /philanthrop|personal|off the court|activism/i, ps: [] },
+    { k: 'school', t: 'School', re: /\b(degree|graduated?|major|studied)\b/, need: /\b(degree|graduat\w*|major\w*|studied|university|college)\b/i, sec: /early life|college|personal/i, ps: [] }];
+  const topicOf = q => { const n = ' ' + norm(q) + ' '; return TOPICS.find(t => t.re.test(n)) || null; };
+  /* the person's own article: the exact name if it's a page about a basketball player, else a search for name + basketball */
+  async function articleOf(name, lk) {
+    const sport = lk === 'wnba' || lk === 'ncaaw' ? "women's basketball" : 'basketball';
+    const d = await jget(WAPI + 'action=query&list=search&srlimit=6&srprop=snippet&srsearch=' + encodeURIComponent(`${name} ${sport}`), 864e5); const hits = d && d.query && d.query.search || [];
+    const nn = norm(name); const pick = hits.find(h => norm(h.title) === nn) || hits.find(h => norm(h.title).startsWith(nn)) || hits.find(h => /basketball/i.test(h.snippet) && norm(h.title).includes(nn.split(' ').slice(-1)[0])) || null;
+    if (!pick) return null;
+    const x = await jget(WAPI + 'action=query&prop=extracts|pageprops&ppprop=wikibase_item&explaintext=1&exsectionformat=wiki&redirects=1&titles=' + encodeURIComponent(pick.title), 864e5);
+    const pg = x && x.query && x.query.pages[Object.keys(x.query.pages)[0]]; if (!pg || !pg.extract) return null;
+    return { title: pg.title, text: pg.extract, qid: pg.pageprops && pg.pageprops.wikibase_item };
+  }
+  /* sentences that answer the topic: must hold one of its words; ones in the topic's own section first; kept in order */
+  function topicSentences(text, T, name) {
+    const last = norm(name).split(' ').slice(-1)[0]; const out = [];
+    splitWiki(text).forEach((x, pi) => { if (/^(see also|references|external links|notes|further reading|statistics)$/i.test(x.sec)) return;
+      const sents = x.p.match(/[^.!?]+(?:[.!?]+["”)]?)(?:\s|$)/g) || [x.p];
+      sents.forEach((s0, si) => { const s = s0.trim(); if (s.length < 25 || !T.need.test(s)) return; let sc = 4; if (T.sec.test(x.sec)) sc += 5; if (new RegExp('\\b(' + last + '|he|she|his|her)\\b', 'i').test(s)) sc += 1; if (/\b(19|20)\d\d\b/.test(s)) sc += 1;
+        out.push({ sc, pi, si, sec: x.sec, s }); }); });
+    const top = out.sort((a, b) => b.sc - a.sc).slice(0, 4).sort((a, b) => a.pi - b.pi || a.si - b.si);
+    return top;
+  }
+  const hiNeed = (s, T) => esc(s).replace(new RegExp(T.need.source, 'gi'), m => `<b>${m}</b>`);
+  async function wdPeople(qid, props) {
+    if (!qid || !props.length) return [];
+    const d = await jget(WD + 'action=wbgetentities&props=claims&ids=' + qid); const cl = d && d.entities && d.entities[qid] && d.entities[qid].claims || {}; const rows = [], ids = [];
+    props.forEach(P => (cl[P] || []).forEach(c => { const dv = c.mainsnak && c.mainsnak.datavalue; if (!dv) return; if (dv.type === 'wikibase-entityid') { rows.push({ p: P, id: dv.value.id }); ids.push(dv.value.id); } else if (dv.type === 'quantity') rows.push({ p: P, text: String(+dv.value.amount) }); else if (dv.type === 'monolingualtext') rows.push({ p: P, text: dv.value.text }); }));
+    if (ids.length) { const e = await jget(WD + 'action=wbgetentities&props=labels|claims&languages=en&ids=' + [...new Set(ids)].slice(0, 30).join('|'));
+      rows.forEach(r => { if (!r.id) return; const en = e && e.entities && e.entities[r.id]; r.text = en && en.labels && en.labels.en ? en.labels.en.value : '';
+        const b = en && en.claims && en.claims.P569 && en.claims.P569[0].mainsnak.datavalue; if (b) { const t = b.value.time; const y = +t.slice(1, 5), m = +t.slice(6, 8) || 1, dd = +t.slice(9, 11) || 1; const now = new Date(); let age = now.getFullYear() - y; if (now.getMonth() + 1 < m || (now.getMonth() + 1 === m && now.getDate() < dd)) age--; r.born = y; r.age = age; } }); }
+    return rows.filter(r => r.text);
+  }
+  async function topicCard(e, T) {
+    const name = e.name, art = await articleOf(name, e.lk); if (!art) return `<div class="xans xweb"><span class="xk">${esc(T.t)}</span><p class="xline dim">No Wikipedia article was found for ${esc(name)}, so RIVL can't answer that one.</p></div>`;
+    const [sents, ppl] = await Promise.all([Promise.resolve(topicSentences(art.text, T, name)), wdPeople(art.qid, T.ps).catch(() => [])]);
+    const named = ppl.filter(r => r.id && r.p !== 'P1971'), count = ppl.find(r => r.p === 'P1971');
+    const chips = named.length ? `<div class="xppl">${named.map(r => `<span><b>${esc(r.text)}</b>${r.age != null ? `<em>${r.age} · born ${r.born}</em>` : ''}</span>`).join('')}</div>` : '';
+    const list = sents.length ? `<ul class="xsents">${sents.map(x => `<li>${hiNeed(x.s, T)}</li>`).join('')}</ul>` : '';
+    const sec = sents.length ? [...new Set(sents.map(x => x.sec).filter(Boolean))][0] : '';
+    const body = list || chips ? chips + list : `<p class="xline dim">${esc(art.title)}'s Wikipedia article doesn't cover ${esc(T.t.toLowerCase())}${count ? `; Wikidata lists ${esc(count.text)} children` : ''}. RIVL won't guess.</p>`;
+    const extra = !named.length && count && list ? `<p class="xsrc">Wikidata lists ${esc(count.text)}${T.k === 'children' ? ' children' : ''}; the article may be newer.</p>` : '';
+    return `<div class="xans xweb xtopic"><span class="xk">${esc(T.t)} · ${esc(name)}</span>${body}${extra}<p class="xsrc">From Wikipedia, “${esc(art.title)}”${sec ? `, ${esc(sec)}` : ''} (CC BY-SA 4.0)</p></div>`;
   }
   async function news(f) {
     const e = f.ps[0] || f.ts[0]; if (!e) return ''; const L = L_(e.lk);
@@ -308,7 +370,10 @@
     if (isRecruit || !asksMore || filter !== 'all') return;
     if (PERSONAL.test(nq) && A.f.ps.some(e => e.lk.startsWith('ncaa') && e.p.cls && /fr|freshman/i.test(e.p.cls))) { /* college players are adults; only high-school recruits are kept out */ }
     web.innerHTML = '<div class="xans xweb xload"><span class="xk">Looking it up</span><i></i><i></i><i></i></div>';
-    const want = wantFacts(q), title = W.e && W.e.type === 'p' ? W.e.name : '';
+    const T = topicOf(q), pe = W.e && W.e.type === 'p' ? W.e : null;
+    if (T && pe) { const parts = await Promise.all([topicCard(pe, T).catch(() => ''), news(A.f).catch(() => '')]); if (my !== SEQ) return;
+      web.innerHTML = parts.join('') || `<div class="xans xweb"><span class="xk">Nothing found</span><p class="xline dim">No public source answers that yet.</p></div>`; return; }
+    const want = wantFacts(q), title = pe ? pe.name : '';
     const parts = await Promise.all([want && title ? wdFacts(title, want.ps).then(r => r ? factCard(r, want.t) : '').catch(() => '') : '', wiki(q, W).catch(() => ''), news(A.f).catch(() => '')]);
     if (my !== SEQ) return;
     const html = parts.join('');
