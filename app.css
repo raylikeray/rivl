@@ -4293,3 +4293,9 @@ html:root body .tabs.flat5 .tab.on{color:var(--ink)!important}
 /* team page: past seasons */
 .tpast{padding:12px 14px 6px}.tpastc{margin:0 0 8px}.tpasth{margin:6px 0 4px;font-size:13px;color:var(--ink-3)}.tpasth b{color:var(--ink)}
 .tpast{padding:12px 0 0}.tpast .tpastc,.tpast .tpasth{padding:0 14px}.tpast .tsch{background:none;box-shadow:none;border:0;margin:0;border-radius:0}
+/* the injury glossary: one aligned column of tags, the meaning beside each, nothing drifting */
+html:root body .xgloss{display:grid;grid-template-columns:max-content 1fr;column-gap:14px;row-gap:0;margin-top:8px}
+html:root body .xgloss .xgw{display:contents}
+html:root body .xgloss .tag{align-self:start;justify-self:start;margin:12px 0 0;white-space:nowrap}
+html:root body .xgloss p{margin:0;padding:12px 0;font-size:14.5px;line-height:1.45;color:var(--ink-2);border-bottom:1px solid var(--line)}
+html:root body .xgloss .xgw:last-child p{border-bottom:0}

@@ -31,13 +31,13 @@
 
   /* ---------- injuries ---------- */
   const GLOSS = [
-    ['Out', 'out', 'Will not play. "Out for the season" means not again this season.'],
-    ['Doubtful', 'q', 'Very unlikely to play; almost always sits.'],
-    ['Questionable (Quest)', 'q', 'A real chance either way, decided close to tip-off. Roughly a coin flip.'],
-    ['Day to day (DTD)', 'q', 'A short-term issue looked at each day; could be back any game now.'],
-    ['Game-time decision (GTD)', 'q', 'Decided right before the game starts.'],
+    ['Out', 'out', 'Will not play. Out for the season means not again this year.'],
+    ['Doubtful', 'q', 'Very unlikely to play.'],
+    ['Quest', 'q', 'Questionable: a real chance either way, decided near tip-off.'],
+    ['DTD', 'q', 'Day to day: a short-term issue, could be back any game.'],
+    ['GTD', 'q', 'Game-time decision: decided right before the game.'],
     ['Probable', 'ok', 'Expected to play.'],
-    ['Cleared', 'ok', 'Off the report; available.']];
+    ['Cleared', 'ok', 'Off the report and available.']];
   const statusCls = s => /out|season/i.test(s) ? 'out' : /doubt|quest|day|game.?time/i.test(s) ? 'q' : /prob|avail|clear/i.test(s) ? 'ok' : '';
   const sevOf = s => /season/i.test(s) ? 5 : /^out$/i.test(s) ? 4 : /doubt/i.test(s) ? 3 : /quest|game.?time/i.test(s) ? 2 : /day/i.test(s) ? 1.5 : /prob/i.test(s) ? 1 : 0;
   async function injuryLog() { return (await HW.hub.file('injuries.json').catch(() => null)) || null; }
@@ -53,19 +53,25 @@
         const what = [det.side && det.side !== 'Not Specified' ? det.side : '', det.type || det.detail || ''].filter(Boolean).join(' ');
         const key = Object.keys(all).find(k => k.startsWith(pid + ':')); const e = key ? all[key] : null;
         const ret = _.retInfo(L, det.returnDate);
-        rows.push({ pid, name: a.displayName || '', pos: a.position && a.position.abbreviation || '', team, status: st, word: _.statusWord(st) || st, cls: statusCls(st), sev: sevOf(st), what, note: x.shortComment || '', long: x.longComment || '',
+        const rest = /\b(rest|personal|coach|suspen|illness|not injury|conditioning|paternity|bereave)/i.test([what, det.detail, x.shortComment].join(' ')) && !/\b(back|knee|ankle|hamstring|foot|hip|shoulder|wrist|hand|calf|quad|groin|concussion|fracture|surgery)\b/i.test(what);
+        rows.push({ pid, name: a.displayName || '', pos: a.position && a.position.abbreviation || '', team, status: st, word: _.statusWord(st) || st, cls: statusCls(st), sev: rest ? .2 : sevOf(st), rest, what, note: x.shortComment || '', long: x.longComment || '',
           since: (e && e.first) || (x.date ? String(x.date).slice(0, 10) : ''), ret: det.returnDate ? String(det.returnDate).slice(0, 10) : '', retWord: ret ? (ret.far ? 'for the season' : ret.past ? 'date passed' : ret.short.replace(/^back around /, '')) : (/out/i.test(st) ? 'no date given' : ''), hs: _.hsUrl(a), x, key: `s:${tid}:${pid}:${x.id || i}` }); }); });
     return { rows, log, logSince: log && log.leagues && log.leagues[lk] ? Object.values(all).map(e => (e.log && e.log[0] && e.log[0].d) || e.last || '').filter(Boolean).sort()[0] : '' };
   }
-  const injRow = (r, lk) => `<a class="xinj" href="${_.href.player(lk, r.pid)}">${_.headshot(r.hs, _.teamColor(r.team, LEAGUES[lk]), 40, r.name)}<span class="nm"><b>${esc(r.name)}</b><em>${esc([r.team.short || r.team.name, r.what].filter(Boolean).join(' · '))}</em></span><span class="fs"><span class="tag ${r.cls}">${esc(r.word)}</span><em>${esc(r.retWord ? r.retWord.charAt(0).toUpperCase() + r.retWord.slice(1) : (r.since ? 'since ' + niceDate(r.since) : ''))}</em></span></a>`;
+  const injRow = (r, lk) => `<a class="xinj" href="${_.href.player(lk, r.pid)}" data-act="ijgo" data-ijopen="${esc(r.pid)}">${_.headshot(r.hs, _.teamColor(r.team, LEAGUES[lk]), 40, r.name)}<span class="nm"><b>${esc(r.name)}</b><em>${esc([r.team.short || r.team.name, r.what].filter(Boolean).join(' · '))}</em></span><span class="fs"><span class="tag ${r.cls}">${esc(r.word)}</span><em>${esc(r.retWord ? r.retWord.charAt(0).toUpperCase() + r.retWord.slice(1) : (r.since ? 'since ' + niceDate(r.since) : ''))}</em></span></a>`;
   function sortInj(rows, nq) {
     if (/\b(return|back|returning|soonest|come back)\b/.test(nq)) return { rows: rows.slice().sort((a, b) => (a.ret || '9999') < (b.ret || '9999') ? -1 : 1), how: 'soonest back first' };
     if (/\b(newest|latest|recent|new|just|this week|happened)\b/.test(nq)) return { rows: rows.slice().sort((a, b) => (b.since || '') < (a.since || '') ? -1 : 1), how: 'newest first' };
     if (/\b(longest|oldest|earliest)\b/.test(nq)) return { rows: rows.slice().sort((a, b) => (a.since || '9999') < (b.since || '9999') ? -1 : 1), how: 'longest out first' };
     if (/\b(least|mild|minor)\b/.test(nq)) return { rows: rows.slice().sort((a, b) => a.sev - b.sev), how: 'least severe first' };
-    return { rows: rows.slice().sort((a, b) => b.sev - a.sev || (a.ret || '9999').localeCompare(b.ret || '9999')), how: 'most severe first' };
+    /* most severe: out before day to day, and within a status the longest absence first (a fracture with a March return
+       ahead of a sore hip for one game); no date counts as a long one; rest and personal days last */
+    const today = HW.todayCT(); const days = r => { if (!r.ret) return r.sev >= 4 ? 45 : 3; const d = Math.round((new Date(r.ret + 'T12:00:00Z') - new Date(today + 'T12:00:00Z')) / 864e5); return Math.max(0, d); };
+    const bad = r => /season|fracture|surgery|torn|tear|acl|achilles|rupture/i.test([r.what, r.x && r.x.details && r.x.details.detail, r.note, r.long].join(' ')) ? 400 : 0;
+    const score = r => (r.rest ? 0 : r.sev) * 1000 + Math.min(999, days(r) + bad(r));
+    return { rows: rows.slice().sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name)), how: 'most severe first' };
   }
-  const glossary = () => `<div class="xans"><span class="xk">What the injury words mean</span><div class="xgloss">${GLOSS.map(([w, c, d]) => `<div><span class="tag ${c}">${esc(w)}</span><p>${esc(d)}</p></div>`).join('')}</div><p class="xsrc">Statuses come from each league's official injury report, through ESPN.</p></div>`;
+  const glossary = () => `<div class="xans"><span class="xk">What the injury words mean</span><div class="xgloss">${GLOSS.map(([w, c, d]) => `<div class="xgw"><span class="tag ${c}">${esc(w)}</span><p>${esc(d)}</p></div>`).join('')}</div><p class="xsrc">Statuses come from each league's official injury report, through ESPN.</p></div>`;
   async function injuryAnswer(f, nq, has) {
     const team = f.ts[0] || null; const lk = team ? team.lk : (leagueIn(nq) || curLk());
     const L = LEAGUES[lk]; const wantsGloss = /\b(mean|means|meaning|what is|whats|define|explain|glossary|key|legend)\b/.test(nq) || /^ ?(injury|injuries|injured|dtd|quest|questionable|out|doubtful|probable|gtd|day to day) ?$/.test(nq);
@@ -77,8 +83,8 @@
     const { rows, log, logSince } = await injuryRows(lk, filt);
     const { rows: sorted, how } = sortInj(rows, nq);
     const title = team ? `${team.t.short || team.t.name} injuries` : mine ? `Injuries on your ${L.label} teams` : `${L.label} injury report`;
-    const count = sorted.length, outN = sorted.filter(r => r.sev >= 4).length, qN = sorted.filter(r => r.sev > 0 && r.sev < 4).length;
-    let line = count ? `<b>${plural(count, 'player')}</b> listed${outN ? `, ${outN} out` : ''}${qN ? `, ${qN} day to day or questionable` : ''}${sorted.length > 1 ? ` · ${how}` : ''}.` : (team ? `No ${esc(team.t.short || team.t.name)} players are on the injury report.` : mine ? 'No one on your teams is on the injury report.' : 'The report is empty right now.');
+    const count = sorted.length, restN = sorted.filter(r => r.rest).length, outN = sorted.filter(r => !r.rest && r.sev >= 4).length, qN = sorted.filter(r => !r.rest && r.sev > 0 && r.sev < 4).length;
+    let line = count ? `<b>${plural(count, 'player')}</b> listed${outN ? `, ${outN} out` : ''}${qN ? `, ${qN} day to day or questionable` : ''}${restN ? `, ${restN} resting or away` : ''}${sorted.length > 1 ? ` · ${how}` : ''}.` : (team ? `No ${esc(team.t.short || team.t.name)} players are on the injury report.` : mine ? 'No one on your teams is on the injury report.' : 'The report is empty right now.');
     // the season so far, from RIVL's own log
     let past = '';
     if (log && log.leagues && log.leagues[lk]) { const all = Object.values(log.leagues[lk].all || {}); const tf = team ? (e => String(e.team.id) === String(team.id)) : mine ? (e => myIds.has(String(e.team.id))) : null; const mineLog = tf ? all.filter(tf) : all;
@@ -87,7 +93,8 @@
       past = `<div class="xpast"><span class="xk2">The season so far</span><p>RIVL has logged <b>${plural(season.length, 'injury listing')}</b> across <b>${plural(byPl, 'player')}</b> since ${esc(niceDate(logSince || log.updated.slice(0, 10)))}; ${cleared.length} have cleared.${wantsPast && /last (year|season)/.test(nq) ? ' The log starts there, so last season isn\'t in it.' : ''}</p>${cleared.length ? `<div class="xclr">${cleared.sort((a, b) => b.cleared.localeCompare(a.cleared)).slice(0, 5).map(e => `<span><b>${esc(e.name)}</b> ${esc(e.what || '')} · cleared ${esc(niceDate(e.cleared))}</span>`).join('')}</div>` : ''}</div>`; }
     else if (wantsPast) past = `<p class="xsrc">RIVL started keeping its own injury log today; past seasons aren't in it. Counts and dates build from here.</p>`;
     const list = sorted.length ? `<div class="xinjs">${sorted.slice(0, 40).map(r => injRow(r, lk)).join('')}${sorted.length > 40 ? `<p class="xsrc">and ${sorted.length - 40} more</p>` : ''}</div>` : '';
-    const sortChips = sorted.length > 2 ? `<div class="xsorts">${[['most severe', 'Most severe'], ['returning soonest', 'Back soonest'], ['newest', 'Newest'], ['longest out', 'Longest out']].map(([k, l]) => `<button class="chip${how.startsWith(k.split(' ')[0]) ? ' on' : ''}" data-xq="${esc((team ? team.name : (mine ? 'my ' : L.label + ' ')) + ' injuries ' + k)}">${l}</button>`).join('')}</div>` : '';
+    const SORTK = { 'most severe': 'most severe first', 'returning soonest': 'soonest back first', 'newest': 'newest first', 'longest out': 'longest out first' };
+    const sortChips = sorted.length > 2 ? `<div class="xsorts">${[['most severe', 'Most severe'], ['returning soonest', 'Back soonest'], ['newest', 'Newest'], ['longest out', 'Longest out']].map(([k, l]) => `<button class="chip${SORTK[k] === how ? ' on' : ''}" aria-pressed="${SORTK[k] === how}" data-xq="${esc((team ? team.name : (mine ? 'my ' : L.label + ' ')) + ' injuries ' + k)}">${l}</button>`).join('')}</div>` : '';
     const head = team ? K().twho(team, title) : `<span class="xk">${esc(title)}</span>`;
     return { html: (wantsGloss ? glossary() : '') + `<div class="xans xinjans">${head}<p class="xline">${line}</p>${sortChips}${list}${past}<p class="xsrc">Official injury report, through ESPN. Dates from RIVL's log.</p></div>`, kind: 'intent' };
   }
