@@ -647,6 +647,8 @@
     const cal = (lg.calendar || []).map(x => typeof x === 'string' ? x : x && (x.startDate || x.date) || '').filter(Boolean).map(x => String(x).slice(0, 10)).sort();
     const name = lg.season && lg.season.type && lg.season.type.name || '';
     const phase = /post/i.test(name) ? 'Playoffs' : /pre/i.test(name) ? 'Preseason' : /off/i.test(name) ? 'Off-season' : '';
+    /* ESPN keeps calling it the postseason after the final; once the last game date is behind us it's the offseason */
+    if (phase && phase !== 'Preseason' && cal.length && cal[cal.length - 1] < t && ymd >= t) return { cal, phase: 'Offseason' };
     return { cal, phase };
   }
 
