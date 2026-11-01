@@ -220,7 +220,7 @@
   /* ================= TEAM ================= */
   async function teamV(lk, id) {
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Team not found'); return; }
-    $main.innerHTML = topbar('') + skeleton(1, 'card') + skeleton(6, 'row');
+    if (!$main.querySelector(`#gpage[data-pid="team:${CSS.escape(String(id))}"]`)) $main.innerHTML = topbar('') + skeleton(1, 'card') + skeleton(6, 'row');   // the same team already up stays up through a refresh
     const [roster, sched, st, inj, lp, news, R] = await Promise.all([jSoft(`${API(L)}/teams/${id}/roster`, 900000), jSoft(`${API(L)}/teams/${id}/schedule`, 300000), standings(L).catch(() => null), injuries(L), L.sport === 'basketball' ? leaguePlayers(L).catch(() => null) : null, jSoft(`${API(L)}/news?limit=10&team=${id}`, 600000), rankings(L), teamsIndex(L).catch(() => null)]);
     const t0 = (roster && roster.team) || (sched && sched.team);
     if (!t0) { $main.innerHTML = topbar('Team') + empty("Couldn't load this team", '<p style="margin:6px 0 0">The feed didn\'t answer. Pull down to try again.</p>'); return; }
@@ -341,12 +341,8 @@
     if (!panels[ttab]) ttab = 'overview';
     const inner = `<div class="tmhead">${V._.imgSized(lg, 160, 160, 'class="tmcrest"')}<div><p class="tmlg">${esc(L.label)}${rank ? ` · No. ${rank}` : ''}</p><h1>${esc(tname)}</h1><p class="tmsen">${sentence}</p><button class="flw${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tid)}" data-name="${esc(tname)}" aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(tname)}">${window.RIVL_flw ? window.RIVL_flw(on, 'team') : (on ? 'Following' : 'Follow team')}</button></div></div>`;
     const bar = `<a class="gxib" href="#teams" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><div class="gxmid2"><div class="gxctr" id="gxmini"><span class="gxmn">${lg ? V._.imgSized(lg, 64, 64, 'class="tmmini"') : ''}<b>${esc(tname)}</b></span></div></div><span class="gxib ghost" aria-hidden="true"></span>`;
-    $main.innerHTML = `<div id="gpage" class="gxpage tmpage" data-tid="${esc(tid)}"><section class="gx solo ${soloLayer(c2).cls}" id="gxhero" style="--aw:${esc(color)};--ha:${esc(c2)};--t2:${esc(c2)}">${LOBES}${soloLayer(c2).html}<div class="gxin" id="gxin">${inner}</div></section>`
-      + `<div class="gxbar" id="gxbar">${bar}</div>`
-      + `<div class="gxscroll" id="gxscroll"><div class="gxspace"></div><div class="gxsheet"><div id="gtabs" class="gxtabw"><div class="gxtabs" role="tablist">${tabsT.map(([k, l]) => `<button class="chip${k === ttab ? ' on' : ''}" data-act="ttab" data-tab="${k}" aria-pressed="${k === ttab}">${l}</button>`).join('')}</div></div>`
-      + `<div id="tbody">${tabsT.map(([k]) => `<div data-tp="${k}"${k === ttab ? '' : ' hidden'}>${panels[k]}</div>`).join('')}</div></div></div></div>`;
+    V._.heroShell({ pid: `team:${tid}`, cls: '', color, c2, inner, bar, act: 'ttab', attr: 'data-tp', tab: ttab, tabs: tabsT, panels });
     document.title = `${t0.displayName} · RIVL`;
-    gxFit(); gxScroll(); if (gxScroll.run) gxScroll.run();
     if (V._ttabL) $main.removeEventListener('click', V._ttabL);
     V._ttabL = e => { const b = e.target.closest('[data-act="ttab"],[data-act="tmore"]'); if (!b || !$main.querySelector('.tmpage')) return; e.preventDefault();
       if (b.dataset.act === 'tmore') { const p = b.closest('.tsch'); p.classList.add('all'); b.remove(); return; }
@@ -361,6 +357,22 @@
   /* the shared hero page (team and player): fixed page, moving colour hero, a clear bar on top, a sheet that scrolls up
      over the hero with sticky tabs */
   V._.heroShell = ({ cls, color, c2, inner, bar, act, attr, tab, tabs, panels, pid, keepY }) => {
+    /* the same page already up (a refresh, a follow, numbers arriving): everything is patched where it stands, at the same
+       scroll and on the same tab, so nothing blinks out and back */
+    const cur = pid && $main.querySelector(`#gpage[data-pid="${CSS.escape(String(pid))}"]`);
+    if (cur && cur.querySelector('#gxin') && cur.querySelector('#tbody')) {
+      const hero = cur.querySelector('#gxhero'), vars = `--aw:${color};--ha:${c2 || color};--t2:${c2 || color}`;
+      if (hero.getAttribute('style') !== vars) hero.setAttribute('style', vars);
+      const want = `gx solo ${soloLayer(c2).cls}`; if (hero.className !== want) hero.className = want;
+      gxPatch(cur.querySelector('#gxin'), inner); gxPatch(cur.querySelector('#gxbar'), bar);
+      const onTab = (cur.querySelector('#gtabs .chip.on') || {}).dataset; if (onTab && onTab.tab && tabs.some(([k]) => k === onTab.tab)) tab = onTab.tab;
+      gxPatch(cur.querySelector('#gtabs'), `<div class="gxtabs" role="tablist">${tabs.map(([k, l]) => `<button class="chip${k === tab ? ' on' : ''}" data-act="${act}" data-tab="${k}" aria-pressed="${k === tab}">${l}</button>`).join('')}</div>`);
+      const body = cur.querySelector('#tbody'); const keepEls = new Set();
+      tabs.forEach(([k]) => { let el = body.querySelector(`:scope > [${attr}="${k}"]`); if (!el) { el = document.createElement('div'); el.setAttribute(attr, k); body.appendChild(el); } keepEls.add(el); gxPatch(el, panels[k] || ''); el.hidden = k !== tab; });
+      [...body.children].forEach(el => { if (!keepEls.has(el)) el.remove(); });
+      gxFit(); if (gxScroll.run) gxScroll.run();
+      return;
+    }
     $main.innerHTML = `<div id="gpage" class="gxpage tmpage ${cls || ''}"${pid ? ` data-pid="${esc(pid)}"` : ''}><section class="gx solo ${soloLayer(c2).cls}" id="gxhero" style="--aw:${esc(color)};--ha:${esc(c2 || color)};--t2:${esc(c2 || color)}">${LOBES}${soloLayer(c2).html}<div class="gxin" id="gxin">${inner}</div></section>`
       + `<div class="gxbar" id="gxbar">${bar}</div>`
       + `<div class="gxscroll" id="gxscroll"><div class="gxspace"></div><div class="gxsheet"><div id="gtabs" class="gxtabw"><div class="gxtabs" role="tablist">${tabs.map(([k, l]) => `<button class="chip${k === tab ? ' on' : ''}" data-act="${act}" data-tab="${k}" aria-pressed="${k === tab}">${l}</button>`).join('')}</div></div>`
@@ -697,7 +709,7 @@
 
   async function gameV(lk, id, focus = '') {
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Game not found'); return; }
-    $main.innerHTML = topbar('', '#scores') + skeleton(1, 'card') + skeleton(6, 'row');
+    if (!$main.querySelector(`#gpage[data-gid="${CSS.escape(String(id))}"] #gxhero`)) $main.innerHTML = topbar('', '#scores') + skeleton(1, 'card') + skeleton(6, 'row');   // the same game already up stays up through a refresh
     const mem = (() => { try { const m = JSON.parse(localStorage.getItem('gx:' + id) || sessionStorage.getItem('gx:' + id) || 'null') || {}; return m.at && Date.now() - m.at > 12 * 3600000 ? {} : m; } catch { return {}; } })();
     let ctx = null, sched, tab = focus ? 'box' : (mem.tab || 'summary');   // every game opens on Summary — or on the box score, led by one player, when opened from his line
     const pv = Object.assign({ q: 'all', scoring: true, n: 30 }, mem.pv || {});   // the plays tab's period and scoring-only filters

@@ -4277,3 +4277,6 @@ html:root body .gxpage .gxplate .tw .tbl th:first-child,html:root body .gxpage .
 html:root body .grow{grid-template-columns:minmax(0,1fr) minmax(42px,auto) minmax(86px,auto) minmax(42px,auto) minmax(0,1fr)}
 html:root body .grow .sc{padding:0 4px}
 html:root body .grow .lv{font-size:11px;padding:3px 8px;max-width:118px;overflow:hidden;text-overflow:ellipsis}
+/* Following: a card lands whole. The tiles and rows inside it no longer run their own rise after the card's, which read as
+   the tiles popping in after the header. Later data swaps a section in place with no motion at all. */
+html:root body .hsec .brief-row .bchip,html:root body .hsec .rows > .row,html:root body .hsec .rail .pl,html:root body .hsec .heroes .hero,html:root body .hsec .card,html:root body .hsec .injgrp{animation:none}
