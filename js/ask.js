@@ -49,12 +49,16 @@
   }
 
   /* each word finds its best match: a whole name, the start of the last word still being typed, a small typo */
+  /* ordinary words that are also bits of names ("east", "night", "thunder", "west", "mean"): they never match a name on their
+     own inside a longer question, only as part of a whole name ("tatum west") or when the whole query is that one word */
+  const COMMON = new Set(('last night east west north south mean means date return most best top game games score shot shots chart missed made make take took many much does what when where who how why injury injured injuries out tonight today yesterday tomorrow season year team teams player players by with without vs and the on in of for report list all order severe sort sorted rank ranked standings standing first second third place seed leaders leader leads lead points rebounds assists steals blocks threes three percent percentage average averages per field goal goals free throw throws minutes turnovers rookie rookies college high school class prospect recruit recruits predict prediction chance odds win forecast if not hurt playing play played plays day days week month back soon soonest newest latest recent longest oldest mild minor least less more than over under between compare versus against home road away record wins losses loss streak next upcoming schedule coach coaches roster draft drafted pick height tall weight age old born from hometown kids wife husband children son daughter salary contract shoes awards mvp nickname key legend glossary define explain tell show give list me my mine our your their his her it its this that these those about near far big small long short new old good bad better best worst great').split(' '));
   function findAll(ents, q) {
     const toks = norm(q).split(' ').filter(Boolean), hits = [], used = {};
+    const alone = toks.length === 1;
     for (let n = 3; n >= 2; n--) for (let i = 0; i + n <= toks.length; i++) { if ([...Array(n).keys()].some(k => used[i + k])) continue; const ph = toks.slice(i, i + n).join(' ');
       const e = ents.find(e => e.al.includes(ph)); if (e && !hits.some(h => h.e === e)) { hits.push({ e, pos: i, score: 4 + n }); for (let k = 0; k < n; k++) used[i + k] = 1; } }
     toks.forEach((tok, i) => {
-      if (used[i] || STOP.has(tok)) return;
+      if (used[i] || STOP.has(tok) || (!alone && COMMON.has(tok))) return;
       const last = i === toks.length - 1; let best = null;
       for (const e of ents) { let sc = 0;
         for (const a of e.al) { if (a === tok) { sc = Math.max(sc, 3); break; }
@@ -71,10 +75,10 @@
     return { ps: hits.filter(h => h.e.type === 'p').map(h => h.e), ts: hits.filter(h => h.e.type === 't').map(h => h.e), rs: hits.filter(h => h.e.type === 'r').map(h => h.e), nq: ' ' + norm(q) + ' ', hits };
   }
   function suggest(ents, q, filter) {
-    const nq = norm(q); if (!nq) return []; const last = nq.split(' ').pop(), out = [];
+    const nq = norm(q); if (!nq) return []; const last = nq.split(' ').pop(), out = []; const lastOk = nq.split(' ').length === 1 || !COMMON.has(last);
     const ok = e => filter === 'all' || (filter === 'players' && e.type === 'p') || (filter === 'teams' && e.type === 't') || (filter === 'rookies' && e.type === 'p' && e.p.rookie) || (filter === 'college' && (e.lk === 'ncaam' || e.lk === 'ncaaw') && e.type !== 'r') || (filter === 'recruits' && e.type === 'r');
     for (const e of ents) { if (!ok(e)) continue; let sc = 0;
-      for (const a of e.al) { if (a.startsWith(nq)) sc = Math.max(sc, 3); for (const w of a.split(' ')) {
+      for (const a of e.al) { if (a.startsWith(nq)) sc = Math.max(sc, 3); if (lastOk) for (const w of a.split(' ')) {
         if (w.startsWith(last)) sc = Math.max(sc, 2); else if (last.length >= 4 && lev(last, w) <= (last.length >= 7 ? 2 : 1)) sc = Math.max(sc, 1); } }
       if (sc) out.push({ e, sc: sc + (e.type === 'p' ? Math.min(.4, ((e.p.s || {}).pts || 0) / 80) + (e.lk === 'nba' ? .2 : 0) : e.type === 't' ? (e.lk === 'nba' ? .3 : .1) : 0) }); }
     // every name the query spells out comes first (all of them in "A vs B vs C"), then what the last word is starting to spell
@@ -101,6 +105,8 @@
   /* ---------- answers from the app's own data ---------- */
   async function answer(I, q) {
     const f = findAll(I.ents, q), nq = f.nq, has = re => re.test(nq);
+    // the wider question engine (injuries, games, leaders, standings, what-ifs) gets the first look
+    if (V.ask2) { try { const r2 = await V.ask2(I, q, f, has); if (r2) return { ...r2, f }; } catch (e) { console.error(e); } }
     /* "top high school players", "best recruits", "class of 2028 girls": the recruit rankings, basketball only */
     if (!f.rs.length && has(/high ?school|\bhs\b|recruit|prospect|class of 20\d\d|prep /)) {
       const girls = has(/girl|women|woman|wbb|female/), cm = nq.match(/20(\d\d)/), g = girls ? 'girls' : 'boys';
@@ -428,7 +434,7 @@
     const I = await index(); if (my !== SEQ) return;
     const sug = suggest(I.ents, q, filter);
     let A = { html: '', kind: 'none', f: findAll(I.ents, q) };
-    if (filter === 'all') { res.innerHTML = sug.length ? `<div class="xlist">${sug.slice(0, 5).map(rowOf).join('')}</div>` : ''; A = await answer(I, q).catch(() => A); if (my !== SEQ) return; }
+    if (filter === 'all') { res.innerHTML = sug.length ? `<div class="xlist">${sug.slice(0, 5).map(rowOf).join('')}</div>` : ''; const A2 = await answer(I, q).catch(() => null); if (A2) A = { f: A.f, ...A2 }; if (my !== SEQ) return; }
     const onlyName = A.f.hits.length === 1 && nq.split(' ').every(w => !STOP.has(w));
     // never list again what the answer already shows (the team itself, its men's or women's twin)
     const shownSet = new Set([...(A.shown || []), ...(A.html ? A.f.hits.map(h => h.e) : [])]);
@@ -483,4 +489,5 @@
 
   HW.ask = { index, findAll, suggest, answer, norm, lev, cmpPlayers };
   V.search = searchV;
+  V._ask = { norm, card, twho, who, crest, face, page, pHref, tHref, LNAME, L_, one, ord, statsOf, NOPE, rowOf, lev };
 })();
