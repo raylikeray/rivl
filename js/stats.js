@@ -30,7 +30,7 @@
     const maxG = Math.max(1, ...lg.players.map(p => (p.s || {}).gp || 0));
     const qual = p => { const s = p.s || {}; return (s.gp || 0) >= Math.max(1, Math.ceil(maxG * .5)) && (s.min || 0) >= (lk.startsWith('ncaa') ? 10 : 12); };
     let R = null; const getR = () => R ? Promise.resolve(R) : HW.rating.league(L).then(r => (R = r)).catch(() => null);
-    const REC = await HW.hub.recruits().catch(() => null), recG = (lk === 'wnba' || lk === 'ncaaw') ? 'girls' : 'boys';
+    const REC = lk.startsWith('ncaa') ? await HW.hub.recruits().catch(() => null) : null, recG = lk === 'ncaaw' ? 'girls' : 'boys';   // high-school recruits live under college only: boys on NCAA M, girls on NCAA W
     const recCls = REC && REC[recG] ? Object.keys(REC[recG]).filter(k => (REC[recG][k] || []).length).sort() : [];
     let rcls = store.get('v5:strcls', recCls[0] || '');
     if (!recCls.includes(rcls)) rcls = recCls[0] || '';
