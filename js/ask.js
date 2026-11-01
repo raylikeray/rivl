@@ -284,7 +284,7 @@
     { k: 'parents', t: 'Parents', re: /\b(parents?|father|dad|mother|mom)\b/, need: /\b(father|mother|parents?|dad|mom)\b/i, sec: /early life|personal life|family|background/i, ps: ['P22', 'P25'] },
     { k: 'siblings', t: 'Siblings', re: /\b(brothers?|sisters?|siblings?)\b/, need: /\b(brothers?|sisters?|siblings?)\b/i, sec: /early life|personal life|family/i, ps: ['P3373'] },
     { k: 'money', t: 'Contract', re: /\b(salary|contract|worth|paid|earn|earns|earnings|money|extension|max deal)\b/, need: /\b(contract|salary|extension|million|billion|net worth|signed|max)\b/i, sec: /contract|free agency|career|personal|business/i, ps: [] },
-    { k: 'shoes', t: 'Shoes and sponsors', re: /\b(shoe|shoes|sneaker|sneakers|nike|adidas|puma|under armour|jordan brand|endorse\w*|sponsor\w*|brand)\b/, need: /\b(shoes?|sneakers?|nike|adidas|puma|under armour|jordan brand|endorse\w*|sponsor\w*|signature)\b/i, sec: /endorse|business|personal|sponsor/i, ps: [] },
+    { k: 'shoes', t: 'Shoes and sponsors', re: /\b(shoe|shoes|sneaker|sneakers|nike|adidas|puma|under armour|jordan brand|endorse\w*|sponsor\w*|brand)\b/, need: /\b(shoes?|sneakers?|nike|adidas|puma|under armour|jordan brand|endorse\w*|sponsor\w*|signature)\b/i, sec: /endorse|business|sponsor|represent|shoe/i, ps: [] },
     { k: 'faith', t: 'Faith', re: /\b(religion|religious|christian|faith|muslim|god|church)\b/, need: /\b(christian\w*|faith|religio\w*|muslim|islam|god|church|jesus)\b/i, sec: /personal/i, ps: [] },
     { k: 'awards', t: 'Awards', re: /\b(awards?|honou?rs|accolades|mvp|all ?star|championships?|rings?|titles?|trophies)\b/, need: /\b(mvp|most valuable|all-stars?|all-nba|champion\w*|awards?|titles?|finals|rookie of the year)\b/i, sec: /awards|honou?rs|accomplishments|achievements|career/i, ps: ['P166'] },
     { k: 'nickname', t: 'Nickname', re: /\b(nickname|nicknamed|called|known as)\b/, need: /\b(nicknamed?|known as|dubbed)\b/i, sec: /.*/, ps: ['P1449'] },
@@ -308,10 +308,13 @@
     const last = norm(name).split(' ').slice(-1)[0]; const out = [];
     splitWiki(text).forEach((x, pi) => { if (/^(see also|references|external links|notes|further reading|statistics)$/i.test(x.sec)) return;
       const sents = x.p.match(/[^.!?]+(?:[.!?]+["”)]?)(?:\s|$)/g) || [x.p];
-      sents.forEach((s0, si) => { const s = s0.trim(); if (s.length < 25 || !T.need.test(s)) return; let sc = 4; if (T.sec.test(x.sec)) sc += 5; if (new RegExp('\\b(' + last + '|he|she|his|her)\\b', 'i').test(s)) sc += 1; if (/\b(19|20)\d\d\b/.test(s)) sc += 1;
-        out.push({ sc, pi, si, sec: x.sec, s }); }); });
-    const top = out.sort((a, b) => b.sc - a.sc).slice(0, 4).sort((a, b) => a.pi - b.pi || a.si - b.si);
-    return top;
+      sents.forEach((s0, si) => { let s = s0.trim(); if (s.length < 25 || !T.need.test(s)) return; const inSec = T.sec.test(x.sec); let sc = 4; if (inSec) sc += 5; if (new RegExp('\\b(' + last + '|he|she|his|her)\\b', 'i').test(s)) sc += 1; if (/\b(19|20)\d\d\b/.test(s)) sc += 1;
+        // "They have two daughters…" needs the sentence before it to say who "they" are
+        if (/^(they|these|this|it|the couple)\b/i.test(s) && si > 0) s = sents[si - 1].trim() + ' ' + s;
+        out.push({ sc, pi, si, sec: x.sec, s, inSec }); }); });
+    // the topic's own section wins outright: a stray "his son" in a draft-night story never outranks Personal life
+    const pool = out.some(x => x.inSec) ? out.filter(x => x.inSec) : out;
+    return pool.sort((a, b) => b.sc - a.sc).slice(0, 4).sort((a, b) => a.pi - b.pi || a.si - b.si);
   }
   const hiNeed = (s, T) => esc(s).replace(new RegExp(T.need.source, 'gi'), m => `<b>${m}</b>`);
   async function wdPeople(qid, props) {
@@ -323,11 +326,21 @@
         const b = en && en.claims && en.claims.P569 && en.claims.P569[0].mainsnak.datavalue; if (b) { const t = b.value.time; const y = +t.slice(1, 5), m = +t.slice(6, 8) || 1, dd = +t.slice(9, 11) || 1; const now = new Date(); let age = now.getFullYear() - y; if (now.getMonth() + 1 < m || (now.getMonth() + 1 === m && now.getDate() < dd)) age--; r.born = y; r.age = age; } }); }
     return rows.filter(r => r.text);
   }
+  /* "two daughters (born July 2012 and July 2015) and two sons (born July 2018 and May 2024)" → one chip per child with an age */
+  const MONTHS = 'january february march april may june july august september october november december'.split(' ');
+  function bornFrom(text) {
+    const out = [], re = /\b(daughters?|sons?)\s*\(born ([^)]+)\)/gi; let m;
+    while ((m = re.exec(text))) { const kind = /daughter/i.test(m[1]) ? 'Daughter' : 'Son';
+      m[2].split(/,|\band\b/).map(x => x.trim()).filter(Boolean).forEach(d => { const y = (d.match(/\b(19|20)\d\d\b/) || [])[0]; if (!y) return; const mo = MONTHS.findIndex(n => d.toLowerCase().includes(n)); const now = new Date();
+        let age = now.getFullYear() - +y; if (mo >= 0 && now.getMonth() < mo) age--; out.push({ id: 'k' + out.length, text: kind, age: Math.max(0, age), born: +y, bornText: d }); }); }
+    return out;
+  }
   async function topicCard(e, T) {
     const name = e.name, art = await articleOf(name, e.lk); if (!art) return `<div class="xans xweb"><span class="xk">${esc(T.t)}</span><p class="xline dim">No Wikipedia article was found for ${esc(name)}, so RIVL can't answer that one.</p></div>`;
     const [sents, ppl] = await Promise.all([Promise.resolve(topicSentences(art.text, T, name)), wdPeople(art.qid, T.ps).catch(() => [])]);
     const named = ppl.filter(r => r.id && r.p !== 'P1971'), count = ppl.find(r => r.p === 'P1971');
-    const chips = named.length ? `<div class="xppl">${named.map(r => `<span><b>${esc(r.text)}</b>${r.age != null ? `<em>${r.age} · born ${r.born}</em>` : ''}</span>`).join('')}</div>` : '';
+    if (T.k === 'children' && !named.length) bornFrom(sents.map(x => x.s).join(' ')).forEach(k => named.push(k));
+    const chips = named.length ? `<div class="xppl">${named.map(r => `<span><b>${esc(r.text)}</b>${r.age != null ? `<em>${r.age} years old · born ${esc(String(r.bornText || r.born))}</em>` : ''}</span>`).join('')}</div>` : '';
     const list = sents.length ? `<ul class="xsents">${sents.map(x => `<li>${hiNeed(x.s, T)}</li>`).join('')}</ul>` : '';
     const sec = sents.length ? [...new Set(sents.map(x => x.sec).filter(Boolean))][0] : '';
     const body = list || chips ? chips + list : `<p class="xline dim">${esc(art.title)}'s Wikipedia article doesn't cover ${esc(T.t.toLowerCase())}${count ? `; Wikidata lists ${esc(count.text)} children` : ''}. RIVL won't guess.</p>`;
