@@ -55,7 +55,7 @@
         const ret = _.retInfo(L, det.returnDate);
         rows.push({ pid, name: a.displayName || '', pos: a.position && a.position.abbreviation || '', team, status: st, word: _.statusWord(st) || st, cls: statusCls(st), sev: sevOf(st), what, note: x.shortComment || '', long: x.longComment || '',
           since: (e && e.first) || (x.date ? String(x.date).slice(0, 10) : ''), ret: det.returnDate ? String(det.returnDate).slice(0, 10) : '', retWord: ret ? (ret.far ? 'for the season' : ret.past ? 'date passed' : ret.short.replace(/^back around /, '')) : (/out/i.test(st) ? 'no date given' : ''), hs: _.hsUrl(a), x, key: `s:${tid}:${pid}:${x.id || i}` }); }); });
-    return { rows, log, logSince: log && log.leagues && log.leagues[lk] ? Object.values(all).map(e => e.first).sort()[0] : '' };
+    return { rows, log, logSince: log && log.leagues && log.leagues[lk] ? Object.values(all).map(e => (e.log && e.log[0] && e.log[0].d) || e.last || '').filter(Boolean).sort()[0] : '' };
   }
   const injRow = (r, lk) => `<a class="xinj" href="${_.href.player(lk, r.pid)}">${_.headshot(r.hs, _.teamColor(r.team, LEAGUES[lk]), 40, r.name)}<span class="nm"><b>${esc(r.name)}</b><em>${esc([r.team.short || r.team.name, r.what].filter(Boolean).join(' · '))}</em></span><span class="fs"><span class="tag ${r.cls}">${esc(r.word)}</span><em>${esc(r.retWord ? r.retWord.charAt(0).toUpperCase() + r.retWord.slice(1) : (r.since ? 'since ' + niceDate(r.since) : ''))}</em></span></a>`;
   function sortInj(rows, nq) {
@@ -164,6 +164,17 @@
 
   /* ---------- leaders ---------- */
   const CATS = [[/\b(three|3 ?point|3pt|3s|threes|shooter)/, 'tpm', 'Threes made', '3PM'], [/\b(point|scor|ppg)/, 'pts', 'Points', 'PPG'], [/\b(rebound|board|rpg)/, 'reb', 'Rebounds', 'RPG'], [/\b(assist|apg|passer|playmak)/, 'ast', 'Assists', 'APG'], [/\b(steal|spg)/, 'stl', 'Steals', 'SPG'], [/\b(block|bpg|rim protect)/, 'blk', 'Blocks', 'BPG'], [/\b(field goal|fg|efficien)/, 'fg', 'Field goal %', 'FG%'], [/\b(free throw|ft)/, 'ft', 'Free throw %', 'FT%'], [/\b(minute|mpg)/, 'min', 'Minutes', 'MPG'], [/\b(turnover)/, 'to', 'Turnovers', 'TOPG'], [/\b(double double)/, 'dd', 'Double-doubles', '']];
+  /* the best lines of one night: every game's leaders from that day's scoreboard, ranked across the league */
+  async function nightLeadersAnswer(nq, f, when) {
+    const lk = leagueIn(nq) || curLk(), L = LEAGUES[lk]; const games = await HW.scoreboard(L, when.ymd, 60000).catch(() => []);
+    const done = (games || []).filter(g => g.state === 'post' || g.state === 'in'); if (!done.length) return null;
+    const cat = CATS.find(c => c[0].test(nq)) || CATS[1]; const want = { pts: /points/i, reb: /rebounds/i, ast: /assists/i }[cat[1]] || /points/i; const label = { pts: 'Points', reb: 'Rebounds', ast: 'Assists' }[cat[1]] || 'Points';
+    const rows = []; done.forEach(g => ['away', 'home'].forEach(side => { const t = g[side], o = g[side === 'home' ? 'away' : 'home']; const l = (t.leaders || []).find(x => want.test(x.name || x.displayName || '')); const a = l && l.leaders && l.leaders[0]; if (!a || !a.athlete) return; rows.push({ v: +a.value || parseFloat(a.displayValue) || 0, a: a.athlete, t, o, g, side }); }));
+    if (!rows.length) return null; rows.sort((a, b) => b.v - a.v); const list = rows.slice(0, 10), top = list[0];
+    const live = done.some(g => g.state === 'in');
+    const line = `<b>${esc(top.a.displayName)}</b> had the most ${label.toLowerCase()} ${esc(when.word)} with <b>${top.v}</b> ${top.side === 'home' ? 'vs' : 'at'} ${esc(top.o.short)}${live ? ' (some games still on)' : ''}.`;
+    return { html: `<div class="xans"><span class="xk">${esc(L.label)} · ${esc(label)} ${esc(when.word)}</span><p class="xline">${line}</p><div class="xtops">${list.map((x, i) => `<a class="xtp" href="${_.href.player(lk, x.a.id)}"><span class="strk">${i + 1}</span>${_.headshot(x.a.headshot || '', _.teamColor(x.t, L), 34, x.a.displayName)}<span><b>${esc(x.a.displayName)}</b><em>${esc(x.t.short)} ${x.side === 'home' ? 'vs' : 'at'} ${esc(x.o.short)} · ${x.g.state === 'in' ? 'live' : `${x.t.score}-${x.o.score}`}</em></span><b class="xv">${x.v}</b></a>`).join('')}</div><p class="xsrc">Each team's leader from ESPN's scoreboard for that day.</p></div>`, kind: 'intent' };
+  }
   async function leadersAnswer(nq, f) {
     const lk = leagueIn(nq) || curLk(), L = LEAGUES[lk]; const lg = await HW.hub.league(L).catch(() => null); if (!lg || !lg.players) return null;
     const cat = CATS.find(c => c[0].test(nq)) || CATS[0]; const key = /\b(percent(age)?|%|pct)\b/.test(nq) && cat[1] === 'tpm' ? 'tp' : cat[1];
@@ -221,7 +232,7 @@
   V.ask2 = async function (I, q, f, has) {
     const nq = f.nq; const K0 = K(); if (!K0) return null;
     const when = whenIn(nq);
-    const injQ = /\b(injur|hurt|dtd|day to day|questionable|quest|doubtful|probable|gtd|game time decision|out for|sidelined|miss(ing)? (the )?game|health)/.test(nq);
+    const injQ = /\b(injur|hurt|dtd|day to day|questionable|quest|doubtful|probable|gtd|game time decision|out for|sidelined|miss(ing)? (the )?game|health|returns? (soonest|first|next)|returning|back soonest|comes? back|coming back)/.test(nq);
     const whatIf = (/\bwhat if\b/.test(nq) || /\bif\b.*\b(hurt|injured|out|healthy|plays?|played|playing|wasn t|weren t|isn t|was|were|without|sits|misses)\b/.test(nq) || /\bwithout\b/.test(nq)) && f.ps.length === 1 && /\b(predict|prediction|chance|chances|odds|win|forecast|tonight|game|line|spread)\b/.test(nq);
     if (whatIf) { const r = await whatIfAnswer(f.ps[0], nq); if (r) return r; }
     if (injQ && !(f.ps.length === 1 && !f.ts.length && !/\b(team|teams|report|list|all|most|every)\b/.test(nq))) return injuryAnswer(f, nq, has);
@@ -230,6 +241,7 @@
     if (gameQ && f.ps.length === 1 && !f.ts.length) { const r = await playerGameAnswer(f.ps[0], nq, when); if (r) return r; }
     if (gameQ && f.ts.length === 1 && !f.ps.length) { const r = await teamGameAnswer(f.ts[0], nq, when); if (r) return r; }
     if (f.ps.length === 1 && !f.ts.length && /\b(average|averages|averaging|per game|ppg|rpg|apg|how many|percent(age)?|%|pct|shooting|stats|numbers)\b/.test(nq) && !when) { const r = playerStatAnswer(f.ps[0], nq); if (r) return r; }
+    if (!f.ps.length && !f.ts.length && when && when.ymd && /\b(lead|leader|leaders|led|top|best|most|highest|scored|dropped|had)\b/.test(nq)) { const r = await nightLeadersAnswer(nq, f, when); if (r) return r; }
     if (!f.ps.length && /\b(lead|leader|leaders|leads|top|best|most|highest|who has the most|who scores)\b/.test(nq) && CATS.some(c => c[0].test(nq))) { const r = await leadersAnswer(nq, f); if (r) return r; }
     if (/\b(standing|standings|first place|last place|seed|rank|ranked|record|where (are|is)|playoff picture|table|who s (first|leading))\b/.test(nq) && !f.ps.length && !/\b(recruit|high school|prospect)\b/.test(nq)) { const r = await standingsAnswer(nq, f); if (r) return r; }
     return null;

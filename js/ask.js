@@ -419,7 +419,12 @@
   }
 
   /* ---------- the screen ---------- */
-  const TRY = ['Shai vs Luka', 'When was Maxey drafted', 'Wemby height', 'Stephen Curry kids', 'Thunder schedule', 'UConn vs South Carolina', 'Where did Cooper Flagg go to high school', 'Flagg vs Acuff vs Harper', 'Who coaches the Knicks', 'Juju injury'];
+  /* what people can ask, by kind, so nobody has to guess what the box understands */
+  const TRY = [['Injuries', ['Who is hurt on the Celtics', 'Most severe injuries in the NBA', 'Who returns soonest', 'What does day to day mean']],
+    ['Last night', ["Curry's shot chart last night", 'How many shots did Shai take', 'Thunder box score last night', 'Who scored the most last night']],
+    ['What if', ['Lakers without LeBron tonight', 'What if Haliburton played'], ],
+    ['Players and teams', ['Shai vs Luka', 'Wemby height', 'Thunder schedule', 'Who coaches the Knicks', 'UConn vs South Carolina']],
+    ['Recruits', ['Top high school player', 'Where is AJ Dybantsa from', 'Flagg vs Acuff vs Harper']]];
   const FILTERS = [['all', 'All'], ['players', 'Players'], ['teams', 'Teams'], ['rookies', 'Rookies'], ['college', 'College'], ['recruits', 'Recruits']];
   let SEQ = 0;
   function rowOf(e) {
@@ -467,7 +472,7 @@
       <div class="xchips">${FILTERS.map(([k, l]) => `<button class="chip${k === f0 ? ' on' : ''}" data-xf="${k}" aria-pressed="${k === f0}">${l}</button>`).join('')}</div>
       <div id="xres"></div><div id="xwebb"></div>
       <div id="xbrowse"${q0 ? ' hidden' : ''}>${recent.length ? `<div class="sec"><h2>Recent</h2><button data-act="xrclear">Clear</button></div><div class="xlist">${recent.map(r => `<button class="xrow xrq" data-xq="${esc(r)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg><span><b>${esc(r)}</b></span></button>`).join('')}</div>` : ''}
-        <div class="sec"><h2>Try asking</h2></div><div class="xtry">${TRY.map(t => `<button class="chip" data-xq="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+        <div class="sec"><h2>Try asking</h2></div>${TRY.map(([h, qs]) => `<div class="xtryg"><p class="xtryh">${esc(h)}</p><div class="xtry">${qs.map(t => `<button class="chip" data-xq="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>`).join('')}
         <p class="xfoot">Answers come from RIVL's own data first, then Wikidata, Wikipedia and ESPN. Every card names its source, and when no source has the answer it says so.</p></div></div>`;
     const inp = $main.querySelector('#xq'); let t = null, filter = f0;
     const go = v => { store.set('v5:xq', v); clearTimeout(t); t = setTimeout(() => run(v, filter), 140); };

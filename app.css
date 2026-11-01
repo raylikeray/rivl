@@ -4286,3 +4286,6 @@ html:root body .tabs.flat5 .tab span{position:static!important;width:auto!import
 html:root body .tabs.flat5 .tab svg{width:24px!important;height:24px!important}
 html:root body .tabs.flat5 .tab:not(.on){color:var(--ink-3)!important}
 html:root body .tabs.flat5 .tab.on{color:var(--ink)!important}
+/* Search: the example questions, grouped by what they are about */
+.xtryg{margin:0 0 14px}.xtryh{margin:0 0 7px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.xtry .chip{white-space:nowrap}
