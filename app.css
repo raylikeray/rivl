@@ -4341,7 +4341,7 @@ html:root body .grow .tm.fav .cr::after{content:'★';position:absolute;right:-6
 html:root body .gxpage .flw svg.fs,html:root body .gxpage .flw svg.fs path{fill:none!important;stroke:currentColor!important;stroke-width:2.8!important;stroke-linecap:round}
 html:root body .gxpage .flw svg.fs.on,html:root body .gxpage .flw svg.fs.on path{fill:none!important;stroke:#fff!important;stroke-width:3!important}
 /* Following: the Now card leads (your live game, else the next tip, else today's final) with a small word over it */
-html:root body .hsec[data-sec="now"]{background:none;box-shadow:none;padding:0;border-radius:0;overflow:visible;--gut:var(--pg);--gut-r:var(--pg-r)}
+html:root body #main .hsec[data-sec="now"]{background:none!important;box-shadow:none!important;padding:0!important;border-radius:0;overflow:visible;border:0!important;--gut:var(--pg);--gut-r:var(--pg-r)}
 .nowh{display:flex;align-items:center;gap:8px;padding:14px var(--pg) 8px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
 .hsec[data-sec="now"] .hero{margin:0 var(--pg)}
 /* Tonight as a rail list: a dot ahead, a pulse while on, a check when done; rows in tip order */
@@ -4403,3 +4403,15 @@ html:root body .livebar .lg .tm{padding:0!important;background:none!important;bo
 /* tap targets: chips keep their look but the hit area reaches 44px (Apple), without moving neighbours */
 .chip:not(.gxtabs .chip){position:relative}
 .chip:not(.gxtabs .chip)::after{content:"";position:absolute;inset:-5px 0}
+/* the Now card: edge stripe, crests, a headline sentence, the score large */
+.nowc{display:block;position:relative;margin:0 var(--pg) 6px;padding:14px 16px 14px 18px;border-radius:20px;background:var(--card);box-shadow:var(--edge);color:inherit;text-decoration:none;overflow:hidden}
+.nowc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--stripe)}
+.nhd{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.nhd .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#E0245E;margin-right:6px;vertical-align:1px}
+.nowc.nlive .nhd span:first-child{color:#E0245E}
+.nln{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;margin-top:10px}
+.ncr{display:flex;gap:2px;flex:none}.ncr .logo{width:36px;height:36px}
+.nwho{min-width:0}.nwho b{display:block;font-size:16px;font-weight:800;line-height:1.2;letter-spacing:-.01em}.nwho small{display:block;font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:3px}
+.nsc{display:flex;gap:8px;align-items:baseline;flex:none}.nsc b{font-size:30px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}.nsc b.lo{color:var(--ink-3);font-weight:600}
+.nsc.rec b{font-size:14px;font-weight:700;color:var(--ink-3)}
+.nowc:active{transform:scale(.99)}

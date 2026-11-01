@@ -348,6 +348,29 @@
   const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
   const SECS = ['wire', 'now', 'live', 'tonight', 'last', 'teams', 'players', 'injuries', 'news'];   // the one thing that matters right now leads   // the wire first when it has something, then a game on now
   let homeToken = 0;
+  /* the Now card: a headline sentence with a colour stripe on the edge, the crests side by side, the score large.
+     "Notre Dame beat Villanova", "Celtics at Magic, 2:30 PM", "Lakers lead by 6, 3rd 4:12". The stripe is the winner's or
+     the leader's colour, the favourite's before tip-off. */
+  function nowCard(L, lk, g, ctx) {
+    const a = g.away, h = g.home, live = isLive(g), fin = g.state === 'post', pre = !live && !fin;
+    const as = +a.score || 0, hs = +h.score || 0; const f = pre && !g.off ? safeF(L, g, ctx) : null; const pH = f && f.pHome != null ? f.pHome : null;
+    const lead = live || fin ? (as > hs ? a : hs > as ? h : null) : (pH == null ? null : pH >= .5 ? h : a);
+    const stripe = lead ? teamColor(lead, L) : 'var(--line-2)';
+    const tip = new Date(g.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const margin = Math.abs(as - hs);
+    const head = g.off ? `${esc(a.short)} at ${esc(h.short)} · ${esc(g.off)}`
+      : fin ? (lead ? `${esc(lead.short)} beat ${esc(lead === a ? h.short : a.short)}` : `${esc(a.short)} and ${esc(h.short)} tied`)
+      : live ? (lead ? `${esc(lead.short)} lead by ${margin}` : `${esc(a.short)} and ${esc(h.short)} level`)
+      : `${esc(a.short)} ${g.neutral ? 'vs' : 'at'} ${esc(h.short)}, ${esc(tip)}`;
+    const st = fin ? finalWord(g) : live ? g.detail : g.off ? '' : relDay(HW.ymdOf(g.date)) === 'Tonight' ? 'Tonight' : dayLabel(HW.ymdOf(g.date), { weekday: 'long' });
+    const tv = tvLabel(g); const fav = pH == null ? '' : `${esc((pH >= .5 ? h : a).abbr || (pH >= .5 ? h : a).short)} ${Math.round(Math.max(pH, 1 - pH) * 100)}%`;
+    const right = fin && ctx ? (() => { const f0 = safeF(L, g, ctx); return f0 && f0.pHome != null ? `Had ${esc((f0.pHome >= .5 ? h : a).short)} ${Math.round(Math.max(f0.pHome, 1 - f0.pHome) * 100)}%` : ''; })() : pre ? fav : '';
+    const sub = pre ? [g.venue && g.venue.name, tv].filter(Boolean).join(' · ') : [tv, g.venue && g.venue.name].filter(Boolean).join(' · ');
+    const sc = pre ? `<span class="nsc rec"><b>${esc(a.rec || '')}</b><b>${esc(h.rec || '')}</b></span>` : `<span class="nsc"><b class="${as >= hs ? '' : 'lo'}">${as}</b><b class="${hs >= as ? '' : 'lo'}">${hs}</b></span>`;
+    return `<a class="nowc${live ? ' nlive' : ''}" href="${href.game(lk, g.id)}" style="--stripe:${esc(stripe)}">
+      <div class="nhd"><span>${live ? '<i class="dot"></i>' : ''}${esc(st)}</span><span>${right}</span></div>
+      <div class="nln"><span class="ncr">${logo(a.logo, '', teamColor(a, L))}${logo(h.logo, '', teamColor(h, L))}</span><span class="nwho"><b>${head}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span>${sc}</div></a>`;
+  }
   /* Duolingo's "jump here": a pill that brings you back to the Now card once it has scrolled away */
   function backNow() {
     let el = document.querySelector('.backnow'); if (!el) { el = document.createElement('button'); el.className = 'backnow'; el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 6-6 6 6"/></svg>Back to now`; el.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' })); document.body.appendChild(el);
@@ -413,7 +436,7 @@
       const byTeam = new Map(); games.forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
       // the Now card: your live game, else the next of your games today, else today's last final; a hero, first on the screen
       const favAll = games.filter(isFav); const nowG = favAll.find(isLive) || favAll.filter(g => g.state === 'pre' && !g.off).sort((a, b) => new Date(a.date) - new Date(b.date))[0] || favAll.filter(g => g.state === 'post').sort((a, b) => new Date(b.date) - new Date(a.date))[0] || null;
-      if (nowG && P.brief) { const w = isLive(nowG) ? 'Live now' : nowG.state === 'post' ? 'Final' : `Next up · ${esc(new Date(nowG.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))}`; secs.now = `<div class="nowh"><span>${w}</span></div>${heroCard(L, nowG, ctx)}`; } else delete secs.now;
+      if (nowG && P.brief) secs.now = nowCard(L, lk, nowG, ctx); else delete secs.now;
       // tonight: your games as a rail list in tip order (a dot ahead, a pulse while on, a check when done), or the next ones on the calendar
       const liveMine = games.filter(g => isLive(g) && isFav(g));
       if (P.brief && mine.length) {
