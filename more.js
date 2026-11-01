@@ -28,14 +28,22 @@
 
   /* ---------- pull to refresh ---------- */
   const ptr = document.createElement('div'); ptr.className = 'ptr'; ptr.innerHTML = '<i></i>'; document.body.appendChild(ptr);
-  let y0 = 0, pulling = false, armed = false;
+  let y0 = 0, x0 = 0, pulling = false, armed = false, dir = '';
   const reset = () => { ptr.classList.remove('arm', 'go'); ptr.style.removeProperty('--p'); armed = false; };
   /* at the top means at the top of whatever the finger is scrolling: the window, or a box that scrolls on its own (the game page) */
-  let box = null;
+  let box = null, strip = null;
   const scrollerOf = el => { for (let n = el; n && n !== document.body; n = n.parentElement) { if (n.scrollHeight > n.clientHeight + 1) { const oy = getComputedStyle(n).overflowY; if (oy === 'auto' || oy === 'scroll') return n; } } return null; };
+  const sideOf = el => { for (let n = el; n && n !== document.body; n = n.parentElement) { if (n.scrollWidth > n.clientWidth + 1) { const ox = getComputedStyle(n).overflowX; if (ox === 'auto' || ox === 'scroll') return n; } } return null; };
   const atTop = () => window.scrollY <= 0 && (!box || box.scrollTop <= 0);
-  window.addEventListener('touchstart', e => { box = scrollerOf(e.target); pulling = atTop() && !document.body.classList.contains('noscroll') && e.touches.length === 1; y0 = pulling ? e.touches[0].clientY : 0; }, { passive: true });
-  window.addEventListener('touchmove', e => { if (!pulling) return; const dy = e.touches[0].clientY - y0; if (dy <= 0 || !atTop()) { pulling = false; reset(); return; } const d = Math.min(dy, 130); ptr.style.setProperty('--p', (d / 90).toFixed(2)); armed = d > 84; ptr.classList.toggle('arm', armed); }, { passive: true });
+  /* a pull is a straight drag down from the very top. The first few pixels decide what the finger is doing: a sideways start
+     (a strip of tiles, a table) is never a pull, even if the finger then drifts down with the strip still held. */
+  window.addEventListener('touchstart', e => { box = scrollerOf(e.target); strip = sideOf(e.target); dir = ''; pulling = atTop() && !document.body.classList.contains('noscroll') && e.touches.length === 1; y0 = pulling ? e.touches[0].clientY : 0; x0 = pulling ? e.touches[0].clientX : 0; }, { passive: true });
+  window.addEventListener('touchmove', e => {
+    if (!pulling) return; const t = e.touches[0], dy = t.clientY - y0, dx = t.clientX - x0;
+    if (!dir) { if (Math.max(Math.abs(dx), Math.abs(dy)) < 12) return; dir = Math.abs(dx) > Math.abs(dy) * .8 ? 'x' : 'y'; }
+    if (dir === 'x' || dy <= 0 || !atTop() || (strip && strip.scrollLeft > 0 && strip.scrollLeft < strip.scrollWidth - strip.clientWidth - 1 && Math.abs(dx) > 6)) { pulling = false; reset(); return; }
+    const d = Math.min(Math.max(0, dy - 12), 130); ptr.style.setProperty('--p', (d / 90).toFixed(2)); armed = d > 84; ptr.classList.toggle('arm', armed);
+  }, { passive: true });
   window.addEventListener('touchend', async () => { if (!pulling) return; pulling = false; if (!armed) { reset(); return; } ptr.classList.add('go'); buzz(10); try { await V.refreshAll(); } finally { setTimeout(reset, 250); } }, { passive: true });
 
   /* ---------- haptics: a tick when something is followed or switched ---------- */
