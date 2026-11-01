@@ -464,9 +464,9 @@
       const r = current || route(); const rc = $m.getBoundingClientRect();
       peek = ready[k] && ready[k].dataset.for === k + ':' + r.name ? ready[k] : null; peekFor = k;
       if (!peek) { peek = $m.cloneNode(false); peek.removeAttribute('id'); peek.classList.remove('hold', 'fade', 'enter', 'noanim'); peek.classList.add('xpeek'); peek.innerHTML = snaps[k + ':' + r.name] || (V._ && V._.skeleton ? V._.skeleton(1, 'card') + V._.skeleton(4, 'row') : ''); $m.parentNode.insertBefore(peek, $m.nextSibling); }
-      const pageTop = Math.max(0, document.getElementById('hdr').getBoundingClientRect().bottom, rc.top);   // the next page shows from its top, just under the leagues
-      peek.style.cssText = `position:fixed;left:${rc.left}px;width:${rc.width}px;top:${pageTop}px;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;will-change:transform;contain:layout paint;transform:translate3d(${rc.width}px,0,0)`;
-      const mainTop = rc.top + window.scrollY; peek.scrollTop = Math.max(0, (scrollMem.get(r.name + '/' + k) || 0) + pageTop - mainTop); };   // the next league shows where you left it
+      const mainTop = rc.top + window.scrollY, ny = scrollMem.get(r.name + '/' + k) || 0;   // where the next league will sit once it lands: its own scroll, the top bar drawn over it as on the real page
+      peek.style.cssText = `position:fixed;left:${rc.left}px;width:${rc.width}px;top:${Math.max(0, mainTop - ny)}px;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;will-change:transform;contain:layout paint;transform:translate3d(${rc.width}px,0,0)`;
+      peek.scrollTop = Math.max(0, ny - mainTop); };   // the next league shows where you left it, or its top
     /* a critically damped spring, the physics X and iOS use: it starts at the finger's own speed (px/ms) and settles on
        the target without overshoot, so letting go never changes the speed the page was moving at */
     let springRaf = 0;
@@ -485,7 +485,7 @@
     const slideTo = (k, dirL, ms, fromX = null, v0 = 0) => { const r0 = current || route(); from = from || r0.lk; to = k; if ($m.dataset.real === '1') snaps[r0.lk + ':' + r0.name] = $m.innerHTML; makePeek(k); W2 = window.innerWidth;
       render.swipe = true; render.swiping = true; render.tapAt = performance.now(); peek.style.visibility = '';
       const land = () => { $m.style.transition = 'none'; $m.style.transform = ''; $m.style.willChange = ''; const snap = snaps[k + ':' + r0.name];
-        scrollMem.set(r0.name + '/' + r0.lk, window.scrollY); render.memDone = true; render.keepHdr = true; render.hdrHold = true; setTimeout(() => { render.hdrHold = false; }, 400); const ny = scrollMem.get(r0.name + '/' + k) || 0;
+        scrollMem.set(r0.name + '/' + r0.lk, window.scrollY); const ny = scrollMem.get(r0.name + '/' + k) || 0; render.memDone = true; render.keepHdr = ny > 4; render.hdrHold = true; if (ny <= 4 && V.showTop) V.showTop(); setTimeout(() => { render.hdrHold = false; }, 400);
         if (snap) { $m.innerHTML = snap; window.scrollTo(0, ny); $m.dataset.hlk = k; location.hash = '#' + k; requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; if (peek) { peek.remove(); Object.keys(ready).forEach(q => { if (ready[q] === peek) delete ready[q]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); })); return; }
         $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { requestAnimationFrame(() => { render.swiping = false; $m.style.visibility = ''; if (peek) { peek.remove(); Object.keys(ready).forEach(k => { if (ready[k] === peek) delete ready[k]; }); peek = null; } clearTrack(); $pills.classList.remove('gliding'); setTimeout(prebuild, 500); }); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); };
       if (fromX != null) { $m.style.transition = 'none'; peek.style.transition = 'none'; $pills.classList.remove('dragging');
@@ -514,6 +514,19 @@
       // the rest of the way starts at exactly the finger's speed and settles, so release is seamless
       slideTo(to, dirL, 0, cur, vx); });
     document.addEventListener('touchcancel', () => { if (mode === 'league') springBack(curX, 0); mode = ''; sx = null; });
+    /* a tap on the league you are already on, or the tab you are already on, glides back to the top the way X does:
+       quick off the mark, a long soft landing, the top bar coming back with it */
+    let topRaf = 0;
+    const toTop = () => { cancelAnimationFrame(topRaf); const y0 = window.scrollY; if (V.showTop) V.showTop(); if (y0 <= 0) return;
+      if (!MOTION()) { window.scrollTo(0, 0); return; }
+      const T = Math.min(560, Math.max(280, 220 + y0 * .12)), t0 = performance.now(); const ease = u => 1 - Math.pow(1 - u, 4);
+      const stop = () => { cancelAnimationFrame(topRaf); window.removeEventListener('touchstart', stop); };   // a finger on the screen stops it where it is
+      window.addEventListener('touchstart', stop, { passive: true, once: true });
+      const step = now => { const u = Math.min(1, (now - t0) / T); window.scrollTo(0, Math.round(y0 * (1 - ease(u)))); if (u < 1) topRaf = requestAnimationFrame(step); else stop(); };
+      topRaf = requestAnimationFrame(step); };
+    V.toTop = toTop;
+    $pills.addEventListener('click', e => { const a = e.target.closest('.pill.on'); if (!a) return; e.preventDefault(); e.stopPropagation(); toTop(); }, true);
+    document.getElementById('tabs').addEventListener('click', e => { const a = e.target.closest('a.tab.on, .tab.on'); if (!a) return; const r = current || route(); if (!r || !SCREENS.includes(r.name) && r.name !== 'search') return; if (window.scrollY > 0) { e.preventDefault(); e.stopPropagation(); toTop(); } }, true);
     /* a tap on another league: the same slide, from the side that league sits on */
     $pills.addEventListener('click', e => { const a = e.target.closest('.pill:not(.on)'); if (!a || render.swiping || !MOTION()) return; const r = current || route(); if (!r || !SCREENS.includes(r.name)) return;
       e.preventDefault(); from = r.lk; slideTo(a.dataset.lk, ORDER.indexOf(a.dataset.lk) > ORDER.indexOf(r.lk), 300); }, true);
@@ -536,6 +549,7 @@
       clearTimeout(idle); idle = setTimeout(() => { const h = hdr.offsetHeight; if (off > 0 && off < h) set(off > h / 2 && window.scrollY > h ? h : 0, true); }, 140);
     }, { passive: true });
     // a new screen always starts with the top showing
+    V.showTop = () => set(0, true);
     let hk = ''; document.addEventListener('rivl:rendered', () => { lastY = window.scrollY; const r = V.route && V.route(); const k = r ? r.name + '/' + (r.args || []).join('/') : ''; const keep = render.keepHdr; render.keepHdr = false; if (k === hk || keep) { hk = k; return; } hk = k; set(0, true); });   // a refresh of the same screen, or a league swipe, leaves the top where it is
   })();
   const flwHTML = (on, what) => window.RIVL_flw(on, what);
