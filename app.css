@@ -4576,3 +4576,10 @@ html:root body .nowc.nhero{padding:16px 14px!important}
 /* v333: the phone owns vertical scrolling; a sideways drag on a page is left to the app (league swipe, profile pull).
    Strips that scroll sideways are their own scroll boxes, so they keep their sideways scroll. */
 html:root body #main,html:root body .xpeek,html:root body #hdr{touch-action:pan-y pinch-zoom}
+/* v335: switching tabs never moves the page. The new screen only fades in (no 8px rise), and quicker, so the two screens
+   are never layered long enough to read as a double image */
+html:root body #main.enter>*{animation:tabfade 160ms linear both!important}
+html:root body #main.fade:not([data-dir]){animation:tabfade 160ms linear both!important}
+html:root body .xghost.out:not([data-dir]){animation:screenout 160ms linear both!important}
+@keyframes tabfade{from{opacity:0}to{opacity:1}}
+html:root body #main.enter>.gxpage,html:root body #main.fade>.gxpage{animation:none!important}
