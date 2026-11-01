@@ -131,6 +131,10 @@
     g.style.cssText = `left:${r.left}px;width:${r.width}px`;
     const c = $main.cloneNode(true); c.removeAttribute('id'); c.className = ''; c.style.cssText = `transform:translateY(${r.top}px)`;
     g.appendChild(c); document.body.appendChild(g);
+    /* a copy starts every sideways strip at its left end, so the date strip (and any rail) jumped inside the fading copy.
+       Put each one back where it was. */
+    const src = $main.querySelectorAll('*'), dst = c.querySelectorAll('*');
+    for (let i = 0; i < src.length; i++) { const x = src[i].scrollLeft; if (x && dst[i]) dst[i].scrollLeft = x; }
     g.addEventListener('animationend', () => g.remove()); setTimeout(() => g.remove(), 1500);   // it fades once the new screen is ready (fadeIn adds .out); never outstays its welcome
   }
   window.addEventListener('hashchange', render);
