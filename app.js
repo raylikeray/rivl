@@ -412,11 +412,11 @@
     const ret = V._.retInfo(L, det.returnDate);
     const rows = [['Status', `<span class="tag ${cls}">${esc(V._.statusWord(st))}</span>`], ['Injury', esc(what || '—')], ['Reported', x.date ? esc(new Date(x.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: HW.TZ })) : ''], ['Expected back', ret ? esc(ret.long) : (/out/i.test(st) ? 'No date given' : '')], ['Fantasy', det.fantasyStatus && det.fantasyStatus.description ? esc(det.fantasyStatus.description) : '']].filter(([, v]) => v);
     const note = x.longComment || x.shortComment || '';
+    const ib = V._.injBody(L, x, false); const tl = team.logo || (team.id && HW.S && HW.S.tIdx && HW.S.tIdx[team.id] && HW.S.tIdx[team.id].logo) || '';
+    const who = `${V._.headshot(V._.hsUrl(at) || at.headshot || '', V._.teamColor(team, L), 56, at.displayName)}<span><b>${esc(at.displayName || '')}</b><em>${tl ? V._.imgSized(tl, 48, 48) : ''}${esc(team.short || '')}</em></span>`;
     openPanel(`<button class="ib close" data-act="panel-close" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-      <div class="inj-head">${id ? `<a href="#player/${lk}/${esc(id)}" data-act="panel-close" aria-label="${esc(at.displayName || '')} profile">` : ''}${V._.headshot(V._.hsUrl(at), V._.teamColor(team, L), 64, at.displayName)}${id ? '</a>' : ''}<div><h3>${esc(at.displayName || '')}</h3><p>${esc(team.short || '')}${at.position && at.position.abbreviation ? `, ${esc(at.position.abbreviation)}` : ''}</p></div></div>
-      <table class="tbl kv"><tbody>${rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</tbody></table>
-      ${note ? `<p class="inj-note">${esc(note)}</p>` : ''}
-      <div style="display:flex;gap:8px;margin-top:14px">${id ? `<a class="btn" href="#player/${lk}/${esc(id)}" data-act="panel-close">Open profile</a>` : ''}${team.id ? `<a class="btn ghost" href="#team/${lk}/${esc(team.id)}" data-act="panel-close">${esc(team.short || 'Team')}</a>` : ''}</div>`);
+      <div class="ijs st-${ib.cls}">${id ? `<a class="ijwho" href="#player/${lk}/${esc(id)}" data-act="panel-close" aria-label="Open ${esc(at.displayName || '')}'s profile">${who}<i class="chev">›</i></a>` : `<div class="ijwho">${who}</div>`}${ib.html}
+      <p class="xnote">${x.date ? `Updated ${esc(new Date(x.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: HW.TZ }))} · ` : ''}From the league injury report, through ESPN</p></div>`);
   }
 
   /* ---------- theme: match the phone, or force dark or light ---------- */

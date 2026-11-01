@@ -2709,3 +2709,35 @@ html.gxon body::before{display:none}
 .frow .fface .hs{position:relative;z-index:0}
 .frow .fcr{z-index:3;overflow:hidden}
 .frow .fcr img{position:static;transform:none}
+
+/* injuries, as v7: the sheet leads with who (one tap to the profile), then the status and the four facts; the profile shows it all */
+.ijs{padding:4px 2px 6px}
+.ijwho{display:flex;align-items:center;gap:12px;padding:4px 0 16px;margin-bottom:16px;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
+.ijwho>span:not(.hs){flex:1;min-width:0}
+.ijwho b{display:block;font-size:20px;font-weight:700}
+.ijwho em{display:flex;align-items:center;gap:6px;font-style:normal;font-size:14px;color:var(--ink-3);margin-top:3px}
+.ijwho em img{width:16px;height:16px;object-fit:contain}
+.ijwho .chev{font-style:normal;font-size:26px;color:var(--ink-3)}
+.ijhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ijhead .tag{font-size:13px;padding:6px 12px;border-radius:999px}
+.ijhead b{font-size:24px;font-weight:700;letter-spacing:-.02em}
+.ijdet{margin:12px 0 0;font-size:16px;line-height:1.5;color:var(--ink)}
+.ijgrid{display:grid;grid-template-columns:1fr 1fr;margin-top:16px;border-radius:16px;overflow:hidden;background:var(--line);gap:1px}
+.ijgrid div{background:var(--surf-2);padding:14px 16px}
+.ijgrid span{display:block;font-size:13px;font-weight:600;color:var(--ink-3)}
+.ijgrid b{display:block;font-size:17px;font-weight:700;margin-top:4px;line-height:1.25}
+.ijc{position:relative;overflow:hidden;margin:14px var(--gut-r) 0 var(--gut);padding:18px 18px 16px 22px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(rgba(255,255,255,.055),transparent 56px),var(--surf)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .ijc{background:linear-gradient(rgba(255,255,255,.9),transparent 56px),var(--surf)} }
+.ijc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#E8B43C}
+.ijc.st-out::before{background:#FF375F}.ijc.st-dtd::before{background:#78AAFF}.ijc.st-ok::before{background:#3DDC84}
+.ijh{margin:22px 0 8px;font-size:17px;font-weight:700}
+.ijp{margin:0;font-size:15.5px;line-height:1.55;color:var(--ink-2)}
+.ijtl{position:relative}
+.ijtl div{position:relative;display:grid;grid-template-columns:62px 1fr;gap:12px;padding:8px 0}
+.ijtl div::before{content:"";position:absolute;left:66px;top:0;bottom:0;width:2px;background:var(--line-2)}
+.ijtl div::after{content:"";position:absolute;left:62px;top:14px;width:10px;height:10px;border-radius:999px;background:var(--ink-3)}
+.ijtl div:last-child::after{background:var(--ink)}
+.ijtl span{font-size:13px;font-weight:600;color:var(--ink-3);padding-top:4px}
+.ijtl p{margin:0;padding-left:14px;font-size:15px;line-height:1.45}
+.ijs .xnote,.ijc .xnote{margin:14px 0 0;font-size:12.5px;color:var(--ink-3);line-height:1.4}
+.ijs .ijwho{padding-right:44px}

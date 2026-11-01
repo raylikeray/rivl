@@ -159,6 +159,33 @@
     update(lk, id, patch) { const a = this.all(); const i = a.findIndex(x => x.lk === lk && x.id === String(id)); if (i < 0) return false; const cur = a[i]; const next = { ...cur }; let changed = false; Object.entries(patch).forEach(([k, v]) => { if (v != null && v !== '' && v !== cur[k]) { next[k] = v; changed = true; } }); if (changed) { a[i] = next; store.set('v5:players', a); } return changed; }
   };
 
+  /* ---------- an injury, as v7 shows it: status and body part, the note, then four facts. `full` adds what the report says in
+     its own words and the dates it carries (reported, expected back). Only the feed's words and dates; nothing is made up. ---------- */
+  function injFacts(L, x) {
+    const det = x.details || {}; const st = x.status || '';
+    const cls = /out/i.test(st) ? 'out' : /day/i.test(st) ? 'dtd' : /quest|doubt/i.test(st) ? 'q' : 'ok';
+    const part = [det.side && det.side !== 'Not Specified' ? det.side : '', det.location || det.type || ''].filter(Boolean).join(' ').trim() || det.detail || det.type || 'Injury';
+    const ret = retInfo(L, det.returnDate);
+    const day = d => { const t = new Date(d); return isNaN(t) ? '' : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: HW.TZ }); };
+    const back = ret ? (ret.far ? 'Not this season' : ret.long) : /out/i.test(st) ? 'No date given' : /quest|doubt|day/i.test(st) ? 'Game-time decision' : '';
+    return { cls, part, ret, back, since: x.date ? day(x.date) : '', day, st: statusWord(st) || 'Listed', note: x.shortComment || '', long: x.longComment || '', det };
+  }
+  function injBody(L, x, full) {
+    const f = injFacts(L, x); const cap = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+    const grid = [['Status', f.st], ['Injury', cap(f.part)], ['Expected back', f.back], ['Since', f.since]].filter(([, v]) => v);
+    let h = `<div class="ijhead"><span class="tag ${f.cls === 'dtd' ? 'q' : f.cls}">${esc(f.st)}</span><b>${esc(cap(f.part))}</b></div>`
+      + (f.note ? `<p class="ijdet">${esc(f.note)}</p>` : '')
+      + `<div class="ijgrid">${grid.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>`;
+    if (full) {
+      if (f.long && f.long !== f.note) h += `<h3 class="ijh">The full report</h3><p class="ijp">${esc(f.long)}</p>`;
+      const tl = [[f.since, `Listed as ${f.st.toLowerCase()}${f.part ? `, ${f.part.toLowerCase()}` : ''}`]];
+      if (f.ret && !f.ret.far && !f.ret.past) tl.push([f.day(f.det.returnDate), 'Expected back']);
+      if (tl.some(([d]) => d)) h += `<h3 class="ijh">Timeline</h3><div class="ijtl">${tl.filter(([d]) => d).map(([d, t]) => `<div><span>${esc(d)}</span><p>${esc(t)}</p></div>`).join('')}</div>`;
+      h += `<h3 class="ijh">What's next</h3><p class="ijp">${esc(f.ret ? (f.ret.far ? 'No return date this season.' : f.ret.past ? `The listed return date has passed (${f.ret.long}); no new date yet.` : `Expected back around ${f.ret.long}.`) : /quest|doubt|day/i.test(x.status || '') ? 'A decision usually comes close to tip-off.' : 'No return date has been given.')}</p>`;
+    }
+    return { html: h, cls: f.cls };
+  }
+
   /* ---------- game cards ---------- */
   function statusLine(L, g, timeOnly) {
     if (g.state === 'in') return `<span class="live">${esc(g.detail || 'Live')}</span>`;
@@ -656,9 +683,9 @@
     </div>`;
     let injStrip = '';
     if (injury) {
-      S.injuries = S.injuries || {}; const key = `p:${id}:${injury.id || 0}`; S.injuries[key] = { x: { ...injury, athlete: { id: String(id), displayName: a.displayName, headshot: a.headshot && a.headshot.href, position: a.position } }, id: String(id), team: { id: tm.id, short: tm.shortDisplayName || tm.name || '', color } };
+      S.injuries = S.injuries || {}; const key = `p:${id}:${injury.id || 0}`; S.injuries[key] = { x: { ...injury, athlete: { id: String(id), displayName: a.displayName, headshot: a.headshot && a.headshot.href, position: a.position } }, id: String(id), team: { id: tm.id, short: tm.shortDisplayName || tm.name || '', color, logo: tlogo || '' } };
       const st0 = injury.status || ''; const cls = /out/i.test(st0) ? 'out' : /day|quest|doubt/i.test(st0) ? 'q' : 'ok'; const det = injury.details || {}; const ret = retInfo(L, det.returnDate);
-      injStrip = `<button class="injstrip ${cls}" data-act="injury" data-key="${esc(key)}"><span class="tag ${cls}">${esc(statusWord(st0))}</span><span class="t"><b>${esc(det.type || det.detail || 'Injury')}${det.detail && det.detail !== det.type ? `, ${esc(det.detail.toLowerCase())}` : ''}</b><span>${ret ? (ret.far ? 'No return date this season' : `Expected back around ${esc(ret.long)}`) : esc((injury.shortComment || injury.longComment || 'Tap for the note').slice(0, 70))}</span></span>${chev}</button>`;
+      { const ib = injBody(L, injury, true); injStrip = `<div class="ijc st-${ib.cls}" id="injury">${ib.html}<p class="xnote">${injury.date ? `Updated ${esc(new Date(injury.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: HW.TZ }))} · ` : ''}From the league injury report, through ESPN</p></div>`; }
     }
     // the game log: regular-season games, newest first
     let evRows = [];
@@ -945,5 +972,5 @@
   }
 
   HW.v5 = Object.assign(HW.v5 || {}, { home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
+    _: { injBody, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();
