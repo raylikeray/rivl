@@ -424,8 +424,7 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
   /* the performance log: hold the Settings title for a moment. Copy puts it on the clipboard for Ray. */
   (() => { let pt = 0; const open = () => { if (!HW.perf) return; const txt = HW.perf.text(); openPanel(`<div class="grab"></div><h2 style="margin:0 0 10px">Performance log</h2><p class="legend" style="margin:0 0 10px">Kept on this phone only. Long tasks, dropped frames during gestures, slow jobs.</p><div style="display:flex;gap:8px;margin:0 0 12px"><button class="btn" data-act="perfcopy">Copy</button><button class="btn" data-act="perfreset">Reset</button></div><pre class="perfpre" style="font:11px/1.4 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word;color:var(--ink-2);margin:0">${esc(txt)}</pre>`, { full: true }); };
-    document.addEventListener('pointerdown', e => { const t = e.target.closest('.topbar .ttl, .topbar .t, .topbar h1'); clearTimeout(pt); if (!t || !/^Settings$/.test(t.textContent.trim())) return; pt = setTimeout(open, 650); }, true);
-    ['pointerup', 'pointercancel', 'pointermove'].forEach(ev => document.addEventListener(ev, () => clearTimeout(pt), true));
+    document.addEventListener('click', e => { if (e.target.closest('[data-act="perfopen"]')) { e.preventDefault(); open(); } });
     document.addEventListener('click', e => { const a = e.target.closest('[data-act="perfcopy"],[data-act="perfreset"]'); if (!a) return; e.preventDefault(); if (a.dataset.act === 'perfreset') { HW.perf.reset(); closePanel(); toast('Log cleared'); return; } try { navigator.clipboard.writeText(HW.perf.text()).then(() => toast('Copied')); } catch { toast("Couldn't copy"); } });
   })();
   /* long-pressing a name or a card is not a link to share: no context menu on the app's own controls */
