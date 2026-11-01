@@ -3734,3 +3734,7 @@ html body .rcard .rtop .rij{display:inline-flex;align-items:center;gap:5px;margi
 .pld .dot i{width:11px;height:11px;box-shadow:0 1px 3px rgba(0,0,0,.35)}
 .gpl.sc .pld .dot{box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--pc),0 5px 12px -2px color-mix(in srgb,var(--pc) 60%,transparent)}
 .pld em{margin-top:2px}
+/* stats board back button: a white circle with a soft shadow in light mode, like the settings gear */
+html body .stback{width:44px;height:44px}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) html body .stback, :root:not([data-theme="dark"]) body .stback{background:#fff!important;color:#0F1419!important;box-shadow:0 2px 10px rgba(15,20,25,.12),0 0 0 1px rgba(15,20,25,.06)!important} }
+:root[data-theme="light"] body .stback{background:#fff!important;color:#0F1419!important;box-shadow:0 2px 10px rgba(15,20,25,.12),0 0 0 1px rgba(15,20,25,.06)!important}
