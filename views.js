@@ -756,12 +756,12 @@
     const fmt = (v, l) => v == null ? '—' : /%/.test(l) ? v.toFixed(1) : (Number.isInteger(v) && /^(GP|GS)$/.test(l) ? String(v) : v.toFixed(1));
     const G = [['PTS', 'Points'], ['REB', 'Rebounds'], ['AST', 'Assists'], ['STL', 'Steals'], ['BLK', 'Blocks'], ['TO', 'Turnovers'], ['MIN', 'Minutes'], ['FG%', 'Field goal %'], ['3P%', 'Three %'], ['FT%', 'Free throw %'], ['PF', 'Fouls'], ['GP', 'Games']];
     const grid = G.map(([k, l]) => ({ k, l, v: stat(k) })).filter(x => x.v != null);
+    /* a breakdown: the big number, one bar split by share in the team's tones, and a row per part. Flat, like the rest
+       of the app (it replaced a donut chart) */
     const ring = (segs, center, label, title) => {
-      const live = segs.filter(x => x.v > 0); const total = live.reduce((a, x) => a + x.v, 0); const R = 54, C = 2 * Math.PI * R, gap = live.length > 1 ? 17 : 0; let off = 0;
-      // every slice at least a short dash (a 4% share is a mark, not a hair); the biggest slice gives up the difference
-      const MIN = 12; const shares = live.map(x => x.v / total * C); const lens = shares.map(sh => Math.max(MIN, sh - gap)); const over = lens.reduce((a, b) => a + b, 0) + gap * live.length - C; if (over > 0) { const big = lens.indexOf(Math.max(...lens)); lens[big] = Math.max(MIN, lens[big] - over); }
-      const arcs = live.map((x, i) => { const len = lens[i]; const a = `<circle cx="70" cy="70" r="${R}" style="stroke:${x.c}" stroke-width="13" stroke-linecap="round" stroke-dasharray="${len.toFixed(1)} ${(C - len).toFixed(1)}" stroke-dashoffset="${(-(off + (gap ? gap / 2 : 0))).toFixed(1)}"/>`; off += len + gap; return a; }).join('');
-      return `<div class="ring" style="${toneVars}"><svg width="150" height="150" viewBox="0 0 140 140" role="img" aria-label="${esc(title)}"><g fill="none" transform="rotate(-90 70 70)">${arcs}</g><text x="70" y="73" text-anchor="middle" fill="var(--ink)" style="font:800 34px var(--num)">${esc(center)}</text><text x="70" y="91" text-anchor="middle" fill="var(--ink-3)" style="font:700 11px var(--ui);letter-spacing:.06em">${esc(label)}</text></svg><div class="key">${segs.map(x => `<div><i style="background:${x.c}"></i><span>${esc(x.l)}</span><b>${x.v == null ? '—' : x.v.toFixed(1)}</b><em>${total && x.v > 0 ? Math.round(x.v / total * 100) + '%' : ''}</em></div>`).join('')}</div></div>`;
+      const live = segs.filter(x => x.v > 0); const total = live.reduce((a, x) => a + x.v, 0);
+      const bar = live.length ? `<div class="mixbar" role="img" aria-label="${esc(title)}">${live.map(x => `<i style="flex:${(x.v / total).toFixed(4)} 1 0;background:${x.c}"></i>`).join('')}</div>` : '';
+      return `<div class="mix" style="${toneVars}"><div class="mixtop"><b>${esc(center)}</b><span>${esc(label)}</span></div>${bar}<div class="mixkey">${segs.map(x => `<div><i style="background:${x.c}"></i><span>${esc(x.l)}</span><b>${x.v == null ? '—' : x.v.toFixed(1)}</b><em>${total && x.v > 0 ? Math.round(x.v / total * 100) + '%' : ''}</em></div>`).join('')}</div></div>`;
     };
     // three tints of the team colour that read on both grounds (set per theme in CSS from these variables)
     const toneVars = `--c1d:${esc(V_lift(color))};--c1l:${esc(V_deep(color))};--c2d:${esc(mixTo(V_lift(color), 255, .38))};--c3d:${esc(mixTo(V_lift(color), 255, .68))};--c2l:${esc(mixTo(V_deep(color), 255, .42))};--c3l:${esc(mixTo(V_deep(color), 255, .72))}`;   // the first tone is the colour as it reads on the ground (a black team lifts on black)

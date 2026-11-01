@@ -3868,3 +3868,35 @@ html:root body .legend.lastyear span{font-size:13.5px;line-height:1.45;color:var
 .unrv .ugs{display:flex;flex-direction:column;gap:6px;margin-top:10px}
 .unrv .ug{display:flex;justify-content:space-between;gap:10px;font-size:14.5px}
 .unrv .ug span{color:var(--ink-2)}.unrv .ug b{font-weight:800}
+/* Season averages, redesigned flat: a big number, one split bar, a clean key; stat tiles on a grey well (not white on
+   white), the same chips as everywhere, and one font (Inter) throughout */
+.mix{--c1:var(--c1d);--c2:var(--c2d);--c3:var(--c3d);padding:6px 0 4px}
+:root[data-theme="light"] .mix{--c1:var(--c1l);--c2:var(--c2l);--c3:var(--c3l)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .mix{--c1:var(--c1l);--c2:var(--c2l);--c3:var(--c3l)} }
+.mixtop{display:flex;align-items:baseline;gap:8px}
+.mixtop b{font:800 44px/1 var(--ui);letter-spacing:-.03em;color:var(--ink)}
+.mixtop span{font:700 13px/1 var(--ui);letter-spacing:.04em;color:var(--ink-3)}
+.mixbar{display:flex;gap:3px;height:12px;margin:16px 0 14px;border-radius:999px;overflow:hidden}
+.mixbar i{display:block;min-width:6px;border-radius:2px}
+.mixbar i:first-child{border-radius:999px 2px 2px 999px}.mixbar i:last-child{border-radius:2px 999px 999px 2px}.mixbar i:only-child{border-radius:999px}
+.mixkey{display:flex;flex-direction:column}
+.mixkey div{display:grid;grid-template-columns:10px 1fr auto 44px;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.mixkey div:first-child{border-top:0}
+.mixkey i{width:10px;height:10px;border-radius:3px}
+.mixkey span{font:500 15px/1.2 var(--ui);color:var(--ink-2)}
+.mixkey b{font:800 17px/1 var(--ui);color:var(--ink)}
+.mixkey em{font:700 13px/1 var(--ui);font-style:normal;color:var(--ink-3);text-align:right}
+html body .card.avg .card-h h2{font:800 20px/1.2 var(--ui);letter-spacing:-.01em}
+html body .card.avg .card-h small{font:600 13.5px/1.2 var(--ui);color:var(--ink-3)}
+html body .card.avg .sgrid{gap:8px;margin-top:14px}
+html body .card.avg .sgrid div{background:var(--surf-2)!important;box-shadow:none!important;border:0!important;border-radius:14px;padding:14px 6px 12px}
+html body .card.avg .sgrid b{font:800 22px/1 var(--ui);letter-spacing:-.02em}
+html body .card.avg .sgrid span{display:block;margin-top:6px;font:600 12.5px/1.2 var(--ui);color:var(--ink-3)}
+html body .card.avg .card-f{padding:12px 0 0;border:0}
+html body .card.avg .card-f button{display:block;width:100%;padding:12px 0;border-radius:14px;background:var(--surf-2);color:var(--ink);font:700 14.5px/1 var(--ui);text-align:center}
+html body .card.avg .bars div b{font-family:var(--ui)}
+/* one font everywhere: Inter first on every device, the system font only as a fallback */
+:root{--ui:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--num:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+html,body,button,input,select,textarea{font-family:var(--ui)}
+html:root body .card.avg .chips .chip{background:var(--surf-2)!important;color:var(--ink)!important;border:0!important;box-shadow:none!important;font:700 14px/1 var(--ui)}
+html:root body .card.avg .chips .chip.on{background:var(--ink)!important;color:var(--card)!important}
