@@ -4193,3 +4193,18 @@ html:root body .xpban::after{display:none}
 .xrate{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
 .xrate>b{font-size:26px;font-weight:800;min-width:44px;text-align:center}.xrate>span{display:flex;flex-direction:column;min-width:0}.xrate>span b{font-size:14px;font-weight:800}.xrate>span em{font-style:normal;font-size:13.5px;color:var(--ink-3)}
 .xpfull .xfacts{margin-top:10px}
+/* an open sheet no longer locks the page with overflow:hidden (that made the page underneath jump and the top bar drop in);
+   the dimmed backdrop just swallows touches and the sheet keeps its own scroll */
+html body.noscroll{overflow:visible!important}
+#bsheet .scrim{touch-action:none}
+#bsheet .bpanel{overscroll-behavior:contain}
+/* one tab line everywhere (leagues, game, team, player and stats tabs): 3px, rounded, the ink colour, word + 20px wide,
+   sliding on the same curve */
+html:root body .gxtabs .gxind{height:3px!important;bottom:0!important;transition:transform .34s cubic-bezier(.25,.8,.25,1),width .34s cubic-bezier(.25,.8,.25,1)!important}
+html:root body .gxtabs{overflow:visible}
+/* switching to a short tab (Bio, News) never pulls the page back down to the photo: the tab body is always at least a
+   screen tall, so the tabs stay pinned where they were */
+.gxpage #tbody{min-height:100dvh}
+/* no focus ring left on a tapped chip or tab */
+html:root body :is(.chip,.pill,.tab,button):focus:not(:focus-visible){outline:none!important}
+@media (pointer:coarse){ html:root body :is(.chip,.pill,.tab,button,a):focus{outline:none!important} }

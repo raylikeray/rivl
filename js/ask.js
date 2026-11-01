@@ -77,7 +77,9 @@
       for (const a of e.al) { if (a.startsWith(nq)) sc = Math.max(sc, 3); for (const w of a.split(' ')) {
         if (w.startsWith(last)) sc = Math.max(sc, 2); else if (last.length >= 4 && lev(last, w) <= (last.length >= 7 ? 2 : 1)) sc = Math.max(sc, 1); } }
       if (sc) out.push({ e, sc: sc + (e.type === 'p' ? Math.min(.4, ((e.p.s || {}).pts || 0) / 80) + (e.lk === 'nba' ? .2 : 0) : e.type === 't' ? (e.lk === 'nba' ? .3 : .1) : 0) }); }
-    return out.sort((a, b) => b.sc - a.sc).slice(0, 8).map(x => x.e);
+    // every name the query spells out comes first (all of them in "A vs B vs C"), then what the last word is starting to spell
+    const named = findAll(ents, q).hits.map(h => h.e).filter(ok);
+    return [...named, ...out.sort((a, b) => b.sc - a.sc).map(x => x.e).filter(e => !named.includes(e))].slice(0, 8);
   }
 
   /* ---------- small pieces ---------- */
@@ -92,7 +94,7 @@
   function who(e, sub) { return `<a class="xwho" href="${pHref(e)}">${face(e, 48)}<span><b>${esc(e.name)}</b><em>${esc(sub || [e.team ? e.team.short || e.team.name : e.p.teamName, e.p.pos, LNAME(e.lk)].filter(Boolean).join(' · '))}</em></span>${_.chev}</a>`; }
   function twho(e, sub) { return `<a class="xwho" href="${tHref(e)}">${crest(e.t, 44)}<span><b>${esc(e.t.name || e.t.short)}</b><em>${esc(sub || LNAME(e.lk))}</em></span>${_.chev}</a>`; }
   const card = (head, line, facts, note, src) => `<div class="xans">${head}${line ? `<p class="xline">${line}</p>` : ''}${facts && facts.length ? `<div class="xfacts">${facts.filter(f => f[1] != null && f[1] !== '').map(f => `<div><span>${esc(f[0])}</span><b>${esc(String(f[1]))}</b></div>`).join('')}</div>` : ''}${note ? `<p class="xnote">${note}</p>` : ''}${src ? `<p class="xsrc">${esc(src)}</p>` : ''}</div>`;
-  const NOPE = 'MSHQ doesn\'t have that.';
+  const NOPE = 'RIVL doesn\'t have that.';
   async function bio(e) { const L = L_(e.lk); const d = await HW.jSoft(`${HW.WEB(L)}/athletes/${e.id}`, 3600000).catch(() => null); return d && (d.athlete || d) || null; }
   const statLine = (p, lk) => { const { s, label } = statsOf(p); return `${one(s.pts)} points, ${one(s.reb)} rebounds and ${one(s.ast)} assists a game${label ? ` ${label}` : (lk === 'ncaam' || lk === 'ncaaw') && p.lastSeason ? ' last season' : ''}`; };
 
@@ -252,7 +254,7 @@
     return `<div class="xans xcmp"><div class="xch" ${cols}>${es.map(e => `<a href="${pHref(e)}" style="${_.tcv(pColor(e))}">${face(e, n > 3 ? 46 : n > 2 ? 54 : 64)}<b>${esc(e.name.replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/i, '').split(' ').slice(-1)[0])}</b><em>${esc((e.team && (e.team.abbr || e.team.short)) || e.p.team)}${e.lk !== 'nba' ? ' · ' + esc(LNAME(e.lk)) : ''}</em></a>`).join('')}</div><p class="xnote xc">${lbl}</p>`
       + rows.map(([label, k]) => { const vals = es.map(e => typeof k === 'function' ? k(e) : v(e, k)); const nums = vals.filter(x => x != null); const best = k === 'min' || k === 'gp' ? null : nums.length ? Math.max(...nums) : null;
           return `<div class="xcr"><span>${label}</span><div ${cols}>${vals.map(x => `<b class="${x != null && best != null && Math.abs(x - best) < 1e-9 && nums.length > 1 ? 'w' : ''}">${x == null ? '-' : k === 'gp' ? Math.round(x) : one(x)}</b>`).join('')}</div></div>`; }).join('')
-      + `<p class="xsrc">ESPN stats, through MSHQ's data file</p></div>`;
+      + `<p class="xsrc">ESPN stats, through RIVL's data file</p></div>`;
   }
   async function cmpTeams(a, b) {
     const same = a.lk === b.lk;
@@ -460,7 +462,7 @@
       <div id="xres"></div><div id="xwebb"></div>
       <div id="xbrowse"${q0 ? ' hidden' : ''}>${recent.length ? `<div class="sec"><h2>Recent</h2><button data-act="xrclear">Clear</button></div><div class="xlist">${recent.map(r => `<button class="xrow xrq" data-xq="${esc(r)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg><span><b>${esc(r)}</b></span></button>`).join('')}</div>` : ''}
         <div class="sec"><h2>Try asking</h2></div><div class="xtry">${TRY.map(t => `<button class="chip" data-xq="${esc(t)}">${esc(t)}</button>`).join('')}</div>
-        <p class="xfoot">Answers come from MSHQ's own data first, then Wikidata, Wikipedia and ESPN. Every card names its source, and when no source has the answer it says so.</p></div></div>`;
+        <p class="xfoot">Answers come from RIVL's own data first, then Wikidata, Wikipedia and ESPN. Every card names its source, and when no source has the answer it says so.</p></div></div>`;
     const inp = $main.querySelector('#xq'); let t = null, filter = f0;
     const go = v => { store.set('v5:xq', v); clearTimeout(t); t = setTimeout(() => run(v, filter), 140); };
     const remember = v => { v = String(v || '').trim(); if (v.length < 2) return; const a = (store.get('v5:xrecent', []) || []).filter(x => x.toLowerCase() !== v.toLowerCase()); a.unshift(v); store.set('v5:xrecent', a.slice(0, 8)); };
@@ -476,7 +478,7 @@
       if (e.target.closest('a.xrow, a.xans, a.xwho, a.xgo') && inp.value) remember(inp.value);
     });
     if (q0) run(q0, filter); else index();   // build the index while the person starts typing
-    document.title = 'Search · MSHQ';
+    document.title = 'Search · RIVL';
   }
 
   HW.ask = { index, findAll, suggest, answer, norm, lev, cmpPlayers };

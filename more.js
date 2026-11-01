@@ -245,7 +245,9 @@
       const on = t.querySelector('.chip.on, .chip[aria-pressed="true"]');
       let ind = t.querySelector(':scope > .gxind');
       if (!on) { if (ind) ind.style.opacity = '0'; return; }
-      const x = on.offsetLeft, w = on.offsetWidth; if (!w) return;
+      // one rule for every tab line in the app (the leagues too): as wide as the word plus 10px each side, centred under it
+      const rg = document.createRange(); rg.selectNodeContents(on); const tw = rg.getBoundingClientRect().width || on.offsetWidth;
+      const w = Math.round(tw + 20), x = Math.round(on.offsetLeft + (on.offsetWidth - w) / 2); if (!on.offsetWidth) return;
       if (!ind) {
         ind = document.createElement('i'); ind.className = 'gxind'; ind.setAttribute('aria-hidden', 'true'); t.appendChild(ind);
         const from = lastKey === key() && last ? last : { x, w };

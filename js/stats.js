@@ -19,7 +19,8 @@
   async function statsV(lk) {
     const L = LEAGUES[lk], $main = document.getElementById('main');
     const tab0 = store.get('v5:sttab', 'players'), board0 = store.get('v5:stboard:' + lk, '');
-    $main.innerHTML = _.skeleton(1, 'card') + _.skeleton(3, 'card');
+    // the title and tabs paint at once, so the screen is never blank while the numbers load
+    $main.innerHTML = `<div class="stpage"><div class="page-h"><h1>Stats</h1><p>${esc(L.label)}</p></div>${(_.skeleton(1, 'card') + _.skeleton(3, 'card')).replace(/<!--skel-->/g, '')}</div>`;
     const [lg, idx, st0, TS] = await Promise.all([HW.hub.league(L).catch(() => null), V.teamsIndex(L).catch(() => ({})), HW.standings(L).catch(() => null), HW.teamStats ? HW.teamStats(L).catch(() => null) : null]);
     /* team numbers come from the same season as the player numbers: when the league is showing last season (college before
        its games start), the team boards read last season's final standings, not this season's 0-0 table */
@@ -121,7 +122,7 @@
       if (e.target.closest('[data-act="stback"]')) { board = ''; store.set('v5:stboard:' + lk, ''); paint(); window.scrollTo(0, 0); return; }
       const c = e.target.closest('.stcmp[data-xq]'); if (c) { store.set('v5:xq', c.dataset.xq); store.set('v5:xf', 'all'); location.hash = '#search'; }
     });
-    document.title = `Stats · ${L.label} · MSHQ`;
+    document.title = `Stats · ${L.label} · RIVL`;
   }
   V.stats = statsV;
 })();

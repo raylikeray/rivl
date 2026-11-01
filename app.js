@@ -351,6 +351,7 @@
       if (bar) { const H = hdr.offsetHeight || 1, b = bar.offsetHeight + 24; bar.style.transition = tr; bar.style.transform = off ? `translate3d(0,${(off / H * b).toFixed(1)}px,0)` : ''; } };
     window.addEventListener('scroll', () => {
       if (!phone.matches) { if (off) set(0); return; }
+      if (document.querySelector('#bsheet.on, .xpsheet.in, .xdrawer.in')) { lastY = window.scrollY; return; }   // a sheet or the side panel is open: the bars stay put
       if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) { lastY = window.scrollY; return; }   // the bottom bounce never counts as scrolling up
       const y = Math.max(0, window.scrollY), H = hdr.offsetHeight, dy = y - lastY; lastY = y;
       set(Math.min(H, Math.max(0, Math.min(off + dy, y))), false);

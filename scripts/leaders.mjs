@@ -77,7 +77,12 @@ async function pickSeason(L, cand) { for (const y of cand) { const j = await J(B
 // ---------- College: last season, current rosters only ----------
 for (const L of ['ncaam', 'ncaaw']) {
   const cur = await pickSeason(L, [Y + 1]);
-  const live = (await J(BY(L, Y + 1, 'offensive.avgPoints', 1, 5, true)))?.athletes?.length > 0;
+  /* the new season counts as live only when it really has its own games: ESPN answers a not-yet-started season with last
+     season's numbers, so the two are compared, and a top line that matches last season player for player is last season */
+  const top = async y => { const j = await J(BY(L, y, 'offensive.avgPoints', 1, 10, false)); return j ? flatten(j).map(p => `${p.id}:${p.s.gp}:${p.s.pts}`) : []; };
+  const [tNew, tOld] = await Promise.all([top(Y + 1), top(Y)]);
+  const live = tNew.length > 0 && tNew.filter(x => tOld.includes(x)).length < 3;
+  console.log(L, 'new season live?', live, tNew.slice(0, 3), tOld.slice(0, 3));
   if (live) {
     const all = await pull(L, Y + 1, SORTS, 300, true);
     out.leagues[L] = { label: `${Y}-${String(Y + 1).slice(2)}`, year: Y + 1, final: false, players: all.players };
@@ -111,6 +116,17 @@ async function sparql(q) { try { const r = await fetch('https://query.wikidata.o
   const wmap = new Map(); wb.forEach(b => { if (/^\d+$/.test(b.w.value)) wmap.set(nn(b.l.value), b.w.value); }); let whit = 0;
   (out.leagues.wnba?.players || []).forEach(p => { const h = wmap.get(nn(p.n)); if (h) { p.hd = h; whit++; } });
   console.log('hd photos', 'nba', hit, 'wnba', whit);
+}
+// a college player who is now on an NBA or WNBA roster is a pro: drop them from college (men's against the NBA, women's against
+// the WNBA), and remember where they went so the app can send an old college link to the pro page
+{
+  const nn = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '');
+  for (const [cl, pro] of [['ncaam', 'nba'], ['ncaaw', 'wnba']]) {
+    const C = out.leagues[cl], P = out.leagues[pro]; if (!C || !P) continue;
+    const pros = new Map(P.players.map(p => [nn(p.n), p]));
+    const gone = []; C.players = C.players.filter(p => { const q = pros.get(nn(p.n)); if (q) { gone.push({ id: p.id, n: p.n, to: pro, pid: q.id, team: q.team }); return false; } return true; });
+    C.turnedPro = gone; console.log(cl, 'turned pro', gone.length);
+  }
 }
 // keep the file light: drop college players with too few games, round numbers
 for (const [L, v] of Object.entries(out.leagues)) {

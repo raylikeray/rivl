@@ -678,6 +678,8 @@
   /* ================= PLAYER ================= */
   async function player(lk, id) {
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Player not found'); return; }
+    /* a college player who has turned pro opens as the pro: their NBA or WNBA page, this season's team and numbers */
+    if (lk.startsWith('ncaa') && HW.hub) { const lg = await HW.hub.league(L).catch(() => null); const tp = lg && (lg.turnedPro || []).find(x => String(x.id) === String(id)); if (tp && tp.pid) { location.replace(`#player/${tp.to}/${tp.pid}`); return; } }
     /* a refresh of the player already on screen keeps the page up while the new numbers load, then swaps it in place at the
        same scroll and tab, so the face never blinks out and back */
     const same = $main.querySelector(`#gpage.plpage[data-pid="${String(id)}"]`);
