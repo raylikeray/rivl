@@ -4007,3 +4007,6 @@ html:root body #pills.pills::after{height:3px!important;bottom:0}
 .pczoom::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-9px;border-radius:50%;background:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.3)}
 .pczoom::-moz-range-track{height:4px;border-radius:999px;background:var(--surf-2)}
 .pczoom::-moz-range-thumb{width:22px;height:22px;border:0;border-radius:50%;background:var(--ink)}
+/* game, player and team pages: no icon, no R, no league row (like X's game pages) */
+html:root body .top.xtop[hidden],html:root body #pills.pills[hidden]{display:none!important}
+html:root body .hdr:has(> .top[hidden]):has(> #pills[hidden]){display:none!important}
