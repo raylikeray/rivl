@@ -3341,3 +3341,7 @@ html body .plpage .gx.solo .w>i:nth-child(2){width:95%!important;height:75%!impo
 .plh .pltx .flw{margin-top:12px}
 .plh::after{height:40%}
 .plh .plwm{top:calc(var(--gxbar) + 10px)}
+/* the sheet's rounded top overlaps the hero by 22px: keep the Follow pill clear of it */
+.gxpage.plpage{--gxh:calc(var(--gxbar) + 474px)}
+.plh .pltx{bottom:42px!important}
+.plh .plshot{bottom:22px!important}
