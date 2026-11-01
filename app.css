@@ -4289,3 +4289,4 @@ html:root body .tabs.flat5 .tab.on{color:var(--ink)!important}
 /* Search: the example questions, grouped by what they are about */
 .xtryg{margin:0 0 14px}.xtryh{margin:0 0 7px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
 .xtry .chip{white-space:nowrap}
+#main>.updat{animation:none}.updat{margin:4px var(--pg) 10px;text-align:center;font-size:12px;color:var(--ink-3);animation:none}

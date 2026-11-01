@@ -197,6 +197,16 @@
     staleEl.innerHTML = `<span></span>${navigator.onLine === false ? 'Offline' : 'Feed not answering'} · showing the last copy from ${m} min ago`;
     staleEl.hidden = false;
   }
+  /* a quiet line at the foot of Following and Scores saying when the numbers were last fetched */
+  const updAt = () => {
+    const r = current || route(); const want = r && (r.name === 'home' || r.name === 'scores') && $main.dataset.real === '1' && lastOk;
+    let el = $main.querySelector(':scope > .updat');
+    if (!want) { if (el) el.remove(); return; }
+    if (!el) { el = document.createElement('p'); el.className = 'updat'; $main.appendChild(el); }
+    const s = Math.round((Date.now() - lastOk) / 1000); const w = s < 45 ? 'just now' : s < 90 ? '1 min ago' : s < 3600 ? `${Math.round(s / 60)} min ago` : new Date(lastOk).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const t = `Updated ${w} · pull down to refresh`; if (el.textContent !== t) el.textContent = t;
+  };
+  document.addEventListener('rivl:polled', updAt); document.addEventListener('rivl:rendered', () => setTimeout(updAt, 50)); setInterval(updAt, 30000);
   window.addEventListener('online', () => { stale(false); poll(); }); window.addEventListener('offline', () => stale(true));
   /* swap live scores into the cards on screen without repainting the whole page */
   function refreshCards() {
