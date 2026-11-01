@@ -113,6 +113,8 @@
        team or a player from a score card: those are children of the day you were on, and coming back lands on that day. */
     if (leagueScreen && r.name !== 'scores') store.set('v5:date', todayCT());
     document.getElementById('top').hidden = !leagueScreen;
+    // a game, team or player page is full screen, like X's game page: no bottom bar; the back button takes you out
+    document.documentElement.classList.toggle('entity', ['game', 'team', 'player', 'venue'].includes(r.name));
     paintPills(r.lk, leagueScreen);
     /* the bar lights the tab you are in; a player, team or game page keeps lit the tab you opened it from */
     const TABS = ['scores', 'standings', 'home', 'stats', 'search'], tabOf = n => n === 'players' || n === 'teams' ? 'home' : n;
