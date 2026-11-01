@@ -208,15 +208,19 @@
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const tier = o => o >= 90 ? 't5' : o >= 80 ? 't4' : o >= 70 ? 't3' : o >= 60 ? 't2' : 't1';
   function hexSVG(R, sel) {
-    const W = 360, H = 318, cx = W / 2, cy = H / 2 + 4, Rr = 96;
+    const W = 360, H = 318, cx = W / 2, cy = H / 2 + 4, Rr = 96, uid = 'hx' + R.id;
     const ang = i => (-90 + i * 60) * Math.PI / 180, P = (i, r) => [cx + r * Math.cos(ang(i)), cy + r * Math.sin(ang(i))], f = n => n.toFixed(1);
-    let s = `<svg class="hexsvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Six traits compared to other ${R.posWord}">`;
-    [1, .66, .33].forEach((k, j) => { s += `<polygon class="hxr${j ? ' d' : ''}" points="${[0, 1, 2, 3, 4, 5].map(i => P(i, Rr * k).map(f).join(',')).join(' ')}"/>`; });
-    for (let i = 0; i < 6; i++) s += `<line class="hxr" x1="${cx}" y1="${cy}" x2="${f(P(i, Rr)[0])}" y2="${f(P(i, Rr)[1])}"/>`;
-    R.traits.forEach((t, i) => { const r = Rr * Math.max(.03, t.pct / 100), a = P(i, r), b = P(i + 1, r);
-      s += `<path class="hxw${t.key === sel ? ' on' : ''}" data-hex="${t.key}" style="--d:${i * 45}ms;fill-opacity:${(.5 + .45 * t.pct / 100).toFixed(2)}" d="M${cx},${cy}L${f(a[0])},${f(a[1])}L${f(b[0])},${f(b[1])}Z"/>`;
-      // a wide invisible target so a small wedge is still easy to tap
-      const A = P(i, Rr + 30), B = P(i + 1, Rr + 30); s += `<path class="hxt" data-hex="${t.key}" d="M${cx},${cy}L${f(A[0])},${f(A[1])}L${f(B[0])},${f(B[1])}Z"/>`; });
+    const ring = k => [0, 1, 2, 3, 4, 5].map(i => P(i, Rr * k).map(f).join(',')).join(' ');
+    const wedge = (i, r) => { const a = P(i, r), b = P(i + 1, r); return `M${cx},${cy}L${f(a[0])},${f(a[1])}L${f(b[0])},${f(b[1])}Z`; };
+    const grid = cls => [.33, .66].map(k => `<polygon class="${cls} d" points="${ring(k)}"/>`).join('') + [0, 1, 2, 3, 4, 5].map(i => `<line class="${cls}" x1="${cx}" y1="${cy}" x2="${f(P(i, Rr)[0])}" y2="${f(P(i, Rr)[1])}"/>`).join('');
+    const wr = R.traits.map(t => Rr * Math.max(.03, t.pct / 100));
+    let s = `<svg class="hexsvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Six traits compared to other ${R.posWord}"><defs><clipPath id="${uid}">${R.traits.map((t, i) => `<path d="${wedge(i, wr[i])}"/>`).join('')}</clipPath></defs>`;
+    // under the colour: the full hexagon, its rings and spokes, so an empty trait still shows its slice
+    s += `<polygon class="hxbg" points="${ring(1)}"/>` + grid('hxr');
+    R.traits.forEach((t, i) => { s += `<path class="hxw${t.key === sel ? ' on' : ''}" data-hex="${t.key}" style="--d:${i * 45}ms;fill-opacity:${(.55 + .45 * t.pct / 100).toFixed(2)}" d="${wedge(i, wr[i])}"/>`; });
+    // over the colour, as FotMob does: the same rings and spokes in light dashes, only where a trait is filled in
+    s += `<g class="hxover" clip-path="url(#${uid})">${grid('hxo')}</g><polygon class="hxedge" points="${ring(1)}"/>`;
+    R.traits.forEach((t, i) => { const A = P(i, Rr + 30), B = P(i + 1, Rr + 30); s += `<path class="hxt" data-hex="${t.key}" d="M${cx},${cy}L${f(A[0])},${f(A[1])}L${f(B[0])},${f(B[1])}Z"/>`; });
     R.traits.forEach((t, i) => { const m = (ang(i) + ang(i + 1)) / 2, c = Math.cos(m); let x = cx + (Rr + 22) * c, anc = c > .3 ? 'start' : c < -.3 ? 'end' : 'middle'; const y = cy + (Rr + 30) * Math.sin(m) - 4;
       if (Math.abs(c) > .9) { anc = c > 0 ? 'end' : 'start'; x = c > 0 ? W - 4 : 4; }
       s += `<g class="hxl${t.key === sel ? ' on' : ''}" data-hex="${t.key}"><text x="${f(x)}" y="${f(y)}" text-anchor="${anc}" class="hxn">${t.label}</text><text x="${f(x)}" y="${f(y + 19)}" text-anchor="${anc}" class="hxp">${t.pct}%</text></g>`; });
@@ -227,7 +231,7 @@
     const g = R.raw, season = R.season ? esc(String(R.season).replace(/ Regular Season$/i, '')) : 'This season';
     const early = R.early ? `<p class="hxnote">Early estimate: ${Math.round(R.sample)} minutes played so far, so this leans on what a typical bench player does and firms up as he plays.</p>` : '';
     return `<div class="gxplate rtcard"><div class="rth"><span class="rtl">${esc(opts.league || 'NBA')}</span><b>${season}</b></div><div class="rtrow"><div><b>${g.gp}</b><span>Games</span></div><div><b>${(Math.round(g.pts * 10) / 10).toFixed(1)}</b><span>Points</span></div><div><b class="rtb ${tier(R.ovr)}">${R.ovr}</b><span>RIVL rating</span></div></div><p class="rtsum">${esc(summary(R))}</p></div>`
-      + `<div class="gxplate hxcard" data-rid="${esc(R.id)}"><div class="hxh"><b>Player traits</b><span>Compared to other ${R.posWord}. Tap a trait for the numbers.</span></div>${hexSVG(R, best)}<div class="hxdet" aria-live="polite"><b>${R.traits.find(t => t.key === best).label} ${R.traits.find(t => t.key === best).pct}%</b><span>${esc(detail(R, best))}</span></div>${early}<button class="hxhow" data-act="rthow">How the rating works</button></div>`;
+      + `<div class="gxplate hxcard" data-rid="${esc(R.id)}"><div class="hxh"><b>Player traits</b><span>Compared to other ${R.posWord}<button class="hxq" data-act="rthow" aria-label="How the rating works">?</button></span></div>${hexSVG(R, best)}<div class="hxdet" aria-live="polite"><b>${R.traits.find(t => t.key === best).label} ${R.traits.find(t => t.key === best).pct}%</b><span>${esc(detail(R, best))}</span></div>${early}</div>`;
   }
   const live = {};   // the rating behind each card on screen, for the taps
   function mount(el, R, opts) { live[R.id] = R; el.innerHTML = cards(R, opts); }
@@ -235,8 +239,8 @@
     const h = e.target.closest && e.target.closest('[data-hex]'); if (h) { const card = h.closest('.hxcard'); const R = card && live[card.dataset.rid]; if (!R) return; const k = h.dataset.hex, t = R.traits.find(x => x.key === k);
       card.querySelectorAll('.hxw,.hxl').forEach(x => x.classList.toggle('on', x.dataset.hex === k));
       const d = card.querySelector('.hxdet'); d.innerHTML = `<b>${t.label} ${t.pct}%</b><span>${esc(detail(R, k))}</span>`; return; }
-    const how = e.target.closest && e.target.closest('[data-act="rthow"]'); if (how) { e.preventDefault(); const card = how.closest('.hxcard'); let p = card.querySelector('.hxexp'); if (p) { p.remove(); how.textContent = 'How the rating works'; return; }
-      card.insertAdjacentHTML('beforeend', `<div class="hxexp"><p><b>Built only from his stats.</b> Every stat is turned into a rate per 36 minutes and compared with players at his position. Six traits come from those rates, and the percentage is the share of ${R.posWord} he beats.</p><p><b>Small samples are held back.</b> A few hot games barely move a player until the minutes back them up. Last season counts too, fading out as this season fills in.</p><p><b>The overall</b> weights impact most, then scoring, playmaking, shooting, defense and rebounding, plus the minutes his coach gives him, and is placed on the 2K scale: a 74 is a typical rotation player, 82 is the top 15%, 90 the top 3%, and the league's best is a 99.</p><p><b>Defense is the hardest to measure</b> from a box score: steals, blocks, defensive rebounds, fouls and his team's defense while he plays.</p></div>`); how.textContent = 'Hide'; }
+    const how = e.target.closest && e.target.closest('[data-act="rthow"]'); if (how) { e.preventDefault(); const card = how.closest('.hxcard'); let p = card.querySelector('.hxexp'); if (p) { p.remove(); how.classList.remove('on'); return; }
+      card.insertAdjacentHTML('beforeend', `<div class="hxexp"><p><b>Built only from his stats.</b> Every stat is turned into a rate per 36 minutes and compared with players at his position. Six traits come from those rates, and the percentage is the share of ${R.posWord} he beats.</p><p><b>Small samples are held back.</b> A few hot games barely move a player until the minutes back them up. Last season counts too, fading out as this season fills in.</p><p><b>The overall</b> weights impact most, then scoring, playmaking, shooting, defense and rebounding, plus the minutes his coach gives him, and is placed on the 2K scale: a 74 is a typical rotation player, 82 is the top 15%, 90 the top 3%, and the league's best is a 99.</p><p><b>Defense is the hardest to measure</b> from a box score: steals, blocks, defensive rebounds, fouls and his team's defense while he plays.</p><p>Tap any trait on the chart for the numbers behind it.</p></div>`); how.classList.add('on'); }
   });
 
   HW.rating = { compute, detail, summary, get, cards, mount, POS, TRAITS };
