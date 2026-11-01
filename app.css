@@ -4472,3 +4472,43 @@ html:root body #main .hsec[data-sec="wire"]{background:none!important;box-shadow
 html:root body #main .hsec[data-sec="wire"] .wire{margin:0 0 14px!important}
 /* the live bar loses its progress line */
 html:root body .livebar .lg .lpr{display:none!important}
+
+/* v326: the live bar built the way Spotify builds its mini player.
+   Measured from Ray's Spotify recording (1080px wide, about 2.7x): 8px side gap, 56px tall, 6px corners, a 40px square of art with
+   4px corners at the left, a bold title over a grey second line, the controls at the right, one flat color taken from the art,
+   and no shadow at all. Here the art is the two crests, the right side is the score, the color is your team's. */
+html:root body .livebar .lg.sp{height:56px!important;padding:0 14px 0 8px!important;gap:10px!important;border-radius:6px!important;box-shadow:none!important;
+  background:color-mix(in srgb,var(--cb) 58%,#121212)!important}
+html:root body .livebar .lg.sp:active{transform:scale(.985)}
+html:root body .livebar .lg.sp .lart{position:relative;flex:none;width:40px;height:40px;border-radius:4px;overflow:hidden;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--ca) 70%,#fff) 0 50%,color-mix(in srgb,var(--ch) 70%,#fff) 50% 100%)}
+html:root body .livebar .lg.sp .lart .logo{position:absolute!important;width:22px!important;height:22px!important;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))!important;margin:0!important}
+html:root body .livebar .lg.sp .lart .logo:first-child{left:3px;top:3px}
+html:root body .livebar .lg.sp .lart .logo:last-child{right:3px;bottom:3px}
+html:root body .livebar .lg.sp .lt{gap:3px}
+html:root body .livebar .lg.sp .lt>b{display:block;font:700 14.5px/1.15 inherit;font-family:inherit;letter-spacing:-.005em;color:#fff!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html:root body .livebar .lg.sp .lt .vs{font-weight:500;color:rgba(255,255,255,.7)}
+html:root body .livebar .lg.sp .st{font:500 13px/1.1 inherit;font-family:inherit;color:rgba(255,255,255,.7)!important}
+html:root body .livebar .lg.sp .st .dot{width:6px;height:6px;background:#ff4d73;box-shadow:none}
+html:root body .livebar .lg.sp.fav .st::after{content:none}
+html:root body .livebar .lg.sp .lsc{flex:none;display:flex;align-items:baseline;gap:5px;font-weight:800;font-size:19px;letter-spacing:-.01em;color:#fff;font-variant-numeric:tabular-nums}
+html:root body .livebar .lg.sp .lsc .sc{font-style:normal;color:#fff!important}
+html:root body .livebar .lg.sp .lsc .dash{color:rgba(255,255,255,.5);font-weight:600}
+html:root body #lbhome{bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) - 2px)!important}
+
+/* the tab bar the way Spotify draws it: no plate, no blur, the page fading out under it */
+html:root body .tabs.flat5{background:linear-gradient(180deg,transparent 0%,color-mix(in srgb,var(--bg) 70%,transparent) 28%,color-mix(in srgb,var(--bg) 96%,transparent) 60%,var(--bg) 100%)!important;padding-top:14px!important}
+html:root body .tabs.flat5 .tab span{font-size:10.5px!important;font-weight:500!important;letter-spacing:0}
+html:root body .tabs.flat5 .tab.on span{font-weight:600!important}
+
+/* the X in the search box sat 8px low: another screen's .xclr rule reached it */
+html:root body .xbox .xclr{display:grid!important;place-items:center;flex-direction:row;margin:0!important;gap:0;width:38px;height:38px;font-size:inherit}
+html:root body .xbox .xclr[hidden]{display:none!important}
+html:root body .livebar .lg.sp .st{box-shadow:none!important;border:0!important}
+html:root body .livebar .lg.sp .lart{background:#fff!important}
+html:root body .livebar .lg.sp .lart .logo,html:root body .livebar .lg.sp .lart .logo.tint{background:none!important;box-shadow:none!important;border-radius:0!important;width:23px!important;height:23px!important;padding:0!important;filter:none!important}
+html:root body .livebar .lg.sp .lart .logo img{width:100%!important;height:100%!important;object-fit:contain;filter:none!important}
+/* the live bar's sheet: slides up over a dimmed screen */
+.bardim{position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.45);opacity:0;pointer-events:none}
+.barexp{position:fixed!important;left:0!important;top:0!important;width:100vw!important;height:100lvh!important;z-index:200;pointer-events:none;will-change:transform;box-shadow:0 -8px 24px rgba(0,0,0,.25)}
+.barclose{box-shadow:0 -8px 24px rgba(0,0,0,.25)}

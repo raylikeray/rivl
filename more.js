@@ -37,7 +37,7 @@
   const atTop = () => window.scrollY <= 0 && (!box || box.scrollTop <= 0);
   /* a pull is a straight drag down from the very top. The first few pixels decide what the finger is doing: a sideways start
      (a strip of tiles, a table) is never a pull, even if the finger then drifts down with the strip still held. */
-  window.addEventListener('touchstart', e => { box = scrollerOf(e.target); strip = sideOf(e.target); dir = ''; pulling = atTop() && !document.body.classList.contains('noscroll') && e.touches.length === 1; y0 = pulling ? e.touches[0].clientY : 0; x0 = pulling ? e.touches[0].clientX : 0; }, { passive: true });
+  window.addEventListener('touchstart', e => { box = scrollerOf(e.target); strip = sideOf(e.target); dir = ''; pulling = atTop() && !document.body.classList.contains('noscroll') && e.touches.length === 1 && !(V.barTrip && V.barTrip() && e.target.closest('#gpage')); y0 = pulling ? e.touches[0].clientY : 0; x0 = pulling ? e.touches[0].clientX : 0; }, { passive: true });
   window.addEventListener('touchmove', e => {
     if (!pulling) return; const t = e.touches[0], dy = t.clientY - y0, dx = t.clientX - x0;
     if (!dir) { if (Math.max(Math.abs(dx), Math.abs(dy)) < 12) return; dir = Math.abs(dx) > Math.abs(dy) * .8 ? 'x' : 'y'; }
