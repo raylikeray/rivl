@@ -685,7 +685,12 @@
     if (injury) {
       S.injuries = S.injuries || {}; const key = `p:${id}:${injury.id || 0}`; S.injuries[key] = { x: { ...injury, athlete: { id: String(id), displayName: a.displayName, headshot: a.headshot && a.headshot.href, position: a.position } }, id: String(id), team: { id: tm.id, short: tm.shortDisplayName || tm.name || '', color, logo: tlogo || '' } };
       const st0 = injury.status || ''; const cls = /out/i.test(st0) ? 'out' : /day|quest|doubt/i.test(st0) ? 'q' : 'ok'; const det = injury.details || {}; const ret = retInfo(L, det.returnDate);
-      { const ib = injBody(L, injury, true); injStrip = `<div class="ijc st-${ib.cls}" id="injury">${ib.html}<p class="xnote">${injury.date ? `Updated ${esc(new Date(injury.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: HW.TZ }))} · ` : ''}From the league injury report, through ESPN</p></div>`; }
+      { const ib = injBody(L, injury, true), f = injFacts(L, injury); const min = !!(store.get('ij:min', {}) || {})[String(id)];
+        const cap = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+        const brief = f.back ? (f.back === 'Not this season' ? 'Out for the season' : /decision/i.test(f.back) ? 'Game-time decision' : f.back === 'No date given' ? 'No return date yet' : `Back around ${f.back}`) : '';
+        injStrip = `<div class="ijc st-${ib.cls}${min ? ' min' : ''}" id="injury" data-pid="${esc(String(id))}">`
+          + `<button class="ijmini" data-act="ijtoggle" aria-expanded="false"><span class="tag ${ib.cls === 'dtd' ? 'q' : ib.cls}">${esc(f.st)}</span><span class="t"><b>${esc(cap(f.part))}</b><em>${esc(brief)}</em></span><i class="ijchev">Show</i></button>`
+          + `<div class="ijfull"><button class="ijhide" data-act="ijtoggle" aria-expanded="true">Hide</button>${ib.html}<p class="xnote">${injury.date ? `Updated ${esc(new Date(injury.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: HW.TZ }))} · ` : ''}From the league injury report, through ESPN</p></div></div>`; }
     }
     // the game log: regular-season games, newest first
     let evRows = [];

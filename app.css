@@ -2741,3 +2741,20 @@ html.gxon body::before{display:none}
 .ijtl p{margin:0;padding-left:14px;font-size:15px;line-height:1.45}
 .ijs .xnote,.ijc .xnote{margin:14px 0 0;font-size:12.5px;color:var(--ink-3);line-height:1.4}
 .ijs .ijwho{padding-right:44px}
+
+/* the injury sheet: a grab bar to pull it down, a tap outside to close, no X */
+.panel-in .grab{display:block;width:40px;height:5px;border-radius:999px;background:var(--line-2);margin:-4px auto 14px}
+.panel-in:has(.ijs){background:var(--bg);touch-action:pan-y}
+.ijs .ijwho{padding-right:0}
+/* on the profile the card folds to one line; it stays folded until opened (or opened from the injury sheet) */
+.ijc .ijmini{display:none;width:100%;align-items:center;gap:12px;background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.ijc.min{padding:14px 16px 14px 20px}
+.ijc.min .ijmini{display:flex}
+.ijc.min .ijfull{display:none}
+.ijmini .tag{font-size:12.5px;padding:5px 10px;border-radius:999px;flex:none}
+.ijmini .t{flex:1;min-width:0}
+.ijmini .t b{display:block;font-size:16px;font-weight:700}
+.ijmini .t em{display:block;font-style:normal;font-size:13.5px;color:var(--ink-3);margin-top:2px}
+.ijchev,.ijhide{flex:none;font-style:normal;font-size:13px;font-weight:700;color:var(--ink-2);padding:7px 12px;border-radius:999px;background:var(--surf-2);border:1px solid var(--line)}
+.ijfull{position:relative}
+.ijhide{position:absolute;right:-4px;top:-4px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}

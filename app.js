@@ -305,6 +305,8 @@
     if (a === 'stab') { e.preventDefault(); store.set('v5:stab:' + (current ? current.lk : 'nba'), act.dataset.tab); render(); }
     if (a === 'play') { e.preventDefault(); openSheet(act.dataset.vid); }
     if (a === 'injury') { e.preventDefault(); openInjury(act.dataset.key); }
+    if (a === 'ijtoggle') { e.preventDefault(); const c = act.closest('.ijc'); if (c) { const min = !c.classList.contains('min'); c.classList.toggle('min', min); const m = store.get('ij:min', {}) || {}; if (min) m[c.dataset.pid] = 1; else delete m[c.dataset.pid]; store.set('ij:min', m); } }
+    if (a === 'panel-close' && act.dataset.ijopen) { const m = store.get('ij:min', {}) || {}; delete m[act.dataset.ijopen]; store.set('ij:min', m); }
     if (a === 'official') { e.preventDefault(); openOfficial(act.dataset.key); }
     if (a === 'gifold') { e.preventDefault(); V._.foldToggle(act, act.getAttribute('aria-expanded') !== 'true'); return; }
     if (a === 'injcol') { e.preventDefault(); const open = act.getAttribute('aria-expanded') !== 'true'; V._.foldToggle(act, open); const c = store.get('v5:injcol', {}) || {}; if (open) delete c[act.dataset.id]; else c[act.dataset.id] = true; store.set('v5:injcol', c); }
@@ -360,6 +362,10 @@
   function openPanel(html, { full = false } = {}) { $panel.querySelector('.panel-in').innerHTML = html; $panel.classList.toggle('full', full); if ($panel.hidden) show($panel); document.body.classList.add('noscroll'); $panel.querySelector('.panel-in').scrollTop = 0; }
   function closePanel() { if ($panel.hidden) return; hide($panel, () => $panel.classList.remove('full')); document.body.classList.remove('noscroll'); }
   $panel.addEventListener('click', e => { if (e.target === $panel && !$panel.classList.contains('full')) closePanel(); });
+  { let y0 = null, dy = 0; const pin = () => $panel.querySelector('.panel-in');
+    $panel.addEventListener('touchstart', e => { const p = pin(); if (!p || !p.querySelector('.grab') || p.scrollTop > 0 || e.touches.length !== 1) { y0 = null; return; } y0 = e.touches[0].clientY; dy = 0; p.style.transition = 'none'; }, { passive: true });
+    $panel.addEventListener('touchmove', e => { if (y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0); const p = pin(); if (p) p.style.transform = dy ? `translateY(${dy}px)` : ''; }, { passive: true });
+    $panel.addEventListener('touchend', () => { if (y0 == null) return; const p = pin(); y0 = null; if (!p) return; p.style.transition = 'transform .22s cubic-bezier(.2,.8,.2,1)'; if (dy > 90) { p.style.transform = 'translateY(100%)'; setTimeout(() => { closePanel(); p.style.transform = ''; p.style.transition = ''; }, 200); } else { p.style.transform = ''; setTimeout(() => { p.style.transition = ''; }, 230); } dy = 0; }, { passive: true }); }
 
   /* the month at a glance: games each day, a mark on the days your teams play; tap a day to go there */
   async function openCalendar(ymd, keep = false) {
@@ -414,8 +420,8 @@
     const note = x.longComment || x.shortComment || '';
     const ib = V._.injBody(L, x, false); const tl = team.logo || (team.id && HW.S && HW.S.tIdx && HW.S.tIdx[team.id] && HW.S.tIdx[team.id].logo) || '';
     const who = `${V._.headshot(V._.hsUrl(at) || at.headshot || '', V._.teamColor(team, L), 56, at.displayName)}<span><b>${esc(at.displayName || '')}</b><em>${tl ? V._.imgSized(tl, 48, 48) : ''}${esc(team.short || '')}</em></span>`;
-    openPanel(`<button class="ib close" data-act="panel-close" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-      <div class="ijs st-${ib.cls}">${id ? `<a class="ijwho" href="#player/${lk}/${esc(id)}" data-act="panel-close" aria-label="Open ${esc(at.displayName || '')}'s profile">${who}<i class="chev">›</i></a>` : `<div class="ijwho">${who}</div>`}${ib.html}
+    openPanel(`<i class="grab" aria-hidden="true"></i>
+      <div class="ijs st-${ib.cls}">${id ? `<a class="ijwho" href="#player/${lk}/${esc(id)}" data-act="panel-close" data-ijopen="${esc(id)}" aria-label="Open ${esc(at.displayName || '')}'s profile">${who}<i class="chev">›</i></a>` : `<div class="ijwho">${who}</div>`}${ib.html}
       <p class="xnote">${x.date ? `Updated ${esc(new Date(x.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: HW.TZ }))} · ` : ''}From the league injury report, through ESPN</p></div>`);
   }
 
