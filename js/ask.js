@@ -118,7 +118,7 @@
     if (f.ts.length >= 2 && !f.ps.length) return { html: await cmpTeams(f.ts[0], f.ts[1]), kind: 'intent', f };
     if (f.rs.length && !f.ps.length && !f.ts.length) return { html: recruitCard(f.rs[0]), kind: 'recruit', f };
     if (f.ps.length === 1) return { ...(await playerAns(f.ps[0], has, nq)), f };
-    return { ...(await teamAns(f.ts[0], has)), f };
+    return { ...(await teamAns(f.ts[0], has, I)), f };
   }
   const page = (t, s, href) => `<a class="xans xpage" href="${href}"><b>${esc(t)}</b><span>${esc(s)}</span>${_.chev}</a>`;
 
@@ -148,8 +148,8 @@
       if (which === 4) { return { html: a.age ? card(who(e), `${esc(e.name)} is ${a.age}.`, [['Born', a.dateOfBirth ? new Date(a.dateOfBirth).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '']], '', src) : card(who(e), NOPE, [], 'None of RIVL\'s sources list a birth date, so it won\'t guess.'), kind: 'intent' }; }
       if (which === 5) { return { html: card(who(e), `${esc(e.name)} is ${esc(a.displayHeight || '?')}${a.displayWeight ? `, ${esc(a.displayWeight)}` : ''}.`, [['Height', a.displayHeight], ['Weight', a.displayWeight], ['Position', a.position && a.position.displayName]], '', src), kind: 'intent' }; }
     }
-    if (PERSONAL.test(nq)) return { html: playerCard(e), kind: 'web' };
-    return { html: playerCard(e), kind: 'generic' };
+    if (PERSONAL.test(nq)) return { html: await playerFull(e).catch(() => playerCard(e)), kind: 'web', newsDone: true };
+    return { html: await playerFull(e).catch(() => playerCard(e)), kind: 'generic', newsDone: true };
   }
   function playerCard(e) {
     const p = e.p, { s, label } = statsOf(p), col = pColor(e);
@@ -158,7 +158,25 @@
       <span class="xsub">${esc(p.rookie ? `Rookie${p.pick ? `, ${ord(p.pick)} pick` : ''} · ` : '')}${s.gp || 0} games${label ? `, ${label}` : (e.lk.startsWith('ncaa') && p.lastSeason ? ', last season' : '')}</span></a>`;
   }
 
-  async function teamAns(e, has) {
+  /* the full player answer: the stat line, then everything people look up about a player on one card: status (hurt or
+     available), the next game, the RIVL rating, who they are (age, height, from, drafted, college), and the latest headlines */
+  async function playerFull(e) {
+    const p = e.p, L = L_(e.lk), tm = e.team;
+    const [inj, a, info, nw] = await Promise.all([HW.injuries(L).catch(() => null), bio(e).catch(() => null), tm ? V.teamInfo(L, tm.id).catch(() => null) : null, HW.jSoft(`${HW.API(L)}/news?limit=50`, 600000).catch(() => null)]);
+    let x = null; if (inj && inj.byTeam) Object.values(inj.byTeam).forEach(t => (t.list || []).forEach(i => { if (String((i.athlete || {}).id || _.athId(i.athlete || {})) === e.id) x = i; }));
+    const det = x && x.details || {}, part = x ? [det.side && det.side !== 'Not Specified' ? det.side : '', det.location || det.type || ''].filter(Boolean).join(' ') : '';
+    const ret = x ? _.retInfo(L, det.returnDate) : null;
+    const status = x ? `<div class="xst hurt"><i class="${/out/i.test(x.status) ? 'out' : 'q'}"></i><b>${esc(_.statusWord(x.status) || x.status)}</b><span>${esc(part)}${ret ? ` · ${esc(ret.far ? 'out for the season' : 'back around ' + (ret.short || '').replace(/^back around /, ''))}` : ''}</span></div>` : `<div class="xst ok"><i></i><b>Available</b><span>not on the injury report</span></div>`;
+    const nx = info && info.next; const game = nx ? (() => { const home = nx.home.id === tm.id, op = home ? nx.away : nx.home; return `<a class="xgl" href="${_.href.game(e.lk, nx.id)}"><span>Next</span>${crest(op, 22)}<em>${home ? 'vs' : 'at'} ${esc(op.short || op.name)}</em><b>${esc(HW.relDay ? HW.relDay(HW.ymdOf(nx.date)) : '')}, ${esc(HW.tipOf ? HW.tipOf(nx) : '')}</b>${_.chev}</a>`; })() : '';
+    const R = HW.rating && HW.rating.cached ? HW.rating.cached(L, e.id) : null;
+    const facts = a ? [['Age', a.age], ['Height', a.displayHeight], ['Weight', a.displayWeight], ['From', a.birthPlace && [a.birthPlace.city, a.birthPlace.state || a.birthPlace.country].filter(Boolean).join(', ')], ['College', a.college && a.college.name], ['Drafted', a.draft && a.draft.year ? `${a.draft.year}, ${a.draft.selection ? ord(a.draft.selection) + ' pick' : 'round ' + (a.draft.round || '?')}` : ''], ['Experience', a.experience && a.experience.displayValue]].filter(f => f[1]) : [];
+    const factsH = facts.length ? `<div class="xfacts">${facts.map(f => `<div><span>${esc(f[0])}</span><b>${esc(String(f[1]))}</b></div>`).join('')}</div>` : '';
+    const last = norm(e.name).split(' ').slice(-1)[0]; const items = (nw && nw.articles || []).filter(ar => norm((ar.headline || '') + ' ' + (ar.description || '')).includes(last)).slice(0, 2);
+    const newsH = items.length ? `<div class="xnewsb"><span class="xk2">Latest</span>${items.map(ar => `<div class="xnews">${ar.images && ar.images[0] ? `<img src="${esc(ar.images[0].url)}" alt="" loading="lazy">` : ''}<span><b>${esc(ar.headline)}</b><em>${esc(HW.ago ? HW.ago(ar.published) : '')}</em></span></div>`).join('')}</div>` : '';
+    const rate = R ? `<div class="xrate"><b class="rtb ${R.ovr >= 90 ? 't5' : R.ovr >= 80 ? 't4' : R.ovr >= 70 ? 't3' : R.ovr >= 60 ? 't2' : 't1'}">${R.ovr}</b><span><b>RIVL rating</b><em>${esc(HW.rating.summary(R))}</em></span></div>` : '';
+    return playerCard(e).replace(/<\/a>$/, '') .replace(/^<a class="xans xlink xpl"/, '<div class="xans xpl xpfull"') + status + game + rate + factsH + newsH + `<a class="xgo2" href="${pHref(e)}">Full profile, stats and game log ${_.chev}</a></div>`;
+  }
+  async function teamAns(e, has, I) {
     const L = L_(e.lk), t = e.t;
     if (has(/ schedule| next| upcoming| when do| when does| play next/)) {
       const sc = await HW.jSoft(`${HW.API(L)}/teams/${e.id}/schedule`, 300000).catch(() => null);
@@ -172,9 +190,46 @@
       const line = has(/ coach/) ? (coach ? `${esc(coach)} coaches ${esc(t.name)}.` : NOPE) : `${esc(t.name)} ${n ? `have ${n} players on the roster` : 'roster is not posted yet'}${e.lk === 'nba' && n ? ' (NBA teams carry up to 15, plus 3 two-way players)' : ''}.`;
       return { html: card(twho(e), line, [['Players', n || ''], ['Head coach', coach]], '', 'ESPN roster') + `<a class="xgo" href="${tHref(e)}">See the roster ${_.chev}</a>`, kind: 'intent' };
     }
-    const st = await HW.standings(L).catch(() => null), row = st && st.byId[e.id];
-    const line = row ? `The ${esc(t.short || t.name)} are ${row.w}-${row.l}${row.pos && L.standingsMode !== 'conferences' ? `, ${ord(row.pos)} in the ${esc(_.confName(row.group, row.groupAbbr))}` : ''}.` : `${esc(t.name)}.`;
-    return { html: card(twho(e), line, row ? [['Record', `${row.w}-${row.l}`], ['Points', row.ppg != null ? one(row.ppg) : ''], ['Allowed', row.opp != null ? one(row.opp) : ''], ['Streak', row.strk]] : [], '', 'ESPN standings') + `<a class="xgo" href="${tHref(e)}">Team page ${_.chev}</a>`, kind: has(/ standing| rank| seed| record| place/) ? 'intent' : 'generic' };
+    /* The team answer: everything about the team on one card, and when a school has a men's and a women's team, one card
+       for the school with both, so a search for "UConn" never shows the same crest three times. Each team: where it stands
+       (or, before the season, last season's record), the next game, the last result, the top scorers, who's hurt, and the
+       latest headlines. The card is the way in; there is no second "Team page" link. */
+    const twin = (I ? I.ents : []).filter(x => x.type === 't' && x !== e && norm(x.t.name || '') === norm(t.name || '') && x.lk.startsWith('ncaa') === e.lk.startsWith('ncaa') && x.lk !== e.lk);
+    const list = [e, ...twin].sort((x, y) => (x.lk === 'ncaam' ? 0 : 1) - (y.lk === 'ncaam' ? 0 : 1));
+    const blocks = await Promise.all(list.map(x => teamBlock(x, has, list.length > 1).catch(() => '')));
+    const head = list.length > 1 ? `<div class="xschool">${crest(t, 48)}<span><b>${esc(t.name || t.short)}</b><em>Men's and women's basketball</em></span></div>` : '';
+    return { html: `<div class="xans xteam">${head}${blocks.join('')}</div>`, kind: has(/ standing| rank| seed| record| place/) ? 'intent' : 'generic', shown: list, newsDone: true };
+  }
+  /* one team's block: the facts people look up, in order of how often they're asked for */
+  async function teamBlock(e, has, twinned) {
+    const L = L_(e.lk), t = e.t, lk = e.lk; const yr = HW.seasonYear ? HW.seasonYear() : new Date().getFullYear();
+    const [st, info, prev, lg, inj, nw] = await Promise.all([HW.standings(L).catch(() => null), V.teamInfo(L, e.id).catch(() => null), HW.standings(L, yr - 1).catch(() => null), HW.hub.league(L).catch(() => null), HW.injuries(L).catch(() => null), HW.jSoft(`${HW.API(L)}/news?limit=50`, 600000).catch(() => null)]);
+    const row = st && st.byId && st.byId[e.id], played = row && row.w + row.l > 0, pr = prev && prev.byId && prev.byId[e.id];
+    const nm = t.name || t.short, are = /s$/i.test(nm) ? 'are' : 'is';
+    const rankOf = g => g && (g.home.id === e.id ? g.home.rank : g.away.rank);
+    const rank = rankOf(info && info.next) || rankOf(info && info.last) || null;
+    // the one-line summary
+    let line;
+    if (played) line = `${rank ? `No. ${rank} ` : ''}${esc(nm)} ${are} <b>${row.w}-${row.l}</b>${row.pos && L.standingsMode !== 'conferences' ? `, ${ord(row.pos)} in the ${esc(_.confName(row.group, row.groupAbbr))}` : row.group ? `, ${esc(row.group)}` : ''}${row.strk && row.strk !== '-' ? ` · ${esc(row.strk)}` : ''}`;
+    else line = `${rank ? `No. ${rank} in the preseason poll. ` : ''}The season hasn't started${pr && pr.w + pr.l > 0 ? `; last season ${esc(nm)} went <b>${pr.w}-${pr.l}</b>${pr.pos && L.standingsMode !== 'conferences' ? `, ${ord(pr.pos)} in the ${esc(_.confName(pr.group, pr.groupAbbr))}` : ''}` : ''}.`;
+    // next and last
+    const gline = (g, label) => { if (!g) return ''; const home = g.home.id === e.id, op = home ? g.away : g.home, done = g.state === 'post'; const us = home ? g.home : g.away;
+      const res = done ? `<b class="${+us.score > +op.score ? 'w' : 'l'}">${+us.score > +op.score ? 'W' : 'L'} ${us.score}–${op.score}</b>` : `<b>${esc(HW.relDay ? HW.relDay(HW.ymdOf(g.date)) : '')}, ${esc(HW.tipOf ? HW.tipOf(g) : '')}</b>`;
+      return `<a class="xgl" href="${_.href.game(lk, g.id)}"><span>${label}</span>${crest(op, 22)}<em>${home ? 'vs' : 'at'} ${op.rank ? `No. ${op.rank} ` : ''}${esc(op.short || op.name)}</em>${res}${_.chev}</a>`; };
+    const games = (info ? gline(info.next, 'Next') + gline(info.last, 'Last') : '');
+    // top scorers from the app's data file (this season, or last season's numbers before the first game)
+    const ab = (t.abbr || '').toUpperCase(); const ps = lg && lg.players ? lg.players.filter(p => String(p.team || '').toUpperCase() === ab && p.s && p.s.pts != null).sort((x, y) => y.s.pts - x.s.pts).slice(0, 3) : [];
+    const tops = ps.length ? `<div class="xtops"><span class="xk2">Top scorers${lg.lastSeason ? ' (last season)' : ''}</span>${ps.map(p => `<a class="xtp" href="${_.href.player(lk, p.id)}">${_.headshot(p.img, _.teamColor(t, L), 34, p.n)}<span><b>${esc(p.n)}</b><em>${esc(p.pos || '')}</em></span><i>${one(p.s.pts)}<small>PPG</small></i></a>`).join('')}</div>` : '';
+    // injuries
+    const il = inj && inj.byTeam && inj.byTeam[String(e.id)] && inj.byTeam[String(e.id)].list || [];
+    const hurt = il.length ? `<div class="xhurt"><span class="xk2">Injuries</span>${il.slice(0, 4).map(x => { const a = x.athlete || {}; const det = x.details || {}; const st2 = _.statusWord(x.status) || x.status || ''; return `<span class="xhr"><b>${esc(a.displayName || '')}</b><em>${esc([det.type || det.detail, st2].filter(Boolean).join(' · '))}</em></span>`; }).join('')}${il.length > 4 ? `<span class="xhr dim">and ${il.length - 4} more</span>` : ''}</div>` : '';
+    // headlines
+    const keys = [norm(t.short), norm(t.name)].filter(Boolean); const items = (nw && nw.articles || []).filter(a => { const tx = norm((a.headline || '') + ' ' + (a.description || '')); return keys.some(k => k && tx.includes(k)); }).slice(0, 2);
+    const newsH = items.length ? `<div class="xnewsb"><span class="xk2">Latest</span>${items.map(a => `<div class="xnews">${a.images && a.images[0] ? `<img src="${esc(a.images[0].url)}" alt="" loading="lazy">` : ''}<span><b>${esc(a.headline)}</b><em>${esc(HW.ago ? HW.ago(a.published) : '')}</em></span></div>`).join('')}</div>` : '';
+    const sub = lk === 'ncaaw' ? "Women's basketball" : lk === 'ncaam' ? "Men's basketball" : LNAME(lk);
+    // inside a school card the team's own line is a slim label; alone it carries the crest
+    const headH = twinned ? `<a class="xtbh" href="${tHref(e)}"><b>${esc(sub)}</b><em>${esc(LNAME(lk))}</em>${_.chev}</a>` : `<a class="xwho" href="${tHref(e)}">${crest(t, 44)}<span><b>${esc(nm)}</b><em>${esc(sub)}${lk.startsWith('ncaa') ? ' · ' + esc(LNAME(lk)) : ''}</em></span>${_.chev}</a>`;
+    return `<div class="xtb">${headH}<p class="xline">${line}</p>${games}${tops}${hurt}${newsH}<a class="xgo2" href="${tHref(e)}">Schedule, roster and stats ${_.chev}</a></div>`;
   }
 
   function recruitCard(e) {
@@ -373,14 +428,16 @@
     let A = { html: '', kind: 'none', f: findAll(I.ents, q) };
     if (filter === 'all') { res.innerHTML = sug.length ? `<div class="xlist">${sug.slice(0, 5).map(rowOf).join('')}</div>` : ''; A = await answer(I, q).catch(() => A); if (my !== SEQ) return; }
     const onlyName = A.f.hits.length === 1 && nq.split(' ').every(w => !STOP.has(w));
-    const rest = (onlyName ? sug.filter(e => !A.f.hits.some(h => h.e === e)) : sug);
+    // never list again what the answer already shows (the team itself, its men's or women's twin)
+    const shownSet = new Set([...(A.shown || []), ...(A.html ? A.f.hits.map(h => h.e) : [])]);
+    const rest = (onlyName || A.html ? sug.filter(e => !shownSet.has(e)) : sug);
     res.innerHTML = (A.html || '') + (rest.length && (filter !== 'all' || onlyName || !A.html) ? `${A.html ? '<p class="xmore">More matches</p>' : ''}<div class="xlist">${rest.map(rowOf).join('')}</div>` : '')
       || (A.kind === 'web' ? '' : `<div class="xnone"><b>Nothing found</b><p>Try a player, a team, a school, or a question like "Maxey drafted" or "Thunder schedule".</p></div>`);
     // past the app's own data: only when the question asks something the app's cards didn't answer
     if (!web) return; web.innerHTML = '';
     const isRecruit = A.f.rs.length && !A.f.ps.length && !A.f.ts.length;
     const W = webTerms(A.f, q); const asksMore = A.kind === 'web' || (A.kind === 'none' && nq.split(' ').length >= 2) || (A.kind === 'generic' && W.terms.length > 0);
-    if (isRecruit || !asksMore || filter !== 'all') return;
+    if (isRecruit || !asksMore || filter !== 'all' || A.newsDone) return;
     if (PERSONAL.test(nq) && A.f.ps.some(e => e.lk.startsWith('ncaa') && e.p.cls && /fr|freshman/i.test(e.p.cls))) { /* college players are adults; only high-school recruits are kept out */ }
     web.innerHTML = '<div class="xans xweb xload"><span class="xk">Looking it up</span><i></i><i></i><i></i></div>';
     const T = topicOf(q), pe = W.e && W.e.type === 'p' ? W.e : null;
@@ -390,7 +447,7 @@
     const parts = await Promise.all([want && title ? wdFacts(title, want.ps).then(r => r ? factCard(r, want.t) : '').catch(() => '') : '', wiki(q, W).catch(() => ''), news(A.f).catch(() => '')]);
     if (my !== SEQ) return;
     const html = parts.join('');
-    web.innerHTML = html || `<div class="xans xweb"><span class="xk">Nothing found</span><p class="xline dim">No public source answers that yet. Try different words, or a player or team name.</p></div>`;
+    web.innerHTML = html || (A.html ? '' : `<div class="xans xweb"><span class="xk">Nothing found</span><p class="xline dim">No public source answers that yet. Try different words, or a player or team name.</p></div>`);
   }
 
   async function searchV() {

@@ -4156,3 +4156,40 @@ html:root body .xpban::after{display:none}
 .xlogo{flex:none;display:block;object-fit:contain;border:0;padding:0}
 .xwho .xlogo{width:48px!important;height:48px!important}
 .xrow .xlogo{width:42px!important;height:42px!important}
+/* the school's other team, inside the same card */
+.xsibs{margin-top:12px;border-top:1px solid var(--line)}
+.xsib{display:flex;align-items:center;gap:12px;padding:12px 0 2px;color:var(--ink);text-decoration:none}
+.xsib>span{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.xsib b{font-size:15.5px;font-weight:800}.xsib em{font-style:normal;font-size:13px;color:var(--ink-3)}
+.xsib>svg{width:18px;height:18px;color:var(--ink-3)}
+/* the team answer */
+.xschool{display:flex;align-items:center;gap:12px;padding-bottom:12px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.xschool>span{display:flex;flex-direction:column;gap:2px}.xschool b{font-size:19px;font-weight:800}.xschool em{font-style:normal;font-size:13.5px;color:var(--ink-3)}
+.xtb+.xtb{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.xtb .xline{margin:8px 0 4px;font-size:16px;line-height:1.45}
+.xk2{display:block;margin:12px 0 6px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.xgl{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:14.5px}
+.xgl>span{width:40px;flex:none;color:var(--ink-3);font-weight:600}.xgl em{font-style:normal;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+.xgl b{font-weight:800;white-space:nowrap}.xgl b.w{color:#16A34A}.xgl b.l{color:var(--ink-3)}
+.xgl .chev{color:var(--ink-3)}
+.xtops{display:flex;flex-direction:column}
+.xtp{display:flex;align-items:center;gap:10px;padding:7px 0;color:var(--ink);text-decoration:none}
+.xtp>span{flex:1;min-width:0;display:flex;flex-direction:column}.xtp b{font-size:15px;font-weight:700}.xtp em{font-style:normal;font-size:12.5px;color:var(--ink-3)}
+.xtp i{font-style:normal;font-weight:800;font-size:16px}.xtp i small{font-size:10.5px;font-weight:700;color:var(--ink-3);margin-left:3px}
+.xhurt{display:flex;flex-direction:column;gap:6px}.xhr{display:flex;justify-content:space-between;gap:10px;font-size:14px}.xhr b{font-weight:700}.xhr em{font-style:normal;color:var(--ink-3);white-space:nowrap}.xhr.dim{color:var(--ink-3)}
+.xgo2{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;padding:11px 0;border-radius:14px;background:var(--surf-2);color:var(--ink);text-decoration:none;font-size:14.5px;font-weight:700}
+.xgo2 .chev{width:18px;height:18px}
+.xtbh{display:flex;align-items:center;gap:8px;padding:2px 0;color:var(--ink);text-decoration:none}
+.xtbh b{font-size:17px;font-weight:800}.xtbh em{font-style:normal;flex:1;font-size:13px;color:var(--ink-3)}.xtbh .chev{color:var(--ink-3)}
+.xtp .hs{flex:none;border-radius:50%;overflow:hidden}
+.xtp .hs i{font-size:13px}
+/* the full player answer */
+.xpfull{display:block;padding-bottom:14px}
+.xpfull>.xwho{display:flex}.xpfull>.xtrio{display:grid}
+.xpfull>.xsub{margin-bottom:10px;justify-content:center}
+.xst{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px}
+.xst i{width:9px;height:9px;border-radius:50%;background:#22C55E;flex:none}.xst i.out{background:#FF4D55}.xst i.q{background:#FFB020}
+.xst b{font-weight:800}.xst span{color:var(--ink-3);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xrate{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.xrate>b{font-size:26px;font-weight:800;min-width:44px;text-align:center}.xrate>span{display:flex;flex-direction:column;min-width:0}.xrate>span b{font-size:14px;font-weight:800}.xrate>span em{font-style:normal;font-size:13.5px;color:var(--ink-3)}
+.xpfull .xfacts{margin-top:10px}
