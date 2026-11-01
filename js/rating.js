@@ -193,9 +193,22 @@
   }
 
   const memo = {};
+  async function league(L) { if (!L || L.sport !== 'basketball') return null; await get(L, '__'); return memo[L.key] ? memo[L.key].p : null; }
   async function get(L, id) {
     if (!L || L.sport !== 'basketball') return null;
     const k = L.key; if (!memo[k] || Date.now() - memo[k].t > 3 * 3600000) memo[k] = { t: Date.now(), p: (async () => {
+      /* first choice: the app's own data file, one download for the whole league with last season alongside */
+      const lg = HW.hub ? await HW.hub.league(L).catch(() => null) : null;
+      if (lg && lg.players && lg.players.length > 30 && (lg.lastSeason || lg.players.some(p => p.prev && p.prev.fga != null))) {   // only once the file carries last season's full lines
+        const row = (p, s) => ({ id: String(p.id), name: p.n, pos: p.pos, teamId: p.team, gp: s.gp || 0, min: s.min || 0, pts: s.pts || 0, reb: s.reb || 0, ast: s.ast || 0, stl: s.stl || 0, blk: s.blk || 0, tov: s.to || 0,
+          fga: s.fga, fta: s.fta, fgm: s.fgm, ftm: s.ftm, tpm: s.tpm, tpa: s.tpa, pf: s.pf, oreb: s.oreb, dreb: s.dreb, fg: s.fg, tp: s.tp, ft: s.ft });
+        const rows = lg.players.map(p => row(p, p.s || {}));
+        const prev = lg.players.filter(p => p.prev && p.prev.fga != null && p.prev.min > 0).map(p => row(p, p.prev));
+        let teams = {};
+        const TS = HW.teamStats ? await HW.teamStats(L).catch(() => null) : null;
+        if (TS && TS.teams && HW.v5 && HW.v5.teamsIndex) { const idx = await HW.v5.teamsIndex(L).catch(() => ({})); Object.entries(TS.teams).forEach(([tid, v]) => { const t = idx[tid]; if (t && t.abbr) teams[t.abbr] = v; }); }
+        return { ...compute(rows, prev.length ? prev : null, { teams }), label: lg.label, stale: !!lg.lastSeason };
+      }
       const cur = await HW.leaguePlayers(L); if (!cur || !cur.rows.length) return null;
       const prevYear = (cur.year || HW.seasonYear()) - 1;
       const [prev, TS] = await Promise.all([HW.leaguePlayers(L, prevYear).catch(() => null), HW.teamStats ? HW.teamStats(L).catch(() => null) : null]);
@@ -245,5 +258,5 @@
       card.insertAdjacentHTML('beforeend', `<div class="hxexp"><p><b>Built only from his stats.</b> Every stat is turned into a rate per 36 minutes and compared with players at his position. Six traits come from those rates, and the percentage is the share of ${R.posWord} he beats.</p><p><b>Small samples are held back.</b> A few hot games barely move a player until the minutes back them up. Last season counts too, fading out as this season fills in.</p><p><b>The overall</b> weights impact most, then scoring, playmaking, shooting, defense and rebounding, plus the minutes his coach gives him, and is placed on the 2K scale: a 74 is a typical rotation player, 82 is the top 15%, 90 the top 3%, and the league's best is a 99.</p><p><b>Defense is the hardest to measure</b> from a box score: steals, blocks, defensive rebounds, fouls and his team's defense while he plays.</p><p>Tap any trait on the chart for the numbers behind it.</p></div>`); how.classList.add('on'); }
   });
 
-  HW.rating = { compute, detail, summary, get, cached, cards, mount, POS, TRAITS };
+  HW.rating = { compute, detail, summary, get, league, cached, cards, mount, POS, TRAITS };
 })();

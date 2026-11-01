@@ -28,7 +28,7 @@
      #home #scores #standings #players #teams          league screens (league from the pills, remembered)
      #player/<lk>/<id> #team/<lk>/<id> #game/<lk>/<id>  entity screens
      #nba #wnba …                                       switch league, stay on the current league screen */
-  const SCREENS = ['home', 'scores', 'standings', 'players', 'teams'];
+  const SCREENS = ['home', 'scores', 'standings', 'stats', 'players', 'teams'];
   const lkOf = k => LEAGUES[k] ? k : 'nba';
   function route() {
     const h = (location.hash || '#home').slice(1);
@@ -55,7 +55,7 @@
   function paintTabs(name) {
     $tabs.querySelectorAll('.tab').forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('on', on); if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
   }
-  const TITLES = { home: 'Home', scores: 'Scores', standings: 'Standings', players: 'Players', teams: 'Teams', search: 'Search', settings: 'Settings', record: 'Record' };
+  const TITLES = { home: 'Following', stats: 'Stats', scores: 'Scores', standings: 'Standings', players: 'Players', teams: 'Teams', search: 'Search', settings: 'Settings', record: 'Record' };
 
   /* ---------- render ---------- */
   let seq = 0, current = null;
@@ -105,7 +105,10 @@
     if (leagueScreen && r.name !== 'scores') store.set('v5:date', todayCT());
     document.getElementById('top').hidden = !leagueScreen;
     paintPills(r.lk, leagueScreen);
-    paintTabs(leagueScreen ? r.name : (r.name === 'player' ? 'players' : r.name === 'team' ? 'teams' : r.name === 'game' ? 'scores' : r.name === 'article' ? 'home' : ''));
+    /* the bar lights the tab you are in; a player, team or game page keeps lit the tab you opened it from */
+    const TABS = ['scores', 'standings', 'home', 'stats', 'search'], tabOf = n => n === 'players' || n === 'teams' ? 'home' : n;
+    if (TABS.includes(tabOf(r.name))) render.tab = tabOf(r.name);
+    paintTabs(TABS.includes(tabOf(r.name)) ? tabOf(r.name) : (render.tab || (r.name === 'game' ? 'scores' : 'home')));
     document.title = leagueScreen ? `${TITLES[r.name]} · ${LEAGUES[r.lk].label} · RIVL` : `${TITLES[r.name] || ''} RIVL`.trim();
     $main.dataset.top = '1';   // scroll to the top with the new screen's first real paint, not before it
     try { await (V[r.name] || V.home)(...r.args); }

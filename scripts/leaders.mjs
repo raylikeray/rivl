@@ -25,7 +25,8 @@ function flatten(j) {
       age: at.age, img: at.headshot?.href || null, s: {
         gp: s.gamesPlayed, min: s.avgMinutes, pts: s.avgPoints, reb: s.avgRebounds, ast: s.avgAssists, stl: s.avgSteals, blk: s.avgBlocks, to: s.avgTurnovers,
         fgm: s.avgFieldGoalsMade, fga: s.avgFieldGoalsAttempted, fg: s.fieldGoalPct, tpm: s.avgThreePointFieldGoalsMade, tpa: s.avgThreePointFieldGoalsAttempted, tp: s.threePointFieldGoalPct,
-        ftm: s.avgFreeThrowsMade, fta: s.avgFreeThrowsAttempted, ft: s.freeThrowPct, pf: s.avgFouls, dd: s.doubleDouble, td: s.tripleDouble } };
+        ftm: s.avgFreeThrowsMade, fta: s.avgFreeThrowsAttempted, ft: s.freeThrowPct, pf: s.avgFouls, dd: s.doubleDouble, td: s.tripleDouble,
+        oreb: s.avgOffensiveRebounds, dreb: s.avgDefensiveRebounds, gs: s.gamesStarted } };
   });
 }
 async function pull(L, season, sorts, perSort, qual) {
@@ -59,7 +60,7 @@ async function pickSeason(L, cand) { for (const y of cand) { const j = await J(B
   const rook = new Map();
   for (const pk of picks) { const a = pk.athlete?.$ref ? await J(pk.athlete.$ref.replace('http:', 'https:')) : null; if (a) rook.set(a.displayName, { pick: pk.overall, round: pk.round }); await sleep(120); }
   const prevPts = new Map(prev.players.map(p => [p.id, p.s]));
-  all.players.forEach(p => { const r = rook.get(p.n); if (r) { p.rookie = true; p.pick = r.pick; } const ps = prevPts.get(p.id); if (ps) p.prev = { pts: ps.pts, reb: ps.reb, ast: ps.ast, gp: ps.gp, min: ps.min }; });
+  all.players.forEach(p => { const r = rook.get(p.n); if (r) { p.rookie = true; p.pick = r.pick; } const ps = prevPts.get(p.id); if (ps) p.prev = { ...ps }; });
   // team records for the award index
   const st = await J('https://site.api.espn.com/apis/v2/sports/basketball/nba/standings');
   const win = {}; (function walk(o) { if (!o || typeof o !== 'object') return; if (o.team && o.stats) { const w = o.stats.find(x => x.name === 'winPercent'); if (w) win[o.team.abbreviation] = w.value; } Object.values(o).forEach(walk); })(st);
@@ -69,6 +70,8 @@ async function pickSeason(L, cand) { for (const y of cand) { const j = await J(B
 {
   const season = await pickSeason('wnba', [Y + 1, Y]);
   const all = await pull('wnba', season, SORTS, 200, false);
+  const prevW = await pull('wnba', season - 1, ['offensive.avgPoints'], 300, false); const pw = new Map(prevW.players.map(p => [p.id, p.s]));
+  all.players.forEach(p => { const ps = pw.get(p.id); if (ps) p.prev = { ...ps }; });
   out.leagues.wnba = { label: String(season), year: season, final: season === Y && now.getUTCMonth() >= 9, players: all.players };
 }
 // ---------- College: last season, current rosters only ----------
@@ -100,7 +103,7 @@ for (const L of ['ncaam', 'ncaaw']) {
 for (const [L, v] of Object.entries(out.leagues)) {
   const max = Math.max(1, ...v.players.map(p => p.s.gp || 0));
   if (L === 'ncaam' || L === 'ncaaw') v.players = v.players.filter(p => (p.s.gp || 0) >= Math.round(max * 0.5));
-  v.players.forEach(p => { for (const k in p.s) if (typeof p.s[k] === 'number') p.s[k] = Math.round(p.s[k] * 10) / 10; if (p.prev) for (const k in p.prev) if (typeof p.prev[k] === 'number') p.prev[k] = Math.round(p.prev[k] * 10) / 10; delete p.teamId; delete p.nowTeamId; delete p.moved; });
+  v.players.forEach(p => { for (const k in p.s) if (typeof p.s[k] === 'number') p.s[k] = Math.round(p.s[k] * 10) / 10; if (p.prev) for (const k in p.prev) if (typeof p.prev[k] === 'number') p.prev[k] = Math.round(p.prev[k] * 10) / 10; delete p.teamId; delete p.nowTeamId; delete p.moved; for (const o of [p.s, p.prev]) if (o) for (const k in o) if (o[k] == null) delete o[k]; });
 }
 writeFileSync('data/leaders.json', JSON.stringify(out));
 for (const [L, v] of Object.entries(out.leagues)) console.log(L, v.label, v.players.length, 'rookies:', v.players.filter(p => p.rookie).length, 'dropped:', v.dropped || 0);
