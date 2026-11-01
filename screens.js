@@ -419,7 +419,11 @@
     vheroShow($main.querySelector('.vhero img'));
     if (!ven.fullName) return;
     // ESPN names the building; Wikipedia has the photo and the detail
-    const wp = await HW.wikiPage(ven.fullName).catch(() => null);
+    /* the right article: the name alone first; when that is missing or a "may refer to" list, search Wikipedia for the
+       name with its city and take the first real article (Palazzo dello Sport, Rome is PalaLottomatica) */
+    let wp = await HW.wikiPage(ven.fullName).catch(() => null);
+    if (!wp) { const city = ven.address && ven.address.city || ''; const d = await HW.jSoft(`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srlimit=5&srsearch=${encodeURIComponent(`${ven.fullName} ${city} arena`)}`, 7 * 864e5).catch(() => null);
+      for (const h of (d && d.query && d.query.search || [])) { const p = await HW.wikiPage(h.title).catch(() => null); if (p && p.extract && (!city || p.extract.toLowerCase().includes(city.toLowerCase()) || p.title.toLowerCase().includes(city.toLowerCase()))) { wp = p; break; } } }
     const live = () => { const h = $main.querySelector('.vhero'); return h && h.dataset.gid === String(gid) ? h : null; };   // still the same venue on screen
     if (!wp || !live()) return;
     const wf = wp.id ? await HW.wikiFacts(wp.id).catch(() => ({})) : {};
