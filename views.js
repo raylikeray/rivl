@@ -352,16 +352,19 @@
       $main.innerHTML = `<div class="page-h"><h1>Make it yours</h1><p>Home shows only the teams and players you follow.</p></div>` + empty('Nothing followed yet', '<p style="margin:6px 0 0">Pick a few teams and players and this screen fills with their games, lines, injuries and news.</p>', `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><a class="btn" href="#teams">Choose teams</a><a class="btn ghost" href="#players">Find players</a></div>`);
       return;
     }
-    $main.innerHTML = skeleton(1, 'card') + skeleton(4, 'row');
+    /* a refresh (pull down, or coming back to the tab) keeps the screen you are looking at and swaps in each section as its
+       fresh data lands, with no skeleton and no rise: only a league you have not seen yet starts from the skeleton */
+    const keep = !!$main.querySelector('.hcols') && $main.dataset.hlk === lk;
+    if (!keep) { $main.innerHTML = skeleton(1, 'card') + skeleton(4, 'row'); $main.dataset.hlk = lk; }
     const P = prefs.all(); const yday = addDays(today, -1);
     const alive = () => { if (token !== homeToken) return false; const r = HW.v5.route && HW.v5.route(); return !r || (r.name === 'home' && r.lk === lk); };   // still the screen being shown, even while the old one is kept on screen during the load
-    const secs = {}; let painted = false;
+    const secs = {}; let painted = keep;
     const wrap = (k, quiet) => `<section class="hsec${quiet ? ' quiet' : ''}" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;
     // two columns on a wide screen (the games and your people on the left, injuries and news on the right); one stack on a phone
     const SIDE = new Set(['injuries', 'news']);
     const col = k => $main.querySelector(SIDE.has(k) ? '.hcol.side' : '.hcol.main') || $main;
     const paint = (quiet = false) => {
-      if (!alive()) return;
+      if (!alive()) return; if (keep) quiet = true;
       if (!painted) {
         painted = true;
         const colHtml = side => SECS.filter(k => SIDE.has(k) === side && secs[k]).map(k => wrap(k, false)).join('');
