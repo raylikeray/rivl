@@ -4299,3 +4299,5 @@ html:root body .xgloss .xgw{display:contents}
 html:root body .xgloss .tag{align-self:start;justify-self:start;margin:12px 0 0;white-space:nowrap}
 html:root body .xgloss p{margin:0;padding:12px 0;font-size:14.5px;line-height:1.45;color:var(--ink-2);border-bottom:1px solid var(--line)}
 html:root body .xgloss .xgw:last-child p{border-bottom:0}
+/* score rows: the star for a team you follow sits beside the name, not over the crest */
+html:root body .grow .tm .nm .star{position:static!important;width:auto;height:auto;display:inline;background:none;box-shadow:none;font-size:10px;color:#F5B915;margin-left:3px;vertical-align:1px}
