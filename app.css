@@ -2985,3 +2985,9 @@ html body :is(.gxplate,.glplate,.hsec,.card,.gp,.giplate,.ijc) .rows:not(.x){bor
 .grow .lv{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:var(--surf-2);border:1px solid var(--line-2);font-size:12px;font-weight:700;white-space:nowrap}
 .grow .lv i{width:6px;height:6px;border-radius:999px;background:#FF375F}
 .grow:active{background:color-mix(in srgb,var(--ink) 4%,transparent)}
+
+/* the page is one plain colour: white in light mode, black in dark. No wash from the top, no grain. */
+.app::before,.app::after{display:none!important}
+html,body,:root[data-tint] body{background:var(--bg)!important;background-image:none!important}
+:root{--grain:none;--page:var(--bg)}
+.hdr,.top{background:var(--bg)!important;background-image:none!important}
