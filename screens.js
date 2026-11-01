@@ -367,6 +367,13 @@
       + `<div id="tbody">${tabs.map(([k]) => `<div ${attr}="${k}"${k === tab ? '' : ' hidden'}>${panels[k] || ''}</div>`).join('')}</div></div></div></div>`;
     gxFit(); gxScroll(); if (gxScroll.run) gxScroll.run();
   };
+  /* the hero sits under the scroll box (the sheet scrolls up over it), so a tap on the hero lands on the box's empty top.
+     Pass it through to whatever is drawn there: the Follow pill, the team crest link. */
+  if (!V._heroTap) { V._heroTap = true; document.addEventListener('click', e => {
+    const sp = e.target.closest && e.target.closest('#gxscroll .gxspace'); if (!sp) return;
+    const under = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.closest && el.closest('#gxhero') && el.closest('a,button'));
+    const hit = under && under.closest('a,button'); if (hit) { e.preventDefault(); e.stopPropagation(); hit.click(); }
+  }, true); }
   /* a team's line from the simulation: odds, projected record, the run left */
   async function outlookFill(L, id, r, { feed = false } = {}) {
     const box = $main.querySelector(`.outlook[data-lk="${L.key}"][data-id="${id}"]`); if (!box) return;

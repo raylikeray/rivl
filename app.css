@@ -3283,3 +3283,17 @@ html body .row .star svg path{stroke:currentColor;stroke-width:2;stroke-linejoin
 /* no rubber-band stretch at either end of the page: on Android it pulled the page and showed text behind the top */
 .gxpage .gxscroll,#gxscroll{overscroll-behavior:none}
 .gxpage .flw svg,.gxpage .flw svg path{color:inherit!important;stroke:currentColor!important;fill:none!important;opacity:1!important;display:block!important;visibility:visible!important}
+/* player hero, second pass: taller, the photo larger and higher so the face clears the name; name, then the line with
+   team, position and number beside the Follow pill, all over the chest */
+.gxpage.plpage{--gxh:calc(var(--gxbar) + 372px)}
+.plh .plshot{height:372px;max-height:none;bottom:0}
+.plh .pltx{bottom:18px}
+.plh h1{font-size:clamp(28px,8.4vw,36px)}
+.plh .plrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px}
+.plh .plrow p{margin:0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plh .plrow .flw{margin-top:0;flex:none}
+.plh::after{height:34%}
+/* the Follow pill's star: outline when not following, solid gold when following, like every other star */
+.gxpage .flw svg.fs,.gxpage .flw svg.fs path{fill:none!important;stroke:currentColor!important;stroke-width:2!important;stroke-linejoin:round}
+.gxpage .flw svg.fs.on,.gxpage .flw svg.fs.on path{fill:#F5B915!important;stroke:#F5B915!important}
+.gxpage .flw.on,.gxpage .flw[aria-pressed="true"]{background:rgba(255,255,255,.22)!important;color:#fff!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)!important}
