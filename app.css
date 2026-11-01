@@ -3192,3 +3192,9 @@ html body .why-h .wt{background:none!important}
 /* the underline under the chosen tab, as on X: as wide as the word, sitting on the divider line */
 .gxtabs .chip{position:relative!important}
 .gxtabs .chip.on::after,.gxtabs .chip[aria-pressed="true"]::after{content:""!important;display:block!important;position:absolute!important;left:0!important;right:0!important;bottom:-1px!important;height:4px!important;border-radius:999px!important;background:var(--ink)!important}
+/* the sliding underline replaces the per-tab one */
+.gxtabs{position:relative!important}
+.gxtabs .chip.on::after,.gxtabs .chip[aria-pressed="true"]::after{display:none!important}
+.gxtabs .gxind{position:absolute;left:0;bottom:-1px;height:4px;width:0;border-radius:999px;background:var(--ink);pointer-events:none;
+  transition:transform .32s cubic-bezier(.2,.8,.2,1),width .32s cubic-bezier(.2,.8,.2,1);will-change:transform}
+@media (prefers-reduced-motion:reduce){ .gxtabs .gxind{transition:none} }

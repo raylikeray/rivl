@@ -233,3 +233,34 @@
      existed and said the server was missing. Paint it again now that they do. */
   { const r = V.route && V.route(); if (r && r.name === 'settings' && V.rerender) V.rerender(); }
 })();
+
+/* The underline under the chosen game or team tab slides to the new tab instead of hopping. One bar per tab row,
+   moved with a transform; if the row is rebuilt, the new bar starts where the old one was so it still slides. */
+(() => {
+  let last = null, lastKey = '', queued = false;
+  const key = () => location.hash.split('/').slice(0, 3).join('/');
+  const sync = () => {
+    queued = false;
+    document.querySelectorAll('.gxtabs').forEach(t => {
+      const on = t.querySelector('.chip.on, .chip[aria-pressed="true"]');
+      let ind = t.querySelector(':scope > .gxind');
+      if (!on) { if (ind) ind.style.opacity = '0'; return; }
+      const x = on.offsetLeft, w = on.offsetWidth; if (!w) return;
+      if (!ind) {
+        ind = document.createElement('i'); ind.className = 'gxind'; ind.setAttribute('aria-hidden', 'true'); t.appendChild(ind);
+        const from = lastKey === key() && last ? last : { x, w };
+        ind.style.transition = 'none'; ind.style.transform = `translateX(${from.x}px)`; ind.style.width = from.w + 'px';
+        void ind.offsetWidth; ind.style.transition = '';
+      }
+      if (ind.dataset.x !== String(x) || ind.dataset.w !== String(w)) {
+        ind.dataset.x = x; ind.dataset.w = w; ind.style.transform = `translateX(${x}px)`; ind.style.width = w + 'px';
+      }
+      ind.style.opacity = '1'; last = { x, w }; lastKey = key();
+    });
+  };
+  const q = () => { if (!queued) { queued = true; requestAnimationFrame(sync); } };
+  new MutationObserver(q).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'aria-pressed'] });
+  window.addEventListener('resize', q);
+  document.fonts && document.fonts.ready.then(q);
+  q();
+})();
