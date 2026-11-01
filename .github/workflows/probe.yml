@@ -1,0 +1,11 @@
+name: probe
+on: workflow_dispatch
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          pip install pillow -q
+          for u in https://a.espncdn.com/i/headshots/wnba/players/full/3149391.png https://a.espncdn.com/i/headshots/wnba/players/full/4433403.png https://a.espncdn.com/i/headshots/nba/players/full/3975.png https://a.espncdn.com/i/headshots/wnba/players/full/2998938.png; do curl -sL "$u" -o i.png; python3 -c "from PIL import Image;im=Image.open('i.png');print('$u',im.size)"; done
+          curl -sL "https://cdn.wnba.com/headshots/wnba/latest/1040x760/1628886.png" -o w.png -w "%{http_code}\n"; python3 -c "from PIL import Image;print('wnba cdn',Image.open('w.png').size)" || true
+          curl -s "https://site.web.api.espn.com/apis/common/v3/sports/basketball/wnba/athletes/2998938" | python3 -c "import sys,json;d=json.load(sys.stdin)['athlete'];print(d.get('displayName'),d.get('headshot'),[k for k in d.keys()][:60])"
