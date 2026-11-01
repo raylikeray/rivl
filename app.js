@@ -305,8 +305,9 @@
     if (a === 'stab') { e.preventDefault(); store.set('v5:stab:' + (current ? current.lk : 'nba'), act.dataset.tab); render(); }
     if (a === 'play') { e.preventDefault(); openSheet(act.dataset.vid); }
     if (a === 'injury') { e.preventDefault(); openInjury(act.dataset.key); }
+    if (a === 'bsheet-close') { e.preventDefault(); closeSheet7(); const to = act.getAttribute('href'); if (to && to.startsWith('#')) location.hash = to; }
     if (a === 'ijtoggle') { e.preventDefault(); const c = act.closest('.ijc'); if (c) { const min = !c.classList.contains('min'); c.classList.toggle('min', min); const m = store.get('ij:min', {}) || {}; if (min) m[c.dataset.pid] = 1; else delete m[c.dataset.pid]; store.set('ij:min', m); } }
-    if (a === 'panel-close' && act.dataset.ijopen) { const m = store.get('ij:min', {}) || {}; delete m[act.dataset.ijopen]; store.set('ij:min', m); }
+    if (act.dataset.ijopen) { const m = store.get('ij:min', {}) || {}; delete m[act.dataset.ijopen]; store.set('ij:min', m); }
     if (a === 'official') { e.preventDefault(); openOfficial(act.dataset.key); }
     if (a === 'gifold') { e.preventDefault(); V._.foldToggle(act, act.getAttribute('aria-expanded') !== 'true'); return; }
     if (a === 'injcol') { e.preventDefault(); const open = act.getAttribute('aria-expanded') !== 'true'; V._.foldToggle(act, open); const c = store.get('v5:injcol', {}) || {}; if (open) delete c[act.dataset.id]; else c[act.dataset.id] = true; store.set('v5:injcol', c); }
@@ -408,6 +409,22 @@
     if (pg.img) { const d = head.querySelector('.hs'); if (d) d.outerHTML = `<span class="hs" style="width:64px;height:64px"><img src="${esc(pg.img)}" alt="" onerror="this.remove()"></span>`; }
     if (pg.extract) box.innerHTML = `<div class="vabout" style="margin-top:12px"><p>${esc(pg.extract.split(/(?<=\.)\s+/).slice(0, 3).join(' '))}</p><a class="src" href="${esc(pg.url)}" target="_blank" rel="noopener">Wikipedia<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></a></div>`;
   }
+  /* v7's bottom sheet, as built there: it rises on a long soft curve while the page behind dims; it follows your finger when you
+     pull it down, the dimming easing off with it; a pull past a third of a hand (or a quick flick) sends it away, less springs back */
+  function openSheet7(html) {
+    let el = document.getElementById('bsheet'); if (!el) { el = document.createElement('div'); el.id = 'bsheet'; el.hidden = true; document.body.appendChild(el); }
+    clearTimeout(openSheet7.t); el.className = 'bottom'; el.innerHTML = '<div class="scrim" data-act="bsheet-close"></div><div class="bpanel">' + html + '</div>';
+    el.hidden = false; requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('on'))); document.body.classList.add('noscroll');
+    const pn = el.querySelector('.bpanel'), sc = el.querySelector('.scrim'); let y0 = 0, t0 = 0, dy = 0, on = false;
+    pn.addEventListener('touchstart', e => { if (pn.scrollTop > 0) return; on = true; y0 = e.touches[0].clientY; t0 = Date.now(); dy = 0; pn.style.transition = 'none'; sc.style.transition = 'none'; }, { passive: true });
+    pn.addEventListener('touchmove', e => { if (!on) return; dy = e.touches[0].clientY - y0; if (dy < 0) dy = dy / 6; pn.style.transform = `translateY(${dy}px)`; sc.style.opacity = String(Math.max(0, 1 - dy / (pn.offsetHeight || 500))); }, { passive: true });
+    pn.addEventListener('touchend', () => { if (!on) return; on = false; const v = dy / Math.max(1, Date.now() - t0);
+      if (dy > 110 || v > .55) { pn.style.transition = 'transform .32s cubic-bezier(.32,.72,0,1)'; pn.style.transform = 'translateY(105%)'; sc.style.transition = 'opacity .32s'; sc.style.opacity = '0'; openSheet7.t = setTimeout(() => { el.classList.remove('on'); document.body.classList.remove('noscroll'); el.hidden = true; el.innerHTML = ''; }, 320); }
+      else { pn.style.transition = ''; pn.style.transform = ''; sc.style.transition = ''; sc.style.opacity = ''; } });
+  }
+  function closeSheet7() { const el = document.getElementById('bsheet'); if (!el || el.hidden) return; const pn = el.querySelector('.bpanel'), sc = el.querySelector('.scrim');
+    if (pn) { pn.style.transition = ''; pn.style.transform = ''; } if (sc) { sc.style.transition = ''; sc.style.opacity = ''; }
+    el.classList.remove('on'); document.body.classList.remove('noscroll'); clearTimeout(openSheet7.t); openSheet7.t = setTimeout(() => { el.hidden = true; el.innerHTML = ''; }, 500); }
   function openInjury(key) {
     const rec = S.injuries && S.injuries[key]; if (!rec) return;
     const { x, team } = rec; const at = x.athlete || {}; const det = x.details || {}; const st = x.status || '';
@@ -420,8 +437,8 @@
     const note = x.longComment || x.shortComment || '';
     const ib = V._.injBody(L, x, false); const tl = team.logo || (team.id && HW.S && HW.S.tIdx && HW.S.tIdx[team.id] && HW.S.tIdx[team.id].logo) || '';
     const who = `${V._.headshot(V._.hsUrl(at) || at.headshot || '', V._.teamColor(team, L), 56, at.displayName)}<span><b>${esc(at.displayName || '')}</b><em>${tl ? V._.imgSized(tl, 48, 48) : ''}${esc(team.short || '')}</em></span>`;
-    openPanel(`<i class="grab" aria-hidden="true"></i>
-      <div class="ijs st-${ib.cls}">${id ? `<a class="ijwho" href="#player/${lk}/${esc(id)}" data-act="panel-close" data-ijopen="${esc(id)}" aria-label="Open ${esc(at.displayName || '')}'s profile">${who}<i class="chev">›</i></a>` : `<div class="ijwho">${who}</div>`}${ib.html}
+    openSheet7(`<i class="grab" aria-hidden="true"></i>
+      <div class="ijs st-${ib.cls}">${id ? `<a class="ijwho" href="#player/${lk}/${esc(id)}" data-act="bsheet-close" data-ijopen="${esc(id)}" aria-label="Open ${esc(at.displayName || '')}'s profile">${who}<i class="chev">›</i></a>` : `<div class="ijwho">${who}</div>`}${ib.html}
       <p class="xnote">${x.date ? `Updated ${esc(new Date(x.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: HW.TZ }))} · ` : ''}From the league injury report, through ESPN</p></div>`);
   }
 
