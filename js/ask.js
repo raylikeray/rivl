@@ -72,6 +72,9 @@
       if (best && !hits.some(h => h.e === best.e)) hits.push(best);
     });
     hits.sort((a, b) => a.pos - b.pos);
+    /* a typo match is only trusted next to something spelled right: in a sentence with no exact or started name anywhere
+       ("testing if this works correctly"), a word that merely resembles a name is not that name */
+    if (toks.length >= 3 && !hits.some(h => h.score >= 2)) hits.length = 0;
     return { ps: hits.filter(h => h.e.type === 'p').map(h => h.e), ts: hits.filter(h => h.e.type === 't').map(h => h.e), rs: hits.filter(h => h.e.type === 'r').map(h => h.e), nq: ' ' + norm(q) + ' ', hits };
   }
   /* who you follow ranks first among equal matches: "jalen" means your Jalen before the league's */
@@ -82,6 +85,7 @@
     for (const e of ents) { if (!ok(e)) continue; let sc = 0;
       for (const a of e.al) { if (a.startsWith(nq)) sc = Math.max(sc, 3); if (lastOk) for (const w of a.split(' ')) {
         if (w.startsWith(last)) sc = Math.max(sc, 2); else if (last.length >= 4 && lev(last, w) <= (last.length >= 7 ? 2 : 1)) sc = Math.max(sc, 1); } }
+      if (sc < 2 && nq.split(' ').length >= 3) sc = 0;   // typo-only matches are for short searches, not sentences
       if (sc) out.push({ e, sc: sc + (e.type === 'p' ? Math.min(.4, ((e.p.s || {}).pts || 0) / 80) + (e.lk === 'nba' ? .2 : 0) : e.type === 't' ? (e.lk === 'nba' ? .3 : .1) : 0) + (followed(e) ? .8 : 0) }); }
     // every name the query spells out comes first (all of them in "A vs B vs C"), then what the last word is starting to spell
     const named = findAll(ents, q).hits.map(h => h.e).filter(ok);
@@ -447,9 +451,10 @@
     const shownSet = new Set([...(A.shown || []), ...(A.html ? A.f.hits.map(h => h.e) : [])]);
     const rest = (onlyName || A.html ? sug.filter(e => !shownSet.has(e)) : sug);
     /* a corrected spelling is said out loud: the top row came from a typo match, not from the letters typed */
-    const last = nq.split(' ').pop(); const top = sug[0];
+    const last = nq.split(' ').pop(); const top = sug[0]; const h0 = A.f.hits[0];
     const typed = e => e.al.some(a => a.startsWith(nq) || a === nq || a.split(' ').some(w => w.startsWith(last)));
-    const dym = top && !typed(top) && (A.html ? A.f.hits.some(h => h.e === top) : true) ? `<p class="xdym">Showing <b>${esc(top.name)}</b></p>` : '';
+    const fixed = h0 && A.f.hits.length === 1 && h0.score < 2 ? h0.e : (!A.f.hits.length && top && nq.split(' ').length <= 2 && !typed(top) ? top : null);
+    const dym = fixed ? `<p class="xdym">Showing <b>${esc(fixed.name)}</b></p>` : '';
     res.innerHTML = dym + (A.html || '') + (rest.length && (filter !== 'all' || onlyName || !A.html) ? `${A.html ? '<p class="xmore">More matches</p>' : ''}<div class="xlist">${rest.map(rowOf).join('')}</div>` : '')
       || (A.kind === 'web' ? '' : noResults(I, q));
     XS.result(q, !!(res.querySelector('.xnone')));
@@ -474,7 +479,7 @@
   /* nothing matched: the closest names at a wider typo distance, then questions that work, so the screen is never a dead end */
   function noResults(I, q) {
     const nq = norm(q), toks = nq.split(' ').filter(t => t.length >= 3 && !STOP.has(t) && !COMMON.has(t));
-    const near = []; if (toks.length) for (const e of I.ents) { let d = 9; for (const a of e.al) for (const w of a.split(' ')) for (const t of toks) { if (Math.abs(w.length - t.length) <= 3) d = Math.min(d, lev(t, w)); } if (d <= 3) near.push({ e, d, pop: (e.p && e.p.s && e.p.s.pts) || 0 }); }
+    const near = []; if (toks.length) for (const e of I.ents) { let d = 9; for (const a of e.al) for (const w of a.split(' ')) for (const t of toks) { if (Math.abs(w.length - t.length) <= 3) d = Math.min(d, lev(t, w)); } if (d <= (toks.length >= 3 ? 1 : 3)) near.push({ e, d, pop: (e.p && e.p.s && e.p.s.pts) || 0 }); }
     near.sort((a, b) => a.d - b.d || b.pop - a.pop); const rows = near.slice(0, 3).map(x => x.e);
     const chips = TRY.flatMap(([, qs]) => qs).slice(0, 6);
     return `<div class="xnone"><b>Nothing found for “${esc(q.trim())}”</b>${rows.length ? `<p>Did you mean</p><div class="xlist">${rows.map(rowOf).join('')}</div>` : '<p>Try a player, a team, a school, or a question.</p>'}<div class="xtry xtry2">${chips.map(t => `<button class="chip" data-xq="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>`;
