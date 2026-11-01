@@ -73,8 +73,10 @@
   }
   const glossary = () => `<div class="xans"><span class="xk">What the injury words mean</span><div class="xgloss">${GLOSS.map(([w, c, d]) => `<div class="xgw"><span class="tag ${c}">${esc(w)}</span><p>${esc(d)}</p></div>`).join('')}</div><p class="xsrc">Statuses come from each league's official injury report, through ESPN.</p></div>`;
   async function injuryAnswer(f, nq, has) {
-    const team = f.ts[0] || null; const lk = team ? team.lk : (leagueIn(nq) || curLk());
-    const L = LEAGUES[lk]; const wantsGloss = /\b(mean|means|meaning|what is|whats|define|explain|glossary|key|legend)\b/.test(nq) || /^ ?(injury|injuries|injured|dtd|quest|questionable|out|doubtful|probable|gtd|day to day) ?$/.test(nq);
+    /* search covers the whole app, not the league tab you happen to be on: with no league or team named, the NBA report
+       is shown (college publishes none). Naming college still gets the note. */
+    const team = f.ts[0] || null; const lk = team ? team.lk : (leagueIn(nq) || 'nba');
+    const L = LEAGUES[lk]; const wantsGloss = /\b(mean|means|meaning|what is|whats|define|explain|glossary|key|legend)\b/.test(nq) || /^ ?(injur[a-z]*|dtd|quest|questionable|out|doubtful|probable|gtd|day to day) ?$/.test(nq);
     const wantsPast = /\b(last (year|season)|this (year|season)|all season|so far|history|have been|has had|had)\b/.test(nq);
     const mine = /\b(my|mine|your|our)\b/.test(nq);
     if (!L.hasInjuries) return { html: (wantsGloss ? glossary() : '') + `<div class="xans"><span class="xk">${esc(L.label)} injuries</span><p class="xline dim">${esc(L.label)} teams don't publish an official injury report, so RIVL has nothing to list for college. The NBA and WNBA do.</p></div>`, kind: 'intent' };
@@ -173,7 +175,7 @@
   const CATS = [[/\b(three|3 ?point|3pt|3s|threes|shooter)/, 'tpm', 'Threes made', '3PM'], [/\b(point|scor|ppg)/, 'pts', 'Points', 'PPG'], [/\b(rebound|board|rpg)/, 'reb', 'Rebounds', 'RPG'], [/\b(assist|apg|passer|playmak)/, 'ast', 'Assists', 'APG'], [/\b(steal|spg)/, 'stl', 'Steals', 'SPG'], [/\b(block|bpg|rim protect)/, 'blk', 'Blocks', 'BPG'], [/\b(field goal|fg|efficien)/, 'fg', 'Field goal %', 'FG%'], [/\b(free throw|ft)/, 'ft', 'Free throw %', 'FT%'], [/\b(minute|mpg)/, 'min', 'Minutes', 'MPG'], [/\b(turnover)/, 'to', 'Turnovers', 'TOPG'], [/\b(double double)/, 'dd', 'Double-doubles', '']];
   /* the best lines of one night: every game's leaders from that day's scoreboard, ranked across the league */
   async function nightLeadersAnswer(nq, f, when) {
-    const lk = leagueIn(nq) || curLk(), L = LEAGUES[lk]; const games = await HW.scoreboard(L, when.ymd, 60000).catch(() => []);
+    const lk = leagueIn(nq) || 'nba', L = LEAGUES[lk]; const games = await HW.scoreboard(L, when.ymd, 60000).catch(() => []);
     const done = (games || []).filter(g => g.state === 'post' || g.state === 'in'); if (!done.length) return null;
     const cat = CATS.find(c => c[0].test(nq)) || CATS[1]; const want = { pts: /points/i, reb: /rebounds/i, ast: /assists/i }[cat[1]] || /points/i; const label = { pts: 'Points', reb: 'Rebounds', ast: 'Assists' }[cat[1]] || 'Points';
     const rows = []; done.forEach(g => ['away', 'home'].forEach(side => { const t = g[side], o = g[side === 'home' ? 'away' : 'home']; const l = (t.leaders || []).find(x => want.test(x.name || x.displayName || '')); const a = l && l.leaders && l.leaders[0]; if (!a || !a.athlete) return; rows.push({ v: +a.value || parseFloat(a.displayValue) || 0, a: a.athlete, t, o, g, side }); }));
@@ -183,7 +185,7 @@
     return { html: `<div class="xans"><span class="xk">${esc(L.label)} · ${esc(label)} ${esc(when.word)}</span><p class="xline">${line}</p><div class="xtops">${list.map((x, i) => `<a class="xtp" href="${_.href.player(lk, x.a.id)}"><span class="strk">${i + 1}</span>${_.headshot(x.a.headshot || '', _.teamColor(x.t, L), 34, x.a.displayName)}<span><b>${esc(x.a.displayName)}</b><em>${esc(x.t.short)} ${x.side === 'home' ? 'vs' : 'at'} ${esc(x.o.short)} · ${x.g.state === 'in' ? 'live' : `${x.t.score}-${x.o.score}`}</em></span><b class="xv">${x.v}</b></a>`).join('')}</div><p class="xsrc">Each team's leader from ESPN's scoreboard for that day.</p></div>`, kind: 'intent' };
   }
   async function leadersAnswer(nq, f) {
-    const lk = leagueIn(nq) || curLk(), L = LEAGUES[lk]; const lg = await HW.hub.league(L).catch(() => null); if (!lg || !lg.players) return null;
+    const lk = leagueIn(nq) || 'nba', L = LEAGUES[lk]; const lg = await HW.hub.league(L).catch(() => null); if (!lg || !lg.players) return null;
     const cat = CATS.find(c => c[0].test(nq)) || CATS[0]; const key = /\b(percent(age)?|%|pct)\b/.test(nq) && cat[1] === 'tpm' ? 'tp' : cat[1];
     const rookies = /\brookie/.test(nq); const maxG = Math.max(1, ...lg.players.map(p => (p.s || {}).gp || 0));
     const qual = p => { const s = p.s || {}; return (s.gp || 0) >= Math.max(1, Math.ceil(maxG * .5)) && (s.min || 0) >= (lk.startsWith('ncaa') ? 10 : 12) && (!rookies || p.rookie); };
@@ -196,7 +198,7 @@
 
   /* ---------- standings ---------- */
   async function standingsAnswer(nq, f) {
-    const team = f.ts[0] || null; const lk = team ? team.lk : (leagueIn(nq) || curLk()), L = LEAGUES[lk];
+    const team = f.ts[0] || null; const lk = team ? team.lk : (leagueIn(nq) || 'nba'), L = LEAGUES[lk];
     const st = await HW.standings(L).catch(() => null); if (!st || !st.byId) return null;
     const idx = await V.teamsIndex(L).catch(() => ({})); const rows = Object.values(st.byId).filter(r => r.w + r.l > 0 || true);
     const grpWord = (nq.match(/\b(east|west|eastern|western|atlantic|central|southeast|northwest|pacific|southwest|big east|big ten|big 12|sec|acc|big twelve)\b/) || [])[1];
