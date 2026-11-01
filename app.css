@@ -3363,3 +3363,14 @@ html body .plmn .hs{box-shadow:0 0 0 2.5px rgba(255,255,255,.62)!important}
 :root[data-theme="dark"]{--bg:#000000;--card:#141517;--surf:#141517;--card-line:#292A2C;--line:#292A2C;--surf-2:#232427}
 :root[data-theme="dark"] .glplate{background:var(--card)!important}
 .plpage .gxbar .gxmid2,.plpage .gxbar .gxctr{justify-content:flex-start!important;text-align:left}.plpage .gxbar .gxmid2{margin-left:10px}
+/* Standings table as one of the app's cards: card colour, thin outline, no shadow, no tinted header, no lighter band on
+   followed teams (the star marks them), no colour stripe down the left */
+html body .tw:has(> .tbl.stand){background:var(--card)!important;border:1px solid var(--card-line)!important;box-shadow:none!important;border-radius:22px!important;overflow:hidden}
+html body .tw:has(> .tbl.stand)::after{display:none!important}
+html body .tbl.stand,html body .tbl.stand thead th,html body .tbl.stand td,html body .tbl.stand tr.me td,html body .tbl.stand th:first-child,html body .tbl.stand td:first-child,html body .tbl.stand tr.me td:first-child,html body .tbl.stand thead th:first-child{background:var(--card)!important;background-image:none!important}
+html body .tbl.stand tr td:first-child,html body .tbl.stand tr.me td:first-child{box-shadow:none!important}
+html body .tbl.stand th,html body .tbl.stand td{border-color:var(--line)!important}
+
+/* team hero: room under the Follow pill so the sheet's rounded top never touches it */
+.gxpage.tmpage:not(.plpage){--gxh:calc(var(--gxbar) + 196px)}
+.tmpage:not(.plpage) .gxin{padding-bottom:48px!important;display:flex;flex-direction:column;justify-content:flex-end;height:100%;box-sizing:border-box}
