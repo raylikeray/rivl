@@ -3161,3 +3161,25 @@ html body .why-h .wt{background:none!important}
   .tabs .tab.on{flex:0 0 auto!important;padding:0 16px!important;min-width:64px!important}
   .tabs .tab.on span{overflow:visible;max-width:none}
 }
+/* Bottom bar, v7 with the raised centre button: frosted glass pill, outline icons over small labels, the page you're on
+   in full white (no pill); Home is the raised red circle in the middle with a ring of the page colour around it. */
+@media (max-width:1039px){
+  .tabs .tab,.tabs .tab.on{flex:1 1 0!important;padding:0!important;min-width:0!important;background:none!important;height:62px!important;gap:5px!important;font-size:12px!important;font-weight:600!important;color:rgba(255,255,255,.62)!important}
+  .tabs .tab.on{color:#fff!important;font-weight:700!important}
+  .tabs .tab.on svg.o{fill:none;stroke-width:2.1}
+  .tabs .tab.mid{flex:0 0 76px!important;height:62px!important;background:none!important;padding:0!important}
+  .tabs .tab.mid span{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important}
+  html body .tabs .tab.mid .mb{position:absolute!important;left:50%;top:50%;transform:translate(-50%,-50%)!important;width:62px!important;height:62px!important;border-radius:999px!important;
+    display:grid;place-items:center;color:#fff!important;background:linear-gradient(160deg,#FF4D6D,#C8102E)!important;
+    box-shadow:0 8px 22px rgba(200,16,46,.45),0 0 0 4px var(--bg)!important}
+  html body .tabs .tab.mid .mb svg{width:26px!important;height:26px!important;color:#fff!important}
+  html body .tabs .tab.mid.on .mb svg.o{fill:#fff;fill-opacity:.25}
+  html body .tabs .tab.mid:active .mb{transform:translate(-50%,-50%) scale(.92)!important}
+}
+@media (max-width:1039px) and (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]) .tabs .tab,:root:not([data-theme="dark"]) .tabs .tab.on{color:rgba(7,9,11,.55)!important;background:none!important}
+  :root:not([data-theme="dark"]) .tabs .tab.on{color:#07090B!important}
+}
+@media (max-width:1039px){ :root[data-theme="light"] .tabs .tab.on{color:#07090B!important;background:none!important} }
+@media (max-width:1039px){ html body .tabs .tab.mid{position:relative!important} html body .tabs .tab.mid .mb{top:calc(50% - 4px)!important;bottom:auto!important} }
+@media (max-width:1039px){ html body .tabs{padding:0 8px!important} html body .tabs .tab.mid .mb{top:calc(50% - 6px)!important} }
