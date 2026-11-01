@@ -72,11 +72,11 @@
     return { rows: rows.slice().sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name)), how: 'most severe first' };
   }
   const glossary = () => `<div class="xans"><span class="xk">What the injury words mean</span><div class="xgloss">${GLOSS.map(([w, c, d]) => `<div class="xgw"><span class="tag ${c}">${esc(w)}</span><p>${esc(d)}</p></div>`).join('')}</div><p class="xsrc">Statuses come from each league's official injury report, through ESPN.</p></div>`;
-  async function injuryAnswer(f, nq, has) {
+  async function injuryOne(f, nq, has, lkWant, both) {
     /* search covers the whole app, not the league tab you happen to be on: with no league or team named, the NBA report
        is shown (college publishes none). Naming college still gets the note. */
-    const team = f.ts[0] || null; const lk = team ? team.lk : (leagueIn(nq) || 'nba');
-    const L = LEAGUES[lk]; const wantsGloss = /\b(mean|means|meaning|what is|whats|define|explain|glossary|key|legend)\b/.test(nq) || /^ ?(injur[a-z]*|dtd|quest|questionable|out|doubtful|probable|gtd|day to day) ?$/.test(nq);
+    const team = both ? null : (f.ts[0] || null); const lk = lkWant || (team ? team.lk : (leagueIn(nq) || 'nba'));
+    const L = LEAGUES[lk]; const wantsGloss = !both && ( /\b(mean|means|meaning|what is|whats|define|explain|glossary|key|legend)\b/.test(nq) || /^ ?(injur[a-z]*|dtd|quest|questionable|out|doubtful|probable|gtd|day to day) ?$/.test(nq));
     const wantsPast = /\b(last (year|season)|this (year|season)|all season|so far|history|have been|has had|had)\b/.test(nq);
     const mine = /\b(my|mine|your|our)\b/.test(nq);
     if (!L.hasInjuries) return { html: (wantsGloss ? glossary() : '') + `<div class="xans"><span class="xk">${esc(L.label)} injuries</span><p class="xline dim">${esc(L.label)} teams don't publish an official injury report, so RIVL has nothing to list for college. The NBA and WNBA do.</p></div>`, kind: 'intent' };
@@ -94,12 +94,24 @@
       const byPl = new Set(season.map(e => e.pid)).size;
       past = `<div class="xpast"><span class="xk2">The season so far</span><p>RIVL has logged <b>${plural(season.length, 'injury listing')}</b> across <b>${plural(byPl, 'player')}</b> since ${esc(niceDate(logSince || log.updated.slice(0, 10)))}; ${cleared.length} have cleared.${wantsPast && /last (year|season)/.test(nq) ? ' The log starts there, so last season isn\'t in it.' : ''}</p>${cleared.length ? `<div class="xclr">${cleared.sort((a, b) => b.cleared.localeCompare(a.cleared)).slice(0, 5).map(e => `<span><b>${esc(e.name)}</b> ${esc(e.what || '')} · cleared ${esc(niceDate(e.cleared))}</span>`).join('')}</div>` : ''}</div>`; }
     else if (wantsPast) past = `<p class="xsrc">RIVL started keeping its own injury log today; past seasons aren't in it. Counts and dates build from here.</p>`;
-    const list = sorted.length ? `<div class="xinjs">${sorted.slice(0, 40).map(r => injRow(r, lk)).join('')}${sorted.length > 40 ? `<p class="xsrc">and ${sorted.length - 40} more</p>` : ''}</div>` : '';
+    const cap = both ? 6 : 40, mk = `inj-${lk}`;
+    const lim = both ? sorted.length : 40;
+    const list = sorted.length ? `<div class="xinjs">${sorted.slice(0, lim).map((r, i) => i >= cap ? injRow(r, lk).replace('<a class="xinj"', `<a class="xinj" hidden data-more="${mk}"`) : injRow(r, lk)).join('')}${sorted.length > cap ? `<button class="xmorebtn" data-act="expand" data-more="${mk}">Show all ${Math.min(lim, sorted.length)}</button>` : ''}${sorted.length > lim ? `<p class="xsrc">and ${sorted.length - lim} more</p>` : ''}</div>` : '';
     const SORTK = { 'most severe': 'most severe first', 'returning soonest': 'soonest back first', 'newest': 'newest first', 'longest out': 'longest out first' };
-    const sortChips = sorted.length > 2 ? `<div class="xsorts">${[['most severe', 'Most severe'], ['returning soonest', 'Back soonest'], ['newest', 'Newest'], ['longest out', 'Longest out']].map(([k, l]) => `<button class="chip${SORTK[k] === how ? ' on' : ''}" aria-pressed="${SORTK[k] === how}" data-xq="${esc((team ? team.name : (mine ? 'my ' : L.label + ' ')) + ' injuries ' + k)}">${l}</button>`).join('')}</div>` : '';
+    const sortChips = sorted.length > 2 ? `<div class="xsorts">${[['most severe', 'Most severe'], ['returning soonest', 'Back soonest'], ['newest', 'Newest'], ['longest out', 'Longest out']].map(([k, l]) => `<button class="chip${SORTK[k] === how ? ' on' : ''}" aria-pressed="${SORTK[k] === how}" data-xq="${esc((team ? team.name : (mine ? 'my ' : both ? '' : L.label + ' ')) + ' injuries ' + k)}">${l}</button>`).join('')}</div>` : '';
     const head = team ? K().twho(team, title) : `<span class="xk">${esc(title)}</span>`;
-    return { html: (wantsGloss ? glossary() : '') + `<div class="xans xinjans">${head}<p class="xline">${line}</p>${sortChips}${list}${past}<p class="xsrc">Official injury report, through ESPN. Dates from RIVL's log.</p></div>`, kind: 'intent' };
+    return { html: (wantsGloss ? glossary() : '') + `<div class="xans xinjans">${head}<p class="xline">${line}</p>${both ? '' : sortChips}${list}${past}<p class="xsrc">Official injury report, through ESPN. Dates from RIVL's log.</p></div>`, kind: 'intent' };
+  }  /* no league or team named: the NBA report, short, with Show all; the WNBA's right under it; one set of sort chips on top */
+  async function injuryAnswer(f, nq, has) {
+    const named = leagueIn(nq), team = f.ts[0] || null;
+    if (team || named) return injuryOne(f, nq, has);
+    const wantsGloss = /\b(mean|means|meaning|what is|whats|define|explain|glossary|key|legend)\b/.test(nq) || /^ ?(injur[a-z]*|dtd|quest|questionable|out|doubtful|probable|gtd|day to day) ?$/.test(nq);
+    const [a, b] = await Promise.all([injuryOne(f, nq, has, 'nba', true), injuryOne(f, nq, has, 'wnba', true)]);
+    const how = sortInj([], nq).how; const SORTK = { 'most severe': 'most severe first', 'returning soonest': 'soonest back first', 'newest': 'newest first', 'longest out': 'longest out first' };
+    const chips = `<div class="xsorts xsorts0">${[['most severe', 'Most severe'], ['returning soonest', 'Back soonest'], ['newest', 'Newest'], ['longest out', 'Longest out']].map(([k, l]) => `<button class="chip${SORTK[k] === how ? ' on' : ''}" aria-pressed="${SORTK[k] === how}" data-xq="${esc((/\b(my|mine|our)\b/.test(nq) ? 'my ' : '') + 'injuries ' + k)}">${l}</button>`).join('')}</div>`;
+    return { html: (wantsGloss ? glossary() : '') + chips + a.html + b.html, kind: 'intent' };
   }
+
 
   /* ---------- games: find the one the question means, read its box ---------- */
   async function gameFor(L, teamId, when) {

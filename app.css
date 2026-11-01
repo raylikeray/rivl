@@ -4301,3 +4301,6 @@ html:root body .xgloss p{margin:0;padding:12px 0;font-size:14.5px;line-height:1.
 html:root body .xgloss .xgw:last-child p{border-bottom:0}
 /* score rows: the star for a team you follow sits beside the name, not over the crest */
 html:root body .grow .tm .nm .star{position:static!important;width:auto;height:auto;display:inline;background:none;box-shadow:none;font-size:10px;color:#F5B915;margin-left:3px;vertical-align:1px}
+/* injury lists: Show all, and the shared sort chips above the two leagues */
+.xmorebtn{display:block;width:100%;margin:10px 0 2px;padding:12px;border:0;border-radius:14px;background:var(--surf-2);color:var(--ink);font:600 15px/1 inherit;font-family:inherit;cursor:pointer}
+.xsorts0{margin:0 0 10px;padding:0 2px}
