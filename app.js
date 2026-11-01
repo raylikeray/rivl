@@ -243,7 +243,7 @@
     [r.lk, ...ORDER.filter(k => k !== r.lk)].forEach(k => {
       if (onToday && k === r.lk) return;
       if (r.name === 'game') return;   // the game page carries the day's games in its own bar
-      const L = LEAGUES[k]; const gs = S.today[k].filter(g => isLive(g) && !(r.name === 'game' && r.lk === k && String(r.args[1]) === g.id));
+      const L = LEAGUES[k]; const gs = S.today[k].filter(g => isLive(g) && !(r.name === 'game' && r.lk === k && String(r.args[1]) === g.id)).sort((a, b) => (HW.isFav(b) ? 1 : 0) - (HW.isFav(a) ? 1 : 0));
       gs.sort((a, b) => (HW.isFav(b) ? 1 : 0) - (HW.isFav(a) ? 1 : 0)).forEach(g => out.push({ g, L }));
     });
     return out;
@@ -256,10 +256,10 @@
   function paintLive() {
     if (!$live) return;
     const r = current || route();
-    const show = r && !['home', 'settings', 'search'].includes(r.name) && !document.body.classList.contains('onboarding');
+    const show = r && !['settings', 'search'].includes(r.name) && !document.body.classList.contains('onboarding') && !(r.name === 'home' && document.querySelector('.hsec[data-sec="now"]') && window.scrollY < window.innerHeight * .6);
     const list = show ? liveList() : [];
     const inner = $live.querySelector('.lb-in');
-    if (!list.length) { if (!$live.hidden) { $live.hidden = true; inner.innerHTML = ''; } return; }
+    if (!list.length) { if (!$live.hidden) { $live.hidden = true; inner.innerHTML = ''; } document.documentElement.classList.remove('lbon'); return; }
     const want = list.map(({ g, L }) => `${L.key}:${g.id}`);
     const have = [...inner.children].map(el => el.dataset.lid);
     if (want.join() !== have.join()) { const x = inner.scrollLeft; inner.innerHTML = list.map(({ g, L }) => liveChip(g, L)).join(''); inner.scrollLeft = x; }   // a game starting or ending rebuilds the strip; where you had scrolled it stays put
@@ -269,13 +269,15 @@
       const d = `${esc(g.detail)}`; if (st.innerHTML !== `<span class="dot"></span>${d}`) st.innerHTML = `<span class="dot"></span>${d}`;
     });
     if ($live.hidden) $live.hidden = false;
+    document.documentElement.classList.add('lbon');
     if (V.edges) V.edges();
   }
+  document.addEventListener('rivl:rendered', () => { if ($live && $live.hidden) document.documentElement.classList.remove('lbon'); });
+  window.addEventListener('scroll', () => { const r = current || route(); if (r && r.name === 'home') paintLive(); }, { passive: true });
   /* the strip lives under the pills; an entity screen's top bar offers a slot of its own and the strip moves there */
   function placeLive() {
     if (!$live) return;
-    const slot = $main.querySelector('.lb-slot');
-    const home = slot || document.getElementById('lbhome');
+    const home = document.getElementById('lbhome');
     if (home && $live.parentNode !== home) home.appendChild($live);
   }
   new MutationObserver(() => { if (!document.contains($live)) placeLive(); else if (!$live.closest('.lb-slot') && $main.querySelector('.lb-slot')) placeLive(); }).observe($main, { childList: true, subtree: true });
@@ -366,7 +368,7 @@
     const bar = document.getElementById('tabs');
     // the bottom bar moves with the top, the same share of its own height, so both leave and come back together
     const set = (v, ease) => { off = v; const tr = ease ? 'transform .22s cubic-bezier(.3,.7,.2,1)' : 'none'; hdr.style.transition = tr; hdr.style.transform = off ? `translate3d(0,${-off}px,0)` : '';
-      if (bar) { const H = hdr.offsetHeight || 1, b = bar.offsetHeight + 24; bar.style.transition = tr; bar.style.transform = off ? `translate3d(0,${(off / H * b).toFixed(1)}px,0)` : ''; } };
+      if (bar) { const H = hdr.offsetHeight || 1, b = bar.offsetHeight + 24; bar.style.transition = tr; bar.style.transform = off ? `translate3d(0,${(off / H * b).toFixed(1)}px,0)` : ''; const lb = document.getElementById('lbhome'); if (lb) { lb.style.transition = tr; lb.style.transform = off ? `translate3d(0,${(off / H * (b + 56)).toFixed(1)}px,0)` : ''; } } };
     window.addEventListener('scroll', () => {
       if (!phone.matches) { if (off) set(0); return; }
       if (document.querySelector('#bsheet.on, .xpsheet.in, .xdrawer.in')) { lastY = window.scrollY; return; }   // a sheet or the side panel is open: the bars stay put

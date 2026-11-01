@@ -4365,3 +4365,32 @@ html:root body .hsec[data-sec="now"]{background:none;box-shadow:none;padding:0;b
 .backnow{position:fixed;left:50%;transform:translate(-50%,0);bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 14px);z-index:60;display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;background:var(--ink);color:var(--bg);font:700 13px/1 inherit;font-family:inherit;border:0;box-shadow:0 8px 24px -10px rgba(0,0,0,.5);transition:opacity var(--t-quick),transform var(--t-move) var(--e-in);opacity:0;pointer-events:none;transform:translate(-50%,12px)}
 .backnow.on{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
 .backnow svg{width:14px;height:14px}
+/* the live bar: Spotify's mini player for a game that is on. It sits above the tabs on every league screen, one game
+   wide, swipe sideways for the next one; your teams' games come first. It leaves with the tabs on scroll. */
+html:root body #lbhome{position:fixed;left:0;right:0;bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) - 6px);z-index:59;pointer-events:none}
+html:root body .livebar{padding:0;margin:0;pointer-events:auto;background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(26px) saturate(2);backdrop-filter:blur(26px) saturate(2);border-top:1px solid var(--line)}
+html:root body .livebar .lb-in{display:flex;gap:0;padding:0;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;scroll-padding-left:0}
+html:root body .livebar .lg{flex:0 0 100%;width:100%;height:54px;margin:0;padding:0 16px;border-radius:0;background:none;box-shadow:none;display:flex;align-items:center;gap:12px;scroll-snap-align:start;justify-content:space-between;border:0}
+html:root body .livebar .lg .tm{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:800;background:none;color:var(--ink)}
+html:root body .livebar .lg .tm .logo{width:26px;height:26px}
+html:root body .livebar .lg .tm .sc{font:800 19px var(--num,inherit);font-style:normal;color:var(--ink-3);min-width:26px;text-align:right}
+html:root body .livebar .lg .tm .sc.on{color:var(--ink)}
+html:root body .livebar .lg .st{order:0;margin:0 auto;font-size:12.5px;font-weight:700;color:var(--ink);display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:999px;background:var(--surf-2)}
+html:root body .livebar .lg .st .dot{width:7px;height:7px;border-radius:50%;background:#E0245E}
+
+html:root body .livebar .lg.fav .st::after{content:"★";color:#F5B915;font-size:10px}
+html.lbon body .app{padding-bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 90px)}
+html.lbon body .backnow,html.lbon body .updat{margin-bottom:0}
+html.lbon body .backnow{bottom:calc(var(--tabs) + env(safe-area-inset-bottom,0px) + 66px)}
+html.entity body #lbhome{display:none}
+html:root body #lbhome,html:root body #livebar,html:root body .livebar{display:block!important}
+html:root body #livebar[hidden]{display:none!important}
+html:root body .livebar .lb-in{display:flex!important}
+html:root body .livebar .lg{display:grid!important;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:10px}
+html:root body .livebar .lg .tm:first-of-type{order:0;justify-self:start}
+html:root body .livebar .lg .st{order:1;margin:0}
+html:root body .livebar .lg .tm:nth-of-type(2){order:2;justify-self:end;flex-direction:row-reverse}
+html:root body .livebar .lg .tm .sc,html:root body .livebar .lg .tm .sc.on{background:none!important;box-shadow:none!important;padding:0!important;border-radius:0!important;color:var(--ink-3)!important;font:800 19px var(--num,inherit)!important}
+html:root body .livebar .lg .tm .sc.on{color:var(--ink)!important}
+html:root body .livebar .lg .tm b{color:var(--ink)!important}
+html:root body .livebar .lg .tm{padding:0!important;background:none!important;box-shadow:none!important;border-radius:0!important}
