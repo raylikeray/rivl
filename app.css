@@ -3444,7 +3444,7 @@ html body .tbl.stand:has(thead th:nth-child(6)) td:last-child,html body .tbl.sta
 .plh .plshot{bottom:0!important;-webkit-mask-image:linear-gradient(180deg,#000 84%,transparent 100%)!important;mask-image:linear-gradient(180deg,#000 84%,transparent 100%)!important}
 .plh::after{height:30%!important;background:linear-gradient(180deg,transparent,rgba(0,0,0,.14) 50%,rgba(0,0,0,.32))!important}
 /* Home lists: five rows, then Show all */
-.capped:not(.capopen) > :nth-child(n+6){display:none!important}
+.capped:not(.capopen) > :nth-child(n+6):not(.capbtn){display:none!important}
 .capped:not(.capopen) > :nth-child(5){border-bottom:0!important}
 .capbtn{display:block;width:calc(100% - var(--gut) - var(--gut-r));margin:8px var(--gut-r) 4px var(--gut);padding:11px 0;border-radius:14px;background:var(--surf-2);color:var(--ink);font-size:14.5px;font-weight:700;text-align:center}
 .brief .capbtn{width:auto;margin:6px 0 2px}
@@ -3747,3 +3747,14 @@ html body .stback{width:44px;height:44px}
 :root[data-theme="light"] html body .capbtn{background:#E3E5EA!important;box-shadow:inset 0 0 0 1px rgba(10,11,14,.06)}
 /* a card inside another card stays flat: no second edge or shadow */
 html:root body :is(.hsec,.card,.game,.giplate,.five,.feat,.chart,.wire,.vabout,.pfocus,.tgrp,.lkc,.mu,.brief,.rows,.why,.injgrp,.zones,.gp,.pp-list,.cmp,.ijc) :is(.hsec,.card,.giplate,.five,.feat,.chart,.wire,.vabout,.pfocus,.tgrp,.lkc,.mu,.brief,.rows:not(.gxrows):not(.injrep),.why,.injgrp,.zones,.gp,.pp-list,.cmp,.ijc){box-shadow:none!important;border-color:transparent!important}
+
+/* Show all inside the white card, like the Last night card */
+html body .gp > .capbtn.capin{display:block;align-self:stretch;justify-self:stretch;grid-column:1/-1;width:auto!important;margin:8px 16px 14px!important;padding:11px 0!important;border:0!important;border-radius:14px;text-align:center;font-size:14.5px;font-weight:700;color:var(--ink)}
+html body .gp.capped:not(.capopen) > :nth-child(5){border-bottom:0!important}
+
+/* player hero: injury status pill beside Follow player, same dark glass, coloured dot */
+html body .plh .pltx .plact{display:flex;align-items:center;gap:8px;margin-top:12px}
+html body .plh .pltx .plact .flw{margin-top:0!important}
+html body .plh .plij{display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 15px 0 13px;border-radius:999px;background:rgba(10,12,16,.42);box-shadow:inset 0 0 0 1px rgba(255,255,255,.32);color:#fff;font-size:15px;font-weight:800;white-space:nowrap;text-decoration:none;pointer-events:auto}
+html body .plh .plij u{width:8px;height:8px;border-radius:50%;background:#FFB020;flex:none}
+html body .plh .plij.out u{background:#FF4D55}

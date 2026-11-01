@@ -374,6 +374,13 @@
     const under = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.closest && el.closest('#gxhero') && el.closest('a,button'));
     const hit = under && under.closest('a,button'); if (hit) { e.preventDefault(); e.stopPropagation(); hit.click(); }
   }, true); }
+  /* the injury pill on a player's photo jumps down to the injury card */
+  if (!V._plInj) { V._plInj = true; document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-act="pl-inj"]'); if (!b) return;
+    const card = document.getElementById('injury'), box = document.getElementById('gxscroll'); if (!card) return;
+    if (box && box.scrollHeight > box.clientHeight + 4) box.scrollTo({ top: box.scrollTop + card.getBoundingClientRect().top - 140, behavior: 'smooth' });
+    else window.scrollTo({ top: window.scrollY + card.getBoundingClientRect().top - 140, behavior: 'smooth' });
+  }); }
   /* a team's line from the simulation: odds, projected record, the run left */
   async function outlookFill(L, id, r, { feed = false } = {}) {
     const box = $main.querySelector(`.outlook[data-lk="${L.key}"][data-id="${id}"]`); if (!box) return;

@@ -273,11 +273,14 @@
   const open = (() => { try { return JSON.parse(sessionStorage.getItem('rivl:open') || '{}'); } catch { return {}; } })();
   const keyOf = el => { const h = el.closest('.hsec,.brief'); return (h && (h.dataset.sec || (h.classList.contains('brief') ? 'brief' : ''))) + ':' + [...(h ? h.querySelectorAll(SEL) : [])].indexOf(el); };
   const apply = () => document.querySelectorAll(SEL).forEach(el => {
-    const n = [...el.children].filter(c => !c.hidden).length, k = keyOf(el);
-    let b = el.nextElementSibling && el.nextElementSibling.classList.contains('capbtn') ? el.nextElementSibling : null;
+    const n = [...el.children].filter(c => !c.hidden && !c.classList.contains('capbtn')).length, k = keyOf(el);
+    /* on the white cards the button sits inside the card, under the last row; the brief keeps it after its list */
+    const inside = el.classList.contains('gp');
+    let b = inside ? el.querySelector(':scope > .capbtn') : (el.nextElementSibling && el.nextElementSibling.classList.contains('capbtn') ? el.nextElementSibling : null);
     if (n <= 5) { el.classList.remove('capped', 'capopen'); if (b) b.remove(); return; }
     el.classList.add('capped'); el.classList.toggle('capopen', !!open[k]);
-    if (!b) { b = document.createElement('button'); b.className = 'capbtn'; el.after(b);
+    if (b && inside && b !== el.lastElementChild) el.appendChild(b);
+    if (!b) { b = document.createElement('button'); b.className = 'capbtn' + (inside ? ' capin' : ''); if (inside) el.appendChild(b); else el.after(b);
       b.addEventListener('click', () => {
         /* the button stays under your finger: closing the list scrolls the page up by what was removed, so you land on the
            five rows you kept instead of whatever sat further down the page */
