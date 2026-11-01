@@ -264,3 +264,24 @@
   document.fonts && document.fonts.ready.then(q);
   q();
 })();
+
+/* Home lists show five at a time: teams, players, last night's lines, games. "Show all" opens the rest in place and
+   "Show fewer" folds them again; the choice is kept for the visit. Works on whatever the list holds, so live updates that
+   redraw the rows keep the same cap. */
+(() => {
+  const SEL = '#main .hsec .gp.frows, #main .hsec .gp.grows, #main .brief-rows';
+  const open = (() => { try { return JSON.parse(sessionStorage.getItem('rivl:open') || '{}'); } catch { return {}; } })();
+  const keyOf = el => { const h = el.closest('.hsec,.brief'); return (h && (h.dataset.sec || (h.classList.contains('brief') ? 'brief' : ''))) + ':' + [...(h ? h.querySelectorAll(SEL) : [])].indexOf(el); };
+  const apply = () => document.querySelectorAll(SEL).forEach(el => {
+    const n = [...el.children].filter(c => !c.hidden).length, k = keyOf(el);
+    let b = el.nextElementSibling && el.nextElementSibling.classList.contains('capbtn') ? el.nextElementSibling : null;
+    if (n <= 5) { el.classList.remove('capped', 'capopen'); if (b) b.remove(); return; }
+    el.classList.add('capped'); el.classList.toggle('capopen', !!open[k]);
+    if (!b) { b = document.createElement('button'); b.className = 'capbtn'; el.after(b);
+      b.addEventListener('click', () => { open[k] = !open[k]; try { sessionStorage.setItem('rivl:open', JSON.stringify(open)); } catch { } apply(); }); }
+    const txt = open[k] ? 'Show fewer' : `Show all ${n}`; if (b.textContent !== txt) b.textContent = txt;
+  });
+  let q = false; const run = () => { if (!q) { q = true; requestAnimationFrame(() => { q = false; apply(); }); } };
+  const m = document.getElementById('main'); if (m) new MutationObserver(run).observe(m, { childList: true, subtree: true });
+  run();
+})();

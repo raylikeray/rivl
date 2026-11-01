@@ -3443,3 +3443,13 @@ html body .tbl.stand:has(thead th:nth-child(6)) td:last-child,html body .tbl.sta
 /* player photo: the body runs down behind the sheet; only the last sliver melts, so shoulders are never cut */
 .plh .plshot{bottom:0!important;-webkit-mask-image:linear-gradient(180deg,#000 84%,transparent 100%)!important;mask-image:linear-gradient(180deg,#000 84%,transparent 100%)!important}
 .plh::after{height:30%!important;background:linear-gradient(180deg,transparent,rgba(0,0,0,.14) 50%,rgba(0,0,0,.32))!important}
+/* Home lists: five rows, then Show all */
+.capped:not(.capopen) > :nth-child(n+6){display:none!important}
+.capped:not(.capopen) > :nth-child(5){border-bottom:0!important}
+.capbtn{display:block;width:calc(100% - var(--gut) - var(--gut-r));margin:8px var(--gut-r) 4px var(--gut);padding:11px 0;border-radius:14px;background:var(--surf-2);color:var(--ink);font-size:14.5px;font-weight:700;text-align:center}
+.brief .capbtn{width:auto;margin:6px 0 2px}
+/* player photo, final: no fade and no dark band. The body runs straight into the sheet, which covers its end the way a
+   card covers a photo; the name reads off its own shadow instead of a band across the picture */
+html body .plh .plshot{-webkit-mask-image:none!important;mask-image:none!important;bottom:0!important}
+html body .plh::after{display:none!important}
+html body .plh h1,html body .plh .pltx>p{text-shadow:0 1px 2px rgba(0,0,0,.55),0 4px 18px rgba(0,0,0,.55)}
