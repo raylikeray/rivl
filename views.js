@@ -224,6 +224,29 @@
       ${forecastRow(L, g, f)}</a>`;
   }
   /* the hero: on Home it is one link to the game; on the game page each team is a link to its own page */
+  function nowCard(L, lk, g, ctx) {
+    const a = g.away, h = g.home, live = isLive(g), fin = g.state === 'post', pre = !live && !fin;
+    const as = +a.score || 0, hs = +h.score || 0; const f = pre && !g.off ? safeF(L, g, ctx) : null; const pH = f && f.pHome != null ? f.pHome : null;
+    const lead = live || fin ? (as > hs ? a : hs > as ? h : null) : (pH == null ? null : pH >= .5 ? h : a);
+    const stripe = lead ? teamColor(lead, L) : 'var(--line-2)';
+    const tip = new Date(g.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const margin = Math.abs(as - hs);
+    const head = g.off ? `${esc(a.short)} at ${esc(h.short)} · ${esc(g.off)}`
+      : fin ? (lead ? `${esc(lead.short)} beat ${esc(lead === a ? h.short : a.short)}` : `${esc(a.short)} and ${esc(h.short)} tied`)
+      : live ? (lead ? `${esc(lead.short)} lead by ${margin}` : `${esc(a.short)} and ${esc(h.short)} level`)
+      : `${esc(a.short)} ${g.neutral ? 'vs' : 'at'} ${esc(h.short)}, ${esc(tip)}`;
+    const st = fin ? finalWord(g) : live ? g.detail : g.off ? '' : relDay(HW.ymdOf(g.date)) === 'Tonight' ? 'Tonight' : dayLabel(HW.ymdOf(g.date), { weekday: 'long' });
+    const tv = tvLabel(g); const fav = pH == null ? '' : `${esc((pH >= .5 ? h : a).abbr || (pH >= .5 ? h : a).short)} ${Math.round(Math.max(pH, 1 - pH) * 100)}%`;
+    const right = fin && ctx ? (() => { const f0 = safeF(L, g, ctx); return f0 && f0.pHome != null ? `Had ${esc((f0.pHome >= .5 ? h : a).short)} ${Math.round(Math.max(f0.pHome, 1 - f0.pHome) * 100)}%` : ''; })() : pre ? fav : '';
+    const sub = pre ? [g.venue && g.venue.name, tv].filter(Boolean).join(' · ') : [tv, g.venue && g.venue.name].filter(Boolean).join(' · ');
+    const sc = pre ? `<span class="nsc rec"><b>${esc(a.rec || '')}</b><b>${esc(h.rec || '')}</b></span>` : `<span class="nsc"><b class="${as >= hs ? '' : 'lo'}">${as}</b><b class="${hs >= as ? '' : 'lo'}">${hs}</b></span>`;
+    /* the game page's hero, shrunk (Ray's pick A): both teams' colours, crest and name either side, the score big in the middle */
+    const ca = teamColor(a, L) || '#333', ch = teamColor(h, L) || '#333';
+    const big = pre ? `<span class="nhs pre">${esc(tip)}</span>` : `<span class="nhs"><b class="${as >= hs ? '' : 'lo'}">${as}</b><b class="${hs >= as ? '' : 'lo'}">${hs}</b></span>`;
+    const side = t => `<span class="nht">${logo(t.logo, '', teamColor(t, L))}<b>${esc(t.short)}</b></span>`;
+    return `<a class="nowc nhero${live ? ' nlive' : ''}" href="${href.game(lk, g.id)}" style="--ca:${esc(ca)};--ch:${esc(ch)}">
+      <span class="nhmid">${side(a)}<span class="nhc"><span class="nhclk">${live ? '<i class="dot"></i>' : ''}${esc(live ? HW.clockOf(g, L) : st)}</span>${big}${tv ? `<small>${esc(tv)}</small>` : ''}</span>${side(h)}</span></a>`;
+  }
   function heroCard(L, g, ctx, { page = false } = {}) {
     const f = prefs.get('forecast') && !g.tbd ? safeF(L, g, ctx) : null;
     let a = teamColor(g.away, L), b = teamColor(g.home, L);
@@ -375,7 +398,7 @@
       }
       // your teams playing right now: the hero
       const live = games.filter(g => isLive(g) && isFav(g)).sort((a, b) => rankGame(b) - rankGame(a));
-      if (live.length && P.live) secs.live = sec('Live now') + `<div class="heroes">${live.map(g => heroCard(L, g, ctx)).join('')}</div>`; else delete secs.live;
+      if (live.length && P.live) secs.live = sec('Live now') + `<div class="heroes nheroes">${live.map(g => nowCard(L, lk, g, ctx)).join('')}</div>`; else delete secs.live;
       // my teams: record, what's next or how it's going, win chance
       if (P.teams) {
         const rows = teams.map(t => {
