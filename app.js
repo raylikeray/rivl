@@ -306,7 +306,7 @@
       $main.dispatchEvent(new CustomEvent('rivl:fav')); $panel.dispatchEvent(new CustomEvent('rivl:fav')); document.dispatchEvent(new CustomEvent('rivl:fav'));
     }
     if (a === 'expand') { e.preventDefault(); $main.querySelectorAll(`[data-more="${act.dataset.more}"]`).forEach(el => { el.hidden = false; }); act.remove(); }
-    if (a === 'clip') { e.preventDefault(); let list = act.previousElementSibling; if (list && !list.classList.contains('clip')) list = list.querySelector('.clip'); if (!list) return; const open = !list.classList.contains('open'); const y0 = act.getBoundingClientRect().top;
+    if (a === 'clip') { e.preventDefault(); let list = act.previousElementSibling; if (list && !list.classList.contains('lclip')) list = list.querySelector('.lclip'); if (!list) return; const open = !list.classList.contains('open'); const y0 = act.getBoundingClientRect().top;
       list.classList.toggle('open', open); act.setAttribute('aria-expanded', String(open)); act.textContent = open ? 'Show less' : act.textContent.replace(/^Show less$/, `Show all ${act.dataset.total}`);
       if (!open) { act.textContent = `Show all ${act.dataset.total}`; const y1 = act.getBoundingClientRect().top; if (Math.abs(y1 - y0) > 1) window.scrollBy({ top: y1 - y0, behavior: 'instant' }); }
       return; }
@@ -711,4 +711,48 @@
     bar.innerHTML = `<img src="img/icon-192.png" alt="" width="36" height="36"><div><b>Add RIVL to your home screen</b><span>Opens full screen, your teams first.</span></div><button class="btn" data-act="install">${deferredInstall ? 'Install' : 'How'}</button><button class="ib" data-act="install-later" aria-label="Not now"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
     $main.prepend(bar);
   });
+})();
+/* ---------- swipe: left and right move to the next or previous thing on the screen ----------
+   On a page with tabs (a team, a player, a game, standings) a swipe changes tab; on Scores it changes day; on Home and
+   Stats it changes league. The page follows the finger, and only a clear sideways swipe counts: anything that starts in
+   a strip that scrolls sideways (rails, chips, tables, the date strip) is left to scroll, and an upward scroll never turns
+   into a swipe. */
+(() => {
+  const HW = window.HW, $main = document.getElementById('main'); if (!$main || !HW) return;
+  const store = HW.store, ORDER = HW.ORDER;
+  const MOTION = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let sx = 0, sy = 0, st = 0, mode = '', dx = 0;
+  const scrollsSideways = el => { for (let n = el; n && n !== $main; n = n.parentElement) { if (n.scrollWidth > n.clientWidth + 2) { const ox = getComputedStyle(n).overflowX; if (ox === 'auto' || ox === 'scroll') return true; } } return false; };
+  const blocked = () => document.body.classList.contains('onboarding') || document.body.classList.contains('noscroll') || !document.getElementById('panel').hidden || !document.getElementById('sheet').hidden;
+  const route = () => (HW.v5.route && HW.v5.route()) || {};
+  // the tab row the swipe moves through, if the screen has one
+  const tabRow = () => { for (const sel of ['#ttabs .chips', '.chips.ptabs', '#gtabs .chips', '#stchips .chips']) { const el = $main.querySelector(sel); if (el && el.querySelector('.chip')) return el; } return null; };
+  function target(dir) {   // dir +1: next (swipe left), -1: previous (swipe right)
+    const r = route();
+    const row = tabRow();
+    if (row) { const cs = [...row.querySelectorAll('.chip')]; const i = cs.findIndex(c => c.classList.contains('on')); const n = cs[i + dir]; return n ? () => n.click() : null; }
+    if (r.name === 'scores') { const on = $main.querySelector('#dates .day.on'); if (!on) return null; const ymd = on.dataset.ymd; const d = new Date(ymd + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + dir); const k = d.toISOString().slice(0, 10); return () => { const b = $main.querySelector(`#dates .day[data-ymd="${k}"]`); if (b) b.click(); else { store.set('v5:date', k); window.dispatchEvent(new HashChangeEvent('hashchange')); } }; }
+    if (['home', 'stats'].includes(r.name) && r.lk) { const i = ORDER.indexOf(r.lk); const n = ORDER[i + dir]; return n ? () => { location.hash = '#' + n; } : null; }
+    return null;
+  }
+  const reset = (anim) => { $main.style.transition = anim && MOTION() ? 'transform .26s cubic-bezier(.2,.8,.2,1),opacity .26s' : ''; $main.style.transform = ''; $main.style.opacity = ''; setTimeout(() => { $main.style.transition = ''; }, 300); };
+  $main.addEventListener('touchstart', e => { mode = ''; dx = 0; if (e.touches.length !== 1 || blocked()) { mode = 'no'; return; } const t = e.touches[0]; sx = t.clientX; sy = t.clientY; st = Date.now(); if (sx < 18 || sx > innerWidth - 18 || scrollsSideways(e.target)) mode = 'no'; }, { passive: true });
+  $main.addEventListener('touchmove', e => {
+    if (mode === 'no') return; const t = e.touches[0]; const x = t.clientX - sx, y = t.clientY - sy;
+    if (!mode) { if (Math.abs(x) < 10 && Math.abs(y) < 10) return; mode = Math.abs(x) > Math.abs(y) * 1.6 ? 'x' : 'no'; if (mode === 'x' && !target(x < 0 ? 1 : -1)) mode = 'edge'; }
+    if (mode !== 'x' && mode !== 'edge') return;
+    dx = x; const pull = mode === 'edge' ? x * .18 : x * .55;   // nothing that way: the page gives a little and springs back
+    $main.style.transition = ''; $main.style.transform = `translate3d(${pull}px,0,0)`; $main.style.opacity = String(1 - Math.min(.35, Math.abs(pull) / 600));
+  }, { passive: true });
+  $main.addEventListener('touchend', () => {
+    if (mode !== 'x' && mode !== 'edge') { mode = ''; return; }
+    const v = Math.abs(dx) / Math.max(1, Date.now() - st); const go = mode === 'x' && (Math.abs(dx) > 80 || (v > .5 && Math.abs(dx) > 40));
+    const dir = dx < 0 ? 1 : -1; mode = '';
+    if (!go) { reset(true); return; }
+    const act = target(dir); if (!act) { reset(true); return; }
+    if (!MOTION()) { act(); reset(false); return; }
+    $main.style.transition = 'transform .16s ease-in,opacity .16s ease-in'; $main.style.transform = `translate3d(${-dir * 90}px,0,0)`; $main.style.opacity = '0';
+    setTimeout(() => { act(); $main.style.transition = ''; $main.style.transform = `translate3d(${dir * 70}px,0,0)`; requestAnimationFrame(() => requestAnimationFrame(() => reset(true))); }, 150);
+  }, { passive: true });
+  $main.addEventListener('touchcancel', () => { if (mode === 'x' || mode === 'edge') reset(true); mode = ''; }, { passive: true });
 })();
