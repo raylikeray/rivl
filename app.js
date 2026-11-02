@@ -712,47 +712,91 @@
     $main.prepend(bar);
   });
 })();
-/* ---------- swipe: left and right move to the next or previous thing on the screen ----------
-   On a page with tabs (a team, a player, a game, standings) a swipe changes tab; on Scores it changes day; on Home and
-   Stats it changes league. The page follows the finger, and only a clear sideways swipe counts: anything that starts in
-   a strip that scrolls sideways (rails, chips, tables, the date strip) is left to scroll, and an upward scroll never turns
-   into a swipe. */
+/* ---------- swipe: the page follows the finger, the way X does ----------
+   A sideways drag that starts anywhere on the screen, edge to edge, moves to the next or previous thing: the next tab on
+   a team, player, game or standings page, the next day on Scores, the next league on Home and Stats. Where the tabs are
+   already on the page (a team's, a player's), the neighbouring tab rides in beside the current one under the finger, as
+   in a pager. Anything else slides out with the finger and the new screen slides in behind it. A drag that starts on a
+   strip that scrolls sideways scrolls the strip until it reaches its end, then the page takes over. */
 (() => {
   const HW = window.HW, $main = document.getElementById('main'); if (!$main || !HW) return;
   const store = HW.store, ORDER = HW.ORDER;
   const MOTION = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let sx = 0, sy = 0, st = 0, mode = '', dx = 0;
-  const scrollsSideways = el => { for (let n = el; n && n !== $main; n = n.parentElement) { if (n.scrollWidth > n.clientWidth + 2) { const ox = getComputedStyle(n).overflowX; if (ox === 'auto' || ox === 'scroll') return true; } } return false; };
+  const EASE = 'cubic-bezier(.22,.7,.2,1)';
+  let g = null;   // the gesture in progress
   const blocked = () => document.body.classList.contains('onboarding') || document.body.classList.contains('noscroll') || !document.getElementById('panel').hidden || !document.getElementById('sheet').hidden;
   const route = () => (HW.v5.route && HW.v5.route()) || {};
-  // the tab row the swipe moves through, if the screen has one
+  const scroller = el => { for (let n = el; n && n !== $main && n !== document.body; n = n.parentElement) { if (n.scrollWidth > n.clientWidth + 2) { const ox = getComputedStyle(n).overflowX; if (ox === 'auto' || ox === 'scroll') return n; } } return null; };
+  const canScroll = (n, dir) => n && (dir > 0 ? n.scrollLeft + n.clientWidth < n.scrollWidth - 1 : n.scrollLeft > 1);
   const tabRow = () => { for (const sel of ['#ttabs .chips', '.chips.ptabs', '#gtabs .chips', '#stchips .chips']) { const el = $main.querySelector(sel); if (el && el.querySelector('.chip')) return el; } return null; };
-  function target(dir) {   // dir +1: next (swipe left), -1: previous (swipe right)
-    const r = route();
-    const row = tabRow();
+  // the panels already on the page, for the pager
+  const panels = () => { const t = [...$main.querySelectorAll('.tpanels > .tpanel')]; if (t.length > 1) return t; const p = [...$main.querySelectorAll('[data-ptab-panel]')]; return p.length > 1 ? p : null; };
+  function action(dir) {   // dir +1: next (finger moves left), -1: previous
+    const r = route(); const row = tabRow();
     if (row) { const cs = [...row.querySelectorAll('.chip')]; const i = cs.findIndex(c => c.classList.contains('on')); const n = cs[i + dir]; return n ? () => n.click() : null; }
-    if (r.name === 'scores') { const on = $main.querySelector('#dates .day.on'); if (!on) return null; const ymd = on.dataset.ymd; const d = new Date(ymd + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + dir); const k = d.toISOString().slice(0, 10); return () => { const b = $main.querySelector(`#dates .day[data-ymd="${k}"]`); if (b) b.click(); else { store.set('v5:date', k); window.dispatchEvent(new HashChangeEvent('hashchange')); } }; }
-    if (['home', 'stats'].includes(r.name) && r.lk) { const i = ORDER.indexOf(r.lk); const n = ORDER[i + dir]; return n ? () => { location.hash = '#' + n; } : null; }
+    if (r.name === 'scores') { const on = $main.querySelector('#dates .day.on'); if (!on) return null; const d = new Date(on.dataset.ymd + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + dir); const k = d.toISOString().slice(0, 10); return () => { const b = $main.querySelector(`#dates .day[data-ymd="${k}"]`); if (b) b.click(); else { store.set('v5:date', k); V.rerender(); } }; }
+    if (['home', 'stats'].includes(r.name) && r.lk) { const n = ORDER[ORDER.indexOf(r.lk) + dir]; return n ? () => { location.hash = '#' + n; } : null; }
     return null;
   }
-  const reset = (anim) => { $main.style.transition = anim && MOTION() ? 'transform .26s cubic-bezier(.2,.8,.2,1),opacity .26s' : ''; $main.style.transform = ''; $main.style.opacity = ''; setTimeout(() => { $main.style.transition = ''; }, 300); };
-  $main.addEventListener('touchstart', e => { mode = ''; dx = 0; if (e.touches.length !== 1 || blocked()) { mode = 'no'; return; } const t = e.touches[0]; sx = t.clientX; sy = t.clientY; st = Date.now(); if (sx < 18 || sx > innerWidth - 18 || scrollsSideways(e.target)) mode = 'no'; }, { passive: true });
+  const V = HW.v5;
+  const stickyH = () => { const h = document.querySelector('.hdr'); const r = h && getComputedStyle(h).position === 'sticky' ? h.getBoundingClientRect() : null; return r ? Math.max(0, r.bottom) : 0; };
+  function startPager() {
+    const ps = panels(); if (!ps) return false; const i = ps.findIndex(p => !p.hidden); if (i < 0) return false;
+    const box = ps[i].parentElement; const W = box.clientWidth; const off = Math.max(0, stickyH() - box.getBoundingClientRect().top);
+    const nb = [ps[i - 1] || null, ps[i + 1] || null];
+    box.style.position = 'relative'; box.style.overflow = 'visible';
+    nb.forEach((p, k) => { if (!p) return; p.hidden = false; p.style.cssText = `position:absolute;left:0;right:0;top:${off}px;transform:translate3d(${k ? W : -W}px,0,0);will-change:transform;animation:none`; });
+    ps[i].style.willChange = 'transform';
+    g.pager = { ps, i, box, W, off, nb };
+    document.documentElement.style.overflowX = 'hidden';
+    return true;
+  }
+  function movePager(dx) { const P = g.pager; const atEnd = (dx < 0 && !P.nb[1]) || (dx > 0 && !P.nb[0]); const x = atEnd ? dx * .2 : dx;
+    P.ps[P.i].style.transform = `translate3d(${x}px,0,0)`; P.nb.forEach((p, k) => { if (p) p.style.transform = `translate3d(${x + (k ? P.W : -P.W)}px,0,0)`; }); return x; }
+  function endPager(commit, dir) {
+    const P = g.pager; const tgt = commit ? P.nb[dir > 0 ? 1 : 0] : null; const to = tgt ? -dir * P.W : 0; const dur = MOTION() ? 300 : 0;
+    const all = [P.ps[P.i], ...P.nb.filter(Boolean)];
+    all.forEach(p => { p.style.transition = `transform ${dur}ms ${EASE}`; });
+    P.ps[P.i].style.transform = `translate3d(${to}px,0,0)`; P.nb.forEach((p, k) => { if (p) p.style.transform = `translate3d(${to + (k ? P.W : -P.W)}px,0,0)`; });
+    setTimeout(() => {
+      all.forEach(p => { p.style.cssText = ''; }); P.box.style.position = ''; P.box.style.overflow = ''; document.documentElement.style.overflowX = '';
+      P.ps.forEach((p, k) => { p.hidden = k !== P.i; });
+      if (tgt) { const row = tabRow(); const cs = row ? [...row.querySelectorAll('.chip')] : []; const n = cs[P.ps.indexOf(tgt)]; if (n) n.click(); else { P.ps.forEach(p => { p.hidden = p !== tgt; }); }
+        if (P.off > 0) window.scrollTo(0, window.scrollY + P.box.getBoundingClientRect().top - stickyH()); }
+    }, dur + 20);
+  }
+  $main.addEventListener('touchstart', e => {
+    if (g && g.anim) return; g = null; if (e.touches.length !== 1 || blocked()) return;
+    const t = e.touches[0]; g = { x0: t.clientX, y0: t.clientY, t0: Date.now(), lock: '', sc: scroller(e.target), dx: 0, lastX: t.clientX, lastT: Date.now(), v: 0 };
+  }, { passive: true });
   $main.addEventListener('touchmove', e => {
-    if (mode === 'no') return; const t = e.touches[0]; const x = t.clientX - sx, y = t.clientY - sy;
-    if (!mode) { if (Math.abs(x) < 10 && Math.abs(y) < 10) return; mode = Math.abs(x) > Math.abs(y) * 1.6 ? 'x' : 'no'; if (mode === 'x' && !target(x < 0 ? 1 : -1)) mode = 'edge'; }
-    if (mode !== 'x' && mode !== 'edge') return;
-    dx = x; const pull = mode === 'edge' ? x * .18 : x * .55;   // nothing that way: the page gives a little and springs back
-    $main.style.transition = ''; $main.style.transform = `translate3d(${pull}px,0,0)`; $main.style.opacity = String(1 - Math.min(.35, Math.abs(pull) / 600));
+    if (!g || g.lock === 'y' || g.lock === 'none') return; const t = e.touches[0]; const dx = t.clientX - g.x0, dy = t.clientY - g.y0;
+    if (!g.lock) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dy) >= Math.abs(dx)) { g.lock = 'y'; return; }
+      const dir = dx < 0 ? 1 : -1;
+      if (g.sc && canScroll(g.sc, dir)) { g.lock = 'none'; return; }   // the strip scrolls first
+      g.dir0 = dir; g.act = action(dir) || action(-dir) ? true : false;
+      g.lock = startPager() ? 'pager' : 'page'; g.xs = dx;
+    }
+    const now = Date.now(); g.v = (t.clientX - g.lastX) / Math.max(1, now - g.lastT); g.lastX = t.clientX; g.lastT = now;
+    g.dx = dx - g.xs;
+    if (g.lock === 'pager') { movePager(g.dx); return; }
+    const can = action(g.dx < 0 ? 1 : -1); const x = can ? g.dx : g.dx * .2;
+    $main.style.transition = ''; $main.style.transform = `translate3d(${x}px,0,0)`;
   }, { passive: true });
-  $main.addEventListener('touchend', () => {
-    if (mode !== 'x' && mode !== 'edge') { mode = ''; return; }
-    const v = Math.abs(dx) / Math.max(1, Date.now() - st); const go = mode === 'x' && (Math.abs(dx) > 80 || (v > .5 && Math.abs(dx) > 40));
-    const dir = dx < 0 ? 1 : -1; mode = '';
-    if (!go) { reset(true); return; }
-    const act = target(dir); if (!act) { reset(true); return; }
-    if (!MOTION()) { act(); reset(false); return; }
-    $main.style.transition = 'transform .16s ease-in,opacity .16s ease-in'; $main.style.transform = `translate3d(${-dir * 90}px,0,0)`; $main.style.opacity = '0';
-    setTimeout(() => { act(); $main.style.transition = ''; $main.style.transform = `translate3d(${dir * 70}px,0,0)`; requestAnimationFrame(() => requestAnimationFrame(() => reset(true))); }, 150);
-  }, { passive: true });
-  $main.addEventListener('touchcancel', () => { if (mode === 'x' || mode === 'edge') reset(true); mode = ''; }, { passive: true });
+  const end = () => {
+    if (!g || (g.lock !== 'pager' && g.lock !== 'page')) { g = null; return; }
+    const W = $main.clientWidth; const dir = g.dx < 0 ? 1 : -1;
+    const go = Math.abs(g.dx) > W * .3 || (Math.abs(g.v) > .35 && Math.sign(-g.v) === dir && Math.abs(g.dx) > 24);
+    if (g.lock === 'pager') { const P = g.pager; const commit = go && !!P.nb[dir > 0 ? 1 : 0]; endPager(commit, dir); g.anim = true; setTimeout(() => { g = null; }, 340); return; }
+    const act = go ? action(dir) : null; const dur = MOTION() ? 220 : 0;
+    if (!act) { $main.style.transition = `transform ${dur}ms ${EASE}`; $main.style.transform = ''; setTimeout(() => { $main.style.transition = ''; }, dur + 20); g = null; return; }
+    g.anim = true;
+    $main.style.transition = `transform ${dur}ms ${EASE},opacity ${dur}ms`; $main.style.transform = `translate3d(${-dir * W}px,0,0)`; $main.style.opacity = '.4';
+    setTimeout(() => { act(); $main.style.transition = ''; $main.style.transform = `translate3d(${dir * W * .45}px,0,0)`; $main.style.opacity = '0';
+      requestAnimationFrame(() => requestAnimationFrame(() => { $main.style.transition = `transform 300ms ${EASE},opacity 220ms`; $main.style.transform = ''; $main.style.opacity = ''; setTimeout(() => { $main.style.transition = ''; g = null; }, 320); })); }, dur);
+  };
+  $main.addEventListener('touchend', end, { passive: true });
+  $main.addEventListener('touchcancel', end, { passive: true });
 })();

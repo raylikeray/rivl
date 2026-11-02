@@ -3197,3 +3197,14 @@ html body .tbcr img{width:100%;height:100%;filter:drop-shadow(0 0 1px rgba(255,2
 .pvit span.lnk{color:var(--acc,#1677FF);font-weight:600}
 .ptabs{padding-top:16px!important}
 @media (max-width:359px){ .pband h1{font-size:31px} .pbtx{max-width:62%} }
+/* ===== v370: the league bar stays put; swipes follow the finger =====
+   The header (wordmark, settings and the league switch) is pinned as one block on a frosted strip, so the league bar
+   never moves while the page scrolls under it. */
+@media (max-width:1039px){
+  .hdr{display:block;position:sticky;top:env(safe-area-inset-top,0px);z-index:40;padding-bottom:6px;
+    background:color-mix(in srgb,var(--bg) 92%,transparent);-webkit-backdrop-filter:blur(24px) saturate(1.6);backdrop-filter:blur(24px) saturate(1.6)}
+  .hdr .pills,html body .hdr #pills.pills{position:relative;top:auto;transform:none;transition:none;margin-bottom:4px}
+  .hdr:has(.top[hidden]):has(.pills[hidden]){display:none}
+}
+@media (prefers-reduced-transparency:reduce){ .hdr{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)} }
+html{overscroll-behavior-x:none}
