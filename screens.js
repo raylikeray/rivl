@@ -51,10 +51,12 @@
     const cupGames = lk === 'nba' && sched0 ? sched0.games.filter(g => g.cup) : [];
     const cupOn = cupGames.length && todayCT() >= addDays(cupGames.map(g => g.d).sort()[0], -7) && todayCT() <= addDays(cupGames.map(g => g.d).sort().pop(), 2);
     if (cupOn) items.push(['cup', 'Cup']);
+    if (HW.bracket) items.push(['bracket', 'Bracket']);
     if (!items.some(([k]) => k === tab)) tab = items[0][0];
     if (tab === 'odds') { await oddsTab(L, items, tab, st); return; }
     if (tab === 'stats') { statsTab(L, items, tab, st, TS); return; }
     if (tab === 'cup') { cupTab(L, items, tab, st, cupGames, idx); return; }
+    if (tab === 'bracket') { await bracketTab(L, items, tab); return; }
     if (tab === 'picture') {
       // the bracket as the table stands today: play-in pairs, then the first round, per conference
       const cut = L.playoffLine; const playIn = cut.length === 2;
@@ -150,6 +152,22 @@
     const table = g => { const rows = g.rows.map(r => ({ r, t: v.byId[r.id] })).filter(x => x.t).sort((a, b) => b.t.playoffs - a.t.playoffs || b.t.top - a.t.top || b.t.w - a.t.w); return (conf ? sec(confName(g.name, g.abbr)) : '') + `<div class="tw"><table class="tbl stand odds"><thead><tr><th>${esc(conf ? '' : L.label)}</th>${cols.map(([h]) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(({ r, t }, i) => `<tr class="click${favs.has(lk, r.id) ? ' me' : ''}${cut.includes(i + 1) ? ' cut' : ''}" data-href="${href.team(lk, r.id)}"><td><span class="tm"><span class="rk">${i + 1}</span>${logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))}<span class="nm"><a href="${href.team(lk, r.id)}">${esc(r.short || r.name)}</a><small>${r.w}-${r.l} now</small></span></span></td>${cols.map(([, k]) => `<td>${cell(t, r, k)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`; };
     const legend = `<p class="legend">The rest of the season played out ${sim.n.toLocaleString()} times from today's ratings — each run with every team's rating given a few points of give, more this early in the season — with the finished games as they stand${sim.known ? ' and ties going to the head-to-head record' : ''}.${(sim.teams[0] || {}).scheduled < (sim.teams[0] || {}).games ? ` Records are projected to ${sim.teams[0].games} games; the schedule doesn't carry every date yet.` : ''} ${playIn ? `Playoffs counts a top-${cut[0]} finish or coming through the play-in.` : `The top ${cut[0]} make the playoffs.`} Left: games to play, and how strong the opponents are — points better than an average team, with home court counted; above +1 is a hard run, below −1 an easy one.${sched.source === 'feed' ? ' The schedule was read from the feed today; the nightly copy wasn\'t available.' : ''}</p>`;
     stPaint(items, tab, groups.map(table).join('') + legend);
+  }
+  /* the bracket: the tournaments this league has on (or the last one, before the next starts), drawn as a tree */
+  async function bracketTab(L, items, tab) {
+    stPaint(items, tab, skeleton(4, 'card'));
+    const list = await HW.bracket.list(L).catch(() => []);
+    if ((V.route() || {}).name !== 'standings' || store.get('v5:stab:' + L.key) !== 'bracket') return;
+    if (!list.length) { stPaint(items, tab, empty('No bracket right now', '<p style="margin:6px 0 0">Tournaments show here once their games are on the schedule.</p>')); return; }
+    let key = store.get('v5:brk:' + L.key, ''); if (!list.some(t => t.key === key)) key = list[list.length - 1].key;
+    const T = list.find(t => t.key === key);
+    const v = await HW.bracket.view(L, T, store.get('v5:brkp:' + L.key, 'ff')).catch(() => null);
+    if ((V.route() || {}).name !== 'standings' || store.get('v5:stab:' + L.key) !== 'bracket') return;
+    const tchips = list.length > 1 ? `<div class="chips bxtour">${list.map(t => `<button class="chip${t.key === key ? ' on' : ''}" data-act="brk" data-k="${esc(t.key)}" aria-pressed="${t.key === key}">${esc(t.label)}</button>`).join('')}</div>` : '';
+    const pchips = v && v.parts ? `<div class="chips bxparts">${v.parts.map(([k, l]) => `<button class="chip${k === v.part ? ' on' : ''}" data-act="brkp" data-k="${esc(k)}" aria-pressed="${k === v.part}">${esc(l)}</button>`).join('')}</div>` : '';
+    const body = v && v.html ? `${tchips}<div class="bxh"><b>${esc(v.label)}</b></div>${pchips}<div class="bx">${v.html}</div><p class="legend">Built from the games as they were played. Tap a matchup for the game.</p>`
+      : tchips + empty(`No ${T.label} games yet`, '<p style="margin:6px 0 0">The bracket fills in as the games are set.</p>');
+    stPaint(items, tab, body);
   }
   /* standings: the chips stay put and only toggle; the table below them swaps */
   function stPaint(items, tab, body) {
