@@ -3021,3 +3021,29 @@ html:has(#main .tband) body::before{background:color-mix(in srgb,var(--tint,#000
 .trdt b{font-size:20px;line-height:1.25;font-weight:800;letter-spacing:-.01em}
 #ttabs{padding-top:16px}
 @media (max-width:359px){ .sgt{min-width:56px} .sgc{width:50px;height:50px} .sgcard{gap:0 10px;padding:14px 12px} .tbttl h1{font-size:30px} }
+/* ===== v366: the WNBA's offseason =====
+   Old results stop showing once the season is over: Tonight goes, Last night becomes a season recap, and team rows say
+   the season is over. Unrivaled leads the WNBA's Home with its next game day, and Scores has an Unrivaled view with the
+   whole schedule. */
+.hsec[data-sec="unrivaled"] .unrv{padding:0 var(--gut-r) 14px var(--gut)}
+.unrv .brief-h{padding:16px 0 4px}
+.unote{margin:0 0 12px;font-size:14px;line-height:1.45;color:var(--ink-3)}
+#scbody > .unote,.unrbody > .unote{padding:0 var(--gut-r) 0 var(--gut)}
+.unrbody .unrv,#scbody .unrv{display:flex;flex-direction:column;gap:10px;padding:0 var(--gut-r) 0 var(--gut)}
+.unx{border-radius:18px;background:var(--surf);box-shadow:var(--edge);padding:14px 16px}
+.hsec .unx{background:color-mix(in srgb,var(--ink) 4%,transparent);box-shadow:none}
+.unh{display:flex;flex-direction:column;gap:2px;padding-bottom:8px;margin-bottom:2px;border-bottom:1px solid var(--line)}
+.unh b{font-size:16px;font-weight:800}
+.unh span{font-size:13px;color:var(--ink-3)}
+.ung{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line)}
+.unh + .ung{border-top:0}
+.unt{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.unt img{width:22px;height:22px;object-fit:contain}
+.unt b{font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.unt.tbd b{font-weight:600;color:var(--ink-2)}
+.ung > i{font-style:normal;font-size:12px;color:var(--ink-3)}
+.ung > em{margin-left:auto;font-style:normal;font-size:14px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.untv{display:flex;gap:6px;margin-top:8px}
+.untv em{font-style:normal;height:26px;display:inline-flex;align-items:center;padding:0 10px;border-radius:999px;background:color-mix(in srgb,var(--ink) 7%,transparent);font-size:12px;font-weight:700}
+.unbtn{width:100%;margin-top:12px}
+.scmode{padding-top:4px}

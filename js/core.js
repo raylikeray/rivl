@@ -296,7 +296,10 @@ async function scoreboard(L, ymd, ttl) {
   // football is a weekly sport: the "today" slate is the current week's games (ESPN's default scoreboard); other dates still work by day
   const q = L.weekly && ymd === t ? `${API(L)}/scoreboard?${L.sbParams.replace(/^&/, '')}` : `${API(L)}/scoreboard?dates=${compact(ymd)}${L.sbParams}`;
   const d = await j(q, ttl ?? (ymd === t ? 25000 : (ymd < t ? 3600000 : 300000)));
-  const gs = (d.events || []).map(e => parseEvent(e, L));
+  /* out of season the feed answers a date that has no games with the last games it has, weeks old; a game more than a day
+     off the date asked for is not that date's game */
+  const near = new Set([addDays(ymd, -1), ymd, addDays(ymd, 1)]);
+  const gs = (d.events || []).map(e => parseEvent(e, L)).filter(g => !g.date || near.has(ymdOf(g.date)) || (L.weekly && !/dates=/.test(q)));
   /* a live game the scoreboard sent without a score: the game's own summary is asked for it (its header carries the score
      and the quarters). Only for those games, only while live, and quietly: if it doesn't answer either, the card says so */
   await Promise.all(gs.filter(g => g.state === 'in' && (g.home.score == null || g.away.score == null)).map(async g => {

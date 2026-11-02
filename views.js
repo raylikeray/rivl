@@ -339,7 +339,7 @@
      while the app is open never repaint what hasn't changed, and never move the page under your thumb. */
   const rankGame = g => (isFav(g) ? 1000 : 0) + (g.tv.national.length ? 100 : 0) + interest(g) / 1000;
   const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
-  const SECS = ['wire', 'live', 'tonight', 'last', 'teams', 'players', 'injuries', 'news'];   // the wire first when it has something, then a game on now
+  const SECS = ['wire', 'unrivaled', 'live', 'tonight', 'last', 'teams', 'players', 'injuries', 'news'];   // the wire first when it has something, then a game on now
   let homeToken = 0;
   async function home(lk) {
     const L = LEAGUES[lk]; const today = todayCT(); const token = ++homeToken;
@@ -414,9 +414,16 @@
     const build = () => {
       const { games, last, ctx } = S0; const teams = teamList();
       const byTeam = new Map(); games.forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
+      /* the off-season: no games today, and every team you follow last played more than three days ago with nothing on the
+         calendar for three weeks. Tonight goes, Last night becomes a short season recap, and team rows stop showing a
+         result from weeks back. */
+      const DAY = 864e5, now = Date.now();
+      const offS = !games.length && !!S0.teams && teams.length > 0 && teams.every(t => (!t.next || new Date(t.next.date) - now > 21 * DAY) && (!t.last || now - new Date(t.last.date) > 3 * DAY));
+      // Unrivaled leads the WNBA's Home once its season is over
+      if (lk === 'wnba' && S0.unr && (offS || !S0.teams && !games.length)) secs.unrivaled = S0.unr; else delete secs.unrivaled;
       // tonight: your games, or the next ones on the calendar once the schedules are in
       const liveMine = games.filter(g => isLive(g) && isFav(g));
-      if (P.brief && mine.length && !(P.live && liveMine.length && games.filter(isFav).length === liveMine.length)) {   // when every game of yours is on now, the hero says it all
+      if (P.brief && mine.length && !offS && !(P.live && liveMine.length && games.filter(isFav).length === liveMine.length)) {   // when every game of yours is on now, the hero says it all
         const tonight = games.filter(g => isFav(g) && !(P.live && isLive(g))).sort((a, b) => new Date(a.date) - new Date(b.date) || rankGame(b) - rankGame(a));   // a timeline: in the order they tip
         let body = '', note = '', title = 'Tonight';
         if (tonight.length) { note = `${tonight.length} ${P.live && liveMine.length ? 'more ' : ''}game${tonight.length === 1 ? '' : 's'} for your teams${tonight.every(g => g.state === 'post') ? ' · all final' : ''}`; body = `<div class="glist">${tonight.map(rowOf).join('')}</div>`; }
@@ -432,7 +439,16 @@
       const pGames = fp.map(p => { const is = teamOf(p); const g = last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? { p, g } : null; }).filter(Boolean);
       const lines = pGames.map(({ p, g }) => { const d = S0.sums[g.id]; const bx = d && d.boxscore && d.boxscore.players || []; for (const side of bx) { const st = side.statistics && side.statistics[0]; if (!st) continue; const labels = st.labels || st.names || []; const a = (st.athletes || []).find(x => x.athlete && String(x.athlete.id) === p.id); if (!a) continue; if (a.didNotPlay || !a.stats || !a.stats.length) return { p, g, dnp: a.reason || 'Did not play' }; const get = l => { const i = labels.indexOf(l); return i >= 0 ? a.stats[i] : ''; }; const is = teamOf(p); const us = is(g.home) ? g.home : g.away, them = is(g.home) ? g.away : g.home; return { p, g, pts: get('PTS'), reb: get('REB'), ast: get('AST'), min: get('MIN'), won: us.score > them.score, us, them }; } return null; }).filter(Boolean);
       const lineBy = {}; lines.forEach(x => { lineBy[x.p.id] = x; });
-      if (P.brief) {
+      if (P.brief && offS) {
+        /* the season recap: each team's final record and standing and how its season closed; your players' season lines */
+        const season = (() => { const y = teams.map(t => t.last && t.last.date).filter(Boolean).sort().pop(); return y ? new Date(y).getFullYear() : ''; })();
+        const trow = t => { const g = t.last; const us = g ? (g.home.id === t.id ? g.home : g.away) : null, them = g ? (g.home.id === t.id ? g.away : g.home) : null;
+          const won = us && them && +us.score > +them.score; const lastW = g && us && them && us.score != null ? `${won ? 'W' : 'L'} ${us.score}-${them.score}` : '';
+          return `<a class="row" href="${href.team(lk, t.id)}">${logo(t.logo, '', teamColor(t, L))}<span class="t"><b>${esc(t.short)}</b><span>${esc([t.rec ? `Finished ${t.rec}` : '', t.standing].filter(Boolean).join(', '))}</span></span>${g ? `<span class="r"><b class="res ${won ? 'w' : 'l'}" style="font-size:14px">${esc(lastW)}</b><span>${esc(`${g.home.id === t.id ? 'vs' : 'at'} ${them.abbr || them.short || ''}, ${dayLabel(HW.ymdOf(g.date), { month: 'short', day: 'numeric' })}`)}</span></span>` : ''}</a>`; };
+        const pl = S0.lp && S0.lp.rows ? fp.map(p => S0.lp.rows.find(r => r.id === String(p.id))).filter(r => r && r.gp) : [];
+        const prow = r => { const p = fp.find(x => String(x.id) === r.id) || {}; return `<a class="row" href="${href.player(lk, r.id)}">${headshot(r.img || p.img, playerColor(p, L), 44, r.name)}<span class="t"><b>${esc(p.short || r.short || r.name)}</b><span>${esc(`${r.pts.toFixed(1)} pts, ${r.reb.toFixed(1)} reb, ${r.ast.toFixed(1)} ast a game over ${r.gp} games`)}</span></span><span class="r"><b>${r.pts.toFixed(1)}</b><span>ppg</span></span></a>`; };
+        secs.last = `<div class="brief"><div class="brief-h"><b>Season recap</b><span>${esc(`${season ? season + ' ' : ''}season is over`)}</span></div><div class="rows brief-rows">${teams.map(trow).join('')}${pl.map(prow).join('')}</div></div>`;
+      } else if (P.brief) {
         const mineLast = last.filter(g => isDone(g) && isFav(g));
         if (mineLast.length || lines.length) {
           const res = mineLast.map(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = us.score > them.score; return `<a class="bchip res" href="${href.game(lk, g.id)}">${logo(us.logo, 's', teamColor(us, L))}<b class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</b><span>${us.score}–${them.score} ${us === g.home ? 'vs' : 'at'} ${esc(them.abbr || them.short)}</span></a>`; });
@@ -446,9 +462,9 @@
       // my teams: record, what's next or how it's going, win chance
       if (P.teams) {
         const rows = teams.map(t => {
-          const g = byTeam.get(t.id) || t.next || t.last; const f = g ? safeF(L, g, ctx) : null;
+          const g0 = byTeam.get(t.id) || t.next || t.last; const g = offS && g0 === t.last ? null : g0; const f = g ? safeF(L, g, ctx) : null;
           const us = g ? (g.home.id === t.id ? g.home : g.away) : null, them = g ? (g.home.id === t.id ? g.away : g.home) : null;
-          let line = t.standing || (S0.teams ? 'No game scheduled' : ''), right = '';
+          let line = offS ? `Season over${t.standing ? `, ${t.standing}` : ''}` : t.standing || (S0.teams ? 'No game scheduled' : ''), right = '';
           if (g) {
             const home = g.home.id === t.id; const vs = `${home ? 'vs' : 'at'} ${esc(them.short)}`;
             if (g.state === 'in') { const lead = us.score - them.score; line = `${lead > 0 ? `Leading ${esc(them.short)} by ${lead}` : lead < 0 ? `Trailing ${esc(them.short)} by ${-lead}` : `Tied with ${esc(them.short)}`}, ${esc(g.detail)}`; }
@@ -516,7 +532,7 @@
     };
 
     // ----- phase 1: one round trip, then paint -----
-    const [tIdx, games, last, ctx, st] = await Promise.all([
+    let [tIdx, games, last, ctx, st] = await Promise.all([
       teamsIndex(L),
       S.today[lk] && S.today[lk].length ? S.today[lk] : scoreboard(L, today).catch(() => []),
       scoreboard(L, yday, 600000).catch(() => []),
@@ -524,6 +540,10 @@
       standings(L).catch(() => null)
     ]);
     if (!alive()) return;
+    /* out of season the feed answers a date with no games by sending the last games it has (weeks old): only games on the
+       day asked for are kept, so last season's final never sits under Tonight or Last night */
+    const onDay = (list, d0, d1) => (list || []).filter(g => { const y = HW.ymdOf(g.date); return y >= d0 && y <= d1; });
+    games = onDay(games, yday, addDays(today, 1)); last = onDay(last, yday, yday);
     Object.assign(S0, { tIdx, games, last, ctx, st, inj: ctx && ctx.inj ? ctx.inj : null });
     S.today[lk] = games;
     build(); paint();
@@ -537,6 +557,8 @@
       if (!alive()) return; build(); paint();
     })());
     if (P.news || P.wire) later.push((async () => { S0.news = await jSoft(`${API(L)}/news?limit=25`, 600000); if (!alive()) return; build(); paint(); })());
+    if (lk === 'wnba' && HW.hub) later.push((async () => { S0.unr = await unrivaledCard(true).catch(() => ''); if (!alive() || !S0.unr) return; build(); paint(); })());
+    if (P.brief && fp.length && !games.length) later.push((async () => { S0.lp = await leaguePlayers(L).catch(() => null); if (!alive()) return; build(); paint(); })());
     if (!S0.inj && mine.length && P.injuries) later.push((async () => { S0.inj = await injuries(L).catch(() => null); if (!alive()) return; build(); paint(); })());
     Promise.all(later).catch(() => { });
 
@@ -544,14 +566,14 @@
     let quietAt = Date.now();
     HW.v5.refresh = async () => {
       if (!alive()) return;
-      S0.games = S.today[lk] || S0.games;
+      S0.games = S.today[lk] ? S.today[lk].filter(g => { const y = HW.ymdOf(g.date); return y >= yday && y <= addDays(today, 1); }) : S0.games;
       const due = Date.now() - quietAt > 180000;
       if (due) {
         quietAt = Date.now();
         try { for (const k of [...HW.cache.keys()]) if (/\/injuries|\/news\?|\/summary\?event=/.test(k) && k.includes(L.path)) HW.cache.delete(k); } catch { }
         const [last2, inj2, news2] = await Promise.all([scoreboard(L, yday, 0).catch(() => null), mine.length && P.injuries ? injuries(L).catch(() => null) : null, P.news || P.wire ? jSoft(`${API(L)}/news?limit=25`, 0) : null]);
         if (!alive()) return;
-        if (last2) S0.last = last2; if (inj2) S0.inj = inj2; if (news2) S0.news = news2;
+        if (last2) S0.last = last2.filter(g => HW.ymdOf(g.date) === yday); if (inj2) S0.inj = inj2; if (news2) S0.news = news2;
         if (fp.length) { const ids = [...new Set(fp.map(p => { const is = teamOf(p); const g = S0.last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? g.id : null; }).filter(Boolean))]; await Promise.all(ids.map(async id => { const d = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 0); if (d) S0.sums[id] = d; })); }
         if (!alive()) return;
       }
@@ -561,6 +583,36 @@
   }
 
   /* ================= SCORES: every game, compact ================= */
+  /* Unrivaled, the 3-on-3 league WNBA players play in their offseason: its schedule from data/unrivaled.json, read off
+     the league's own site by a job every few hours. Times come in Eastern and show in Central. Teams fill in once the
+     league sets the matchups. */
+  const unrDays = d => {
+    const toYmd = x => { const t = new Date(String(x).replace(/^\w+,\s*/, '') + ' 12:00'); return isNaN(t) ? '' : `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };
+    const days = {}; (d.games || []).forEach(g => { const y = toYmd(g.date); if (!y) return; const k = y + '|' + (g.arena || ''); (days[k] = days[k] || { y, arena: g.arena, city: g.city, games: [] }).games.push(g); });
+    return Object.values(days).sort((a, b) => a.y < b.y ? -1 : a.y > b.y ? 1 : 0);
+  };
+  const unrCT = tm => { const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(tm || ''); if (!m) return tm || ''; let h = (+m[1] % 12) + (/PM/i.test(m[3]) ? 12 : 0) - 1; if (h < 0) h += 24; return `${h % 12 || 12}:${m[2]} ${h >= 12 ? 'PM' : 'AM'}`; };
+  const unrLogo = (d, name) => { const c = (d.clubs || []).find(x => x.name === name); return c && c.logo ? `<img src="${esc(c.logo)}" alt="" loading="lazy" onerror="this.remove()">` : ''; };
+  async function unrivaledCard() {
+    const d = HW.hub ? await HW.hub.file('unrivaled.json').catch(() => null) : null; if (!d || !d.games || !d.games.length) return '';
+    const today = todayCT(); const list = unrDays(d); const ahead = list.filter(x => x.y >= today); const nx = ahead[0]; if (!nx) return '';
+    const n = Math.round((new Date(nx.y + 'T12:00:00Z') - new Date(today + 'T12:00:00Z')) / 864e5);
+    const tv = [...new Set(nx.games.flatMap(g => g.tv || []))];
+    const games = nx.games.map(g => `<div class="ung">${g.teams && g.teams.length === 2 ? `<span class="unt">${unrLogo(d, g.teams[0])}<b>${esc(g.teams[0])}</b></span><i>vs</i><span class="unt">${unrLogo(d, g.teams[1])}<b>${esc(g.teams[1])}</b></span>` : '<span class="unt tbd"><b>Teams to be set</b></span>'}<em>${esc(unrCT(g.time))} CT</em></div>`).join('');
+    return `<div class="unrv"><div class="brief-h"><b>Unrivaled</b><span>${n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`}</span></div><p class="unote">The 3-on-3 league where WNBA stars play in the offseason.</p>`
+      + `<div class="unx"><div class="unh"><b>${esc(dayLabel(nx.y, { weekday: 'long', month: 'long', day: 'numeric' }))}</b><span>${esc([nx.arena, nx.city].filter(Boolean).join(' · '))}</span></div>${games}${tv.length ? `<div class="untv">${tv.map(x => `<em>${esc(x)}</em>`).join('')}</div>` : ''}</div>`
+      + `<button class="btn ghost unbtn" data-act="scmode" data-mode="unrivaled">See the full schedule · ${ahead.reduce((a, x) => a + x.games.length, 0)} games</button></div>`;
+  }
+  async function unrivaledList() {
+    const d = HW.hub ? await HW.hub.file('unrivaled.json').catch(() => null) : null;
+    if (!d || !d.games || !d.games.length) return empty('No Unrivaled schedule yet', '<p style="margin:6px 0 0">It shows here once the league posts it.</p>');
+    const today = todayCT(); const list = unrDays(d); const ahead = list.filter(x => x.y >= today), done = list.filter(x => x.y < today).reverse();
+    const dayCard = x => `<div class="unx"><div class="unh"><b>${esc(dayLabel(x.y, { weekday: 'short', month: 'short', day: 'numeric' }))}</b><span>${esc([x.arena, x.city].filter(Boolean).join(' · '))}</span></div>${x.games.map(g => `<div class="ung">${g.teams && g.teams.length === 2 ? `<span class="unt">${unrLogo(d, g.teams[0])}<b>${esc(g.teams[0])}</b></span><i>vs</i><span class="unt">${unrLogo(d, g.teams[1])}<b>${esc(g.teams[1])}</b></span>` : '<span class="unt tbd"><b>Teams to be set</b></span>'}<em>${g.score ? `<b>${esc(String(g.score[0]))}-${esc(String(g.score[1]))}</b>` : `${esc(unrCT(g.time))} CT`}</em></div>`).join('')}${(x.games[0] && x.games[0].tv || []).length ? `<div class="untv">${x.games[0].tv.map(t => `<em>${esc(t)}</em>`).join('')}</div>` : ''}</div>`;
+    const byMonth = {}; ahead.forEach(x => { const k = dayLabel(x.y, { month: 'long', year: 'numeric' }); (byMonth[k] = byMonth[k] || []).push(x); });
+    return `<p class="unote" style="margin-top:4px">The 3-on-3 league where WNBA stars play in the offseason. ${ahead.length ? `${ahead.reduce((a, x) => a + x.games.length, 0)} games to come.` : ''}</p>`
+      + Object.entries(byMonth).map(([m, xs]) => sec(m, `${xs.length} game days`) + `<div class="unrv">${xs.map(dayCard).join('')}</div>`).join('')
+      + (done.length ? sec('Results', 'newest first') + `<div class="unrv">${done.slice(0, 12).map(dayCard).join('')}</div>` : '');
+  }
   async function scores(lk) {
     const L = LEAGUES[lk]; const today = todayCT();
     let ymd = store.get('v5:date', today); if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd) || Math.abs(new Date(ymd) - new Date(today)) > 200 * 864e5) ymd = today;
@@ -570,13 +622,17 @@
     const dayBtn = (d, lab) => `<button class="day${d === ymd ? ' on' : ''}" data-act="date" data-ymd="${d}" aria-pressed="${d === ymd}"><em>${esc(lab)}</em><b>${d.slice(8) === '01' && lab !== 'Today' ? esc(dayLabel(d, { month: 'short' })) + ' ' : ''}${+d.slice(8)}</b></button>`;
     const calPill = `<div class="calrow"><span id="phase"></span><button class="chip cal" data-act="calendar" data-ymd="${esc(ymd)}" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>${esc(dayLabel(ymd, { month: 'long', year: 'numeric' }))}<svg class="dn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>${(favs.all()[lk] || []).length ? `<button class="chip mine${mineOnly ? ' on' : ''}" data-act="scmine" aria-pressed="${mineOnly}">${starSvg}Mine</button>` : '<span></span>'}</div>`;
     const strip = calPill + `<div class="dates" id="dates">${far ? dayBtn(today, 'Today') + '<span class="gap"></span>' : ''}${days.map(d => dayBtn(d, d === today ? 'Today' : dayLabel(d, { weekday: 'short' }))).join('')}</div>`;
-    const head = strip;
+    const unrMode = lk === 'wnba' && !!store.get('v5:scunr', false);
+    const modes = lk === 'wnba' ? `<div class="chips scmode" role="tablist">${[['wnba', 'WNBA'], ['unrivaled', 'Unrivaled']].map(([k, l]) => `<button class="chip${(k === 'unrivaled') === unrMode ? ' on' : ''}" role="tab" data-act="scmode" data-mode="${k}" aria-pressed="${(k === 'unrivaled') === unrMode}">${l}</button>`).join('')}</div>` : '';
+    if (unrMode) { HW.v5.refresh = null; const h = await unrivaledList(); if (store.get('v5:scunr', false)) $main.innerHTML = `<div id="unrpage">${modes}<div class="unrbody">${h}</div></div>`; return; }
+    const head = modes + strip;
     /* the page is two parts: the date strip, which only moves its highlight from one day to the next (and is rebuilt when
        the window of days shifts), and the list below it, which swaps. A day change never repaints the strip or the screen. */
     const page0 = $main.querySelector('#scpage');
     const inPlace = page0 && page0.dataset.lk === lk;
     const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
     const paint = body => {
+      if (lk === 'wnba' && store.get('v5:scunr', false)) return;   // switched to Unrivaled while this day was loading
       const page = $main.querySelector('#scpage');
       if (page && page.dataset.lk === lk) {
         const hd = page.querySelector('#schead'); const hh = hashOf(head);
@@ -1023,6 +1079,6 @@
     await playerPicker($main.querySelector('#ppick'), L, { following: true, leaders: true });
   }
 
-  HW.v5 = Object.assign(HW.v5 || {}, { home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
+  HW.v5 = Object.assign(HW.v5 || {}, { unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
     _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist } });
 })();
