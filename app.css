@@ -2815,16 +2815,69 @@ html body .tbl.stand td:first-child{overflow:hidden}
    Under the hero, four tabs split the page: Overview (the numbers at a glance, last five, the next game, injuries,
    news), Schedule, Roster and Stats. The tabs are the same chips as the game page, spread evenly, and stay pinned under
    the status bar on a frosted strip while the page scrolls. */
-#ttabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;padding:16px var(--gut-r) 10px var(--gut);
-  background:color-mix(in srgb,var(--bg) 80%,transparent);-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6)}
+#ttabs{padding:16px var(--gut-r) 4px var(--gut)}
 #ttabs .chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:0;overflow:visible}
 #ttabs .chip{height:38px;padding:0 6px;font-size:14px}
 .tpanel{animation:tpin .24s var(--ease) both}
 .tpanel > .stats:first-child{padding-top:6px}
 @keyframes tpin{from{opacity:0;transform:translateY(5px)}}
 @media (prefers-reduced-motion:reduce){ .tpanel{animation:none} }
-@media (prefers-reduced-transparency:reduce){ #ttabs{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)} }
-/* a short tab still fills the screen, so switching to it with the tabs pinned keeps them pinned instead of the page
-   jumping back down to the hero */
-.tpanels{min-height:calc(100svh - 64px - env(safe-area-inset-top,0px))}
 @media (max-width:359px){ #ttabs .chips{gap:4px} #ttabs .chip{font-size:12.5px;padding:0 2px;height:36px} }
+/* ===== v363: tabs scroll with the page; the roster as cards; one look for every injury status =====
+   The team tabs no longer pin to the top. The Roster tab is the players as cards, grouped by position: the photo over
+   the crest on the team's colour, scoring and any injury in pills at the top. Every injury status in the app (Out, DTD,
+   Questionable, Probable) is now a soft grey pill with a coloured dot, red for out, amber for doubtful or day to day,
+   green for probable. */
+.rrail2{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding:0 var(--gut);padding:2px var(--gut-r) 8px var(--gut);scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.rrail2::-webkit-scrollbar{display:none}
+.rcard2{position:relative;flex:none;width:150px;height:214px;border-radius:22px;overflow:hidden;isolation:isolate;scroll-snap-align:start;color:#fff;text-decoration:none;
+  background:radial-gradient(120% 70% at 20% 0%,rgba(255,255,255,.26),transparent 60%),radial-gradient(90% 60% at 100% 100%,color-mix(in srgb,var(--rc2) 40%,transparent),transparent 70%),var(--rc);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),0 10px 22px -14px rgba(0,0,0,.55);transition:transform .2s var(--ease)}
+.rcard2:active{transform:scale(.97)}
+.rcard2 .rwm{position:absolute;left:50%;top:20px;width:132px;height:132px;transform:translateX(-50%);object-fit:contain;opacity:.16;filter:grayscale(1) brightness(2.2);z-index:0;pointer-events:none}
+.rcard2 .rhs{position:absolute;left:50%;bottom:0;width:226px;max-width:none;height:auto;transform:translateX(-50%);z-index:1;pointer-events:none}
+.rcard2 .rini{position:absolute;left:0;right:0;top:64px;text-align:center;font-size:44px;font-weight:800;opacity:.55;z-index:1}
+.rcard2::after{content:"";position:absolute;left:0;right:0;bottom:0;height:104px;z-index:2;background:linear-gradient(180deg,transparent,rgba(0,0,0,.42) 46%,rgba(0,0,0,.74));pointer-events:none}
+.rcard2 .rtop{position:absolute;left:9px;right:9px;top:9px;z-index:3;display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+.rcard2 .rtop i{font-style:normal}
+.rcard2 .rppg{display:inline-flex;align-items:baseline;gap:3px;padding:5px 9px;border-radius:999px;background:rgba(0,0,0,.36);font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+.rcard2 .rppg small{font-size:10px;font-weight:700;opacity:.82;letter-spacing:.03em}
+.rcard2 .rst{display:inline-flex;align-items:center;gap:5px;padding:5px 9px 5px 8px;border-radius:999px;background:rgba(0,0,0,.36);font-size:12px;font-weight:800;white-space:nowrap}
+.rcard2 .rst::before{content:"";width:7px;height:7px;border-radius:50%;background:#FF4D55;flex:none}
+.rcard2 .rst.q::before{background:#FFB020}.rcard2 .rst.ok::before{background:#3DDC84}
+.rcard2 .rtx{position:absolute;left:13px;right:10px;bottom:12px;z-index:3;display:flex;flex-direction:column;gap:2px;min-width:0}
+.rcard2 .rtx b{font-size:17px;font-weight:800;letter-spacing:-.01em;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.rcard2 .rtx small{font-size:13px;font-weight:500;color:rgba(255,255,255,.86);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rgroups .legend{padding:6px var(--gut-r) 0 var(--gut)}
+html body .tag.out,html body .tag.q,html body .tag.ok{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 11px 0 9px;border-radius:999px;font-size:13px;font-weight:800;line-height:1;
+  background:color-mix(in srgb,var(--ink) 7%,transparent)!important;color:var(--ink)!important;box-shadow:none!important;background-image:none!important}
+html body .tag.out::before,html body .tag.q::before,html body .tag.ok::before{content:"";width:8px;height:8px;border-radius:50%;flex:none;background:#E5484D}
+html body .tag.q::before{background:#F5A524}
+html body .tag.ok::before{background:#30A46C}
+html body .row .t .tag.out,html body .row .t .tag.q,html body .row .t .tag.ok{height:20px;padding:0 8px 0 7px;gap:5px;font-size:11px;top:0}
+html body .row .t .tag.out::before,html body .row .t .tag.q::before,html body .row .t .tag.ok::before{width:6px;height:6px}
+/* the Scores list: one card per section, a row per game, each team on its own side */
+.srows{margin:0 var(--gut-r) 0 var(--gut);padding:0 12px;border-radius:24px;background:var(--surf);box-shadow:var(--edge)}
+.srows > .games{margin:0 -12px;padding:12px 0}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) 48px minmax(84px,auto) 48px minmax(0,1fr);align-items:center;column-gap:2px;padding:18px 0;color:inherit;text-decoration:none;transition:opacity .15s var(--ease)}
+.srow + .srow,.srows > .games + .srow,.srow + .games{border-top:1px solid var(--line)}
+.srow:active{opacity:.6}
+.stm{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0}
+.stm.lo{opacity:.45}
+.scr{position:relative;width:46px;height:46px;display:grid;place-items:center}
+.scr img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.12))}
+.scr .sab{font-size:13px;font-weight:800;color:var(--ink-2)}
+.sstar{position:absolute;right:-7px;bottom:-5px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:#F5B915;color:#fff;box-shadow:0 0 0 2px var(--surf),0 1px 3px rgba(0,0,0,.25)}
+.sstar svg{width:12px;height:12px}
+.snm{font-size:14px;font-weight:600;color:var(--ink-2);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ssc{text-align:center;font-size:27px;font-weight:700;letter-spacing:-.02em;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.ssc.up{color:var(--ink);font-weight:800}
+.ssc.lo{opacity:.7}
+.ssc.rec{font-size:15px;font-weight:600;letter-spacing:.06em;color:var(--ink-3)}
+.smid{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;min-width:0}
+.stt{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.smid small{font-size:12.5px;font-weight:700;letter-spacing:.02em;color:var(--ink-3);white-space:nowrap}
+.sft{font-size:14px;font-weight:700;color:var(--ink-2);white-space:nowrap}
+.slv{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:color-mix(in srgb,var(--live) 12%,transparent);color:var(--live);font-size:13px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.slv i{width:6px;height:6px;border-radius:50%;background:var(--live)}
+@media (max-width:359px){ .srow{grid-template-columns:minmax(0,1fr) 44px minmax(74px,auto) 44px minmax(0,1fr)} .ssc{font-size:24px} .ssc.rec{font-size:13px;letter-spacing:.02em} .scr{width:40px;height:40px} .snm{font-size:13px} .srows{padding:0 10px} }

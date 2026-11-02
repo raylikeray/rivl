@@ -182,6 +182,7 @@
     const byId = new Map(S.today[r.lk].map(g => [g.id, g]));
     $main.querySelectorAll('[data-gid]').forEach(el => {
       const g = byId.get(el.dataset.gid); if (!g) return;
+      if (el.classList.contains('srow')) { const h = V._.scoreRow(L, g); const k = /data-k="([^"]*)"/.exec(h); if (k && el.getAttribute('data-k') !== k[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&')) { el.outerHTML = h; } if (g.state === 'post' && el.classList.contains('on')) render(); return; }
       const scores = el.querySelectorAll('.sc');
       if (el.classList.contains('hero')) { const sc = el.querySelector('.mid .sc'); const st = el.querySelector('.mid .st'); if (sc) { const txt = `${g.away.score ?? ''}–${g.home.score ?? ''}`; if (sc.textContent !== txt) { sc.innerHTML = `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`; sc.classList.remove('bump'); void sc.offsetWidth; sc.classList.add('bump'); } } if (st) st.textContent = g.state === 'in' ? g.detail : g.state === 'post' ? HW.finalWord(g) : st.textContent; return; }
       if (scores.length === 2) {
@@ -415,7 +416,7 @@
     const cls = /out/i.test(st) ? 'out' : /day|quest|doubt/i.test(st) ? 'q' : /prob|avail/i.test(st) ? 'ok' : '';
     const what = [det.type, det.detail && det.detail !== det.type ? det.detail : '', det.side && det.side !== 'Not Specified' ? det.side.toLowerCase() : '', det.location && det.location !== det.type ? det.location : ''].filter(Boolean).join(', ');
     const ret = V._.retInfo(L, det.returnDate);
-    const rows = [['Status', `<span class="tag ${cls}">${esc(V._.statusWord(st))}</span>`], ['Injury', esc(what || '—')], ['Reported', x.date ? esc(new Date(x.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: HW.TZ })) : ''], ['Expected back', ret ? esc(ret.long) : (/out/i.test(st) ? 'No date given' : '')], ['Fantasy', det.fantasyStatus && det.fantasyStatus.description ? esc(det.fantasyStatus.description) : '']].filter(([, v]) => v);
+    const rows = [['Status', `<span class="tag ${cls}">${esc(V._.tagWord(st))}</span>`], ['Injury', esc(what || '—')], ['Reported', x.date ? esc(new Date(x.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: HW.TZ })) : ''], ['Expected back', ret ? esc(ret.long) : (/out/i.test(st) ? 'No date given' : '')], ['Fantasy', det.fantasyStatus && det.fantasyStatus.description ? esc(det.fantasyStatus.description) : '']].filter(([, v]) => v);
     const note = x.longComment || x.shortComment || '';
     openPanel(`<button class="ib close" data-act="panel-close" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       <div class="inj-head">${id ? `<a href="#player/${lk}/${esc(id)}" data-act="panel-close" aria-label="${esc(at.displayName || '')} profile">` : ''}${V._.headshot(V._.hsUrl(at), V._.teamColor(team, L), 64, at.displayName)}${id ? '</a>' : ''}<div><h3>${esc(at.displayName || '')}</h3><p>${esc(team.short || '')}${at.position && at.position.abbreviation ? `, ${esc(at.position.abbreviation)}` : ''}</p></div></div>
