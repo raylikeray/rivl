@@ -754,13 +754,29 @@
       const side = t => ({ short: t.short, abbr: t.abbr, logo: t.logo, color: V._.teamColor(t), score: t.score, rec: t.rec || '' });
       const card = g.state === 'pre' ? null : { kind: 'game', away: side(g.away), home: side(g.home), status: g.state === 'post' ? finalWord(g) : g.detail, sub: tvLabel(g) || (d.gameInfo && d.gameInfo.venue && d.gameInfo.venue.fullName) || '', date: dayLabel(ymdOf(g.date), { weekday: 'long', month: 'long', day: 'numeric' }), note: f && prefs.get('forecast') ? `RIVL had ${(f.pHome >= .5 ? g.home : g.away).short} ${pct(Math.max(f.pHome, 1 - f.pHome))}` : '', title: `${g.away.short} ${g.away.score ?? ''}, ${g.home.short} ${g.home.score ?? ''}`, text: `${g.away.short} ${g.away.score ?? ''}, ${g.home.short} ${g.home.score ?? ''} · ${g.state === 'post' ? finalWord(g) : g.detail}`, file: `${g.away.abbr}-${g.home.abbr}-${ymdOf(g.date)}` };
       // the page is three parts: the head (bar + hero) changes only when the score does, the chips only toggle, the body swaps
-      const headHtml = topbar(title, '#scores', '', card) + hero, hh = hashOf(headHtml), page = $main.querySelector('#gpage');
+      /* the head, as Apple Sports draws a game: on a dark page, each side's crest and score with the clock, Final or the tip
+         time between them; the records, the series and RIVL's pick under it. The two teams' colours drift behind it. */
+      const pc = g.tbd ? ['#3A3D44', '#3A3D44'] : V._.pairColors(L, g.away, g.home); const lift = c => V._.lift(c);
+      const hasSc = g.state !== 'pre' && !g.off && g.away.score != null && g.home.score != null;
+      const lead = (t, o) => hasSc && +t.score >= +o.score;
+      const gside = (t, o, right) => { const crest = `<a class="ghc" href="${g.tbd ? '#' : href.team(lk, t.id)}" aria-label="${esc(t.short || '')}">${t.logo ? V._.imgSized(t.logo, 128, 128, 'alt=""') : `<b>${esc(t.abbr || 'TBD')}</b>`}</a>`; const num = hasSc ? `<b class="ghn${lead(t, o) ? '' : ' lo'}">${esc(String(t.score))}</b>` : ''; return `<div class="ghs${right ? ' r' : ''}">${right ? num + crest : crest + num}</div>`; };
+      const mid = g.off ? `<b class="ght">${esc(g.off)}</b>` : g.state === 'in' ? `<span class="ghl"><i></i>${esc(g.detail || 'Live')}</span>` : g.state === 'post' ? `<b class="ght">${esc(finalWord(g))}</b>` : `<b class="ght">${esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT)$/, ''))}</b><small>${esc(dayLabel(ymdOf(g.date), { weekday: 'short', month: 'short', day: 'numeric' }))}</small>`;
+      const pickTxt = f && !g.tbd ? `${g.state === 'post' ? 'RIVL had' : 'RIVL pick:'} ${esc((f.pHome >= .5 ? g.home : g.away).abbr || '')} ${pct(Math.max(f.pHome, 1 - f.pHome))}` : '';
+      const subs = [g.tbd ? '' : `${esc(g.away.abbr || '')} ${esc(g.away.rec || '')} · ${esc(g.home.abbr || '')} ${esc(g.home.rec || '')}`, V._.seriesLine(g) ? esc(V._.seriesLine(g)) + (spick ? ` · ${esc(spick)}` : '') : '', pickTxt, esc(tvLabel(g) || '')].filter(x => x && x.replace(/[\s·]/g, ''));
+      const backI = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg>`;
+      const shareI = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>`;
+      const headHtml = `<header class="ghd"><div class="ghbar"><a class="ghib" href="#scores" data-act="back" aria-label="Back">${backI}</a><span class="ghtt">${title}</span><button class="ghib" data-act="share" data-title="${esc(title.replace(/<[^>]+>/g, ''))}"${card ? ` data-card='${esc(JSON.stringify(card))}'` : ''} aria-label="Share">${shareI}</button></div>`
+        + `<div class="ghrow">${gside(g.away, g.home, false)}<div class="ghm">${mid}</div>${gside(g.home, g.away, true)}</div>`
+        + `${subs.length ? `<p class="ghsub">${subs.join('<i>·</i>')}</p>` : ''}</header><div class="lb-slot"></div>`;
+      const bgVars = `--ga:${pc[0]};--gh:${pc[1]}`;
+      const hh = hashOf(headHtml), page = $main.querySelector('#gpage');
       if (page && page.dataset.gid === String(id)) {
         const head = page.querySelector('#ghead'); if (head.dataset.h !== hh) { head.innerHTML = headHtml; head.dataset.h = hh; }
         const tabsEl = page.querySelector('#gtabs'); if (tabsEl.dataset.k !== tabKey) { tabsEl.innerHTML = tabs; tabsEl.dataset.k = tabKey; }
         else tabsEl.querySelectorAll('.chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); c.setAttribute('aria-selected', String(on)); });
         const bodyEl = page.querySelector('#gbody'); if (bodyEl.dataset.h !== hashOf(body) || bodyEl.dataset.tab !== tab) { const tabChanged = bodyEl.dataset.tab !== tab; bodyEl.innerHTML = body; if (tabChanged && V.soft) V.soft(bodyEl); bodyEl.dataset.h = hashOf(body); bodyEl.dataset.tab = tab; }
-      } else $main.innerHTML = `<div id="gpage" data-gid="${esc(String(id))}"><div id="ghead" data-h="${hh}">${headHtml}</div><div id="gtabs" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div>`;
+        const bg = page.querySelector('.ghbg'); if (bg && bg.getAttribute('style') !== bgVars) bg.setAttribute('style', bgVars);
+      } else $main.innerHTML = `<div id="gpage" class="gdark" data-gid="${esc(String(id))}"><div class="ghbg" style="${bgVars}" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="fade"></i></div><div id="ghead" data-h="${hh}">${headHtml}</div><div id="gtabs" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div>`;
       document.title = `${g.tbd ? 'Teams to be decided' : `${g.away.short} at ${g.home.short}`} · RIVL`;
       return g;
     };

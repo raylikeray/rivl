@@ -65,7 +65,7 @@
   const scrollMem = new Map();
   let navN = 0;   // each history entry is numbered the first time it is shown; an entry numbered below the one we left is a step back
   async function render() {
-    const r = route(); const my = ++seq; current = r; V.refresh = null; closeSheet();
+    const r = route(); const my = ++seq; const wasGame = current && current.name === 'game'; current = r; V.refresh = null; closeSheet(); if (wasGame !== (r.name === 'game')) applyTheme();
     if (r.name !== 'scores' && V.todayPill) V.todayPill(false);   // the Scores screen's back-to-today pill goes with it
     const key = `${r.name}/${r.args.join('/')}`;
     const st = history.state; const back = !!(st && st.n != null && st.n < navN);
@@ -433,7 +433,7 @@
 
   /* ---------- theme: match the phone, or force dark or light ---------- */
   function applyTheme() {
-    const t = store.get('v5:theme', 'system'); const root = document.documentElement;
+    const t = current && current.name === 'game' ? 'dark' : store.get('v5:theme', 'system'); const root = document.documentElement;   // a game page is always dark, the way Apple Sports draws one
     if (t === 'dark' || t === 'light') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme');
     // the status bar takes the top of the wash, so the screen is one surface from its top edge down; once the wash has scrolled
     // away it takes the plain ground, the way a translucent bar would show what is behind it
@@ -800,3 +800,6 @@
   $main.addEventListener('touchend', end, { passive: true });
   $main.addEventListener('touchcancel', end, { passive: true });
 })();
+
+/* the version on this phone, read off the stamp the page loaded its script with, shown small by the settings button */
+(() => { const s = document.querySelector('script[src*="app.js"]'); const m = s && /[?&]v=(\d+)/.exec(s.getAttribute('src')); const el = document.getElementById('ver'); if (el && m) el.textContent = 'v' + m[1]; })();

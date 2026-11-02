@@ -3197,14 +3197,58 @@ html body .tbcr img{width:100%;height:100%;filter:drop-shadow(0 0 1px rgba(255,2
 .pvit span.lnk{color:var(--acc,#1677FF);font-weight:600}
 .ptabs{padding-top:16px!important}
 @media (max-width:359px){ .pband h1{font-size:31px} .pbtx{max-width:62%} }
-/* ===== v370: the league bar stays put; swipes follow the finger =====
-   The header (wordmark, settings and the league switch) is pinned as one block on a frosted strip, so the league bar
-   never moves while the page scrolls under it. */
+/* the league bar sits at the top of the page and scrolls away with it; scrolling back to the top brings it back. Swipe
+   left or right anywhere to change league or section. */
 @media (max-width:1039px){
-  .hdr{display:block;position:sticky;top:env(safe-area-inset-top,0px);z-index:40;padding-bottom:6px;
-    background:color-mix(in srgb,var(--bg) 92%,transparent);-webkit-backdrop-filter:blur(24px) saturate(1.6);backdrop-filter:blur(24px) saturate(1.6)}
-  .hdr .pills,html body .hdr #pills.pills{position:relative;top:auto;transform:none;transition:none;margin-bottom:4px}
-  .hdr:has(.top[hidden]):has(.pills[hidden]){display:none}
+  .hdr{display:block;position:relative;z-index:5}
+  html body .pills,html body .hdr #pills.pills{position:relative;top:auto;transform:none;transition:none}
 }
-@media (prefers-reduced-transparency:reduce){ .hdr{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)} }
+.ver{display:inline-flex;align-items:center;height:24px;padding:0 9px;margin-right:8px;border-radius:999px;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink-3);font-size:11.5px;font-weight:700;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 html{overscroll-behavior-x:none}
+/* ===== v371: the game page, Apple Sports dark =====
+   A game page is always dark. The two teams' colours drift slowly behind the head as soft light, fading into the page;
+   the head is each side's crest and score with the clock, Final or tip time between, the records, the series and
+   RIVL's pick under it, and plain tabs with an underline. */
+#gpage.gdark{position:relative;isolation:isolate}
+.ghbg{position:absolute;left:0;right:0;top:calc(-1 * env(safe-area-inset-top,0px));height:440px;z-index:-1;overflow:hidden;pointer-events:none}
+.ghbg{background:#0B0C10}
+.ghbg i{position:absolute;display:block;border-radius:50%;filter:blur(64px);opacity:.85;will-change:transform}
+.ghbg::after{content:"";position:absolute;inset:0;background:rgba(6,7,10,.38)}
+.ghbg .b1{width:340px;height:300px;left:-90px;top:-60px;background:var(--ga);animation:ghd1 16s ease-in-out infinite alternate}
+.ghbg .b2{width:340px;height:300px;right:-100px;top:-40px;background:var(--gh);animation:ghd2 19s ease-in-out infinite alternate}
+.ghbg .b3{width:260px;height:220px;left:30%;top:90px;background:color-mix(in srgb,var(--ga) 50%,var(--gh));opacity:.45;animation:ghd3 23s ease-in-out infinite alternate}
+.ghbg .fade{z-index:1;inset:auto 0 0 0;width:auto;height:240px;border-radius:0;filter:none;opacity:1;background:linear-gradient(180deg,transparent,var(--bg));animation:none}
+@keyframes ghd1{0%{transform:translate(0,0) scale(1)}50%{transform:translate(70px,40px) scale(1.15)}100%{transform:translate(20px,90px) scale(.95)}}
+@keyframes ghd2{0%{transform:translate(0,0) scale(1.05)}50%{transform:translate(-80px,60px) scale(.9)}100%{transform:translate(-30px,10px) scale(1.15)}}
+@keyframes ghd3{0%{transform:translate(0,0) scale(.9)}50%{transform:translate(-60px,-30px) scale(1.2)}100%{transform:translate(50px,20px) scale(1)}}
+@media (prefers-reduced-motion:reduce){ .ghbg i{animation:none} }
+.ghd{color:#fff;padding:6px var(--gut-r) 6px var(--gut)}
+.ghbar{display:flex;align-items:center;gap:10px;height:52px}
+.ghib{flex:none;width:42px;height:42px;border:0;border-radius:50%;display:grid;place-items:center;color:#fff;text-decoration:none;cursor:pointer;
+  background:rgba(255,255,255,.14);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 1px 1px 0 rgba(255,255,255,.32),inset -1px -1px 0 rgba(255,255,255,.08)}
+.ghib svg{width:20px;height:20px}
+.ghib:active{transform:scale(.92)}
+.ghtt{flex:1;min-width:0;text-align:center;font-size:15px;font-weight:700;color:rgba(255,255,255,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ghrow{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-top:14px}
+.ghs{display:flex;align-items:center;gap:10px;min-width:0}
+.ghs.r{justify-content:flex-end}
+.ghc{flex:none;width:52px;height:52px;display:grid;place-items:center;color:#fff;text-decoration:none}
+.ghc img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 1px rgba(255,255,255,.5)) drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+.ghc b{font-size:13px;font-weight:800}
+.ghn{font:800 46px/1 var(--num);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ghn.lo{opacity:.55}
+.ghm{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;min-width:76px}
+.ght{font-size:17px;font-weight:700;white-space:nowrap}
+.ghm small{font-size:12.5px;color:rgba(255,255,255,.65);white-space:nowrap}
+.ghl{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(10,11,14,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.2);color:#fff;font-size:13.5px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ghl i{width:7px;height:7px;border-radius:50%;background:#FF3B30;animation:gmkp 1.8s ease-in-out infinite}
+.ghsub{margin:14px 0 0;text-align:center;font-size:13px;font-weight:600;color:rgba(255,255,255,.7);line-height:1.5}
+.ghsub i{font-style:normal;margin:0 7px;opacity:.5}
+/* plain tabs with an underline */
+.gdark #gtabs{border-bottom:1px solid rgba(255,255,255,.12);margin-top:6px}
+.gdark #gtabs .chips{gap:22px;padding:0 var(--gut-r) 0 var(--gut);overflow-x:auto}
+html body .gdark #gtabs .chip,html body .gdark #gtabs .chip.on{position:relative;height:44px;padding:0 2px;border-radius:0;background:none!important;box-shadow:none!important;color:rgba(255,255,255,.55);font-size:16px;font-weight:700}
+html body .gdark #gtabs .chip.on{color:#fff}
+.gdark #gtabs .chip.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:3px;background:#fff}
+/* cards on the dark page read as glass */
+.gdark #gbody .card,.gdark #gbody .ijl,.gdark #gbody .srows{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.1)}
