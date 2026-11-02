@@ -215,7 +215,7 @@
   function paintLive() {
     if (!$live) return;
     const r = current || route();
-    const show = r && !['home', 'settings', 'search'].includes(r.name) && !document.body.classList.contains('onboarding');
+    const show = r && !['home', 'settings', 'search', 'team'].includes(r.name) && !document.body.classList.contains('onboarding');
     const list = show ? liveList() : [];
     const inner = $live.querySelector('.lb-in');
     if (!list.length) { if (!$live.hidden) { $live.hidden = true; inner.innerHTML = ''; } return; }
