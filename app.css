@@ -2709,3 +2709,8 @@ html:root body :is(#main,.xpeek) .hsec[data-sec="wire"] .wire2{margin:0 0 14px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .w2k{color:#ff6b8f}:root:not([data-theme="light"]) .w2k .dot{background:#ff6b8f}}
 :root[data-theme="dark"] .w2k{color:#ff6b8f}
 :root[data-theme="dark"] .w2k .dot{background:#ff6b8f}
+/* the Breaking strip wears the same sheet as every other card on this screen: the same gradient, the same edge and the
+   same corner. The red stays where it belongs, on the label and the dot, with only a wash of it through the surface. */
+html:root body .wire2{border-radius:18px;box-shadow:var(--edge);
+  background:linear-gradient(180deg,color-mix(in srgb,#E0245E 9%,var(--surf-2)),color-mix(in srgb,#E0245E 9%,var(--surf)))}
+html:root body .wire2 .w2list{border-top:1px solid var(--line)}
