@@ -362,12 +362,31 @@
     const favTeam = t => mine.includes(String(t.id));
     const teamOf = p => { const k = String(p.team || '').toLowerCase(); return t => (p.teamId && String(t.id) === String(p.teamId)) || (k && [t.abbr, t.short, t.name].some(x => String(x || '').toLowerCase() === k)); };
     const chipOf = g => { const sc = g.off ? `<span>${esc(g.off)}</span>` : g.state === 'pre' ? `<span>${esc(tipOf(g))}</span>` : g.state === 'in' ? `<span class="on">${g.away.score}–${g.home.score} · ${esc(g.detail)}</span>` : `<span>${g.away.score}–${g.home.score} · ${esc(finalWord(g))}</span>`; return `<a class="bchip" href="${href.game(lk, g.id)}">${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b>${sc}${seriesShort(g) ? `<em class="po">${esc(seriesShort(g))}</em>` : ''}</a>`; };
-    // one game, two team rows stacked, score right-aligned, status pinned to the far right spanning both rows
+    // one game on a timeline: an open ring before the final, a check once it's over, both teams stacked with their
+    // scores, the result or tip time on the right, and RIVL's pregame pick as a two-colour bar underneath
+    const pickColors = g => {
+      let a = teamColor(g.away, L), b = teamColor(g.home, L);
+      if (rgbDist(a, b) < 110) {
+        const ok = c => c && !BAD(c) && lumOf(c) >= .06 && lumOf(c) <= .6;
+        const aa = teamAlt(g.away, L), ba = teamAlt(g.home, L);
+        const opts = [[a, b, rgbDist(a, b)]]; if (ok(ba)) opts.push([a, ba, rgbDist(a, ba)]); if (ok(aa)) opts.push([aa, b, rgbDist(aa, b)]);
+        [a, b] = opts.sort((x, y) => y[2] - x[2])[0];
+      }
+      return [a, b];
+    };
     const rowOf = g => {
-      const live = g.state === 'in', done = g.state === 'post', showSc = live || done;
+      const live = g.state === 'in', done = g.state === 'post' && !g.off, showSc = (live || done) && !g.off;
       const side = (t, which) => `<span class="gt ${which}">${logo(t.logo, 's', teamColor(t, L))}<b>${esc(t.abbr || t.short)}</b></span><span class="gsc ${which}">${showSc ? (t.score ?? '–') : ''}</span>`;
       const status = g.off ? esc(g.off) : live ? esc(g.detail) : done ? esc(finalWord(g)) : esc(tipOf(g));
-      return `<a class="grow${live ? ' on' : ''}" href="${href.game(lk, g.id)}">${side(g.away, 'away')}${side(g.home, 'home')}<span class="gst">${status}</span>${seriesShort(g) ? `<em class="po">${esc(seriesShort(g))}</em>` : ''}</a>`;
+      const mark = done ? `<i class="gmk ok" aria-label="Final"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12.5l4 4 8-9"/></svg></i>` : `<i class="gmk${live ? ' on' : ''}"></i>`;
+      let bar = '';
+      const f = !done && !g.off ? safeF(L, g, S0.ctx) : null;
+      if (f && Number.isFinite(f.pHome)) {
+        const ph = Math.min(.99, Math.max(.01, f.pHome)), pa = 1 - ph; const [ca, cb] = pickColors(g);
+        const fav = ph >= .5 ? g.home : g.away, fp = Math.max(ph, pa);
+        bar = `<span class="gpk"><span class="gbar"><i style="flex:${pa.toFixed(3)};${tcv(ca, teamAlt(g.away, L))}"></i><i style="flex:${ph.toFixed(3)};${tcv(cb, teamAlt(g.home, L))}"></i></span><b>${esc(fav.abbr || fav.short)} ${pct(fp)}</b></span>`;
+      }
+      return `<a class="grow${live ? ' on' : ''}${done ? ' done' : ''}${bar ? ' pk' : ''}" href="${href.game(lk, g.id)}">${mark}${side(g.away, 'away')}${side(g.home, 'home')}<span class="gst">${status}</span>${bar}${seriesShort(g) ? `<em class="po">${esc(seriesShort(g))}</em>` : ''}</a>`;
     };
     const dayWord = (ymd, long) => { const rd = relDay(ymd); return rd === 'Tomorrow' || rd === 'Tonight' ? rd : dayLabel(ymd, { weekday: long ? 'long' : 'short' }); };
     const nextChip = g => `<a class="bchip next" href="${href.game(lk, g.id)}"><em>${esc(dayWord(HW.ymdOf(g.date)))}</em>${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b><span>${esc(tipOf(g))}</span></a>`;
@@ -380,9 +399,9 @@
       // tonight: your games, or the next ones on the calendar once the schedules are in
       const liveMine = games.filter(g => isLive(g) && isFav(g));
       if (P.brief && mine.length && !(P.live && liveMine.length && games.filter(isFav).length === liveMine.length)) {   // when every game of yours is on now, the hero says it all
-        const tonight = games.filter(g => isFav(g) && !(P.live && isLive(g))).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
+        const tonight = games.filter(g => isFav(g) && !(P.live && isLive(g))).sort((a, b) => new Date(a.date) - new Date(b.date) || rankGame(b) - rankGame(a));   // a timeline: in the order they tip
         let body = '', note = '', title = 'Tonight';
-        if (tonight.length) { note = `${tonight.length} ${P.live && liveMine.length ? 'more ' : ''}game${tonight.length === 1 ? '' : 's'} for your teams`; body = `<div class="glist">${tonight.map(rowOf).join('')}</div>`; }
+        if (tonight.length) { note = `${tonight.length} ${P.live && liveMine.length ? 'more ' : ''}game${tonight.length === 1 ? '' : 's'} for your teams${tonight.every(g => g.state === 'post') ? ' · all final' : ''}`; body = `<div class="glist">${tonight.map(rowOf).join('')}</div>`; }
         else {
           // nothing tonight: the block is the next games instead, headed by when they are, so a chip never sits under "no games"
           const seen = new Set(); const next = teams.map(t => t.next).filter(g => g && g.state === 'pre' && !seen.has(g.id) && seen.add(g.id)).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 4);
