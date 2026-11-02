@@ -210,7 +210,7 @@
   /* ================= TEAM ================= */
   async function teamV(lk, id) {
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Team not found'); return; }
-    $main.innerHTML = `<div class="tmx sk"><div class="tmbar"><a class="tmib" href="#teams" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div><header class="tmh"></header><div class="tmsheet">${skeleton(1, 'card')}${skeleton(4, 'row')}</div></div>`;
+    $main.innerHTML = topbar('') + skeleton(1, 'card') + skeleton(6, 'row');
     const [roster, sched, st, inj, lp, news, R] = await Promise.all([jSoft(`${API(L)}/teams/${id}/roster`, 900000), jSoft(`${API(L)}/teams/${id}/schedule`, 300000), standings(L).catch(() => null), injuries(L), L.sport === 'basketball' ? leaguePlayers(L).catch(() => null) : null, jSoft(`${API(L)}/news?limit=10&team=${id}`, 600000), rankings(L), teamsIndex(L).catch(() => null)]);
     const t0 = (roster && roster.team) || (sched && sched.team);
     if (!t0) { $main.innerHTML = topbar('Team') + empty("Couldn't load this team", '<p style="margin:6px 0 0">The feed didn\'t answer. Pull down to try again.</p>'); return; }
@@ -275,76 +275,10 @@
     const statsHtml = ts ? sec('Team stats', `ranked among ${TS.n}`) + `<div class="stats four tsg"><div><b>${f1(ts.ortg)}</b><span>OFF RTG</span>${rk('ortg')}</div><div><b>${f1(ts.drtg)}</b><span>DEF RTG</span>${rk('drtg')}</div><div><b>${sg1(ts.net)}</b><span>NET</span>${rk('net')}</div><div><b>${f1(ts.pace)}</b><span>PACE</span>${rk('pace')}</div></div>` +
       `<table class="tbl ff"><thead><tr><th>Four factors</th><th>Offense</th><th>Defense</th></tr></thead><tbody>${[['Effective FG%', 'efg', 'oefg', pctS], ['Turnover rate', 'tovr', 'otovr', pctS], ['Rebounding', 'orbr', 'drbr', pctS], ['Free-throw rate', 'ftr', 'oftr', pctS]].map(([lab, a, b, fmt]) => `<tr><td>${lab}</td><td><b>${fmt(ts[a])}</b>${rk(a)}</td><td><b>${fmt(ts[b])}</b>${rk(b)}</td></tr>`).join('')}</tbody></table><p class="legend">Ratings are points per 100 possessions scored and allowed; pace is possessions per game. The four factors: shooting (effective field-goal %), turnovers per possession, offensive rebounds taken (and defensive rebounds kept), free throws attempted per shot. Ranks are among the league: 1st is best on each line.</p>` : '';
     const outlook = simOk ? `<div class="outlook" data-lk="${lk}" data-id="${esc(String(id))}">${HW.sim.ready(L) ? '' : `<div class="rows"><button class="row" data-act="outlook"><span class="t"><b>Season outlook</b><span class="wrap">Playoff odds and a projected record, from the rest of the schedule</span></span>${chev}</button></div>`}</div>` : '';
-    /* ---- the team page: the team's colour behind a short head (crest, league and rank, name, a sentence on the season,
-       Follow), and under it a sheet in four tabs: Overview, Schedule, Roster, Stats ---- */
-    const tid = String(id), tname = t0.shortDisplayName || t0.name || t0.displayName || '';
-    const { mixTo, lumOf: lumC } = V._;
-    let dk = color; for (let k = 0; k < 8 && lumC(dk) > .16; k++) dk = mixTo(dk, 0, .22);   // dark enough for white type
-    const alt0 = V._.teamAlt({ id: tid, abbr: t0.abbreviation, color: t0.color, alt: t0.alternateColor }, L);
-    const sentence = r ? `The ${esc(t0.name || tname)} ${/s$/i.test(t0.name || '') ? 'are' : 'is'} ${r.w}-${r.l}${L.standingsMode !== 'conferences' && r.pos ? `, ${ordinal(r.pos)} in the ${esc(confName(r.group, r.groupAbbr))}` : r.group ? `, ${esc(r.group)}` : ''}.` : esc(t0.standingSummary || '');
-    const starOn = `<svg class="st on" viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`, starOff = `<svg class="st" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`;
-    const when = g => { const n = Math.round((new Date(ymdOf(g.date) + 'T12:00:00Z') - new Date(todayCT() + 'T12:00:00Z')) / 864e5); if (n === 0) return 'Today'; if (n === 1) return 'Tomorrow'; if (n === -1) return 'Yesterday'; return dayLabel(ymdOf(g.date), Math.abs(n) < 7 ? { weekday: 'long' } : { month: 'short', day: 'numeric' }); };
-    /* a game as a plate: both crests and names on the outside, the scores beside them, the clock, the time or Final in a
-       pill in the middle with RIVL's pick under it until the game is over */
-    const plate = g => { if (!g) return ''; const f = g.state !== 'post' && !g.off ? safeF(L, g, ctx) : null; const pre = g.state === 'pre' || g.off || g.away.score == null;
-      const mid = g.off ? esc(g.off) : g.state === 'in' ? esc(g.detail) : g.state === 'post' ? esc(finalWord(g)) : esc(tipOf(g));
-      const pk = f && Number.isFinite(f.pHome) ? `<small>${esc((f.pHome >= .5 ? g.home : g.away).abbr || '')} ${pct(Math.max(f.pHome, 1 - f.pHome))}</small>` : '';
-      const lead = s => !pre && +g[s].score > +g[s === 'home' ? 'away' : 'home'].score;
-      const side = s => { const t = g[s]; return `<span class="tps ${s}">${t.logo ? V._.imgSized(t.logo, 112, 112, 'class="tpc"') : '<span class="tpc"></span>'}<em>${esc(t.short || t.abbr || '')}</em><em class="ab">${esc(t.abbr || t.short || '')}</em></span>`; };
-      const sc = s => pre ? '' : `<b class="tpn ${s}${lead(s) ? '' : ' tr'}">${esc(String(g[s].score ?? '–'))}</b>`;
-      return `<a class="tplate${g.state === 'in' ? ' on' : ''}" href="${href.game(lk, g.id)}" data-gid="${esc(g.id)}">${side('away')}${sc('away')}<span class="tpm"><span class="tpp">${g.state === 'in' ? '<i></i>' : ''}${mid}</span>${pk}</span>${sc('home')}${side('home')}</a>`; };
-    const doneG = evs.filter(isDone), lastG = doneG[doneG.length - 1];
-    /* the players as tall cards in the team's colour, the crest faint behind the photo, scoring in a tag at the top */
-    const ilBy = {}; il.forEach(x => { const aid = athId(x.athlete || {}); if (aid) ilBy[aid] = x.status || ''; });
-    const rCard = a => { const p = ppg[a.id]; const pos = posWord(a.position && a.position.abbreviation); const hs = hsUrl(a); const ij = ilBy[String(a.id)];
-      const parts = (a.displayName || '').split(/\s+/); const nm = a.shortName || (parts.length > 1 ? `${parts[0][0]}. ${parts.slice(1).join(' ')}` : parts.join(' ')); const ini = parts.map(w => w[0] || '').slice(0, 2).join('');
-      return `<a class="tcard" href="${href.player(lk, a.id)}">${lg ? `<img class="twm" src="${esc(lg)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ''}${hs ? `<img class="ths" src="${esc(hs)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : `<b class="tini">${esc(ini)}</b>`}<span class="ttop">${p && p.pts != null ? `<i class="tppg">${(+p.pts).toFixed(1)}<small>PPG</small></i>` : '<i></i>'}${ij ? `<i class="tij${/out/i.test(ij) ? ' out' : ''}">${esc(statusWord(ij) || 'Injured')}</i>` : ''}</span><span class="ttx"><b>${esc(nm)}</b><small>${esc([pos, a.jersey ? `#${a.jersey}` : ''].filter(Boolean).join(' · '))}</small></span></a>`; };
-    const rail = l => `<div class="trail">${l.map(rCard).join('')}</div>`;
-    const grp = p => ({ G: 'Guards', PG: 'Guards', SG: 'Guards', F: 'Forwards', SF: 'Forwards', PF: 'Forwards', 'G-F': 'Guards', 'F-G': 'Forwards', 'F-C': 'Forwards', C: 'Centers', 'C-F': 'Centers' }[p] || 'Others');
-    const groups = ['Guards', 'Forwards', 'Centers', 'Others'].map(h => [h, sorted.filter(a => grp(a.position && a.position.abbreviation) === h)]).filter(([, l]) => l.length);
-    const hdr = (title, meta, btn) => `<div class="tsec"><h2>${title}</h2>${meta ? `<span>${meta}</span>` : ''}${btn || ''}</div>`;
-    const live = next && next.state === 'in', today = next && (live || ymdOf(next.date) === todayCT()) ? next : null, nextUp = !today ? next : null;
-    const panels = {
-      overview: (today ? hdr(live ? 'Live now' : 'Today', live ? '' : esc(tipOf(today))) + plate(today) : nextUp ? hdr('Next up', esc(when(nextUp))) + plate(nextUp) : '')
-        + (lastG ? hdr('Last game', esc(when(lastG))) + plate(lastG) : '')
-        + (form ? `<div class="tform">${form}</div>` : '')
-        + (sorted.length ? hdr('Players', '', `<button class="tbtn" data-act="ttab" data-tab="roster">Full roster</button>`) + rail(sorted.slice(0, 8)) : '')
-        + (injHtml ? `<div class="tblk">${injHtml}</div>` : '')
-        + (newsHtml ? `<div class="tblk">${newsHtml}</div>` : '')
-        || empty('Nothing to show yet'),
-      schedule: schedHtml ? `<div class="tblk">${schedHtml}</div>` : empty('No games listed'),
-      roster: groups.length ? groups.map(([h, l]) => hdr(h, String(l.length)) + rail(l)).join('') : empty('No roster listed'),
-      stats: (strip || splitsHtml || outlook || statsHtml) ? `<div class="tblk">${(strip ? sec('Season') + strip : '') + splitsHtml + outlook + statsHtml}</div>` : empty('No season numbers yet', '<p style="margin:6px 0 0">They show up once the team has played.</p>')
-    };
-    const TABS = [['overview', 'Overview'], ['schedule', 'Schedule'], ['roster', 'Roster'], ['stats', 'Stats']];
-    const tkey = `tm:${lk}:${tid}`; let ttab = (() => { try { return localStorage.getItem(tkey) || 'overview'; } catch { return 'overview'; } })(); if (!panels[ttab]) ttab = 'overview';
-    const back = `<a class="tmib" href="#teams" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a>`;
-    $main.innerHTML = `<div class="tmx" style="--th:${esc(color)};--thd:${esc(dk)};--th2:${esc(alt0 || color)}">`
-      + `<div class="tmbar">${back}<span class="tmmini">${lg ? V._.imgSized(lg, 64, 64) : ''}<b>${esc(tname)}</b></span><span class="tmib ghost" aria-hidden="true"></span></div>`
-      + `<header class="tmh"><div class="tmh-in">${V._.imgSized(lg, 200, 200, 'class="tmcr" alt=""')}<div class="tmtx"><p class="tmlg">${esc(L.label)}${rank ? ` · No. ${rank}` : ''}</p><h1>${esc(tname)}</h1>${sentence ? `<p class="tmsen">${sentence}</p>` : ''}<button class="tmflw${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tid)}" data-name="${esc(tname)}" aria-pressed="${on}">${on ? starOn : starOff}${on ? 'Following' : 'Follow'}</button></div></div></header>`
-      + `<div class="tmsheet"><div class="tmtabs" role="tablist">${TABS.map(([k, l]) => `<button class="tmtab${k === ttab ? ' on' : ''}" role="tab" data-act="ttab" data-tab="${k}" aria-selected="${k === ttab}">${l}</button>`).join('')}<i class="tmind"></i></div>`
-      + `<div class="tmbody">${TABS.map(([k]) => `<div class="tmp" data-tp="${k}"${k === ttab ? '' : ' hidden'}>${panels[k]}</div>`).join('')}</div></div></div>`;
+    $main.innerHTML = topbar(esc(t0.shortDisplayName || t0.name || t0.displayName || ''), '#teams') + hero + strip + `<div class="tcols"><div class="tcol main">${nextHtml + outlook + statsHtml + rosterHtml + schedHtml}</div><div class="tcol side">${injHtml + newsHtml}</div></div>`;
     document.title = `${t0.displayName} · RIVL`;
-    const page = $main.querySelector('.tmx');
-    const ind = () => { const on = page.querySelector('.tmtab.on'), i = page.querySelector('.tmind'); if (!on || !i) return; i.style.width = `${on.offsetWidth}px`; i.style.transform = `translateX(${on.offsetLeft}px)`; };
-    ind(); requestAnimationFrame(() => { ind(); page.classList.add('ready'); });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(ind);
-    /* the small bar: the back button rides over the colour; once the head has scrolled under it the bar fills in with the
-       team's colour and its crest and name */
-    const head = page.querySelector('.tmh');
-    if (V._tmIO) V._tmIO.disconnect();
-    if ('IntersectionObserver' in window) { V._tmIO = new IntersectionObserver(([e]) => page.classList.toggle('stuck', !e.isIntersecting && e.boundingClientRect.top < 0), { rootMargin: `-${Math.round(page.querySelector('.tmbar').getBoundingClientRect().bottom)}px 0px 0px 0px`, threshold: 0 }); V._tmIO.observe(page.querySelector('.tmtx h1')); }
-    if (V._ttabL) $main.removeEventListener('click', V._ttabL);
-    V._ttabL = e => { const b = e.target.closest('[data-act="ttab"]'); if (!b || !$main.querySelector('.tmx')) return; e.preventDefault();
-      const k = b.dataset.tab; try { localStorage.setItem(tkey, k); } catch { }
-      page.querySelectorAll('.tmtab').forEach(x => { const o = x.dataset.tab === k; x.classList.toggle('on', o); x.setAttribute('aria-selected', String(o)); });
-      page.querySelectorAll('.tmp').forEach(x => { x.hidden = x.dataset.tp !== k; }); ind();
-      /* a tab picked with the tabs pinned opens at its top, just under them; picked higher up, the page stays where it is */
-      const tabs = page.querySelector('.tmtabs'); const stick = parseFloat(getComputedStyle(tabs).top) || 0; const y0 = page.querySelector('.tmsheet').getBoundingClientRect().top + window.scrollY - stick;
-      if (window.scrollY > y0) window.scrollTo({ top: y0, behavior: 'instant' }); };
-    $main.addEventListener('click', V._ttabL);
-    if (simOk) outlookFill(L, tid, r, { feed: HW.sim.ready(L) });   // fills in from the nightly file when there is one; otherwise the row above offers it
-    V.refresh = live ? async () => { const g2 = await liveOf(next, 15000); const host = $main.querySelector(`.tmx .tplate[data-gid="${CSS.escape(String(next.id))}"]`); if (!host || !g2) return; const h = plate(g2); if (host.outerHTML !== h) host.outerHTML = h; if (g2.state === 'post') V.refresh = null; } : null;
+    if (simOk) outlookFill(L, String(id), r, { feed: HW.sim.ready(L) });   // fills in from the nightly file when there is one; otherwise the row above offers it
+    V.refresh = next && next.state === 'in' ? async () => { const g2 = await liveOf(next, 15000); const host = $main.querySelector('.tcol.main .games'); if (!host || !g2) return; const h = gameCard(L, g2, ctx); if (host.dataset.h !== hashOf(h)) { host.innerHTML = h; host.dataset.h = hashOf(h); } if (g2.state === 'post') V.refresh = null; } : null;
   }
   /* a team's line from the simulation: odds, projected record, the run left */
   async function outlookFill(L, id, r, { feed = false } = {}) {
