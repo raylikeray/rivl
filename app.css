@@ -2811,3 +2811,20 @@ html body .tbl.stand td:first-child{overflow:hidden}
 .grow em.po{grid-column:2/5;justify-self:start;font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);padding:2px 7px;border-radius:999px;background:color-mix(in srgb,var(--ink) 8%,transparent);margin-top:2px;white-space:nowrap}
 .grow:active{background:color-mix(in srgb,var(--ink) 4%,transparent)}
 @media (prefers-reduced-motion:reduce){ .grow .gmk.on{animation:none} }
+/* ===== v362: the team page in tabs =====
+   Under the hero, four tabs split the page: Overview (the numbers at a glance, last five, the next game, injuries,
+   news), Schedule, Roster and Stats. The tabs are the same chips as the game page, spread evenly, and stay pinned under
+   the status bar on a frosted strip while the page scrolls. */
+#ttabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;padding:16px var(--gut-r) 10px var(--gut);
+  background:color-mix(in srgb,var(--bg) 80%,transparent);-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6)}
+#ttabs .chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:0;overflow:visible}
+#ttabs .chip{height:38px;padding:0 6px;font-size:14px}
+.tpanel{animation:tpin .24s var(--ease) both}
+.tpanel > .stats:first-child{padding-top:6px}
+@keyframes tpin{from{opacity:0;transform:translateY(5px)}}
+@media (prefers-reduced-motion:reduce){ .tpanel{animation:none} }
+@media (prefers-reduced-transparency:reduce){ #ttabs{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)} }
+/* a short tab still fills the screen, so switching to it with the tabs pinned keeps them pinned instead of the page
+   jumping back down to the hero */
+.tpanels{min-height:calc(100svh - 64px - env(safe-area-inset-top,0px))}
+@media (max-width:359px){ #ttabs .chips{gap:4px} #ttabs .chip{font-size:12.5px;padding:0 2px;height:36px} }

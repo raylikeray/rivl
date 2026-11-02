@@ -250,7 +250,7 @@
     const sorted = ath.slice().sort((a, b) => ((ppg[b.id] || {}).pts || 0) - ((ppg[a.id] || {}).pts || 0) || (a.displayName || '').localeCompare(b.displayName || ''));
     const posWord = p => ({ G: 'Guard', F: 'Forward', C: 'Center', 'G-F': 'Guard/forward', 'F-G': 'Forward/guard', 'F-C': 'Forward/center', 'C-F': 'Center/forward', PG: 'Point guard', SG: 'Shooting guard', SF: 'Small forward', PF: 'Power forward' }[p] || p || '');
     const rRow = (a, extra) => { const p = ppg[a.id]; const injd = a.injuries && a.injuries[0]; return `<a class="row${extra ? ' more' : ''}" href="${href.player(lk, a.id)}"${extra ? ' hidden data-more="roster"' : ''}>${headshot(hsUrl(a), color, 46, a.displayName)}<span class="t"><b>${esc(a.displayName)}</b><span>${esc([posWord(a.position && a.position.abbreviation), a.jersey ? `No. ${a.jersey}` : ''].filter(Boolean).join(', '))}${injd ? `<span class="tag ${/out/i.test(injd.status) ? 'out' : 'q'}">${esc(statusWord(injd.status))}</span>` : ''}</span></span>${p ? `<span class="r"><b>${p.pts.toFixed(1)}</b><span>ppg</span></span>` : chev}</a>`; };
-    const rosterHtml = sorted.length ? sec('Roster', `${sorted.length}`, sorted.length > 6 ? `<button data-act="expand" data-more="roster">Everyone</button>` : '') + `<div class="rows">${sorted.slice(0, 6).map(a => rRow(a, false)).join('')}${sorted.slice(6).map(a => rRow(a, true)).join('')}</div>` : '';
+    const rosterHtml = sorted.length ? sec('Roster', `${sorted.length} players`) + `<div class="rows">${sorted.map(a => rRow(a, false)).join('')}</div>` : '';
     // schedule: next five and last five, expandable to the season
     const sRow = (g, extra) => { const homeSide = g.home.id === String(id); const me = homeSide ? g.home : g.away, op = homeSide ? g.away : g.home; const d = new Date(g.date); const res = isDone(g) ? `<span class="res ${me.score > op.score ? 'w' : 'l'}" style="font-size:15px">${me.score > op.score ? 'W' : 'L'} ${me.score}-${op.score}</span>` : g.off ? `<span class="tag">${esc(g.off)}</span>` : g.state === 'in' ? `<span class="live">${esc(g.detail)}</span>` : chev; return `<a class="row" href="${href.game(lk, g.id)}"${extra ? ' hidden data-more="sched"' : ''}><span class="d">${esc(d.toLocaleDateString('en-US', { month: 'short', timeZone: HW.TZ }))}<b>${esc(d.toLocaleDateString('en-US', { day: 'numeric', timeZone: HW.TZ }))}</b></span>${logo(op.logo, 'm', V._.teamColor(op, L))}<span class="t"><b>${g.neutral ? 'vs' : homeSide ? 'vs' : 'at'} ${esc(op.short)}</b><span>${g.off ? esc(g.off) : g.state === 'post' ? esc(finalWord(g)) : g.state === 'in' ? 'Live' : esc([tipOf(g), tvLabel(g)].filter(Boolean).join(', '))}</span></span>${res}</a>`; };
     const done = evs.filter(isDone), up = evs.filter(g => !isDone(g));
@@ -275,10 +275,31 @@
     const statsHtml = ts ? sec('Team stats', `ranked among ${TS.n}`) + `<div class="stats four tsg"><div><b>${f1(ts.ortg)}</b><span>OFF RTG</span>${rk('ortg')}</div><div><b>${f1(ts.drtg)}</b><span>DEF RTG</span>${rk('drtg')}</div><div><b>${sg1(ts.net)}</b><span>NET</span>${rk('net')}</div><div><b>${f1(ts.pace)}</b><span>PACE</span>${rk('pace')}</div></div>` +
       `<table class="tbl ff"><thead><tr><th>Four factors</th><th>Offense</th><th>Defense</th></tr></thead><tbody>${[['Effective FG%', 'efg', 'oefg', pctS], ['Turnover rate', 'tovr', 'otovr', pctS], ['Rebounding', 'orbr', 'drbr', pctS], ['Free-throw rate', 'ftr', 'oftr', pctS]].map(([lab, a, b, fmt]) => `<tr><td>${lab}</td><td><b>${fmt(ts[a])}</b>${rk(a)}</td><td><b>${fmt(ts[b])}</b>${rk(b)}</td></tr>`).join('')}</tbody></table><p class="legend">Ratings are points per 100 possessions scored and allowed; pace is possessions per game. The four factors: shooting (effective field-goal %), turnovers per possession, offensive rebounds taken (and defensive rebounds kept), free throws attempted per shot. Ranks are among the league: 1st is best on each line.</p>` : '';
     const outlook = simOk ? `<div class="outlook" data-lk="${lk}" data-id="${esc(String(id))}">${HW.sim.ready(L) ? '' : `<div class="rows"><button class="row" data-act="outlook"><span class="t"><b>Season outlook</b><span class="wrap">Playoff odds and a projected record, from the rest of the schedule</span></span>${chev}</button></div>`}</div>` : '';
-    $main.innerHTML = topbar(esc(t0.shortDisplayName || t0.name || t0.displayName || ''), '#teams') + hero + strip + `<div class="tcols"><div class="tcol main">${nextHtml + outlook + statsHtml + rosterHtml + schedHtml}</div><div class="tcol side">${injHtml + newsHtml}</div></div>`;
+    /* the page in four tabs under the hero: Overview (the numbers at a glance, the next game, injuries, news), Schedule,
+       Roster and Stats. Every tab is built up front, so switching is instant; the tab picked last is kept per team. */
+    const nextGame = next ? sec(next.state === 'in' ? 'Live now' : 'Next up') + `<div class="games">${gameCard(L, next, ctx)}</div>` : '';
+    const panels = {
+      overview: (strip + form + nextGame + injHtml + newsHtml) || empty('Nothing to show yet'),
+      schedule: schedHtml || empty('No games listed'),
+      roster: rosterHtml || empty('No roster listed'),
+      stats: (splitsHtml ? sec('Splits') + splitsHtml : '') + outlook + statsHtml || empty('No season numbers yet', '<p style="margin:6px 0 0">They show up once the team has played.</p>')
+    };
+    const TT = [['overview', 'Overview'], ['schedule', 'Schedule'], ['roster', 'Roster'], ['stats', 'Stats']];
+    const tkey = `v5:ttab:${lk}:${id}`; let ttab = store.get(tkey, 'overview'); if (!panels[ttab]) ttab = 'overview';
+    $main.innerHTML = topbar(esc(t0.shortDisplayName || t0.name || t0.displayName || ''), '#teams') + hero + `<div id="ttabs">${chips(TT, ttab, 'tptab', 'tab')}</div>`
+      + `<div class="tpanels">${TT.map(([k]) => `<div class="tpanel" data-tp="${k}"${k === ttab ? '' : ' hidden'}>${panels[k]}</div>`).join('')}</div>`;
     document.title = `${t0.displayName} · RIVL`;
+    if (V._tptabL) $main.removeEventListener('click', V._tptabL);
+    V._tptabL = e => { const b = e.target.closest('[data-act="tptab"]'); if (!b || !$main.querySelector('.tpanels')) return; e.preventDefault();
+      const k = b.dataset.tab; store.set(tkey, k);
+      $main.querySelectorAll('#ttabs .chip').forEach(x => { const o = x.dataset.tab === k; x.classList.toggle('on', o); x.setAttribute('aria-pressed', String(o)); x.setAttribute('aria-selected', String(o)); });
+      $main.querySelectorAll('.tpanel').forEach(x => { x.hidden = x.dataset.tp !== k; });
+      /* picked with the tabs pinned at the top, the new tab opens at its start, just under them */
+      const tb = document.getElementById('ttabs'); const stick = parseFloat(getComputedStyle(tb).top) || 0; const y0 = $main.querySelector('.tpanels').getBoundingClientRect().top + window.scrollY - tb.offsetHeight - stick;
+      if (window.scrollY > y0) window.scrollTo({ top: y0, behavior: 'instant' }); };
+    $main.addEventListener('click', V._tptabL);
     if (simOk) outlookFill(L, String(id), r, { feed: HW.sim.ready(L) });   // fills in from the nightly file when there is one; otherwise the row above offers it
-    V.refresh = next && next.state === 'in' ? async () => { const g2 = await liveOf(next, 15000); const host = $main.querySelector('.tcol.main .games'); if (!host || !g2) return; const h = gameCard(L, g2, ctx); if (host.dataset.h !== hashOf(h)) { host.innerHTML = h; host.dataset.h = hashOf(h); } if (g2.state === 'post') V.refresh = null; } : null;
+    V.refresh = next && next.state === 'in' ? async () => { const g2 = await liveOf(next, 15000); const host = $main.querySelector('.tpanel[data-tp="overview"] .games'); if (!host || !g2) return; const h = gameCard(L, g2, ctx); if (host.dataset.h !== hashOf(h)) { host.innerHTML = h; host.dataset.h = hashOf(h); } if (g2.state === 'post') V.refresh = null; } : null;
   }
   /* a team's line from the simulation: odds, projected record, the run left */
   async function outlookFill(L, id, r, { feed = false } = {}) {
