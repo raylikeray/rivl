@@ -21,7 +21,7 @@
 <link rel="preconnect" href="https://site.api.espn.com" crossorigin>
 <link rel="preconnect" href="https://a.espncdn.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800;900&family=Big+Shoulders+Display:wght@700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=364">
+<link rel="stylesheet" href="app.css?v=365">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -42,11 +42,13 @@
   <main id="main" tabindex="-1"></main>
 </div>
 <nav class="tabs" id="tabs" aria-label="Main">
+  <div class="tabpill">
   <a class="tab" data-tab="home" href="#home"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/></svg><svg class="f" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6 2.5 10.4V21h6.7v-6h5.6v6h6.7V10.4z"/></svg><span>Home</span></a>
   <a class="tab" data-tab="scores" href="#scores"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M12 5v14M3 12h18"/></svg><svg class="f" viewBox="0 0 24 24" fill="currentColor"><path d="M5.5 4h13A2.5 2.5 0 0 1 21 6.5v4.5h-8V4zM11 4v7H3V6.5A2.5 2.5 0 0 1 5.5 4zM3 13h8v7H5.5A2.5 2.5 0 0 1 3 17.5zM13 13h8v4.5a2.5 2.5 0 0 1-2.5 2.5H13z"/></svg><span>Scores</span></a>
   <a class="tab" data-tab="standings" href="#standings"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 20v-7M10 20V5M16 20v-9M22 20H2"/></svg><svg class="f" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 13h3v7h-3zM8.5 4h3v16h-3zM14.5 10h3v10h-3zM2 20.5h18v1.6H2z"/></svg><span>Standings</span></a>
   <a class="tab" data-tab="stats" href="#stats"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9.5 11l4 4L21 7.5"/><path d="M15.5 7.5H21V13"/></svg><svg class="f" viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 6.2h-5.6a1.3 1.3 0 0 0 0 2.6h2.4l-3.6 3.6-3.1-3.1a1.3 1.3 0 0 0-1.9 0l-6 6a1.3 1.3 0 0 0 1.9 1.9l5-5 3.1 3.1a1.3 1.3 0 0 0 1.9 0l4.6-4.6v2.4a1.3 1.3 0 0 0 2.6 0V7.5a1.3 1.3 0 0 0-1.3-1.3z"/></svg><span>Stats</span></a>
-  <a class="tab" data-tab="search" href="#search"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><svg class="f" viewBox="0 0 24 24" fill="currentColor"><path d="M11 3a8 8 0 1 0 4.9 14.3l3.4 3.4a1.3 1.3 0 0 0 1.9-1.9l-3.4-3.4A8 8 0 0 0 11 3zm0 2.6A5.4 5.4 0 1 1 11 16.4 5.4 5.4 0 0 1 11 5.6z"/></svg><span>Search</span></a>
+  </div>
+  <a class="tab srch" data-tab="search" href="#search" aria-label="Search"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><svg class="f" viewBox="0 0 24 24" fill="currentColor"><path d="M11 3a8 8 0 1 0 4.9 14.3l3.4 3.4a1.3 1.3 0 0 0 1.9-1.9l-3.4-3.4A8 8 0 0 0 11 3zm0 2.6A5.4 5.4 0 1 1 11 16.4 5.4 5.4 0 0 1 11 5.6z"/></svg><span>Search</span></a>
 </nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="panel" id="panel" hidden role="dialog"><div class="panel-in"></div></div>
@@ -60,18 +62,18 @@
   </div>
 </div>
 
-<script src="config.js?v=364"></script>
-<script src="js/core.js?v=364"></script>
-<script src="js/sim.js?v=364"></script>
-<script src="js/hub.js?v=364"></script>
-<script src="js/rating.js?v=364"></script>
-<script src="views.js?v=364"></script>
-<script src="screens.js?v=364"></script>
-<script src="js/ask.js?v=364"></script>
-<script src="js/ask2.js?v=364"></script>
-<script src="js/stats.js?v=364"></script>
-<script src="js/recruit.js?v=364"></script>
-<script src="app.js?v=364"></script>
-<script src="more.js?v=364"></script>
+<script src="config.js?v=365"></script>
+<script src="js/core.js?v=365"></script>
+<script src="js/sim.js?v=365"></script>
+<script src="js/hub.js?v=365"></script>
+<script src="js/rating.js?v=365"></script>
+<script src="views.js?v=365"></script>
+<script src="screens.js?v=365"></script>
+<script src="js/ask.js?v=365"></script>
+<script src="js/ask2.js?v=365"></script>
+<script src="js/stats.js?v=365"></script>
+<script src="js/recruit.js?v=365"></script>
+<script src="app.js?v=365"></script>
+<script src="more.js?v=365"></script>
 </body>
 </html>

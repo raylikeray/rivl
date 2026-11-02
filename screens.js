@@ -286,16 +286,42 @@
       const cls = ij ? (/out/i.test(ij) ? 'out' : /prob|avail/i.test(ij) ? 'ok' : 'q') : '';
       return `<a class="rcard2" href="${href.player(lk, a.id)}">${lg ? `<img class="rwm" src="${esc(lg)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ''}${hs ? `<img class="rhs" src="${esc(hs)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : `<b class="rini">${esc(ini)}</b>`}<span class="rtop">${p && p.pts != null ? `<i class="rppg">${(+p.pts).toFixed(1)}<small>PPG</small></i>` : '<i></i>'}${ij ? `<i class="rst ${cls}">${esc(V._.tagWord(ij))}</i>` : ''}</span><span class="rtx"><b>${esc(nm)}</b><small>${esc([pos.replace(/\/.*/, ''), a.jersey ? `#${a.jersey}` : ''].filter(Boolean).join(' · '))}</small></span></a>`; };
     const rosterCards = sorted.length ? `<div class="rgroups" style="--rc:${esc(color)};--rc2:${esc(V._.teamAlt({ id: String(id), abbr: t0.abbreviation, alt: t0.alternateColor }, L) || color)}">${['Guards', 'Forwards', 'Centers', 'Others'].map(h => [h, sorted.filter(a => grpOf(a.position && a.position.abbreviation) === h)]).filter(([, l]) => l.length).map(([h, l]) => sec(h, String(l.length)) + `<div class="rrail2">${l.map(rcard).join('')}</div>`).join('')}<p class="legend">Points per game this season.</p></div>` : '';
-    const nextGame = next ? sec(next.state === 'in' ? 'Live now' : 'Next up') + `<div class="games">${gameCard(L, next, ctx)}</div>` : '';
+    /* Scores & Schedule, as Apple lays it out: the two crests on the left with rank and abbreviation (the scores under them
+       once the game starts), and on the right the day and time, what the game is, where, the TV, and RIVL's pick */
+    const gcard = g => { if (!g) return ''; const f = g.state !== 'post' && !g.off ? safeF(L, g, ctx) : null; const has = g.state !== 'pre' && !g.off && g.away.score != null && g.home.score != null;
+      const rk = t => { const x = R && R.ranks.find(y => y.team.id === String(t.id)); return x ? `<small>#${x.rank}</small>` : ''; };
+      const lead = (t, o) => has && +t.score > +o.score;
+      const side = (t, o) => `<span class="sgt${has && !lead(t, o) && g.state === 'post' ? ' lo' : ''}"><span class="sgc">${t.logo ? V._.imgSized(t.logo, 128, 128, 'alt=""') : ''}</span><span class="sga">${rk(t)}<b>${esc(t.abbr || t.short || '')}</b></span>${has ? `<em class="sgs${lead(t, o) ? ' up' : ''}">${esc(String(t.score))}</em>` : ''}</span>`;
+      const ymdG = ymdOf(g.date), dd = new Date(ymdG + 'T12:00:00Z'); const wk = dd.toLocaleDateString('en-US', { weekday: g.state === 'pre' ? 'long' : 'short', timeZone: 'UTC' }); const rd = relDay(ymdG); const day = `${rd === 'Today' || rd === 'Tonight' || rd === 'Tomorrow' || rd === 'Yesterday' ? rd : wk} ${dd.getUTCMonth() + 1}/${dd.getUTCDate()}`;
+      const right = g.state === 'in' ? `<span class="sgl"><i></i>${esc(g.detail)}</span>` : g.state === 'post' ? `<span class="sgf">${esc(finalWord(g))}</span>` : g.off ? `<span class="sgf">${esc(g.off)}</span>` : `<span class="sgt2">${esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT)$/, ''))}</span>`;
+      const home = g.home.id === String(id); const what = (HW.v5._ && V._.seriesLine && V._.seriesLine(g)) || g.note || `${home ? 'vs' : 'at'} ${(home ? g.away : g.home).short || ''}`;
+      const where = [g.venue, g.city].filter(Boolean);
+      const tv = tvLabel(g); const pick = f && Number.isFinite(f.pHome) ? `RIVL pick: ${(f.pHome >= .5 ? g.home : g.away).abbr || ''} ${pct(Math.max(f.pHome, 1 - f.pHome))}` : '';
+      return `<a class="sgcard" href="${href.game(lk, g.id)}" data-gid="${esc(g.id)}">${side(g.away, g.home)}<i class="sgdv"></i>${side(g.home, g.away)}<span class="sgr"><span class="sgh"><b>${esc(day)}</b>${right}</span><b class="sgw">${esc(what)}</b>${where.map(x => `<span class="sgv">${esc(x)}</span>`).join('')}<span class="sgx">${tv ? `<em>${esc(tv)}</em>` : ''}${pick ? `<em class="pk">${esc(pick)}</em>` : ''}</span></span></a>`; };
+    const lastDone = evs.filter(isDone).slice(-1)[0];
+    const nextGame = (next || lastDone) ? `<button class="asec" data-act="tptab" data-tab="schedule"><h2>Scores &amp; Schedule</h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>` + (next ? gcard(next) : '') + (lastDone && (!next || next.state === 'pre') ? gcard(lastDone) : '') : '';
+    /* Top reads: the first story large with its picture, the rest as rows */
+    const topReads = (() => { if (!arts.length) return ''; const a = arts[0]; const row = newsRow(lk, a); const hrefM = /href="([^"]+)"/.exec(row); const ims = (a.images || []).filter(x => x && x.url); const im = ims.sort((x, y) => (y.width || 0) - (x.width || 0))[0];
+      const big = hrefM && im && /^#article\//.test(hrefM[1]) ? `<a class="trd" href="${hrefM[1]}"><img src="${esc(im.url)}" alt="" loading="lazy" onerror="this.remove()"><span class="trdt"><em>${esc([a.byline, a.published ? ago(a.published) : ''].filter(Boolean).join(' · ') || 'Story')}</em><b>${esc(a.headline || '')}</b></span></a>` : '';
+      const rest = (big ? arts.slice(1) : arts).map(x => newsRow(lk, x)).join('');
+      return `<div class="asec2"><h2>Top reads</h2><p>The latest on the ${esc(t0.name || t0.shortDisplayName || '')}.</p></div>${big}${rest ? `<div class="rows">${rest}</div>` : ''}`; })();
     const panels = {
-      overview: (strip + form + nextGame + injHtml + newsHtml) || empty('Nothing to show yet'),
+      overview: (nextGame + strip + form + injHtml + topReads) || empty('Nothing to show yet'),
       schedule: schedHtml || empty('No games listed'),
       roster: rosterCards || empty('No roster listed'),
       stats: (splitsHtml ? sec('Splits') + splitsHtml : '') + outlook + statsHtml || empty('No season numbers yet', '<p style="margin:6px 0 0">They show up once the team has played.</p>')
     };
     const TT = [['overview', 'Overview'], ['schedule', 'Schedule'], ['roster', 'Roster'], ['stats', 'Stats']];
     const tkey = `v5:ttab:${lk}:${id}`; let ttab = store.get(tkey, 'overview'); if (!panels[ttab]) ttab = 'overview';
-    $main.innerHTML = topbar(esc(t0.shortDisplayName || t0.name || t0.displayName || ''), '#teams') + hero + `<div id="ttabs">${chips(TT, ttab, 'tptab', 'tab')}</div>`
+    /* the head, as Apple News does a team: a band in the team's colour with light diagonal stripes, glass buttons for back,
+       follow and share, the crest on a disc and the name large, the season in one line under it */
+    const { mixTo: mixT, lumOf: lumT } = V._; let dkc = color; for (let k = 0; k < 8 && lumT(dkc) > .2; k++) dkc = mixT(dkc, 0, .2);
+    const tnm = t0.shortDisplayName || t0.name || t0.displayName || '';
+    const starI = on => on ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`;
+    const band = `<header class="tband" style="--a:${esc(color)};--ad:${esc(dkc)}"><div class="tbtop"><a class="tbib" href="#teams" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a>`
+      + `<div class="tbcap"><button class="star tbb${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(String(id))}" data-name="${esc(tnm)}" aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(tnm)}">${starI(on)}</button><button class="tbb" data-act="share" data-title="${esc(t0.displayName || tnm)}" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></div></div>`
+      + `<div class="tbttl"><span class="tbcr">${V._.imgSized(lg, 160, 160, 'alt=""')}</span><h1 class="${tnm.length > 12 ? 'long' : ''}">${esc(tnm)}</h1></div><p class="tbsub">${esc([L.label, ...facts].join(' · '))}</p></header><div class="lb-slot"></div>`;
+    $main.innerHTML = band + `<div id="ttabs">${chips(TT, ttab, 'tptab', 'tab')}</div>`
       + `<div class="tpanels">${TT.map(([k]) => `<div class="tpanel" data-tp="${k}"${k === ttab ? '' : ' hidden'}>${panels[k]}</div>`).join('')}</div>`;
     document.title = `${t0.displayName} · RIVL`;
     if (V._tptabL) $main.removeEventListener('click', V._tptabL);
@@ -306,7 +332,7 @@
  };
     $main.addEventListener('click', V._tptabL);
     if (simOk) outlookFill(L, String(id), r, { feed: HW.sim.ready(L) });   // fills in from the nightly file when there is one; otherwise the row above offers it
-    V.refresh = next && next.state === 'in' ? async () => { const g2 = await liveOf(next, 15000); const host = $main.querySelector('.tpanel[data-tp="overview"] .games'); if (!host || !g2) return; const h = gameCard(L, g2, ctx); if (host.dataset.h !== hashOf(h)) { host.innerHTML = h; host.dataset.h = hashOf(h); } if (g2.state === 'post') V.refresh = null; } : null;
+    V.refresh = next && next.state === 'in' ? async () => { const g2 = await liveOf(next, 15000); const host = $main.querySelector(`.tpanel[data-tp="overview"] .sgcard[data-gid="${CSS.escape(String(next.id))}"]`); if (!host || !g2) return; const h = gcard(g2); if (host.dataset.h !== hashOf(h)) { host.outerHTML = h.replace('<a class="sgcard"', `<a class="sgcard" data-h="${hashOf(h)}"`); } if (g2.state === 'post') V.refresh = null; } : null;
   }
   /* a team's line from the simulation: odds, projected record, the run left */
   async function outlookFill(L, id, r, { feed = false } = {}) {
