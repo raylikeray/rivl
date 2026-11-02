@@ -104,7 +104,11 @@
     if (leagueScreen && r.name !== 'scores') store.set('v5:date', todayCT());
     document.getElementById('top').hidden = !leagueScreen;
     paintPills(r.lk, leagueScreen);
-    paintTabs(leagueScreen ? r.name : (r.name === 'player' ? 'players' : r.name === 'team' ? 'teams' : r.name === 'game' ? 'scores' : r.name === 'article' ? 'home' : ''));
+    /* the bar lights the tab you are on; Teams, Players and a game, team or player page keep lit the tab you opened
+       them from, so drilling in never leaves the bar blank */
+    const TABS = ['home', 'scores', 'standings', 'stats', 'search'];
+    if (TABS.includes(r.name)) render.tab = r.name;
+    paintTabs(TABS.includes(r.name) ? r.name : (r.name === 'game' ? 'scores' : (render.tab || 'home')));
     document.title = leagueScreen ? `${TITLES[r.name]} · ${LEAGUES[r.lk].label} · RIVL` : `${TITLES[r.name] || ''} RIVL`.trim();
     $main.dataset.top = '1';   // scroll to the top with the new screen's first real paint, not before it
     try { await (V[r.name] || V.home)(...r.args); }
@@ -315,6 +319,8 @@
     if (a === 'onb-done') { e.preventDefault(); store.set('v5:onboarded', true); store.set('v5:lk', 'nba'); store.set('v5:screen', 'home'); closePanel(); if (location.hash !== '#home') location.hash = '#home'; else render(); }
     if (a === 'install') { e.preventDefault(); install(); }
     if (a === 'install-later') { e.preventDefault(); store.set('v5:installDismissed', Date.now()); const b = document.getElementById('installBar'); if (b) b.remove(); }
+    /* +N opens the rest of the breaking items in place; the button becomes Less */
+    if (a === 'wire-more') { e.preventDefault(); const w = act.closest('.wire2'); const on = !w.classList.contains('open'); w.classList.toggle('open', on); act.setAttribute('aria-expanded', String(on)); act.textContent = on ? 'Less' : '+' + w.querySelectorAll('.w2it').length; return; }
     if (a === 'wire-x') { e.preventDefault(); const ids = (act.dataset.ids || '').split(',').filter(Boolean); const seen = store.get('v5:wire:seen', []) || []; store.set('v5:wire:seen', [...new Set([...ids, ...seen])].slice(0, 80)); const sec = act.closest('section'); if (sec) sec.remove(); return; }
     if (a === 'scmine') { e.preventDefault(); store.set('v5:scmine', !store.get('v5:scmine', false)); render(); return; }
     if (a === 'panel-close') { e.preventDefault(); closePanel(); const to = act.getAttribute('href'); if (to && to.startsWith('#')) location.hash = to; }
