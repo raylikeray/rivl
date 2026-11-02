@@ -49,8 +49,10 @@
 
     /* the numbers people look for first: where this prospect ranks, nationally and at the position */
     const nums = [['Rank', r.rank ? `No. ${r.rank}` : ''], ['At position', r.posRank ? `No. ${r.posRank}` : ''], ['Position', r.pos], ['Height', r.ht], ['Weight', r.wt ? `${r.wt} lbs` : ''], ['Class', cls]].filter(f => f[1]);
+    /* the grid is three across, so a prospect missing a weight gets blank cells rather than a hole in the sheet */
+    const blanks = nums.length % 3 ? 3 - nums.length % 3 : 0;
     const numsCard = nums.length ? `<section class="card"><div class="card-h"><h2>The prospect</h2>${r.tier ? `<small>${esc(String(r.tier).toLowerCase())}</small>` : ''}</div>
-      <div class="rcgrid">${nums.map(([k, v]) => `<div><b>${esc(String(v))}</b><span>${esc(k)}</span></div>`).join('')}</div></section>` : '';
+      <div class="rcgrid">${nums.map(([k, v]) => `<div><b>${esc(String(v))}</b><span>${esc(k)}</span></div>`).join('')}${'<div class="rcblank"></div>'.repeat(blanks)}</div></section>` : '';
 
     const where = r.hs || r.home || r.club ? `<section class="card"><div class="card-h"><h2>Where they play</h2></div>
       <div class="rcrows">${[['High school', r.hs], ['Hometown', r.home], ['Club', r.club]].filter(f => f[1]).map(([k, v]) => `<div class="rcr"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div></section>` : '';
