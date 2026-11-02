@@ -28,7 +28,7 @@
      #home #scores #standings #players #teams          league screens (league from the pills, remembered)
      #player/<lk>/<id> #team/<lk>/<id> #game/<lk>/<id>  entity screens
      #nba #wnba …                                       switch league, stay on the current league screen */
-  const SCREENS = ['home', 'scores', 'standings', 'players', 'teams'];
+  const SCREENS = ['home', 'scores', 'standings', 'stats', 'players', 'teams'];
   const lkOf = k => LEAGUES[k] ? k : 'nba';
   function route() {
     const h = (location.hash || '#home').slice(1);

@@ -2625,3 +2625,65 @@ html:root body .xgloss .xgw:last-child p{border-bottom:0}
 /* the X in the search box sat 8px low: another screen's .xclr rule reached it */
 html:root body .xbox .xclr{display:grid!important;place-items:center;flex-direction:row;margin:0!important;gap:0;width:38px;height:38px;font-size:inherit}
 html:root body .xbox .xclr[hidden]{display:none!important}
+
+/* ===== Stats, drawn in this build's own idiom =====
+   The screen is the later build's layout, but every surface here is this app's: cards carry the same gradient and
+   edge as every other card, the category switch is a row of pills rather than an underline, and the back button is
+   the same circle used elsewhere. Nothing of the flatter design came across. */
+.stpage{padding-bottom:20px}
+.stbar{display:flex;align-items:center;gap:10px;padding:6px var(--gut-r) 2px var(--gut)}
+.stbar h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em}
+.stback{flex:none;width:44px;height:44px;display:grid;place-items:center;border-radius:50%;color:var(--ink-2);
+  background:linear-gradient(180deg,var(--surf-2),var(--surf));box-shadow:var(--edge)}
+.stback svg{width:20px;height:20px}
+.stnote{margin:8px var(--gut-r) 0 var(--gut);font-size:13.5px;color:var(--ink-3)}
+.stload{padding:0 16px 14px}
+
+/* the Players / Teams / Rookies switch: pills, like the chips everywhere else in this app */
+.sttabs{display:flex;gap:6px;margin:0;padding:4px var(--gut-r) 2px var(--gut);overflow-x:auto;scrollbar-width:none}
+.sttabs::-webkit-scrollbar{display:none}
+
+/* a category card and a full board: the same sheet as every other card here */
+.stcard,.stboard{margin:14px var(--gut-r) 0 var(--gut);padding:0;border-radius:18px;overflow:hidden;
+  background:linear-gradient(180deg,var(--surf-2),var(--surf));box-shadow:var(--edge)}
+.sth{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 16px 10px;color:var(--ink);text-decoration:none;background:none;border:0;text-align:left}
+.sth b{font-size:18px;font-weight:800}
+.sth span{display:flex;align-items:center;gap:2px;font-size:14px;font-weight:600;color:var(--ink-3)}
+.sth .chev{display:inline-grid;width:18px;height:18px}
+.sth .chev svg{width:18px;height:18px}
+
+/* the leader tile: the player's own colours, the name and number to the right of the photo */
+.sthero{position:relative;display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;
+  height:150px;margin:0 10px 10px;padding:12px 14px;border-radius:14px;overflow:hidden;text-decoration:none;
+  background:var(--tg,var(--tc,var(--surf-3)));color:var(--tgi,#fff)}
+.sthero .stwm{position:absolute;right:-18px;top:-16px;width:150px;height:150px;object-fit:contain;opacity:.18;z-index:0}
+.sthero .stshot{position:absolute;left:30px;bottom:0;height:140px;width:auto;aspect-ratio:600/436;object-fit:contain;object-position:bottom;z-index:0;filter:drop-shadow(0 8px 16px rgba(0,0,0,.35))}
+.sthero .stcrest{position:absolute;left:34px;bottom:22px;width:78px;height:78px;object-fit:contain;z-index:0;filter:drop-shadow(0 6px 12px rgba(0,0,0,.3))}
+.sthero .strk{position:absolute;left:12px;top:10px;z-index:1;font-size:14px;font-weight:800;opacity:.9}
+.sthero .stwho{position:relative;z-index:1;width:calc(100% - 150px);display:flex;flex-direction:column;align-items:flex-end;text-align:right;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.sthero.team .stwho{width:calc(100% - 124px)}
+.sthero .stwho b{font-size:16px;font-weight:800;line-height:1.15}
+.sthero .stwho em{font-style:normal;font-size:13px;opacity:.85}
+.sthero .stv{position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-end;font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.sthero .stv i{font-style:normal;font-size:11px;font-weight:700;letter-spacing:.06em;opacity:.85;margin-top:4px}
+
+/* the rows under the tile, and every row on a board */
+.strow{display:flex;align-items:center;gap:12px;padding:10px 16px;color:var(--ink);text-decoration:none;border-top:1px solid var(--line)}
+.stcard .strow:nth-of-type(2),.stboard .strow:first-child{border-top:0}
+.strow .strk{flex:none;width:22px;text-align:center;font-size:14px;font-weight:700;color:var(--ink-3)}
+.strow .stwho{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.strow .stwho b{font-size:15.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strow .stwho em{font-style:normal;font-size:12.5px;color:var(--ink-3)}
+.strow .stv{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+.strow img,.strow .logo{flex:none}
+
+/* recruits: where they committed, on the right */
+.strec .strc{flex:none;max-width:42%;text-align:right;font-size:13px;font-weight:700;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strec .strc.on{color:#16A34A}
+
+/* the compare button under the boards */
+.stcmp{display:block;width:calc(100% - var(--gut) - var(--gut-r));margin:14px var(--gut-r) 0 var(--gut);padding:13px 0;
+  border-radius:14px;border:0;font-size:14.5px;font-weight:700;color:var(--ink);
+  background:linear-gradient(180deg,var(--surf-2),var(--surf));box-shadow:var(--edge)}
+/* the recruit rows inside a search answer sit tighter than a full board row */
+.xrecs .strow{padding-left:4px;padding-right:4px}
