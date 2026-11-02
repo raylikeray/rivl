@@ -306,6 +306,10 @@
       $main.dispatchEvent(new CustomEvent('rivl:fav')); $panel.dispatchEvent(new CustomEvent('rivl:fav')); document.dispatchEvent(new CustomEvent('rivl:fav'));
     }
     if (a === 'expand') { e.preventDefault(); $main.querySelectorAll(`[data-more="${act.dataset.more}"]`).forEach(el => { el.hidden = false; }); act.remove(); }
+    if (a === 'clip') { e.preventDefault(); let list = act.previousElementSibling; if (list && !list.classList.contains('clip')) list = list.querySelector('.clip'); if (!list) return; const open = !list.classList.contains('open'); const y0 = act.getBoundingClientRect().top;
+      list.classList.toggle('open', open); act.setAttribute('aria-expanded', String(open)); act.textContent = open ? 'Show less' : act.textContent.replace(/^Show less$/, `Show all ${act.dataset.total}`);
+      if (!open) { act.textContent = `Show all ${act.dataset.total}`; const y1 = act.getBoundingClientRect().top; if (Math.abs(y1 - y0) > 1) window.scrollBy({ top: y1 - y0, behavior: 'instant' }); }
+      return; }
     if (a === 'brk' || a === 'brkp') { e.preventDefault(); store.set(`v5:${a}:` + (current ? current.lk : 'nba'), act.dataset.k); if (a === 'brk') store.set('v5:brkp:' + (current ? current.lk : 'nba'), 'ff'); render(); return; }
     if (a === 'stab') { e.preventDefault(); store.set('v5:stab:' + (current ? current.lk : 'nba'), act.dataset.tab); render(); }
     if (a === 'play') { e.preventDefault(); openSheet(act.dataset.vid); }

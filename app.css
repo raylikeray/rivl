@@ -3086,3 +3086,95 @@ html:has(#main .tband) body::before{background:color-mix(in srgb,var(--tint,#000
 .bxw img{width:30px;height:30px;object-fit:contain}
 .bxw b{font-size:17px;font-weight:800}
 .bxt em{font-style:normal;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+/* ===== v368: Apple's type, glass and glyphs =====
+   The type is Apple's system face (San Francisco) on Apple devices and Inter, the closest open face to it, everywhere
+   else, scores included. The bottom bar is smaller and icon-only, in Liquid Glass: a clear frosted capsule with a bright
+   rim, the tab you are on lifted on a lighter capsule. The league switch at the top is the same glass. Team crests stand
+   on their own with no disc, and player photos sit in a flat circle of their team's colour. */
+:root{--ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,"Helvetica Neue",Arial,sans-serif;--num:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",system-ui,"Helvetica Neue",Arial,sans-serif}
+body{font-feature-settings:"cv11","ss03";font-optical-sizing:auto;letter-spacing:-.006em}
+:where(h1,h2,.sec h2,.brief-h b,.asec h2,.asec2 h2,.tbttl h1){letter-spacing:-.022em}
+:where(.sc,.ssc,.tpn,.sgs,.lbh b,.prrow b,.bxs b,.stats b,.sgrid b,.res){font-variant-numeric:tabular-nums}
+/* glass */
+@media (max-width:1039px){
+  #tabs.tabs{left:22px;right:22px;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);gap:8px;max-width:420px}
+  #tabs .tabpill,#tabs .tab.srch{position:relative;isolation:isolate;background:rgba(255,255,255,.42);-webkit-backdrop-filter:blur(14px) saturate(1.8) brightness(1.04);backdrop-filter:blur(14px) saturate(1.8) brightness(1.04);
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.9),inset -1px -1px 0 rgba(255,255,255,.35),inset 0 0 6px rgba(255,255,255,.35),0 0 0 .5px rgba(10,11,14,.1),0 8px 24px -8px rgba(16,24,40,.3),0 1px 3px rgba(16,24,40,.08)}
+  #tabs .tabpill::after,#tabs .tab.srch::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;
+    background:linear-gradient(160deg,rgba(255,255,255,.55),rgba(255,255,255,0) 38%,rgba(255,255,255,0) 70%,rgba(255,255,255,.22))}
+  #tabs .tabpill{padding:3px}
+  #tabs .tab{height:46px;gap:0;color:color-mix(in srgb,var(--ink) 86%,transparent)}
+  #tabs .tab span{display:none}
+  #tabs .tab svg{width:24px;height:24px;display:block}
+  #tabs .tab.on{color:var(--ink);background:rgba(10,11,14,.08);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.6)}
+  [data-accent] #tabs .tab.on{color:var(--acc)}
+  #tabs .tab.srch{width:52px;height:52px}
+  #tabs .tab.srch svg{width:23px;height:23px}
+  #tabs .tab.srch.on{color:var(--ink);background:rgba(255,255,255,.42)}
+  :root[data-theme="dark"] #tabs .tabpill,:root[data-theme="dark"] #tabs .tab.srch{background:rgba(40,42,48,.42);box-shadow:inset 1px 1px 0 rgba(255,255,255,.28),inset -1px -1px 0 rgba(255,255,255,.08),inset 0 0 8px rgba(255,255,255,.06),0 0 0 .5px rgba(0,0,0,.6),0 10px 28px -8px rgba(0,0,0,.75)}
+  :root[data-theme="dark"] #tabs .tabpill::after,:root[data-theme="dark"] #tabs .tab.srch::after{background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,0) 40%,rgba(255,255,255,0) 72%,rgba(255,255,255,.06))}
+  :root[data-theme="dark"] #tabs .tab{color:rgba(255,255,255,.88)}
+  :root[data-theme="dark"] #tabs .tab.on{color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.18)}
+  :root[data-theme="dark"] #tabs .tab.srch.on{background:rgba(40,42,48,.42)}
+}
+@media (max-width:1039px) and (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) #tabs .tabpill,:root:not([data-theme="light"]) #tabs .tab.srch{background:rgba(40,42,48,.42);box-shadow:inset 1px 1px 0 rgba(255,255,255,.28),inset -1px -1px 0 rgba(255,255,255,.08),inset 0 0 8px rgba(255,255,255,.06),0 0 0 .5px rgba(0,0,0,.6),0 10px 28px -8px rgba(0,0,0,.75)}
+  :root:not([data-theme="light"]) #tabs .tabpill::after,:root:not([data-theme="light"]) #tabs .tab.srch::after{background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,0) 40%,rgba(255,255,255,0) 72%,rgba(255,255,255,.06))}
+  :root:not([data-theme="light"]) #tabs .tab{color:rgba(255,255,255,.88)}
+  :root:not([data-theme="light"]) #tabs .tab.on{color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.18)}
+  :root:not([data-theme="light"]) #tabs .tab.srch.on{background:rgba(40,42,48,.42)}
+}
+.app{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px) + 36px)}
+/* the league switch, in the same glass */
+html body #pills.pills{background:rgba(255,255,255,.42);-webkit-backdrop-filter:blur(14px) saturate(1.8);backdrop-filter:blur(14px) saturate(1.8);
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,.9),inset -1px -1px 0 rgba(255,255,255,.35),0 0 0 .5px rgba(10,11,14,.1),0 6px 18px -8px rgba(16,24,40,.25)}
+html body #pills.pills::before{background:rgba(10,11,14,.08);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.6)}
+html body #pills .pill,html body #pills .pill.on{color:var(--ink);text-shadow:none;font-weight:600}
+html body #pills .pill.on{font-weight:800}
+html body #pills .pill:not(.on){color:color-mix(in srgb,var(--ink) 62%,transparent)}
+:root[data-theme="dark"] body #pills.pills{background:rgba(40,42,48,.42);box-shadow:inset 1px 1px 0 rgba(255,255,255,.28),inset -1px -1px 0 rgba(255,255,255,.08),0 0 0 .5px rgba(0,0,0,.6),0 8px 22px -8px rgba(0,0,0,.7)}
+:root[data-theme="dark"] body #pills.pills::before{background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.18)}
+:root[data-theme="dark"] body #pills .pill{color:#fff}
+:root[data-theme="dark"] body #pills .pill:not(.on){color:rgba(255,255,255,.6)}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) body #pills.pills{background:rgba(40,42,48,.42);box-shadow:inset 1px 1px 0 rgba(255,255,255,.28),inset -1px -1px 0 rgba(255,255,255,.08),0 0 0 .5px rgba(0,0,0,.6),0 8px 22px -8px rgba(0,0,0,.7)}
+  :root:not([data-theme="light"]) body #pills.pills::before{background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.18)}
+  :root:not([data-theme="light"]) body #pills .pill{color:#fff}
+  :root:not([data-theme="light"]) body #pills .pill:not(.on){color:rgba(255,255,255,.6)}
+}
+/* crests on their own */
+html body .logo,html body .logo.tint{background:none!important;box-shadow:none!important}
+html body .logo::before,html body .logo::after{display:none!important}
+html body .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.14))}
+:root[data-theme="dark"] body .logo img{filter:drop-shadow(0 0 1px rgba(255,255,255,.45)) drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) body .logo img{filter:drop-shadow(0 0 1px rgba(255,255,255,.45)) drop-shadow(0 1px 2px rgba(0,0,0,.4))} }
+html body .scr img,html body .sgc img{filter:drop-shadow(0 1px 1px rgba(0,0,0,.14))}
+html body .sgc{background:none;box-shadow:none}
+/* faces in a flat circle of the team's colour */
+html body .hs{background:var(--tc,var(--surf-3))!important;box-shadow:none!important}
+html body .hs img{transform:scale(1.04) translateY(3%);transform-origin:50% 20%}
+html body .hs i{background:none}
+/* long lists: five showing, the rest under Show all, folded back with Show less */
+.clip:not(.open) > :nth-child(n+6){display:none}
+.clip.open > :nth-child(n+6){animation:clipin .28s var(--ease) both}
+@keyframes clipin{from{opacity:0;transform:translateY(-4px)}}
+.cliptog{display:flex;align-items:center;justify-content:center;width:calc(100% - var(--gut) - var(--gut-r));margin:10px var(--gut-r) 4px var(--gut);height:42px;border:0;border-radius:999px;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink);font:700 14.5px/1 var(--ui);cursor:pointer;transition:transform .15s var(--ease)}
+.cliptog:active{transform:scale(.97)}
+.hsec .cliptog,.brief .cliptog{width:100%;margin-left:0;margin-right:0}
+.tw + .cliptog{margin-top:8px}
+/* injuries as one flat list */
+.ijl{padding:0 var(--gut-r) 0 var(--gut)}
+.ijr{display:flex;align-items:center;gap:12px;width:100%;padding:11px 0;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);text-align:left;font:inherit;cursor:pointer}
+.ijl > .ijr:first-child{border-top:0}
+.ijr:active{opacity:.6}
+.ijf{position:relative;flex:none}
+.ijc{position:absolute;right:-5px;bottom:-4px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--bg);box-shadow:0 0 0 1.5px var(--bg)}
+.hsec .ijc{background:var(--surf);box-shadow:0 0 0 1.5px var(--surf)}
+.ijc img{width:16px;height:16px;object-fit:contain}
+.ijn{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ijn b{font-size:15.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ijn small{font-size:13.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ijs{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px;max-width:42%}
+.ijs em{font-style:normal;font-size:12.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+html body .tbcr{background:none;box-shadow:none;width:64px;height:64px}
+html body .tbcr img{width:100%;height:100%;filter:drop-shadow(0 0 1px rgba(255,255,255,.55)) drop-shadow(0 4px 10px rgba(0,0,0,.35))}
