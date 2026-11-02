@@ -53,7 +53,6 @@ const wikiPage = async (title, ttl = 7 * 86400000) => {
   if (!pages) return null;
   const pg = Object.values(pages)[0];
   if (!pg || pg.missing !== undefined || !pg.title) return null;
-  if (pg.pageprops && pg.pageprops.disambiguation !== undefined) return null;   // a "may refer to" list is not an answer
   // the 1024px thumbnail, NOT `original` — originals on Commons run to 4000px and several megabytes, which is what made the
   // arena photo arrive band by band down the screen. The thumbnail is already wider than any phone shows it.
   return { title: pg.title, extract: pg.extract || '', img: (pg.thumbnail && pg.thumbnail.source) || (pg.original && pg.original.source) || '',
@@ -109,7 +108,7 @@ const TZLABEL = (() => {
   return /^(GMT|UTC)?[+-]/.test(v) ? '' : v;
 })();
 /* a game's tip, or 'Time TBD' when the feed says the time isn't set (timeValid false — a Cup knockout, a playoff game not yet scheduled) */
-const tipOf = g => g && g.timeValid === false ? 'Time TBD' : tip(g.date);   // in the phone's own time zone, no zone label
+const tipOf = g => g && g.timeValid === false ? 'Time TBD' : TZLABEL ? `${tip(g.date)} ${TZLABEL}` : tip(g.date);
 const dateShort = iso => new Date(iso).toLocaleDateString('en-US', { timeZone: TZ, month: 'short', day: 'numeric' });
 const timeCT = (d = new Date()) => d.toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit', second: '2-digit' });
 function ago(iso) { const s = (Date.now() - new Date(iso)) / 1000; if (s < 3600) return Math.max(1, Math.round(s / 60)) + 'm ago'; if (s < 86400) return Math.round(s / 3600) + 'h ago'; return dateShort(iso); }
@@ -323,8 +322,6 @@ function parseStandingRow(en, L, grp) {
     logo: (t.logos && t.logos[0] && t.logos[0].href) || logoUrl(L, t.abbreviation),
     w, l, t: ties, pct: dv('winPercent') || (w + l ? (w / (w + l)).toFixed(3).replace(/^0/, '') : ''), gb: dv('gamesBehind'),
     home: dv('Home'), road: dv('Road') || dv('Away'), l10: dv('Last Ten Games'), strk: dv('streak'), conf: dv('vs. Conf.') || dv('vsConf') || dv('vs. Div.'),
-    /* college tables are sorted by conference record; the season record sits in the "overall" stat as "34-2" */
-    ovr: (() => { const x = (en.stats || []).find(z => (z.type === 'total' || z.name === 'overall' || /^overall$/i.test(z.displayName || '')) && /^\d+-\d+$/.test(String(z.summary || z.displayValue || ''))); return x ? String(x.summary || x.displayValue) : ''; })(),
     diff, ppg, opp, seed: val('playoffSeed') || null, clinch: dv('clincher') || '',
     group: grp.name, groupAbbr: grp.abbr
   };
@@ -513,7 +510,7 @@ async function statCategory(L, cat, sort, limit = 50, season) {
 const lpMem = {};
 async function leaguePlayers(L, season) {
   // the season's list is kept on the device for six hours: stats move nightly, and every page is a request the feed may refuse
-  const key = `v5:lp2:${L.key}${season ? ':' + season : ''}`;
+  const key = `v5:lp:${L.key}${season ? ':' + season : ''}`;
   if (lpMem[key] && Date.now() - lpMem[key].t < 6 * 3600000) return lpMem[key].v;
   const kept = store.get(key, null); if (kept && kept.t && Date.now() - kept.t < 6 * 3600000 && kept.v && kept.v.rows && kept.v.rows.length) { lpMem[key] = kept; return kept.v; }
   const base = `${WEB(L)}/statistics/byathlete?region=us&lang=en&contentorigin=espn&isqualified=false&limit=100&sort=offensive.avgPoints:desc${season ? `&season=${season}&seasontype=2` : ''}`;
@@ -528,10 +525,7 @@ async function leaguePlayers(L, season) {
     const pts = v.avgPoints || 0, fga = v.avgFieldGoalsAttempted || 0, fta = v.avgFreeThrowsAttempted || 0;
     rows.push({ id: String(at.id), name: at.displayName, short: at.shortName, team: at.teamShortName || at.teamName || '', teamId: String(at.teamId || ''), pos: at.position && at.position.abbreviation || '', img: at.headshot && at.headshot.href,
       gp: v.gamesPlayed || 0, min: v.avgMinutes || 0, pts, reb: v.avgRebounds || 0, ast: v.avgAssists || 0, stl: v.avgSteals || 0, blk: v.avgBlocks || 0, tov: v.avgTurnovers || 0,
-      fg: v.fieldGoalPct || 0, tp: v.threePointFieldGoalPct || 0, ft: v.freeThrowPct || 0, tpm: v.avgThreePointFieldGoalsMade || 0, ts: (fga + 0.44 * fta) > 0 ? pts / (2 * (fga + 0.44 * fta)) * 100 : 0,
-      /* the rest of the box line, for the RIVL rating; null when the feed doesn't carry it, so the rating can tell "zero" from "unknown" */
-      fga, fta, fgm: v.avgFieldGoalsMade ?? null, ftm: v.avgFreeThrowsMade ?? null, tpa: v.avgThreePointFieldGoalsAttempted ?? null,
-      oreb: v.avgOffensiveRebounds ?? null, dreb: v.avgDefensiveRebounds ?? null, pf: v.avgFouls ?? null, gs: v.gamesStarted ?? null });
+      fg: v.fieldGoalPct || 0, tp: v.threePointFieldGoalPct || 0, ft: v.freeThrowPct || 0, tpm: v.avgThreePointFieldGoalsMade || 0, ts: (fga + 0.44 * fta) > 0 ? pts / (2 * (fga + 0.44 * fta)) * 100 : 0 });
   }));
   /* Which season these numbers actually describe. Before a season tips off the feed keeps serving the last completed one,
      so a college list in October is last year's — a player drafted in June is still listed with his old school and his old
@@ -625,8 +619,6 @@ const S = { today: {}, todayYmd: null, lastOk: 0, err: false, timer: null, route
 ORDER.forEach(k => S.today[k] = []);
 const allToday = () => ORDER.flatMap(k => S.today[k]);
 
-/* the one way the app writes a live clock: "4th 4:37", "2nd half 14:28", "End of 3rd", "Halftime", "OT 2:10" */
-function clockOf(g, L) { const per = +g.period || 0, d = String(g.detail || ''), st = String(g.status || ''); if (!per) return d || 'Live'; if (/HALFTIME/.test(st) || /^half/i.test(d)) return 'Halftime'; const reg = L && L.periods === 2 ? 2 : 4; const ord = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`; const nm = per <= reg ? (reg === 2 ? `${ord(per)} half` : ord(per)) : (per - reg > 1 ? `${per - reg}OT` : 'OT'); if (/END_PERIOD/.test(st) || /^end/i.test(d)) return `End of ${nm}`; const c = String(g.clock || '').trim(); return c && !/^0{1,2}(?::00)?(?:\.0)?$/.test(c) ? `${nm} ${c}` : nm; }
-Object.assign(HW, { clockOf, watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, tipOf, TZLABEL, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, carry, API, API2, WEB, logoUrl, seasonYear, favs,
+Object.assign(HW, { watchLink, watchFor, SERVICES, SERVICE_GROUPS, myServices, serviceHref, launchTries, IS_ANDROID, sportOf, fracLeft, statCategory, STAT_CATS, esc, j, jSoft, cache, todayCT, addDays, compact, expand, ymdOf, dayLabel, relDay, tip, tipOf, TZLABEL, dateShort, timeCT, ago, pct, sign, ordinal, hx, darkOf, Phi, store, carry, API, API2, WEB, logoUrl, seasonYear, favs,
   EARLY_GP, EARLY_W, parseEvent, prettyDetail, isLive, isDone, finalWord, isFav, isWire, readable, wireTeams, wirePlayers, wikiPage, wikiFacts, wikiPerson, isRanked, order, interest, scoreboard, standings, priorStandings, rankings, ratings, record, params, teamStats, injuries, forecast, seriesForecast, forecastCtx, leaguePlayers, S, allToday, strength, paramsOf, calibrate });
 })();

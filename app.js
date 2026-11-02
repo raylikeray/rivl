@@ -12,15 +12,15 @@
     const hideBar = () => { clearTimeout(barT); if (bar) bar.classList.remove('on'); $main.removeAttribute('aria-busy'); };
     /* real content is on screen: the bar goes, the slow note is off, and a new screen lands at its remembered scroll */
     let pendingSkel = '';
-    const settle = () => { $main.dataset.real = '1'; pendingSkel = ''; clearTimeout(slowT); const sl = $main.querySelector('.slow'); if (sl) sl.remove(); hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; const y = +$main.dataset.y || 0; window.scrollTo(0, y); if (y) requestAnimationFrame(() => window.scrollTo(0, y)); requestAnimationFrame(() => requestAnimationFrame(() => { $main.style.minHeight = ''; })); } if (render.onReal) { const f = render.onReal; render.onReal = null; f(); } };
+    const settle = () => { $main.dataset.real = '1'; pendingSkel = ''; clearTimeout(slowT); const sl = $main.querySelector('.slow'); if (sl) sl.remove(); hideBar(); if ($main.dataset.top === '1') { $main.dataset.top = '0'; const y = +$main.dataset.y || 0; window.scrollTo(0, y); if (y) requestAnimationFrame(() => window.scrollTo(0, y)); } if (render.onReal) { const f = render.onReal; render.onReal = null; f(); } };
     /* a slow load: the skeleton that was swallowed while the old screen was kept is painted after all, so the hold never ends in a blank */
-    V.showSkeleton = () => { if (!pendingSkel) return false; const s = pendingSkel; pendingSkel = ''; if (render.parkKey && $main.dataset.real === '1' && V._kept) { V._kept.put(render.parkKey, $main); render.parkKey = ''; } proto.set.call($main, s); $main.dataset.real = '0'; return true; };
+    V.showSkeleton = () => { if (!pendingSkel) return false; const s = pendingSkel; pendingSkel = ''; proto.set.call($main, s); $main.dataset.real = '0'; return true; };
     V.busy = on => on ? showBar() : hideBar();   // for views that patch themselves in place and have no paint to hang the bar on
     V.soft = el => { if (!el || !MOTION()) return; el.classList.remove('soft'); void el.offsetWidth; el.classList.add('soft'); };   // a block repainted in place eases in instead of popping
     V.settled = settle;   // for a view whose first real paint went into a part of the screen (Scores' list, a standings table) rather than the whole
     Object.defineProperty($main, 'innerHTML', {
       get() { return proto.get.call($main); },
-      set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { pendingSkel = s; showBar(); return; } if (render.parkKey && $main.dataset.real === '1' && V._kept) { V._kept.put(render.parkKey, $main); render.parkKey = ''; } proto.set.call($main, s); clearTimeout(slowT); if (!s.includes('<!--skel-->')) settle(); else { $main.dataset.real = '0'; slowT = setTimeout(() => { if ($main.dataset.real === '0' && !$main.querySelector('.slow')) $main.insertAdjacentHTML('beforeend', '<p class="legend slow">The feed is slow to answer. It usually clears within a minute; pull down to try again.</p>'); }, 7000); } }
+      set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { pendingSkel = s; showBar(); return; } proto.set.call($main, s); clearTimeout(slowT); if (!s.includes('<!--skel-->')) settle(); else { $main.dataset.real = '0'; slowT = setTimeout(() => { if ($main.dataset.real === '0' && !$main.querySelector('.slow')) $main.insertAdjacentHTML('beforeend', '<p class="legend slow">The feed is slow to answer. It usually clears within a minute; pull down to try again.</p>'); }, 7000); } }
     }); }
   S.today = S.today || {}; ORDER.forEach(k => { S.today[k] = S.today[k] || []; });
 
@@ -28,13 +28,12 @@
      #home #scores #standings #players #teams          league screens (league from the pills, remembered)
      #player/<lk>/<id> #team/<lk>/<id> #game/<lk>/<id>  entity screens
      #nba #wnba …                                       switch league, stay on the current league screen */
-  const SCREENS = ['home', 'scores', 'standings', 'stats', 'players', 'teams'];
+  const SCREENS = ['home', 'scores', 'standings', 'players', 'teams'];
   const lkOf = k => LEAGUES[k] ? k : 'nba';
   function route() {
     const h = (location.hash || '#home').slice(1);
     let m;
     if ((m = h.match(/^(player|team|game|article|venue)\/([a-z]+)\/([A-Za-z0-9]+)(?:\/p\/(\d+))?$/))) return { name: m[1], lk: lkOf(m[2]), args: m[4] ? [lkOf(m[2]), m[3], m[4]] : [lkOf(m[2]), m[3]] };   // a game can open on one player: #game/nba/401/p/1966
-    let rc; if ((rc = h.match(/^recruit\/(boys|girls)\/(\d{4})\/([a-z0-9-]+)$/))) return { name: 'recruit', lk: rc[1] === 'girls' ? 'ncaaw' : 'ncaam', args: [rc[1], rc[2], rc[3]] };
     if (LEAGUES[h]) { if (store.get('v5:lk') !== h) { store.set('v5:lk', h); if (V.applyAccent) V.applyAccent(); } return { name: store.get('v5:screen', 'home'), lk: h, args: [h] }; }
     if (h === 'search') return { name: 'search', lk: lkOf(store.get('v5:lk', 'nba')), args: [] };
     let rm; if ((rm = h.match(/^record(?:\/([a-z]+))?$/))) { const k = rm[1] && LEAGUES[rm[1]] ? rm[1] : lkOf(store.get('v5:lk', 'nba')); return { name: 'record', lk: k, args: [k] }; }
@@ -52,108 +51,51 @@
     if ($pills.children.length !== ORDER.length) $pills.innerHTML = ORDER.map(k => `<a class="pill" href="#${k}" data-lk="${k}"><span>${esc(LEAGUES[k].label)}</span></a>`).join('');
     ORDER.forEach((k, i) => { const el = $pills.children[i]; const on = k === lk; el.classList.toggle('on', on); if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); const n = S.today[k].filter(isLive).length; let ct = el.querySelector('.ct'); if (n && !ct) { ct = document.createElement('span'); ct.className = 'ct live'; el.appendChild(ct); } if (ct) { if (!n) ct.remove(); else if (ct.textContent !== String(n)) ct.textContent = n; } });
     $pills.style.setProperty('--n', ORDER.length); $pills.style.setProperty('--i', Math.max(0, ORDER.indexOf(lk)));   // the knob slides to the chosen league
-    // X-style: the line sits under the chosen league's word, as wide as the word, and slides to the next one
-    requestAnimationFrame(() => { const on = $pills.querySelector('.pill.on'), sp = on && on.querySelector('span'); if (!sp) return; $pills.style.setProperty('--ux', (on.offsetLeft + sp.offsetLeft - 10) + 'px'); $pills.style.setProperty('--uw', (sp.offsetWidth + 20) + 'px'); });
   }
   function paintTabs(name) {
     $tabs.querySelectorAll('.tab').forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('on', on); if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
   }
-  const TITLES = { home: 'Following', stats: 'Stats', scores: 'Scores', standings: 'Standings', players: 'Players', teams: 'Teams', search: 'Search', settings: 'Settings', record: 'Record' };
+  const TITLES = { home: 'Home', scores: 'Scores', standings: 'Standings', players: 'Players', teams: 'Teams', search: 'Search', settings: 'Settings', record: 'Record' };
 
   /* ---------- render ---------- */
   let seq = 0, current = null;
   /* where each screen was scrolled to, by screen key: going BACK to a screen lands where you were; a tab lands where you left it;
      a link to a player, team, game or story always opens at the top, however far down it you were last time */
-  const J = (n, f) => HW.perf ? HW.perf.job(n, f) : f();
-  /* the gesture gate: while a finger is on the screen or a slide is settling, nothing that could take a frame runs
-     (polling repaints, crest fitting, building the next league's copy). It all waits for the hand to lift. */
-  let touching = false; const later = [];
-  V.gesturing = () => touching || !!render.swiping || !!render.gliding;
-  const ric = window.requestIdleCallback || (f => setTimeout(() => f({ timeRemaining: () => 8, didTimeout: true }), 60));
-  let ricId = 0;
-  V.whenIdle = fn => { if (!later.includes(fn)) later.push(fn); if (!ricId) ricId = ric(V.flushIdle, { timeout: 1200 }); };
-  V.flushIdle = dl => { ricId = 0; if (!later.length) return; if (V.gesturing()) { ricId = ric(V.flushIdle, { timeout: 1200 }); return; }
-    while (later.length && (!dl || dl.didTimeout || dl.timeRemaining() > 4)) { const f = later.shift(); try { f(); } catch (e) { console.error(e); } }   // one job at a time, between frames
-    if (later.length) ricId = ric(V.flushIdle, { timeout: 1200 }); };
-  document.addEventListener('touchstart', () => { touching = true; clearTimeout(V.flushT); }, { passive: true, capture: true });
-  const lift = () => { touching = false; if (later.length && !ricId) ricId = ric(V.flushIdle, { timeout: 1200 }); };
-  document.addEventListener('touchend', lift, { passive: true, capture: true }); document.addEventListener('touchcancel', lift, { passive: true, capture: true });
   const scrollMem = new Map();
-  /* pages are kept as the very nodes they were drawn with, not as text: a screen you leave is parked offscreen (still in the
-     document) and comes back by moving those nodes into place. Nothing is serialised, parsed or decoded again, which is
-     what made every landing and every tap cost a few frames. */
-  const kept = new Map();
-  const KEEP_CSS = 'position:fixed;left:0;width:100%;top:0;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;visibility:hidden;transform:translate3d(200vw,0,0);contain:layout paint;content-visibility:hidden';
-  const keepBox = () => { const b = document.createElement('div'); b.className = 'xpeek xkeep'; b.style.cssText = KEEP_CSS; document.body.appendChild(b); return b; };
-  /* moving nodes resets every scroll box inside them, so a move reads the few that scroll (strips, the page's own box) and
-     puts them back: one layout read, a few writes, nothing rebuilt */
-  const SCROLLERS = '.dates,.brief-row,.chips,.rail,.media,.tw,.onb-picked-row,#gxscroll,.xsorts,.gxtabs';
-  const moveNodes = (from, to, st0) => { const st = st0 || []; if (!st0) from.querySelectorAll(SCROLLERS).forEach(el => { const x = el.scrollLeft, y = el.scrollTop; if (x || y) st.push([el, x, y]); }); to.replaceChildren(...from.childNodes); st.forEach(([el, x, y]) => { if (x) el.scrollLeft = x; if (y) el.scrollTop = y; }); return st; };   // a parked box skips layout, so its scroll state travels as a list and is applied on the way back in
-  V._moveNodes = moveNodes;
-  const keepPut = (key, from, box) => { const old = kept.get(key); if (old && old !== box) old.remove(); kept.delete(key); const b = box || keepBox(); b.className = 'xpeek xkeep'; b.style.cssText = KEEP_CSS; if (from) b._st = moveNodes(from, b); b.querySelectorAll('[id]').forEach(el => { el.dataset.xid = el.id; el.removeAttribute('id'); }); b.dataset.key = key; kept.set(key, b);   // a parked page answers to no id: lookups only ever find the live screen
-    while (kept.size > 28) { const k0 = kept.keys().next().value; const b0 = kept.get(k0); kept.delete(k0); b0.remove(); } return b; };
-  const keepTake = key => { const b = kept.get(key); if (!b) return null; kept.delete(key); b.querySelectorAll('[data-xid]').forEach(el => { el.id = el.dataset.xid; delete el.dataset.xid; }); return b; };
-  const keepHas = key => kept.has(key);
-  V._kept = { put: keepPut, take: keepTake, has: keepHas, map: kept };
-  /* every sideways strip (last night's results, a rail of players, the date row) remembers how far you moved it, per
-     screen, so coming back by a league swipe, a tab or a refresh finds it exactly where you left it */
-  const STRIP_SEL = '.dates,.brief-row,.chips,.rail,.media,.tw,.onb-picked-row,.frows-x';
-  const stripMem = new Map();
-  const stripKeys = root => { const cnt = {}; return [...root.querySelectorAll(STRIP_SEL)].map(el => { const sec = el.closest('[data-sec]'); const b = (sec ? sec.dataset.sec : '') + '|' + (el.classList[0] || ''); cnt[b] = (cnt[b] || 0) + 1; return [b + '|' + cnt[b], el]; }); };
-  const stripsOf = root => { const m = {}; stripKeys(root).forEach(([k, el]) => { if (el.scrollLeft > 0) m[k] = el.scrollLeft; }); return m; };
-  const stripsTo = (root, m) => { if (!root || !m) return; stripKeys(root).forEach(([k, el]) => { const v = m[k] || 0; if (Math.abs(el.scrollLeft - v) > 1) el.scrollLeft = v; }); };
-  const keyOf = r => r ? `${r.name}/${(r.args || []).join('/')}` : '';
-  document.addEventListener('scroll', e => { const t = e.target; if (render.swiping || !t || t.nodeType !== 1 || !t.matches(STRIP_SEL) || !$main.contains(t)) return; const k = keyOf(current); if (k) stripMem.set(k, stripsOf($main)); }, true);
-  // sections that arrive after the first paint get their place back too
-  const stripFix = () => J('mo:strips', () => { if (render.swiping || $main.querySelector(':scope > #gpage')) return; const k = keyOf(current); const m = k && stripMem.get(k); if (m && Object.keys(m).length) stripsTo($main, m); });
-  new MutationObserver(() => { if (!render.swiping && !$main.querySelector(':scope > #gpage')) V.whenIdle(stripFix); }).observe($main, { childList: true, subtree: true });
   let navN = 0;   // each history entry is numbered the first time it is shown; an entry numbered below the one we left is a step back
   async function render() {
     const r = route(); const my = ++seq; current = r; V.refresh = null; closeSheet();
     if (r.name !== 'scores' && V.todayPill) V.todayPill(false);   // the Scores screen's back-to-today pill goes with it
-    const key = `${r.name}/${r.args.join('/')}`; const sp = HW.perf && HW.perf.span('render ' + key);
+    const key = `${r.name}/${r.args.join('/')}`;
     const st = history.state; const back = !!(st && st.n != null && st.n < navN);
     if (st && st.n != null) navN = st.n; else { navN += 1; try { history.replaceState({ n: navN }, ''); } catch { } }
     const leagueScreen = SCREENS.includes(r.name);
-    if (render.key && render.key !== key && !render.memDone) { scrollMem.set(render.key, window.scrollY); stripMem.set(render.key, stripsOf($main)); } render.memDone = false;   // a swipe already saved where you were
+    if (render.key && render.key !== key) scrollMem.set(render.key, window.scrollY);
     const leagueChanged = leagueScreen && render.lk && render.lk !== r.lk;   // a tap on the league switch starts the new league at the top
-    $main.dataset.y = render.key !== key ? ((back || leagueScreen) ? String(scrollMem.get(key) || 0) : '0') : '';
+    $main.dataset.y = render.key !== key ? ((back || (leagueScreen && !leagueChanged)) ? String(scrollMem.get(key) || 0) : '0') : '';
     // a page that starts at the top goes there now, before its skeleton replaces the old screen — otherwise the old scroll
     // position clamps as the document shrinks and the eye sees two moves instead of one
     const fresh = render.key !== key;
-    /* a game, team or player page you leave is kept as it stood (its scroll included), so coming back to it, by the arrow or
-       the phone's own back swipe, shows it at once exactly as you left it; its numbers then refresh in place */
-    const ENT = ['game', 'team', 'player'];
-    const light = !!render.light; render.light = false;   // a swipe landing: the page is already in place, the bookkeeping runs now and the data check waits for idle
-    render.screen = r.name;
-    /* hold the page's height through the switch: while the new screen loads, a shorter page would clamp the scroll and the
-       header with the league switch would drop in and slide back out (the hitch between tabs). Released once the new
-       screen has landed at its scroll. */
-    if (fresh && render.key && !light) { $main.style.minHeight = $main.offsetHeight + 'px'; clearTimeout(render.mhT); render.mhT = setTimeout(() => { $main.style.minHeight = ''; }, 1500); }
     clearTimeout(render.holdT); render.onReal = null;
-    /* the phone's own back swipe (or its back button) already animates the move with a snapshot of the screen you are
-       going back to: our crossfade on top of that showed the old page a second time, fading out over the new one (the hitch
-       on swiping back). So the fade runs only for a move started by a tap inside the app. */
-    const byTap = render.tapAt && performance.now() - render.tapAt < 1500; render.tapAt = 0;
-    const swiped = render.swipe; render.swipe = false; if (swiped) { $main.classList.remove('enter', 'fade', 'hold'); $main.classList.add('noanim'); }
-    if (fresh && !swiped && !light && render.key && $main.dataset.real === '1') {
-      /* X's way, not a crossfade: the old screen stays exactly as it is while the new one loads (its skeleton is swallowed), and
-         on the new screen's first real paint the old nodes are parked and the new ones fade in. Nothing is copied or laid
-         out twice. If the load takes longer than a beat the skeleton shows after all, so it never ends in a blank. */
-      render.parkKey = render.key;
-      if (MOTION() && byTap) { const fadeIn = () => { clearTimeout(render.holdT); $main.classList.remove('fade', 'enter', 'hold'); void $main.offsetWidth; $main.classList.add('fade', 'enter'); };
-        render.onReal = fadeIn; render.holdT = setTimeout(() => { if (render.onReal === fadeIn && my === seq) { render.onReal = null; V.showSkeleton(); render.onReal = () => { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); }; } }, 260); }
-    } else render.parkKey = '';
-    if (leagueChanged && !light) {
+    if (fresh && MOTION()) {
+      /* a crossfade, not a blink: a snapshot of the old screen is laid over the page and fades out while the new screen, held
+         invisible until its real content has painted, fades in beneath it. If the content takes longer than a beat, the skeleton
+         is shown instead so the hold never ends in a blank. */
+      if (render.key) ghost();
+      $main.classList.remove('fade', 'enter'); $main.classList.add('hold');
+      const fadeIn = () => { clearTimeout(render.holdT); $main.classList.remove('hold', 'fade', 'enter'); void $main.offsetWidth; $main.classList.add('fade', 'enter'); document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); }); };   // the snapshot lets go only now, so the two cross
+      render.onReal = fadeIn;
+      render.holdT = setTimeout(() => { if (render.onReal === fadeIn && my === seq) { render.onReal = null; V.showSkeleton(); fadeIn(); render.onReal = () => { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); }; } }, 260);
+    }
+    if (leagueChanged) {
       /* A league switch is a new screen, not the old one refreshed: the old league never stays on screen while the new one
          loads (its skeleton paints instead), and a scroll still coasting from a flick is stopped before the jump to the top,
          so iOS cannot carry the page on down or bounce it back after the new league lands. */
-      if (!swiped) $main.dataset.real = '0';   // after a swipe the page already holds that league's last screen; it updates in place
-      const de = document.documentElement, y0 = +$main.dataset.y || 0; de.style.overflow = 'hidden'; window.scrollTo(0, y0); void de.offsetHeight;   // each league comes back where you left it
-      requestAnimationFrame(() => { de.style.overflow = ''; window.scrollTo(0, y0); });
-    } else if ($main.dataset.y === '0' && fresh && !light) window.scrollTo(0, 0);
+      $main.dataset.real = '0';
+      const de = document.documentElement; de.style.overflow = 'hidden'; window.scrollTo(0, 0); void de.offsetHeight;
+      requestAnimationFrame(() => { de.style.overflow = ''; window.scrollTo(0, 0); });
+    } else if ($main.dataset.y === '0' && fresh) window.scrollTo(0, 0);
     render.lk = r.lk;
-    if (r.name !== 'game') document.documentElement.classList.remove('gxon');
     if (!['team', 'player', 'game'].includes(r.name) && V._.tint) V._.tint('');   // only a team's, a player's or a game's page wears a team colour
     if (leagueScreen) store.set('v5:screen', r.name);
     /* The Scores date goes back to today when you move to another tab — Home, Standings, Teams, Players — so a day you
@@ -161,58 +103,32 @@
        team or a player from a score card: those are children of the day you were on, and coming back lands on that day. */
     if (leagueScreen && r.name !== 'scores') store.set('v5:date', todayCT());
     document.getElementById('top').hidden = !leagueScreen;
-    // a game, team or player page is full screen, like X's game page: no bottom bar; the back button takes you out
-    document.documentElement.classList.toggle('entity', ['game', 'team', 'player', 'venue', 'recruit'].includes(r.name));
     paintPills(r.lk, leagueScreen);
-    /* the bar lights the tab you are in; a player, team or game page keeps lit the tab you opened it from */
-    const TABS = ['scores', 'standings', 'home', 'stats', 'search'], tabOf = n => n === 'players' || n === 'teams' ? 'home' : n;
-    if (TABS.includes(tabOf(r.name))) render.tab = tabOf(r.name);
-    paintTabs(TABS.includes(tabOf(r.name)) ? tabOf(r.name) : (render.tab || (r.name === 'game' ? 'scores' : 'home')));
+    paintTabs(leagueScreen ? r.name : (r.name === 'player' ? 'players' : r.name === 'team' ? 'teams' : r.name === 'game' ? 'scores' : r.name === 'article' ? 'home' : ''));
     document.title = leagueScreen ? `${TITLES[r.name]} · ${LEAGUES[r.lk].label} · RIVL` : `${TITLES[r.name] || ''} RIVL`.trim();
     $main.dataset.top = '1';   // scroll to the top with the new screen's first real paint, not before it
-    let restored = false;
-    if (fresh && !light) { const kb = keepTake(key); if (kb) { restored = true; if (render.key && $main.dataset.real === '1' && !document.querySelector('.xghost.mv[data-key="' + render.key + '"]')) keepPut(render.key, $main);   // the page being left is parked
-        render.parkKey = ''; moveNodes(kb, $main, kb._st); kb.remove(); $main.dataset.real = '1'; if (ENT.includes(r.name) && V._ && V._.gxAttach) V._.gxAttach(); if (r.name === 'home') $main.dataset.hlk = r.lk; const y = +$main.dataset.y || 0; if (y) window.scrollTo(0, y); if (render.onReal) { const f = render.onReal; render.onReal = null; f(); } } }
-    if (sp) sp.end();
-    /* a page put back as it stood refreshes its numbers once the hand is off the screen, never inside the tap */
-    if (light || restored) {
-      /* only screens that carry live numbers are worth a second look; Search, Settings and the pickers come back exactly as
-         they stood (a re-run would redraw them, and wipe a half-typed search) */
-      if (['home', 'scores', 'standings', 'stats', 'game', 'team', 'player'].includes(r.name)) { const run = () => { if (my !== seq) return; Promise.resolve((V[r.name] || V.home)(...r.args)).catch(err => console.error(err)); }; V.whenIdle(() => setTimeout(run, 320)); }
-    }
-    else try { await (V[r.name] || V.home)(...r.args); }
+    try { await (V[r.name] || V.home)(...r.args); }
     catch (err) { if (my === seq) $main.innerHTML = `<div class="empty"><b>Something went wrong</b><p style="margin:6px 0 0">${esc(err && err.message || 'Try again in a moment.')}</p></div>`; console.error(err); }
     if (my !== seq) return;
     V.settled();   // a view that painted into part of the screen (Scores' list, a standings chip, a refreshed game) made no full paint to clear the bar, the dimming and the slow note, or to land at its scroll
     paintPills(r.lk, leagueScreen);   // live counts may have arrived while the view loaded
     // the rise plays for a new screen; a screen repainting itself (another day on Scores, another conference) keeps still
-    if (swiped) { $main.classList.remove('enter', 'fade', 'hold'); $main.classList.add('noanim'); clearTimeout(render.naT); render.naT = setTimeout(() => $main.classList.remove('noanim'), 1200); }   // a swipe already moved the page: it lands still, no fade, no rise
-    else if (key !== render.key) { if (!$main.classList.contains('enter')) { void $main.offsetWidth; $main.classList.add('enter'); } } else $main.classList.remove('enter');
-    render.key = key;
-    $main.classList.remove('hold'); clearTimeout(render.holdT); render.onReal = null; document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => parkGhost(g), 500); });   // whatever happened, nothing stays held once the view has returned
+    if (key !== render.key) { if (!$main.classList.contains('enter')) { void $main.offsetWidth; $main.classList.add('enter'); } } else $main.classList.remove('enter'); render.key = key;
+    $main.classList.remove('hold'); clearTimeout(render.holdT); render.onReal = null; document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); });   // whatever happened, nothing stays held once the view has returned
     document.dispatchEvent(new CustomEvent('rivl:rendered'));
   }
   /* the old screen, as it stood, laid over the page and fading. NOTE the class is `xghost`, never `ghost`:
      `.btn.ghost` is the secondary-button style, and a bare `.ghost` rule captured every one of them (v86 regression —
      they turned position:fixed and pointer-events:none, and this function deleted them). Keep the names apart. — so the next screen appears through it instead of after a gap */
-  /* a fading copy is done: its nodes go back under their screen's key (ids restored) rather than being thrown away */
-  const parkGhost = g => { if (!g || !g.isConnected) return; const c = g.querySelector('.xgbody'); if (g.classList.contains('mv') && c) { c.querySelectorAll('[data-xid]').forEach(el => { el.id = el.dataset.xid; delete el.dataset.xid; }); if (g.dataset.key && c.childNodes.length) keepPut(g.dataset.key, c); } g.remove(); };
-  function ghost(key) {
-    document.querySelectorAll('.xghost').forEach(parkGhost);
-    /* a game, team or player page is fixed to the viewport, so the page box itself has no height: the copy then covers the
-       whole viewport. Otherwise the copy sits exactly over the page, with the page's own padding (no few-pixel shift). */
-    const ent = !!$main.querySelector(':scope > .gxpage'); let r = $main.getBoundingClientRect();
-    if (ent) r = { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight }; if (!r.width || !r.height) return;
-    const g = document.createElement('div'); g.className = 'xghost mv' + (ent ? ' ent' : ''); g.setAttribute('aria-hidden', 'true'); if (key) g.dataset.key = key;
+  function ghost() {
+    document.querySelectorAll('.xghost').forEach(g => g.remove());
+    const r = $main.getBoundingClientRect(); if (!r.width || !r.height) return;
+    const g = document.createElement('div'); g.className = 'xghost'; g.setAttribute('aria-hidden', 'true');
     g.style.cssText = `left:${r.left}px;width:${r.width}px`;
-    /* the page's own nodes move into the fading copy (no deep clone, no second page to lay out); when the fade ends they are
-       parked under the screen's key, so coming back finds them as they were */
-    const c = $main.cloneNode(false); c.removeAttribute('id'); c.className = 'xgbody'; const cs = getComputedStyle($main); c.style.cssText = ent ? `transform:translateY(0);width:${r.width}px;height:${r.height}px;margin:0;padding:0` : `transform:translateY(${r.top}px);padding:${cs.padding};margin:0;width:${r.width}px;box-sizing:border-box`;
-    g.appendChild(c); document.body.appendChild(g); moveNodes($main, c); $main.dataset.real = '0';
-    c.querySelectorAll('[id]').forEach(el => { el.dataset.xid = el.id; el.removeAttribute('id'); });   // the ids belong to the live page while the copy fades
-    setTimeout(() => parkGhost(g), 900);   // whatever else happens, the copy never outlives the fade
+    const c = $main.cloneNode(true); c.removeAttribute('id'); c.className = ''; c.style.cssText = `transform:translateY(${r.top}px)`;
+    g.appendChild(c); document.body.appendChild(g);
+    g.addEventListener('animationend', () => g.remove()); setTimeout(() => g.remove(), 1500);   // it fades once the new screen is ready (fadeIn adds .out); never outstays its welcome
   }
-
   window.addEventListener('hashchange', render);
 
   /* ---------- polling: today's slate for every league, faster while something is live ---------- */
@@ -225,7 +141,7 @@
     let anyLive = ORDER.some(k => k !== r.lk && S.today[k].some(isLive)), failed = false;
     for (const k of order) {
       try {
-        const g = await scoreboard(LEAGUES[k], today, k === r.lk || S.today[k].some(isLive) ? 15000 : 120000);   // a league with a game on refreshes fast whichever tab you are on (the live bar shows it)
+        const g = await scoreboard(LEAGUES[k], today, k === r.lk ? 20000 : 120000);
         /* a game in play never loses its score: when the feed sends a live game with the score missing (it has done so at
            the half), the last score it gave stands until a new one comes */
         const was = new Map((S.today[k] || []).map(x => [x.id, x]));
@@ -236,7 +152,7 @@
     }
     if (!failed) lastOk = Date.now();
     stale(failed);
-    V.whenIdle(() => J('polled', () => document.dispatchEvent(new CustomEvent('rivl:polled'))));
+    document.dispatchEvent(new CustomEvent('rivl:polled'));
     if (SCREENS.includes((current || route()).name)) paintPills((current || route()).lk, true);
     if (anyLive && current && (current.name === 'home' || current.name === 'scores')) refreshCards();
     if (V.refresh) { try { await V.refresh(); } catch { } }
@@ -254,16 +170,6 @@
     staleEl.innerHTML = `<span></span>${navigator.onLine === false ? 'Offline' : 'Feed not answering'} · showing the last copy from ${m} min ago`;
     staleEl.hidden = false;
   }
-  /* a quiet line at the foot of Following and Scores saying when the numbers were last fetched */
-  const updAt = () => {
-    const r = current || route(); const want = r && (r.name === 'home' || r.name === 'scores') && $main.dataset.real === '1' && lastOk;
-    let el = $main.querySelector(':scope > .updat');
-    if (!want) { if (el) el.remove(); return; }
-    if (!el) { el = document.createElement('p'); el.className = 'updat'; $main.appendChild(el); }
-    const s = Math.round((Date.now() - lastOk) / 1000); const w = s < 45 ? 'just now' : s < 90 ? '1 min ago' : s < 3600 ? `${Math.round(s / 60)} min ago` : new Date(lastOk).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    const t = `Updated ${w} · pull down to refresh`; if (el.textContent !== t) el.textContent = t;
-  };
-  document.addEventListener('rivl:polled', updAt); document.addEventListener('rivl:rendered', () => setTimeout(updAt, 50)); setInterval(updAt, 30000);
   window.addEventListener('online', () => { stale(false); poll(); }); window.addEventListener('offline', () => stale(true));
   /* swap live scores into the cards on screen without repainting the whole page */
   function refreshCards() {
@@ -271,14 +177,6 @@
     const byId = new Map(S.today[r.lk].map(g => [g.id, g]));
     $main.querySelectorAll('[data-gid]').forEach(el => {
       const g = byId.get(el.dataset.gid); if (!g) return;
-      if (el.classList.contains('grow')) {   // a score row: copy over the numbers, the middle and the fading; the crests stay put
-        const t = document.createElement('div'); t.innerHTML = V._.gameRow(L, g, null); const n = t.firstElementChild; if (!n) return;
-        const a2 = el.querySelectorAll(':scope > .sc'), b2 = n.querySelectorAll(':scope > .sc'); a2.forEach((s, i) => { if (!b2[i]) return; if (s.textContent !== b2[i].textContent) s.textContent = b2[i].textContent; if (s.className !== b2[i].className) s.className = b2[i].className; });
-        const m1 = el.querySelector(':scope > .mid'), m2 = n.querySelector(':scope > .mid'); if (m1 && m2 && m1.innerHTML !== m2.innerHTML) m1.innerHTML = m2.innerHTML;
-        const t1 = el.querySelectorAll(':scope > .tm'), t2 = n.querySelectorAll(':scope > .tm'); t1.forEach((s, i) => { if (t2[i] && s.className !== t2[i].className) s.className = t2[i].className; });
-        if (g.state === 'post' && el.closest('[data-sec="live"]')) render();
-        return;
-      }
       const scores = el.querySelectorAll('.sc');
       if (el.classList.contains('hero')) { const sc = el.querySelector('.mid .sc'); const st = el.querySelector('.mid .st'); if (sc) { const txt = `${g.away.score ?? ''}–${g.home.score ?? ''}`; if (sc.textContent !== txt) { sc.innerHTML = `${g.away.score ?? ''}<i>–</i>${g.home.score ?? ''}`; sc.classList.remove('bump'); void sc.offsetWidth; sc.classList.add('bump'); } } if (st) st.textContent = g.state === 'in' ? g.detail : g.state === 'post' ? HW.finalWord(g) : st.textContent; return; }
       if (scores.length === 2) {
@@ -296,340 +194,59 @@
   const $live = document.getElementById('livebar');
   function liveList() {
     const r = current || route(); const out = [];
-    const onToday = false;   // the bar stays, whichever league and screen you are on
+    const onToday = r.name === 'scores' && (store.get('v5:date', todayCT()) || todayCT()) === todayCT();   // Scores on today already lists this league's live games
     [r.lk, ...ORDER.filter(k => k !== r.lk)].forEach(k => {
       if (onToday && k === r.lk) return;
-      if (r.name === 'game') return;   // the game page carries the day's games in its own bar
-      const L = LEAGUES[k]; const gs = S.today[k].filter(g => isLive(g) && !(r.name === 'game' && r.lk === k && String(r.args[1]) === g.id)).sort((a, b) => (HW.isFav(b) ? 1 : 0) - (HW.isFav(a) ? 1 : 0));
+      const L = LEAGUES[k]; const gs = S.today[k].filter(g => isLive(g) && !(r.name === 'game' && r.lk === k && String(r.args[1]) === g.id));
       gs.sort((a, b) => (HW.isFav(b) ? 1 : 0) - (HW.isFav(a) ? 1 : 0)).forEach(g => out.push({ g, L }));
     });
     return out;
   }
-  /* the live bar, Spotify's mini player: a floating card in both teams' colours, the score on one line, the clock and
-     the channel under it, a thin line along the bottom for how much of the game is played */
   function liveChip(g, L) {
-    const tc = t => V._.teamColor(t, L); const a = g.away, h = g.home;
-    const left = HW.fracLeft ? HW.fracLeft(L, g) : null; const played = left == null || !isFinite(left) ? 0 : Math.max(0, Math.min(1, 1 - left));
-    const nm = t => esc(t.short || t.abbr), sc = t => t.score ?? '';
-    const tv = g.tv && g.tv.label ? ` · ${esc(g.tv.label)}` : '';
-    const mine = HW.favs && HW.favs.has(L.key, a.id) ? a : HW.favs && HW.favs.has(L.key, h.id) ? h : null;   // the card takes your team's color, like Spotify takes the cover's
-    const base = tc(mine || h) || tc(a) || '#333';
-    const as = Number(a.score), hs = Number(h.score), lo = t => (isFinite(as) && isFinite(hs) && as !== hs && (t === a ? as < hs : hs < as)) ? ' lo' : '';
-    const row = t => `<span class="lr${lo(t)}">${V._.logo(t.logo || '', 's', tc(t))}<span class="nm">${nm(t)}</span><i class="sc">${sc(t)}</i></span>`;
-    return `<a class="lg sb${HW.isFav(g) ? ' fav' : ''}" href="#game/${L.key}/${esc(g.id)}" data-lid="${L.key}:${esc(g.id)}" style="--ca:${esc(tc(a) || '#333')};--ch:${esc(tc(h) || '#333')};--cb:${esc(base)};--pl:${(played * 100).toFixed(1)}%"><span class="lrows">${row(a)}${row(h)}</span><span class="lside"><span class="st"><span class="dot"></span>${esc(HW.clockOf ? HW.clockOf(g, L) : g.detail)}</span>${g.tv && g.tv.label ? `<small>${esc(g.tv.label)}</small>` : ''}</span></a>`;
+    const tc = t => V._.teamColor(t, L);
+    const side = (t, o) => { const lead = t.score != null && o.score != null && t.score > o.score; return `<span class="tm"${!tc(t) || /^#(2A2D33|55606e)$/i.test(tc(t)) ? '' : ` style="${V._.tcv(tc(t), V._.teamAlt(t, L))}"`}>${V._.logo(t.logo || '', 's', tc(t))}<b>${esc(t.abbr)}</b><i class="sc${lead ? ' on' : ''}">${t.score ?? ''}</i></span>`; };
+    return `<a class="lg${HW.isFav(g) ? ' fav' : ''}" href="#game/${L.key}/${esc(g.id)}" data-lid="${L.key}:${esc(g.id)}">${side(g.away, g.home)}${side(g.home, g.away)}<span class="st"><span class="dot"></span>${esc(g.detail)}</span></a>`;
   }
-  const paintLive = () => J('paintLive', paintLive0);
-  function paintLive0() {
+  function paintLive() {
     if (!$live) return;
     const r = current || route();
-    const show = r && !['settings', 'search'].includes(r.name) && !document.body.classList.contains('onboarding');
+    const show = r && !['home', 'settings', 'search'].includes(r.name) && !document.body.classList.contains('onboarding');
     const list = show ? liveList() : [];
     const inner = $live.querySelector('.lb-in');
-    if (!list.length) { if (!$live.hidden) { $live.hidden = true; inner.innerHTML = ''; } document.documentElement.classList.remove('lbon'); return; }
+    if (!list.length) { if (!$live.hidden) { $live.hidden = true; inner.innerHTML = ''; } return; }
     const want = list.map(({ g, L }) => `${L.key}:${g.id}`);
     const have = [...inner.children].map(el => el.dataset.lid);
     if (want.join() !== have.join()) { const x = inner.scrollLeft; inner.innerHTML = list.map(({ g, L }) => liveChip(g, L)).join(''); inner.scrollLeft = x; }   // a game starting or ending rebuilds the strip; where you had scrolled it stays put
-    else list.forEach(({ g, L }, i) => {   // same games: touch only the numbers, the clock and the line
-      const el = inner.children[i]; const t = document.createElement('div'); t.innerHTML = liveChip(g, L); const n = t.firstElementChild; if (!n) return;
-      el.querySelectorAll('.sc').forEach((x, j) => { const y = n.querySelectorAll('.sc')[j]; if (y && x.textContent !== y.textContent) x.textContent = y.textContent; });
-      el.querySelectorAll('.lr').forEach((x, j) => { const y = n.querySelectorAll('.lr')[j]; if (y) x.classList.toggle('lo', y.classList.contains('lo')); });   // who leads can change between polls
-      const st = el.querySelector('.st'), st2 = n.querySelector('.st'); if (st && st2 && st.innerHTML !== st2.innerHTML) st.innerHTML = st2.innerHTML;
-      el.style.setProperty('--pl', n.style.getPropertyValue('--pl'));
+    else list.forEach(({ g, L }, i) => {   // same games: touch only the numbers and the clock
+      const el = inner.children[i]; const sc = el.querySelectorAll('.sc'); const st = el.querySelector('.st');
+      [[g.away, g.home], [g.home, g.away]].forEach(([t, o], j) => { const txt = String(t.score ?? ''); if (sc[j].textContent !== txt) { sc[j].textContent = txt; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } sc[j].classList.toggle('on', t.score != null && o.score != null && t.score > o.score); });
+      const d = `${esc(g.detail)}`; if (st.innerHTML !== `<span class="dot"></span>${d}`) st.innerHTML = `<span class="dot"></span>${d}`;
     });
     if ($live.hidden) $live.hidden = false;
-    document.documentElement.classList.add('lbon');
     if (V.edges) V.edges();
   }
-  document.addEventListener('rivl:rendered', () => { if ($live && $live.hidden) document.documentElement.classList.remove('lbon'); });
   /* the strip lives under the pills; an entity screen's top bar offers a slot of its own and the strip moves there */
   function placeLive() {
     if (!$live) return;
-    const home = document.getElementById('lbhome');
+    const slot = $main.querySelector('.lb-slot');
+    const home = slot || document.getElementById('lbhome');
     if (home && $live.parentNode !== home) home.appendChild($live);
   }
   new MutationObserver(() => { if (!document.contains($live)) placeLive(); else if (!$live.closest('.lb-slot') && $main.querySelector('.lb-slot')) placeLive(); }).observe($main, { childList: true, subtree: true });
-  document.addEventListener('rivl:rendered', () => { placeLive(); V.whenIdle(paintLive); });
-  /* once Home has painted, the other leagues warm up one at a time at idle (their first-paint data only), each at most once
-     every few minutes, so the first swipe into any league lands on numbers, not a skeleton */
-  const warmed = {}; document.addEventListener('rivl:rendered', () => { const r = current; if (!r || r.name !== 'home' || !V.homeWarm) return;
-    const todo = ORDER.filter(k => k !== r.lk && !(warmed[k] && Date.now() - warmed[k] < 300000));
-    const next = () => { const k = todo.shift(); if (!k) return; warmed[k] = Date.now(); V.homeWarm(k).catch(() => { }).then(() => V.whenIdle(next)); };
-    V.whenIdle(next); });
+  document.addEventListener('rivl:rendered', () => { placeLive(); paintLive(); });
   document.addEventListener('rivl:polled', paintLive);
   V.paintLive = paintLive;
-  /* Spotify's open and close. A tap on the live bar: the card grows into the full screen in the game's colours, the game
-     page arrives under it and the colour gives way to it. Back (the arrow, or a swipe down on the hero): the page drops
-     away downward and the screen you came from is already there, at the same scroll, with the bar back in its place. */
-  (() => {
-    let trip = null;   // where the game was opened from: the screen, its scroll, the bar's place
-    const de = document.documentElement;
-    const deep = c => `color-mix(in srgb,${c} 74%,#000)`;
-    const EASE = 'cubic-bezier(.2,.9,.25,1)';   // Spotify's sheet: quick off the mark, a long soft landing
-    // the game's data is asked for the moment a finger lands on the bar, so the page is ready by the time the sheet is up
-    const warm = a => { try { const [lk, id] = a.dataset.lid.split(':'); const L = LEAGUES[lk]; if (L && HW.jSoft) HW.jSoft(`${HW.API(L)}/summary?event=${encodeURIComponent(id)}`, 60000); } catch { } };
-    document.getElementById('livebar').addEventListener('pointerdown', e => { const a = e.target.closest('a.lg'); if (a) warm(a); }, { passive: true });
-    /* open: a sheet in the game's colours slides up from the bar (transform only, so it never stutters), the screen behind
-       dims, the game page lands under the sheet and the sheet lets go of it */
-    document.getElementById('livebar').addEventListener('click', e => {
-      const a = e.target.closest('a.lg'); if (!a || !MOTION()) return; e.preventDefault(); e.stopPropagation(); warm(a);
-      const r = current || route(); const rc = a.getBoundingClientRect(); const ca = a.style.getPropertyValue('--ca'), ch = a.style.getPropertyValue('--ch');
-      trip = { hash: location.hash || '#home', lk: r.lk, name: r.name, y: window.scrollY };
-      const H = window.innerHeight;
-      const dim = document.createElement('div'); dim.className = 'bardim'; document.body.appendChild(dim);
-      const cv = document.createElement('div'); cv.className = 'barexp';
-      cv.style.cssText = `transform:translate3d(0,${rc.top}px,0);border-radius:12px 12px 0 0;background:linear-gradient(112deg,${deep(ca)} 0%,${deep(ca)} 34%,${deep(ch)} 76%)`;
-      document.body.appendChild(cv); void cv.offsetWidth;
-      cv.style.transition = `transform 380ms ${EASE},border-radius 380ms ${EASE}`; dim.style.transition = `opacity 380ms ${EASE}`;
-      cv.style.transform = 'translate3d(0,0,0)'; cv.style.borderRadius = '0'; dim.style.opacity = '1';
-      setTimeout(() => { render.swipe = true; render.tapAt = performance.now(); location.hash = a.getAttribute('href'); dim.remove();
-        const t0 = performance.now(); const wait = () => { const hero = document.getElementById('gxhero'); if ((hero && $main.dataset.real === '1') || performance.now() - t0 > 3000) { cv.style.transition = 'opacity 160ms linear'; cv.style.opacity = '0'; setTimeout(() => cv.remove(), 180); } else requestAnimationFrame(wait); }; requestAnimationFrame(wait); }, 380);
-    }, true);
-    /* lift: the screen you came from goes back under the game page, real and at its scroll, before the page moves at all, so a
-       drag down shows it the way Spotify shows Home under the player. Undone if the drag is let go short. */
-    let held = null;
-    const lift = () => {
-      if (held) return held; const gp = document.getElementById('gpage'); if (!trip || !gp) return null;
-      const kb = keepTake(trip.name + '/' + trip.lk); if (!kb) return null;
-      const wrap = document.createElement('div'); wrap.className = 'barclose'; document.body.appendChild(wrap);
-      const gs = gp.querySelector('#gxscroll'), st = gs ? gs.scrollTop : 0; const kids = [...$main.childNodes]; const gy = window.scrollY;
-      gp.style.transform = ''; wrap.appendChild(gp); if (gs) gs.scrollTop = st;
-      moveNodes(kb, $main, kb._st); kb.remove(); $main.dataset.real = '1'; if (trip.name === 'home') $main.dataset.hlk = trip.lk; stripsTo($main, stripMem.get(trip.name + '/' + trip.lk)); de.classList.remove('entity', 'gxon'); document.getElementById('top').hidden = false; window.scrollTo(0, trip.y);
-      held = { wrap, gp, kids, gs, st, gy, t: trip }; return held;
-    };
-    const unlift = () => {   // let go short: everything goes back exactly as it was
-      const h = held; held = null; if (!h) return;
-      if ($main.childNodes.length) keepPut(h.t.name + '/' + h.t.lk, $main);   // the screen underneath goes back to its parking place
-      $main.replaceChildren(...h.kids.map(n => n === h.gp ? h.gp : n)); if (!h.gp.isConnected) $main.appendChild(h.gp);
-      de.classList.add('entity', 'gxon'); document.getElementById('top').hidden = true; window.scrollTo(0, h.gy); if (h.gs) h.gs.scrollTop = h.st; h.wrap.remove();
-    };
-    const close = (dy0 = 0, v0 = 0) => {
-      const h = lift();
-      if (!h) { const gp = document.getElementById('gpage'); if (!trip || !gp) return false; trip = null; history.back(); return true; }
-      held = null; const t = h.t; trip = null; const H = window.innerHeight; const wrap = h.wrap;
-      wrap.style.transform = `translate3d(0,${dy0}px,0)`;
-      render.swipe = true; render.light = true; render.tapAt = performance.now(); $main.dataset.hlk = t.lk;   // the screen is already in place: no re-render, the data check waits for idle
-      history.back();
-      const ms = Math.round(Math.max(180, Math.min(340, v0 > .3 ? (H - dy0) / v0 : 320)));   // a flick keeps its speed
-      requestAnimationFrame(() => { window.scrollTo(0, t.y); wrap.style.transition = `transform ${ms}ms ${v0 > .3 ? 'cubic-bezier(.25,.6,.4,1)' : EASE}`; wrap.style.transform = `translate3d(0,${H}px,0)`; setTimeout(() => wrap.remove(), ms + 30); });
-      requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, t.y)));
-      return true; };
-    V.barTrip = () => trip; V.barClose = close; V.barHeld = () => !!held;
-    window.addEventListener('hashchange', () => { if (trip && !/^#game\//.test(location.hash)) trip = null; });
-    // a swipe down on the hero of a game opened from the bar: the page follows the finger, the screen you came from under it
-    let y0 = null, dy = 0, vy = 0, ly = 0, lt = 0;
-    document.addEventListener('touchstart', e => { const gp = document.getElementById('gpage'); y0 = null; if (!trip || !gp || e.touches.length > 1) return; const sc = document.getElementById('gxscroll'); if (sc && sc.scrollTop > 2) return; if (!e.target.closest('#gxhero, .gxbar, .gxspace')) return; y0 = e.touches[0].clientY; dy = 0; vy = 0; ly = y0; lt = performance.now(); }, { passive: true });
-    const onMove = e => { if (y0 == null) return; const y = e.touches[0].clientY; dy = Math.max(0, y - y0); const now = performance.now(); if (now > lt) vy = vy * .5 + .5 * (y - ly) / (now - lt); ly = y; lt = now;
-      if (dy > 4) { e.preventDefault(); const h = held || lift(); const el = h ? h.wrap : document.getElementById('gpage'); if (el) { el.style.transition = 'none'; el.style.transform = `translate3d(0,${dy}px,0)`; } } };
-    /* a listener that can stop scrolling makes every scroll wait on it, so it is only attached while a game opened from the bar is on screen */
-    let hooked = false; const hook = on => { if (on === hooked) return; hooked = on; if (on) document.addEventListener('touchmove', onMove, { passive: false }); else document.removeEventListener('touchmove', onMove, { passive: false }); };
-    window.addEventListener('hashchange', () => hook(!!trip && /^#game\//.test(location.hash)));
-    const end = () => { if (y0 == null) return; y0 = null;
-      if (dy > 120 || (vy > .5 && dy > 20)) { close(dy, vy); return; }
-      const h = held; const el = h ? h.wrap : document.getElementById('gpage'); if (!el) return;
-      el.style.transition = `transform 260ms ${EASE}`; el.style.transform = 'translate3d(0,0,0)';
-      setTimeout(() => { el.style.transition = ''; el.style.transform = ''; if (h) unlift(); }, 270); };
-    document.addEventListener('touchend', end); document.addEventListener('touchcancel', end);
-  })();
   document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
-  /* the performance log: hold the Settings title for a moment. Copy puts it on the clipboard for Ray. */
-  (() => { let pt = 0; const open = () => { if (!HW.perf) return; const txt = HW.perf.text(); openPanel(`<div class="grab"></div><h2 style="margin:0 0 10px">Performance log</h2><p class="legend" style="margin:0 0 10px">Kept on this phone only. Long tasks, dropped frames during gestures, slow jobs.</p><div style="display:flex;gap:8px;margin:0 0 12px"><button class="btn" data-act="perfcopy">Copy</button><button class="btn" data-act="perfreset">Reset</button></div><pre class="perfpre" style="font:11px/1.4 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word;color:var(--ink-2);margin:0">${esc(txt)}</pre>`, { full: true }); };
-    document.addEventListener('click', e => { if (e.target.closest('[data-act="perfopen"]')) { e.preventDefault(); open(); } });
-    document.addEventListener('click', e => { const a = e.target.closest('[data-act="perfcopy"],[data-act="perfreset"]'); if (!a) return; e.preventDefault(); if (a.dataset.act === 'perfreset') { HW.perf.reset(); closePanel(); toast('Log cleared'); return; } try { navigator.clipboard.writeText(HW.perf.text()).then(() => toast('Copied')); } catch { toast("Couldn't copy"); } });
-  })();
   /* long-pressing a name or a card is not a link to share: no context menu on the app's own controls */
   document.addEventListener('contextmenu', e => { if (!e.target.closest('.reader .body, input, textarea')) e.preventDefault(); });
 
   /* ---------- delegated actions ---------- */
-  function toast(msg) { $toast.textContent = msg; $toast.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => $toast.classList.remove('on'), Math.min(4000, 900 + String(msg).length * 30)); }   // short: a follow note is gone in about a second and a half   // a sentence needs longer on screen than a word
+  function toast(msg) { $toast.textContent = msg; $toast.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => $toast.classList.remove('on'), Math.min(9000, 1800 + String(msg).length * 55)); }   // a sentence needs longer on screen than a word
   V.toast = toast; V.rerender = () => render(); V.route = () => current;
   V.refreshAll = async () => { try { HW.cache.clear(); } catch { } await render(); poll(); };
-  /* your icon, top left (it replaced the settings gear): your own photo when you've added one, otherwise your jersey in your
-     team's colours with your number. Tapping it opens your profile and settings. */
-  window.RIVL_avatar = () => {
-    const photo = HW.store.get('v5:avatar', ''); if (photo) return `<img class="avimg" src="${esc(photo)}" alt="">`;
-    const j = HW.store.get('v5:jlook', null) || { main: '#1D9BF0', trim: '#FFFFFF', ink: '#FFFFFF', num: '' };
-    const nm = String(HW.store.get('v5:name', '') || '').trim(); const ch = (nm.charAt(0) || '').toUpperCase();
-    // no photo: your first initial (or your number) in your team's colour, ringed in its second colour, so it reads as you
-    return `<span class="avini" style="background:${esc(j.main)};color:${esc(j.ink)};box-shadow:inset 0 0 0 2px ${esc(j.trim)}">${esc(ch || String(j.num || '') || '+')}</span>`;
-  };
-  window.RIVL_paintAv = () => { const b = document.getElementById('avbtn'); if (!b) return; b.innerHTML = window.RIVL_avatar(); const j = HW.store.get('v5:jlook', null); b.style.setProperty('--avc', j && j.main || '#1D9BF0'); };
-  window.RIVL_paintAv();
-  /* tapping the league you're already on, like tapping X's tab again: back to that screen's start, at the top */
-  $pills.addEventListener('click', e => { const a = e.target.closest('.pill.on'); if (!a) return; e.preventDefault(); document.dispatchEvent(new CustomEvent('rivl:retap', { detail: a.dataset.lk })); window.scrollTo({ top: 0, behavior: 'smooth' }); });
-  /* the side panel, like X's: your icon opens it, or drag the page to the right from anywhere. It follows your finger:
-     the panel slides in from the left, the page is pushed along to the right and dims, and letting go settles it open or
-     shut on the same curve. Your photo and name open your profile; the list holds what Settings holds. */
-  (() => {
-    const btn = document.getElementById('avbtn'); if (!btn) return;
-    const I = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
-    const ICO = { me: I('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>'), teams: I('<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'),
-      players: I('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.7c2 .7 3.5 2.4 3.5 5.3"/>'), bell: I('<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>'),
-      tv: I('<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/>'),
-      sun: I('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'), moon: I('<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>') };
-    const EASE = 'cubic-bezier(.32,.72,0,1)';
-    let el = null, panel = null, bg = null, W = 300, p = 0;
-    const pushed = () => ['main', 'hdr', 'tabs', 'lbhome'].map(id => document.getElementById(id)).filter(Boolean);
-    const build = () => {
-      if (el) return; const S = HW.store, name = S.get('v5:name', '') || 'Add your name', F = HW.favs.all(), nT = Object.values(F).reduce((a, x) => a + (x || []).length, 0), nP = V.fplayers ? V.fplayers.all().length : 0;
-      const theme = S.get('v5:theme', 'system'), dark = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
-      el = document.createElement('div'); el.className = 'xdrawer';
-      el.innerHTML = `<div class="xdbg"></div><nav class="xdp" aria-label="You and settings">
-        <div class="xdtop"><a class="xdav avbtn" href="#settings/profile" aria-label="Your profile">${window.RIVL_avatar()}</a><button class="xdtheme" data-xd="theme" data-dark="${dark ? 1 : 0}" aria-label="Switch to ${dark ? 'light' : 'dark'} mode">${dark ? ICO.sun : ICO.moon}</button></div>
-        <a class="xdme" href="#settings/profile"><b>${esc(name)}</b><span>Your profile</span></a>
-        <div class="xdst"><a href="#teams"><b>${nT}</b> Teams</a><a href="#players"><b>${nP}</b> Players</a></div>
-        <div class="xdnav"><a href="#settings/profile">${ICO.me}Profile</a><a href="#teams">${ICO.teams}Teams</a><a href="#players">${ICO.players}Players</a><a href="#settings/watch">${ICO.tv}Where you watch</a></div>
-        <div class="xdsub"><a href="#settings/home">Display</a><a href="#settings/sync">Sync</a><a href="#settings/app">App</a><a href="#settings">All settings</a><a href="#settings/about">About and sources</a></div></nav>`;
-      document.body.appendChild(el); panel = el.querySelector('.xdp'); bg = el.querySelector('.xdbg'); W = panel.offsetWidth || 300;
-      const av = el.querySelector('.xdav'); const j = HW.store.get('v5:jlook', null); av.style.setProperty('--avc', j && j.main || '#1D9BF0');
-      el.addEventListener('click', e => { const t = e.target.closest('[data-xd="theme"]'); if (t) { e.preventDefault(); HW.store.set('v5:theme', t.dataset.dark === '1' ? 'light' : 'dark'); applyTheme(); go(0); return; } if (e.target.closest('a') || e.target === bg) go(0); });
-      // dragging the open panel back to the left
-      let x0 = null, p0 = 1; panel.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; p0 = p; }, { passive: true });
-      panel.addEventListener('touchmove', e => { if (x0 == null) return; set(Math.max(0, Math.min(1, p0 + (e.touches[0].clientX - x0) / W)), false); }, { passive: true });
-      panel.addEventListener('touchend', () => { if (x0 == null) return; x0 = null; go(p > .6 ? 1 : 0); });
-      bg.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; p0 = p; }, { passive: true });
-      bg.addEventListener('touchmove', e => { if (x0 == null) return; set(Math.max(0, Math.min(1, p0 + (e.touches[0].clientX - x0) / W)), false); }, { passive: true });
-      bg.addEventListener('touchend', () => { if (x0 == null) return; const moved = Math.abs(p - p0) > .02; x0 = null; go(moved ? (p > .6 ? 1 : 0) : 0); });
-    };
-    // p: 0 shut, 1 open. The panel, the dimming and the pushed page all move from this one number.
-    const set = (v, ease) => { p = v; const tr = ease ? `transform .34s ${EASE}, translate .34s ${EASE}, opacity .34s ${EASE}` : 'none';
-      panel.style.transition = tr; bg.style.transition = tr; panel.style.transform = `translate3d(${(p - 1) * 100}%,0,0)`; bg.style.opacity = String(p * .9);
-      el.style.pointerEvents = p > 0 ? 'auto' : 'none';
-      pushed().forEach(n => { n.style.transition = ease ? `translate .34s ${EASE}` : 'none'; n.style.translate = p ? `${(p * W * .82).toFixed(1)}px 0` : ''; }); };
-    const go = v => { if (!el) build(); set(v, true); if (!v) setTimeout(() => { if (p === 0 && el) { el.remove(); el = null; pushed().forEach(n => { n.style.translate = ''; }); } }, 360); };
-    btn.addEventListener('click', e => { e.preventDefault(); build(); requestAnimationFrame(() => go(1)); });
-    window.addEventListener('hashchange', () => { if (el) go(0); });
-    /* drag the page to the right, from anywhere on it, to pull the panel out (not on a strip that scrolls sideways, and only
-       on the screens that show your icon) */
-    const sideScroller = t => { for (let n = t; n && n !== document.body; n = n.parentElement) { if (n.scrollWidth > n.clientWidth + 2) { const ox = getComputedStyle(n).overflowX; if (ox === 'auto' || ox === 'scroll') return true; } if (n.matches && n.matches('input,textarea,[type=range]')) return true; } return false; };
-    /* one sideways drag, two jobs, the way X does it. The page follows the finger and the next league is already there
-       beside it, sliding in attached (the last copy of that league's screen, or its skeleton the first time); the two
-       league names cross-fade with the finger and the line under them travels and stretches 1:1. Past a quarter of the
-       screen, or with a flick, it carries on; short of that both spring back. On the first league a drag to the right
-       pulls out your profile instead. A tap on a league runs the same slide. */
-    let sx = null, sy = 0, mode = '', vx = 0, lx = 0, lt = 0, W2 = window.innerWidth, from = null, to = null, curX = 0, peek = null, peekFor = null, peekKey = '';
-    const $m = document.getElementById('main');
-    const idle = f => (window.requestIdleCallback || (g => setTimeout(g, 120)))(f, { timeout: 800 });
-    /* the league beside you is the real page you last saw there, parked offscreen; a drag borrows it and slides it in.
-       Nothing is copied, built or parsed during the gesture. A league never seen yet slides in as a skeleton. */
-    const prebuild = () => { };   // nothing to build: kept pages are the pages
-    V._dbg = () => ({ swiping: !!render.swiping, gliding: !!render.gliding, mode, sx, peek: !!peek, peekKey, touching: V.gesturing() });
-    document.addEventListener('rivl:rendered', () => { if (peek && !render.swiping) dropPeek(); });
-    const pillOf = k => $pills.querySelector(`.pill[data-lk="${k}"]`);
-    const geo = k => { const pl = pillOf(k), sp = pl && pl.querySelector('span'); return sp ? { x: pl.offsetLeft + sp.offsetLeft - 10, w: sp.offsetWidth + 20 } : null; };
-    const track = t => {   // t: 0 at the league you are on, 1 at the one the finger is heading to
-      const a = geo(from), b = to && geo(to); if (!a) return;
-      if (!b) { $pills.style.setProperty('--ux', (a.x + t * 14).toFixed(1) + 'px'); return; }
-      $pills.style.setProperty('--ux', (a.x + (b.x - a.x) * t).toFixed(1) + 'px'); $pills.style.setProperty('--uw', (a.w + (b.w - a.w) * t).toFixed(1) + 'px');
-      const pa = pillOf(from), pb = pillOf(to); if (pa) pa.style.setProperty('--on', (1 - t).toFixed(3)); if (pb) pb.style.setProperty('--on', t.toFixed(3)); };
-    const clearTrack = () => { $pills.classList.remove('dragging'); $pills.querySelectorAll('.pill').forEach(p => p.style.removeProperty('--on')); };
-    /* the borrowed page goes back to its parking place (a short drag), or the skeleton is thrown away */
-    const dropPeek = () => { if (!peek) return; if (peekKey) keepPut(peekKey, null, peek); else peek.remove(); peek = null; peekKey = ''; peekFor = null; };
-    const makePeek = k => { if (peek && peekFor === k) return; dropPeek();
-      const r = current || route(); const rc = $m.getBoundingClientRect(); const key = r.name + '/' + k;
-      const box = keepTake(key);
-      if (box) { peek = box; peekKey = key; } else { peek = document.createElement('div'); peek.className = 'xpeek'; peek.innerHTML = V._ && V._.skeleton ? V._.skeleton(1, 'card') + V._.skeleton(4, 'row') : ''; document.body.appendChild(peek); peekKey = ''; }
-      peekFor = k;
-      const mainTop = rc.top + window.scrollY, ny = scrollMem.get(key) || 0;   // where the next league will sit once it lands: its own scroll, the top bar drawn over it as on the real page
-      peek.className = 'xpeek'; peek.style.cssText = `position:fixed;left:${rc.left}px;width:${rc.width}px;top:${Math.max(0, mainTop - ny)}px;bottom:0;overflow:hidden;pointer-events:none;z-index:1;margin:0;will-change:transform;contain:layout paint;transform:translate3d(${rc.width}px,0,0)`;
-      peek.scrollTop = Math.max(0, ny - mainTop); };   // the next league shows where you left it, or its top
-    /* a critically damped spring, the physics X and iOS use: it starts at the finger's own speed (px/ms) and settles on
-       the target without overshoot, so letting go never changes the speed the page was moving at */
-    let springRaf = 0;
-    const spring = (x0, v0, target, onStep, onDone) => { cancelAnimationFrame(springRaf); const d = target - x0, sgn = Math.sign(d) || 1, sp = Math.max(0, v0 * sgn);
-      const T = Math.max(170, Math.min(300, Math.abs(d) / Math.max(sp, .6) * 1.25)), t0 = performance.now();
-      const step = now => { const u = Math.min(1, (now - t0) / T), u2 = u * u, u3 = u2 * u;
-        const x = (2 * u3 - 3 * u2 + 1) * x0 + (u3 - 2 * u2 + u) * T * v0 + (-2 * u3 + 3 * u2) * target;   // a cubic that starts at the finger's place and speed, ends still on the target
-        if (u >= 1) { onStep(target); onDone && onDone(); return; } onStep(x); springRaf = requestAnimationFrame(step); };
-      springRaf = requestAnimationFrame(step); };
-    const place = x => { $m.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`; if (peek) peek.style.transform = `translate3d(${(x + (x < 0 ? W2 : -W2)).toFixed(1)}px,0,0)`; };
-    const springBack = (x0, v0) => { $m.style.transition = 'none'; if (peek) peek.style.transition = 'none'; $pills.classList.remove('dragging'); const pk = peek;
-      spring(x0 || 0, v0 || 0, 0, x => { $m.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`; if (pk) pk.style.transform = `translate3d(${(x + (x0 < 0 ? W2 : -W2)).toFixed(2)}px,0,0)`; track(Math.min(1, Math.abs(x) / W2)); },
-        () => { $m.style.transform = ''; $m.style.willChange = ''; dropPeek(); clearTrack(); const r = current || route(); paintPills(r.lk, true); }); };
-    /* carry on to league k: the page leaves, the next slides fully in, then the real nodes change places */
-    const slideTo = (k, dirL, ms, fromX = null, v0 = 0) => { const r0 = current || route(); from = from || r0.lk; to = k; makePeek(k); W2 = window.innerWidth;
-      render.swipe = true; render.swiping = true; render.gliding = true; render.tapAt = performance.now(); peek.style.visibility = '';
-      const finish = () => { requestAnimationFrame(() => requestAnimationFrame(() => { render.swiping = false; clearTrack(); $pills.classList.remove('gliding'); render.gliding = false; if (later.length && !ricId) ricId = ric(V.flushIdle, { timeout: 1200 }); })); };
-      const land = () => J('land', () => { $m.style.transition = 'none'; $m.style.transform = ''; $m.style.willChange = '';
-        const fromKey = r0.name + '/' + r0.lk, toKey = r0.name + '/' + k;
-        scrollMem.set(fromKey, window.scrollY); const ny = scrollMem.get(toKey) || 0; render.memDone = true; render.keepHdr = ny > 4; render.hdrHold = true; if (ny <= 4 && V.showTop) V.showTop(); setTimeout(() => { render.hdrHold = false; }, 400);
-        if (peekKey) {
-          /* the real nodes change places: the page you were on is parked, the one that slid in becomes the page */
-          if ($m.dataset.real === '1') keepPut(fromKey, $m);
-          moveNodes(peek, $m, peek._st); peek.remove(); peek = null; peekKey = ''; peekFor = null; $m.dataset.real = '1';
-          window.scrollTo(0, ny); if (r0.name === 'home') $m.dataset.hlk = k;
-          render.light = true; location.hash = '#' + k; finish(); return; }
-        // a league never seen: the skeleton stays up while the real screen paints under it
-        $m.style.visibility = 'hidden'; location.hash = '#' + k; const done = () => { requestAnimationFrame(() => { $m.style.visibility = ''; dropPeek(); render.swiping = false; clearTrack(); $pills.classList.remove('gliding'); render.gliding = false; if (later.length && !ricId) ricId = ric(V.flushIdle, { timeout: 1200 }); }); }; const t0 = performance.now(); const wait = () => { if ($m.dataset.real === '1' || performance.now() - t0 > 2500) done(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); });
-      if (fromX != null) { $m.style.transition = 'none'; peek.style.transition = 'none'; $pills.classList.remove('dragging');
-        spring(fromX, v0, dirL ? -W2 : W2, x => { $m.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`; peek.style.transform = `translate3d(${(x + (dirL ? W2 : -W2)).toFixed(2)}px,0,0)`; track(Math.min(1, Math.abs(x) / W2)); }, land); return; }
-      const T = `transform ${ms}ms cubic-bezier(.25,.8,.25,1)`; if (!dirL) peek.style.transform = `translate3d(${-W2}px,0,0)`; void peek.offsetWidth; $m.style.transition = T; peek.style.transition = T; $pills.classList.remove('dragging'); $pills.classList.add('gliding');
-      requestAnimationFrame(() => { $m.style.transform = `translate3d(${dirL ? -W2 : W2}px,0,0)`; peek.style.transform = 'translate3d(0,0,0)'; track(1); });
-      setTimeout(land, ms); };
-    document.addEventListener('touchstart', e => { if (el || render.swiping || document.getElementById('top').hidden || document.documentElement.classList.contains('sheet-open') || e.touches.length > 1) { sx = null; return; }
-      const t = e.touches[0]; if (sideScroller(e.target)) { sx = null; return; } sx = t.clientX; sy = t.clientY; mode = ''; W2 = window.innerWidth; }, { passive: true });
-    document.addEventListener('touchmove', e => { if (sx == null) return; let t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
-      if (!mode) { if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { sx = null; return; } if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
-        const r = current || route(); from = r.lk; const i = ORDER.indexOf(from);
-        if (dx > 0 && i <= 0) { mode = 'drawer'; build(); }
-        else { mode = 'league'; to = null; $pills.classList.add('dragging'); $m.classList.remove('fade', 'enter'); delete $m.dataset.dir; $m.style.transition = 'none'; $m.style.willChange = 'transform'; }
-        lx = t.clientX; lt = performance.now(); vx = 0; sx = t.clientX - Math.sign(dx); dx = t.clientX - sx; }   // the drag starts from where it was recognised, so nothing jumps to catch up
-      const now = performance.now(); if (now > lt) { vx = vx * .5 + .5 * (t.clientX - lx) / (now - lt); } lx = t.clientX; lt = now;
-      if (mode === 'drawer') { set(Math.max(0, Math.min(1, dx / W)), false); return; }
-      const i = ORDER.indexOf(from), want = ORDER[i + (dx < 0 ? 1 : -1)] || null;
-      if (want !== to) { to = want; if (to) makePeek(to); else dropPeek(); if (peek) { peek.style.transition = 'none'; peek.style.visibility = ''; } }
-      const x = to ? dx : dx / 4; curX = x; place(x); track(to ? Math.min(1, Math.abs(dx) / W2) : (dx < 0 ? 1 : -1) * Math.min(1, Math.abs(dx) / W2) * .5); }, { passive: true });   // passive: the phone scrolls on its own and never waits on this (touch-action in the CSS keeps a sideways drag from scrolling)
-    document.addEventListener('touchend', () => { if (!mode) { sx = null; return; } const m0 = mode; mode = ''; sx = null;
-      if (m0 === 'drawer') { go(vx > .35 ? 1 : vx < -.35 ? 0 : (p > .4 ? 1 : 0)); return; }
-      const cur = curX; curX = 0; const dirL = cur < 0;
-      const commit = to && (Math.abs(cur) > W2 * .25 || (dirL ? vx < -.3 : vx > .3));
-      if (!commit) { springBack(cur, vx); return; }
-      // the rest of the way starts at exactly the finger's speed and settles, so release is seamless
-      slideTo(to, dirL, 0, cur, vx); });
-    document.addEventListener('touchcancel', () => { if (mode === 'league') springBack(curX, 0); mode = ''; sx = null; });
-    /* a tap on the league you are already on, or the tab you are already on, glides back to the top the way X does:
-       quick off the mark, a long soft landing, the top bar coming back with it */
-    let topRaf = 0;
-    const toTop = () => { cancelAnimationFrame(topRaf); const y0 = window.scrollY; if (V.showTop) V.showTop(); if (y0 <= 0) return;
-      if (!MOTION()) { window.scrollTo(0, 0); return; }
-      const T = Math.min(560, Math.max(280, 220 + y0 * .12)), t0 = performance.now(); const ease = u => 1 - Math.pow(1 - u, 4);
-      const stop = () => { cancelAnimationFrame(topRaf); window.removeEventListener('touchstart', stop); };   // a finger on the screen stops it where it is
-      window.addEventListener('touchstart', stop, { passive: true, once: true });
-      const step = now => { const u = Math.min(1, (now - t0) / T); window.scrollTo(0, Math.round(y0 * (1 - ease(u)))); if (u < 1) topRaf = requestAnimationFrame(step); else stop(); };
-      topRaf = requestAnimationFrame(step); };
-    V.toTop = toTop;
-    $pills.addEventListener('click', e => { const a = e.target.closest('.pill.on'); if (!a) return; e.preventDefault(); e.stopPropagation(); toTop(); }, true);
-    document.getElementById('tabs').addEventListener('click', e => { const a = e.target.closest('a.tab.on, .tab.on'); if (!a) return; const r = current || route(); if (!r || !SCREENS.includes(r.name) && r.name !== 'search') return; if (window.scrollY > 0) { e.preventDefault(); e.stopPropagation(); toTop(); } }, true);
-    /* a tap on another league: the same slide, from the side that league sits on */
-    $pills.addEventListener('click', e => { const a = e.target.closest('.pill:not(.on)'); if (!a || render.swiping || !MOTION()) return; const r = current || route(); if (!r || !SCREENS.includes(r.name)) return;
-      e.preventDefault(); from = r.lk; slideTo(a.dataset.lk, ORDER.indexOf(a.dataset.lk) > ORDER.indexOf(r.lk), 300); }, true);
-  })();
-  /* the top (your icon, the R, the leagues) behaves like X's: it slides up out of the way as you scroll down, following
-     your finger, and slides back down the moment you scroll up. When you stop halfway it settles open or closed. */
-  (() => {
-    const hdr = document.getElementById('hdr'); if (!hdr) return; const phone = matchMedia('(max-width:1039px)');
-    let off = 0, lastY = window.scrollY, idle = 0;
-    let hH = 0; const hdrH = () => hH || (hH = hdr.offsetHeight); window.addEventListener('resize', () => { hH = 0; }); document.addEventListener('rivl:rendered', () => { hH = 0; });   // measured once, not on every scroll event
-    const bar = document.getElementById('tabs');
-    // the bottom bar moves with the top, the same share of its own height, so both leave and come back together
-    const set = (v, ease) => { off = v; const tr = ease ? 'transform .22s cubic-bezier(.3,.7,.2,1)' : 'none'; hdr.style.transition = tr; hdr.style.transform = off ? `translate3d(0,${-off}px,0)` : '';
-      /* the bottom bar and the live bar above it stay put while you scroll; only the top slides away */ };
-    window.addEventListener('scroll', () => {
-      if (!phone.matches) { if (off) set(0); return; }
-      if (render.hdrHold || document.querySelector('#bsheet.on, .xpsheet.in, .xdrawer.in')) { lastY = window.scrollY; return; }   // a swipe landing at the league's own scroll is not you scrolling   // a sheet or the side panel is open: the bars stay put
-      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) { lastY = window.scrollY; return; }   // the bottom bounce never counts as scrolling up
-      const y = Math.max(0, window.scrollY), H = hdrH(), dy = y - lastY; lastY = y;
-      set(Math.min(H, Math.max(0, Math.min(off + dy, y))), false);
-      clearTimeout(idle); idle = setTimeout(() => { const h = hdrH(); if (off > 0 && off < h) set(off > h / 2 && window.scrollY > h ? h : 0, true); }, 140);
-    }, { passive: true });
-    // a new screen always starts with the top showing
-    V.showTop = () => set(0, true);
-    let hk = ''; document.addEventListener('rivl:rendered', () => { lastY = window.scrollY; const r = V.route && V.route(); const k = r ? r.name + '/' + (r.args || []).join('/') : ''; const keep = render.keepHdr; render.keepHdr = false; if (k === hk || keep) { hk = k; return; } hk = k; set(0, true); });   // a refresh of the same screen, or a league swipe, leaves the top where it is
-  })();
-  const flwHTML = (on, what) => window.RIVL_flw(on, what);
   document.addEventListener('click', e => {
-    render.tapAt = performance.now();   // a move that follows a tap is ours to animate; one without a tap was the phone's own swipe
     const back = e.target.closest('[data-act="back"]');
-    if (back) { if (V.barTrip && V.barTrip() && /^#game\//.test(location.hash)) { e.preventDefault(); V.barClose(0); return; } if (history.length > 1) { e.preventDefault(); history.back(); } return; }
+    if (back) { if (history.length > 1) { e.preventDefault(); history.back(); } return; }
     const row = e.target.closest('tr.click[data-href]');
     if (row && !e.target.closest('a')) { location.hash = row.dataset.href; return; }
     const act = e.target.closest('[data-act]'); if (!act) return;
@@ -642,11 +259,10 @@
       act.setAttribute('aria-pressed', String(on)); act.classList.toggle('on', on);
       const star = act.classList.contains('star') ? act : act.querySelector('.star'); if (star && on) { star.classList.add('pop'); setTimeout(() => star.classList.remove('pop'), 450); }   // the star pops as it fills, at the tap
       if (on && navigator.vibrate) { try { navigator.vibrate(8); } catch { } }   // a tick under the thumb on phones that can (Android); iOS ignores it
-      if (act.classList.contains('flw')) { act.innerHTML = flwHTML(on, 'player'); act.setAttribute('aria-label', (on ? 'Unfollow ' : 'Follow ') + (snap.name || '')); }
-      else if (act.classList.contains('prow')) { const st = act.querySelector('.star'); if (st) { st.classList.toggle('on', on); st.innerHTML = on ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`; } }   // a setup row: the row is the button, only its star changes
+      if (act.classList.contains('prow')) { const st = act.querySelector('.star'); if (st) { st.classList.toggle('on', on); st.innerHTML = on ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`; } }   // a setup row: the row is the button, only its star changes
       else if (act.classList.contains('star')) { act.innerHTML = on ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`; act.setAttribute('aria-label', (on ? 'Unfollow ' : 'Follow ') + (snap.name || '')); }
       else act.innerHTML = (on ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`) + (on ? 'Following' : 'Follow');
-      if (!act.classList.contains('flw')) toast(on ? `Following ${snap.short || snap.name}` : `Unfollowed ${snap.short || snap.name}`); else { act.classList.remove('pop'); void act.offsetWidth; act.classList.add('pop'); }
+      toast(on ? `Following ${snap.short || snap.name}` : `Unfollowed ${snap.short || snap.name}`);
       $main.dispatchEvent(new CustomEvent('rivl:follow')); $panel.dispatchEvent(new CustomEvent('rivl:follow')); document.dispatchEvent(new CustomEvent('rivl:follow'));
     }
     if (a === 'mix') {
@@ -655,10 +271,6 @@
       $main.querySelectorAll('[data-act="mix"]').forEach(b => { const on = b.dataset.mix === want; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-selected', String(on)); });
       $main.querySelectorAll('[data-mix-panel]').forEach(p => { const on = p.dataset.mixPanel === want; if (on && p.hidden) { p.classList.remove('swap'); void p.offsetWidth; p.classList.add('swap'); } p.hidden = !on; });   // the new panel slides in
     }
-    /* Add to calendar: a plain .ics file the phone opens in its own calendar; no account, nothing sent anywhere */
-    if (a === 'ics') { e.preventDefault(); const st = new Date(act.dataset.start); if (isNaN(st)) return; const en = new Date(st.getTime() + 150 * 60000); const f = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-      const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//RIVL//EN', 'BEGIN:VEVENT', `UID:${Date.now()}@rivl`, `DTSTAMP:${f(new Date())}`, `DTSTART:${f(st)}`, `DTEND:${f(en)}`, `SUMMARY:${act.dataset.title}`, act.dataset.loc ? `LOCATION:${act.dataset.loc.replace(/,/g, '\\,')}` : '', `URL:${location.href}`, 'END:VEVENT', 'END:VCALENDAR'].filter(Boolean).join('\r\n');
-      const blob = new Blob([ics], { type: 'text/calendar' }); const url = URL.createObjectURL(blob); const a2 = document.createElement('a'); a2.href = url; a2.download = `${act.dataset.title.replace(/[^\w]+/g, '-')}.ics`; document.body.appendChild(a2); a2.click(); a2.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); return; }
     if (a === 'share') {
       e.preventDefault();
       const url = location.href, title = act.dataset.title || 'RIVL';
@@ -671,6 +283,9 @@
     if (a === 'watch') { e.preventDefault(); const id = act.dataset.id; const mine = HW.myServices(); const on = !mine.includes(id); store.set('watch', on ? [...mine, id] : mine.filter(x => x !== id)); act.classList.toggle('on', on); act.setAttribute('aria-pressed', String(on)); if (navigator.vibrate) navigator.vibrate(8); return; }
     if (a === 'theme') { e.preventDefault(); store.set('v5:theme', act.dataset.theme); applyTheme(); $main.querySelectorAll('[data-act="theme"]').forEach(b => { const on = b.dataset.theme === act.dataset.theme; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); }
     if (a === 'onb-restart') { e.preventDefault(); onbLk = 'nba'; onbWelcome(); }   // from the welcome, as a new person sees it; picks are kept
+    if (a === 'alerts') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; (on ? V.alerts.enable() : V.alerts.disable()).catch(err => { try { store.set('v5:alertsWhy', 'Unexpected: ' + (err && err.message || err)); } catch { } toast('Unexpected: ' + (err && err.message || err)); }).then(() => render()); }
+    if (a === 'alert-pref') { e.preventDefault(); const on = act.getAttribute('aria-checked') !== 'true'; V.alerts.setPref(act.dataset.pref, on); act.setAttribute('aria-checked', String(on)); }
+    if (a === 'alert-test') { e.preventDefault(); V.alerts.test(); }
     if (a === 'sync-up') { e.preventDefault(); V.sync.up().then(code => { toast(`Backed up as ${code}`); render(); }).catch(() => toast("The server didn't answer")); }
     if (a === 'sync-down') { e.preventDefault(); const inp = document.getElementById('syncCode'); const code = inp && inp.value.trim(); if (!code || code.length !== 6) { toast('Enter the six-character code'); return; } V.sync.down(code).then(() => { toast('Restored'); location.hash = '#home'; location.reload(); }).catch(() => toast('No backup under that code')); }
     if (a === 'accent') { e.preventDefault(); store.set('v5:accent', act.dataset.accent); applyAccent(); $main.querySelectorAll('[data-act="accent"]').forEach(b => { const on = b.dataset.accent === act.dataset.accent; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); }
@@ -680,24 +295,14 @@
       act.setAttribute('aria-pressed', String(on)); act.classList.toggle('on', on);
       const star = on ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`;
       // a setup tile keeps its logo, name and record; only its check changes. Stars and the hero button redraw.
-      if (act.classList.contains('flw')) act.innerHTML = flwHTML(on, 'team');
-      else if (!act.classList.contains('onb-team')) act.innerHTML = act.classList.contains('star') ? star : star + (on ? 'Following' : 'Follow');
-      if (!act.classList.contains('flw')) toast(on ? `Following ${act.dataset.name || 'team'}` : `Unfollowed ${act.dataset.name || 'team'}`); else { act.classList.remove('pop'); void act.offsetWidth; act.classList.add('pop'); }
+      if (!act.classList.contains('onb-team')) act.innerHTML = act.classList.contains('star') ? star : star + (on ? 'Following' : 'Follow');
+      toast(on ? `Following ${act.dataset.name || 'team'}` : `Unfollowed ${act.dataset.name || 'team'}`);
       $main.dispatchEvent(new CustomEvent('rivl:fav')); $panel.dispatchEvent(new CustomEvent('rivl:fav')); document.dispatchEvent(new CustomEvent('rivl:fav'));
     }
     if (a === 'expand') { e.preventDefault(); $main.querySelectorAll(`[data-more="${act.dataset.more}"]`).forEach(el => { el.hidden = false; }); act.remove(); }
     if (a === 'stab') { e.preventDefault(); store.set('v5:stab:' + (current ? current.lk : 'nba'), act.dataset.tab); render(); }
     if (a === 'play') { e.preventDefault(); openSheet(act.dataset.vid); }
     if (a === 'injury') { e.preventDefault(); openInjury(act.dataset.key); }
-    if (a === 'bsheet-close') { e.preventDefault(); closeSheet7(); const to = act.getAttribute('href'); if (to && to.startsWith('#')) location.hash = to; }
-    if (a === 'ijtoggle') { e.preventDefault(); const c = act.closest('.ijc'); if (c) { const min = !c.classList.contains('min'); c.classList.toggle('min', min); const m = store.get('ij:min', {}) || {}; if (min) m[c.dataset.pid] = 1; else delete m[c.dataset.pid]; store.set('ij:min', m); } }
-    if (act.dataset.ijopen) { const m = store.get('ij:min', {}) || {}; delete m[act.dataset.ijopen]; store.set('ij:min', m);
-      /* opening a player from an injury report lands on their injury write-up, not the top of the page */
-      const pid = act.dataset.ijopen, t0 = Date.now();
-      const seek = () => { const card = document.querySelector(`#injury[data-pid="${CSS.escape(pid)}"]`), box = document.getElementById('gxscroll');
-        if (card && box) { requestAnimationFrame(() => box.scrollTo({ top: Math.max(0, box.scrollTop + card.getBoundingClientRect().top - 150), behavior: 'smooth' })); return; }
-        if (Date.now() - t0 < 6000) setTimeout(seek, 120); };
-      setTimeout(seek, 250); }
     if (a === 'official') { e.preventDefault(); openOfficial(act.dataset.key); }
     if (a === 'gifold') { e.preventDefault(); V._.foldToggle(act, act.getAttribute('aria-expanded') !== 'true'); return; }
     if (a === 'injcol') { e.preventDefault(); const open = act.getAttribute('aria-expanded') !== 'true'; V._.foldToggle(act, open); const c = store.get('v5:injcol', {}) || {}; if (open) delete c[act.dataset.id]; else c[act.dataset.id] = true; store.set('v5:injcol', c); }
@@ -710,7 +315,6 @@
     if (a === 'onb-done') { e.preventDefault(); store.set('v5:onboarded', true); store.set('v5:lk', 'nba'); store.set('v5:screen', 'home'); closePanel(); if (location.hash !== '#home') location.hash = '#home'; else render(); }
     if (a === 'install') { e.preventDefault(); install(); }
     if (a === 'install-later') { e.preventDefault(); store.set('v5:installDismissed', Date.now()); const b = document.getElementById('installBar'); if (b) b.remove(); }
-    if (a === 'wire-more') { e.preventDefault(); const w = act.closest('.wire2'); const on = !w.classList.contains('open'); w.classList.toggle('open', on); act.setAttribute('aria-expanded', String(on)); act.textContent = on ? 'Less' : '+' + w.querySelectorAll('.w2it').length; return; }
     if (a === 'wire-x') { e.preventDefault(); const ids = (act.dataset.ids || '').split(',').filter(Boolean); const seen = store.get('v5:wire:seen', []) || []; store.set('v5:wire:seen', [...new Set([...ids, ...seen])].slice(0, 80)); const sec = act.closest('section'); if (sec) sec.remove(); return; }
     if (a === 'scmine') { e.preventDefault(); store.set('v5:scmine', !store.get('v5:scmine', false)); render(); return; }
     if (a === 'panel-close') { e.preventDefault(); closePanel(); const to = act.getAttribute('href'); if (to && to.startsWith('#')) location.hash = to; }
@@ -754,10 +358,6 @@
   function openPanel(html, { full = false } = {}) { $panel.querySelector('.panel-in').innerHTML = html; $panel.classList.toggle('full', full); if ($panel.hidden) show($panel); document.body.classList.add('noscroll'); $panel.querySelector('.panel-in').scrollTop = 0; }
   function closePanel() { if ($panel.hidden) return; hide($panel, () => $panel.classList.remove('full')); document.body.classList.remove('noscroll'); }
   $panel.addEventListener('click', e => { if (e.target === $panel && !$panel.classList.contains('full')) closePanel(); });
-  { let y0 = null, dy = 0; const pin = () => $panel.querySelector('.panel-in');
-    $panel.addEventListener('touchstart', e => { const p = pin(); if (!p || !p.querySelector('.grab') || p.scrollTop > 0 || e.touches.length !== 1) { y0 = null; return; } y0 = e.touches[0].clientY; dy = 0; p.style.transition = 'none'; }, { passive: true });
-    $panel.addEventListener('touchmove', e => { if (y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0); const p = pin(); if (p) p.style.transform = dy ? `translateY(${dy}px)` : ''; }, { passive: true });
-    $panel.addEventListener('touchend', () => { if (y0 == null) return; const p = pin(); y0 = null; if (!p) return; p.style.transition = 'transform .22s cubic-bezier(.2,.8,.2,1)'; if (dy > 90) { p.style.transform = 'translateY(100%)'; setTimeout(() => { closePanel(); p.style.transform = ''; p.style.transition = ''; }, 200); } else { p.style.transform = ''; setTimeout(() => { p.style.transition = ''; }, 230); } dy = 0; }, { passive: true }); }
 
   /* the month at a glance: games each day, a mark on the days your teams play; tap a day to go there */
   async function openCalendar(ymd, keep = false) {
@@ -800,22 +400,6 @@
     if (pg.img) { const d = head.querySelector('.hs'); if (d) d.outerHTML = `<span class="hs" style="width:64px;height:64px"><img src="${esc(pg.img)}" alt="" onerror="this.remove()"></span>`; }
     if (pg.extract) box.innerHTML = `<div class="vabout" style="margin-top:12px"><p>${esc(pg.extract.split(/(?<=\.)\s+/).slice(0, 3).join(' '))}</p><a class="src" href="${esc(pg.url)}" target="_blank" rel="noopener">Wikipedia<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></a></div>`;
   }
-  /* v7's bottom sheet, as built there: it rises on a long soft curve while the page behind dims; it follows your finger when you
-     pull it down, the dimming easing off with it; a pull past a third of a hand (or a quick flick) sends it away, less springs back */
-  function openSheet7(html) {
-    let el = document.getElementById('bsheet'); if (!el) { el = document.createElement('div'); el.id = 'bsheet'; el.hidden = true; document.body.appendChild(el); }
-    clearTimeout(openSheet7.t); el.className = 'bottom'; el.innerHTML = '<div class="scrim" data-act="bsheet-close"></div><div class="bpanel">' + html + '</div>';
-    el.hidden = false; requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('on'))); document.body.classList.add('noscroll');
-    const pn = el.querySelector('.bpanel'), sc = el.querySelector('.scrim'); let y0 = 0, t0 = 0, dy = 0, on = false;
-    pn.addEventListener('touchstart', e => { if (pn.scrollTop > 0) return; on = true; y0 = e.touches[0].clientY; t0 = Date.now(); dy = 0; pn.style.transition = 'none'; sc.style.transition = 'none'; }, { passive: true });
-    pn.addEventListener('touchmove', e => { if (!on) return; dy = e.touches[0].clientY - y0; if (dy < 0) dy = dy / 6; pn.style.transform = `translateY(${dy}px)`; sc.style.opacity = String(Math.max(0, 1 - dy / (pn.offsetHeight || 500))); }, { passive: true });
-    pn.addEventListener('touchend', () => { if (!on) return; on = false; const v = dy / Math.max(1, Date.now() - t0);
-      if (dy > 110 || v > .55) { pn.style.transition = 'transform .32s cubic-bezier(.32,.72,0,1)'; pn.style.transform = 'translateY(105%)'; sc.style.transition = 'opacity .32s'; sc.style.opacity = '0'; openSheet7.t = setTimeout(() => { el.classList.remove('on'); document.body.classList.remove('noscroll'); el.hidden = true; el.innerHTML = ''; }, 320); }
-      else { pn.style.transition = ''; pn.style.transform = ''; sc.style.transition = ''; sc.style.opacity = ''; } });
-  }
-  function closeSheet7() { const el = document.getElementById('bsheet'); if (!el || el.hidden) return; const pn = el.querySelector('.bpanel'), sc = el.querySelector('.scrim');
-    if (pn) { pn.style.transition = ''; pn.style.transform = ''; } if (sc) { sc.style.transition = ''; sc.style.opacity = ''; }
-    el.classList.remove('on'); document.body.classList.remove('noscroll'); clearTimeout(openSheet7.t); openSheet7.t = setTimeout(() => { el.hidden = true; el.innerHTML = ''; }, 500); }
   function openInjury(key) {
     const rec = S.injuries && S.injuries[key]; if (!rec) return;
     const { x, team } = rec; const at = x.athlete || {}; const det = x.details || {}; const st = x.status || '';
@@ -824,13 +408,13 @@
     const cls = /out/i.test(st) ? 'out' : /day|quest|doubt/i.test(st) ? 'q' : /prob|avail/i.test(st) ? 'ok' : '';
     const what = [det.type, det.detail && det.detail !== det.type ? det.detail : '', det.side && det.side !== 'Not Specified' ? det.side.toLowerCase() : '', det.location && det.location !== det.type ? det.location : ''].filter(Boolean).join(', ');
     const ret = V._.retInfo(L, det.returnDate);
-    const rows = [['Status', `<span class="tag ${cls}">${esc(String(st || '').replace(/\bDay[- ]To[- ]Day\b/i, 'Day to day').replace(/\bGame Time Decision\b/i, 'Game-time decision'))}</span>`], ['Injury', esc(what || '—')], ['Reported', x.date ? esc(new Date(x.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: HW.TZ })) : ''], ['Expected back', ret ? esc(ret.long) : (/out/i.test(st) ? 'No date given' : '')], ['Fantasy', det.fantasyStatus && det.fantasyStatus.description ? esc(det.fantasyStatus.description) : '']].filter(([, v]) => v);
+    const rows = [['Status', `<span class="tag ${cls}">${esc(V._.statusWord(st))}</span>`], ['Injury', esc(what || '—')], ['Reported', x.date ? esc(new Date(x.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: HW.TZ })) : ''], ['Expected back', ret ? esc(ret.long) : (/out/i.test(st) ? 'No date given' : '')], ['Fantasy', det.fantasyStatus && det.fantasyStatus.description ? esc(det.fantasyStatus.description) : '']].filter(([, v]) => v);
     const note = x.longComment || x.shortComment || '';
-    const ib = V._.injBody(L, x, false); const tl = team.logo || (team.id && HW.S && HW.S.tIdx && HW.S.tIdx[team.id] && HW.S.tIdx[team.id].logo) || '';
-    const who = `${V._.headshot(V._.hsUrl(at) || at.headshot || '', V._.teamColor(team, L), 56, at.displayName)}<span><b>${esc(at.displayName || '')}</b><em>${tl ? V._.imgSized(tl, 48, 48) : ''}${esc(team.short || '')}</em></span>`;
-    openSheet7(`<i class="grab" aria-hidden="true"></i>
-      <div class="ijs st-${ib.cls}">${id ? `<a class="ijwho" href="#player/${lk}/${esc(id)}" data-act="bsheet-close" data-ijopen="${esc(id)}" aria-label="Open ${esc(at.displayName || '')}'s profile">${who}<i class="chev">›</i></a>` : `<div class="ijwho">${who}</div>`}${ib.html}
-      <p class="xnote">${x.date ? `Updated ${esc(new Date(x.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: HW.TZ }))} · ` : ''}From the league injury report, through ESPN</p></div>`);
+    openPanel(`<button class="ib close" data-act="panel-close" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <div class="inj-head">${id ? `<a href="#player/${lk}/${esc(id)}" data-act="panel-close" aria-label="${esc(at.displayName || '')} profile">` : ''}${V._.headshot(V._.hsUrl(at), V._.teamColor(team, L), 64, at.displayName)}${id ? '</a>' : ''}<div><h3>${esc(at.displayName || '')}</h3><p>${esc(team.short || '')}${at.position && at.position.abbreviation ? `, ${esc(at.position.abbreviation)}` : ''}</p></div></div>
+      <table class="tbl kv"><tbody>${rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</tbody></table>
+      ${note ? `<p class="inj-note">${esc(note)}</p>` : ''}
+      <div style="display:flex;gap:8px;margin-top:14px">${id ? `<a class="btn" href="#player/${lk}/${esc(id)}" data-act="panel-close">Open profile</a>` : ''}${team.id ? `<a class="btn ghost" href="#team/${lk}/${esc(team.id)}" data-act="panel-close">${esc(team.short || 'Team')}</a>` : ''}</div>`);
   }
 
   /* ---------- theme: match the phone, or force dark or light ---------- */
@@ -929,7 +513,7 @@
      the only colour in setup is the teams you pick. */
   function onbWelcome() {
     const rows = [['Pick your teams', 'NBA, WNBA and college'], ['Follow players', 'From your teams or anyone'], ['Set up Home', 'Choose what you see first'], ['Add to your home screen', 'Opens full screen, like an app']].slice(0, onbSteps().length);
-    onbOpen(`<div class="onb welcome"><div class="wstage"><div class="onb-logo">${onbMark}</div><h2>Your teams.<br>Nothing else.</h2><p>Scores, stats and news for the teams and players you follow.</p></div><label class="onb-name"><span>What should we call you?</span><input id="onbName" type="text" maxlength="24" autocomplete="given-name" autocapitalize="words" placeholder="Your first name" value="${esc(store.get('v5:name', '') || '')}" oninput="HW.store.set('v5:name', this.value.trim())"></label><div class="wset"><p class="wlab">Set up in ${rows.length === 3 ? 'three' : 'four'} steps</p><ol class="wrows">${rows.map(([t, b], i) => `<li class="${i ? '' : 'on'}"><i>${i + 1}</i><span><b>${t}</b><span>${b}</span></span></li>`).join('')}</ol></div><div class="onb-foot"><div class="onb-bar">${onbSlot}${onbProg(-1)}<button class="btn" data-act="onb-next" data-step="0">Start${arrow}</button></div></div></div>`, -1);
+    onbOpen(`<div class="onb welcome"><div class="wstage"><div class="onb-logo">${onbMark}</div><h2>Your teams.<br>Nothing else.</h2><p>Scores, stats and news for the teams and players you follow.</p></div><div class="wset"><p class="wlab">Set up in ${rows.length === 3 ? 'three' : 'four'} steps</p><ol class="wrows">${rows.map(([t, b], i) => `<li class="${i ? '' : 'on'}"><i>${i + 1}</i><span><b>${t}</b><span>${b}</span></span></li>`).join('')}</ol></div><div class="onb-foot"><div class="onb-bar">${onbSlot}${onbProg(-1)}<button class="btn" data-act="onb-next" data-step="0">Start${arrow}</button></div></div></div>`, -1);
   }
   async function onbStep(n) {
     const lk = lkOf(onbLk); const L = LEAGUES[lk];

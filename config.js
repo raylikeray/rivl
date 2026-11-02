@@ -42,7 +42,7 @@
   // The RIVL worker (worker/worker.js on Cloudflare): ESPN cache proxy, follows sync and push alerts.
   // WORKER stays empty until it is deployed; the app then talks to ESPN directly and offers no alerts or sync.
   const WORKER = 'https://rivl.ray-marshall300.workers.dev';
-  const PUSH = { url: WORKER, key: '' };   // push alerts were removed
+  const PUSH = { url: WORKER, key: 'BNkWE-DFMABpLNkt2Juu-p0pxlD02CMiqI_0_AxwVv3_Q2P5UHWTdFqRcrNzfZFd1EZq0F_UDuBG-JxJ44je6Rs' };
   // ESPN's own bases: what the app reads when there is no worker, and what a proxied call falls back to if the worker ever fails
   const DIRECT = {
     site: 'https://site.api.espn.com/apis/site/v2/sports/',

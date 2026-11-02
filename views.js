@@ -112,7 +112,7 @@
   /* ESPN's art at the size it is drawn: the CDN's combiner scales a logo or headshot on the fly, so a 46px disc doesn't
      pull the 500px original. If the combiner ever refuses, the image falls back to the original it was made from. */
   const sized = (src, w, h) => { const m = /^https:\/\/a\.espncdn\.com(\/i\/[^?]+\.png)(?:\?.*)?$/i.exec(String(src || '')); return m ? `https://a.espncdn.com/combiner/i?img=${m[1]}&w=${w}&h=${h}` : src || ''; };
-  const fallback = then => `onerror="if(this.dataset.o){this.dataset.f=this.src;this.src=this.dataset.o;this.removeAttribute('data-o')}else{${then}}"`;   // data-f: the sized URL that failed, so a later patch never asks for it again
+  const fallback = then => `onerror="if(this.dataset.o){this.src=this.dataset.o;this.removeAttribute('data-o')}else{${then}}"`;
   // `extra` is written before loading="lazy" so a caller can pass loading="eager": with a duplicate attribute the first wins
   const imgSized = (src, w, h, extra = '', then = "this.style.visibility='hidden'") => { const u = sized(src, w, h); return `<img src="${esc(u)}"${u !== src ? ` data-o="${esc(src)}"` : ''} alt="" ${extra} loading="lazy" ${fallback(then)}>`; };
   /* a logo disc; with a team colour it takes a tint and a ring in that colour */
@@ -125,20 +125,14 @@
   /* headshot disc: the photo when the feed has one, the player's initials on the team colour when it doesn't */
   const headshot = (src, color, size = 64, name = '') => `<span class="hs${src ? '' : ' noimg'}${BAD(color) ? ' plain' : ''}" style="${BAD(color) ? '' : `${tcv(hx(color))};`}width:${size}px;height:${size}px;font-size:${Math.round(size * .34)}px"><i>${esc(initials(name))}</i>${src ? imgSized(src, size >= 56 ? 254 : 160, size >= 56 ? 185 : 116, '', "this.parentNode.classList.add('noimg');this.remove()") : ''}</span>`;
   /* what a return date means: ESPN pencils in the next season's opener for anyone out for the year */
-  const statusWord = s => String(s || '').replace(/\bDay[- ]To[- ]Day\b/i, 'DTD').replace(/^Questionable$/i, 'Quest').replace(/\bGame Time Decision\b/i, 'Game-time decision').replace(/\bOut For Season\b/i, 'Out for season');
-  const retInfo = (L, iso) => { if (!iso) return null; const d = new Date(iso); if (isNaN(d)) return null; const exact = dayUTC(iso); const ss = String(L && L.seasonStart || '2026-10-01').slice(5); const now = new Date(); let next = new Date(`${now.getUTCFullYear()}-${ss}T00:00:00Z`); if (next - now < 30 * 864e5) next = new Date(`${now.getUTCFullYear() + 1}-${ss}T00:00:00Z`); const far = d >= next - 14 * 864e5; if (far) return { short: 'for the season', long: `Not before next season (ESPN lists ${exact})`, far: true }; if (d < now - 36e5 * 36) return { short: `no new date (was ${exact})`, long: `Was ${exact}; no new date yet`, far: false, past: true }; return { short: `back around ${exact}`, long: exact, far: false }; };
+  const statusWord = s => String(s || '').replace(/\bDay-To-Day\b/i, 'Day to day').replace(/\bGame Time Decision\b/i, 'Game-time decision').replace(/\bOut For Season\b/i, 'Out for season');
+  const retInfo = (L, iso) => { if (!iso) return null; const d = new Date(iso); if (isNaN(d)) return null; const exact = dayUTC(iso); const ss = String(L && L.seasonStart || '2026-10-01').slice(5); const now = new Date(); let next = new Date(`${now.getUTCFullYear()}-${ss}T00:00:00Z`); if (next - now < 30 * 864e5) next = new Date(`${now.getUTCFullYear() + 1}-${ss}T00:00:00Z`); const far = d >= next - 14 * 864e5; if (far) return { short: 'no return date this season', long: `Not before next season (ESPN lists ${exact})`, far: true }; if (d < now - 36e5 * 36) return { short: `no new date (was ${exact})`, long: `Was ${exact}; no new date yet`, far: false, past: true }; return { short: `back around ${exact}`, long: exact, far: false }; };
   /* what Home shows: every section on by default */
   const PREF_KEYS = ['wire', 'brief', 'live', 'teams', 'players', 'injuries', 'news', 'forecast'];
   const prefs = { all() { const d = {}; PREF_KEYS.forEach(k => d[k] = true); return Object.assign(d, store.get('v5:prefs', {}) || {}); }, get(k) { return this.all()[k] !== false; }, set(k, v) { const a = store.get('v5:prefs', {}) || {}; a[k] = !!v; store.set('v5:prefs', a); } };
   const chev = `<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>`;
   const sec = (title, small, action) => `<div class="sec"><h2>${esc(title)}${small ? `<small>${esc(small)}</small>` : ''}</h2>${action || ''}</div>`;
   const empty = (title, body, cta) => `<div class="empty"><b>${esc(title)}</b>${body || ''}${cta || ''}</div>`;
-  /* lists show five at a time; "Show all" opens the rest in place. Decided while the HTML is written, never after the paint,
-     so a list is born folded instead of painting long and snapping shut a moment later. The choice is kept for the visit. */
-  const capOpen = (() => { try { return JSON.parse(sessionStorage.getItem('rivl:open') || '{}') || {}; } catch { return {}; } })();
-  const capSave = () => { try { sessionStorage.setItem('rivl:open', JSON.stringify(capOpen)); } catch { } };
-  const capList = (cls, rows, key) => { const n = rows.length; if (n <= 5) return `<div class="${cls}">${rows.join('')}</div>`; const on = !!capOpen[key];
-    return `<div class="${cls} capped${on ? ' capopen' : ''}" data-cap="${esc(key)}">${rows.join('')}<button class="capbtn capin" type="button">${on ? 'Show fewer' : `Show all ${n}`}</button></div>`; };
   /* the placeholder while a screen loads: an outline of what is coming — a disc and two lines per row, two discs and a score line for a
      card — faint and breathing, never slabs. The marker lets the screen keep what it has while the next one loads. */
   const skeleton = (n = 3, kind = 'row') => '<!--skel-->' + Array.from({ length: n }, (_, i) => kind === 'card' ? `<div class="skel card"><i></i><b></b><i></i></div>` : `<div class="skel row"><i></i><b style="width:${[58, 44, 66, 50, 38, 62][i % 6]}%"></b><b style="width:${[34, 26, 40, 30, 22, 36][i % 6]}%"></b></div>`).join('');
@@ -147,13 +141,8 @@
      and a college conference loses the word Conference (the two everyone abbreviates get their initials) */
   const CONF_SHORT = { 'Atlantic Coast': 'ACC', 'Southeastern': 'SEC', 'American Athletic': 'American', 'Western Athletic': 'WAC', 'Mid-American': 'MAC', 'Mid-Eastern Athletic': 'MEAC', 'Southwestern Athletic': 'SWAC', 'Atlantic Sun': 'ASUN', 'Coastal Athletic Association': 'CAA' };
   const confName = (name, abbr) => { const n = String(name || ''); let m = n.match(/^(East|West)(ern)? Conference$/i); if (m) return m[1][0].toUpperCase() + m[1].slice(1).toLowerCase(); m = n.match(/^(\w+) Division$/i); if (m) return m[1]; if (/ Conference$/i.test(n)) { const base = n.replace(/ Conference$/i, ''); return CONF_SHORT[base] || base; } if (CONF_SHORT[n]) return CONF_SHORT[n]; if (abbr && String(abbr).length > 3) return String(abbr); return n || String(abbr || ''); };
-  /* a return date in another year carries the year ("Mar 2, 2027"), so a March date never reads as last March */
-  const dayUTC = iso => { const d = new Date(iso); const y = d.getUTCFullYear() !== new Date().getFullYear(); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(y ? { year: 'numeric' } : {}), timeZone: 'UTC' }); };
+  const dayUTC = iso => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   const standingLine = (r, L) => !r ? '' : L.standingsMode === 'conferences' ? `${r.w}-${r.l}` : `${r.w}-${r.l}, ${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}`;
-  /* the Follow pill on player and team pages: a plus and "Follow player" / "Follow team", a check and "Following" */
-  /* Spotify's plus: a plus to follow, and the same pill turns into a check that says Following (the pill is the confirmation, no toast) */
-  const flwHTML = (on, what) => on ? `<svg class="fs on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Following` : `<svg class="fs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Follow ${what}`;
-  window.RIVL_flw = flwHTML;
   const starSvg = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`;
   const starLine = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`;
   const tvLabel = g => (g.tv && g.tv.label) || '';
@@ -169,33 +158,6 @@
     reorder(lk, ids) { const a = this.all(); const mine = a.filter(p => p.lk === lk); const byId = Object.fromEntries(mine.map(p => [p.id, p])); const want = ids.map(String).filter(id => byId[id]).map(id => byId[id]); const rest = mine.filter(p => !ids.map(String).includes(p.id)); const ordered = [...want, ...rest]; let i = 0; store.set('v5:players', a.map(p => p.lk === lk ? ordered[i++] : p)); },
     update(lk, id, patch) { const a = this.all(); const i = a.findIndex(x => x.lk === lk && x.id === String(id)); if (i < 0) return false; const cur = a[i]; const next = { ...cur }; let changed = false; Object.entries(patch).forEach(([k, v]) => { if (v != null && v !== '' && v !== cur[k]) { next[k] = v; changed = true; } }); if (changed) { a[i] = next; store.set('v5:players', a); } return changed; }
   };
-
-  /* ---------- an injury, as v7 shows it: status and body part, the note, then four facts. `full` adds what the report says in
-     its own words and the dates it carries (reported, expected back). Only the feed's words and dates; nothing is made up. ---------- */
-  function injFacts(L, x) {
-    const det = x.details || {}; const st = x.status || '';
-    const cls = /out/i.test(st) ? 'out' : /day/i.test(st) ? 'dtd' : /quest|doubt/i.test(st) ? 'q' : 'ok';
-    const part = [det.side && det.side !== 'Not Specified' ? det.side : '', det.location || det.type || ''].filter(Boolean).join(' ').trim() || det.detail || det.type || 'Injury';
-    const ret = retInfo(L, det.returnDate);
-    const day = d => { const t = new Date(d); return isNaN(t) ? '' : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: HW.TZ }); };
-    const back = ret ? (ret.far ? 'Not this season' : ret.long) : /out/i.test(st) ? 'No date given' : /quest|doubt|day/i.test(st) ? 'Game-time decision' : '';
-    return { cls, part, ret, back, since: x.date ? day(x.date) : '', day, st: statusWord(st) || 'Listed', note: x.shortComment || '', long: x.longComment || '', det };
-  }
-  function injBody(L, x, full) {
-    const f = injFacts(L, x); const cap = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
-    const grid = [['Status', f.st], ['Injury', cap(f.part)], ['Expected back', f.back], ['Since', f.since]].filter(([, v]) => v);
-    let h = `<div class="ijhead"><span class="tag ${f.cls === 'dtd' ? 'q' : f.cls}">${esc(f.st)}</span><b>${esc(cap(f.part))}</b></div>`
-      + (f.note ? `<p class="ijdet">${esc(f.note)}</p>` : '')
-      + `<div class="ijgrid">${grid.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>`;
-    if (full) {
-      if (f.long && f.long !== f.note) h += `<h3 class="ijh">The full report</h3><p class="ijp">${esc(f.long)}</p>`;
-      const tl = [[f.since, `Listed as ${f.st.toLowerCase()}${f.part ? `, ${f.part.toLowerCase()}` : ''}`]];
-      if (f.ret && !f.ret.far && !f.ret.past) tl.push([f.day(f.det.returnDate), 'Expected back']);
-      if (tl.some(([d]) => d)) h += `<h3 class="ijh">Timeline</h3><div class="ijtl">${tl.filter(([d]) => d).map(([d, t]) => `<div><span>${esc(d)}</span><p>${esc(t)}</p></div>`).join('')}</div>`;
-      h += `<h3 class="ijh">What's next</h3><p class="ijp">${esc(f.ret ? (f.ret.far ? 'No return date this season.' : f.ret.past ? `The listed return date has passed (${f.ret.long}); no new date yet.` : `Expected back around ${f.ret.long}.`) : /quest|doubt|day/i.test(x.status || '') ? 'A decision usually comes close to tip-off.' : 'No return date has been given.')}</p>`;
-    }
-    return { html: h, cls: f.cls };
-  }
 
   /* ---------- game cards ---------- */
   function statusLine(L, g, timeOnly) {
@@ -260,22 +222,6 @@
       <div class="status">${statusLine(L, g, timeOnly)}<span class="ln"></span><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div>
       ${side(L, g, g.home, g.away)}
       ${forecastRow(L, g, f)}</a>`;
-  }
-  /* the score row, as v7 drew it (Apple's grammar on fixed columns): crest over name, score, the status in the middle, score,
-     crest over name. Your teams carry a small star. The winner's number is dark; the loser's side fades. No team colours. */
-  function gameRow(L, g, ctx) {
-    /* the live poll repaints a card without the forecast context: the last one this league's cards were drawn with stands in, so the pick under the clock never drops out */
-    gameRow.ctx = gameRow.ctx || {}; if (ctx) gameRow.ctx[L.key] = ctx; else ctx = gameRow.ctx[L.key] || null;
-    if (g.tbd) return gameCard(L, g, ctx, false, true);
-    const live = g.state === 'in', fin = g.state === 'post' && !g.off, pre = !live && !fin;
-    const a = +g.away.score, h = +g.home.score;
-    const aUp = (live || fin) && a > h, hUp = (live || fin) && h > a, aLose = fin && !aUp && a !== h, hLose = fin && !hUp && a !== h;
-    const side = (t, lose) => `<span class="tm${lose ? ' lo' : ''}${HW.favs.has(L.key, t.id) ? ' fav' : ''}"><span class="cr">${t.logo ? imgSized(t.logo, 128, 128) : ''}</span><span class="nm"><b>${esc(t.short)}</b>${HW.favs.has(L.key, t.id) ? '<em class="star" aria-label="Following">★</em>' : ''}</span></span>`;
-    const score = (t, up, lose) => pre || t.score == null ? `<span class="sc rec">${esc(t.rec || '')}</span>` : `<span class="sc${up ? '' : ' tr'}${lose ? ' lo' : ''}">${t.score}</span>`;
-    const f = !fin && prefs.get('forecast') ? safeF(L, g, ctx) : null; const pr = f && !g.off ? `<small>${esc((f.pHome >= .5 ? g.home : g.away).abbr)} ${pct(Math.max(f.pHome, 1 - f.pHome))}</small>` : '';
-    const clk = () => { const per = +g.period || 0, d = String(g.detail || ''), st = String(g.status || ''); if (!per) return d || 'Live'; if (/HALFTIME/.test(st) || /^half/i.test(d)) return 'Halftime'; const reg = L.periods === 2 ? 2 : 4; const ord = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`; const nm = per <= reg ? (reg === 2 ? `${ord(per)} half` : ord(per)) : (per - reg > 1 ? `${per - reg}OT` : 'OT'); if (/END_PERIOD/.test(st) || /^end/i.test(d)) return `End of ${nm}`; const c = String(g.clock || '').trim(); return c && !/^0{1,2}(?::00)?(?:\.0)?$/.test(c) ? `${nm} ${c}` : nm; };
-    const mid = live ? `<span class="lv"><i></i>${esc(clk())}</span>${pr}` : fin ? `<span class="ft">${esc(finalWord(g))}</span>` : g.off ? `<span class="ft">${esc(g.off)}</span>` : `<b class="tt">${esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT)$/, ''))}</b>${pr}`;
-    return `<a class="grow" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}">${side(g.away, aLose)}${score(g.away, aUp, aLose)}<span class="mid">${mid}</span>${score(g.home, hUp, hLose)}${side(g.home, hLose)}</a>`;
   }
   /* the hero: on Home it is one link to the game; on the game page each team is a link to its own page */
   function heroCard(L, g, ctx, { page = false } = {}) {
@@ -351,67 +297,9 @@
      moment later. Each section is patched in place by a content hash, so later data and the quiet refresh that runs
      while the app is open never repaint what hasn't changed, and never move the page under your thumb. */
   const rankGame = g => (isFav(g) ? 1000 : 0) + (g.tv.national.length ? 100 : 0) + interest(g) / 1000;
-  const J = (n, f) => HW.perf ? HW.perf.job(n, f) : f();
-  /* centre a chip in its strip sideways only: scrollIntoView could also move the page up or down */
-  const centerX = el => { const box = el && el.parentElement; if (!box) return; const x = el.offsetLeft - (box.clientWidth - el.offsetWidth) / 2; if (Math.abs(box.scrollLeft - x) > 1) box.scrollLeft = Math.max(0, x); };
   const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
-  /* a section changes in place: text and attributes are patched where the shape matches, so a score ticking over does not
-     rebuild the whole card (crests reloading, strips resetting). Children are matched by kind (tag, id, class, a game or
-     section id), so a row added or dropped moves its neighbours instead of rebuilding them. */
-  const keyOf = n => n.nodeType === 1 ? `${n.nodeName}|${n.id || ''}|${n.getAttribute('data-sec') || n.getAttribute('data-gid') || n.getAttribute('data-lk') || n.getAttribute('href') || ''}|${n.className && n.className.baseVal !== undefined ? n.className.baseVal : (n.className || '')}` : '#' + n.nodeType;
-  const morphKids = (el, bc) => {
-    const ac = [...el.childNodes];
-    if (ac.length === bc.length && ac.every((n, i) => keyOf(n) === keyOf(bc[i]))) { ac.forEach((n, i) => morph(n, bc[i])); return; }
-    const used = new Set(); const out = bc.map(b => { const k = keyOf(b); const x = ac.find(y => !used.has(y) && keyOf(y) === k); if (x) { used.add(x); morph(x, b); return x; } return b; });
-    ac.forEach(x => { if (!used.has(x)) x.remove(); });
-    out.forEach((n, i) => { const cur = el.childNodes[i]; if (cur !== n) el.insertBefore(n, cur || null); });   // only a node out of place moves; nothing that stayed is rebuilt
-  };
-  const morph = (a, b) => {
-    if (a.nodeType !== b.nodeType || a.nodeName !== b.nodeName) { a.replaceWith(b); return; }
-    if (a.nodeType === 3) { if (a.data !== b.data) a.data = b.data; return; }
-    if (a.nodeType !== 1) return;
-    if (a.tagName === 'IMG' && a.getAttribute('src') !== b.getAttribute('src') && (a.dataset.o === b.getAttribute('src') || a.dataset.f === b.getAttribute('src'))) { b.setAttribute('src', a.getAttribute('src')); b.removeAttribute('data-o'); if (a.dataset.f) b.setAttribute('data-f', a.dataset.f); }   // a crest that fell back to its plain file keeps it
-    for (const at of [...a.attributes]) if (!b.hasAttribute(at.name) && at.name !== 'style' && !(at.name === 'class' && a.tagName === 'IMG')) a.removeAttribute(at.name);
-    for (const at of [...b.attributes]) if (a.getAttribute(at.name) !== at.value) { if (at.name === 'class' && a.tagName === 'IMG' && a.classList.contains('fitted')) continue; a.setAttribute(at.name, at.value); }
-    if (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'IMG' || a.tagName === 'VIDEO') return;
-    morphKids(a, [...b.childNodes]);
-  };
-  /* new HTML into a box that already shows the old */
-  const patch = (el, html) => { const t = document.createElement('div'); t.innerHTML = html; morphKids(el, [...t.childNodes]); };
-  const SECS = ['wire', 'now', 'live', 'tonight', 'last', 'teams', 'players', 'injuries', 'news'];   // the one thing that matters right now leads   // the wire first when it has something, then a game on now
+  const SECS = ['wire', 'live', 'tonight', 'last', 'teams', 'players', 'injuries', 'news'];   // the wire first when it has something, then a game on now
   let homeToken = 0;
-  /* the Now card: a headline sentence with a colour stripe on the edge, the crests side by side, the score large.
-     "Notre Dame beat Villanova", "Celtics at Magic, 2:30 PM", "Lakers lead by 6, 3rd 4:12". The stripe is the winner's or
-     the leader's colour, the favourite's before tip-off. */
-  function nowCard(L, lk, g, ctx) {
-    const a = g.away, h = g.home, live = isLive(g), fin = g.state === 'post', pre = !live && !fin;
-    const as = +a.score || 0, hs = +h.score || 0; const f = pre && !g.off ? safeF(L, g, ctx) : null; const pH = f && f.pHome != null ? f.pHome : null;
-    const lead = live || fin ? (as > hs ? a : hs > as ? h : null) : (pH == null ? null : pH >= .5 ? h : a);
-    const stripe = lead ? teamColor(lead, L) : 'var(--line-2)';
-    const tip = new Date(g.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    const margin = Math.abs(as - hs);
-    const head = g.off ? `${esc(a.short)} at ${esc(h.short)} · ${esc(g.off)}`
-      : fin ? (lead ? `${esc(lead.short)} beat ${esc(lead === a ? h.short : a.short)}` : `${esc(a.short)} and ${esc(h.short)} tied`)
-      : live ? (lead ? `${esc(lead.short)} lead by ${margin}` : `${esc(a.short)} and ${esc(h.short)} level`)
-      : `${esc(a.short)} ${g.neutral ? 'vs' : 'at'} ${esc(h.short)}, ${esc(tip)}`;
-    const st = fin ? finalWord(g) : live ? g.detail : g.off ? '' : relDay(HW.ymdOf(g.date)) === 'Tonight' ? 'Tonight' : dayLabel(HW.ymdOf(g.date), { weekday: 'long' });
-    const tv = tvLabel(g); const fav = pH == null ? '' : `${esc((pH >= .5 ? h : a).abbr || (pH >= .5 ? h : a).short)} ${Math.round(Math.max(pH, 1 - pH) * 100)}%`;
-    const right = fin && ctx ? (() => { const f0 = safeF(L, g, ctx); return f0 && f0.pHome != null ? `Had ${esc((f0.pHome >= .5 ? h : a).short)} ${Math.round(Math.max(f0.pHome, 1 - f0.pHome) * 100)}%` : ''; })() : pre ? fav : '';
-    const sub = pre ? [g.venue && g.venue.name, tv].filter(Boolean).join(' · ') : [tv, g.venue && g.venue.name].filter(Boolean).join(' · ');
-    const sc = pre ? `<span class="nsc rec"><b>${esc(a.rec || '')}</b><b>${esc(h.rec || '')}</b></span>` : `<span class="nsc"><b class="${as >= hs ? '' : 'lo'}">${as}</b><b class="${hs >= as ? '' : 'lo'}">${hs}</b></span>`;
-    /* the game page's hero, shrunk (Ray's pick A): both teams' colours, crest and name either side, the score big in the middle */
-    const ca = teamColor(a, L) || '#333', ch = teamColor(h, L) || '#333';
-    const big = pre ? `<span class="nhs pre">${esc(tip)}</span>` : `<span class="nhs"><b class="${as >= hs ? '' : 'lo'}">${as}</b><b class="${hs >= as ? '' : 'lo'}">${hs}</b></span>`;
-    const side = t => `<span class="nht">${logo(t.logo, '', teamColor(t, L))}<b>${esc(t.short)}</b></span>`;
-    return `<a class="nowc nhero${live ? ' nlive' : ''}" href="${href.game(lk, g.id)}" style="--ca:${esc(ca)};--ch:${esc(ch)}">
-      <span class="nhmid">${side(a)}<span class="nhc"><span class="nhclk">${live ? '<i class="dot"></i>' : ''}${esc(live ? HW.clockOf(g, L) : st)}</span>${big}${tv ? `<small>${esc(tv)}</small>` : ''}</span>${side(h)}</span></a>`;
-  }
-  /* Duolingo's "jump here": a pill that brings you back to the Now card once it has scrolled away */
-  function backNow() {
-    let el = document.querySelector('.backnow'); if (!el) { el = document.createElement('button'); el.className = 'backnow'; el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 6-6 6 6"/></svg>Back to now`; el.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' })); document.body.appendChild(el);
-      window.addEventListener('scroll', () => { const r = HW.v5.route && HW.v5.route(); const on = r && r.name === 'home' && document.querySelector('.hsec[data-sec="now"]') && window.scrollY > window.innerHeight * .9; el.classList.toggle('on', !!on); }, { passive: true });
-      document.addEventListener('rivl:rendered', () => el.classList.remove('on')); }
-  }
   async function home(lk) {
     const L = LEAGUES[lk]; const today = todayCT(); const token = ++homeToken;
     const mine = favs.all()[lk] || [];
@@ -420,28 +308,16 @@
       $main.innerHTML = `<div class="page-h"><h1>Make it yours</h1><p>Home shows only the teams and players you follow.</p></div>` + empty('Nothing followed yet', '<p style="margin:6px 0 0">Pick a few teams and players and this screen fills with their games, lines, injuries and news.</p>', `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><a class="btn" href="#teams">Choose teams</a><a class="btn ghost" href="#players">Find players</a></div>`);
       return;
     }
-    /* a refresh (pull down, or coming back to the tab) keeps the screen you are looking at and swaps in each section as its
-       fresh data lands, with no skeleton and no rise: only a league you have not seen yet starts from the skeleton */
-    const keep = !!$main.querySelector('.hcols') && $main.dataset.hlk === lk; backNow();
-    if (!keep) { $main.innerHTML = skeleton(1, 'card') + skeleton(4, 'row'); $main.dataset.hlk = lk; }
+    $main.innerHTML = skeleton(1, 'card') + skeleton(4, 'row');
     const P = prefs.all(); const yday = addDays(today, -1);
     const alive = () => { if (token !== homeToken) return false; const r = HW.v5.route && HW.v5.route(); return !r || (r.name === 'home' && r.lk === lk); };   // still the screen being shown, even while the old one is kept on screen during the load
-    /* what this league's Home was last built from stays with the league: a return (a swipe back, the tab, a refresh) builds
-       the first paint from the full data it had, so the screen you land on is the one you left, not a thinner version that
-       fills back in section by section (the reload look). Fresh data then replaces only what actually changed. */
-    const HS = home.states || (home.states = {});
-    const S0 = HS[lk] || (HS[lk] = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null });
-    if (S0.teams && S0.teams.filter(Boolean).map(t => String(t.id)).sort().join() !== mine.map(String).sort().join()) S0.teams = null;   // the follows changed since: the list is rebuilt
-    const secs = S0.secs || (S0.secs = {}); let painted = keep;   // the section strings live with the league's data: unchanged inputs mean unchanged strings, found again without rebuilding
-    const onScreen = S0.onScreen || (S0.onScreen = {});   // the string each section was last drawn from: a section is touched only when its string is a different one
-    const hashS = str => '';
-    const wrap = (k, quiet) => { onScreen[k] = secs[k]; return `<section class="hsec${quiet ? ' quiet' : ''}" data-sec="${k}">${secs[k]}</section>`; };
+    const secs = {}; let painted = false;
+    const wrap = (k, quiet) => `<section class="hsec${quiet ? ' quiet' : ''}" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;
     // two columns on a wide screen (the games and your people on the left, injuries and news on the right); one stack on a phone
     const SIDE = new Set(['injuries', 'news']);
     const col = k => $main.querySelector(SIDE.has(k) ? '.hcol.side' : '.hcol.main') || $main;
-    const paint = (quiet = false) => J('home:paint', () => paint0(quiet));
-    const paint0 = (quiet = false) => {
-      if (!alive()) return; if (keep) quiet = true;
+    const paint = (quiet = false) => {
+      if (!alive()) return;
       if (!painted) {
         painted = true;
         const colHtml = side => SECS.filter(k => SIDE.has(k) === side && secs[k]).map(k => wrap(k, false)).join('');
@@ -451,24 +327,18 @@
       if (!$main.querySelector('.hcols')) { painted = false; return paint(quiet); }   // the empty state is on screen and something arrived
       SECS.forEach(k => {
         const cur = $main.querySelector(`section[data-sec="${k}"]`);
-        if (!secs[k]) { if (cur) cur.remove(); delete onScreen[k]; return; }
-        if (cur) { if (onScreen[k] !== secs[k]) { const t = document.createElement('div'); t.innerHTML = wrap(k, quiet); morph(cur, t.firstElementChild); } return; }
+        if (!secs[k]) { if (cur) cur.remove(); return; }
+        if (cur) { if (cur.dataset.h !== hashOf(secs[k])) cur.outerHTML = wrap(k, quiet); return; }
         const after = SECS.slice(SECS.indexOf(k) + 1).filter(j => SIDE.has(j) === SIDE.has(k)).map(j => $main.querySelector(`section[data-sec="${j}"]`)).find(Boolean);
         if (after) after.insertAdjacentHTML('beforebegin', wrap(k, quiet)); else col(k).insertAdjacentHTML('beforeend', wrap(k, quiet));
       });
     };
 
     // ----- what everything is built from -----
+    const S0 = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null };
     const favTeam = t => mine.includes(String(t.id));
     const teamOf = p => { const k = String(p.team || '').toLowerCase(); return t => (p.teamId && String(t.id) === String(p.teamId)) || (k && [t.abbr, t.short, t.name].some(x => String(x || '').toLowerCase() === k)); };
-    /* tonight's games as small stacked tiles: away team on top, home team under it, the time or score at the right */
-    const chipOf = g => { const showSc = !g.off && g.state !== 'pre'; const side = (t, o) => `<span class="sr${showSc && +t.score < +o.score ? ' lo' : ''}">${logo(t.logo, 's', teamColor(t, L))}<b>${esc(t.abbr || t.short)}</b>${showSc ? `<em>${t.score}</em>` : ''}</span>`;
-      const st = g.off ? esc(g.off) : g.state === 'pre' ? esc(new Date(g.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) : g.state === 'in' ? `<span class="on">${esc(g.detail)}</span>` : esc(finalWord(g));
-      /* the pick for a game not started: a thin bar in both teams' colours split by win chance, the favourite named */
-      const f = g.state === 'pre' && !g.off ? safeF(L, g, S0.ctx) : null; const pH = f && f.pHome != null ? f.pHome : null;
-      const fav = pH == null ? null : pH >= .5 ? g.home : g.away, fp = pH == null ? 0 : Math.round(Math.max(pH, 1 - pH) * 100);
-      const pick = fav ? `<span class="pk"><span class="pkbar"><i style="flex:${(1 - pH).toFixed(3)} 1 0;background:${esc(teamColor(g.away, L))}"></i><i style="flex:${pH.toFixed(3)} 1 0;background:${esc(teamColor(g.home, L))}"></i></span><em>${esc(fav.abbr || fav.short)} ${fp}%</em></span>` : '';
-      return `<a class="bchip st2${pick ? ' haspk' : ''}" href="${href.game(lk, g.id)}">${side(g.away, g.home)}${side(g.home, g.away)}${pick}<span class="ss">${st}${seriesShort(g) ? `<i class="po">${esc(seriesShort(g))}</i>` : ''}</span></a>`; };
+    const chipOf = g => { const sc = g.off ? `<span>${esc(g.off)}</span>` : g.state === 'pre' ? `<span>${esc(tipOf(g))}</span>` : g.state === 'in' ? `<span class="on">${g.away.score}–${g.home.score} · ${esc(g.detail)}</span>` : `<span>${g.away.score}–${g.home.score} · ${esc(finalWord(g))}</span>`; return `<a class="bchip" href="${href.game(lk, g.id)}">${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b>${sc}${seriesShort(g) ? `<em class="po">${esc(seriesShort(g))}</em>` : ''}</a>`; };
     const dayWord = (ymd, long) => { const rd = relDay(ymd); return rd === 'Tomorrow' || rd === 'Tonight' ? rd : dayLabel(ymd, { weekday: long ? 'long' : 'short' }); };
     const nextChip = g => `<a class="bchip next" href="${href.game(lk, g.id)}"><em>${esc(dayWord(HW.ymdOf(g.date)))}</em>${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b><span>${esc(tipOf(g))}</span></a>`;
     const basicTeam = id => { const t = S0.tIdx[id]; const r = S0.st && S0.st.byId && S0.st.byId[id]; if (!t && !r) return null; return { id, abbr: t ? t.abbr : r.abbr, name: t ? t.name : r.name, short: t ? t.short : r.short, loc: t ? t.loc : r.loc, color: teamColor({ id, color: t && t.color }, L), logo: (t && t.logo) || (r && r.logo) || '', rec: r ? `${r.w}-${r.l}` : '', standing: r && L.standingsMode !== 'conferences' ? `${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}` : '', row: r || null, next: null, last: null }; };
@@ -476,41 +346,22 @@
 
     const build = () => {
       const { games, last, ctx } = S0; const teams = teamList();
-      /* only the sections whose inputs changed are built again: a score ticking over rebuilds the games and the team rows, not
-         the news, the injuries or the players' lines. Inputs are compared by identity, which the data loaders change only
-         when they bring something new. */
-      const refs = S0.refs || (S0.refs = {}); const ch = (k, v) => { const d = refs[k] !== v; refs[k] = v; return d; };
-      const gsig = g => `${g.id}|${g.state}|${g.home.score}|${g.away.score}|${g.detail}|${g.off || ''}`; const gamesSig = games.map(gsig).join('\n');
-      const fpTeams = new Set(fp.map(p => String(p.teamId))); const pSig = games.filter(g => fpTeams.has(String(g.home.id)) || fpTeams.has(String(g.away.id))).map(gsig).join('\n');
-      const D = { games: ch('games', gamesSig), pg: ch('pg', pSig), last: ch('last', last), sums: ch('sums', Object.keys(S0.sums).length), teams: ch('teams', S0.teams), inj: ch('inj', S0.inj), news: ch('news', S0.news), ctx: ch('ctx', ctx), st: ch('st', S0.st), prefs: ch('prefs', JSON.stringify(P)), fp: ch('fp', fp.map(p => p.id).join()) };
-      const first = !Object.keys(secs).length; const need = (...ks) => first || D.prefs || ks.some(k => D[k]);
       const byTeam = new Map(); games.forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
-      // the Now card is for a game that is on; before tip-off and after the final, the rail list is the whole story
-      const favAll = games.filter(isFav); const nowG = favAll.filter(isLive).sort((a, b) => rankGame(b) - rankGame(a))[0] || null;
-      if (need('games', 'ctx', 'teams', 'st')) {
-      if (nowG && P.brief) secs.now = nowCard(L, lk, nowG, ctx); else delete secs.now;
-      // tonight: your games as a rail list in tip order (a dot ahead, a pulse while on, a check when done), or the next ones on the calendar
+      // tonight: your games, or the next ones on the calendar once the schedules are in
       const liveMine = games.filter(g => isLive(g) && isFav(g));
-      if (P.brief && mine.length) {
-        const tonight = favAll.filter(g => g !== nowG).sort((a, b) => new Date(a.date) - new Date(b.date));
+      if (P.brief && mine.length && !(P.live && liveMine.length && games.filter(isFav).length === liveMine.length)) {   // when every game of yours is on now, the hero says it all
+        const tonight = games.filter(g => isFav(g) && !(P.live && isLive(g))).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
         let body = '', note = '', title = 'Tonight';
-        const railRow = g => { const showSc = !g.off && g.state !== 'pre'; const side = (t, o) => `<span class="sr${showSc && +t.score < +o.score ? ' lo' : ''}">${logo(t.logo, 's', teamColor(t, L))}<b>${esc(t.abbr || t.short)}</b>${showSc ? `<em>${t.score}</em>` : ''}</span>`;
-          const st = g.off ? esc(g.off) : g.state === 'pre' ? esc(new Date(g.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) : g.state === 'in' ? `<span class="on">${esc(g.detail)}</span>` : esc(finalWord(g));
-          const f = g.state === 'pre' && !g.off ? safeF(L, g, S0.ctx) : null; const pH = f && f.pHome != null ? f.pHome : null; const fav = pH == null ? null : pH >= .5 ? g.home : g.away, fp = pH == null ? 0 : Math.round(Math.max(pH, 1 - pH) * 100);
-          const pick = fav ? `<span class="pk"><span class="pkbar"><i style="flex:${(1 - pH).toFixed(3)} 1 0;background:${esc(teamColor(g.away, L))}"></i><i style="flex:${pH.toFixed(3)} 1 0;background:${esc(teamColor(g.home, L))}"></i></span><em>${esc(fav.abbr || fav.short)} ${fp}%</em></span>` : '';
-          return `<a class="tnr ${g.state === 'in' ? 'in' : g.state === 'post' ? 'done' : 'pre'}" href="${href.game(lk, g.id)}"><span class="rl"><i></i></span><span class="tms">${side(g.away, g.home)}${side(g.home, g.away)}</span><span class="ss">${st}${seriesShort(g) ? `<i class="po">${esc(seriesShort(g))}</i>` : ''}</span>${pick}</a>`; };
-        if (tonight.length) { const ahead = tonight.filter(g => g.state !== 'post').length, over = tonight.length - ahead; note = `${favAll.length} game${favAll.length === 1 ? '' : 's'} for your teams${over && ahead ? ` · ${over} final` : over && !ahead ? ' · all final' : ''}`; if (!ahead) title = 'Today'; body = `<div class="tnl">${tonight.map(railRow).join('')}</div>`; }
-        else if (!nowG) {
-          // nothing today: the block is the next games instead, headed by when they are, so a row never sits under "no games"
+        if (tonight.length) { note = `${tonight.length} ${P.live && liveMine.length ? 'more ' : ''}game${tonight.length === 1 ? '' : 's'} for your teams`; body = `<div class="brief-row">${tonight.map(chipOf).join('')}</div>`; }
+        else {
+          // nothing tonight: the block is the next games instead, headed by when they are, so a chip never sits under "no games"
           const seen = new Set(); const next = teams.map(t => t.next).filter(g => g && g.state === 'pre' && !seen.has(g.id) && seen.add(g.id)).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 4);
           if (next.length) { const d0 = HW.ymdOf(next[0].date); const w = dayWord(d0, true); title = 'Next up'; note = `${esc(w === 'Tonight' ? 'later tonight' : w === 'Tomorrow' ? 'tomorrow' : w)} · nothing tonight`; body = `<div class="brief-row">${next.map(nextChip).join('')}</div>`; }
           else note = S0.teams ? 'no games for your teams' : 'no games tonight';
         }
-        if (body || !nowG) secs.tonight = `<div class="brief"><div class="brief-h"><b>${title}</b><span>${note}</span></div>${body}</div>`; else delete secs.tonight;
+        secs.tonight = `<div class="brief"><div class="brief-h"><b>${title}</b><span>${note}</span></div>${body}</div>`;
       } else delete secs.tonight;
-      }
       // last night: results, then your players' lines once the box scores are in
-      if (need('last', 'sums', 'fp')) {
       const pGames = fp.map(p => { const is = teamOf(p); const g = last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? { p, g } : null; }).filter(Boolean);
       const lines = pGames.map(({ p, g }) => { const d = S0.sums[g.id]; const bx = d && d.boxscore && d.boxscore.players || []; for (const side of bx) { const st = side.statistics && side.statistics[0]; if (!st) continue; const labels = st.labels || st.names || []; const a = (st.athletes || []).find(x => x.athlete && String(x.athlete.id) === p.id); if (!a) continue; if (a.didNotPlay || !a.stats || !a.stats.length) return { p, g, dnp: a.reason || 'Did not play' }; const get = l => { const i = labels.indexOf(l); return i >= 0 ? a.stats[i] : ''; }; const is = teamOf(p); const us = is(g.home) ? g.home : g.away, them = is(g.home) ? g.away : g.home; return { p, g, pts: get('PTS'), reb: get('REB'), ast: get('AST'), min: get('MIN'), won: us.score > them.score, us, them }; } return null; }).filter(Boolean);
       const lineBy = {}; lines.forEach(x => { lineBy[x.p.id] = x; });
@@ -519,78 +370,58 @@
         if (mineLast.length || lines.length) {
           const res = mineLast.map(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = us.score > them.score; return `<a class="bchip res" href="${href.game(lk, g.id)}">${logo(us.logo, 's', teamColor(us, L))}<b class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</b><span>${us.score}–${them.score} ${us === g.home ? 'vs' : 'at'} ${esc(them.abbr || them.short)}</span></a>`; });
           const rows = lines.map(x => `<a class="row" href="${href.game(lk, x.g.id)}/p/${esc(String(x.p.id))}">${headshot(x.p.img, x.us ? teamColor(x.us, L) : playerColor(x.p, L), 44, x.p.name)}<span class="t"><b>${esc(x.p.short || x.p.name)}</b><span>${x.dnp ? esc(x.dnp) : `${esc(x.pts)} pts, ${esc(x.reb)} reb, ${esc(x.ast)} ast in a ${x.won ? 'win' : 'loss'} ${x.us === x.g.home ? 'vs' : 'at'} ${esc(x.them.short)}`}</span></span>${x.dnp ? '' : `<span class="r"><b>${esc(x.pts)}</b><span>pts</span></span>`}</a>`);
-          secs.last = `<div class="brief"><div class="brief-h"><b>Last night</b><span>${esc(dayLabel(yday, { weekday: 'long' }))}</span></div>${res.length ? `<div class="brief-row">${res.join('')}</div>` : ''}${rows.length ? capList('rows brief-rows', rows, 'last') : ''}</div>`;
+          secs.last = `<div class="brief"><div class="brief-h"><b>Last night</b><span>${esc(dayLabel(yday, { weekday: 'long' }))}</span></div>${res.length ? `<div class="brief-row">${res.join('')}</div>` : ''}${rows.length ? `<div class="rows brief-rows">${rows.join('')}</div>` : ''}</div>`;
         } else delete secs.last;
       }
-      }
       // your teams playing right now: the hero
-      if (need('games', 'ctx')) { const live = games.filter(g => isLive(g) && isFav(g)).sort((a, b) => rankGame(b) - rankGame(a));
-      const more = live.filter(g => g !== nowG); if (more.length && P.live) secs.live = sec(nowG && isLive(nowG) ? 'Also on' : 'Live now') + capList('gp grows', more.map(g => gameRow(L, g, ctx)), 'live'); else delete secs.live; }
-      const clk = g => { const per = +g.period || 0, d = String(g.detail || ''), st = String(g.status || ''); if (!per) return d || 'Live'; if (/HALFTIME/.test(st) || /^half/i.test(d)) return 'Halftime'; const reg = L.periods === 2 ? 2 : 4; const ord = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`; const nm = per <= reg ? (reg === 2 ? `${ord(per)} half` : ord(per)) : (per - reg > 1 ? `${per - reg}OT` : 'OT'); if (/END_PERIOD/.test(st) || /^end/i.test(d)) return `End of ${nm}`; const c = String(g.clock || '').trim(); return c && !/^0{1,2}(?::00)?(?:\.0)?$/.test(c) ? `${nm} ${c}` : nm; };
+      const live = games.filter(g => isLive(g) && isFav(g)).sort((a, b) => rankGame(b) - rankGame(a));
+      if (live.length && P.live) secs.live = sec('Live now') + `<div class="heroes">${live.map(g => heroCard(L, g, ctx)).join('')}</div>`; else delete secs.live;
       // my teams: record, what's next or how it's going, win chance
-      if (need('games', 'teams', 'st')) {
       if (P.teams) {
-        /* v7's rows: the team's colour as a thin edge, the crest, the name and league; on the right one status and one line under it */
-        /* in the order you'd want them: playing now first, then games that ended today, then the soonest game coming up,
-           then older results, then teams with nothing scheduled. Followed order only breaks ties. */
-        const gOf = t => byTeam.get(t.id) || t.next || t.last;
-        const todayY = HW.todayCT ? HW.todayCT() : '';
-        const rank = t => { const g = gOf(t); if (!g) return [5, 0]; const at = new Date(g.date).getTime() || 0;
-          if (g.state === 'in') return [0, at];
-          if (g.state === 'post') return HW.ymdOf(g.date) === todayY ? [1, -at] : [3, -at];
-          return [2, at]; };
-        const ordered = teams.map((t, i) => ({ t, i, r: rank(t) })).sort((x, y) => x.r[0] - y.r[0] || x.r[1] - y.r[1] || x.i - y.i).map(x => x.t);
-        const rows = ordered.map(t => {
-          const g = gOf(t);
-          let st = `<span class="sl"><b class="dim">Next</b></span><em>${esc(t.standing || 'No game scheduled')}</em>`;
+        const rows = teams.map(t => {
+          const g = byTeam.get(t.id) || t.next || t.last; const f = g ? safeF(L, g, ctx) : null;
+          const us = g ? (g.home.id === t.id ? g.home : g.away) : null, them = g ? (g.home.id === t.id ? g.away : g.home) : null;
+          let line = t.standing || (S0.teams ? 'No game scheduled' : ''), right = '';
           if (g) {
-            const home = g.home.id === t.id, us = home ? g.home : g.away, them = home ? g.away : g.home, vs = `${home ? 'vs' : 'at'} ${esc(them.short)}`;
-            if (g.state === 'in') st = `<span class="sl"><span class="fpill"><i></i>${esc(clk(g))}</span><b class="num">${us.score}–${them.score}</b></span><em>${vs}</em>`;
-            else if (g.state === 'post' && !g.off) { const w = +us.score > +them.score; st = `<span class="sl"><b class="${w ? 'w' : 'l'}">${w ? 'W' : 'L'} ${us.score}–${them.score}</b></span><em>Final · ${vs}</em>`; }
-            else if (g.off) st = `<span class="sl"><b class="dim">${esc(g.off)}</b></span><em>${vs}</em>`;
-            else st = `<span class="sl"><b>${esc(tipOf(g))}</b></span><em>${esc(relDay(HW.ymdOf(g.date)))} · ${vs}</em>`;
+            const home = g.home.id === t.id; const vs = `${home ? 'vs' : 'at'} ${esc(them.short)}`;
+            if (g.state === 'in') { const lead = us.score - them.score; line = `${lead > 0 ? `Leading ${esc(them.short)} by ${lead}` : lead < 0 ? `Trailing ${esc(them.short)} by ${-lead}` : `Tied with ${esc(them.short)}`}, ${esc(g.detail)}`; }
+            else if (g.off) line = `${esc(g.off)} ${vs}`;
+            else if (g.state === 'post') line = `${us.score > them.score ? 'Won' : 'Lost'} ${esc(String(us.score))}-${esc(String(them.score))} ${vs}`;
+            else line = `<em>${esc(relDay(HW.ymdOf(g.date)))} ${vs}, ${esc(tipOf(g))}</em>${tvLabel(g) ? `<i class="tvt">${esc(tvLabel(g))}</i>` : ''}`;
+            if (f && g.state !== 'post') { const p = home ? f.pHome : 1 - f.pHome; right = `<span class="r"><b>${pct(p)}</b><span>to win</span></span>`; }
+            else if (g.state === 'post' && !g.off) right = `<span class="r"><b class="${us.score > them.score ? 'res w' : 'res l'}" style="font-size:22px">${us.score > them.score ? 'W' : 'L'}</b></span>`;
           }
-          return `<a class="frow" href="${href.team(lk, t.id)}" style="--tc:${esc(teamColor(t, L))}"><i class="edge"></i><span class="fcrest">${t.logo ? imgSized(t.logo, 128, 128) : ''}</span><span class="nm"><b>${esc(t.short)}</b><small>${esc(L.label)}${t.rec ? ` · ${esc(t.rec)}` : ''}</small></span><span class="fs">${st}</span></a>`;
+          const to = g ? href.game(lk, g.id) : href.team(lk, t.id);
+          return `<div class="row prow teamrow"><a class="go" href="${href.team(lk, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, '', teamColor(t, L))}</a><a class="t2" href="${to}"><span class="t"><b>${esc(t.short)}<small>${esc(t.rec)}</small></b><span class="${line.includes('<em>') ? 'sub2' : ''}">${line || '&nbsp;'}</span></span>${right || chev}</a></div>`;
         });
-        secs.teams = sec('My teams', '', `<a href="#teams">Edit</a>`) + (rows.length ? capList('gp frows', rows, 'teams') : mine.length ? skeleton(mine.length, 'row') : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`));
+        secs.teams = sec('My teams', '', `<a href="#teams">Edit</a>`) + (rows.length ? `<div class="rows">${rows.join('')}</div>` : mine.length ? skeleton(mine.length, 'row') : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`));
       } else delete secs.teams;
-      }
       // my players
-      if (need('pg', 'ctx', 'teams', 'fp')) {
       if (P.players) {
         const ppgOf = p => { const r = ctx && ctx.ppg && ctx.ppg[(p.name || '').toLowerCase()]; return r && r.pts != null ? `${(+r.pts).toFixed(1)} ppg` : ''; };
         secs.players = sec('My players', '', `<a href="#players">${fp.length ? 'Edit' : 'Find players'}</a>`) + (fp.length
-          ? capList('gp frows', fp.map(p => { const is = teamOf(p); const g = games.find(g => is(g.home) || is(g.away)); const us = g ? (is(g.home) ? g.home : g.away) : null, them = g ? (is(g.home) ? g.away : g.home) : null;
-            const ti = (p.teamId && S0.tIdx && S0.tIdx[p.teamId]) || us || {}; const c = playerColor(p, L);
-            let st = `<span class="sl"><b class="dim">${esc(ppgOf(p) ? 'Season' : 'Next')}</b></span><em>${esc(ppgOf(p) || 'No game today')}</em>`;
-            if (g && !g.off) { const vs = `${is(g.home) ? 'vs' : 'at'} ${esc(them.short)}`;
-              if (g.state === 'in') st = `<span class="sl"><i class="ldot"></i><b class="num">${us.score}–${them.score}</b></span><em>${esc(clk(g))} · ${vs}</em>`;
-              else if (g.state === 'post') { const w = +us.score > +them.score; st = `<span class="sl"><b class="${w ? 'w' : 'l'}">${w ? 'W' : 'L'} ${us.score}–${them.score}</b></span><em>Final · ${vs}</em>`; }
-              else st = `<span class="sl"><b>${esc(tipOf(g))}</b></span><em>${esc(relDay(HW.ymdOf(g.date)))} · ${vs}</em>`; }
-            const sub = [ti.abbr || p.team, p.pos, L.label].filter(Boolean).join(' · ');
-            return `<a class="frow" href="${href.player(lk, p.id)}"><span class="fface">${headshot(p.img, c, 42, p.name)}${ti.logo ? `<span class="fcr">${imgSized(ti.logo, 64, 64)}</span>` : ''}</span><span class="nm"><b>${esc(p.name || p.short)}</b><small>${esc(sub)}</small></span><span class="fs">${st}</span></a>`; }), 'players')
+          ? `<div class="rail">${fp.map(p => { const is = teamOf(p); const g = games.find(g => is(g.home) || is(g.away)); const us = g ? (is(g.home) ? g.home : g.away) : null, them = g ? (is(g.home) ? g.away : g.home) : null;
+            // under the average: the game tonight, short (on now, the tip, or the result); last night's line lives in the Last night block above
+            const now = g && !g.off ? (g.state === 'in' ? `<i class="on">${us.score}–${them.score}</i> ${esc(g.detail)}` : g.state === 'post' ? `${us.score > them.score ? 'W' : 'L'} ${us.score}–${them.score}` : `${esc(tipOf(g))} ${g.neutral ? 'vs' : is(g.home) ? 'vs' : 'at'} ${esc(them.abbr)}`) : '';
+            return `<a class="pl" href="${href.player(lk, p.id)}" style="${tcv(playerColor(p, L))}">${headshot(p.img, playerColor(p, L), 64, p.name)}<b>${esc(p.short || p.name)}</b><span>${esc(ppgOf(p) || p.team || '')}</span>${now ? `<em class="nx">${now}</em>` : ''}</a>`; }).join('')}</div>`
           : empty('Follow the players you watch', '<p style="margin:6px 0 0">They show up here with their scoring line, and their profile is one tap away.</p>', `<a class="btn" href="#players">Find players</a>`));
       } else delete secs.players;
-      }
       // injuries: one list grouped by team. Your teams show every report, with your players marked; a team you don't
       // follow appears only for the players you follow on it. Rows are keyed by the report, so two reports on one player never collide.
       const inj = S0.inj;
-      if (need('inj', 'teams', 'fp')) {
       if (inj && P.injuries) {
         S.injuries = S.injuries || {};
         const pById = new Map(fp.map(p => [p.id, p]));
-        const row = (x, i, t, p) => { const a = x.athlete || {}; const id = athId(a) || (p && p.id) || ''; const key = `h:${t.id}:${id}:${x.id || i}`; S.injuries[key] = { x, id, team: t }; const st = x.status || ''; const cls = /out/i.test(st) ? 'out' : /day|quest|doubt/i.test(st) ? 'q' : /prob|avail/i.test(st) ? 'ok' : ''; const det = x.details || {}; const ret = retInfo(L, det.returnDate); const part = [det.side, det.type].filter(Boolean).join(' ') || det.detail || ''; const name = a.displayName || (p && p.name) || ''; return `<button class="frow ijrow" data-act="injury" data-key="${esc(key)}"><span class="fface">${headshot(hsUrl(a) || (p && p.img) || '', teamColor(t, L), 42, name)}${t.logo ? `<span class="fcr">${imgSized(t.logo, 64, 64)}</span>` : ''}</span><span class="nm"><b>${esc(name)}</b><small>${esc([t.abbr || t.short, part].filter(Boolean).join(' · '))}</small></span><span class="fs"><span class="tag ${cls}">${esc(statusWord(st) || 'Listed')}</span><em>${esc((t => t.charAt(0).toUpperCase() + t.slice(1))(ret ? ret.short : (x.shortComment || '')))}</em></span></button>`; };
+        const row = (x, i, t, p) => { const a = x.athlete || {}; const id = athId(a) || (p && p.id) || ''; const key = `h:${t.id}:${id}:${x.id || i}`; S.injuries[key] = { x, id, team: t }; const st = x.status || ''; const cls = /out/i.test(st) ? 'out' : /day|quest|doubt/i.test(st) ? 'q' : /prob|avail/i.test(st) ? 'ok' : ''; const det = x.details || {}; const ret = retInfo(L, det.returnDate); const why = [det.type || det.detail, ret ? ret.short : ''].filter(Boolean).join(', '); const name = a.displayName || (p && p.name) || ''; return `<button class="row${p ? ' fav' : ''}" data-act="injury" data-key="${esc(key)}">${headshot(hsUrl(a) || (p && p.img) || '', teamColor(t, L), 44, name)}<span class="t"><b>${esc(name)}${p ? `<i class="fstar" title="You follow them">${starSvg}</i>` : ''}</b><span>${esc(why || (x.shortComment || '').slice(0, 80))}</span></span><span class="tag ${cls}">${esc(statusWord(st))}</span></button>`; };
         const groups = [];
         teams.forEach(t => { const b = inj.byTeam[t.id]; if (b && b.list.length) groups.push({ t, rows: b.list.map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })) }); });
         const have = new Set(groups.map(g => g.t.id));
         if (fp.length) (inj.teams || []).forEach(tt => { const tid = String(tt.id || ''); if (!tid || have.has(tid)) return; const rows = (tt.injuries || []).map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })).filter(r => r.p); if (!rows.length) return; const ti = S0.tIdx[tid] || {}; groups.push({ t: { id: tid, short: ti.short || tt.displayName || rows[0].p.team || '', logo: ti.logo || '', color: ti.color || playerColor(rows[0].p, L) }, rows, only: true }); });
         const folds = store.get('v5:injcol', {}) || {};
-        const blocks = groups.flatMap(({ t, rows }) => rows.map(({ x, i, p }) => row(x, i, t, p)));
-        if (blocks.length) secs.injuries = sec('Injuries', 'your teams and players') + capList('gp frows', blocks, 'injuries'); else delete secs.injuries;
+        const blocks = groups.map(({ t, rows, only }) => `<div class="injgrp"><button class="injhd" data-act="injcol" data-id="${esc(t.id)}" aria-expanded="${!folds[t.id]}" style="${tcv(teamColor(t, L))}"><i class="bar"></i>${logo(t.logo, 's')}<b>${esc(t.short)}</b><span class="n">${only ? 'your players' : `${rows.length} listed`}</span>${chev}</button>${foldWrap(`<div class="injbody">${rows.map(({ x, i, p }) => row(x, i, t, p)).join('')}</div>`, !!folds[t.id])}</div>`);
+        if (blocks.length) secs.injuries = sec('Injuries', 'your teams and players') + `<div class="rows">${blocks.join('')}</div>`; else delete secs.injuries;
       } else delete secs.injuries;
-      }
       // news about my teams and players: ESPN tags every story with the teams and athletes it covers; full names are the fallback
-      if (need('news', 'teams', 'fp')) {
       const news = S0.news;
       const tIds = new Set(mine.map(String)), pIds = new Set(fp.map(p => p.id));
       const tagged = a => (a.categories || []).some(c => (c.type === 'team' && tIds.has(String(c.teamId || (c.team && c.team.id) || ''))) || (c.type === 'athlete' && pIds.has(String(c.athleteId || (c.athlete && c.athlete.id) || ''))));
@@ -600,9 +431,7 @@
         const items = news.articles.filter(a => HW.readable(a) && HW.isWire(a) && tagged(a) && !seen.has(String(a.id)) && a.published && new Date(a.published) > cutoff).sort((a, b) => new Date(b.published) - new Date(a.published)).slice(0, 3);
         if (items.length) {
           const who = a => { const t = HW.wireTeams(a).map(id => (S0.tIdx[id] || {}).short).filter(Boolean); const p = (a.categories || []).filter(c => c.type === 'athlete' && pIds.has(String(c.athleteId || (c.athlete && c.athlete.id) || ''))).map(c => c.description).filter(Boolean); return [...new Set([...p, ...t])].slice(0, 2).join(' · '); };
-          const more = items.slice(1);
-          secs.wire = `<div class="wire2"><div class="w2row"><a class="w2main" href="#article/${lk}/${esc(String(items[0].id))}"><span class="w2k"><i class="dot"></i>Breaking</span><span class="w2h">${esc(items[0].headline)}</span></a>${more.length ? `<button class="w2more" data-act="wire-more" aria-expanded="false" aria-label="${more.length} more">+${more.length}</button>` : ''}<button class="w2x" data-act="wire-x" data-ids="${esc(items.map(a => a.id).join(','))}" aria-label="Dismiss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>${more.length ? `<div class="w2list"><div>${more.map(a => `<a class="w2it" href="#article/${lk}/${esc(String(a.id))}"><span class="w2h">${esc(a.headline)}</span><small>${esc(ago(a.published))}</small></a>`).join('')}</div></div>` : ''}</div>`;
-          items.forEach(a => { (S.news = S.news || {})[String(a.id)] = a; });
+          secs.wire = `<div class="wire"><div class="wh"><i class="dot"></i><b>Breaking</b><span>${esc(ago(items[0].published))}</span><button class="x" data-act="wire-x" data-ids="${esc(items.map(a => a.id).join(','))}" aria-label="Dismiss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>${items.map(a => { (S.news = S.news || {})[String(a.id)] = a; return `<a class="wr" href="#article/${lk}/${esc(String(a.id))}"><b>${esc(a.headline)}</b><span>${esc([who(a), items.length > 1 ? ago(a.published) : ''].filter(Boolean).join(' · '))}</span></a>`; }).join('')}</div>`;
         } else delete secs.wire;
       } else delete secs.wire;
       if (P.news && news) {
@@ -616,7 +445,6 @@
         const arts = mineA.concat(rest);
         if (arts.length) secs.news = sec('News', mineA.length && !rest.length ? 'your teams and players' : mineA.length ? 'yours first, then the league' : 'around the league') + `<div class="rows">${arts.map(a => HW.v5.newsRow(lk, a)).join('')}</div>`; else delete secs.news;
       } else delete secs.news;
-      }
     };
 
     // ----- phase 1: one round trip, then paint -----
@@ -628,25 +456,20 @@
       standings(L).catch(() => null)
     ]);
     if (!alive()) return;
-    Object.assign(S0, { tIdx, games, last, ctx, st, inj: ctx && ctx.inj ? ctx.inj : S0.inj });
+    Object.assign(S0, { tIdx, games, last, ctx, st, inj: ctx && ctx.inj ? ctx.inj : null });
     S.today[lk] = games;
-    /* the same data draws the same screen: when what came back matches what the screen was already built from, nothing
-       is redrawn (no crest reloads, no rows blinking, no strips resetting). Only new data touches the page. */
-    const fpOf = v => { try { return hashOf(JSON.stringify(v)); } catch { return String(Math.random()); } };
-    const fresh = key => { const f = fpOf(S0[key]); if (S0.fp && S0.fp[key] === f) return false; (S0.fp = S0.fp || {})[key] = f; return true; };
-    S0.base = { games, last, inj: S0.inj, st: st && st.byId ? Object.keys(st.byId).length : 0 };
-    if (fresh('base') || !painted) { build(); paint(); }
+    build(); paint();
 
     // ----- phase 2: schedules, box scores, news — each patches its section as it lands -----
     const later = [];
-    if (mine.length) later.push((async () => { const teams = await Promise.all(mine.map(id => teamInfo(L, id, { idx: tIdx, st }).catch(() => null))); if (!alive()) return; S0.teams = teams; if (fresh('teams')) { build(); paint(true); } })());
+    if (mine.length) later.push((async () => { const teams = await Promise.all(mine.map(id => teamInfo(L, id, { idx: tIdx, st }).catch(() => null))); if (!alive()) return; S0.teams = teams; build(); paint(); })());
     if (P.brief && fp.length) later.push((async () => {
       const ids = [...new Set(fp.map(p => { const is = teamOf(p); const g = last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? g.id : null; }).filter(Boolean))];
       await Promise.all(ids.map(async id => { S0.sums[id] = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 3600000); }));
-      if (!alive()) return; if (fresh('sums')) { build(); paint(); }
+      if (!alive()) return; build(); paint();
     })());
-    if (P.news || P.wire) later.push((async () => { S0.news = await jSoft(`${API(L)}/news?limit=25`, 600000); if (!alive()) return; if (fresh('news')) { build(); paint(true); } })());
-    if (!S0.inj && mine.length && P.injuries) later.push((async () => { S0.inj = await injuries(L).catch(() => null); if (!alive()) return; if (fresh('inj')) { build(); paint(true); } })());
+    if (P.news || P.wire) later.push((async () => { S0.news = await jSoft(`${API(L)}/news?limit=25`, 600000); if (!alive()) return; build(); paint(); })());
+    if (!S0.inj && mine.length && P.injuries) later.push((async () => { S0.inj = await injuries(L).catch(() => null); if (!alive()) return; build(); paint(); })());
     Promise.all(later).catch(() => { });
 
     // ----- while the app sits on Home: scores every pass, the rest every few minutes, patched quietly -----
@@ -685,8 +508,7 @@
     const page0 = $main.querySelector('#scpage');
     const inPlace = page0 && page0.dataset.lk === lk;
     const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
-    const paint = body => J('scores:paint', () => paint0(body));
-    const paint0 = body => {
+    const paint = body => {
       const page = $main.querySelector('#scpage');
       if (page && page.dataset.lk === lk) {
         const hd = page.querySelector('#schead'); const hh = hashOf(head);
@@ -695,19 +517,17 @@
           if (same) {   // the same window of days: move the highlight, and refresh the small row above it (month, Mine) in place
             dates.querySelectorAll('.day').forEach(b => { const on = b.dataset.ymd === ymd; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
             const cr = hd.querySelector('.calrow'); if (cr) { const tmp = document.createElement('div'); tmp.innerHTML = calPill; cr.replaceWith(tmp.firstElementChild); }
-          } else patch(hd, head);
+          } else hd.innerHTML = head;
           hd.dataset.h = hh;
         }
-        const bd = page.querySelector('#scbody'); const bh = hashOf(body); if (bd.dataset.h !== bh) { const dayChanged = bd.dataset.d !== ymd; if (dayChanged) bd.innerHTML = body; else patch(bd, body); bd.dataset.h = bh; bd.dataset.d = ymd; if (dayChanged && HW.v5.soft) HW.v5.soft(bd); }
+        const bd = page.querySelector('#scbody'); const bh = hashOf(body); if (bd.dataset.h !== bh) { const dayChanged = bd.dataset.d !== ymd; bd.innerHTML = body; bd.dataset.h = bh; bd.dataset.d = ymd; if (dayChanged && HW.v5.soft) HW.v5.soft(bd); }
         if (HW.v5.busy) HW.v5.busy(false);
-      } else $main.innerHTML = `<div id="scpage" data-lk="${lk}"><div id="schead" data-h="${hashOf(head)}">${head}</div><div id="scbody" data-h="${hashOf(body)}" data-d="${esc(ymd)}">${body}</div></div>`;
+      } else $main.innerHTML = `<div id="scpage" data-lk="${lk}"><div id="schead" data-h="${hashOf(head)}">${head}</div><div id="scbody">${body}</div></div>`;
     };
     if (inPlace) { paint($main.querySelector("#scbody").innerHTML); if (HW.v5.busy) HW.v5.busy(true); } else $main.innerHTML = `<div id="scpage" data-lk="${lk}"><div id="schead" data-h="${hashOf(head)}">${head}</div><div id="scbody">${skeleton(4, 'card')}</div></div>`;
     const [games, ctx, meta] = await Promise.all([ymd === today && S.today[lk] && S.today[lk].length ? S.today[lk] : scoreboard(L, ymd).catch(() => null), forecastCtx(L, ymd).catch(() => null), sbMeta(L, ymd)]);
     if (ymd === today && games) S.today[lk] = games;
-    /* the days either side are fetched while the phone is idle, so a tap on a neighbouring date paints from memory at once */
-    { const near = [-1, 1, -2, 2, -3, 3].map(i => addDays(ymd, i)); let i = 0; const step = () => { if (i >= near.length) return; const r = HW.v5.route && HW.v5.route(); if (!r || r.name !== 'scores' || r.lk !== lk) return; const d = near[i++]; Promise.all([scoreboard(L, d).catch(() => null), forecastCtx(L, d).catch(() => null), sbMeta(L, d).catch(() => null)]).finally(() => setTimeout(() => HW.v5.whenIdle(step), 150)); }; setTimeout(() => HW.v5.whenIdle(step), 1200); }
-    const el = $main.querySelector('#dates .on'); if (el) centerX(el);
+    const el = $main.querySelector('#dates .on'); if (el) el.scrollIntoView({ inline: 'center', block: 'nearest' });
     todayPill(ymd !== today, today);
     const phase = ''; const phaseTag = meta.phase ? `<span class="phase">${esc(meta.phase)}</span>` : '';
     const setPhase = () => { const el = $main.querySelector('#phase'); if (el) el.innerHTML = phaseTag; };
@@ -717,18 +537,17 @@
       const next = meta.cal.find(d => d > ymd), last = meta.cal.filter(d => d < ymd).slice(-1)[0];
       const when = next ? (next === addDays(today, 1) ? 'tomorrow' : next === today ? 'today' : `on ${dayLabel(next, { weekday: 'long', month: 'short', day: 'numeric' })}`) : '';
       const body = next ? `<p style="margin:6px 0 0">Next ${esc(L.label)} games are ${esc(when)}.</p>` : meta.cal.length ? `<p style="margin:6px 0 0">The season is over${last ? `; the last games were ${esc(dayLabel(last, { month: 'long', day: 'numeric' }))}` : ''}. Next season shows here once the schedule is posted.</p>` : '';
-      if (L.key === 'wnba' && !next) unrivaledCard().then(h => { if (h && !$main.querySelector('.unrv')) { const host = $main.querySelector('.empty') || $main.lastElementChild; (host && host.parentElement || $main).insertAdjacentHTML('beforeend', h); } });
       paint(phase + empty(`No ${L.label} games ${ymd === today ? 'today' : 'on ' + dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, body, next ? `<button class="btn" data-act="date" data-ymd="${esc(next)}">Jump to ${esc(dayLabel(next, { weekday: 'short', month: 'short', day: 'numeric' }))}</button>` : ''));
       setPhase(); return;
     }
     const shown = mineOnly ? games.filter(g => isFav(g) || g.tbd) : games;   // your teams always sort first; Mine hides the rest (a game whose teams aren't set yet stays: it could be yours)
     const by = st => shown.filter(g => g.state === st && !g.off).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
     const live = by('in'), pre = by('pre'), post = by('post'), off = shown.filter(g => g.off);
-    const block = (title, list) => list.length ? sec(title, `${list.length}`) + `<div class="gp grows">${list.map(g => gameRow(L, g, ctx)).join('')}</div>` : '';
+    const block = (title, list) => list.length ? sec(title, `${list.length}`) + `<div class="games">${list.map(g => gameCard(L, g, ctx, false, true)).join('')}</div>` : '';
     const none = mineOnly && !shown.length ? empty(`None of your teams play ${ymd === today ? 'today' : dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, `<p style="margin:6px 0 0">${games.length} game${games.length === 1 ? '' : 's'} on the slate.</p>`, `<button class="btn ghost" data-act="scmine">Show all</button>`) : '';
     paint(phase + none + block('Live', live) + block(ymd === today ? 'Upcoming' : 'Scheduled', pre) + block('Final', post) + block('Not played', off));
     setPhase();
-    const el2 = $main.querySelector('#dates .on'); if (el2) centerX(el2);
+    const el2 = $main.querySelector('#dates .on'); if (el2) el2.scrollIntoView({ inline: 'center', block: 'nearest' });
   }
   /* a pill that stays put above the tab bar while another day is shown: one tap back to today, wherever the strip is scrolled */
   function todayPill(show, today) {
@@ -770,21 +589,6 @@
     if (counted || Object.keys(days).length) monthCache[key] = { t: Date.now(), v };
     return v;
   }
-  /* Unrivaled, the 3-on-3 league WNBA players play in their offseason: its schedule from data/unrivaled.json (read off the
-     league's own site by a job), shown on the WNBA scores page once the WNBA season is over. Times come in Eastern. */
-  async function unrivaledCard() {
-    const d = HW.hub ? await HW.hub.file('unrivaled.json').catch(() => null) : null; if (!d || !d.games || !d.games.length) return '';
-    const toYmd = s => { const t = new Date(s + ' 12:00'); return isNaN(t) ? '' : `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };
-    const ct = tm => { const m = /^(\d{1,2}):(\d{2}) (AM|PM)$/.exec(tm || ''); if (!m) return tm || ''; let h = (+m[1] % 12) + (m[3] === 'PM' ? 12 : 0) - 1; if (h < 0) h += 24; const ap = h >= 12 ? 'PM' : 'AM'; return `${h % 12 || 12}:${m[2]} ${ap} CT`; };
-    const today = todayCT(); const days = {};
-    d.games.forEach(g => { const y = toYmd(g.date); if (!y) return; const k = y + '|' + (g.arena || ''); (days[k] = days[k] || { y, date: g.date, arena: g.arena, city: g.city, games: [] }).games.push(g); });
-    const list = Object.values(days).sort((a, b) => a.y < b.y ? -1 : a.y > b.y ? 1 : 0); const ahead = list.filter(x => x.y >= today), done = list.filter(x => x.y < today).reverse();
-    const show = (ahead.length ? ahead : done).slice(0, 12); if (!show.length) return '';
-    const line = g => { const tms = g.teams && g.teams.length === 2 ? `${esc(g.teams[0])} vs ${esc(g.teams[1])}` : 'Teams to be set'; const sc = g.score ? `<b>${g.score[0]}–${g.score[1]}</b>` : `<b>${esc(ct(g.time))}</b>`; return `<span class="ug"><span>${tms}</span>${sc}</span>`; };
-    const rows = show.map(x => `<div class="frow urow"><span class="nm"><b>${esc(dayLabel(x.y, { weekday: 'short', month: 'short', day: 'numeric' }))}</b><small>${esc([x.arena, x.city].filter(Boolean).join(' · ') || 'Arena to be announced')}</small>${x.games.some(g => g.teams && g.teams.length === 2 || g.score) ? `<span class="ugs">${x.games.map(line).join('')}</span>` : `<span class="utimes">${x.games.map(g => `<i>${esc(ct(g.time).replace(' CT', ''))}</i>`).join('')}<em>CT</em></span>`}</span></div>`);
-    const first = ahead[0] ? dayLabel(ahead[0].y, { month: 'long', day: 'numeric' }) : '';
-    return `<section class="hsec unrv" data-sec="unrivaled">${sec('Unrivaled', ahead.length ? `season opens ${esc(first)}` : 'latest results')}<p class="unote">The 3-on-3 league where WNBA stars play in the offseason. Games on TNT and truTV.</p>${capList('gp frows', rows, 'unrivaled')}<p class="unote src">Schedule from <a href="${esc(d.url || 'https://www.unrivaled.basketball/schedule')}" target="_blank" rel="noopener">unrivaled.basketball</a></p></section>`;
-  }
   /* what else the scoreboard says: the league's game-day calendar and the part of the season it is (regular season, playoffs) */
   async function sbMeta(L, ymd) {
     const t = todayCT(); const d = await jSoft(`${API(L)}/scoreboard?dates=${HW.compact(ymd)}${L.sbParams}`, ymd === t ? 25000 : (ymd < t ? 3600000 : 300000));
@@ -792,22 +596,13 @@
     const cal = (lg.calendar || []).map(x => typeof x === 'string' ? x : x && (x.startDate || x.date) || '').filter(Boolean).map(x => String(x).slice(0, 10)).sort();
     const name = lg.season && lg.season.type && lg.season.type.name || '';
     const phase = /post/i.test(name) ? 'Playoffs' : /pre/i.test(name) ? 'Preseason' : /off/i.test(name) ? 'Off-season' : '';
-    /* ESPN keeps calling it the postseason after the final; once the last game date is behind us it's the offseason */
-    if (phase && phase !== 'Preseason' && cal.length && cal[cal.length - 1] < t && ymd >= t) return { cal, phase: 'Offseason' };
     return { cal, phase };
   }
 
   /* ================= PLAYER ================= */
   async function player(lk, id) {
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Player not found'); return; }
-    /* a college player who has turned pro opens as the pro: their NBA or WNBA page, this season's team and numbers */
-    if (lk.startsWith('ncaa') && HW.hub) { const lg = await HW.hub.league(L).catch(() => null); const tp = lg && (lg.turnedPro || []).find(x => String(x.id) === String(id)); if (tp && tp.pid) { location.replace(`#player/${tp.to}/${tp.pid}`); return; } }
-    /* a refresh of the player already on screen keeps the page up while the new numbers load, then swaps it in place at the
-       same scroll and tab, so the face never blinks out and back */
-    const same = $main.querySelector(`#gpage.plpage[data-pid="${String(id)}"]`);
-    const keep = same ? { y: (document.getElementById('gxscroll') || {}).scrollTop || 0, tab: (($main.querySelector('#gtabs .chip.on') || {}).dataset || {}).tab } : null;
-    player.keep = keep;
-    if (!same) $main.innerHTML = `<div class="topbar"><a class="ib" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>` + skeleton(1, 'card') + skeleton(6, 'row');
+    $main.innerHTML = `<div class="topbar"><a class="ib" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a></div>` + skeleton(1, 'card') + skeleton(6, 'row');
     const bioUrl = `${WEB(L)}/athletes/${id}`;
     const coreUrl = `${HW.ESPN.core}sports/basketball/leagues/${L.path.split('/')[1]}/athletes/${id}`;
     // two sources for the bio: the site feed (team, headshot, injuries) and the core record (birthplace, hand, class, debut), merged field by field
@@ -858,14 +653,9 @@
     </div>`;
     let injStrip = '';
     if (injury) {
-      S.injuries = S.injuries || {}; const key = `p:${id}:${injury.id || 0}`; S.injuries[key] = { x: { ...injury, athlete: { id: String(id), displayName: a.displayName, headshot: a.headshot && a.headshot.href, position: a.position } }, id: String(id), team: { id: tm.id, short: tm.shortDisplayName || tm.name || '', color, logo: tlogo || '' } };
+      S.injuries = S.injuries || {}; const key = `p:${id}:${injury.id || 0}`; S.injuries[key] = { x: { ...injury, athlete: { id: String(id), displayName: a.displayName, headshot: a.headshot && a.headshot.href, position: a.position } }, id: String(id), team: { id: tm.id, short: tm.shortDisplayName || tm.name || '', color } };
       const st0 = injury.status || ''; const cls = /out/i.test(st0) ? 'out' : /day|quest|doubt/i.test(st0) ? 'q' : 'ok'; const det = injury.details || {}; const ret = retInfo(L, det.returnDate);
-      { const ib = injBody(L, injury, true), f = injFacts(L, injury); const min = !!(store.get('ij:min', {}) || {})[String(id)];
-        const cap = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
-        const brief = f.back ? (f.back === 'Not this season' ? 'Out for the season' : /decision/i.test(f.back) ? 'Game-time decision' : f.back === 'No date given' ? 'No return date yet' : `Back around ${f.back}`) : '';
-        injStrip = `<div class="ijc st-${ib.cls}${min ? ' min' : ''}" id="injury" data-pid="${esc(String(id))}">`
-          + `<button class="ijmini" data-act="ijtoggle" aria-expanded="false"><span class="tag ${ib.cls === 'dtd' ? 'q' : ib.cls}">${esc(f.st)}</span><span class="t"><b>${esc(cap(f.part))}</b><em>${esc(brief)}</em></span><i class="ijchev">Show</i></button>`
-          + `<div class="ijfull"><button class="ijhide" data-act="ijtoggle" aria-expanded="true">Hide</button>${ib.html}<p class="xnote">${injury.date ? `Updated ${esc(new Date(injury.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: HW.TZ }))} · ` : ''}From the league injury report, through ESPN</p></div></div>`; }
+      injStrip = `<button class="injstrip ${cls}" data-act="injury" data-key="${esc(key)}"><span class="tag ${cls}">${esc(statusWord(st0))}</span><span class="t"><b>${esc(det.type || det.detail || 'Injury')}${det.detail && det.detail !== det.type ? `, ${esc(det.detail.toLowerCase())}` : ''}</b><span>${ret ? (ret.far ? 'No return date this season' : `Expected back around ${esc(ret.long)}`) : esc((injury.shortComment || injury.longComment || 'Tap for the note').slice(0, 70))}</span></span>${chev}</button>`;
     }
     // the game log: regular-season games, newest first
     let evRows = [];
@@ -884,12 +674,12 @@
     const fmt = (v, l) => v == null ? '—' : /%/.test(l) ? v.toFixed(1) : (Number.isInteger(v) && /^(GP|GS)$/.test(l) ? String(v) : v.toFixed(1));
     const G = [['PTS', 'Points'], ['REB', 'Rebounds'], ['AST', 'Assists'], ['STL', 'Steals'], ['BLK', 'Blocks'], ['TO', 'Turnovers'], ['MIN', 'Minutes'], ['FG%', 'Field goal %'], ['3P%', 'Three %'], ['FT%', 'Free throw %'], ['PF', 'Fouls'], ['GP', 'Games']];
     const grid = G.map(([k, l]) => ({ k, l, v: stat(k) })).filter(x => x.v != null);
-    /* a breakdown: the big number, one bar split by share in the team's tones, and a row per part. Flat, like the rest
-       of the app (it replaced a donut chart) */
     const ring = (segs, center, label, title) => {
-      const live = segs.filter(x => x.v > 0); const total = live.reduce((a, x) => a + x.v, 0);
-      const bar = live.length ? `<div class="mixbar" role="img" aria-label="${esc(title)}">${live.map(x => `<i style="flex:${(x.v / total).toFixed(4)} 1 0;background:${x.c}"></i>`).join('')}</div>` : '';
-      return `<div class="mix" style="${toneVars}"><div class="mixtop"><b>${esc(center)}</b><span>${esc(label)}</span></div>${bar}<div class="mixkey">${segs.map(x => `<div><i style="background:${x.c}"></i><span>${esc(x.l)}</span><b>${x.v == null ? '—' : x.v.toFixed(1)}</b><em>${total && x.v > 0 ? Math.round(x.v / total * 100) + '%' : ''}</em></div>`).join('')}</div></div>`;
+      const live = segs.filter(x => x.v > 0); const total = live.reduce((a, x) => a + x.v, 0); const R = 54, C = 2 * Math.PI * R, gap = live.length > 1 ? 17 : 0; let off = 0;
+      // every slice at least a short dash (a 4% share is a mark, not a hair); the biggest slice gives up the difference
+      const MIN = 12; const shares = live.map(x => x.v / total * C); const lens = shares.map(sh => Math.max(MIN, sh - gap)); const over = lens.reduce((a, b) => a + b, 0) + gap * live.length - C; if (over > 0) { const big = lens.indexOf(Math.max(...lens)); lens[big] = Math.max(MIN, lens[big] - over); }
+      const arcs = live.map((x, i) => { const len = lens[i]; const a = `<circle cx="70" cy="70" r="${R}" style="stroke:${x.c}" stroke-width="13" stroke-linecap="round" stroke-dasharray="${len.toFixed(1)} ${(C - len).toFixed(1)}" stroke-dashoffset="${(-(off + (gap ? gap / 2 : 0))).toFixed(1)}"/>`; off += len + gap; return a; }).join('');
+      return `<div class="ring" style="${toneVars}"><svg width="150" height="150" viewBox="0 0 140 140" role="img" aria-label="${esc(title)}"><g fill="none" transform="rotate(-90 70 70)">${arcs}</g><text x="70" y="73" text-anchor="middle" fill="var(--ink)" style="font:800 34px var(--num)">${esc(center)}</text><text x="70" y="91" text-anchor="middle" fill="var(--ink-3)" style="font:700 11px var(--ui);letter-spacing:.06em">${esc(label)}</text></svg><div class="key">${segs.map(x => `<div><i style="background:${x.c}"></i><span>${esc(x.l)}</span><b>${x.v == null ? '—' : x.v.toFixed(1)}</b><em>${total && x.v > 0 ? Math.round(x.v / total * 100) + '%' : ''}</em></div>`).join('')}</div></div>`;
     };
     // three tints of the team colour that read on both grounds (set per theme in CSS from these variables)
     const toneVars = `--c1d:${esc(V_lift(color))};--c1l:${esc(V_deep(color))};--c2d:${esc(mixTo(V_lift(color), 255, .38))};--c3d:${esc(mixTo(V_lift(color), 255, .68))};--c2l:${esc(mixTo(V_deep(color), 255, .42))};--c3l:${esc(mixTo(V_deep(color), 255, .72))}`;   // the first tone is the colour as it reads on the ground (a black team lifts on black)
@@ -990,31 +780,9 @@
     };
     const ptab = 'summary';   // every player opens on Summary
     const ptabs = `<div class="chips ptabs" role="tablist" style="padding-top:14px">${[['summary', 'Summary'], ['stats', 'Stats'], ['bio', 'Bio'], ['news', 'News']].map(([k, l]) => `<button class="chip${k === ptab ? ' on' : ''}" role="tab" data-act="ptab" data-tab="${k}" aria-selected="${k === ptab}" aria-pressed="${k === ptab}">${l}</button>`).join('')}</div>`;
-    const legacyHTML = `<div class="topbar"><a class="ib" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><span class="ttl">${esc(a.displayName || '')}</span><div class="sp"><button class="ib" data-act="share" data-title="${esc(a.displayName)}" data-card='${esc(JSON.stringify({ kind: 'player', name: a.displayName, sub: [tm.shortDisplayName || tm.name || '', (a.position && a.position.displayName || '').toLowerCase(), a.jersey ? `No. ${a.jersey}` : ''].filter(Boolean).join(' · '), color, img: a.headshot && a.headshot.href || '', jersey: a.jersey || '', line: [['PTS', 'PPG'], ['REB', 'RPG'], ['AST', 'APG']].map(([k, l]) => [stat(k) == null ? '—' : stat(k).toFixed(1), l]), note: seasonName, date: dayLabel(todayCT(), { month: 'long', day: 'numeric', year: 'numeric' }), title: a.displayName, text: `${a.displayName}: ${['PTS', 'REB', 'AST'].map(k => stat(k) == null ? '' : `${stat(k).toFixed(1)} ${k.toLowerCase()}`).filter(Boolean).join(', ')} · ${seasonName}`, file: a.displayName }))}' aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></div></div><div class="lb-slot"></div>` + hero + injStrip + ptabs + Object.entries(panels).map(([k, html]) => `<div data-ptab-panel="${k}"${k === ptab ? '' : ' hidden'}>${html}</div>`).join('');
-    /* v8 player page, after the v7 card: a tall hero in the team's moving colours with the club crest large and faint
-       behind a high-definition cut-out of the player, the name over the bottom; scrolling folds it into a bar with a small
-       face and the name. Follow is the flat star at the top right, the same star as everywhere else. */
-    const shell = HW.v5._ && HW.v5._.heroShell;
-    if (shell) {
-      /* the full-size cut-out: a resized "combiner" link is turned back into the original file */
-      const hsBig = (h => { if (!h) return ''; const m = /[?&]img=([^&]+)/.exec(h); return m ? 'https://a.espncdn.com' + decodeURIComponent(m[1]) : h; })(a.headshot && a.headshot.href);
-      const pos = a.position && (a.position.abbreviation || a.position.displayName) || '';
-      const teamName = tm.shortDisplayName || tm.name || tm.displayName || '';
-      const subBits = [teamName && tm.id ? `<a class="plteam" href="${href.team(lk, tm.id)}">${tlogo ? `<img src="${esc(tlogo)}" alt="" ${hide}>` : ''}${esc(teamName)}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>` : esc(teamName), esc(pos), a.jersey ? esc(`#${a.jersey}`) : ''].filter(Boolean).join(' · ');
-      const ijSt = injury && !/^active$/i.test(injury.status || '') ? injury.status : '';
-      const ijPill = ijSt ? `<button class="plij ${/out/i.test(ijSt) ? 'out' : 'q'}" data-act="pl-inj" aria-label="Injury: ${esc(ijSt)}"><u></u>${esc(statusWord(ijSt))}</button>` : '';
-      const flwBtn = `<button class="flw${following ? ' on' : ''}" data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}' aria-pressed="${following}" aria-label="${following ? 'Unfollow' : 'Follow'} ${esc(a.displayName || '')}">${window.RIVL_flw ? window.RIVL_flw(following, 'player') : (following ? 'Following' : 'Follow player')}</button>`;
-      const inner = `<div class="plh">${tlogo ? `<img class="plwm" src="${esc(tlogo)}" alt="" ${hide}>` : ''}${hsBig ? `<img class="plshot" src="${esc(hsBig)}" alt="" decoding="sync" fetchpriority="high" ${hide}>` : `<b class="plini">${esc(initials(a.displayName || ''))}</b>`}<div class="pltx"><h1>${esc(a.displayName || '')}</h1><p>${subBits}</p><div class="plact">${flwBtn}${ijPill}</div></div></div>`;
-      const bar = `<a class="gxib" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><div class="gxmid2"><div class="gxctr" id="gxmini"><span class="gxmn plmn">${headshot(a.headshot && a.headshot.href, color, 40, a.displayName)}<span><b>${esc(a.displayName || '')}</b><small>${tlogo ? `<img src="${esc(tlogo)}" alt="" ${hide}>` : ''}${esc(tm.displayName && tm.displayName.length <= 18 ? tm.displayName : teamName)}</small></span></span></div></div><span class="gxib ghost" aria-hidden="true"></span>`;
-      const factRows = [['Jersey', a.jersey ? `#${a.jersey}` : ''], ['Position', pos], ['Height', a.displayHeight], ['Weight', a.displayWeight], [college ? 'Class' : 'Age', college ? classWord : (a.age ? `${a.age}` : '')], ['Team', tm.abbreviation || '']].filter(([, v]) => v);
-      const factsT = factRows.length ? `<div class="gxplate plfacts">${factRows.map(([k, v]) => k === 'Team' && tm.id ? `<a class="plft" href="${href.team(lk, tm.id)}"><b>${esc(String(v))}</b><span>${esc(k)} ›</span></a>` : `<div><b>${esc(String(v))}</b><span>${esc(k)}</span></div>`).join('')}</div>` : '';
-      const pan = { ...panels, summary: factsT + (L.sport === 'basketball' && HW.rating ? `<div class="prate" data-pid="${esc(String(id))}" style="${tcv(color)}"></div>` : '') + injStrip + panels.summary };
-      const kp = player.keep || {}; shell({ pid: String(id), keepY: kp.y, cls: 'plpage', color, c2: teamAlt({ id: String(tm.id || ''), abbr: tm.abbreviation, alt: tm.alternateColor }, L) || color, inner, bar, act: 'ptab', attr: 'data-ptab-panel', tab: kp.tab && pan[kp.tab] ? kp.tab : ptab, tabs: [['summary', 'Overview'], ['stats', 'Stats'], ['bio', 'Bio'], ['news', 'News']], panels: pan });
-      if (HW.rating) { const R0 = HW.rating.cached(L, id), el0 = R0 && $main.querySelector(`.prate[data-pid="${String(id)}"]`); if (el0) { HW.rating.mount(el0, R0, { league: L.short || L.label }); el0.dataset.ovr = String(R0.ovr) + R0.traits.map(t => t.pct).join(); el0.classList.add('nogrow'); } }
-      if (HW.rating) HW.rating.get(L, id).then(R => { const el = $main.querySelector(`.prate[data-pid="${String(id)}"]`); if (el && R && el.dataset.ovr !== String(R.ovr) + R.traits.map(t => t.pct).join()) { HW.rating.mount(el, R, { league: L.short || L.label }); el.dataset.ovr = String(R.ovr) + R.traits.map(t => t.pct).join(); } }).catch(() => { });
-    } else $main.innerHTML = legacyHTML;
+    $main.innerHTML = `<div class="topbar"><a class="ib" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><span class="ttl">${esc(a.displayName || '')}</span><div class="sp"><button class="ib" data-act="share" data-title="${esc(a.displayName)}" data-card='${esc(JSON.stringify({ kind: 'player', name: a.displayName, sub: [tm.shortDisplayName || tm.name || '', (a.position && a.position.displayName || '').toLowerCase(), a.jersey ? `No. ${a.jersey}` : ''].filter(Boolean).join(' · '), color, img: a.headshot && a.headshot.href || '', jersey: a.jersey || '', line: [['PTS', 'PPG'], ['REB', 'RPG'], ['AST', 'APG']].map(([k, l]) => [stat(k) == null ? '—' : stat(k).toFixed(1), l]), note: seasonName, date: dayLabel(todayCT(), { month: 'long', day: 'numeric', year: 'numeric' }), title: a.displayName, text: `${a.displayName}: ${['PTS', 'REB', 'AST'].map(k => stat(k) == null ? '' : `${stat(k).toFixed(1)} ${k.toLowerCase()}`).filter(Boolean).join(', ')} · ${seasonName}`, file: a.displayName }))}' aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></div></div><div class="lb-slot"></div>` + hero + injStrip + ptabs + Object.entries(panels).map(([k, html]) => `<div data-ptab-panel="${k}"${k === ptab ? '' : ' hidden'}>${html}</div>`).join('');
     if (HW.v5._ptabL) $main.removeEventListener('click', HW.v5._ptabL);
-    HW.v5._ptabL = e => { const b = e.target.closest('[data-act="ptab"]'); if (!b) return; e.preventDefault(); const k = b.dataset.tab; $main.querySelectorAll('[data-act="ptab"]').forEach(x => { const on = x.dataset.tab === k; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); x.setAttribute('aria-selected', String(on)); }); $main.querySelectorAll('[data-ptab-panel]').forEach(p => { const on = p.dataset.ptabPanel === k; if (on && p.hidden && HW.v5.soft && !$main.querySelector('.plpage')) { p.hidden = false; HW.v5.soft(p); } else p.hidden = !on; }); const box = document.getElementById('gxscroll'), sp = box && box.querySelector('.gxspace'); if (sp && box.scrollTop > sp.offsetHeight) box.scrollTop = sp.offsetHeight; };
+    HW.v5._ptabL = e => { const b = e.target.closest('[data-act="ptab"]'); if (!b) return; e.preventDefault(); const k = b.dataset.tab; $main.querySelectorAll('[data-act="ptab"]').forEach(x => { const on = x.dataset.tab === k; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); x.setAttribute('aria-selected', String(on)); }); $main.querySelectorAll('[data-ptab-panel]').forEach(p => { const on = p.dataset.ptabPanel === k; if (on && p.hidden && HW.v5.soft) { p.hidden = false; HW.v5.soft(p); } else p.hidden = !on; }); };
     $main.addEventListener('click', HW.v5._ptabL);
     document.title = `${a.displayName} · RIVL`;
   }
@@ -1050,24 +818,10 @@
      rendering, but on the phone the GPU had to raster those layers as the slide began and the tiles it hadn't finished showed
      as the page's white — the flash Ray saw. The slide now stays on the ordinary paint path and the paint is kept cheap
      instead: no grain on anything that moves (the bands, the roster block), layout contained to each card. */
-  /* open and close by animating the measured height (one smooth slide, contents fading with it) instead of a grid-row
-     transition, which stuttered on the phone with a long roster inside */
   function foldToggle(head, open) {
     const fold = head.nextElementSibling; if (!fold || !fold.classList.contains('fold')) return;
-    head.setAttribute('aria-expanded', String(open));
-    if (fold._anim) { fold._anim.cancel(); fold._anim = null; }
-    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const from = fold.getBoundingClientRect().height;
-    fold.classList.toggle('closed', !open);
-    if (open) fold.querySelectorAll('img[loading="lazy"]').forEach(i => { i.loading = 'eager'; });
-    if (reduce || !fold.animate) return;
-    fold.classList.add('anim');
-    const to = open ? fold.scrollHeight : 0;
-    /* closing: the contents are fully faded before the height reaches zero, so no sliver of the card (its top edge) is left
-       showing as a thin line under the heading */
-    const frames = open ? [{ height: from + 'px', opacity: .4 }, { height: to + 'px', opacity: 1 }] : [{ height: from + 'px', opacity: 1 }, { opacity: 0, offset: .65 }, { height: '0px', opacity: 0 }];
-    const a = fold.animate(frames, { duration: open ? 320 : 260, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'none' });
-    fold._anim = a; a.onfinish = a.oncancel = () => { fold.classList.remove('anim'); if (fold._anim === a) fold._anim = null; };
+    head.setAttribute('aria-expanded', String(open)); fold.classList.toggle('closed', !open);
+    if (open) { fold.classList.add('opening'); setTimeout(() => fold.classList.remove('opening'), 500); fold.querySelectorAll('img[loading="lazy"]').forEach(i => { i.loading = 'eager'; }); }
   }
   function dragOrder(list, onChange) {
     if (!list || list.dataset.drag) return; list.dataset.drag = '1';
@@ -1121,8 +875,6 @@
     const sections = rosters.filter(Boolean).map(r => ({ key: r.team.id, team: r.team, rows: r.players.slice().sort(byLine), open: false }));
     const missing = mine.filter((id, i) => !rosters[i]);
     const shown = () => new Set(sections.flatMap(s => s.rows.map(p => p.id)));
-    /* the Following block on its own, so a follow can swap just this block instead of repainting the whole list */
-    const folHTML = () => { const fl = fplayers.all().filter(p => p.lk === lk); return `<div class="ppfol">${fl.length ? sec('Following', `${fl.length}`, fl.length > 1 ? `<button data-pp="order" aria-pressed="${!!paint.order}">${paint.order ? 'Done' : 'Reorder'}</button>` : '') + `<div class="tgrp plain"><div class="rows${paint.order ? ' ordering' : ''}" data-order="players">${fl.map(p => playerRow(p, { sub: p.team || '', on: true, select, order: !!paint.order })).join('')}</div></div>` : ''}</div>`; };
     const paint = (only) => {   // only === 'leaders': swap just the leaders block, the rest of the list stays as it is
       const q = inp.value.trim().toLowerCase();
       const fset = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id));
@@ -1137,7 +889,7 @@
         const teams = Object.values(idx).filter(t => `${t.name} ${t.short} ${t.abbr}`.toLowerCase().includes(q) && !sections.some(s => s.key === t.id)).sort((a, b) => (a.short || '').localeCompare(b.short || '')).slice(0, 5);
         if (teams.length) parts.push(sec('Teams', 'tap to see the roster') + `<div class="tgrp plain"><div class="rows">${teams.map(t => `<button class="row" data-pp="browse" data-id="${esc(t.id)}">${logo(t.logo)}<span class="t"><b>${esc(t.name)}</b><span>Show the roster</span></span>${chev}</button>`).join('')}</div></div>`);
       }
-      if (following && !q) parts.push(folHTML());
+      if (following && !q) { const fl = fplayers.all().filter(p => p.lk === lk); if (fl.length) parts.push(sec('Following', `${fl.length}`, fl.length > 1 ? `<button data-pp="order" aria-pressed="${!!paint.order}">${paint.order ? 'Done' : 'Reorder'}</button>` : '') + `<div class="tgrp plain"><div class="rows${paint.order ? ' ordering' : ''}" data-order="players">${fl.map(p => playerRow(p, { sub: p.team || '', on: true, select, order: !!paint.order })).join('')}</div></div>`); }
       sections.forEach(s => {
         const rows = q ? s.rows.filter(p => `${p.name} ${s.team.name} ${s.team.abbr}`.toLowerCase().includes(q)) : s.rows; if (!rows.length) return;
         const folded = !q && !!(store.get('v5:ppcol', {}) || {})[s.key];   // a search always opens every team
@@ -1174,33 +926,21 @@
       else if (b.dataset.pp === 'lcat') {
         const was = list.querySelector('.lchips'); const sl = was ? was.scrollLeft : 0;   // the row is rebuilt; it must not jump back to the start
         paint.lcat = b.dataset.cat; paint.topOpen = false; paint('leaders');
-        const y = list.querySelector('.lchips'); if (y) { y.scrollLeft = sl; const on = y.querySelector('.chip.on'); if (on) centerX(on); if (y.getBoundingClientRect().top < 60) y.scrollIntoView({ block: 'start' }); }
+        const y = list.querySelector('.lchips'); if (y) { y.scrollLeft = sl; const on = y.querySelector('.chip.on'); if (on) on.scrollIntoView({ inline: 'nearest', block: 'nearest' }); if (y.getBoundingClientRect().top < 60) y.scrollIntoView({ block: 'start' }); }
       }
       else if (b.dataset.pp === 'fold') { const f = store.get('v5:ppcol', {}) || {}; const k = b.dataset.id; if (f[k]) delete f[k]; else f[k] = 1; store.set('v5:ppcol', f); foldToggle(b, !f[k]); }
       else if (b.dataset.pp === 'browse') { b.querySelector('.t span').textContent = 'Loading…'; const r = await rosterOf(L, b.dataset.id, idx).catch(() => null); if (r) { sections.push({ key: r.team.id, team: r.team, rows: r.players.slice().sort(byLine), open: true }); inp.value = ''; } paint(); }
     });
     const sync = (e) => { if (!el.isConnected) { document.removeEventListener('rivl:follow', sync); return; } if (e && e.detail && e.detail.reorder) return;
-      const fs = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('.thead.pp-team').forEach(h => { const body = h.nextElementSibling; const all = body ? [...body.querySelectorAll('[data-act="follow-player"]')] : []; const picked = all.map(b => { try { return JSON.parse(b.dataset.snap); } catch { return null; } }).filter(x => x && fs.has(String(x.id))); const sm = h.querySelector('.tt small'); if (sm) sm.innerHTML = bandLine(all.length, picked.length); const old = h.querySelector('.faces'); const fresh = faces(picked); if (old) old.remove(); if (fresh) h.querySelector('.chev').insertAdjacentHTML('beforebegin', fresh); }); const fset = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('[data-act="follow-player"]').forEach(b => { let id = ''; try { id = JSON.parse(b.dataset.snap).id; } catch { } const on = fset.has(String(id)), was = b.classList.contains('on'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); const st = b.classList.contains('star') ? b : b.querySelector('.star'); if (st) { st.classList.toggle('on', on); st.innerHTML = on ? starSvg : starLine; if (on && !was) { st.classList.add('pop'); setTimeout(() => st.classList.remove('pop'), 450); } } }); if (following && !inp.value) {
-        /* swap only the Following block, and hold the row you tapped where it was: the block above it growing or
-           shrinking by a row used to shove the whole list down a row under your thumb */
-        const cur = list.querySelector('.ppfol'); if (!cur || paint.order) { paint(); return; }
-        const anchorEl = sync.tap && sync.tap.isConnected && !cur.contains(sync.tap) ? sync.tap : null; const y0 = anchorEl ? anchorEl.getBoundingClientRect().top : 0;
-        const t = document.createElement('div'); t.innerHTML = folHTML(); cur.replaceWith(t.firstElementChild);
-        if (anchorEl) { const d = anchorEl.getBoundingClientRect().top - y0; if (d) window.scrollBy(0, d); }
-      } };
-    el.addEventListener('pointerdown', e => { const b = e.target.closest('[data-act="follow-player"]'); if (b) sync.tap = b; }, true);
+      const fs = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('.thead.pp-team').forEach(h => { const body = h.nextElementSibling; const all = body ? [...body.querySelectorAll('[data-act="follow-player"]')] : []; const picked = all.map(b => { try { return JSON.parse(b.dataset.snap); } catch { return null; } }).filter(x => x && fs.has(String(x.id))); const sm = h.querySelector('.tt small'); if (sm) sm.innerHTML = bandLine(all.length, picked.length); const old = h.querySelector('.faces'); const fresh = faces(picked); if (old) old.remove(); if (fresh) h.querySelector('.chev').insertAdjacentHTML('beforebegin', fresh); }); const fset = new Set(fplayers.all().filter(p => p.lk === lk).map(p => p.id)); el.querySelectorAll('[data-act="follow-player"]').forEach(b => { let id = ''; try { id = JSON.parse(b.dataset.snap).id; } catch { } const on = fset.has(String(id)), was = b.classList.contains('on'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); const st = b.classList.contains('star') ? b : b.querySelector('.star'); if (st) { st.classList.toggle('on', on); st.innerHTML = on ? starSvg : starLine; if (on && !was) { st.classList.add('pop'); setTimeout(() => st.classList.remove('pop'), 450); } } }); if (following && !inp.value) paint(); };
     document.addEventListener('rivl:follow', sync);
   }
   async function players(lk) {
     const L = LEAGUES[lk];
-    $main.innerHTML = `<div class="stbar edbar"><a class="gxib stback" href="#home" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><h1>Players</h1></div><p class="edsub">From the teams you follow. Search any team to see its roster.</p><div id="ppick"></div>`;
+    $main.innerHTML = `<div class="page-h"><h1>Players</h1><p>From the teams you follow. Search any team to see its roster.</p></div><div id="ppick"></div>`;
     await playerPicker($main.querySelector('#ppick'), L, { following: true, leaders: true });
   }
 
-  /* the other leagues' first-paint data, fetched at idle after the one on screen has painted, so a swipe into a league not
-     yet opened this session finds its numbers in the cache and paints at once instead of showing the skeleton */
-  const homeWarm = async lk => { const L = LEAGUES[lk]; if (!L) return; const today = todayCT(), yday = addDays(today, -1);
-    await Promise.all([teamsIndex(L), scoreboard(L, today).catch(() => []), scoreboard(L, yday, 600000).catch(() => []), forecastCtx(L, today).catch(() => null), standings(L).catch(() => null)]).catch(() => { }); };
-  HW.v5 = Object.assign(HW.v5 || {}, { homeWarm, unrivaledCard, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { morph, patch, centerX, capOpen, capSave, teamNow: (L, id) => L && ((teamIdx[L.key] || {})[String(id)] || pool(L.key)[String(id)] || null), gameRow, injBody, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
+  HW.v5 = Object.assign(HW.v5 || {}, { home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
+    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized } });
 })();

@@ -2,16 +2,14 @@
    the app-icon badge and share cards. Loaded last; everything here is optional and fails quietly. */
 (() => {
   'use strict';
-  const { LEAGUES, ORDER, S, esc, store, isLive, isFav } = HW; const J = (n, f) => HW.perf ? HW.perf.job(n, f) : f();
+  const { LEAGUES, ORDER, S, esc, store, isLive, isFav } = HW;
   const V = HW.v5;
   const toast = m => V.toast && V.toast(m);
 
   /* ---------- service worker: instant opens, last good data when the feed is slow ---------- */
   if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
-        /* look for a new version whenever the app is opened or comes back to the front */
-        reg.update().catch(() => { }); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => { }); });
+      navigator.serviceWorker.register('sw.js').then(reg => {
         reg.addEventListener('updatefound', () => { const w = reg.installing; if (!w) return; w.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) showUpdate(); }); });
       }).catch(() => { });
       const had = !!navigator.serviceWorker.controller;   // first install takes control without a reload; a later update reloads once
@@ -28,22 +26,10 @@
 
   /* ---------- pull to refresh ---------- */
   const ptr = document.createElement('div'); ptr.className = 'ptr'; ptr.innerHTML = '<i></i>'; document.body.appendChild(ptr);
-  let y0 = 0, x0 = 0, pulling = false, armed = false, dir = '';
+  let y0 = 0, pulling = false, armed = false;
   const reset = () => { ptr.classList.remove('arm', 'go'); ptr.style.removeProperty('--p'); armed = false; };
-  /* at the top means at the top of whatever the finger is scrolling: the window, or a box that scrolls on its own (the game page) */
-  let box = null, strip = null;
-  const scrollerOf = el => { for (let n = el; n && n !== document.body; n = n.parentElement) { if (n.scrollHeight > n.clientHeight + 1) { const oy = getComputedStyle(n).overflowY; if (oy === 'auto' || oy === 'scroll') return n; } } return null; };
-  const sideOf = el => { for (let n = el; n && n !== document.body; n = n.parentElement) { if (n.scrollWidth > n.clientWidth + 1) { const ox = getComputedStyle(n).overflowX; if (ox === 'auto' || ox === 'scroll') return n; } } return null; };
-  const atTop = () => window.scrollY <= 0 && (!box || box.scrollTop <= 0);
-  /* a pull is a straight drag down from the very top. The first few pixels decide what the finger is doing: a sideways start
-     (a strip of tiles, a table) is never a pull, even if the finger then drifts down with the strip still held. */
-  window.addEventListener('touchstart', e => { box = scrollerOf(e.target); strip = sideOf(e.target); dir = ''; pulling = atTop() && !document.body.classList.contains('noscroll') && e.touches.length === 1 && !(V.barTrip && V.barTrip() && e.target.closest('#gpage')); y0 = pulling ? e.touches[0].clientY : 0; x0 = pulling ? e.touches[0].clientX : 0; }, { passive: true });
-  window.addEventListener('touchmove', e => {
-    if (!pulling) return; const t = e.touches[0], dy = t.clientY - y0, dx = t.clientX - x0;
-    if (!dir) { if (Math.max(Math.abs(dx), Math.abs(dy)) < 12) return; dir = Math.abs(dx) > Math.abs(dy) * .8 ? 'x' : 'y'; }
-    if (dir === 'x' || dy <= 0 || !atTop() || (strip && strip.scrollLeft > 0 && strip.scrollLeft < strip.scrollWidth - strip.clientWidth - 1 && Math.abs(dx) > 6)) { pulling = false; reset(); return; }
-    const d = Math.min(Math.max(0, dy - 12), 130); ptr.style.setProperty('--p', (d / 90).toFixed(2)); armed = d > 84; ptr.classList.toggle('arm', armed);
-  }, { passive: true });
+  window.addEventListener('touchstart', e => { pulling = window.scrollY <= 0 && !document.body.classList.contains('noscroll') && e.touches.length === 1; y0 = pulling ? e.touches[0].clientY : 0; }, { passive: true });
+  window.addEventListener('touchmove', e => { if (!pulling) return; const dy = e.touches[0].clientY - y0; if (dy <= 0 || window.scrollY > 0) { reset(); return; } const d = Math.min(dy, 130); ptr.style.setProperty('--p', (d / 90).toFixed(2)); armed = d > 84; ptr.classList.toggle('arm', armed); }, { passive: true });
   window.addEventListener('touchend', async () => { if (!pulling) return; pulling = false; if (!armed) { reset(); return; } ptr.classList.add('go'); buzz(10); try { await V.refreshAll(); } finally { setTimeout(reset, 250); } }, { passive: true });
 
   /* ---------- haptics: a tick when something is followed or switched ---------- */
@@ -66,7 +52,50 @@
     try { if (n) navigator.setAppBadge(n); else navigator.clearAppBadge && navigator.clearAppBadge(); } catch { }
   });
 
-  V.edges = () => { };   // strip fades are drawn by CSS (scroll-driven), nothing to measure
+  /* ---------- logos sized by their artwork, not their file: ESPN's PNGs carry different padding ---------- */
+  const fitCache = new Map();
+  /* the artwork's box inside a logo file: ESPN's PNGs pad wildly (a shield fills its square, a wordmark sits in a strip),
+     so every disc scales and centres the artwork itself, not the file. Needs the CDN's CORS header; without it a disc keeps its default size. */
+  function measure(src) {
+    if (fitCache.has(src)) return fitCache.get(src);
+    const p = new Promise(res => {
+      const im = new Image(); im.crossOrigin = 'anonymous';
+      im.onload = () => { try { const S = 72; const c = document.createElement('canvas'); c.width = S; c.height = S; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, S, S); const d = x.getImageData(0, 0, S, S).data; let x0 = S, y0 = S, x1 = -1, y1 = -1; for (let y = 0; y < S; y++) for (let xx = 0; xx < S; xx++) if (d[(y * S + xx) * 4 + 3] > 30) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; } if (x1 < 0) return res(null); res({ w: (x1 - x0 + 1) / S, h: (y1 - y0 + 1) / S, cx: ((x0 + x1 + 1) / 2) / S, cy: ((y0 + y1 + 1) / 2) / S }); } catch { res(null); } };
+      im.onerror = () => res(null); im.src = src + (src.includes('?') ? '&' : '?') + 'fit';   // its own URL, so the cache never hands a no-CORS copy to a CORS load
+    });
+    fitCache.set(src, p); return p;
+  }
+  const apply = (img, scale, m) => { img.style.setProperty('--fit', scale.toFixed(3)); img.style.setProperty('--fx', (-(m.cx - .5) * 100).toFixed(1) + '%'); img.style.setProperty('--fy', (-(m.cy - .5) * 100).toFixed(1) + '%'); img.classList.add('fit'); };
+  async function fitLogos() {
+    // the big ones: fill the box
+    for (const img of document.querySelectorAll('.ehero .biglogo:not(.fitted), .hero .tm .logo img:not(.fitted)')) { img.classList.add('fitted'); const m = await measure(img.getAttribute('src') || ''); if (!m) continue; apply(img, Math.min(1.45, Math.max(1, Math.min(1 / m.w, 1 / m.h) * 0.94)), m); }
+    // the discs: the artwork's longer side lands at 68% of the disc, whatever the file's padding, and sits on the disc's centre
+    for (const img of document.querySelectorAll('.logo img:not(.fitted)')) {
+      img.classList.add('fitted'); if (img.closest('.onb-team,.thead,.injhd,.pp-team,.hero,.ehero')) continue;
+      const m = await measure(img.getAttribute('src') || ''); if (!m) continue;
+      const base = parseFloat(getComputedStyle(img).width) / Math.max(1, parseFloat(getComputedStyle(img.parentElement).width)) || .74;
+      apply(img, Math.min(1.4, Math.max(.7, (0.68 / base) / Math.max(m.w, m.h))), m);
+    }
+  }
+  document.addEventListener('rivl:rendered', fitLogos); setTimeout(fitLogos, 1200);
+
+  /* ---------- strips fade at the edge that still has more to show ---------- */
+  const STRIPS = '.dates,.brief-row,.chips,.rail,.media,.tw,.onb-picked-row,.livebar .lb-in';
+  /* the fade on each side grows with the scroll — 0 at the end of travel, full 48px once there is that much behind it —
+     so the haze eases in instead of switching on at the first few pixels */
+  const FADE = 48;
+  const edge = el => {
+    const max = el.scrollWidth - el.clientWidth; const more = max > 4;
+    const fl = more ? Math.round(Math.min(FADE, Math.max(0, el.scrollLeft))) : 0, fr = more ? Math.round(Math.min(FADE, Math.max(0, max - el.scrollLeft))) : 0;
+    const v = fl + '|' + fr; if (el.dataset.edge === v) return; el.dataset.edge = v;
+    el.style.setProperty('--fl', fl + 'px'); el.style.setProperty('--fr', fr + 'px'); el.classList.toggle('fades', fl > 0 || fr > 0);
+  };
+  const edges = () => document.querySelectorAll(STRIPS).forEach(edge);
+  V.edges = edges;
+  document.addEventListener('scroll', e => { const t = e.target; if (t && t.nodeType === 1 && t.matches && t.matches(STRIPS)) edge(t); }, true);
+  document.addEventListener('rivl:rendered', () => { edges(); setTimeout(edges, 300); });
+  window.addEventListener('resize', edges);
+  new MutationObserver(() => { clearTimeout(edges.t); edges.t = setTimeout(() => { edges(); fitLogos(); }, 60); }).observe(document.getElementById('main'), { childList: true, subtree: true });
 
   /* ---------- share cards: a picture of the result or the line, not a link ---------- */
   const loadImg = src => new Promise(res => { if (!src) return res(null); const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
@@ -138,14 +167,51 @@
   }
   V.shareCard = shareCard; V._draw = { drawGame, drawPlayer };
 
-  /* alerts were removed: no push, no subscriptions, nothing sent to the worker. A phone that had them on lets go of its
-     push subscription once, quietly. */
-  V.alerts = { available() { return false; }, on() { return false; } };
-  (async () => { try { if (!store.get('v5:alerts', false)) return; store.set('v5:alerts', false); const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch (e) { } })();
+  /* ---------- alerts: web push through the RIVL worker, for your teams and players ---------- */
+  const WORKER = HW.WORKER || ''; const PUSHKEY = HW.PUSH && HW.PUSH.key || '';
+  const unb64u = str => { str = str.replace(/-/g, '+').replace(/_/g, '/'); while (str.length % 4) str += '='; return Uint8Array.from(atob(str), c => c.charCodeAt(0)); };
+  const post = (path, body) => fetch(WORKER + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+  V.alerts = {
+    available() { return !!WORKER && !!PUSHKEY && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; },
+    on() { return !!store.get('v5:alerts', false); },
+    prefs() { return Object.assign({ pre: true, close: true, final: true, inj: true }, store.get('v5:alertPrefs', {}) || {}); },
+    setPref(k, v) { const a = store.get('v5:alertPrefs', {}) || {}; a[k] = !!v; store.set('v5:alertPrefs', a); this.push(); },
+    why() { return store.get('v5:alertsWhy', '') || ''; },
+    /* every step that can fail says so in words: a silent failure here looks to anyone like a switch that won't stay on */
+    async enable() {
+      const fail = m => { store.set('v5:alertsWhy', m); toast(m); return false; };
+      store.set('v5:alertsWhy', '');
+      if (!WORKER || !PUSHKEY) return fail('Alerts need the RIVL server');
+      if (!('serviceWorker' in navigator)) return fail('This browser has no service worker');
+      if (!('PushManager' in window) || !('Notification' in window)) return fail(V.standalone && V.standalone() ? 'This browser cannot do push' : 'Add RIVL to your home screen first, then turn alerts on from there');
+      if (Notification.permission === 'denied') return fail('Notifications are blocked for RIVL. Allow them for RIVL in your phone\'s settings, then come back.');
+      let perm;
+      try { perm = await Notification.requestPermission(); } catch (e) { return fail('The permission prompt failed: ' + (e && e.message || e)); }
+      if (perm !== 'granted') return fail(perm === 'denied' ? 'You turned the prompt down. Allow notifications for RIVL in your phone\'s settings to change it.' : 'No answer to the permission prompt — tap the switch again');
+      let sub;
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        sub = await reg.pushManager.getSubscription();
+        if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: unb64u(PUSHKEY) });
+      } catch (e) { return fail('Subscribing failed: ' + (e && (e.name ? e.name + ' — ' + e.message : e.message) || e)); }
+      if (!sub) return fail('No push subscription came back');
+      store.set('v5:alerts', true);
+      try { const r = await this.push({ quiet: false, sub }); if (r && r.ok === false) { store.set('v5:alerts', false); return fail('The server refused the subscription' + (r.error ? ': ' + r.error : '')); } }
+      catch (e) { store.set('v5:alerts', false); return fail("Couldn't reach the RIVL server: " + (e && e.message || e)); }
+      toast('Alerts on'); return true;
+    },
+    async disable() { store.set('v5:alerts', false); try { const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (sub) await post('/unsubscribe', { endpoint: sub.endpoint }); } catch { } toast('Alerts off'); },
+    async push({ quiet = true, sub: have = null } = {}) {
+      if (!this.on() || !this.available()) return null;
+      try { let sub = have; if (!sub) { const reg = await navigator.serviceWorker.ready; sub = await reg.pushManager.getSubscription(); } if (!sub) { if (!quiet) throw new Error('the subscription went missing'); return null; } const F = HW.favs.all(); const teams = ORDER.flatMap(k => (F[k] || []).map(id => `${k}:${id}`)); const players = V.fplayers.all().map(p => `${p.lk}:${p.id}`); return await post('/subscribe', { sub: sub.toJSON(), teams, players, prefs: this.prefs() }); }
+      catch (e) { if (!quiet) throw e; return null; }   // the background re-send stays silent; turning alerts on reports what went wrong
+    },
+    async test() { try { const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (!sub) { toast('Turn alerts on first'); return; } const r = await post('/test', { endpoint: sub.endpoint }); toast(r && r.ok ? 'Sent — it should land in a moment' : 'The server could not send it' + (r && r.error ? ': ' + r.error : '')); } catch (e) { toast("Couldn't reach the RIVL server: " + (e && e.message || e)); } },
+  };
+  let pushT = null; const repush = () => { clearTimeout(pushT); pushT = setTimeout(() => V.alerts.push(), 1500); };
+  document.addEventListener('rivl:fav', repush); document.addEventListener('rivl:follow', repush);
 
   /* ---------- sync: your follows and settings behind a six-character code ---------- */
-  const WORKER = HW.WORKER || '';
-  const post = (path, body) => fetch(WORKER + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
   const KEYS = ['favs', 'v5:players', 'v5:prefs', 'v5:theme', 'v5:accent', 'v5:alertPrefs', 'v5:injcol'];
   V.sync = {
     available() { return !!WORKER; },
@@ -160,49 +226,4 @@
      straight from a link (or from the home-screen app, which reopens where it was) would have drawn itself before either
      existed and said the server was missing. Paint it again now that they do. */
   { const r = V.route && V.route(); if (r && r.name === 'settings' && V.rerender) V.rerender(); }
-})();
-
-/* The underline under the chosen game or team tab slides to the new tab instead of hopping. One bar per tab row,
-   moved with a transform; if the row is rebuilt, the new bar starts where the old one was so it still slides. */
-(() => {
-  let last = null, lastKey = '', queued = false;
-  const key = () => location.hash.split('/').slice(0, 3).join('/');
-  const sync = () => {
-    queued = false;
-    document.querySelectorAll('.gxtabs').forEach(t => {
-      const on = t.querySelector('.chip.on, .chip[aria-pressed="true"]');
-      let ind = t.querySelector(':scope > .gxind');
-      if (!on) { if (ind) ind.style.opacity = '0'; return; }
-      // one rule for every tab line in the app (the leagues too): as wide as the word plus 10px each side, centred under it
-      const rg = document.createRange(); rg.selectNodeContents(on); const tw = rg.getBoundingClientRect().width || on.offsetWidth;
-      const w = Math.round(tw + 20), x = Math.round(on.offsetLeft + (on.offsetWidth - w) / 2); if (!on.offsetWidth) return;
-      if (!ind) {
-        ind = document.createElement('i'); ind.className = 'gxind'; ind.setAttribute('aria-hidden', 'true'); t.appendChild(ind);
-        const from = lastKey === key() && last ? last : { x, w };
-        ind.style.transition = 'none'; ind.style.transform = `translateX(${from.x}px)`; ind.style.width = from.w + 'px';
-        void ind.offsetWidth; ind.style.transition = '';
-      }
-      if (ind.dataset.x !== String(x) || ind.dataset.w !== String(w)) {
-        ind.dataset.x = x; ind.dataset.w = w; ind.style.transform = `translateX(${x}px)`; ind.style.width = w + 'px';
-      }
-      ind.style.opacity = '1'; last = { x, w }; lastKey = key();
-    });
-  };
-  const q = () => { if (!queued) { queued = true; requestAnimationFrame(sync); } };
-  new MutationObserver(q).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'aria-pressed'] });
-  window.addEventListener('resize', q);
-  document.fonts && document.fonts.ready.then(q);
-  q();
-})();
-
-/* "Show all" on the five-at-a-time lists. The fold itself is written into the HTML (views.js capList); this only flips it.
-   The button stays under your finger: closing the list scrolls the page up by what was removed. */
-(() => {
-  const V = HW.v5;
-  document.addEventListener('click', e => {
-    const b = e.target.closest('.capbtn'); if (!b) return; const el = b.parentElement; const k = el && el.dataset.cap; if (!k) return;
-    const open = V._.capOpen; const y0 = b.getBoundingClientRect().top; open[k] = !open[k]; V._.capSave();
-    el.classList.toggle('capopen', !!open[k]); b.textContent = open[k] ? 'Show fewer' : `Show all ${el.children.length - 1}`;
-    const d = b.getBoundingClientRect().top - y0; if (d) window.scrollBy(0, d);
-  });
 })();

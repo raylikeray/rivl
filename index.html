@@ -20,30 +20,34 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://site.api.espn.com" crossorigin>
 <link rel="preconnect" href="https://a.espncdn.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=348">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800;900&family=Big+Shoulders+Display:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css?v=350">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <div class="sbg" aria-hidden="true"></div>
 <div class="app">
   <div class="hdr" id="hdr">
-  <header class="top xtop" id="top">
-    <a class="avbtn" id="avbtn" href="#settings" aria-label="You and settings"></a>
-    <a class="lockup rmark" href="#home" aria-label="RIVL home"><svg class="mark" viewBox="0 0 100 123.41" aria-hidden="true"><path class="r" d="M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0Z"/></svg></a>
-    <span class="avsp" aria-hidden="true"></span>
+  <header class="top" id="top">
+    <a class="lockup" href="#home" aria-label="RIVL home">
+      <svg class="mark" viewBox="0 0 250 123.41" aria-hidden="true"><defs><linearGradient id="rivlMark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".40"/><stop offset=".05" stop-color="#fff" stop-opacity=".38"/><stop offset=".10" stop-color="#fff" stop-opacity=".10"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><path class="r" d="M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0Z"/><path class="w" d="M108 0H132V123.41H108ZM140 0H164.5L168.0 96L171.5 0H196L192 123.41H144ZM204 0H228V99.41H250V123.41H204Z"/><g class="sheen" fill="url(#rivlMark)"><path d="M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0ZM108 0H132V123.41H108ZM140 0H164.5L168.0 96L171.5 0H196L192 123.41H144ZM204 0H228V99.41H250V123.41H204Z"/></g></svg>
+    </a>
+    <div class="sp">
+      <a class="ib" href="#search" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></a>
+      <a class="ib" href="#settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>
+    </div>
   </header>
   <nav class="pills" id="pills" aria-label="Leagues"></nav>
   </div>
+  <div id="lbhome"><div class="livebar" id="livebar" hidden aria-label="Live now"><div class="lb-in"></div></div></div>
   <main id="main" tabindex="-1"></main>
 </div>
-<div id="lbhome"><div class="livebar" id="livebar" hidden aria-label="Live now"><div class="lb-in"></div></div></div>
-<nav class="tabs flat5" id="tabs" aria-label="Main">
-  <a class="tab" data-tab="home" href="#home"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg><svg class="f" viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg><span>Following</span></a>
+<nav class="tabs" id="tabs" aria-label="Main">
+  <a class="tab" data-tab="home" href="#home"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/></svg><svg class="f" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6 2.5 10.4V21h6.7v-6h5.6v6h6.7V10.4z"/></svg><span>Home</span></a>
   <a class="tab" data-tab="scores" href="#scores"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M12 5v14M3 12h18"/></svg><svg class="f" viewBox="0 0 24 24" fill="currentColor"><path d="M5.5 4h13A2.5 2.5 0 0 1 21 6.5v4.5h-8V4zM11 4v7H3V6.5A2.5 2.5 0 0 1 5.5 4zM3 13h8v7H5.5A2.5 2.5 0 0 1 3 17.5zM13 13h8v4.5a2.5 2.5 0 0 1-2.5 2.5H13z"/></svg><span>Scores</span></a>
-  <a class="tab" data-tab="standings" href="#standings"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8v6a4 4 0 0 1-8 0z"/><path d="M8 5H4.5v1.5A3.5 3.5 0 0 0 8 10M16 5h3.5v1.5A3.5 3.5 0 0 1 16 10"/><path d="M12 13v3.5M8.5 20.5h7M9.5 16.5h5v4h-5z"/></svg><svg class="f" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2.5h10V9a5 5 0 0 1-10 0z"/><path d="M7 4.5v2H5.2v.6a2.6 2.6 0 0 0 2.2 2.6l.5 2A4.6 4.6 0 0 1 3.2 7.1V4.5zM17 4.5h3.8v2.6a4.6 4.6 0 0 1-4.7 4.6l.5-2a2.6 2.6 0 0 0 2.2-2.6v-.6H17z"/><path d="M11 13.5h2V16h2.5a1 1 0 0 1 1 1v2.5h1.2v2H6.3v-2h1.2V17a1 1 0 0 1 1-1H11z"/></svg><span>Standings</span></a>
-  <a class="tab" data-tab="stats" href="#stats"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9 11l4 4 8-8.5"/><path d="M15.5 6.5H21V12"/></svg><svg class="f" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9 11l4 4 8-8.5"/><path d="M15.5 6.5H21V12"/></svg><span>Stats</span></a>
-  <a class="tab" data-tab="search" href="#search"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><svg class="f" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><span>Search</span></a>
+  <a class="tab" data-tab="standings" href="#standings"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 20v-7M10 20V5M16 20v-9M22 20H2"/></svg><svg class="f" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 13h3v7h-3zM8.5 4h3v16h-3zM14.5 10h3v10h-3zM2 20.5h18v1.6H2z"/></svg><span>Standings</span></a>
+  <a class="tab" data-tab="teams" href="#teams"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M12 3 4 7v5c0 4.6 3.4 8 8 9.5 4.6-1.5 8-4.9 8-9.5V7z"/></svg><svg class="f" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.4 3.2 6.8v5.3c0 5 3.6 8.7 8.8 10.4 5.2-1.7 8.8-5.4 8.8-10.4V6.8z"/></svg><span>Teams</span></a>
+  <a class="tab" data-tab="players" href="#players"><svg class="o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="8" r="3.8"/><path d="M4.5 20c0-3.8 3.3-6 7.5-6s7.5 2.2 7.5 6"/></svg><svg class="f" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4.2"/><path d="M4 20.5c0-4.2 3.5-6.6 8-6.6s8 2.4 8 6.6z"/></svg><span>Players</span></a>
 </nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="panel" id="panel" hidden role="dialog"><div class="panel-in"></div></div>
@@ -57,19 +61,12 @@
   </div>
 </div>
 
-<script src="config.js?v=348"></script>
-<script src="js/core.js?v=348"></script>
-<script src="js/perf.js?v=348"></script>
-<script src="js/sim.js?v=348"></script>
-<script src="js/hub.js?v=348"></script>
-<script src="js/rating.js?v=348"></script>
-<script src="views.js?v=348"></script>
-<script src="screens.js?v=348"></script>
-<script src="js/ask.js?v=348"></script>
-<script src="js/ask2.js?v=348"></script>
-<script src="js/stats.js?v=348"></script>
-<script src="js/recruit.js?v=348"></script>
-<script src="app.js?v=348"></script>
-<script src="more.js?v=348"></script>
+<script src="config.js?v=350"></script>
+<script src="js/core.js?v=350"></script>
+<script src="js/sim.js?v=350"></script>
+<script src="views.js?v=350"></script>
+<script src="screens.js?v=350"></script>
+<script src="app.js?v=350"></script>
+<script src="more.js?v=350"></script>
 </body>
 </html>
