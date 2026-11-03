@@ -8,21 +8,17 @@ jobs:
           cat > p.mjs <<'JS'
           const S='https://site.api.espn.com/apis/site/v2/sports/basketball/';
           const U=[
-            ['m25-nolim', S+'mens-college-basketball/scoreboard?dates=20250315-20250410&groups=50'],
-            ['m25-l300', S+'mens-college-basketball/scoreboard?dates=20250315-20250410&groups=50&limit=300'],
-            ['m25-l100', S+'mens-college-basketball/scoreboard?dates=20250315-20250410&groups=50&limit=100'],
-            ['m25-st3-l100', S+'mens-college-basketball/scoreboard?dates=20250315-20250410&groups=50&seasontype=3&limit=100'],
-            ['m25-late', S+'mens-college-basketball/scoreboard?dates=20250327-20250408&groups=50&limit=100'],
-            ['w25-late', S+'womens-college-basketball/scoreboard?dates=20250328-20250407&groups=50&limit=100'],
-            ['w24-l100', S+'womens-college-basketball/scoreboard?dates=20240315-20240410&groups=50&limit=100'],
-            ['nba25-l100', S+'nba/scoreboard?dates=20250410-20250625&limit=100'],
-            ['nba25-l300', S+'nba/scoreboard?dates=20250410-20250625&limit=300'],
-            ['nba25-may', S+'nba/scoreboard?dates=20250501-20250531&limit=100'],
-            ['nba25-jun', S+'nba/scoreboard?dates=20250601-20250625&limit=100'],
-            ['wnba25-l100', S+'wnba/scoreboard?dates=20250905-20251025&limit=100'],
+            ['short2', S+'mens-college-basketball/scoreboard?dates=20250320-20250321&groups=50'],
+            ['short7', S+'mens-college-basketball/scoreboard?dates=20250320-20250327&groups=50'],
+            ['nbaShort', S+'nba/scoreboard?dates=20250420-20250422'],
+            ['nbaMonth', S+'nba/scoreboard?dates=202505'],
+            ['mMonth', S+'mens-college-basketball/scoreboard?dates=202503&groups=50&limit=400'],
+            ['mYear', S+'mens-college-basketball/scoreboard?dates=2025&seasontype=3&groups=50&limit=400'],
+            ['nbaYear', S+'nba/scoreboard?dates=2025&seasontype=3&limit=400'],
+            ['wYear', S+'womens-college-basketball/scoreboard?dates=2024&seasontype=3&groups=50&limit=400'],
           ];
           for (const [k,u] of U) {
-            try { const r = await fetch(u); const j = await r.json(); const ev = j.events||[];
+            try { const r = await fetch(u); const t = await r.text(); if (r.status!==200) console.log(' body:', t.slice(0,300)); const j = JSON.parse(t); const ev = j.events||[];
               console.log(`\n### ${k} status=${r.status} events=${ev.length}`);
               ev.slice(0,1).forEach(e=>{ const c=e.competitions[0];
                 console.log(' note:', JSON.stringify((c.notes||[]).map(n=>n.headline)), '| type:', e.season&&e.season.type, e.season&&e.season.slug);
