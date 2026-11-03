@@ -3,7 +3,7 @@
    ESPN's feeds go network-first with a short leash: a fresh answer when there is one, the last good copy
    when the network is slow, down, or ESPN is throttling (429/5xx). Logos, headshots and fonts are cached
    on first sight and served from cache after that. */
-const VERSION = 'rivl-v386';
+const VERSION = 'rivl-v387';
 const SHELL = `${VERSION}-shell`, DATA = 'rivl-data', MEDIA = 'rivl-media';   // feed copies and media outlive a version: the app reads the feed copies for a warm start
 const Q = `?v=${VERSION.replace(/^rivl-v/, '')}`;   // the same stamp index.html puts on its assets
 const SHELL_FILES = ['./', './index.html', ...['./app.css', './app.js', './views.js', './screens.js', './config.js', './js/core.js', './js/sim.js', './js/hub.js', './js/rating.js', './js/ask.js', './js/ask2.js', './js/stats.js', './js/recruit.js', './js/bracket.js', './more.js'].map(f => f + Q), './manifest.webmanifest', './img/mark.svg', './img/badge-96.png', './img/icon-192.png', './img/icon-512.png', './img/apple-touch-icon.png'];
@@ -59,9 +59,11 @@ self.addEventListener('fetch', e => {
         const live = /\/(scoreboard|summary)\b/.test(url.pathname);
         const r = await withTimeout(fetch(req), live ? 20000 : DATA_TIMEOUT);
         if (r.ok) { stamp(r).then(sr => c.put(req, sr)).catch(() => { }); return r; }
+        if (live) return r;   // v387: a live score is never answered with an old copy; the app tries ESPN directly and says if it can't
         const hit = await c.match(req); if (hit) return hit;   // throttled or broken upstream: the last good copy
         return r;
       } catch {
+        if (live) return new Response('', { status: 504, statusText: 'unreachable' });
         const hit = await c.match(req); if (hit) return hit;
         return new Response('', { status: 504, statusText: 'offline' });
       }

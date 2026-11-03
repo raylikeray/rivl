@@ -14,6 +14,9 @@ const cache = new Map();
    screen paints from that copy at once instead of a placeholder; the copy is dated when it was fetched, so the next
    call for it goes to the network as usual and the live answer replaces it */
 const BOOT = Date.now(); let warmC = null;
+async function lastCopy(url) {
+  try { if (typeof caches === 'undefined') return null; const r = await (await caches.open('rivl-data')).match(url); if (!r) return null; const t = +(r.headers.get('x-rivl-t') || 0); return t ? { t, v: await r.json() } : null; } catch { return null; }
+}
 async function warm(url) {
   if (typeof caches === 'undefined' || Date.now() - BOOT > 8000) return null;
   try {
@@ -39,8 +42,13 @@ async function j(url, ttl = 60000) {
     cache.set(url, { t: st && Date.now() - st > 30000 ? st : Date.now(), v });
     return v;
   } catch (err) {
-    const d = directOf(url); if (!d) throw err;   // a proxied call that failed: try ESPN itself once, and keep the answer under the url that was asked for
-    const v = await j(d, ttl); cache.set(url, { t: Date.now(), v }); return v;
+    const d = directOf(url);   // a proxied call that failed: try ESPN itself once, and keep the answer under the url that was asked for
+    if (d) { try { const v = await j(d, ttl); cache.set(url, { t: Date.now(), v }); return v; } catch { } }
+    /* v387: neither the proxy nor ESPN answered. Show the last copy this phone kept, and flag it, so the screen says the
+       scores are old instead of passing them off as current */
+    const old = await lastCopy(url);
+    if (old) { cache.set(url, old); HW.feedStaleAt = Math.min(HW.feedStaleAt || Infinity, old.t); HW.feedStaleSeen = Date.now(); return old.v; }
+    throw err;
   } finally { clearTimeout(to); }
 }
 async function jSoft(url, ttl) { try { return await j(url, ttl); } catch { return null; } }

@@ -183,7 +183,7 @@
   /* ---------- polling: today's slate for every league, faster while something is live ---------- */
   let pollT = null, lastOk = 0;
   async function poll() {
-    clearTimeout(pollT);
+    clearTimeout(pollT); poll.start = Date.now();
     const today = todayCT(); const r = current || route();
     poll.n = (poll.n || 0) + 1;
     const order = [r.lk, ...ORDER.filter(k => k !== r.lk && (poll.n % 4 === 1 || S.today[k].some(isLive)))];   // the other leagues every fourth pass, every pass while one of them has a game on (the live strip shows it)
@@ -199,7 +199,8 @@
       }
       catch { failed = true; }
     }
-    if (!failed) lastOk = Date.now();
+    if (HW.feedStaleSeen && HW.feedStaleSeen >= poll.start) failed = true;   // the scores came from the phone's last copy, not the feed
+    if (!failed) { lastOk = Date.now(); HW.feedStaleAt = 0; }
     stale(failed);
     document.dispatchEvent(new CustomEvent('rivl:polled'));
     if (SCREENS.includes((current || route()).name)) paintPills((current || route()).lk, true);
@@ -211,12 +212,13 @@
   let staleEl = null, staleSince = 0;
   function stale(failed) {
     const off = failed || navigator.onLine === false;
-    if (off && !staleSince) staleSince = lastOk || Date.now();
+    if (off && !staleSince) staleSince = Math.min(lastOk || Infinity, HW.feedStaleAt || Infinity, Date.now());
     if (!off) staleSince = 0;
     if (!staleEl) { staleEl = document.createElement('div'); staleEl.className = 'stale'; staleEl.hidden = true; document.getElementById('main').before(staleEl); }
     if (!off) { staleEl.hidden = true; return; }
     const m = Math.max(1, Math.round((Date.now() - staleSince) / 60000));
-    staleEl.innerHTML = `<span></span>${navigator.onLine === false ? 'Offline' : 'Feed not answering'} · showing the last copy from ${m} min ago`;
+    const at = new Date(staleSince).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: HW.TZ });
+    staleEl.innerHTML = `<span></span>${navigator.onLine === false ? 'Offline' : "Can't reach the scores feed"} · these scores are from ${m < 60 ? `${m} min ago` : at}`;
     staleEl.hidden = false;
   }
   window.addEventListener('online', () => { stale(false); poll(); }); window.addEventListener('offline', () => stale(true));
