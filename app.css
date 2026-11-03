@@ -3483,3 +3483,44 @@ html body #pills .pill.on,:root[data-theme="dark"] body #pills .pill.on{color:#f
 .g2 #gbody .cmp,.g2 #gbody .zones,.g2 #gbody .tw,.g2 #gbody .rows{margin-bottom:14px!important}
 /* the court fills the head's width; the goals clear the series line */
 .g2court{margin:16px -6px 2px}
+
+/* ===== v375: the duel =====
+   The head is two deep planes of the teams' colours split on a diagonal seam, a fine bright line along it. The seam sits
+   at the win chance and glides when it changes. The team letters are cut huge and faint into each plane. X's grain lies
+   over both; a soft light drifts slowly over each plane. Text always sits on a darkened band, so the score reads on any
+   colour. The fixed bar carries the same planes, so the seam runs unbroken behind it. */
+@property --seam{syntax:'<percentage>';inherits:true;initial-value:50%}
+.g2 .ghbg{--seam:50%;transition:--seam 1.4s cubic-bezier(.2,.8,.2,1);
+  background:linear-gradient(118deg,
+    color-mix(in srgb,var(--ga) 84%,#000) 0,color-mix(in srgb,var(--ga) 70%,#000) calc(var(--seam) - 1.2%),
+    rgba(255,255,255,.34) calc(var(--seam) - .35%),rgba(255,255,255,.34) calc(var(--seam) + .35%),
+    color-mix(in srgb,var(--gh) 70%,#000) calc(var(--seam) + 1.2%),color-mix(in srgb,var(--gh) 84%,#000) 100%)}
+.g2 .ghbg .b1,.g2 .ghbg .b2{display:block;background:radial-gradient(closest-side,rgba(255,255,255,.22),transparent 72%);mix-blend-mode:soft-light;filter:blur(18px);opacity:1;width:80%;height:110%}
+.g2 .ghbg .b1{left:-28%;top:-20%;animation:g2la 18s ease-in-out infinite}
+.g2 .ghbg .b2{right:-28%;left:auto;top:-10%;animation:g2lb 22s ease-in-out infinite}
+.g2 .ghbg .b3{display:none}
+@keyframes g2la{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(14%,18%,0)}}
+@keyframes g2lb{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(-14%,-12%,0)}}
+.g2 .ghbg::after{background:linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,.08) 30%,rgba(0,0,0,.06) 62%,rgba(0,0,0,.4) 100%)}
+@media (prefers-reduced-motion:reduce){ .g2 .ghbg{transition:none} .g2 .ghbg .b1,.g2 .ghbg .b2{animation:none} }
+.g2duel{position:relative;padding:4px 18px 0;overflow:visible}
+.g2top{overflow:hidden}
+.g2wm{position:absolute;z-index:0;font:900 132px/1 var(--ui);letter-spacing:-.06em;opacity:.1;pointer-events:none;white-space:nowrap;user-select:none}
+.g2wm.a{left:-22px;bottom:-30px}
+.g2wm.h{right:-26px;top:-6px}
+.g2dg{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:22px 0 4px}
+.g2ds{display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff;text-decoration:none;min-width:0}
+.g2dl{width:56px;height:56px;object-fit:contain;filter:drop-shadow(0 3px 10px rgba(0,0,0,.4))}
+.g2dn{font:800 62px/1 var(--num);letter-spacing:-.045em;font-variant-numeric:tabular-nums;text-shadow:0 2px 18px rgba(0,0,0,.5)}
+.g2dn.lo{opacity:.62}
+.g2dn.pre{font-size:22px;font-weight:700;letter-spacing:-.01em;opacity:.85;min-height:30px;display:flex;align-items:center}
+.g2ds em{font-style:normal;font-size:14px;font-weight:800;letter-spacing:.04em;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.g2dc{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 13px;border-radius:16px;background:rgba(6,7,9,.58);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.16),0 6px 18px rgba(0,0,0,.3);text-align:center;max-width:132px}
+.g2dc b{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:#fff;white-space:nowrap}
+.g2dc.now b{color:#FF7A70}
+.g2dc b i{width:7px;height:7px;border-radius:50%;background:#FF3B30;box-shadow:0 0 0 3px rgba(255,59,48,.25);animation:gmkp 1.8s ease-in-out infinite}
+.g2dc span{font-size:19px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums}
+.g2df{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 0 18px;font-size:13px;font-weight:700;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.g2df span{color:rgba(255,255,255,.72);font-weight:600}
+.g2duel .g2s{position:relative;z-index:1;margin:-6px 0 0;padding-bottom:16px}
+.g2top::after{display:none}

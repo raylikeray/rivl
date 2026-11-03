@@ -917,11 +917,19 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
       const miniClock = g.off ? esc(g.off) : g.state === 'post' ? esc(finalWord(g)) : g.state === 'in' ? (/HALFTIME/.test(g.status || '') ? 'Half' : `${perS(+g.period || 1)}${stateSub ? `<br>${stateSub}` : ''}`) : `${esc(stateTop)}<br>${stateSub}`;
       const mini = g.tbd ? `<span class="g2mn"><b>${title}</b></span>` : `<span class="g2mn">${lgo(g.away)}<b class="${hasSc && !lead(g.away, g.home) ? 'lo' : ''}">${hasSc ? g.away.score : ''}</b><span class="${g.state === 'in' ? 'now' : ''}">${miniClock}</span><b class="${hasSc && !lead(g.home, g.away) ? 'lo' : ''}">${hasSc ? g.home.score : ''}</b>${lgo(g.home)}</span>`;
       const barHtml = `<div class="g2bar"><a class="g2ib" href="#scores" data-act="back" aria-label="Back">${backI}</a><div class="g2mid"><div class="g2strip" id="g2strip" data-h="${hashOf(strip)}">${strip}</div><div class="g2mini" id="g2mini">${mini}</div></div><button class="g2ib" data-act="share" data-title="${esc(title.replace(/<[^>]+>/g, ''))}"${card ? ` data-card='${esc(JSON.stringify(card))}'` : ''} aria-label="Share">${shareI}</button></div>`;
-      const headHtml = `<header class="g2h"><div class="g2row">${crest(g.away)}${num(g.away, g.home)}<div class="g2m${g.state === 'in' ? ' now' : ''}"><b>${g.state === 'in' ? '<i></i>' : ''}${stateTop}</b>${stateSub ? `<span>${stateSub}</span>` : ''}</div>${num(g.home, g.away)}${crest(g.home)}</div>`
-        + pred + court + (V._.seriesLine(g) ? `<p class="g2s">${esc(V._.seriesLine(g))}${spick ? ` · ${esc(spick)}` : ''}</p>` : '') + `</header>`;
-      // how much of the aurora each side holds: the score's margin once it starts, RIVL's call before it
-      const share = hasSc ? .5 + Math.max(-.32, Math.min(.32, (+g.home.score - +g.away.score) / 30)) : ph != null ? .5 + (ph - .5) * .7 : .5;
-      const bgVars = `--ga:${pc[0]};--gh:${pc[1]};--sh:${share.toFixed(3)}`;
+      /* the duel: the head splits on a diagonal seam, a deep plane of each side's colour, the team letters cut huge into the
+         ground. The seam sits at the win chance (the feed's live number during the game, RIVL's call before it), so the
+         favoured side owns more of the screen, and it slides as the game swings. Scores face off across the seam. */
+      const wmC = t => t.alt && V._.rgbDist && V._.rgbDist(t.alt, '#000000') > 120 ? t.alt : '#ffffff';
+      const dside = (t, o, r) => `<a class="g2ds${r ? ' r' : ''}" href="${g.tbd ? '#' : href.team(lk, t.id)}">${t.logo ? V._.imgSized(t.logo, 128, 128, 'alt="" class="g2dl"') : '<i class="g2dl"></i>'}${hasSc ? `<b class="g2dn${lead(t, o) ? '' : ' lo'}">${esc(String(t.score))}</b>` : `<b class="g2dn pre">${esc(t.rec || '')}</b>`}<em>${esc(t.abbr || 'TBD')}</em></a>`;
+      const chip = `<div class="g2dc${g.state === 'in' ? ' now' : ''}"><b>${g.state === 'in' ? '<i></i>' : ''}${stateTop}</b>${stateSub ? `<span>${stateSub}</span>` : ''}</div>`;
+      const foot = pv2 != null && !g.tbd ? `<div class="g2df" role="img" aria-label="${esc(`${predWord}: ${g.away.abbr} ${pct(1 - pv2)}, ${g.home.abbr} ${pct(pv2)}`)}"><b>${esc(g.away.abbr || '')} ${pct(1 - pv2)}</b><span>${predWord}</span><b>${pct(pv2)} ${esc(g.home.abbr || '')}</b></div>` : '';
+      const headHtml = `<header class="g2h g2duel">${g.tbd ? '' : `<span class="g2wm a" style="color:${esc(wmC(g.away))}">${esc(g.away.abbr || '')}</span><span class="g2wm h" style="color:${esc(wmC(g.home))}">${esc(g.home.abbr || '')}</span>`}<div class="g2dg">${dside(g.away, g.home, false)}${chip}${dside(g.home, g.away, true)}</div>`
+        + foot + (V._.seriesLine(g) ? `<p class="g2s">${esc(V._.seriesLine(g))}${spick ? ` · ${esc(spick)}` : ''}</p>` : '') + `</header>`;
+      // where the seam sits: the away side's share of the win chance, kept inside the screen so both sides always show
+      const seam = pv2 != null ? Math.min(78, Math.max(22, 50 - (pv2 - .5) * 80)) : 50;
+      const share = pv2 != null ? pv2 : .5;
+      const bgVars = `--ga:${pc[0]};--gh:${pc[1]};--sh:${share.toFixed(3)};--seam:${seam.toFixed(1)}%`;
       const blobs = `<i class="b1"></i><i class="b2"></i><i class="b3"></i>`;
       const hh = hashOf(headHtml), page = $main.querySelector('#gpage');
       if (page && page.dataset.gid === String(id)) {
