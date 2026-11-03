@@ -4590,3 +4590,18 @@ html.noscroll,html.noscroll body{overflow:hidden}
 .bkside.lean .bkpc{box-shadow:inset 0 0 0 2px #fff,0 0 0 3px rgba(255,255,255,.25)}
 .bkside.fade{opacity:.45}
 .bkduel{touch-action:pan-x;will-change:transform}
+
+/* ===== v410: the takeover — the chosen team's colour claims the card ===== */
+@property --sm{syntax:'<percentage>';inherits:true;initial-value:46.2%}
+html body .bkov .bkduel{background:linear-gradient(155deg,var(--ca,#1b3f7a) 0 calc(var(--sm,46.2%) - .3%),rgba(255,255,255,.34) calc(var(--sm,46.2%) - .2%) calc(var(--sm,46.2%) + .2%),var(--cb,#5b1b2e) calc(var(--sm,46.2%) + .3%) 100%);transition:transform .22s ease,opacity .22s ease,--sm .3s ease}
+.bkov .bkduel.in{transition:none}
+.bkov .bkside{transition:transform .22s ease,opacity .22s ease,filter .22s ease;transform-origin:left center}
+.bkov .bkside+.bkvs+.bkside{transform-origin:right center}
+.bkov .bkduel.drag,.bkov .bkduel.drag .bkside{transition:none}
+html body .bknm .bkadv{display:inline-flex;align-items:center;gap:6px;background:#fff;color:var(--sc,#1b3f7a);border-radius:999px;padding:9px 14px;font:800 12px/1 var(--ui);letter-spacing:.05em;margin-top:11px;opacity:0;transform:scale(.85);width:max-content;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.bkside+.bkvs+.bkside .bknm .bkadv{margin-left:auto}
+.bkadv svg{width:12px;height:12px}
+html body .bkside.arm .bknm .bkadv{opacity:1;transform:scale(1);animation:bkpop .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes bkpop{0%{transform:scale(.6)}100%{transform:scale(1)}}
+.bkside.dim{opacity:.55;filter:saturate(.75)}
+.bkside .bk2k{display:none}

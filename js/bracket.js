@@ -405,8 +405,9 @@
       const name = s.reg === 'ff' ? s.round : `${s.reg} · ${s.round}`;
       return sib.length > 1 ? `${name} <span>· ${at} of ${sib.length}</span>` : name; };
 
-    const sideHtml = (t, seed, picked) => !t ? '' :
-      `<button class="bkside${picked ? ' on' : ''}" data-side="${esc(String(t.id))}">${crest(t, L)}<span class="bknm"><b>${esc(t.short || t.name)}</b><span>${[seed ? `${seed} seed` : '', t.rec || ''].filter(Boolean).join(' · ')}</span></span>${tick}</button>`;
+    const tickS = `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6.5 5 9l5-6"/></svg>`;
+    const sideHtml = (t, seed, cls, c) => !t ? '' :
+      `<button class="bkside${cls ? ' ' + cls : ''}" data-side="${esc(String(t.id))}" style="--sc:${esc(c)}">${crest(t, L)}<span class="bknm"><b>${esc(t.short || t.name)}</b><span>${[seed ? `${seed} seed` : '', t.rec || ''].filter(Boolean).join(' · ')}</span><span class="bkadv">${tickS}ADVANCING</span></span></button>`;
 
     const paint = (dir) => {
       const M = mine(F, picks); const s = Q[idx];
@@ -416,12 +417,13 @@
       const done = filled(F, picks);
       const nexts = Q.slice(idx + 1, idx + 4).map(x => { const [p1, p2] = M.teams[x.id] || []; if (!p1 || !p2) return '';
         return `<span><em>${seedOf(F, p1) || ''}</em> ${esc(p1.abbr)} <em>vs ${seedOf(F, p2) || ''}</em> ${esc(p2.abbr)}</span>`; }).filter(Boolean).join('');
-      const myPick = (picks.p || {})[s.id];
-      ov.innerHTML = `<div class="bkovh"><button class="bkx" data-bko="x" aria-label="Close">${HW.v5._.chev ? '' : ''}✕</button><b>${whereOf(s)}</b><button class="bkx${idx ? '' : ' off'}" data-bko="back" aria-label="Previous matchup">‹</button></div>`
+      const myPick = (picks.p || {})[s.id]; const myA = myPick === String(a.id), myB = myPick === String(b.id);
+      const sm0 = myA ? 64.2 : myB ? 28.2 : 46.2;   // a matchup already picked opens with the pick's colour holding more of the card
+      ov.innerHTML = `<div class="bkovh"><button class="bkx" data-bko="x" aria-label="Close">✕</button><b>${whereOf(s)}</b><button class="bkx${idx ? '' : ' off'}" data-bko="back" aria-label="Previous matchup">‹</button></div>`
         + `<div class="pbar bkpb"><i style="width:${(done / total * 100).toFixed(1)}%"></i></div>`
-        + `<div class="bkduel${dir ? ' in' : ''}" style="--ca:${esc(ca)};--cb:${esc(cb)}">`
+        + `<div class="bkduel${dir ? ' in' : ''}" style="--ca:${esc(ca)};--cb:${esc(cb)};--sm:${sm0}%">`
         + `<span class="wm a">${esc(a.abbr || '')}</span><span class="wm h">${esc(b.abbr || '')}</span>`
-        + `<p class="bkq">WHO ADVANCES?</p>${sideHtml(a, sa, myPick === String(a.id))}<span class="bkvs">VS</span>${sideHtml(b, sb, myPick === String(b.id))}`
+        + `<p class="bkq">WHO ADVANCES?</p>${sideHtml(a, sa, myA ? 'arm' : myB ? 'dim' : '', ca)}<span class="bkvs">VS</span>${sideHtml(b, sb, myB ? 'arm' : myA ? 'dim' : '', cb)}`
         + `<p class="bktap">${myPick ? 'Tap or swipe to change it' : `Swipe · ← ${esc(a.abbr || '')} / ${esc(b.abbr || '')} → · or tap`}</p></div>`
         + (nexts ? `<p class="bknxt">NEXT UP</p><div class="bkups">${nexts}</div>` : '<p class="bknxt"></p>')
         + `<p class="bkfoot">Picks save as you go · close and finish later</p>`;
@@ -442,12 +444,19 @@
     };
 
     let settling = false;
-    const choose = (side, wait) => {
+    const buzz = () => { try { if (navigator.vibrate) navigator.vibrate(12); } catch { } };
+    const choose = (side, wait, flew) => {
       if (settling || !side) return; settling = true;
       const s = Q[idx]; picks.p = picks.p || {}; picks.p[s.id] = side.dataset.side;
       cleanse(F, picks); savePicks(lk, key, picks); picks = picksOf(lk, key);
-      side.classList.add('on');
-      setTimeout(() => { settling = false; if (idx + 1 >= total) { finish(); } else { idx++; paint('f'); } }, reduce ? 60 : wait);
+      if (!flew) {   // a tap: the chosen colour floods the card and the pill pops before the next card arrives
+        const d = ov.querySelector('.bkduel');
+        if (d) { const [ta, tb] = sidesOf(d); const top = side === ta; const ot = top ? tb : ta;
+          d.classList.remove('drag'); side.classList.remove('dim'); side.classList.add('arm');
+          if (ot) { ot.classList.remove('arm'); ot.style.opacity = '.38'; ot.style.filter = 'saturate(.6)'; ot.style.transform = 'scale(.96)'; }
+          d.style.setProperty('--sm', top ? '86%' : '7%'); buzz(); }
+      }
+      setTimeout(() => { settling = false; if (idx + 1 >= total) { finish(); } else { idx++; paint('f'); } }, reduce ? 60 : (flew ? 230 : 330));
     };
     ov.addEventListener('click', e => {
       const x = e.target.closest('[data-bko]');
@@ -455,27 +464,41 @@
       const side = e.target.closest('.bkside'); if (!side || drag && drag.moved) return;
       e.preventDefault(); choose(side, 240);
     });
-    /* the deck swipe: drag the card left for the top side, right for the bottom. The card rides the finger, the side
-       being chosen lights its tick, and past a third of the screen the card flies off and the pick is made. */
+    /* the deck swipe, the takeover: as the card rides the finger, the seam slides so the chosen team's colour claims
+       the card, their side grows while the other greys out and shrinks, and at the point of no return their ADVANCING
+       pill pops with a small buzz. Letting go past it floods the card and the pick is made; short of it, it springs back. */
     let drag = null;
     const sidesOf = d => d.querySelectorAll('.bkside');
+    const TH = d => Math.max(96, d.clientWidth * .32);
     ov.addEventListener('touchstart', e => { const d = e.target.closest('.bkduel'); if (!d || settling) return;
-      drag = { d, x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, moved: false }; }, { passive: true });
+      const [ta, tb] = sidesOf(d);
+      drag = { d, x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, moved: false, armed: false,
+        sm0: d.style.getPropertyValue('--sm') || '46.2%', cls: [ta && ta.className, tb && tb.className] }; }, { passive: true });
     ov.addEventListener('touchmove', e => { if (!drag) return;
       const dx = e.touches[0].clientX - drag.x, dy = e.touches[0].clientY - drag.y;
-      if (!drag.moved) { if (Math.abs(dx) < 8) { if (Math.abs(dy) > 16) drag = null; return; } drag.moved = true; drag.d.style.transition = 'none'; }
-      drag.dx = dx; drag.d.style.transform = `translateX(${dx}px) rotate(${(dx / 28).toFixed(2)}deg)`;
-      const [ta, tb] = sidesOf(drag.d);
-      if (ta && tb) { ta.classList.toggle('lean', dx < -36); ta.classList.toggle('fade', dx > 36);
-        tb.classList.toggle('lean', dx > 36); tb.classList.toggle('fade', dx < -36); } }, { passive: true });
-    const endDrag = () => { if (!drag) return; const { d, dx, moved } = drag; drag = null; if (!moved) return;
+      if (!drag.moved) { if (Math.abs(dx) < 8) { if (Math.abs(dy) > 16) drag = null; return; } drag.moved = true; drag.d.classList.add('drag'); }
+      drag.dx = dx; const d = drag.d;
+      d.style.transform = `translateX(${dx}px) rotate(${(dx / 28).toFixed(2)}deg)`;
+      const p = Math.min(1, Math.abs(dx) / TH(d));
+      d.style.setProperty('--sm', (46.2 + (dx < 0 ? 1 : -1) * 34 * p).toFixed(1) + '%');
+      const [ta, tb] = sidesOf(d); if (!ta || !tb) return;
+      const ch = dx < 0 ? ta : tb, ot = dx < 0 ? tb : ta;
+      ch.style.opacity = ''; ch.style.filter = ''; ch.style.transform = `scale(${(1 + .04 * p).toFixed(3)})`; ch.classList.remove('dim');
+      ot.style.opacity = String(1 - .62 * p); ot.style.filter = `saturate(${(1 - .45 * p).toFixed(2)})`; ot.style.transform = `scale(${(1 - .05 * p).toFixed(3)})`;
+      const armed = p >= 1;
+      if (armed !== drag.armed) { drag.armed = armed; ch.classList.toggle('arm', armed); ot.classList.remove('arm'); if (armed) buzz(); }
+      if (!armed) { ta.classList.remove('arm'); tb.classList.remove('arm'); } }, { passive: true });
+    const endDrag = () => { if (!drag) return; const { d, dx, moved, armed, sm0, cls } = drag; drag = null; if (!moved) return;
       const [ta, tb] = sidesOf(d);
-      if (Math.abs(dx) > Math.max(96, d.clientWidth * .32)) {
+      if (armed) {
         const side = dx < 0 ? ta : tb;
-        if (!reduce) { d.style.transition = 'transform .24s ease,opacity .24s ease'; d.style.transform = `translateX(${(dx < 0 ? -1.2 : 1.2) * d.clientWidth}px) rotate(${dx < 0 ? -9 : 9}deg)`; d.style.opacity = '0'; }
-        choose(side, 230);
-      } else { d.style.transition = 'transform .2s ease'; d.style.transform = '';
-        [ta, tb].forEach(x => x && x.classList.remove('lean', 'fade')); } };
+        d.classList.remove('drag');
+        if (!reduce) { d.style.transform = `translateX(${(dx < 0 ? -1.2 : 1.2) * d.clientWidth}px) rotate(${dx < 0 ? -9 : 9}deg)`; d.style.opacity = '0';
+          d.style.setProperty('--sm', dx < 0 ? '108%' : '-8%'); }
+        choose(side, 230, true);
+      } else {   // not far enough: everything glides back to where it was
+        d.classList.remove('drag'); d.style.transform = ''; d.style.setProperty('--sm', sm0);
+        [ta, tb].forEach((x, i) => { if (!x) return; x.style.opacity = ''; x.style.filter = ''; x.style.transform = ''; if (cls[i] != null) x.className = cls[i]; }); } };
     ov.addEventListener('touchend', endDrag, { passive: true });
     ov.addEventListener('touchcancel', endDrag, { passive: true });
     if (idx >= total || (filled(F, picks) >= total && idx === 0 && false)) finish(); else paint();
