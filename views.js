@@ -242,6 +242,37 @@
     const key = [g.state, g.away.score, g.home.score, g.detail, g.off || ''].join('|');
     return `<a class="srow${live ? ' on' : ''}" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}" data-k="${esc(key)}">${side(g.away, lo(a, h))}${num(g.away, up(a, h), lo(a, h))}<span class="smid">${mid}</span>${num(g.home, up(h, a), lo(h, a))}${side(g.home, lo(h, a))}</a>`;
   }
+  /* v389: the duel card, one renderer for Home's deck and the team and player pages. Two deep planes of the teams'
+     colours split on a seam that follows the score (RIVL's pick before tip), the clock or tip and TV on top, the score
+     face to face, the lead or the pick in the middle, one line of context at the foot. */
+  const duelColors = (g, L) => {
+    let a = teamColor(g.away, L), b = teamColor(g.home, L);
+    if (rgbDist(a, b) < 110) { const ok = c => c && !BAD(c) && lumOf(c) >= .06 && lumOf(c) <= .6; const aa = teamAlt(g.away, L), ba = teamAlt(g.home, L); const opts = [[a, b, rgbDist(a, b)]]; if (ok(ba)) opts.push([a, ba, rgbDist(a, ba)]); if (ok(aa)) opts.push([aa, b, rgbDist(aa, b)]); [a, b] = opts.sort((x, y) => y[2] - x[2])[0]; }
+    return [deepen(a), deepen(b)];
+  };
+  function duelCard(L, g, ctx, { kicker = '', foot = '', tvTop = true } = {}) {
+    const lk = L.key; const live = isLive(g), done = g.state === 'post' && !g.off, pre = !live && !done;
+    const [ca, cb] = duelColors(g, L);
+    const f = !g.off ? safeF(L, g, ctx) : null; const ph = f && Number.isFinite(f.pHome) ? Math.min(.99, Math.max(.01, f.pHome)) : null;
+    const hasSc = (live || done) && g.away.score != null && g.home.score != null;
+    const share = hasSc ? .5 + Math.max(-.3, Math.min(.3, (+g.home.score - +g.away.score) / 30)) : ph != null ? ph : .5;
+    const seam = Math.min(74, Math.max(26, 50 - (share - .5) * 80));
+    const tv = tvLabel(g);
+    const k = kicker || (live ? `<i class="dot"></i>${esc(HW.clockOf(g, L))}` : done ? esc(finalWord(g)) : g.off ? esc(g.off) : `${esc(relDay(HW.ymdOf(g.date)))} · ${esc(tipOf(g))}`) + (tvTop && tv && !done ? ` · ${esc(tv)}` : '');
+    const side = (t, o) => `<span class="dks">${logo(t.logo, '', teamColor(t, L))}<b>${esc(t.abbr || t.short)}</b>${hasSc ? `<em class="sc${+t.score >= +o.score ? '' : ' lo'}">${esc(String(t.score))}</em>` : `<em>${esc(t.rec || '')}</em>`}</span>`;
+    const fav = ph != null ? (ph >= .5 ? g.home : g.away) : null;
+    const lead = hasSc && +g.home.score !== +g.away.score ? (+g.home.score > +g.away.score ? g.home : g.away) : null;
+    const mid = hasSc ? `<span class="dkm"><b>${live ? 'Live' : 'Final'}</b>${lead ? `${esc(lead.abbr)} ${live ? 'by' : 'won by'} ${Math.abs(+g.home.score - +g.away.score)}` : 'Level'}</span>` : fav ? `<span class="dkm"><b>${esc(fav.abbr)} ${pct(Math.max(ph, 1 - ph))}</b>to win</span>` : `<span class="dkm"><b>${esc(tipOf(g))}</b></span>`;
+    const ft = foot || (hasSc && ph != null ? `RIVL had ${esc((ph >= .5 ? g.home : g.away).abbr)} ${pct(Math.max(ph, 1 - ph))}` : '');
+    return `<a class="dk${live ? ' live' : ''}" href="${href.game(lk, g.id)}" style="--ca:${esc(ca)};--cb:${esc(cb)};--seam:${seam.toFixed(1)}%"><span class="wm a">${esc(g.away.abbr || '')}</span><span class="wm h">${esc(g.home.abbr || '')}</span><span class="dkk">${k}</span><span class="dkg">${side(g.away, g.home)}${mid}${side(g.home, g.away)}</span>${ft ? `<span class="dkf">${ft}</span>` : ''}</a>`;
+  }
+  /* the duel card with a short grouped list under it for where and on what channel: the long lines that used to run off
+     the old card live here, where they wrap */
+  function duelBlock(L, g, ctx, id) {
+    const where = [g.venue, g.city].filter(Boolean).join(', '); const tv = tvLabel(g);
+    const rows = [where ? ['Where', where] : null, tv ? ['TV', tv] : null].filter(Boolean);
+    return `<div class="sgcard dkhost" data-gid="${esc(String(g.id))}">${duelCard(L, g, ctx, { tvTop: false })}${rows.length && g.state !== 'post' ? `<div class="gl dkinfo">${rows.map(([k, v]) => `<div class="gr ni"><span class="gm"><span>${esc(k)}</span></span><span class="ge"><b>${esc(v)}</b></span></div>`).join('')}</div>` : ''}</div>`;
+  }
   function gameCard(L, g, ctx, withForecast = true, timeOnly = false) {
     if (g.tbd) return `<a class="game tbd" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}"><div class="side tbd"><span class="logo tbd"></span><span class="nm"><b>Teams to be decided</b><span>${esc(noteWord(g) || 'Matchup not set yet')}</span></span></div><div class="status">${statusLine(L, g, timeOnly)}<span class="ln"></span><span class="tv">${esc(tvLabel(g) || g.venue || '')}</span></div></a>`;
     const f = withForecast && prefs.get('forecast') && !g.tbd ? safeF(L, g, ctx) : null;
@@ -975,7 +1006,7 @@
 
     // next game for the team
     let next = '';
-    if (tm.id) { const t = await teamInfo(L, tm.id); if (t && t.next) { const ctx = await forecastCtx(L, todayCT()).catch(() => null); next = sec('Next up') + `<div class="games">${gameCard(L, t.next, ctx)}</div>`; } }
+    if (tm.id) { const t = await teamInfo(L, tm.id); if (t && t.next) { const ctx = await forecastCtx(L, todayCT()).catch(() => null); next = sec(isLive(t.next) ? 'Live now' : 'Next up') + duelBlock(L, t.next, ctx); } }
 
     // game log
     let log = '';
@@ -1251,5 +1282,5 @@
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom < 64; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };
     window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(run); }, { passive: true }); document.addEventListener('rivl:rendered', run); }
   HW.v5 = Object.assign(HW.v5 || {}, { initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
+    _: { duelCard, duelBlock, deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
 })();

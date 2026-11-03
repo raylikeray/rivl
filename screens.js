@@ -332,7 +332,8 @@
     const rosterCards = sorted.length ? `<div class="rgroups" style="--rc:${esc(color)};--rc2:${esc(V._.teamAlt({ id: String(id), abbr: t0.abbreviation, alt: t0.alternateColor }, L) || color)}">${['Guards', 'Forwards', 'Centers', 'Others'].map(h => [h, sorted.filter(a => grpOf(a.position && a.position.abbreviation) === h)]).filter(([, l]) => l.length).map(([h, l]) => sec(h, String(l.length)) + `<div class="rrail2">${l.map(rcard).join('')}</div>`).join('')}<p class="legend">Points per game this season.</p></div>` : '';
     /* Scores & Schedule, as Apple lays it out: the two crests on the left with rank and abbreviation (the scores under them
        once the game starts), and on the right the day and time, what the game is, where, the TV, and RIVL's pick */
-    const gcard = g => { if (!g) return ''; const f = g.state !== 'post' && !g.off ? safeF(L, g, ctx) : null; const has = g.state !== 'pre' && !g.off && g.away.score != null && g.home.score != null;
+    const gcard = g => g ? V._.duelBlock(L, g, ctx, id) : '';
+    const gcardOld = g => { if (!g) return ''; const f = g.state !== 'post' && !g.off ? safeF(L, g, ctx) : null; const has = g.state !== 'pre' && !g.off && g.away.score != null && g.home.score != null;
       const rk = t => { const x = R && R.ranks.find(y => y.team.id === String(t.id)); return x ? `<small>#${x.rank}</small>` : ''; };
       const lead = (t, o) => has && +t.score > +o.score;
       const side = (t, o) => `<span class="sgt${has && !lead(t, o) && g.state === 'post' ? ' lo' : ''}"><span class="sgc">${t.logo ? V._.imgSized(t.logo, 128, 128, 'alt=""') : ''}</span><span class="sga">${rk(t)}<b>${esc(t.abbr || t.short || '')}</b></span>${has ? `<em class="sgs${lead(t, o) ? ' up' : ''}">${esc(String(t.score))}</em>` : ''}</span>`;
@@ -388,7 +389,7 @@
  };
     $main.addEventListener('click', V._tptabL);
     if (simOk) outlookFill(L, String(id), r, { feed: HW.sim.ready(L) });   // fills in from the nightly file when there is one; otherwise the row above offers it
-    V.refresh = next && next.state === 'in' ? async () => { const g2 = await liveOf(next, 15000); const host = $main.querySelector(`.tpanel[data-tp="overview"] .sgcard[data-gid="${CSS.escape(String(next.id))}"]`); if (!host || !g2) return; const h = gcard(g2); if (host.dataset.h !== hashOf(h)) { host.outerHTML = h.replace('<a class="sgcard"', `<a class="sgcard" data-h="${hashOf(h)}"`); } if (g2.state === 'post') V.refresh = null; } : null;
+    V.refresh = next && next.state === 'in' ? async () => { const g2 = await liveOf(next, 15000); const host = $main.querySelector(`.tpanel[data-tp="overview"] .sgcard[data-gid="${CSS.escape(String(next.id))}"]`); if (!host || !g2) return; const h = gcard(g2); if (host.dataset.h !== hashOf(h)) { host.outerHTML = h.replace('<div class="sgcard dkhost"', `<div class="sgcard dkhost" data-h="${hashOf(h)}"`); } if (g2.state === 'post') V.refresh = null; } : null;
   }
   /* a team's line from the simulation: odds, projected record, the run left */
   async function outlookFill(L, id, r, { feed = false } = {}) {
