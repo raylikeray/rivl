@@ -4248,3 +4248,92 @@ html body .xans .xgloss p{margin:0!important;padding:0!important;border:0!import
 html body .xans .xgloss p::before,html body .xans .xgloss p::after{display:none!important}
 html body .xgloss .tag{line-height:1.4!important;height:auto!important;min-height:0!important}
 #lbhome,#livebar,.livebar,.lb-slot{display:none!important}
+
+/* ===== v384: setup, league by league ===== */
+.panel.full .panel-in:has(.o384){background:var(--bg)!important;padding:0!important;max-width:none}
+.o384{min-height:100dvh;display:flex;flex-direction:column;background:var(--bg);color:var(--ink)}
+.o384 .oscroll{flex:1;padding:6px 16px 120px}
+.o384 h2{margin:14px 2px 6px;font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.o384 .olead{margin:0 2px 16px;font-size:15px;line-height:1.45;color:var(--ink-3)}
+.o384 .osmall{margin:12px 0 0;font-size:13px;color:var(--ink-3);text-align:center;line-height:1.4}
+/* the trail */
+.otrail{position:sticky;top:0;z-index:5;display:flex;background:color-mix(in srgb,var(--bg) 90%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:.5px solid var(--line);padding:calc(env(safe-area-inset-top,0px) + 6px) 8px 0}
+.otrail button{flex:1;border:0;background:none;padding:10px 2px 11px;font:700 13px/1 var(--ui);color:var(--ink-3);position:relative;cursor:pointer;white-space:nowrap}
+.otrail button span{display:inline-flex;align-items:center;gap:4px}
+.otrail button i{width:7px;height:7px;border-radius:50%;background:#34C759;flex:none}
+.otrail button em{font-style:normal;color:var(--ink-3);font-weight:600}
+.otrail button.on{color:var(--ink)}
+.otrail button.on::after{content:"";position:absolute;left:16%;right:16%;bottom:-.5px;height:2px;border-radius:1px;background:var(--ink)}
+/* the bar */
+.ofoot{position:fixed;left:0;right:0;bottom:0;z-index:6;padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 14px);background:color-mix(in srgb,var(--bg) 90%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:.5px solid var(--line)}
+.welcome .ofoot{position:static;background:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0 16px calc(env(safe-area-inset-bottom,0px) + 28px)}
+.obar{display:flex;align-items:center;gap:10px}
+.oback{border:0;background:none;color:var(--tint-b);font:500 16px/1 var(--ui);padding:10px 2px;cursor:pointer}
+.omid{flex:1;min-width:0;text-align:center;font-size:12.5px;font-weight:600;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.onext{border:0;background:var(--ink);color:var(--bg);font:650 15.5px/1 var(--ui);padding:14px 18px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.onext.big{display:block;width:100%;padding:17px;font-size:17px}
+.onext:active,.oback:active{opacity:.7}
+/* the welcome */
+.o384.welcome{justify-content:space-between}
+.owel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:calc(env(safe-area-inset-top,0px) + 40px) 28px 24px}
+.owel .onb-logo{margin:0 0 26px}
+.owel .onb-logo .mark{height:46px;width:auto;fill:var(--ink)}
+.owel .onb-logo .sheen{display:none}
+.owel h2{margin:0;font-size:38px;line-height:1.08}
+.owel p{margin:14px 0 0;max-width:320px;font-size:16px;line-height:1.5;color:var(--ink-3)}
+.olgs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:22px}
+.olgs span{padding:7px 13px;border-radius:999px;background:var(--surf);font-size:13.5px;font-weight:700}
+/* team rows */
+.osearch{margin:0 0 14px!important;background:var(--surf)!important;box-shadow:none!important;border-radius:13px!important}
+.o384 .gr.onb-team{min-height:58px}
+.o384 .gr.onb-team .logo{width:34px;height:34px;flex:none}
+.o384 .gr.onb-team .logo img{width:100%;height:100%;object-fit:contain}
+.o384 .ork{font-size:12px;font-weight:700;color:var(--ink-3);margin-right:6px}
+.ock{width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;box-shadow:inset 0 0 0 1.6px var(--line-2);color:transparent;transition:background .15s,box-shadow .15s}
+.ock svg{width:14px;height:14px}
+.onb-team.on .ock{background:var(--tint-b);box-shadow:none;color:#fff}
+.o384 .onb-team:active{background:var(--seg)}
+/* college conferences: a plain header that folds its card */
+.o384 .onb-sec{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:16px 4px 8px;color:var(--ink);font:inherit;cursor:pointer;box-shadow:none!important}
+.o384 .onb-sec b{font-size:16px;font-weight:750}
+.o384 .onb-sec span{font-size:13px;color:var(--ink-3);font-weight:600}
+.o384 .onb-sec em{font-style:normal;margin-left:auto;font-size:13px;font-weight:700;color:var(--tint-b)}
+.o384 .onb-sec .chev{margin-left:auto;transition:transform .2s}
+.o384 .onb-sec em + .chev{margin-left:6px}
+.o384 .onb-sec[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.o384 .onb-note{margin:0 4px 8px;font-size:12.5px;color:var(--ink-3)}
+.o384 .gr.sw{min-height:62px}
+.o384 .oinst img{border-radius:13px;flex:none}
+.o384 .oinst .gm span{white-space:normal}
+.o384 .segc{margin-bottom:14px}
+
+/* the player picker (setup and the Players screen): one grouped card per team, plain header, no colour bands */
+.pp .tgrp{background:var(--surf)!important;background-image:none!important;border-radius:var(--r-card)!important;box-shadow:none!important;overflow:hidden;margin:0 0 14px!important}
+.pp .tgrp::before,.pp .tgrp::after{display:none!important}
+.pp .thead.pp-team{background:none!important;color:var(--ink)!important;box-shadow:none!important;border-radius:0!important;padding:12px 14px!important;min-height:56px}
+.pp .thead.pp-team::before,.pp .thead.pp-team::after{display:none!important}
+.pp .thead.pp-team .tt b{color:var(--ink)!important;font-size:16px}
+.pp .thead.pp-team .tt small{color:var(--ink-3)!important}
+.pp .thead.pp-team .chev{color:var(--ink-3)!important}
+.pp .tgrp .rows{background:none!important;box-shadow:none!important;border-top:.5px solid var(--line)}
+.pp .search{background:var(--surf)!important;box-shadow:none!important;border-radius:13px!important}
+/* the new rows win over the old setup tiles */
+html body .o384 .gr.onb-team{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;text-align:left!important;gap:12px!important;padding:12px 14px!important;border-radius:0!important;background:none!important;background-image:none!important;box-shadow:none!important;color:var(--ink)!important;transform:none!important;aspect-ratio:auto!important;height:auto!important;width:100%!important;margin:0!important;border:0!important}
+html body .o384 .gr.onb-team::after{display:none!important}
+html body .o384 .gr.onb-team > i:not(.ock){display:none!important}
+html body .o384 .gr.onb-team .gm b{color:var(--ink)!important;font-size:15.5px!important;text-shadow:none!important}
+html body .o384 .gr.onb-team .gm span{color:var(--ink-3)!important;text-shadow:none!important}
+html body .o384 .gr.onb-team .logo{background:none!important;box-shadow:none!important;filter:none!important;margin:0!important}
+html body .o384 .gr.onb-team:active{background:var(--seg)!important}
+html body .o384 .gl .gr.onb-team + .gr.onb-team::before{content:"";position:absolute;top:0;right:0;left:60px;height:.5px;background:var(--line)}
+.o384 .gl{display:block}
+.o384.welcome .ofoot .onext.big{width:100%!important;max-width:none}
+.o384 .onb-logo .mark path{fill:var(--ink)!important}
+html body .o384 .gr.onb-team .ock{position:static!important;align-self:center!important;margin:0 0 0 auto!important;width:26px!important;height:26px!important;display:grid!important;background:none!important;box-shadow:inset 0 0 0 1.6px var(--line-2)!important;color:transparent!important;inset:auto!important}
+html body .o384 .gr.onb-team.on .ock{background:var(--tint-b)!important;box-shadow:none!important;color:#fff!important}
+html body .o384 .gr.onb-team .ock::after{display:none!important;content:none!important}
+html body .o384 .gr.onb-team .gm{flex:1;min-width:0}
+html body .o384 .gr.onb-team .ock{opacity:1!important}
+html body .o384.welcome{align-items:stretch!important}
+html body .o384.welcome .ofoot{width:100%!important;align-self:stretch!important}
+html body .o384 .gr.onb-team .ock{transform:none!important;min-width:26px}

@@ -346,7 +346,7 @@
       const star = on ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`;
       // a setup tile keeps its logo, name and record; only its check changes. Stars and the hero button redraw.
       if (!act.classList.contains('onb-team')) act.innerHTML = act.classList.contains('star') ? star : star + (on ? 'Following' : 'Follow');
-      toast(on ? `Following ${act.dataset.name || 'team'}` : `Unfollowed ${act.dataset.name || 'team'}`);
+      if (!act.dataset.quiet) toast(on ? `Following ${act.dataset.name || 'team'}` : `Unfollowed ${act.dataset.name || 'team'}`);
       $main.dispatchEvent(new CustomEvent('rivl:fav')); $panel.dispatchEvent(new CustomEvent('rivl:fav')); document.dispatchEvent(new CustomEvent('rivl:fav'));
     }
     if (a === 'expand') { e.preventDefault(); $main.querySelectorAll(`[data-more="${act.dataset.more}"]`).forEach(el => { el.hidden = false; }); act.remove(); }
@@ -364,7 +364,7 @@
     // a conference bar in setup: fold it, and remember which ones this device leaves open
     if (a === 'onbsec') { e.preventDefault(); const open = act.getAttribute('aria-expanded') !== 'true'; V._.foldToggle(act, open); const s = store.get('v5:onbsec', {}) || {}; s[act.dataset.sec] = open ? 1 : 0; store.set('v5:onbsec', s); return; }
     if (a === 'reload') { e.preventDefault(); render(); }
-    if (a === 'onb-next') { e.preventDefault(); onbLk = 'nba'; onbStep(+act.dataset.step); }
+    if (a === 'onb-next') { e.preventDefault(); onbStep(+act.dataset.step); }
     if (a === 'onb-welcome') { e.preventDefault(); onbWelcome(); }
     if (a === 'onb-lk') { e.preventDefault(); onbLk = act.dataset.lk; onbStep(+(act.dataset.step || 0)); }
     if (a === 'onb-done') { e.preventDefault(); store.set('v5:onboarded', true); store.set('v5:lk', 'nba'); store.set('v5:screen', 'home'); closePanel(); if (location.hash !== '#home') location.hash = '#home'; else render(); }
@@ -533,183 +533,100 @@
      next three steps do. Then the picks. */
   /* the lockup, the same one as the top bar's, drawn large on the welcome */
   const onbMark = `<svg class="mark" viewBox="0 0 250 123.41" aria-hidden="true"><defs><linearGradient id="rivlMarkOnb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".40"/><stop offset=".05" stop-color="#fff" stop-opacity=".38"/><stop offset=".10" stop-color="#fff" stop-opacity=".10"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><path class="r" d="M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0Z"/><path class="w" d="M108 0H132V123.41H108ZM140 0H164.5L168.0 96L171.5 0H196L192 123.41H144ZM204 0H228V99.41H250V123.41H204Z"/><g class="sheen" fill="url(#rivlMarkOnb)"><path d="M0 0H88.8A11.2 11.2 0 0 1 100 11.2V50.5A11.2 11.2 0 0 1 88.8 61.7H62.3L0 25.61ZM0 47.02L100 104.96V123.41H0ZM108 0H132V123.41H108ZM140 0H164.5L168.0 96L171.5 0H196L192 123.41H144ZM204 0H228V99.41H250V123.41H204Z"/></g></svg>`;
-  /* Where you are in setup, in the footer bar on every screen: a slot per step, a knob that slides to the one you are on,
-     the ones behind it filled, and "Step 2 of 4". On the welcome the knob is not out yet: the track is empty and reads
-     "4 steps"; it appears on the first step and slides from there. The home-screen step only counts when there is one. */
-  const onbSteps = () => standalone() ? ['Teams', 'Players', 'Home'] : ['Teams', 'Players', 'Home', 'Install'];
-  const onbProg = cur => { const t = onbSteps().length; const k = Math.max(0, Math.min(cur, t - 1)); const pre = cur < 0; const label = pre ? `${t} steps` : `Step ${k + 1} of ${t}`;
-    return `<span class="onb-prog${pre ? ' pre' : ''}" style="--i:${k};--n:${t}" role="img" aria-label="${label}"><span class="pd">${Array.from({ length: t }, (_, i) => `<i class="${!pre && i < k ? 'd' : ''}"></i>`).join('')}<u></u></span><span class="ps">${label}</span></span>`; };
-  const onbSlot = `<span class="onb-slot" aria-hidden="true"></span>`;
-  /* One bar for the whole of setup. Each screen is drawn fresh, but the bar from the screen before is kept and patched: the
-     knob's position changes as a style, so it slides; the label crossfades; Back appears or goes; the step button is
-     swapped. The new screen's content slides in from the side it came from. */
+  /* ===== Setup (v384): league by league =====
+     A tester pressed Next expecting the next league, and people did not know WNBA and college were there to pick. So each
+     league is its own step, the trail at the top shows all four with what you've picked in each, and the button always
+     names where it goes ("Next: WNBA"). Every screen says what the picks are for. Then players, then Home, then install. */
+  const ONB = () => [...ORDER.map(k => ({ t: 'lg', lk: k })), { t: 'players' }, { t: 'home' }, ...(standalone() ? [] : [{ t: 'install' }])];
+  const onbName = st => !st ? 'Finish' : st.t === 'lg' ? LEAGUES[st.lk].label : st.t === 'players' ? 'Players' : st.t === 'home' ? 'Home' : 'Install';
+  const nTeams = k => (HW.favs.all()[k] || []).length;
+  const allTeams = () => ORDER.reduce((c, k) => c + nTeams(k), 0);
+  const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  /* the trail: the four leagues, a green dot and a count once something is picked in one, a line under the one you're on */
+  const onbTrail = cur => `<div class="otrail" role="list">${ORDER.map((k, i) => { const n = nTeams(k); return `<button role="listitem" class="${cur === k ? 'on' : ''}${n ? ' done' : ''}" data-act="onb-next" data-step="${i}" data-lk="${k}"><span>${n ? '<i></i>' : ''}${esc(LEAGUES[k].label)}${n ? `<em> · ${n}</em>` : ''}</span></button>`; }).join('')}</div>`;
+  const onbBar = (n, mid) => { const S2 = ONB(); const nx = S2[n + 1];
+    return `<div class="obar">${n >= 0 ? `<button class="oback" data-act="${n === 0 ? 'onb-welcome' : 'onb-next'}" data-step="${n - 1}">Back</button>` : '<span></span>'}<span class="omid" id="onbMid">${mid || ''}</span>${nx ? `<button class="onext" data-act="onb-next" data-step="${n + 1}" id="onbNext">Next: ${esc(onbName(nx))}</button>` : `<button class="onext" data-act="onb-done">${standalone() ? 'Open Home' : 'Finish'}</button>`}</div>`; };
+  const onbMidText = n => { const st = ONB()[n]; if (!st) return ''; if (st.t === 'lg') { const c = nTeams(st.lk); return c ? `${plural(c, LEAGUES[st.lk].label + ' team')} picked` : 'None picked yet'; } if (st.t === 'players') { const c = V.fplayers.all().length; return `${plural(allTeams(), 'team')} · ${plural(c, 'player')}`; } return ''; };
   let onbAt = -1;
   function onbOpen(html, n) {
-    const was = !$panel.hidden && $panel.querySelector('.onb'); const kept = was ? was.querySelector('.onb-bar') : null; const dir = was ? (n > onbAt ? 'f' : 'b') : '';
+    const dir = !$panel.hidden && $panel.querySelector('.onb') ? (n > onbAt ? 'f' : n < onbAt ? 'b' : '') : '';
     openPanel(html, { full: true });
     const root = $panel.querySelector('.onb');
-    if (kept) {
-      const fresh = root.querySelector('.onb-bar'); fresh.replaceWith(kept);
-      void kept.offsetWidth;   // a node put back in the page has no style to move from: lay it out as it was, then change it, so the knob slides rather than lands
-      const np = fresh.querySelector('.onb-prog'), op = kept.querySelector('.onb-prog');
-      const od = op.querySelectorAll('.pd i'), nd = np.querySelectorAll('.pd i');
-      if (od.length !== nd.length) op.replaceWith(np);
-      else {
-        op.style.setProperty('--i', np.style.getPropertyValue('--i')); op.classList.toggle('pre', np.classList.contains('pre')); op.setAttribute('aria-label', np.getAttribute('aria-label'));
-        od.forEach((d, i) => { d.className = nd[i].className; });
-        const ol = op.querySelector('.ps'), nl = np.querySelector('.ps').textContent;
-        if (ol.textContent !== nl) { ol.classList.remove('swap'); void ol.offsetWidth; ol.textContent = nl; ol.classList.add('swap'); }
-      }
-      const ob = kept.firstElementChild, nb = fresh.firstElementChild;
-      if (ob.tagName !== nb.tagName) { ob.replaceWith(nb); nb.classList.add('pop'); } else if (nb.tagName === 'BUTTON') { ob.dataset.act = nb.dataset.act; if (nb.dataset.step) ob.dataset.step = nb.dataset.step; else delete ob.dataset.step; }
-      kept.lastElementChild.replaceWith(fresh.lastElementChild);
-    }
-    if (dir) { root.classList.add(`slide-${dir}`); root.addEventListener('animationend', () => root.classList.remove('slide-f', 'slide-b'), { once: true }); }
+    if (dir && root) { root.classList.add(`slide-${dir}`); root.addEventListener('animationend', () => root.classList.remove('slide-f', 'slide-b'), { once: true }); }
     onbAt = n;
   }
-  /* The first thing a new person sees: the lockup large and lifted on a lit ground, what RIVL is in a line, the steps ahead
-     as a stack of raised cards with the first one forward, and the bar that stays for the rest of setup. Black and white;
-     the only colour in setup is the teams you pick. */
   function onbWelcome() {
-    const rows = [['Pick your teams', 'NBA, WNBA and college'], ['Follow players', 'From your teams or anyone'], ['Set up Home', 'Choose what you see first'], ['Add to your home screen', 'Opens full screen, like an app']].slice(0, onbSteps().length);
-    onbOpen(`<div class="onb welcome"><div class="wstage"><div class="onb-logo">${onbMark}</div><h2>Your teams.<br>Nothing else.</h2><p>Scores, stats and news for the teams and players you follow.</p></div><div class="wset"><p class="wlab">Set up in ${rows.length === 3 ? 'three' : 'four'} steps</p><ol class="wrows">${rows.map(([t, b], i) => `<li class="${i ? '' : 'on'}"><i>${i + 1}</i><span><b>${t}</b><span>${b}</span></span></li>`).join('')}</ol></div><div class="onb-foot"><div class="onb-bar">${onbSlot}${onbProg(-1)}<button class="btn" data-act="onb-next" data-step="0">Start${arrow}</button></div></div></div>`, -1);
+    onbOpen(`<div class="onb o384 welcome"><div class="owel"><div class="onb-logo">${onbMark}</div><h2>Your teams.<br>Nothing else.</h2>
+      <p>Pick the teams you follow in each league you watch. Home, Scores and Stats are built from what you choose here.</p>
+      <div class="olgs">${ORDER.map(k => `<span>${esc(LEAGUES[k].label)}</span>`).join('')}</div>
+      <p class="osmall">Skip any league you don't watch. You can change all of this later in Settings.</p></div>
+      <div class="ofoot"><button class="onext big" style="display:block;width:100%" data-act="onb-next" data-step="0">Pick my teams</button><p class="osmall">About a minute. No account.</p></div></div>`, -1);
   }
+  const CHECK = `<i class="ock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></i>`;
   async function onbStep(n) {
-    const lk = lkOf(onbLk); const L = LEAGUES[lk];
-    const countFor = k => n === 1 ? V.fplayers.all().filter(p => p.lk === k).length : (HW.favs.all()[k] || []).length;
-    const leaguePills = `<div class="pills onb-pills" style="--n:${ORDER.length};--i:${Math.max(0, ORDER.indexOf(lk))}">${ORDER.map(k => `<button class="pill${k === lk ? ' on' : ''}" data-act="onb-lk" data-lk="${k}" data-step="${n}"><span>${esc(LEAGUES[k].label)}</span>${countFor(k) ? `<span class="ct">${countFor(k)}</span>` : ''}</button>`).join('')}</div>`;
-    const frame = (title, body, inner, foot) => {
-      /* a league change on the pick steps swaps the list in place: the switch moves at once and the old list stays until the new
-         one is ready, so a tap never shows a blank step or a frozen knob */
-      const cur = !$panel.hidden && $panel.querySelector('.onb');
-      if (cur && cur.dataset.step === String(n) && (n === 0 || n === 1)) {
-        const pills = cur.querySelector('.onb-pills'); if (pills) { pills.style.setProperty('--i', Math.max(0, ORDER.indexOf(lk))); pills.querySelectorAll('.pill').forEach(p => p.classList.toggle('on', p.dataset.lk === lk)); }
-        const host = cur.querySelector('.onb-body'); if (host) { const keep = host.querySelector('.onb-pills'); host.innerHTML = inner; const fresh = host.querySelector('.onb-pills'); if (keep && fresh) fresh.replaceWith(keep); }   // the same switch stays, so its knob slides
-        return;
-      }
-      /* Setup is a full-screen panel, so the warning bar on Home is behind it — and setup is exactly where someone in a
-         private window is about to pick thirty teams that will not be kept. It has to be said here. */
-      const noSave = store.broken() ? `<p class="legend warn">This browser isn't saving anything. Private browsing blocks it. Whatever you pick here will be gone when you close the tab.</p>` : '';
-      onbOpen(`<div class="onb" data-step="${n}"><h2>${title}</h2><p>${body}</p>${noSave}<div class="onb-body">${inner}</div><div class="onb-foot"><div class="onb-bar">${foot}</div></div></div>`, n);
-    };
-    if (n === 0 || n === 1) {
-      const nn = n === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length;
-      frame(n === 0 ? 'Pick your teams' : 'Follow some players', n === 0 ? 'Switch leagues above. Your picks are kept for each. Your teams lead Home and are the only ones you get updates about.' : 'Switch leagues above. These are the rosters of the teams you picked; search any team to see its roster.',
-        n === 0 ? `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div class="search" style="margin:0 0 12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input id="onbq" type="search" placeholder="Search teams" autocomplete="off"></div><div id="onbList" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`
-          : `${leaguePills}<div id="onbPicked" class="onb-picked"></div><div id="onbPick" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`,
-        /* the button names where it goes. "Continue" next to a row of leagues read as "continue to the next league", which it
-           never was — the switch changes league, the button changes step. Back exists from the second step on. */
-        `${backBtn(n ? `data-act="onb-next" data-step="${n - 1}"` : 'data-act="onb-welcome"')}${onbProg(n)}<button class="btn" data-act="onb-next" data-step="${n + 1}" id="onbNext">${n ? 'Next: Home' : 'Next: players'}${arrow}</button>`);
-      if (n === 1) { onbCount(); await V.playerPicker(document.getElementById('onbPick'), L, { leaders: true, select: true }); onbCount(); return; }
+    const S2 = ONB(); n = Math.max(0, Math.min(n, S2.length - 1)); const st = S2[n];
+    const noSave = store.broken() ? `<p class="legend warn">This browser isn't saving anything. Private browsing blocks it, so whatever you pick here will be gone when you close the tab.</p>` : '';
+    const page = (title, body, inner, trail = true) => onbOpen(`<div class="onb o384" data-step="${n}">${trail ? onbTrail(st.t === 'lg' ? st.lk : '') : ''}<div class="oscroll"><h2>${title}</h2><p class="olead">${body}</p>${noSave}<div class="onb-body">${inner}</div></div><div class="ofoot">${onbBar(n, onbMidText(n))}</div></div>`, n);
+    if (st.t === 'lg') {
+      const lk = st.lk, L = LEAGUES[lk], first = n === 0;
+      const body = first ? `Tap the teams you follow. They lead Home and Scores, and they're the only teams you get alerts about.` : `Tap the teams you follow, or skip ahead if you don't watch ${/^ncaa/.test(lk) ? 'college' : 'the ' + L.label}.`;
+      page(esc(L.label), body, `<div class="search osearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg><input id="onbq" type="search" placeholder="Search teams" autocomplete="off"></div><div id="onbList">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`);
       const list = document.getElementById('onbList'); const inp = document.getElementById('onbq');
-      if (n === 0) {
-        /* every team in the league. Pro leagues are one alphabetical grid; college is the AP Top 25 first, then each
-           conference A to Z with its teams alphabetical, because 360 tiles in one wall is not a list anyone can use. */
-        const [idx, st, R] = await Promise.all([V.teamsIndex(L), HW.standings(L).catch(() => null), HW.rankings(L).catch(() => null)]); const pal = V._.distinctPalette(L, idx);
-        const byShort = (a, b) => (a.short || a.name || '').localeCompare(b.short || b.name || '');
-        const tile = (id, rank) => { const t = idx[id] || {}; const r = st && st.byId && st.byId[id]; return { id, short: t.short || (r && r.short) || t.name || (r && r.name) || '', name: t.name || (r && r.name) || '', abbr: t.abbr || (r && r.abbr) || '', logo: t.logo || (r && r.logo) || '', color: pal[id] || V._.teamColor({ id, abbr: t.abbr || (r && r.abbr) || '' }, L) || '', alt: V._.teamAlt({ id, abbr: t.abbr || (r && r.abbr) || '', alt: t.alt || '' }, L) || '', rec: r ? `${r.w}-${r.l}` : '', rank: rank || 0 }; };
-        const seen = new Set(); const groups = [];
-        /* ESPN's college standings put some schools in more than one group — a conference and a division of it — so a team
-           could be drawn twice. Each conference keeps only the first claim on a team, and no group repeats one internally.
-           The ranked group is deliberately a second home for its teams; the note inside it says so. */
-        const once = rows => { const got = new Set(); return rows.filter(r => r && r.id && !got.has(r.id) && got.add(r.id)); };
-        if (L.standingsMode === 'conferences' && st && st.groups.length) {
-          if (R && R.ranks && R.ranks.length) groups.push({ name: R.name || 'Top 25', note: 'Also listed under their conference.', rows: once(R.ranks.map(x => tile(String(x.team.id), x.rank))) });
-          st.groups.slice().sort((a, b) => V._.confName(a.name, a.abbr).localeCompare(V._.confName(b.name, b.abbr))).forEach(g => { const rows = once(g.rows.filter(r => !seen.has(r.id)).map(r => { seen.add(r.id); return tile(r.id); })).sort(byShort); if (rows.length) groups.push({ name: V._.confName(g.name, g.abbr), rows }); });
-          const rest = once(Object.keys(idx).filter(id => !seen.has(id)).map(id => tile(id))).sort(byShort); if (rest.length) groups.push({ name: 'Other', rows: rest });
-        } else groups.push({ name: '', rows: once(Object.keys(idx).map(id => tile(id))).sort(byShort) });
-        /* 360 college teams in one wall is not a list anyone can use, so each conference is a full-width bar that folds its
-           own grid. The ranked group leads and stays open; the conferences start closed, so the whole league fits on a screen
-           and you open the one you want. A search opens every section that still has a match, without disturbing the saved
-           state. Pro leagues are one unnamed alphabetical group of thirty — nothing to section, so nothing folds. */
-        const secKey = name => `${lk}:${name}`;
-        const secOpen = (name, first) => { const s = store.get('v5:onbsec', {}) || {}; const v = s[secKey(name)]; return v === undefined ? first : !!v; };
-        const paint = () => {
-          const q = inp.value.trim().toLowerCase();
-          const html = groups.map((g, gi) => {
-            const rows = g.rows.filter(tm => !q || `${tm.name} ${tm.short} ${tm.abbr} ${g.name}`.toLowerCase().includes(q));
-            if (!rows.length) return '';
-            /* eager, at low priority: a crest inside a closed fold would otherwise not be fetched until the fold opened,
-               so every conference popped in blank and then filled. They load quietly up front, the service worker keeps
-               them, and the section is already drawn when you open it — with or without a signal the second time. */
-            const grid = `<div class="onb-grid">${rows.map(tm => { const on = HW.favs.has(lk, tm.id); return `<button class="onb-team${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(tm.id)}" data-name="${esc(tm.short)}" aria-pressed="${on}"${tm.color ? ` style="${V._.tcv(tm.color, tm.alt)}"` : ''}><span class="logo">${V._.imgSized(tm.logo || '', 128, 128, 'loading="eager" fetchpriority="low" decoding="async"')}</span><b>${esc(tm.short)}</b><span>${tm.rank ? `<em>No. ${tm.rank}</em>` : ''}${esc(tm.rec)}</span><i></i></button>`; }).join('')}</div>`;
-            const body = g.note ? `<p class="onb-note">${esc(g.note)}</p>${grid}` : grid;
-            if (!g.name) return grid;
-            const open = q ? true : secOpen(g.name, gi === 0);
-            return `<button class="onb-sec" data-act="onbsec" data-sec="${esc(secKey(g.name))}" aria-expanded="${open}"><b>${esc(g.name)}</b><span>${rows.length}</span>${V._.chev}</button><div class="fold${open ? '' : ' closed'}"><div>${body}</div></div>`;
-          }).join('');
-          list.innerHTML = html || `<div class="empty"><b>No team matches</b><p style="margin:6px 0 0">Try the school, the nickname or the conference.</p></div>`;
-          onbCount();
-        };
-        paint(); inp.addEventListener('input', paint);
-      }
-    } else if (n === 2) {
+      const [idx, stg, R] = await Promise.all([V.teamsIndex(L), HW.standings(L).catch(() => null), HW.rankings(L).catch(() => null)]);
+      if (!document.getElementById('onbList')) return;
+      const byShort = (a, b) => (a.short || a.name || '').localeCompare(b.short || b.name || '');
+      const tile = (id, rank) => { const t = idx[id] || {}; const r = stg && stg.byId && stg.byId[id]; const conf = r && L.standingsMode !== 'conferences' && r.pos ? ` · ${HW.ordinal(r.pos)} in the ${V._.confName(r.group, r.groupAbbr)}` : ''; return { id, short: t.short || (r && r.short) || t.name || (r && r.name) || '', name: t.name || (r && r.name) || '', abbr: t.abbr || (r && r.abbr) || '', logo: t.logo || (r && r.logo) || '', color: V._.teamColor({ id, abbr: t.abbr || (r && r.abbr) || '' }, L) || '', sub: r ? `${r.w}-${r.l}${conf}` : '', rank: rank || 0 }; };
+      const once = rows => { const got = new Set(); return rows.filter(r => r && r.id && !got.has(r.id) && got.add(r.id)); };
+      const seen = new Set(); const groups = [];
+      if (L.standingsMode === 'conferences' && stg && stg.groups.length) {
+        if (R && R.ranks && R.ranks.length) groups.push({ name: R.name || 'Top 25', note: 'Also listed under their conference.', rows: once(R.ranks.map(x => tile(String(x.team.id), x.rank))) });
+        stg.groups.slice().sort((a, b) => V._.confName(a.name, a.abbr).localeCompare(V._.confName(b.name, b.abbr))).forEach(g => { const rows = once(g.rows.filter(r => !seen.has(r.id)).map(r => { seen.add(r.id); return tile(r.id); })).sort(byShort); if (rows.length) groups.push({ name: V._.confName(g.name, g.abbr), rows }); });
+        const rest = once(Object.keys(idx).filter(id => !seen.has(id)).map(id => tile(id))).sort(byShort); if (rest.length) groups.push({ name: 'Other', rows: rest });
+      } else groups.push({ name: '', rows: once(Object.keys(idx).map(id => tile(id))).sort(byShort) });
+      const secKey = name => `${lk}:${name}`;
+      const secOpen = (name, first) => { const s = store.get('v5:onbsec', {}) || {}; const v = s[secKey(name)]; return v === undefined ? first : !!v; };
+      const row = tm => { const on = HW.favs.has(lk, tm.id); return `<button class="gr onb-team${on ? ' on' : ''}" data-act="fav" data-quiet="1" data-lk="${lk}" data-id="${esc(tm.id)}" data-name="${esc(tm.short)}" aria-pressed="${on}"><span class="logo">${V._.imgSized(tm.logo || '', 96, 96, 'loading="eager" fetchpriority="low" decoding="async"')}</span><span class="gm"><b>${tm.rank ? `<small class="ork">${tm.rank}</small>` : ''}${esc(tm.short)}</b>${tm.sub ? `<span>${esc(tm.sub)}</span>` : ''}</span>${CHECK}</button>`; };
+      const paint = () => {
+        const q = inp.value.trim().toLowerCase();
+        const html = groups.map((g, gi) => {
+          const rows = g.rows.filter(tm => !q || `${tm.name} ${tm.short} ${tm.abbr} ${g.name}`.toLowerCase().includes(q)); if (!rows.length) return '';
+          const card = `<div class="gl">${rows.map(row).join('')}</div>`;
+          if (!g.name) return card;
+          const open = q ? true : secOpen(g.name, gi === 0);
+          return `<button class="onb-sec" data-act="onbsec" data-sec="${esc(secKey(g.name))}" aria-expanded="${open}"><b>${esc(g.name)}</b><span>${rows.length}</span>${V._.chev}</button><div class="fold${open ? '' : ' closed'}"><div>${g.note ? `<p class="onb-note">${esc(g.note)}</p>` : ''}${card}</div></div>`;
+        }).join('');
+        list.innerHTML = html || `<div class="empty"><b>No team matches</b><p style="margin:6px 0 0">Try the school, the nickname or the conference.</p></div>`;
+        onbCount();
+      };
+      paint(); inp.addEventListener('input', paint);
+    } else if (st.t === 'players') {
+      const withTeams = ORDER.filter(k => nTeams(k)); const pool = withTeams.length ? withTeams : ORDER;
+      if (!pool.includes(onbLk)) onbLk = pool[0];
+      const lk = onbLk, L = LEAGUES[lk];
+      const seg = pool.length > 1 ? `<div class="segc">${pool.map(k => `<button class="${k === lk ? 'on' : ''}" data-act="onb-lk" data-lk="${k}" data-step="${n}">${esc(LEAGUES[k].label)}</button>`).join('')}</div>` : '';
+      page('Players', `Follow players to get their stat line after every game and any injury news. Pick from your teams' rosters or search any name. This step is optional.`, `${seg}<div id="onbPick" class="onb-list">${Array.from({ length: 6 }, () => '<div class="skel row" style="margin:0 0 8px"></div>').join('')}</div>`);
+      await V.playerPicker(document.getElementById('onbPick'), L, { leaders: true, select: true }); onbCount();
+    } else if (st.t === 'home') {
       const P = V.prefs.all();
-      const items = [['brief', 'Tonight and last night', "Your teams' games in one line, and last night's results"], ['live', 'Live now', 'A big card when one of your teams is playing'], ['teams', 'My teams', 'Record, the game that matters and the chance to win'], ['players', 'My players', 'Scoring lines, one tap to the profile'], ['injuries', 'Injuries', 'Reports on your teams and players'], ['news', 'News', 'Stories about your teams and players'], ['forecast', 'Win chances', "RIVL's own estimate on each game card"]];
-      frame('What do you want to see?', 'Home is yours. Switch off anything you don\'t care about; you can change it later in Settings.',
-        `<div class="rows onb-prefs">${items.map(([k, t, b]) => `<button class="row sw" data-act="pref" data-pref="${k}" role="switch" aria-checked="${P[k] !== false}"><span class="t"><b>${esc(t)}</b><span class="wrap">${esc(b)}</span></span><span class="switch"></span></button>`).join('')}</div>`,
-        `${backBtn('data-act="onb-next" data-step="1"')}${onbProg(2)}<button class="btn" data-act="onb-next" data-step="3">${standalone() ? 'Finish' : 'Next: install'}${arrow}</button>`);
+      const items = [['live', 'Game cards', "Swipeable cards for your teams' games today"], ['teams', 'Live and upcoming', "Your teams' games on now and later today"], ['brief', 'Results', "How your teams' games went, with the top scorers"], ['players', 'Player lines', "Your players' numbers after each game"], ['injuries', 'Injuries', 'Status changes on your teams and players'], ['news', 'News', 'Stories about your teams and players'], ['forecast', 'Win chances', "RIVL's pick on every game"]];
+      page('Your Home screen', `Home is a feed of what happens to your teams and players. Turn off anything you don't want. You can change this later in Settings.`,
+        `<div class="gl">${items.map(([k, t, b]) => `<button class="gr ni sw" data-act="pref" data-pref="${k}" role="switch" aria-checked="${P[k] !== false}"><span class="gm wrap"><b>${esc(t)}</b><span>${esc(b)}</span></span><span class="switch"></span></button>`).join('')}</div>`, false);
     } else {
-      /* The home-screen app starts with its own storage, so what was picked in the browser is not in it. RIVL carries the
-         picks over in a cookie, which is the one thing iOS copies as the app is created — but only if cookies are allowed.
-         When they are not, say so here rather than let someone install and find an empty app. */
       const carryNote = () => HW.carry.works()
-        ? `<p class="legend" style="padding-left:0;padding-right:0">Your teams and players come with you. The app starts with them already chosen.</p>`
-        : `<p class="legend warn">This browser is blocking cookies, so your picks can't be carried into the home-screen app automatically. Before you add it, open <b>Settings → Sync</b> and back up to a code, then restore it in the app.</p>`;
-      const done = standalone();
-      frame(done ? "You're set" : 'Put RIVL on your home screen', done ? 'RIVL is on your home screen. Your teams and players are waiting on Home.' : 'It opens full screen like an app, with no browser bar, and your teams load first.',
-        done ? '' : `<div class="onb-install"><img src="img/icon-192.png" alt="" width="64" height="64"><div>${deferredInstall ? `<button class="btn" data-act="install" id="installBtn">Install RIVL</button>` : isIOS ? `<b>In Safari</b><ol><li>Tap the Share button</li><li>Choose <b>Add to Home Screen</b></li><li>Tap <b>Add</b></li></ol>` : `<b>In your browser menu</b><p style="margin:4px 0 0">Choose <b>Add to Home screen</b> (or <b>Install app</b>).</p>`}</div></div>${carryNote()}`,
-        `${backBtn('data-act="onb-next" data-step="2"')}${onbProg(3)}<button class="btn" data-act="onb-done">${done ? 'Open Home' : 'Done'}${arrow}</button>`);
+        ? `<p class="osmall" style="text-align:left">Your teams and players come with you. The app opens with them already picked.</p>`
+        : `<p class="legend warn">This browser is blocking cookies, so your picks can't move into the home-screen app on their own. Before you add it, open <b>Settings → Sync</b> and back up to a code, then restore it in the app.</p>`;
+      page('Add RIVL to your home screen', 'It opens full screen like an app, with no browser bar, and your teams load first.',
+        `<div class="gl"><div class="gr ni oinst"><img src="img/icon-192.png" alt="" width="56" height="56"><span class="gm wrap">${deferredInstall ? `<button class="onext" data-act="install" id="installBtn">Install RIVL</button>` : isIOS ? `<b>In Safari</b><span>Tap the Share button, choose <b>Add to Home Screen</b>, then tap <b>Add</b>.</span>` : `<b>In your browser menu</b><span>Choose <b>Add to Home screen</b> or <b>Install app</b>.</span>`}</span></div></div>${carryNote()}`, false);
     }
   }
   V.onbStep = onbStep; V.onbWelcome = onbWelcome;
-  /* how many are picked so far, across every league — it sits between Back and the step button, so the button itself can say
-     where it goes instead of carrying a number that looked like it belonged to the league switch */
-  const onbTally = (step, n) => n ? `${n} ${step === 0 ? 'team' : 'player'}${n === 1 ? '' : 's'}` : '';
-  /* a team in the Top 25 and in its conference is one tile drawn twice, so every tile re-syncs */
-  const onbCount = () => { const b = document.getElementById('onbNext'); if (!b || $panel.hidden) return;
-    $panel.querySelectorAll('.onb-team').forEach(t => { const on = HW.favs.has(t.dataset.lk, t.dataset.id); t.classList.toggle('on', on); t.setAttribute('aria-pressed', String(on)); });
-    const step = +(b.dataset.step || 1) - 1; const nn = step === 0 ? ORDER.reduce((c, k) => c + (HW.favs.all()[k] || []).length, 0) : V.fplayers.all().length;
-    const cnt = document.getElementById('onbCnt'); if (cnt) cnt.textContent = onbTally(step, nn);   // (no longer drawn; the switch above carries the counts)
-    // each section says how many of its tiles are picked; the league pills carry their counts; the rail shows every pick
-    // the bar carries its own tally, so a folded conference still says how many of its teams you follow
-    $panel.querySelectorAll('.onb-sec').forEach(h => { const n = h.nextElementSibling; const grid = n ? (n.classList.contains('onb-grid') ? n : n.querySelector('.onb-grid')) : null; const k = grid ? grid.querySelectorAll('.onb-team.on').length : 0; let em = h.querySelector('em'); if (k && !em) { em = document.createElement('em'); const ch = h.querySelector('.chev'); if (ch) ch.before(em); else h.appendChild(em); } if (em) { if (k) em.textContent = `${k} picked`; else em.remove(); } });
-    $panel.querySelectorAll('.onb-pills .pill').forEach(p => { const k = p.dataset.lk; const c = step === 0 ? (HW.favs.all()[k] || []).length : V.fplayers.all().filter(x => x.lk === k).length; let ct = p.querySelector('.ct'); if (c && !ct) { ct = document.createElement('span'); ct.className = 'ct'; p.appendChild(ct); } if (ct) { if (c) ct.textContent = c; else ct.remove(); } });
-    const rail = document.getElementById('onbPicked');
-    if (rail) {
-      /* what has been picked, by league: a count for each league (tap one to go there), then this league's picks, wrapping, each with its x */
-      let picks;
-      if (step === 0) {
-        const names = {}; $panel.querySelectorAll('.onb-team').forEach(t => { names[`${t.dataset.lk}:${t.dataset.id}`] = { name: t.dataset.name, logo: (t.querySelector('img') || {}).src || '' }; }); const kept = store.get('v5:onbNames', {}) || {}; Object.assign(kept, names); store.set('v5:onbNames', kept);
-        const F = HW.favs.all();
-        // a pick made elsewhere (another device, an earlier session) has no tile on this screen yet: its name and logo come from the league's index
-        const tried = onbCount.tried || (onbCount.tried = new Set());
-        const unknown = ORDER.filter(k => !tried.has(k) && (F[k] || []).some(id => !kept[`${k}:${id}`]));
-        if (unknown.length) { unknown.forEach(k => tried.add(k)); Promise.all(unknown.map(k => V.teamsIndex(LEAGUES[k]).then(idx => { (F[k] || []).forEach(id => { const t = idx[id]; if (t && !kept[`${k}:${id}`]) kept[`${k}:${id}`] = { name: t.short || t.name || 'Team', logo: t.logo || '' }; }); }).catch(() => { }))).then(() => { store.set('v5:onbNames', kept); onbCount(); }); }   // each league is looked up once
-        picks = ORDER.flatMap(k => (F[k] || []).map(id => ({ k, id, ...(kept[`${k}:${id}`] || { name: 'Team', logo: '' }), html: p => `<button class="pick" data-act="fav" data-lk="${p.k}" data-id="${esc(p.id)}" data-name="${esc(p.name)}" aria-label="Unfollow ${esc(p.name)}"><span class="logo s"><img src="${esc(p.logo)}" alt="" onerror="this.style.visibility='hidden'"></span><b>${esc(p.name)}</b><s></s></button>` })));
-      } else {
-        picks = V.fplayers.all().map(pl => ({ k: pl.lk, id: pl.id, name: pl.short || pl.name, html: p => `<button class="pick" data-act="follow-player" data-snap='${esc(JSON.stringify(pl))}' aria-label="Unfollow ${esc(pl.name)}">${V._.headshot(pl.img, pl.color || '', 26, pl.name)}<b>${esc(p.name)}</b>${pl.team ? `<i>${esc(pl.team)}</i>` : ''}<s></s></button>` }));
-      }
-      /* patched in place, never rebuilt: re-writing the row's innerHTML on every tap threw away each <img> and made the
-         logos already on screen blink and jump as they decoded again — and it reset the row's scroll position. Chips that
-         are still picked are moved, not recreated; only a new one is built and only a dropped one is removed. */
-      const lk = lkOf(onbLk); const here = picks.filter(p => p.k === lk);
-      if (!here.length) { if (rail.firstChild) rail.textContent = ''; }
-      else {
-        let row = rail.querySelector('.onb-picked-row');
-        if (!row) { rail.textContent = ''; row = document.createElement('div'); row.className = 'onb-picked-row'; rail.appendChild(row); }
-        const have = new Map(); row.querySelectorAll('.pick').forEach(el => have.set(el.dataset.key, el));
-        const want = new Set(); let prev = null;
-        here.forEach(p => {
-          const key = `${p.k}:${p.id}`; want.add(key);
-          let el = have.get(key);
-          if (!el) { const t = document.createElement('template'); t.innerHTML = p.html(p).trim(); el = t.content.firstElementChild; if (!el) return; el.dataset.key = key; }
-          if (prev ? prev.nextElementSibling !== el : row.firstElementChild !== el) { if (prev) prev.after(el); else row.prepend(el); }
-          prev = el;
-        });
-        have.forEach((el, key) => { if (!want.has(key)) el.remove(); });
-      }
-    }
+  /* after every tap: the checks, the trail's counts, each conference's "N picked", the line in the bar */
+  const onbCount = () => {
+    const root = $panel.querySelector('.o384'); if (!root || $panel.hidden) return;
+    root.querySelectorAll('.onb-team').forEach(t => { const on = HW.favs.has(t.dataset.lk, t.dataset.id); t.classList.toggle('on', on); t.setAttribute('aria-pressed', String(on)); });
+    const tr = root.querySelector('.otrail'); if (tr) { const cur = (tr.querySelector('.on') || {}).dataset; tr.outerHTML = onbTrail(cur ? cur.lk : ''); }
+    root.querySelectorAll('.onb-sec').forEach(h => { const f = h.nextElementSibling; const k = f ? f.querySelectorAll('.onb-team.on').length : 0; let em = h.querySelector('em'); if (k && !em) { em = document.createElement('em'); const ch = h.querySelector('.chev'); if (ch) ch.before(em); else h.appendChild(em); } if (em) { if (k) em.textContent = `${k} picked`; else em.remove(); } });
+    const mid = document.getElementById('onbMid'); if (mid) mid.textContent = onbMidText(+root.dataset.step);
   };
   $panel.addEventListener('rivl:fav', onbCount); $panel.addEventListener('rivl:follow', onbCount);
 
