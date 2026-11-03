@@ -729,12 +729,37 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
         if (played.length || ahead.length) series = sec('Season series', played.length ? lead : 'First meeting this season') + (rows ? `<div class="rows">${rows}</div>` : '') + next;
       }
       // the injury report for both sides, before tip; each row opens the report
+      /* the injury report as what it costs: each side's card leads with the points a night in street clothes and how much
+         of the team's scoring is left (its own season figures from the feed), then the names, each with his average.
+         Tapping a name still opens his report. */
       let report = '';
       if (g.state === 'pre' && ctx && ctx.inj) {
         S.injuries = S.injuries || {};
-        const side = t => { const il = ctx.inj.byTeam[t.id] && ctx.inj.byTeam[t.id].list || []; if (!il.length) return ''; const tc = V._.teamColor(t, L); const rows = il.map((x, i) => { const a = x.athlete || {}; const aid = athId(a); const key = `g:${t.id}:${aid}:${x.id || i}`; S.injuries[key] = { x, id: aid, team: { id: t.id, short: t.short, color: tc } }; const stt = x.status || ''; const cls = /out/i.test(stt) ? 'out' : /day|quest|doubt/i.test(stt) ? 'q' : 'ok'; const det = x.details || {}; const ret = retInfo(L, det.returnDate); const why = [det.type || det.detail, ret ? ret.short : ''].filter(Boolean).join(', '); return `<button class="row" data-act="injury" data-key="${esc(key)}">${headshot(hsUrl(a), tc, 44, a.displayName)}<span class="t"><b>${esc(a.displayName || '')}</b><span>${esc(why || (x.shortComment || '').slice(0, 80))}</span></span><span class="tag ${cls}">${esc(V._.tagWord(stt))}</span></button>`; }).join(''); return `<div class="injgrp"><button class="injhd" data-act="injcol" data-id="g:${esc(t.id)}" aria-expanded="true" style="${tcv(tc)}"><i class="bar"></i>${logo(t.logo, 's')}<b>${esc(t.short)}</b><span class="n">${il.length} listed</span>${chev}</button><div class="fold"><div class="injbody">${rows}</div></div></div>`; };
-        const both = side(g.away) + side(g.home);
-        report = sec('Injury report') + (both ? `<div class="rows injrep">${both}</div>` : `<p class="legend">Nobody listed on either side.</p>`);
+        const pOf = a => { const e = ctx.ppg && ctx.ppg[String(a.displayName || '').toLowerCase()]; return e && isFinite(e.pts) ? +e.pts : null; };
+        const costCard = t => {
+          const il = ctx.inj.byTeam[t.id] && ctx.inj.byTeam[t.id].list || []; if (!il.length) return '';
+          const tc = V._.teamColor(t, L);
+          const kind = x => /out|suspen/i.test(x.status || '') ? 'out' : 'doubt';
+          const rows = il.map((x, i) => { const a = x.athlete || {}; const aid = athId(a); const key = `g:${t.id}:${aid}:${x.id || i}`;
+            S.injuries[key] = { x, id: aid, team: { id: t.id, short: t.short, color: tc } };
+            const det = x.details || {}; const ret = retInfo(L, det.returnDate); const why = [det.type || det.detail, ret ? ret.short : ''].filter(Boolean).join(' · ');
+            const pts = pOf(a); const cls = kind(x) === 'out' ? 'out' : /doubt|quest|game/i.test(x.status || '') ? 'q' : 'ok';
+            return { k: kind(x), pts, html: `<button class="row" data-act="injury" data-key="${esc(key)}">${headshot(hsUrl(a), tc, 44, a.displayName)}<span class="t"><b>${esc(a.displayName || '')}</b><span>${esc(why || (x.shortComment || '').slice(0, 60))}</span></span>${pts != null ? `<b class="ippg">${pts.toFixed(1)}</b>` : ''}<span class="tag ${cls}">${esc(V._.tagWord(x.status || '').replace(/^Questionable$/i, 'Quest.'))}</span></button>` }; });
+          rows.sort((x, y) => (x.k === 'out' ? 0 : 1) - (y.k === 'out' ? 0 : 1) || (y.pts || 0) - (x.pts || 0));
+          const outs = rows.filter(r => r.k === 'out'), doubts = rows.filter(r => r.k !== 'out');
+          const outPts = outs.reduce((n, r) => n + (r.pts || 0), 0), doubtPts = doubts.reduce((n, r) => n + (r.pts || 0), 0);
+          const bigN = outPts > 0 ? outPts : doubtPts; const bigWord = outPts > 0 ? 'points a game in street clothes' : 'points a game in doubt';
+          const tppg = ctx.cur && ctx.cur.byId && ctx.cur.byId[t.id] && ctx.cur.byId[t.id].ppg;
+          const availP = tppg && outPts > 0 ? Math.max(0, Math.min(1, (tppg - outPts) / tppg)) : null;
+          const counts = [outs.length ? `${outs.length} out` : '', doubts.length ? `${doubts.length} in doubt` : ''].filter(Boolean).join(' · ');
+          const tag = outs.length ? `<span class="tag out">${outs.length} out</span>` : `<span class="tag q">${doubts.length} listed</span>`;
+          return `<section class="g2card icost"><div class="imh">${logo(t.logo, 's', tc)}<b>${esc(t.short)}</b>${tag}</div>`
+            + (bigN > 0 ? `<div class="imbig"><b>${bigN.toFixed(1)}</b><span>${bigWord}</span></div>` : '')
+            + (availP != null ? `<div class="imbar"><i style="width:${(availP * 100).toFixed(0)}%;background:${esc(V._.lift(tc))}"></i></div><div class="imcap"><span>${Math.round(availP * 100)}% of the scoring still dressed</span><span>${counts}</span></div>` : (counts ? `<div class="imcap solo"><span>${counts}</span></div>` : ''))
+            + V._.clip(rows.map(r => r.html), 'rows irows', 4, 'listed') + `</section>`;
+        };
+        const both = costCard(g.away) + costCard(g.home);
+        report = sec('Injury report') + (both || `<p class="legend">Nobody listed on either side.</p>`);
       }
       let body = '';
       if (tab === 'summary') {

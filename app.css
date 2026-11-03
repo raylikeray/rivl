@@ -3524,3 +3524,25 @@ html body #pills .pill.on,:root[data-theme="dark"] body #pills .pill.on{color:#f
 .g2df span{color:rgba(255,255,255,.72);font-weight:600}
 .g2duel .g2s{position:relative;z-index:1;margin:-6px 0 0;padding-bottom:16px}
 .g2top::after{display:none}
+
+/* ===== v376: the injury report as what it costs =====
+   One card a side: the points a night sitting out in big figures, a bar in the team's colour for how much of the
+   scoring is still dressed, then the names with each man's average. */
+.icost{margin-bottom:14px}
+.imh{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.imh .logo{width:26px;height:26px}
+.imh b{font-size:15.5px;font-weight:800;color:#fff}
+.imh .tag{margin-left:auto}
+.imbig{display:flex;align-items:baseline;gap:9px;margin:8px 0 2px}
+.imbig b{font:800 34px/1 var(--num);letter-spacing:-.03em;color:#fff;font-variant-numeric:tabular-nums}
+.imbig span{font-size:12.5px;color:var(--g2mute);font-weight:600}
+.imbar{height:8px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden;margin:10px 0 7px}
+.imbar i{display:block;height:100%;border-radius:4px;min-width:3%}
+.imcap{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;font-weight:600;color:var(--g2mute);font-variant-numeric:tabular-nums}
+.imcap.solo{margin-top:6px}
+.g2 #gbody .icost .rows.irows{margin:10px 0 0!important;padding:0!important;border:0!important;background:none!important;border-radius:0!important;border-top:1px solid var(--g2line)!important;box-shadow:none!important}
+.icost .row{padding-left:0;padding-right:0;gap:10px}
+.icost .row .t > span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icost .tag{padding:3px 8px;font-size:10.5px;flex:none}
+.ippg{flex:none;font:800 16px/1 var(--num);color:#fff;font-variant-numeric:tabular-nums;margin-right:2px}
+.icost .cliptog{margin-bottom:4px}
