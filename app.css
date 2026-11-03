@@ -4476,3 +4476,6 @@ html body .approf .tw table th:first-child,html body .approf .tw table td:first-
 .stseg.pgd .pgthumb{top:2px;bottom:2px;height:auto;left:0;border-radius:7px;background:var(--thumb);box-shadow:0 3px 8px rgba(0,0,0,.12),0 0 0 .5px rgba(0,0,0,.04);z-index:0}
 #gbody>.gpanel>.tw:first-child>.tbl{margin-top:0}
 #gbody>.gpanel>.chips:first-child,#gbody>.gpanel>.pchips:first-child{padding-top:0}
+
+/* ===== v402: a logo the same colour as its panel gets a thin light edge ===== */
+.dks .logo.ol img,html body .g2ds .g2dl.ol{filter:drop-shadow(0 0 .6px #fff) drop-shadow(0 0 .6px #fff) drop-shadow(0 0 .6px rgba(255,255,255,.9)) drop-shadow(0 4px 10px rgba(0,0,0,.35))}

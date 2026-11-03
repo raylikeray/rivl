@@ -116,6 +116,11 @@
      pull the 500px original. If the combiner ever refuses, the image falls back to the original it was made from. */
   const sized = (src, w, h) => { const m = /^https:\/\/a\.espncdn\.com(\/i\/[^?]+\.png)(?:\?.*)?$/i.exec(String(src || '')); return m ? `https://a.espncdn.com/combiner/i?img=${m[1]}&w=${w}&h=${h}` : src || ''; };
   const fallback = then => `onerror="if(this.dataset.o){this.src=this.dataset.o;this.removeAttribute('data-o')}else{${then}}"`;
+  /* v402: on a team-colour panel, ESPN's logo made for dark grounds (falling back to the usual one), and a thin light
+     edge when the logo's colour is the panel's own (TCU purple on TCU purple) */
+  const darkLogo = src => String(src || '').replace(/(\/teamlogos\/[a-z]+\/)500\//i, '$1500-dark/');
+  const panelLogo = (src, px, extra = '') => { const d = darkLogo(src); return d === String(src || '') ? imgSized(src, px, px, extra) : imgSized(d, px, px, extra, `this.onerror=null;this.src='${sized(src, px, px)}'`); };
+  const nearPanel = (t, panel, L) => rgbDist(teamColor(t, L), panel) < 120;
   // `extra` is written before loading="lazy" so a caller can pass loading="eager": with a duplicate attribute the first wins
   const imgSized = (src, w, h, extra = '', then = "this.style.visibility='hidden'") => { const u = sized(src, w, h); return `<img src="${esc(u)}"${u !== src ? ` data-o="${esc(src)}"` : ''} alt="" ${extra} loading="lazy" ${fallback(then)}>`; };
   /* a logo disc; with a team colour it takes a tint and a ring in that colour */
@@ -245,10 +250,12 @@
   /* v389: the duel card, one renderer for Home's deck and the team and player pages. Two deep planes of the teams'
      colours split on a seam that follows the score (RIVL's pick before tip), the clock or tip and TV on top, the score
      face to face, the lead or the pick in the middle, one line of context at the foot. */
-  const duelColors = (g, L) => {
+  /* v402: one colour rule for the Home card and the game page, so a matchup looks the same on both */
+  const duelColors = (g, L) => duelPair(g, L).map(deepen);
+  const duelPair = (g, L) => {
     let a = teamColor(g.away, L), b = teamColor(g.home, L);
     if (rgbDist(a, b) < 110) { const ok = c => c && !BAD(c) && lumOf(c) >= .06 && lumOf(c) <= .6; const aa = teamAlt(g.away, L), ba = teamAlt(g.home, L); const opts = [[a, b, rgbDist(a, b)]]; if (ok(ba)) opts.push([a, ba, rgbDist(a, ba)]); if (ok(aa)) opts.push([aa, b, rgbDist(aa, b)]); [a, b] = opts.sort((x, y) => y[2] - x[2])[0]; }
-    return [deepen(a), deepen(b)];
+    return [a, b];
   };
   function duelCard(L, g, ctx, { kicker = '', foot = '', tvTop = true } = {}) {
     const lk = L.key; const live = isLive(g), done = g.state === 'post' && !g.off, pre = !live && !done;
@@ -259,7 +266,7 @@
     const seam = Math.min(74, Math.max(26, 50 - (share - .5) * 80));
     const tv = tvLabel(g);
     const k = kicker || (live ? `<i class="dot"></i>${esc(HW.clockOf(g, L))}` : done ? esc(finalWord(g)) : g.off ? esc(g.off) : `${esc(relDay(HW.ymdOf(g.date)))} · ${esc(tipOf(g))}`) + (tvTop && tv && !done ? ` · ${esc(tv)}` : '');
-    const side = (t, o) => `<span class="dks">${logo(t.logo, '', teamColor(t, L))}<b>${esc(t.abbr || t.short)}</b>${hasSc ? `<em class="sc${+t.score >= +o.score ? '' : ' lo'}">${esc(String(t.score))}</em>` : `<em>${esc(t.rec || '')}</em>`}</span>`;
+    const side = (t, o) => `<span class="dks"><span class="logo${nearPanel(t, t === g.away ? ca : cb, L) ? ' ol' : ''}">${panelLogo(t.logo, 128)}</span><b>${esc(t.abbr || t.short)}</b>${hasSc ? `<em class="sc${+t.score >= +o.score ? '' : ' lo'}">${esc(String(t.score))}</em>` : `<em>${esc(t.rec || '')}</em>`}</span>`;
     const fav = ph != null ? (ph >= .5 ? g.home : g.away) : null;
     const lead = hasSc && +g.home.score !== +g.away.score ? (+g.home.score > +g.away.score ? g.home : g.away) : null;
     const mid = hasSc ? `<span class="dkm"><b>${live ? 'Live' : 'Final'}</b>${lead ? `${esc(lead.abbr)} ${live ? 'by' : 'won by'} ${Math.abs(+g.home.score - +g.away.score)}` : 'Level'}</span>` : fav ? `<span class="dkm"><b>${esc(fav.abbr)} ${pct(Math.max(ph, 1 - ph))}</b>to win</span>` : `<span class="dkm"><b>${esc(tipOf(g))}</b></span>`;
@@ -1377,5 +1384,5 @@
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom < 64; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };
     window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(run); }, { passive: true }); document.addEventListener('rivl:rendered', run); }
   HW.v5 = Object.assign(HW.v5 || {}, { initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { pager, duelCard, duelBlock, deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
+    _: { pager, duelPair, panelLogo, nearPanel, duelCard, duelBlock, deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
 })();

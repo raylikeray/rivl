@@ -962,7 +962,7 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
          and time). Under it, RIVL's call as a bar in the two teams' colours. Before tip, the home court sits under the
          teams. Behind it all the two colours drift like an aurora, the side that is ahead (or favoured) holding more of
          it; the colour stays in the head and never runs into the stats. */
-      const pc = g.tbd ? ['#3A3D44', '#55585F'] : V._.pairColors(L, g.away, g.home); const lift = c => V._.lift(c);
+      const pc = g.tbd ? ['#3A3D44', '#55585F'] : V._.duelPair(g, L); const lift = c => V._.lift(c);
       const hasSc = g.state !== 'pre' && !g.off && g.away.score != null && g.home.score != null;
       const lead = (t, o) => hasSc && +t.score >= +o.score;
       const ord = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`;
@@ -1001,7 +1001,7 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
          ground. The seam sits at the win chance (the feed's live number during the game, RIVL's call before it), so the
          favoured side owns more of the screen, and it slides as the game swings. Scores face off across the seam. */
       const wmC = t => t.alt && V._.rgbDist && V._.rgbDist(t.alt, '#000000') > 120 ? t.alt : '#ffffff';
-      const dside = (t, o, r) => `<a class="g2ds${r ? ' r' : ''}" href="${g.tbd ? '#' : href.team(lk, t.id)}">${t.logo ? V._.imgSized(t.logo, 128, 128, 'alt="" class="g2dl"') : '<i class="g2dl"></i>'}${hasSc ? `<b class="g2dn${lead(t, o) ? '' : ' lo'}">${esc(String(t.score))}</b>` : `<b class="g2dn pre">${esc(t.rec || '')}</b>`}<em>${esc(t.abbr || 'TBD')}</em></a>`;
+      const dside = (t, o, r) => `<a class="g2ds${r ? ' r' : ''}" href="${g.tbd ? '#' : href.team(lk, t.id)}">${t.logo ? V._.panelLogo(t.logo, 128, `alt="" class="g2dl${V._.nearPanel(t, V._.deepen(t === g.away ? pc[0] : pc[1]), L) ? ' ol' : ''}"`) : '<i class="g2dl"></i>'}${hasSc ? `<b class="g2dn${lead(t, o) ? '' : ' lo'}">${esc(String(t.score))}</b>` : `<b class="g2dn pre">${esc(t.rec || '')}</b>`}<em>${esc(t.abbr || 'TBD')}</em></a>`;
       const chip = `<div class="g2dc${g.state === 'in' ? ' now' : ''}"><b>${g.state === 'in' ? '<i></i>' : ''}${stateTop}</b>${stateSub ? `<span>${stateSub}</span>` : ''}</div>`;
       const foot = pv2 != null && !g.tbd ? `<div class="g2df" role="img" aria-label="${esc(`${predWord}: ${g.away.abbr} ${pct(1 - pv2)}, ${g.home.abbr} ${pct(pv2)}`)}"><b>${esc(g.away.abbr || '')} ${pct(1 - pv2)}</b><span>${predWord}</span><b>${pct(pv2)} ${esc(g.home.abbr || '')}</b></div>` : '';
       const headHtml = `<header class="g2h g2duel">${g.tbd ? '' : `<span class="g2wm a" style="color:${esc(wmC(g.away))}">${esc(g.away.abbr || '')}</span><span class="g2wm h" style="color:${esc(wmC(g.home))}">${esc(g.home.abbr || '')}</span>`}<div class="g2dg">${dside(g.away, g.home, false)}${chip}${dside(g.home, g.away, true)}</div>`
