@@ -590,9 +590,9 @@
         if (items.length) {
           const who = a => { const t = HW.wireTeams(a).map(id => (S0.tIdx[id] || {}).short).filter(Boolean); const p = (a.categories || []).filter(c => c.type === 'athlete' && pIds.has(String(c.athleteId || (c.athlete && c.athlete.id) || ''))).map(c => c.description).filter(Boolean); return [...new Set([...p, ...t])].slice(0, 2).join(' · '); };
           const more = items.slice(1);
-          secs.wire = `<div class="wire2"><div class="w2row"><a class="w2main" href="#article/${lk}/${esc(String(items[0].id))}"><span class="w2k"><i class="dot"></i>Breaking</span><span class="w2h">${esc(items[0].headline)}</span></a>${more.length ? `<button class="w2more" data-act="wire-more" aria-expanded="false" aria-label="${more.length} more">+${more.length}</button>` : ''}<button class="w2x" data-act="wire-x" data-ids="${esc(items.map(a => a.id).join(','))}" aria-label="Dismiss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>${more.length ? `<div class="w2list"><div>${more.map(a => `<a class="w2it" href="#article/${lk}/${esc(String(a.id))}"><span class="w2h">${esc(a.headline)}</span><small>${esc(ago(a.published))}</small></a>`).join('')}</div></div>` : ''}</div>`;
-        } else delete secs.wire;
-      } else delete secs.wire;
+          S0.wireItems = items; S0.wireWho = who; delete secs.wire;   // v391: breaking stories are pinned posts at the top of the feed
+        } else { S0.wireItems = []; delete secs.wire; }
+      } else { S0.wireItems = []; delete secs.wire; }
       if (P.news && news) {
         const tNames = teams.flatMap(t => [t.name, t.short, t.loc]).filter(n => n && n.length > 3);
         const pNames = fp.map(p => p.name).filter(n => n && n.length > 3);
@@ -609,7 +609,7 @@
          to your teams and players, newest first, in Apple's grouped card: a result, a player's line, an injury, a game
          about to tip, a story. Each post is the finished thing and opens what it is about. ===== */
       ['last', 'tonight', 'injuries', 'players', 'teams', 'news'].forEach(k => delete secs[k]);
-      const NOW = Date.now(); const posts = [];
+      const NOW = Date.now(); const posts = []; const wireIds = new Set((S0.wireItems || []).map(a => String(a.id)));
       const when = ts => { const d = (NOW - ts) / 6e4; if (d < -1) { const m = -d; return m < 60 ? `in ${Math.round(m)}m` : `in ${Math.round(m / 60)}h`; } if (d < 1) return 'now'; if (d < 60) return `${Math.round(d)}m`; if (d < 1440) return `${Math.round(d / 60)}h`; return `${Math.round(d / 1440)}d`; };
       const crest = t => logo(t.logo, '', teamColor(t, L));
       const post = (ts, to, av, who, kind, body, extra = '', act = '', lab = '') => posts.push({ ts, html: `<${to ? `a href="${to}"` : `button${act}`} class="fp">${`<span class="fav">${av}</span>`}<span class="fb"><span class="fh"><b>${who}</b>${kind ? `<span>${kind}</span>` : ''}<time>${lab || when(ts)}</time></span><span class="ft">${body}</span>${extra}</span></${to ? 'a' : 'button'}>` });
@@ -644,7 +644,7 @@
       }
       if (P.news && S0.news) {
         const all = (S0.news.articles || []).filter(HW.readable); const mineA = all.filter(a => tagged(a)); const arts = (mineA.length >= 3 ? mineA : mineA.concat(all.filter(a => !mineA.includes(a)).slice(0, 3 - mineA.length))).slice(0, 8);
-        arts.forEach(a => { const r = HW.v5.newsRow(lk, a); const hrefM = /^<a class="row" href="([^"]+)"/.exec(r); const vid = /data-vid="([^"]+)"/.exec(r); const im = /<img[^>]+src="([^"]+)"/.exec(r);
+        arts.filter(a => !wireIds.has(String(a.id))).forEach(a => { const r = HW.v5.newsRow(lk, a); const hrefM = /^<a class="row" href="([^"]+)"/.exec(r); const vid = /data-vid="([^"]+)"/.exec(r); const im = /<img[^>]+src="([^"]+)"/.exec(r);
           const tid = (a.categories || []).map(c => c.type === 'team' ? String(c.teamId || (c.team && c.team.id) || '') : '').find(id => id && S0.tIdx[id]); const tm = tid ? S0.tIdx[tid] : null;
           const av = tm ? crest(tm) : `<span class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4.5" width="16" height="15" rx="2.5"/><path d="M8 9h8M8 12.5h8M8 16h5"/></svg></span>`;
           const extra = im ? `<span class="fimg"><img src="${im[1]}" alt="" loading="lazy" onerror="this.parentNode.remove()">${vid ? '<i class="play"></i>' : ''}</span>` : '';
@@ -652,6 +652,13 @@
           if (vid) post(ts, '', av, esc(tm ? tm.short : L.label), 'Video', esc(a.headline), extra, ` data-act="play" data-vid="${vid[1]}"`);
           else post(ts, hrefM ? hrefM[1] : '', av, esc(tm ? tm.short : L.label), 'News', esc(a.headline), extra); });
       }
+      /* v391 (Ray's pick, option A): breaking news is the first thing in the feed. Each story is a post with the team's
+         crest, a red BREAKING kicker, the whole headline, and its own dismiss. They stay pinned until dismissed or until
+         they age out (eight hours). */
+      (S0.wireItems || []).forEach((a, i) => {
+        const tid = HW.wireTeams ? HW.wireTeams(a).find(id => S0.tIdx[id]) : null; const tm = tid ? S0.tIdx[tid] : null;
+        const av = tm ? crest(tm) : `<span class="fic brk"><i></i></span>`; const ts = a.published ? new Date(a.published).getTime() : NOW;
+        posts.push({ ts: NOW + 3e9 - i, html: `<div class="fp fbrk"><a class="fpa" href="#article/${lk}/${esc(String(a.id))}" aria-label="${esc(a.headline)}"></a><span class="fav">${av}</span><span class="fb"><span class="fh"><span class="fbk"><i></i>Breaking</span>${tm ? `<span>${esc(tm.short)}</span>` : ''}<time>${when(ts)}</time><button class="fx2" data-act="wire-x" data-ids="${esc(String(a.id))}" aria-label="Dismiss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span><span class="ft"><b>${esc(a.headline)}</b></span></span></div>` }); });
       posts.sort((a, b) => b.ts - a.ts);
       const items = posts.map(p => p.html);
       if (items.length) secs.feed = `<div class="gl feed${items.length > 12 ? ' lclip fclip' : ''}">${items.join('')}${items.length > 12 ? `<button class="cliptog" data-act="clip" data-total="${items.length}" aria-expanded="false">Show ${items.length - 12} more</button>` : ''}</div>`;

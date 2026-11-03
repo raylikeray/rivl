@@ -4400,3 +4400,16 @@ html body .sgcard.dkhost{display:block!important;background:none!important;box-s
 .sgcard.dkhost .dkinfo .ge b{font-size:15px;font-weight:600;white-space:normal;text-align:right}
 .approf .sgcard.dkhost{margin-left:0!important;margin-right:0!important}
 html body .sgcard.dkhost,html body .approf .sgcard.dkhost{margin:0 16px 22px!important}
+
+/* ===== v391: breaking news as pinned feed posts ===== */
+.feed .fp.fbrk{position:relative}
+.fp.fbrk .fpa{position:absolute;inset:0;z-index:1}
+.fp.fbrk .fx2{position:relative;z-index:2}
+.fbk{display:inline-flex!important;align-items:center;gap:5px;color:var(--live)!important;font-size:12px!important;font-weight:800!important;letter-spacing:.07em;text-transform:uppercase}
+.fbk i{width:7px;height:7px;border-radius:50%;background:var(--live);flex:none}
+.fbrk .fh time{margin-left:auto}
+.fx2{flex:none;width:26px;height:26px;margin:-3px -2px 0 8px;border:0;border-radius:50%;background:var(--seg);color:var(--ink-3);display:grid;place-items:center;cursor:pointer;align-self:center}
+.fx2 svg{width:12px;height:12px}
+.fbrk .ft b{font-weight:700}
+.fic.brk{background:color-mix(in srgb,var(--live) 16%,transparent)}
+.fic.brk i{width:10px;height:10px;border-radius:50%;background:var(--live)}
