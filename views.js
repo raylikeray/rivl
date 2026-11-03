@@ -771,14 +771,14 @@
         const outOf = t => { const b = S0.inj && S0.inj.byTeam[t.id]; const outs = (b && b.list || []).filter(x => /out|suspen/i.test(x.status || '')); const pts = outs.reduce((n, x) => { const e = ctx && ctx.ppg && ctx.ppg[String(x.athlete && x.athlete.displayName || '').toLowerCase()]; return n + (e && isFinite(e.pts) ? +e.pts : 0); }, 0); return { n: outs.length, pts }; };
         const card = (g, i) => {
           const live = isLive(g), done = g.state === 'post' && !g.off, pre = !live && !done;
-          const [ca, cb] = pickColors(g);
+          const [ca, cb] = duelPair(g, L);   // v404: the same colours as the game page
           const f = !g.off ? safeF(L, g, ctx) : null; const ph = f && Number.isFinite(f.pHome) ? Math.min(.99, Math.max(.01, f.pHome)) : null;
           const hasSc = (live || done) && g.away.score != null && g.home.score != null;
           const share = hasSc ? .5 + Math.max(-.3, Math.min(.3, (+g.home.score - +g.away.score) / 30)) : ph != null ? ph : .5;
           const seam = Math.min(74, Math.max(26, 50 - (share - .5) * 80));
           const k = live ? `<i class="dot"></i>${esc(HW.clockOf(g, L))}` : done ? esc(finalWord(g)) : g.off ? esc(g.off) : `${nextMode || relDay(HW.ymdOf(g.date)) !== 'Tonight' ? esc(dayWord(HW.ymdOf(g.date), true)) + ' · ' : (i === deck.findIndex(x => x.state === 'pre') ? 'Up next · ' : '')}${esc(tipOf(g))}`;
           const tv = tvLabel(g);
-          const side = (t, o) => `<span class="dks">${logo(t.logo, '', teamColor(t, L))}<b>${esc(t.abbr || t.short)}</b>${hasSc ? `<em class="sc${+t.score >= +o.score ? '' : ' lo'}">${esc(String(t.score))}</em>` : `<em>${esc(t.rec || '')}</em>`}</span>`;
+          const side = (t, o) => `<span class="dks"><span class="logo${nearPanel(t, deepen(t === g.away ? ca : cb), L) ? ' ol' : ''}">${panelLogo(t.logo, 128)}</span><b>${esc(t.abbr || t.short)}</b>${hasSc ? `<em class="sc${+t.score >= +o.score ? '' : ' lo'}">${esc(String(t.score))}</em>` : `<em>${esc(t.rec || '')}</em>`}</span>`;
           const fav = ph != null ? (ph >= .5 ? g.home : g.away) : null;
           const mid = live || done ? (hasSc ? `<span class="dkm"><b>${live ? 'Live' : 'Final'}</b>${(() => { const lead = +g.home.score === +g.away.score ? null : (+g.home.score > +g.away.score ? g.home : g.away); return lead ? `${esc(lead.abbr)} ${live ? 'by' : 'won by'} ${Math.abs(+g.home.score - +g.away.score)}` : 'Level'; })()}</span>` : '') : fav ? `<span class="dkm"><b>${esc(fav.abbr)} ${pct(Math.max(ph, 1 - ph))}</b>to win</span>` : `<span class="dkm"><b>${esc(tipOf(g))}</b></span>`;
           let foot = '';
