@@ -4463,7 +4463,8 @@ html body .approf .tw table th:first-child,html body .approf .tw table td:first-
 
 /* ===== v400: the pager on team and game pages ===== */
 .pgd .chip.on::after{display:none!important}
-.pgd .chips,#gtabs.pgd{position:relative}
+.pgd .chips{position:relative}
+.g2 #gtabs.pgd{position:sticky}   /* v406: v400 had made the game tabs relative, which dropped them 56px onto the first card */
 .g2 #gtabs.pgd .pgi{height:4px;border-radius:4px;bottom:-1px;background:#1D9BF0}
 .g2 #gtabs.pgd .chip{transition:color .15s}
 .segc.pgd{position:relative}
