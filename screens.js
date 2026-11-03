@@ -176,14 +176,63 @@
   /* the bracket: the tournaments this league has on (or the last one, before the next starts), drawn as a tree */
   async function bracketTab(L, items, tab) {
     stPaint(items, tab, skeleton(4, 'card'));
-    const list = await HW.bracket.list(L).catch(() => []);
-    if ((V.route() || {}).name !== 'standings' || store.get('v5:stab:' + L.key) !== 'bracket') return;
+    const B = HW.bracket, lk = L.key;
+    const alive = () => (V.route() || {}).name === 'standings' && store.get('v5:stab:' + lk) === 'bracket';
+    const list = await B.list(L).catch(() => []);
+    if (!alive()) return;
     if (!list.length) { stPaint(items, tab, empty('No bracket right now', '<p style="margin:6px 0 0">Tournaments show here once their games are on the schedule.</p>')); return; }
-    let key = store.get('v5:brk:' + L.key, ''); if (!list.some(t => t.key === key)) key = list[list.length - 1].key;
+    let key = store.get('v5:brk:' + lk, ''); if (!list.some(t => t.key === key)) key = (list.find(t => t.pick) || list[list.length - 1]).key;
     const T = list.find(t => t.key === key);
-    const v = await HW.bracket.view(L, T, store.get('v5:brkp:' + L.key, 'ff')).catch(() => null);
-    if ((V.route() || {}).name !== 'standings' || store.get('v5:stab:' + L.key) !== 'bracket') return;
-    const tchips = list.length > 1 ? `<div class="chips bxtour">${list.map(t => `<button class="chip${t.key === key ? ' on' : ''}" data-act="brk" data-k="${esc(t.key)}" aria-pressed="${t.key === key}">${esc(t.label)}</button>`).join('')}</div>` : '';
+    const tchips = list.length > 1 ? `<div class="chips bxtour">${list.map(t => `<button class="chip${t.key === key ? ' on' : ''}" data-act="brk" data-k="${esc(t.key)}" aria-pressed="${t.key === key}">${esc(t.short || t.label)}</button>`).join('')}</div>` : '';
+
+    /* v407: a seeded field (the NCAA tournament, the NBA and WNBA playoffs) is drawn from its own slots, so it can be
+       filled in before a ball is thrown. Anything else (the holiday events, an odd field) keeps the old read-the-results
+       tree, which asks nothing of seeds. */
+    let F = null, games = [];
+    if (T.pick) {
+      games = await B.range(L, T.from, T.to, T.extra).catch(() => []);
+      if (!alive()) return;
+      const mine = games.filter(g => T.match(g.note || ''));
+      F = B.applyResults(B.fieldFromGames(L, mine), mine);
+    }
+    if (F) {
+      const picks = B.picksOf(lk, key); const n = B.filled(F, picks), total = F.all.length;
+      const sc = n ? B.score(F, picks) : null;
+      const ch = B.chart(L, F, picks);
+      const bar = n === 0
+        ? `<button class="bkgo" data-act="brkplay" data-k="${esc(key)}"><b>Fill out your bracket</b><span>${total} picks · tap your way through</span></button>`
+        : n < total
+          ? `<button class="bkgo" data-act="brkplay" data-k="${esc(key)}"><b>Finish your bracket</b><span>${n} of ${total} picked</span></button>`
+          : `<div class="bkbar"><div class="bkb1"><b>${sc.pts}</b><span>points</span></div><div class="bkb1"><b>${sc.right}</b><span>right</span></div><div class="bkb1"><b>${sc.open}</b><span>still alive</span></div><button class="bkre" data-act="brkplay" data-k="${esc(key)}">Edit</button></div>`;
+      const body = tchips + `<div class="bxh"><b>${esc(T.label)}</b></div>` + bar
+        + `<div class="bkseg segc scroll" role="tablist">${ch.tabs.map(([k, l], i) => `<button data-tab="${esc(k)}" class="${i ? '' : 'on'}" role="tab" aria-selected="${i ? 'false' : 'true'}">${esc(l)}</button>`).join('')}</div>`
+        + ch.html + `<p class="legend">Your picks carry a blue tick; once a game is final a right pick turns green and a busted one red. Tap any matchup to change it.</p>`;
+      stPaint(items, tab, body);
+      const tb = $main.querySelector('.bkseg'), sp = $main.querySelector('.bk2strip');
+      if (tb && sp) { const apb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--apb')) || 56;
+        V._bpg = V._.pager(tb, { tabs: tb, strip: sp, start: store.get('v5:brkp:' + lk, ''), stickTop: apb, thumb: true, onShow: k => store.set('v5:brkp:' + lk, k) });
+        if (!V._bpg) sp.querySelectorAll('[data-pg]').forEach(el => { el.hidden = el.dataset.pg !== (ch.tabs[0] || [])[0]; }); }
+      V._bkF = F; V._bkKey = key;
+      // changing a pick straight on the chart: a tap on a team row re-saves and repaints; a team the person never
+      // advanced to that slot is ignored rather than quietly wiping the picks that fed it
+      if (V._bkL) $main.removeEventListener('click', V._bkL);
+      V._bkL = e => { const row = e.target.closest('.bk2t[data-pick]'); if (!row || !$main.querySelector('.bk2strip')) return;
+        const slot = row.closest('[data-slot]'); if (!slot) return; e.preventDefault();
+        const id = row.dataset.pick, sid = slot.dataset.slot;
+        const pk = B.picksOf(lk, key); pk.p = pk.p || {};
+        const mm = B.mine(F, pk); const [ta, tb] = mm.teams[sid] || [];
+        const validMine = (ta && String(ta.id) === id) || (tb && String(tb.id) === id);
+        const sl = F.byId[sid];
+        const validReal = sl && ((sl.a && String(sl.a.id) === id) || (sl.b && String(sl.b.id) === id)) && sl.r === 0;
+        if (!validMine && !validReal) return;
+        if (pk.p[sid] === id) delete pk.p[sid]; else pk.p[sid] = id;
+        B.cleanse(F, pk); B.savePicks(lk, key, pk);
+        const y = window.scrollY; if (V.render) V.render(); requestAnimationFrame(() => window.scrollTo(0, y)); };
+      $main.addEventListener('click', V._bkL);
+      return;
+    }
+    const v = await B.view(L, T, store.get('v5:brkp:' + lk, 'ff')).catch(() => null);
+    if (!alive()) return;
     const pchips = v && v.parts ? `<div class="chips bxparts">${v.parts.map(([k, l]) => `<button class="chip${k === v.part ? ' on' : ''}" data-act="brkp" data-k="${esc(k)}" aria-pressed="${k === v.part}">${esc(l)}</button>`).join('')}</div>` : '';
     const body = v && v.html ? `${tchips}<div class="bxh"><b>${esc(v.label)}</b></div>${pchips}<div class="bx">${v.html}</div><p class="legend">Built from the games as they were played. Tap a matchup for the game.</p>`
       : tchips + empty(`No ${T.label} games yet`, '<p style="margin:6px 0 0">The bracket fills in as the games are set.</p>');

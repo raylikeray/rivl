@@ -31,7 +31,10 @@
     if (L.key === 'nba' || L.key === 'wnba') {
       const [s0, s1] = L.key === 'nba' ? ['04-10', '06-25'] : ['09-05', '10-25'];
       const yr = md >= s0 ? y : y - 1;
-      out.push({ key: `po${yr}`, label: `${yr} Playoffs`, kind: 'series', from: `${yr}-${s0}`, to: `${yr}-${s1}`, extra: '&seasontype=3', match: n => !/play-?in/i.test(n), fallback: { key: `po${yr - 1}`, label: `${yr - 1} Playoffs`, from: `${yr - 1}-${s0}`, to: `${yr - 1}-${s1}` } });
+      // v407: this year's and the last two, so a finished bracket can still be looked back at
+      for (let k = 0; k < 3; k++) { const Y = yr - k;
+        out.push({ key: `po${Y}`, label: `${Y} Playoffs`, short: String(Y), pick: true, kind: 'series', from: `${Y}-${s0}`, to: `${Y}-${s1}`, extra: '&seasontype=3', match: n => !/play-?in/i.test(n), year: Y,
+          fallback: k ? null : { key: `po${yr - 1}`, label: `${yr - 1} Playoffs`, from: `${yr - 1}-${s0}`, to: `${yr - 1}-${s1}` } }); }
     }
     if (L.key === 'ncaam' || L.key === 'ncaaw') {
       // the holiday events around now: any tournament with its games named in the feed
@@ -41,7 +44,8 @@
       Object.entries(by).filter(([, gs]) => gs.length >= 3).sort((a, b) => a[1].map(g => g.date).sort()[0] < b[1].map(g => g.date).sort()[0] ? -1 : 1)
         .forEach(([n]) => out.push({ key: 'h:' + n, label: n, kind: 'games', from: addDays(t, -14), to: addDays(t, 21), extra: '', match: x => nameOf(x) === n }));
       const yr = md >= '03-15' ? y : y - 1;
-      out.push({ key: `nc${yr}`, label: `${yr} NCAA Tournament`, kind: 'games', from: `${yr}-03-15`, to: `${yr}-04-10`, extra: '&seasontype=3', match: n => /basketball championship/i.test(n) && !/first four/i.test(n), regions: true });
+      for (let k = 0; k < 3; k++) { const Y = yr - k;
+        out.push({ key: `nc${Y}`, label: `${Y} NCAA Tournament`, short: String(Y), kind: 'games', from: `${Y}-03-15`, to: `${Y}-04-10`, extra: '&seasontype=3', match: n => /basketball championship/i.test(n) && !/first four/i.test(n), regions: true, pick: true, year: Y }); }
     }
     return out;
   }
@@ -113,5 +117,294 @@
     }
     return { label, html: block(L, t) + trophy(L, t) };
   }
-  HW.bracket = { list, view };
+
+  /* ==================================================================================================================
+     v407: THE FIELD — a tournament as a fixed set of slots, not a tree read back from results.
+
+     A bracket people can fill in has to exist before a ball is thrown, so the field is built from the seeds: each region
+     is 16 teams in the order the committee pairs them (1-16, 8-9, 5-12, ...), and every later slot is fed by two earlier
+     ones. The real results and a person's picks are then two separate layers laid over the same slots, which is what
+     lets the app say "you had Duke here, the game said Alabama".
+
+     Slot ids are built from the bracket's own shape, never from a game id, so a pick made the day the field is announced
+     still means something in the Elite 8 three weeks later.
+       <region>-<round>-<i>    round 0 is that region's first round
+       ff-0-0, ff-0-1          the national semifinals (a two-conference league has none)
+       ff-1-0                  the final
+     ================================================================================================================== */
+  const SEEDS16 = [[1, 16], [8, 9], [5, 12], [4, 13], [6, 11], [3, 14], [7, 10], [2, 15]];
+  const SEEDS8 = [[1, 8], [4, 5], [3, 6], [2, 7]];
+  const roundNames = n => n === 16 ? ['1st Round', '2nd Round', 'Sweet 16', 'Elite 8'] : ['1st Round', 'Semifinals', 'Conference Finals'];
+  const regionOf = note => { const p = String(note || '').split(/\s+-\s+/).find(x => /region/i.test(x)); return p ? p.replace(/\s*region(al)?s?\s*/i, '').trim() : ''; };
+  const isFF = note => /final four|semifinal/i.test(note || '') && !/region/i.test(note || '');
+  const isTitle = note => /national championship|championship game|\bfinals?\b/i.test(note || '') && !/region|semi|conference/i.test(note || '');
+
+  /* the first round's games, grouped into regions, each with its teams by seed */
+  function fieldFromGames(L, games) {
+    const first = games.filter(g => g.home && g.away && !g.home.tbd && !g.away.tbd);
+    const byReg = {};
+    first.forEach(g => { const r = regionOf(g.note) || (isFF(g.note) || isTitle(g.note) ? '' : 'Bracket'); if (!r) return; (byReg[r] = byReg[r] || []).push(g); });
+    const names = Object.keys(byReg); if (!names.length) return null;
+    const size = names.length >= 4 ? 16 : 8;   // four regions of 16, or two conferences of 8
+    const pairs = size === 16 ? SEEDS16 : SEEDS8;
+    const regions = names.map(name => {
+      const gs = byReg[name].slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+      const seeded = {};
+      gs.forEach(g => { [g.away, g.home].forEach(t => { const s = t.rank; if (s >= 1 && s <= size && !seeded[s]) seeded[s] = t; }); });
+      const haveSeeds = pairs.every(([x, y]) => seeded[x] && seeded[y]);
+      const slots = [];
+      const rounds = roundNames(size); const nR = rounds.length;
+      for (let r = 0; r < nR; r++) {
+        const n = pairs.length >> r;
+        for (let i = 0; i < n; i++) slots.push({ id: `${name}-${r}-${i}`, reg: name, r, i, round: rounds[r], a: null, b: null, feed: r ? [`${name}-${r - 1}-${i * 2}`, `${name}-${r - 1}-${i * 2 + 1}`] : null });
+      }
+      // the first round, in the committee's order when the seeds are there and the feed's own order when they are not
+      pairs.forEach(([x, y], i) => { const s = slots[i];
+        if (haveSeeds) { s.a = seeded[x]; s.b = seeded[y]; s.sa = x; s.sb = y; }
+        else if (gs[i]) { const g = gs[i]; const ah = (g.away.rank || 99) <= (g.home.rank || 99); s.a = ah ? g.away : g.home; s.b = ah ? g.home : g.away; s.sa = s.a.rank; s.sb = s.b.rank; }
+      });
+      return { name, slots, size };
+    }).filter(x => x.slots[0].a && x.slots[0].b);
+    if (regions.length < 2) return null;
+    const ff = [];
+    if (regions.length === 4) { ff.push({ id: 'ff-0-0', reg: 'ff', r: 0, i: 0, round: 'Final Four', a: null, b: null, feed: [last(regions[0]), last(regions[1])] });
+      ff.push({ id: 'ff-0-1', reg: 'ff', r: 0, i: 1, round: 'Final Four', a: null, b: null, feed: [last(regions[2]), last(regions[3])] });
+      ff.push({ id: 'ff-1-0', reg: 'ff', r: 1, i: 0, round: 'Championship', a: null, b: null, feed: ['ff-0-0', 'ff-0-1'] }); }
+    else ff.push({ id: 'ff-1-0', reg: 'ff', r: 1, i: 0, round: 'Finals', a: null, b: null, feed: [last(regions[0]), last(regions[1])] });
+    const all = regions.flatMap(r => r.slots).concat(ff);
+    const byId = {}; all.forEach(s => { byId[s.id] = s; });
+    return { lk: L.key, regions, ff, all, byId, size: regions[0].size };
+  }
+  const last = reg => reg.slots[reg.slots.length - 1].id;
+
+  /* the games as they were actually played, laid onto the slots: each slot learns its game, its winner, and (for a slot
+     whose teams only exist once the round before is over) who actually turned up */
+  function applyResults(F, games) {
+    if (!F) return F;
+    const pool = games.filter(g => g.home && g.away && !g.home.tbd && !g.away.tbd);
+    const take = (slot, g) => { slot.game = g; const done = g.state === 'post' && !g.off && g.home.score != null && g.away.score != null;
+      slot.live = g.state === 'in'; slot.final = done;
+      slot.won = done ? (+g.home.score > +g.away.score ? g.home : g.away) : null; };
+    const match = (slot, within) => pool.find(g => within(g) && ((sameT(g.home, slot.a) && sameT(g.away, slot.b)) || (sameT(g.home, slot.b) && sameT(g.away, slot.a))));
+    F.regions.forEach(reg => {
+      reg.slots.forEach(s => {
+        if (s.r > 0) { const [x, y] = s.feed.map(id => F.byId[id]); s.a = x && x.won; s.b = y && y.won; s.sa = seedOf(F, s.a); s.sb = seedOf(F, s.b); }
+        if (!s.a || !s.b) return;
+        const g = match(s, g => regionOf(g.note) === reg.name || reg.name === 'Bracket');
+        if (g) take(s, g);
+      });
+    });
+    F.ff.forEach(s => { const [x, y] = s.feed.map(id => F.byId[id]); s.a = x && x.won; s.b = y && y.won; s.sa = seedOf(F, s.a); s.sb = seedOf(F, s.b);
+      if (!s.a || !s.b) return; const g = match(s, g => s.r === 1 ? isTitle(g.note) : isFF(g.note)); if (g) take(s, g); });
+    return F;
+  }
+  const dp = c => (HW.v5 && HW.v5._ && HW.v5._.deepen) ? HW.v5._.deepen(c) : c;
+  const sameT = (x, y) => x && y && String(x.id) === String(y.id);
+  const seedOf = (F, t) => { if (!t) return null; const f = F.regions.flatMap(r => r.slots).find(s => s.r === 0 && (sameT(s.a, t) || sameT(s.b, t))); return !f ? null : sameT(f.a, t) ? f.sa : f.sb; };
+
+  /* ---------- a person's own bracket ---------- */
+  const pkey = (lk, key) => `v5:brkpicks:${lk}:${key}`;
+  const picksOf = (lk, key) => { try { return HW.store.get(pkey(lk, key), null) || { p: {}, at: 0 }; } catch { return { p: {}, at: 0 }; } };
+  const savePicks = (lk, key, v) => HW.store.set(pkey(lk, key), { ...v, at: Date.now() });
+  const clearPicks = (lk, key) => HW.store.set(pkey(lk, key), { p: {}, at: 0 });
+
+  /* who the person has in every slot, worked out from their picks alone: a pick in the first round carries all the way
+     up until a later slot has no pick of its own */
+  function mine(F, picks) {
+    const p = (picks && picks.p) || {}; const out = {};
+    const teams = {};   // slot id -> the two teams the person's own run put there
+    const put = s => {
+      let a = s.a, b = s.b;
+      if (s.r > 0 || s.reg === 'ff') { const [x, y] = s.feed.map(id => out[id]); a = x || null; b = y || null; }
+      teams[s.id] = [a, b];
+      const pick = p[s.id]; out[s.id] = pick ? [a, b].find(t => t && String(t.id) === String(pick)) || null : null;
+    };
+    F.regions.forEach(reg => reg.slots.forEach(put));
+    F.ff.forEach(put);
+    return { win: out, teams };
+  }
+  /* the picks in the order they are asked for: a region at a time, round by round, then the Final Four */
+  const order = F => F.regions.flatMap(r => r.slots.slice().sort((a, b) => a.r - b.r || a.i - b.i)).concat(F.ff.slice().sort((a, b) => a.r - b.r || a.i - b.i));
+
+  /* the office-pool count: a round is worth double the one before it */
+  function score(F, picks) {
+    const m = mine(F, picks); const dead = deadOf(F); let pts = 0, right = 0, wrong = 0, open = 0, max = 0;
+    const perRound = {};
+    order(F).forEach(s => {
+      const w = s.won, got = m.win[s.id];
+      const depth = s.reg === 'ff' ? (F.size === 16 ? 4 + s.r : 3 + s.r) : s.r;
+      const val = 1 << depth;
+      const row = perRound[s.round] = perRound[s.round] || { round: s.round, right: 0, of: 0, pts: 0 };
+      if (!got) { if (w) { wrong++; row.of++; } else open++; return; }
+      // a pick whose team has already gone home is lost even though its own game is still to come
+      if (!w) { if (dead.has(String(got.id))) wrong++; else { open++; max += val; } return; }
+      row.of++;
+      if (sameT(w, got)) { pts += val; right++; row.right++; row.pts += val; max += val; } else wrong++;
+    });
+    return { pts, right, wrong, open, max, rounds: Object.values(perRound).filter(r => r.of) };
+  }
+  const filled = (F, picks) => order(F).filter(s => (picks.p || {})[s.id]).length;
+
+
+  /* ---------- the chart: a region on one screen, the real bracket shape ----------
+     Four columns, the first round down the left, each later game centred between the two it is fed by. Nothing scrolls
+     sideways inside a region, so the whole run from the first round to the regional final is on the glass at once; the
+     regions themselves are the pages you swipe between. */
+  function teamRow(L, t, seed, o) {
+    if (!t) return `<span class="bk2t gh"><i class="bk2s"></i><i class="bk2l"></i><b>${esc(o.wait || 'TBD')}</b></span>`;
+    const c = HW.v5._.teamColor(t, L);
+    return `<span class="bk2t${o.cls ? ' ' + o.cls : ''}"${o.pick ? ` data-pick="${esc(String(t.id))}"` : ''} style="--tc:${esc(c)}">`
+      + `<i class="bk2s">${seed || ''}</i>`
+      + `<i class="bk2l">${t.logo ? `<img src="${esc(t.logo)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : ''}</i>`
+      + `<b>${esc(t.abbr || t.short || '')}</b>`
+      + (o.sc != null ? `<em>${esc(String(o.sc))}</em>` : '')
+      + (o.mark || '') + `</span>`;
+  }
+  const tick = `<svg class="bk2k" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.4 4.8 9.2 10 3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+  function slotBox(L, F, s, M, dead) {
+    const myW = M.win[s.id]; const [ma, mb] = M.teams[s.id] || [null, null];
+    const a = s.a || ma, b = s.b || mb;
+    const sa = s.sa != null ? s.sa : seedOf(F, a), sb = s.sb != null ? s.sb : seedOf(F, b);
+    const row = (t, seed, other) => {
+      if (!t) return teamRow(L, null, null, { wait: 'TBD' });
+      const picked = myW && sameT(myW, t);
+      const realW = s.won;
+      const beat = realW && !sameT(realW, t);
+      const bust = picked && (realW ? !sameT(realW, t) : dead && dead.has(String(t.id)));
+      const cls = [picked ? 'pk' : '', bust ? 'bust' : '', beat ? 'out' : '', realW && sameT(realW, t) ? 'adv' : ''].filter(Boolean).join(' ');
+      const sc = s.game && s.final ? (sameT(s.game.home, t) ? s.game.home.score : sameT(s.game.away, t) ? s.game.away.score : null) : null;
+      return teamRow(L, t, seed, { cls, sc, pick: true, mark: picked ? tick : '' });
+    };
+    const open = a && b && !s.won;
+    return `<div class="bk2b${s.live ? ' lv' : ''}${open ? ' open' : ''}" data-slot="${esc(s.id)}">${row(a, sa, b)}${row(b, sb, a)}</div>`;
+  }
+
+  /* a region reads two rounds at a time, the way the wall chart was mocked: the earlier round down the left at full
+     size, each winner's box bridged into the later round on the right. The swipe carries on into the region's second
+     half, then the next region. */
+  function stagePanel(L, F, reg, M, stage, dead) {
+    const r0 = stage * 2;
+    const cols = [reg.slots.filter(s => s.r === r0), reg.slots.filter(s => s.r === r0 + 1)].filter(c => c.length);
+    const n0 = cols[0].length;
+    const head = `<div class="bk2h">${cols.map(c => `<span>${esc(c[0].round)}</span>`).join('')}</div>`;
+    const grid = `<div class="bk2g" style="--n:${n0}">` + cols.map((c, r) => c.map((s, i) =>
+      `<div class="bk2c" style="grid-column:${r + 1};grid-row:${i * (1 << r) + 1} / span ${1 << r}">${slotBox(L, F, s, M, dead)}</div>`).join('')).join('')
+      + (cols.length > 1 ? cols[0].map((s, i) => i % 2 ? '' : `<i class="bk2j" style="grid-column:1;grid-row:${i + 1} / span 2"></i>`).join('') : '')
+      + `</div>`;
+    return head + grid;
+  }
+
+  function ffPanel(L, F, M, dead) {
+    const semis = F.ff.filter(s => s.r === 0), fin = F.ff.find(s => s.r === 1);
+    const champ = fin && (fin.won || M.win[fin.id]);
+    const real = fin && fin.won;
+    const body = (semis.length ? `<p class="bk2r">${esc(semis[0].round)}</p><div class="bk2ff">${semis.map(s => slotBox(L, F, s, M)).join('')}</div>` : '')
+      + `<p class="bk2r">${esc(fin ? fin.round : '')}</p><div class="bk2ff one">${fin ? slotBox(L, F, fin, M, dead) : ''}</div>`;
+    const hero = champ ? (() => { const d = dp(HW.v5._.teamColor(champ, L));
+      return `<div class="bk2w" style="--ca:${esc(d)}"><span class="bk2wm">${esc(champ.abbr || '')}</span>`
+        + `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 8h24v14a12 12 0 0 1-24 0z" fill="currentColor"/><path d="M20 12H10v4a10 10 0 0 0 10 10M44 12h10v4a10 10 0 0 1-10 10" fill="none" stroke="currentColor" stroke-width="4"/><path d="M29 34h6v10h-6zM22 48h20v6H22z" fill="currentColor"/></svg>`
+        + `<b>${esc(champ.short || champ.name || '')}</b><span>${real ? 'Champions' : 'Your pick to win it all'}</span></div>`; })() : '';
+    return hero + body;
+  }
+
+  const deadOf = F => { const d = new Set(); F.all.forEach(s => { if (s.final && s.game) { const l = +s.game.home.score > +s.game.away.score ? s.game.away : s.game.home; d.add(String(l.id)); } }); return d; };
+  function chart(L, F, picks) {
+    const M = mine(F, picks); const dead = deadOf(F);
+    const tabs = F.regions.map(r => [r.name, r.name]).concat([['ff', F.regions.length === 4 ? 'Final Four' : 'Finals']]);
+    const stages = F.regions[0].slots[F.regions[0].slots.length - 1].r >= 2 ? 2 : 1;
+    const panels = F.regions.flatMap(r => Array.from({ length: stages }, (_, st) =>
+      `<div data-pg="${esc(r.name)}·${st}" data-pgtab="${esc(r.name)}">${stagePanel(L, F, r, M, st, dead)}</div>`))
+      .concat(`<div data-pg="ff" data-pgtab="ff">${ffPanel(L, F, M, dead)}</div>`).join('');
+    return { tabs, html: `<div class="bk2strip">${panels}</div>` };
+  }
+
+
+  /* ==================================================================================================================
+     THE GAUNTLET — picking the bracket one matchup at a time.
+
+     The whole screen becomes the matchup, painted in the two teams' colours with the same diagonal seam as a game card.
+     A tap on a side is the pick: it saves at once, and the next matchup slides in. The order is the bracket's own —
+     a region at a time, round by round, then the Final Four — so by the time a second-round game asks for a pick, both
+     of its teams are the person's own winners. Changing an early pick quietly clears any later pick it carried.
+     ================================================================================================================== */
+  function cleanse(F, picks) {
+    const p = picks.p || {};
+    for (let pass = 0; pass < 6; pass++) {
+      const M = mine(F, picks); let dropped = false;
+      order(F).forEach(s => { const pk = p[s.id]; if (!pk) return; const [a, b] = M.teams[s.id] || [];
+        if (!(a && String(a.id) === String(pk)) && !(b && String(b.id) === String(pk))) { delete p[s.id]; dropped = true; } });
+      if (!dropped) break;
+    }
+    return picks;
+  }
+
+  const crest = (t, L) => { const c = HW.v5._.teamColor(t, L);
+    return `<span class="bkpc" style="--tc:${esc(c)}">${t.logo ? `<img src="${esc(t.logo)}" alt="" onerror="this.style.visibility='hidden'">` : `<b>${esc((t.abbr || '').slice(0, 4))}</b>`}</span>`; };
+
+  function play(L, key, F) {
+    if (!F) return;
+    document.querySelectorAll('.bkov').forEach(x => x.remove());
+    const lk = L.key; const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let picks = cleanse(F, picksOf(lk, key));
+    const Q = order(F); const total = Q.length;
+    let idx = Q.findIndex(s => !(picks.p || {})[s.id]); if (idx < 0) idx = 0;
+    const ov = document.createElement('div'); ov.className = 'bkov'; document.body.appendChild(ov);
+    document.documentElement.classList.add('noscroll');
+    const close = () => { ov.remove(); document.documentElement.classList.remove('noscroll'); if (HW.v5.render) HW.v5.render(); };
+
+    const whereOf = s => { const sib = Q.filter(x => x.reg === s.reg && x.r === s.r); const at = sib.indexOf(s) + 1;
+      const name = s.reg === 'ff' ? s.round : `${s.reg} · ${s.round}`;
+      return sib.length > 1 ? `${name} <span>· ${at} of ${sib.length}</span>` : name; };
+
+    const sideHtml = (t, seed, picked) => !t ? '' :
+      `<button class="bkside${picked ? ' on' : ''}" data-side="${esc(String(t.id))}">${crest(t, L)}<span class="bknm"><b>${esc(t.short || t.name)}</b><span>${[seed ? `${seed} seed` : '', t.rec || ''].filter(Boolean).join(' · ')}</span></span>${tick}</button>`;
+
+    const paint = (dir) => {
+      const M = mine(F, picks); const s = Q[idx];
+      const [a, b] = M.teams[s.id] || []; if (!a || !b) { close(); return; }
+      const sa = seedOf(F, a), sb = seedOf(F, b);
+      const ca = dp(HW.v5._.teamColor(a, L)), cb = dp(HW.v5._.teamColor(b, L));
+      const done = filled(F, picks);
+      const nexts = Q.slice(idx + 1, idx + 4).map(x => { const [p1, p2] = M.teams[x.id] || []; if (!p1 || !p2) return '';
+        return `<span><em>${seedOf(F, p1) || ''}</em> ${esc(p1.abbr)} <em>vs ${seedOf(F, p2) || ''}</em> ${esc(p2.abbr)}</span>`; }).filter(Boolean).join('');
+      const myPick = (picks.p || {})[s.id];
+      ov.innerHTML = `<div class="bkovh"><button class="bkx" data-bko="x" aria-label="Close">${HW.v5._.chev ? '' : ''}✕</button><b>${whereOf(s)}</b><button class="bkx${idx ? '' : ' off'}" data-bko="back" aria-label="Previous matchup">‹</button></div>`
+        + `<div class="pbar bkpb"><i style="width:${(done / total * 100).toFixed(1)}%"></i></div>`
+        + `<div class="bkduel${dir ? ' in' : ''}" style="--ca:${esc(ca)};--cb:${esc(cb)}">`
+        + `<span class="wm a">${esc(a.abbr || '')}</span><span class="wm h">${esc(b.abbr || '')}</span>`
+        + `<p class="bkq">WHO ADVANCES?</p>${sideHtml(a, sa, myPick === String(a.id))}<span class="bkvs">VS</span>${sideHtml(b, sb, myPick === String(b.id))}`
+        + `<p class="bktap">${myPick ? 'Tap to change it, or swipe on' : "Tap the side you've got"}</p></div>`
+        + (nexts ? `<p class="bknxt">NEXT UP</p><div class="bkups">${nexts}</div>` : '<p class="bknxt"></p>')
+        + `<p class="bkfoot">Picks save as you go · close and finish later</p>`;
+      if (dir && !reduce) requestAnimationFrame(() => { const d = ov.querySelector('.bkduel'); if (d) d.classList.remove('in'); });
+    };
+
+    const finish = () => {
+      const M = mine(F, picks); const champ = M.win['ff-1-0'];
+      const ffIds = F.ff.filter(x => x.r === 0).length ? F.ff.filter(x => x.r === 0).flatMap(x => M.teams[x.id] || []) : (M.teams['ff-1-0'] || []);
+      const c = champ ? dp(HW.v5._.teamColor(champ, L)) : '#1b3f7a';
+      const sc = score(F, picks);
+      ov.innerHTML = `<div class="bkovh"><button class="bkx" data-bko="x" aria-label="Close">✕</button><b>Your bracket <span>· done</span></b><span class="bkx off"></span></div>`
+        + `<div class="bkw bkwin" style="--ca:${esc(c)}"><span class="bkwm">${esc(champ ? champ.abbr : '')}</span>`
+        + `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 8h24v14a12 12 0 0 1-24 0z" fill="currentColor"/><path d="M20 12H10v4a10 10 0 0 0 10 10M44 12h10v4a10 10 0 0 1-10 10" fill="none" stroke="currentColor" stroke-width="4"/><path d="M29 34h6v10h-6zM22 48h20v6H22z" fill="currentColor"/></svg>`
+        + `<b>${esc(champ ? `${champ.short || champ.name} to win it all` : 'All picked')}</b><span>${filled(F, picks)} of ${total} picked${sc.of ? '' : ''}</span></div>`
+        + (ffIds.length ? `<p class="bknxt">YOUR ${F.regions.length === 4 ? 'FINAL FOUR' : 'FINALISTS'}</p><div class="bkff4">${ffIds.filter(Boolean).map(t => `<span>${crest(t, L)}<b>${esc(t.abbr || t.short)}</b></span>`).join('')}</div>` : '')
+        + `<button class="bkgo bkcta" data-bko="x"><b>See your full bracket</b><span>Right picks turn green as the real games go final</span></button>`;
+    };
+
+    ov.addEventListener('click', e => {
+      const x = e.target.closest('[data-bko]');
+      if (x) { e.preventDefault(); if (x.dataset.bko === 'x') close(); else if (x.dataset.bko === 'back' && idx > 0) { idx--; paint('b'); } return; }
+      const side = e.target.closest('.bkside'); if (!side) return;
+      e.preventDefault();
+      const s = Q[idx]; picks.p = picks.p || {}; picks.p[s.id] = side.dataset.side;
+      cleanse(F, picks); savePicks(lk, key, picks); picks = picksOf(lk, key);
+      side.classList.add('on');
+      setTimeout(() => { if (idx + 1 >= total) { finish(); } else { idx++; paint('f'); } }, reduce ? 60 : 240);
+    });
+    if (idx >= total || (filled(F, picks) >= total && idx === 0 && false)) finish(); else paint();
+  }
+
+  HW.bracket = { list, view, chart, play, cleanse, fieldFromGames, applyResults, picksOf, savePicks, clearPicks, mine, order, score, filled, range, regionOf, seedOf };
 })();

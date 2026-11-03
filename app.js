@@ -186,6 +186,7 @@
     { const o = $main.querySelectorAll('*'), k = c.querySelectorAll('*'); for (let i = 0; i < o.length && i < k.length; i++) { const x = o[i].scrollLeft; if (x) { k[i].style.scrollBehavior = 'auto'; k[i].style.scrollSnapType = 'none'; k[i].scrollLeft = x; } } }
     g.addEventListener('animationend', () => g.remove()); setTimeout(() => g.remove(), 1500);   // it fades once the new screen is ready (fadeIn adds .out); never outstays its welcome
   }
+  HW.v5.render = render;
   window.addEventListener('hashchange', render);
   /* v398: the tab bar works like the iPhone's. Each tab keeps its own trail.
      · Tap another tab: back to it exactly as you left it (the page you were on inside it, the day, the scroll).
@@ -390,6 +391,7 @@
       list.classList.toggle('open', open); act.setAttribute('aria-expanded', String(open)); clipMem(list, open); const what = act.dataset.what ? ' ' + act.dataset.what : ''; act.textContent = open ? 'Show less' : `Show all ${act.dataset.total}${what}`;
       if (!open) { const y1 = act.getBoundingClientRect().top; if (Math.abs(y1 - y0) > 1) window.scrollBy({ top: y1 - y0, behavior: 'instant' }); }
       return; }
+    if (a === 'brkplay') { e.preventDefault(); const V2 = HW.v5; if (HW.bracket && V2._bkF) HW.bracket.play(LEAGUES[current ? current.lk : 'nba'], V2._bkKey || act.dataset.k, V2._bkF); return; }
     if (a === 'brk' || a === 'brkp') { e.preventDefault(); store.set(`v5:${a}:` + (current ? current.lk : 'nba'), act.dataset.k); if (a === 'brk') store.set('v5:brkp:' + (current ? current.lk : 'nba'), 'ff'); render(); return; }
     if (a === 'stab') { e.preventDefault(); store.set('v5:stab:' + (current ? current.lk : 'nba'), act.dataset.tab); render(); }
     if (a === 'play') { e.preventDefault(); openSheet(act.dataset.vid); }
