@@ -1175,9 +1175,9 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
   /* ================= SETTINGS: what you follow, what Home shows, how it looks ================= */
   const PREFS = [
     ['wire', 'Breaking', "Big news on your teams and players (a surgery, a trade, a benching) at the top of Home for a few hours after it lands"],
-    ['brief', 'Games and results', "Your teams' games today and how last night went, in the feed"],
+    ['brief', 'Results', "How your teams' games went, in the feed"],
     ['live', 'Game cards', 'The swipeable cards for your teams\u2019 games today'],
-    ['teams', 'Team updates', 'Standings moves and team news in the feed'],
+    ['teams', 'Live and upcoming', "Your teams' games on now and later today, in the feed"],
     ['players', 'Player lines', "Your players' lines after every game"],
     ['injuries', 'Injuries', 'Injury updates on your teams and players'],
     ['news', 'News', 'Stories about your teams and players']

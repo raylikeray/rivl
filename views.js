@@ -563,10 +563,10 @@
           post(Math.min(endTs(g), NOW - 6e4), href.game(lk, g.id), crest(us), esc(us.short), esc(finalWord(g)), `${won ? 'Beat' : 'Lost to'} ${esc(them.short)} <b class="${won ? 'wl-w' : 'wl-l'}">${esc(String(us.score))}–${esc(String(them.score))}</b>.${esc(note)}`, strip(g));
         });
         // live: your games on now
-        games.filter(g => isLive(g) && isFav(g)).forEach(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const d = +us.score - +them.score;
+        if (P.teams) games.filter(g => isLive(g) && isFav(g)).forEach(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const d = +us.score - +them.score;
           post(NOW + 1e9, href.game(lk, g.id), crest(us), esc(us.short), `<i class="lvd"></i>Live · ${esc(HW.clockOf(g, L))}`, `${d > 0 ? `Up ${d} on` : d < 0 ? `Down ${-d} to` : 'Tied with'} ${esc(them.short)}, <b>${esc(String(us.score))}–${esc(String(them.score))}</b>.`, strip(g), '', 'now'); });
         // coming up today: soonest first, kept at the top until they tip
-        games.filter(g => g.state === 'pre' && !g.off && isFav(g) && HW.ymdOf(g.date) === today).forEach(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const t0 = new Date(g.date).getTime();
+        if (P.teams) games.filter(g => g.state === 'pre' && !g.off && isFav(g) && HW.ymdOf(g.date) === today).forEach(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const t0 = new Date(g.date).getTime();
           const f = safeF(L, g, ctx); const pu = f && Number.isFinite(f.pHome) ? (us === g.home ? f.pHome : 1 - f.pHome) : null;
           posts.push({ ts: NOW + 1e8 - (t0 - NOW) / 1e3, html: `<a href="${href.game(lk, g.id)}" class="fp"><span class="fav">${crest(us)}</span><span class="fb"><span class="fh"><b>${esc(us.short)}</b><span>Tonight</span><time>${esc(tipOf(g).replace(/\s*CT$/, ''))}</time></span><span class="ft">Face ${esc(them.short)} ${us === g.home ? 'at home' : 'on the road'}${tvLabel(g) ? ` on ${esc(tvLabel(g))}` : ''}.${pu != null ? ` RIVL gives them <b>${pct(pu)}</b>.` : ''}</span></span></a>` }); });
       }
