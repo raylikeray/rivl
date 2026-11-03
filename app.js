@@ -94,6 +94,7 @@
   const clipMem = (list, open) => { const k = clipKey(list); if (open) clipOpen.add(k); else clipOpen.delete(k); };
   const clipApply = () => { if (!clipOpen.size) return; $main.querySelectorAll('.lclip:not(.open)').forEach(l => { if (!clipOpen.has(clipKey(l))) return; l.classList.add('open'); const b = l.querySelector(':scope > .cliptog') || (l.nextElementSibling && l.nextElementSibling.classList.contains('cliptog') ? l.nextElementSibling : null); if (b) { b.setAttribute('aria-expanded', 'true'); b.textContent = 'Show less'; } }); };
   new MutationObserver(clipApply).observe($main, { childList: true, subtree: true });
+  store.set('v5:date', todayCT());   // v397: a fresh open of the app starts Scores on today
   let homeKeep = null;   // Home as you left it
   async function render() {
     const r = route(); const my = ++seq;
@@ -137,7 +138,7 @@
     /* The Scores date goes back to today when you move to another tab — Home, Standings, Teams, Players — so a day you
        looked at last week is not waiting the next time you open Scores. It does NOT reset when you drill into a game, a
        team or a player from a score card: those are children of the day you were on, and coming back lands on that day. */
-    if (leagueScreen && r.name !== 'scores') store.set('v5:date', todayCT());
+    // v397: the Scores day stays put while you move between tabs; it goes back to today only when the app is opened fresh (see boot)
     document.getElementById('top').hidden = !leagueScreen;
     paintPills(r.lk, leagueScreen);
     /* the bar lights the tab you are on; Teams, Players and a game, team or player page keep lit the tab you opened
