@@ -334,6 +334,10 @@
   document.addEventListener('click', e => {
     const back = e.target.closest('[data-act="back"]');
     if (back) { if (history.length > 1) { e.preventDefault(); history.back(); } return; }
+    /* v413: hopping between the day's games in the game header swaps the page in place rather than stacking a history
+       step for each one, so Back returns to wherever the first game was opened from */
+    const hop = e.target.closest('#g2strip a.g2gp[href^="#game/"]');
+    if (hop && !e.metaKey && !e.ctrlKey) { e.preventDefault(); if (location.hash !== hop.getAttribute('href')) location.replace(hop.getAttribute('href')); return; }
     const row = e.target.closest('tr.click[data-href]');
     if (row && !e.target.closest('a')) { location.hash = row.dataset.href; return; }
     const act = e.target.closest('[data-act]'); if (!act) return;

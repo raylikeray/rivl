@@ -423,7 +423,9 @@
     const stick = () => Math.max(0, top0() - stickTop - (tabs.offsetHeight || 0));   // the scroll at which the tabs pin
     const yFor = i => ys[i] != null ? ys[i] : Math.min(window.scrollY, stick());
     const place = () => { const y = window.scrollY; panels.forEach((p, i) => { p.style.transform = i === cur ? '' : `translateY(${y - yFor(i)}px)`; }); };
-    const fit = (wide) => { const a = panels[cur].offsetHeight; const need = wide ? Math.max(a, window.scrollY + innerHeight - top0()) : a; strip.style.height = need + 'px'; };
+    // v413: the strip's own padding counts too, or a padded strip trims the bottom of its last card (Game info, 12px)
+    const padY = () => { const cs = getComputedStyle(strip); return (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0) + (cs.boxSizing === 'border-box' ? (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0) : 0); };
+    const fit = (wide) => { const pad = getComputedStyle(strip).boxSizing === 'border-box' ? padY() : 0; const a = panels[cur].offsetHeight + pad; const need = wide ? Math.max(a, window.scrollY + innerHeight - top0() + pad) : a; strip.style.height = need + 'px'; };
     const inkTo = (x) => { const i = Math.floor(x), f = x - i; const a = btns[Math.max(0, Math.min(i, btns.length - 1))], b = btns[Math.max(0, Math.min(i + 1, btns.length - 1))];
       const L = a.offsetLeft + (b.offsetLeft - a.offsetLeft) * f, Wd = a.offsetWidth + (b.offsetWidth - a.offsetWidth) * f; ink.style.transform = `translateX(${L + Wd * (1 - inkW) / 2}px)`; ink.style.width = Wd * inkW + 'px';
       const near = Math.round(x); uniq.forEach(bt => { const idxs = btns.map((x2, j) => x2 === bt ? j : -1).filter(j => j >= 0);
@@ -441,6 +443,32 @@
     strip.addEventListener('touchend', up, { passive: true }); strip.addEventListener('touchcancel', up, { passive: true });
     strip.addEventListener('scroll', () => { const x = strip.scrollLeft / W(); inkTo(x); if (!moving) { moving = true; place(); fit(true); } settle(); }, { passive: true });
     window.addEventListener('scroll', () => { if (strip.isConnected) place(); }, { passive: true });
+    /* v413: a sideways table inside a panel. A swipe that starts on its frozen first column (the names) turns the page;
+       a swipe on the numbers scrolls the table, and once the table is already at its edge, a swipe that pushes past that
+       edge turns the page instead of doing nothing. The page is then carried by the finger and let go with the same
+       snap a normal swipe gets. */
+    const scrollerIn = el => { for (let x = el; x && x !== strip; x = x.parentElement) { if (x.scrollWidth > x.clientWidth + 1) { const o = getComputedStyle(x).overflowX; if (o === 'auto' || o === 'scroll') return x; } } return null; };
+    const onFrozen = (el, sc) => { for (let x = el; x && x !== sc; x = x.parentElement) if (getComputedStyle(x).position === 'sticky') return true; return false; };
+    let hand = null;
+    strip.addEventListener('touchstart', e => { if (e.touches.length !== 1) { hand = null; return; } const t = e.touches[0]; const sc = scrollerIn(e.target);
+      hand = sc ? { sc, frozen: onFrozen(e.target, sc), x: t.clientX, y: t.clientY, sl: strip.scrollLeft, on: false, decided: false, last: t.clientX, lt: performance.now(), v: 0 } : null; }, { passive: true });
+    strip.addEventListener('touchmove', e => { if (!hand) return; const t = e.touches[0]; const dx = t.clientX - hand.x, dy = t.clientY - hand.y;
+      if (!hand.decided) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; hand.decided = true;
+        if (Math.abs(dy) > Math.abs(dx)) { hand = null; return; }
+        const sc = hand.sc, atL = sc.scrollLeft <= 1, atR = sc.scrollLeft + sc.clientWidth >= sc.scrollWidth - 1;
+        hand.on = hand.frozen || (dx > 0 && atL) || (dx < 0 && atR);
+        if (hand.on) { strip.style.scrollSnapType = 'none'; } else { hand = null; return; } }
+      if (!hand.on) return;
+      e.preventDefault();
+      const now = performance.now(); hand.v = (t.clientX - hand.last) / Math.max(1, now - hand.lt); hand.last = t.clientX; hand.lt = now;
+      strip.scrollLeft = Math.max(0, Math.min(strip.scrollWidth - W(), hand.sl - dx)); }, { passive: false });
+    const handEnd = () => { if (!hand || !hand.on) { hand = null; return; } const { sl, v } = hand; hand = null;
+      const from = Math.round(sl / W()); const moved = (strip.scrollLeft - sl) / W(); let to = from;
+      if (moved > .35 || (moved > .05 && v < -.25)) to = from + 1; else if (moved < -.35 || (moved < -.05 && v > .25)) to = from - 1;   // past a third, or a quick flick, turns the page
+      to = Math.max(0, Math.min(panels.length - 1, to));
+      strip.scrollTo({ left: to * W(), behavior: reduce ? 'auto' : 'smooth' });
+      setTimeout(() => { strip.style.scrollSnapType = ''; }, reduce ? 0 : 420); };
+    strip.addEventListener('touchend', handEnd, { passive: true }); strip.addEventListener('touchcancel', handEnd, { passive: true });
     uniq.forEach(b => b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation();
       const idxs = btns.map((x2, j) => x2 === b ? j : -1).filter(j => j >= 0);
       if (idxs.includes(cur) && Math.abs(strip.scrollLeft - cur * W()) < 2) { if (window.scrollY > stick()) window.scrollTo({ top: stick(), behavior: reduce ? 'auto' : 'smooth' }); return; }
@@ -707,7 +735,7 @@
       if (P.teams) games.filter(g => g.state === 'pre' && !g.off && isFav(g) && HW.ymdOf(g.date) === today).forEach(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const t0 = new Date(g.date).getTime();
         const f = safeF(L, g, ctx); const pu = f && Number.isFinite(f.pHome) ? (us === g.home ? f.pHome : 1 - f.pHome) : null;
         const sit = [without(us), without(them)].filter(Boolean).join(' ');
-        post(-t0, href.game(lk, g.id), crest(us), esc(us.short), +new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'America/Chicago' }).format(new Date(t0)) % 24 >= 17 ? 'Tonight' : 'Today', `Face ${esc(them.short)} ${us === g.home ? 'at home' : 'on the road'}${tvLabel(g) ? ` on ${esc(tvLabel(g))}` : ''}.${pu != null ? ` RIVL gives them <b>${pct(pu)}</b>.` : ''}${sit ? `<span class="fsit">${sit}</span>` : ''}`, '', '', esc(tipOf(g).replace(/\s*CT$/, ''))); });
+        post(-t0, href.game(lk, g.id), crest(us), esc(us.short), +new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: HW.TZ || 'America/Chicago' }).format(new Date(t0)) % 24 >= 17 ? 'Tonight' : 'Today', `Face ${esc(them.short)} ${us === g.home ? 'at home' : 'on the road'}${tvLabel(g) ? ` on ${esc(tvLabel(g))}` : ''}.${pu != null ? ` RIVL gives them <b>${pct(pu)}</b>.` : ''}${sit ? `<span class="fsit">${sit}</span>` : ''}`, '', '', esc(tipOf(g).replace(/\s*CT$/, ''))); });
       // 4 · injury changes, from the phone's own log
       tier = 4;
       if (P.injuries && S0.inj && (S0.inj.teams || []).length) {
@@ -775,7 +803,7 @@
       // the greeting and the deck
       delete secs.live;
       if (P.brief || P.live) {
-        const hr = +new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'America/Chicago' }).format(new Date()) % 24;
+        const hr = +new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: HW.TZ || 'America/Chicago' }).format(new Date()) % 24;
         const hello = hr < 5 ? 'Good evening' : hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
         const ord = g => isLive(g) ? 0 : g.state === 'pre' ? 1 : 2;
         let deck = games.filter(g => HW.ymdOf(g.date) === today && isFav(g)).sort((a, b) => ord(a) - ord(b) || new Date(a.date) - new Date(b.date) || rankGame(b) - rankGame(a));
@@ -861,21 +889,27 @@
 
   /* ================= SCORES: every game, compact ================= */
   /* Unrivaled, the 3-on-3 league WNBA players play in their offseason: its schedule from data/unrivaled.json, read off
-     the league's own site by a job every few hours. Times come in Eastern and show in Central. Teams fill in once the
+     the league's own site by a job every few hours. Times come in Eastern and show on the viewer's own clock. Teams fill in once the
      league sets the matchups. */
   const unrDays = d => {
     const toYmd = x => { const t = new Date(String(x).replace(/^\w+,\s*/, '') + ' 12:00'); return isNaN(t) ? '' : `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };
     const days = {}; (d.games || []).forEach(g => { const y = toYmd(g.date); if (!y) return; const k = y + '|' + (g.arena || ''); (days[k] = days[k] || { y, arena: g.arena, city: g.city, games: [] }).games.push(g); });
     return Object.values(days).sort((a, b) => a.y < b.y ? -1 : a.y > b.y ? 1 : 0);
   };
-  const unrCT = tm => { const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(tm || ''); if (!m) return tm || ''; let h = (+m[1] % 12) + (/PM/i.test(m[3]) ? 12 : 0) - 1; if (h < 0) h += 24; return `${h % 12 || 12}:${m[2]} ${h >= 12 ? 'PM' : 'AM'}`; };
+  /* v413: Unrivaled's times come in Eastern; they show on the viewer's own clock (it used to subtract an hour for Central) */
+  const zoneMin = (tz, d) => { try { const p = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).formatToParts(d).reduce((o, x) => (o[x.type] = x.value, o), {});
+    return (Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute) - d.getTime()) / 60000; } catch { return 0; } };
+  const unrCT = (tm, ymd) => { const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(tm || ''); if (!m) return tm || '';
+    const h = (+m[1] % 12) + (/PM/i.test(m[3]) ? 12 : 0); const day = ymd || todayCT();
+    const guess = new Date(`${day}T${String(h).padStart(2, '0')}:${m[2]}:00Z`); const utc = new Date(guess.getTime() - zoneMin('America/New_York', guess) * 60000);
+    try { return utc.toLocaleTimeString('en-US', { timeZone: HW.TZ, hour: 'numeric', minute: '2-digit' }); } catch { return tm; } };
   const unrLogo = (d, name) => { const c = (d.clubs || []).find(x => x.name === name); return c && c.logo ? `<img src="${esc(c.logo)}" alt="" loading="lazy" onerror="this.remove()">` : ''; };
   async function unrivaledCard() {
     const d = HW.hub ? await HW.hub.file('unrivaled.json').catch(() => null) : null; if (!d || !d.games || !d.games.length) return '';
     const today = todayCT(); const list = unrDays(d); const ahead = list.filter(x => x.y >= today); const nx = ahead[0]; if (!nx) return '';
     const n = Math.round((new Date(nx.y + 'T12:00:00Z') - new Date(today + 'T12:00:00Z')) / 864e5);
     const tv = [...new Set(nx.games.flatMap(g => g.tv || []))];
-    const games = nx.games.map(g => `<div class="ung">${g.teams && g.teams.length === 2 ? `<span class="unt">${unrLogo(d, g.teams[0])}<b>${esc(g.teams[0])}</b></span><i>vs</i><span class="unt">${unrLogo(d, g.teams[1])}<b>${esc(g.teams[1])}</b></span>` : '<span class="unt tbd"><b>Teams to be set</b></span>'}<em>${esc(unrCT(g.time))} CT</em></div>`).join('');
+    const games = nx.games.map(g => `<div class="ung">${g.teams && g.teams.length === 2 ? `<span class="unt">${unrLogo(d, g.teams[0])}<b>${esc(g.teams[0])}</b></span><i>vs</i><span class="unt">${unrLogo(d, g.teams[1])}<b>${esc(g.teams[1])}</b></span>` : '<span class="unt tbd"><b>Teams to be set</b></span>'}<em>${esc(unrCT(g.time, nx.y))} CT</em></div>`).join('');
     return `<div class="unrv"><div class="brief-h"><b>Unrivaled</b><span>${n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`}</span></div><p class="unote">The 3-on-3 league where WNBA stars play in the offseason.</p>`
       + `<div class="unx"><div class="unh"><b>${esc(dayLabel(nx.y, { weekday: 'long', month: 'long', day: 'numeric' }))}</b><span>${esc([nx.arena, nx.city].filter(Boolean).join(' · '))}</span></div>${games}${tv.length ? `<div class="untv">${tv.map(x => `<em>${esc(x)}</em>`).join('')}</div>` : ''}</div>`
       + `<button class="btn ghost unbtn" data-act="scmode" data-mode="unrivaled">See the full schedule · ${ahead.reduce((a, x) => a + x.games.length, 0)} games</button></div>`;
@@ -884,7 +918,7 @@
     const d = HW.hub ? await HW.hub.file('unrivaled.json').catch(() => null) : null;
     if (!d || !d.games || !d.games.length) return empty('No Unrivaled schedule yet', '<p style="margin:6px 0 0">It shows here once the league posts it.</p>');
     const today = todayCT(); const list = unrDays(d); const ahead = list.filter(x => x.y >= today), done = list.filter(x => x.y < today).reverse();
-    const dayCard = x => `<div class="unx"><div class="unh"><b>${esc(dayLabel(x.y, { weekday: 'short', month: 'short', day: 'numeric' }))}</b><span>${esc([x.arena, x.city].filter(Boolean).join(' · '))}</span></div>${x.games.map(g => `<div class="ung">${g.teams && g.teams.length === 2 ? `<span class="unt">${unrLogo(d, g.teams[0])}<b>${esc(g.teams[0])}</b></span><i>vs</i><span class="unt">${unrLogo(d, g.teams[1])}<b>${esc(g.teams[1])}</b></span>` : '<span class="unt tbd"><b>Teams to be set</b></span>'}<em>${g.score ? `<b>${esc(String(g.score[0]))}-${esc(String(g.score[1]))}</b>` : `${esc(unrCT(g.time))} CT`}</em></div>`).join('')}${(x.games[0] && x.games[0].tv || []).length ? `<div class="untv">${x.games[0].tv.map(t => `<em>${esc(t)}</em>`).join('')}</div>` : ''}</div>`;
+    const dayCard = x => `<div class="unx"><div class="unh"><b>${esc(dayLabel(x.y, { weekday: 'short', month: 'short', day: 'numeric' }))}</b><span>${esc([x.arena, x.city].filter(Boolean).join(' · '))}</span></div>${x.games.map(g => `<div class="ung">${g.teams && g.teams.length === 2 ? `<span class="unt">${unrLogo(d, g.teams[0])}<b>${esc(g.teams[0])}</b></span><i>vs</i><span class="unt">${unrLogo(d, g.teams[1])}<b>${esc(g.teams[1])}</b></span>` : '<span class="unt tbd"><b>Teams to be set</b></span>'}<em>${g.score ? `<b>${esc(String(g.score[0]))}-${esc(String(g.score[1]))}</b>` : `${esc(unrCT(g.time, x.y))} CT`}</em></div>`).join('')}${(x.games[0] && x.games[0].tv || []).length ? `<div class="untv">${x.games[0].tv.map(t => `<em>${esc(t)}</em>`).join('')}</div>` : ''}</div>`;
     const byMonth = {}; ahead.forEach(x => { const k = dayLabel(x.y, { month: 'long', year: 'numeric' }); (byMonth[k] = byMonth[k] || []).push(x); });
     return `<p class="unote" style="margin-top:4px">The 3-on-3 league where WNBA stars play in the offseason. ${ahead.length ? `${ahead.reduce((a, x) => a + x.games.length, 0)} games to come.` : ''}</p>`
       + Object.entries(byMonth).map(([m, xs]) => sec(m, `${xs.length} game days`) + `<div class="unrv">${xs.map(dayCard).join('')}</div>`).join('')

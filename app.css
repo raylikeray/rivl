@@ -4626,3 +4626,14 @@ html body .apfx{transform:none;visibility:hidden;transition:none}
 html body .apfx.on{visibility:visible}
 html body .apfx > *{opacity:0;transform:translateY(6px);transition:opacity .18s var(--ease),transform .18s var(--ease)}
 html body .apfx.on > *{opacity:1;transform:none}
+
+/* ===== v413 ===== */
+/* injury report: the points-in-street-clothes number reads on both themes (it was white on white in light mode) */
+html body .g2 #gbody .imbig b{color:var(--ink)}
+/* team stats: the better side of each row in full ink, the other quiet and its bar dimmed; a tie shows both plainly */
+html body .g2 #gbody .cmp > div b{color:var(--ink-3)!important;font-weight:650;opacity:.85}
+html body .g2 #gbody .cmp > div b.lead{color:var(--ink)!important;font-weight:800;opacity:1}
+html body .g2 #gbody .cmp > div:not(:has(b.lead)) b{color:var(--ink)!important;opacity:1}
+html body .g2 #gbody .cmp .cb i.lo{opacity:.35}
+/* a swipe panel contains its children's margins, so the strip's height never trims the last card */
+.pgp{display:flow-root}
