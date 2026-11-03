@@ -3681,3 +3681,64 @@ html body #pills .pill.on,:root[data-theme="dark"] body #pills .pill.on{color:#f
 .cal-g .cd.mine i{background:#F5B915}
 .cal-f .dot{background:#F5B915}
 .cal-today{display:block;margin:12px auto 0;width:100%}
+
+/* ===== v378: Standings, the ladder =====
+   Every team is its own rung: seed, crest, name, record, and how far it moved this week. Your teams' rungs are painted
+   in their own colour. Playoffs, Play-in and Outside are labelled bands. The tabs are plain words with an underline. */
+#stchips .chips{gap:20px;padding:0 20px;overflow-x:auto;scrollbar-width:none;border-bottom:.5px solid var(--line);margin:0 0 12px;flex-wrap:nowrap}
+#stchips .chips::-webkit-scrollbar{display:none}
+html body #stchips .chip,html body #stchips .chip.on{flex:none;height:44px;padding:0;border-radius:0;background:none!important;box-shadow:none!important;color:var(--ink-3);font-size:15px;font-weight:700;position:relative}
+html body #stchips .chip.on{color:var(--ink)}
+#stchips .chip.on::after{content:"";position:absolute;left:0;right:0;bottom:-.5px;height:3px;border-radius:2px;background:#0A84FF}
+.ladder{display:flex;flex-direction:column;gap:7px;margin:0 16px}
+.ldb{margin:12px 6px 2px;font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.ldb:first-child{margin-top:2px}
+.ldb.pi{color:#C98500}
+.ldr{display:flex;align-items:center;gap:11px;padding:9px 14px 9px 10px;border-radius:16px;background:var(--surf);color:var(--ink);text-decoration:none;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+.ldr:active{transform:scale(.985)}
+.lds{width:28px;flex:none;text-align:center;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.ldr .logo{width:32px;height:32px;flex:none}
+.ldn{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.ldn b{font-size:15.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ldn b .fs{font-style:normal;color:#F5B915;font-size:12px}
+.ldn b .ap{font-style:normal;font-size:11px;color:var(--ink-3);margin-right:4px}
+.ldn small{font-size:11.5px;font-weight:600;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ldn .tag.cl{align-self:flex-start;margin-top:2px}
+.ldw{font-size:15.5px;font-weight:800;font-variant-numeric:tabular-nums}
+.ldm{min-width:34px;text-align:right;display:inline-flex;align-items:center;justify-content:flex-end;gap:2px;font-size:12px;font-weight:800;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.ldm svg{width:9px;height:9px;fill:currentColor}
+.ldm.up{color:#24A148}.ldm.dn{color:#E5484D}
+.ldm.st.w{color:#24A148}.ldm.st.l{color:#E5484D}
+.ldr.me{color:#fff;background:linear-gradient(135deg,var(--tc),color-mix(in srgb,var(--tc) 72%,#000));box-shadow:0 8px 18px -10px color-mix(in srgb,var(--tc) 70%,#000)}
+.ldr.me .lds,.ldr.me .ldm,.ldr.me .ldn small,.ldr.me .ldn b .ap{color:#fff}
+.ldr.me .ldn small{opacity:.8}
+.ldr.me .ldm.up,.ldr.me .ldm.dn,.ldr.me .ldm.st{color:#fff}
+.ldr.me .ldn b .fs{color:#FFD54A}
+.ldr.me .logo{filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
+
+/* ===== v378: Stats, the sheet =====
+   Players, Teams and Rookies on a segmented switch; one table with every number side by side. The player column stays
+   put while the numbers scroll; the column it is ranked by is blue. No shadow on the pinned column. */
+.stseg{display:flex;margin:4px 16px 12px;padding:3px;border-radius:12px;background:color-mix(in srgb,var(--ink) 7%,transparent)}
+.stseg button{flex:1;height:34px;border:0;border-radius:9px;background:none;color:var(--ink-2);font:700 14px/1 var(--ui);cursor:pointer}
+.stseg button.on{background:var(--surf);color:var(--ink);box-shadow:0 1px 3px rgba(16,24,40,.14)}
+.sheet2{margin:0 16px;border-radius:18px;background:var(--surf);box-shadow:0 1px 2px rgba(16,24,40,.05),0 6px 16px -10px rgba(16,24,40,.12);overflow:hidden}
+.shw{overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}
+.shw::-webkit-scrollbar{display:none}
+.sht{border-collapse:separate;border-spacing:0;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+.sht th,.sht td{padding:0 6px;height:44px;text-align:right;white-space:nowrap;border-bottom:.5px solid var(--line)}
+.sht tbody tr:last-child td{border-bottom:0}
+.sht th{height:40px;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--ink-3);background:var(--surf);position:sticky;top:0}
+.sht th button{border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;cursor:pointer;padding:8px 2px;min-width:38px;text-align:right}
+.sht th.on{color:#0A84FF}
+.sht th i{font-style:normal;font-size:9px}
+.sht td{font-weight:600;color:var(--ink-2);min-width:42px}
+.sht td.on{color:#0A84FF;font-weight:800;background:color-mix(in srgb,#0A84FF 6%,transparent)}
+.sht .spc{position:sticky;left:0;z-index:1;background:var(--surf);text-align:left;padding-left:10px;min-width:150px;max-width:172px}
+.sht th.spc{z-index:2;letter-spacing:.06em}
+.sht td.spc a{display:flex;align-items:center;gap:7px;color:var(--ink);text-decoration:none;min-width:0}
+.sht td.spc .rk{width:18px;flex:none;text-align:right;font-size:11.5px;font-weight:700;color:var(--ink-3)}
+.sht td.spc .hs,.sht td.spc img{flex:none}
+.sht td.spc b{font-size:13.5px;font-weight:800;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.sht td.spc small{font-size:10.5px;font-weight:700;color:var(--ink-3);flex:none}
+.sht tbody tr:active td{background:color-mix(in srgb,var(--ink) 4%,var(--surf))}

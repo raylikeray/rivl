@@ -19,7 +19,7 @@
 
   async function statsV(lk) {
     const L = LEAGUES[lk], $main = document.getElementById('main');
-    const tab0 = store.get('v5:sttab', 'players'), board0 = store.get('v5:stboard:' + lk, '');
+    const tab0 = store.get('v5:sttab', 'players'), board0 = '';
     // the title and tabs paint at once, so the screen is never blank while the numbers load
     { const up = $main.querySelector('.stpage'); if (!up || up.dataset.lk !== lk) $main.innerHTML = `<div class="stpage" data-lk="${lk}"><div class="page-h"><h1>Stats</h1><p>${esc(L.label)}</p></div>${(_.skeleton(1, 'card') + _.skeleton(3, 'card')).replace(/<!--skel-->/g, '')}</div>`; }   // the league's stats already up stay up while fresh numbers load
     const [lg, idx, st0, TS] = await Promise.all([HW.hub.league(L).catch(() => null), V.teamsIndex(L).catch(() => ({})), HW.standings(L).catch(() => null), HW.teamStats ? HW.teamStats(L).catch(() => null) : null]);
@@ -98,8 +98,32 @@
       return `<div class="page-h"><h1>Stats</h1><p>Top high school ${recG === 'girls' ? 'girls' : 'boys'} recruits</p></div>${tabsHTML()}${pills}<div class="gxplate stboard">${list.map(row).join('')}</div><p class="stnote">Rankings from PrepRanks, a blend of the major recruiting services.</p>`;
     }
     const tabsHTML = () => `<div class="gxtabs sttabs" role="tablist">${tabs.map(([k, l]) => `<button class="chip${k === tab ? ' on' : ''}" data-stt="${k}" aria-pressed="${k === tab}">${l}</button>`).join('')}</div>`;
+    /* the sheet (Ray's pick, Sheet A): one table, every number side by side; tap a column head to rank the whole table
+       by it. The player column stays put while the numbers scroll sideways. */
+    const PCOLS = [['pts', 'PTS'], ['reb', 'REB'], ['ast', 'AST'], ['tpm', '3PM'], ['stl', 'STL'], ['blk', 'BLK'], ['fg', 'FG%'], ['tp', '3P%'], ['ft', 'FT%'], ['min', 'MIN'], ['rating', 'RIVL']];
+    const TCOLS = [['ppg', 'PTS'], ['opp', 'OPP'], ['diff', '+/-'], ['wp', 'PCT'], ['ortg', 'ORTG'], ['drtg', 'DRTG'], ['pace', 'PACE']];
+    function sheetHTML() {
+      const isT = tab === 'teams', rookies = tab === 'rookies';
+      const cols = isT ? TCOLS.filter(([k]) => teamRows(k).length) : PCOLS.filter(([k]) => k !== 'rating' || R);
+      let sk = store.get(`v5:stsort:${lk}:${isT ? 't' : 'p'}`, isT ? 'ppg' : 'pts'); if (!cols.some(([k]) => k === sk)) sk = cols[0][0];
+      const head = `<thead><tr><th class="spc">${isT ? 'Team' : rookies ? 'Rookie' : 'Player'}</th>${cols.map(([k, l]) => `<th class="${k === sk ? 'on' : ''}"><button data-sts="${k}" aria-sort="${k === sk ? 'descending' : 'none'}">${l}${k === sk ? ' <i>▾</i>' : ''}</button></th>`).join('')}</tr></thead>`;
+      let body = '', n = 0;
+      if (isT) {
+        const order = teamRows(sk); n = order.length;
+        const val = {}; cols.forEach(([k]) => { val[k] = {}; teamRows(k).forEach(x => { val[k][x.t.id] = x.v; }); });
+        body = order.map((x, i) => `<tr><td class="spc"><a href="${_.href.team(lk, x.t.id)}"><span class="rk">${i + 1}</span>${tLogo(x.t, 24)}<b>${esc(x.t.short || x.t.name)}</b><small>${x.r.w}-${x.r.l}</small></a></td>${cols.map(([k]) => `<td class="${k === sk ? 'on' : ''}">${val[k][x.t.id] == null ? '–' : tfmt(k, val[k][x.t.id])}</td>`).join('')}</tr>`).join('');
+      } else {
+        const order = list(sk, rookies) || []; n = order.length;
+        const cell = (p, k) => { if (k === 'rating') { const r = R && R.byId[String(p.id)]; return r && r.qualified ? String(Math.round(r.ovr)) : '–'; } const c = CATS.find(c => c[0] === k); const s0 = { ...(p.s || {}), __g: maxG }; const v = c[3](s0); return v == null || (c[4] && !c[4](s0)) ? '–' : fmt(k, v); };
+        body = order.slice(0, 100).map((x, i) => { const t = byAbbr[x.p.team] || {}; return `<tr><td class="spc"><a href="${_.href.player(lk, x.p.id)}"><span class="rk">${i + 1}</span>${face(x.p, 26)}<b>${esc(lastNm(x.p.n))}</b><small>${esc(x.p.team || t.abbr || '')}</small></a></td>${cols.map(([k]) => `<td class="${k === sk ? 'on' : ''}">${cell(x.p, k)}</td>`).join('')}</tr>`; }).join('');
+      }
+      const cap = isT ? `Every team by ${esc((TCATS.find(c => c[0] === sk) || [])[1] || '').toLowerCase()}.` : `${n > 100 ? 'Top 100' : n} qualified ${rookies ? 'rookies' : 'players'} by ${esc((CATS.find(c => c[0] === sk) || [])[1] || '').toLowerCase()}. Percentages need enough attempts to count.`;
+      return n ? `<div class="sheet2"><div class="shw"><table class="sht">${head}<tbody>${body}</tbody></table></div></div><p class="stnote">${cap} Tap a column to rank by it.</p>` : _.empty('No one qualifies yet');
+    }
+    const lastNm = n => { const p = String(n || '').split(' '); return p.length > 1 ? p.slice(1).join(' ') : n; };
     function homeHTML() {
       if (tab === 'recruits') return recHTML();
+      if (true) { const seg = `<div class="stseg" role="tablist">${tabs.map(([k, l]) => `<button class="${k === tab ? 'on' : ''}" data-stt="${k}" aria-pressed="${k === tab}">${l}</button>`).join('')}</div>`; return `<div class="page-h"><h1>Stats</h1><p>${esc(lg.label || '')}${lg.lastSeason ? ', last season' : ''}</p></div>${seg}${note}${sheetHTML()}`; }
       const seg = `<div class="gxtabs sttabs" role="tablist">${tabs.map(([k, l]) => `<button class="chip${k === tab ? ' on' : ''}" data-stt="${k}" aria-pressed="${k === tab}">${l}</button>`).join('')}</div>`;
       const body = tab === 'teams' ? TCATS.map(c => tcard(c[0])).join('') || _.empty('No team numbers yet')
         : (tab === 'rookies' ? ROOK : CATS.map(c => c[0])).map(k => pcard(k, tab === 'rookies')).join('');
@@ -117,6 +141,7 @@
     $main.addEventListener('click', $main._stClick = e => {
       if (!$main.querySelector('.stpage')) return;
       const rc = e.target.closest('[data-rcls]'); if (rc) { rcls = rc.dataset.rcls; store.set('v5:strcls', rcls); paint(); return; }
+      const so = e.target.closest('[data-sts]'); if (so) { const isT = tab === 'teams'; store.set(`v5:stsort:${lk}:${isT ? 't' : 'p'}`, so.dataset.sts); const w = $main.querySelector('.shw'); const x = w ? w.scrollLeft : 0; paint(); const w2 = $main.querySelector('.shw'); if (w2) w2.scrollLeft = x; return; }
       const t = e.target.closest('[data-stt]'); if (t) { tab = t.dataset.stt; store.set('v5:sttab', tab); paint(); return; }
       const b = e.target.closest('[data-stb]'); if (b) { e.preventDefault(); const was = !!board; board = b.dataset.stb; store.set('v5:stboard:' + lk, board); paint(); if (!was) window.scrollTo(0, 0); return; }
       if (e.target.closest('[data-act="stback"]')) { board = ''; store.set('v5:stboard:' + lk, ''); paint(); window.scrollTo(0, 0); return; }
