@@ -390,6 +390,40 @@
      a copy jumps, without animation, to the real card it copies, so swiping left from game 1 lands on the last game. The
      card you were on is kept across repaints and visits. */
   document.addEventListener('click', e => { const b = e.target.closest('[data-act="injmore"]'); if (!b) return; e.preventDefault(); b.closest('.feed').querySelectorAll('.fmore').forEach(x => { x.hidden = false; x.classList.remove('fmore'); }); b.remove(); });
+  /* ===== v399: the pager — Apple-style swiping between a page's tabs =====
+     Every panel is built and laid side by side in one horizontal strip; the phone's own scrolling moves it (momentum,
+     snap, 120 Hz), so nothing is rebuilt mid-swipe. The underline rides under the finger. Each panel keeps its own
+     vertical place: while you swipe, a panel you're not on is shifted so it shows where you left it, and on landing
+     the page scrolls to that place with the shift removed in the same frame, so nothing jumps.
+     pager(root, { tabs, strip, key, onShow }) — tabs: the row of buttons with data-tab; strip: the element holding
+     panels with data-pg="<tab>". */
+  function pager(root, { tabs, strip, start, onShow, stickTop = 0 } = {}) {
+    if (!tabs || !strip) return null;
+    const panels = [...strip.children]; const keys = panels.map(p => p.dataset.pg); const btns = keys.map(k => tabs.querySelector(`[data-tab="${k}"]`));
+    if (panels.length < 2 || btns.some(b => !b)) return null;
+    strip.classList.add('pgr'); panels.forEach(p => { p.classList.add('pgp'); p.hidden = false; });
+    tabs.classList.add('pgd'); const ink = document.createElement('i'); ink.className = 'pgi'; (btns[0].parentElement).appendChild(ink);
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let cur = Math.max(0, keys.indexOf(start)); const ys = {}; const seen = new Set([cur]);
+    const W = () => strip.clientWidth || 1;
+    const top0 = () => strip.getBoundingClientRect().top + window.scrollY;   // where the panels start on the page
+    const stick = () => Math.max(0, top0() - stickTop - (tabs.offsetHeight || 0));   // the scroll at which the tabs pin
+    const yFor = i => ys[i] != null ? ys[i] : Math.min(window.scrollY, stick());
+    const place = () => { const y = window.scrollY; panels.forEach((p, i) => { p.style.transform = i === cur ? '' : `translateY(${y - yFor(i)}px)`; }); };
+    const fit = (wide) => { const a = panels[cur].offsetHeight; const need = wide ? Math.max(a, window.scrollY + innerHeight - top0()) : a; strip.style.height = need + 'px'; };
+    const inkTo = (x) => { const i = Math.floor(x), f = x - i; const a = btns[Math.max(0, Math.min(i, btns.length - 1))], b = btns[Math.max(0, Math.min(i + 1, btns.length - 1))];
+      const L = a.offsetLeft + (b.offsetLeft - a.offsetLeft) * f, Wd = a.offsetWidth + (b.offsetWidth - a.offsetWidth) * f; ink.style.transform = `translateX(${L}px)`; ink.style.width = Wd + 'px';
+      const near = Math.round(x); btns.forEach((bt, j) => { const on = j === near; if (bt.classList.contains('on') !== on) { bt.classList.toggle('on', on); bt.setAttribute('aria-selected', String(on)); bt.setAttribute('aria-pressed', String(on)); } bt.style.opacity = String(.55 + .45 * Math.max(0, 1 - Math.abs(x - j))); }); };
+    const land = (i) => { if (i === cur) { fit(false); return; } ys[cur] = window.scrollY; const y = yFor(i); cur = i; panels.forEach(p => { p.style.transform = ''; }); fit(false); window.scrollTo(0, y); place();
+      if (!seen.has(i)) { seen.add(i); if (HW.v5.soft) HW.v5.soft(panels[i]); } if (onShow) onShow(keys[i]); };
+    let t = 0, moving = false;
+    strip.addEventListener('scroll', () => { const x = strip.scrollLeft / W(); inkTo(x); if (!moving) { moving = true; place(); fit(true); } clearTimeout(t); t = setTimeout(() => { const i = Math.round(strip.scrollLeft / W()); if (Math.abs(strip.scrollLeft - i * W()) > 1) { strip.scrollTo({ left: i * W(), behavior: reduce ? 'auto' : 'smooth' }); return; } moving = false; land(i); }, 120); }, { passive: true });
+    window.addEventListener('scroll', () => { if (strip.isConnected) place(); }, { passive: true });
+    btns.forEach((b, i) => b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); if (i === cur && Math.abs(strip.scrollLeft - i * W()) < 2) { if (window.scrollY > stick()) window.scrollTo({ top: stick(), behavior: reduce ? 'auto' : 'smooth' }); return; } place(); fit(true); strip.scrollTo({ left: i * W(), behavior: reduce ? 'auto' : 'smooth' }); }, true));
+    const ro = new ResizeObserver(() => { if (!moving) fit(false); inkTo(strip.scrollLeft / W()); }); panels.forEach(p => ro.observe(p)); ro.observe(strip);
+    requestAnimationFrame(() => { strip.scrollLeft = cur * W(); inkTo(cur); fit(false); place(); });
+    return { go: k => { const i = keys.indexOf(k); if (i >= 0) strip.scrollTo({ left: i * W(), behavior: reduce ? 'auto' : 'smooth' }); }, get key() { return keys[cur]; } };
+  }
   const deckPos = { key: '', i: 0 };
   const deckStep = d => { const c = d.querySelector('.dk'); return c ? c.offsetWidth + 10 : d.clientWidth; };
   const deckDots = (d, real) => { const dots = d.parentElement.querySelector('.dkdots'); if (!dots) return; if (dots.classList.contains('n')) { const s = dots.querySelector('span'); if (s.textContent !== String(real + 1)) s.textContent = real + 1; } else [...dots.children].forEach((x, j) => x.classList.toggle('on', j === real)); };
@@ -1139,10 +1173,11 @@
     const ptabs = `<div class="chips ptabs" role="tablist" style="padding-top:14px">${[['summary', 'Overview'], ['stats', 'Stats'], ['bio', 'Bio'], ['news', 'News']].map(([k, l]) => `<button class="chip${k === ptab ? ' on' : ''}" role="tab" data-act="ptab" data-tab="${k}" aria-selected="${k === ptab}" aria-pressed="${k === ptab}">${l}</button>`).join('')}</div>`;
     const pSub = `${tm.id ? `<a href="${href.team(lk, tm.id)}">${esc(tm.shortDisplayName || tm.name || '')}</a>` : ''}${[a.jersey ? `#${a.jersey}` : '', posWordP].filter(Boolean).map(x => ` · ${esc(x)}`).join('')}`.replace(/^ · /, '');
     const pHead = apHead({ color, name: a.displayName || '', sub: pSub, img: a.headshot && a.headshot.href, face: true, back: '#home', star: { on: following, attrs: `data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}'` }, share: a.displayName || '', badge: L.sport === 'basketball' && HW.rating ? `<span class="aprt" data-pid="${esc(String(id))}"></span>` : '' });
-    $main.innerHTML = `<div class="approf">` + pHead + `<div class="lb-slot"></div><div class="aptabs">${ptabs}</div>` + Object.entries(panels).map(([k, html]) => `<div data-ptab-panel="${k}"${k === ptab ? '' : ' hidden'}>${html}</div>`).join('') + `</div>`;
+    $main.innerHTML = `<div class="approf">` + pHead + `<div class="lb-slot"></div><div class="aptabs">${ptabs}</div><div class="pgstrip">` + Object.entries(panels).map(([k, html]) => `<div data-ptab-panel="${k}" data-pg="${k}"${k === ptab ? '' : ' hidden'}>${html}</div>`).join('') + `</div></div>`;
     if (HW.v5._ptabL) $main.removeEventListener('click', HW.v5._ptabL);
-    HW.v5._ptabL = e => { const b = e.target.closest('[data-act="ptab"]'); if (!b) return; e.preventDefault(); const k = b.dataset.tab; $main.querySelectorAll('[data-act="ptab"]').forEach(x => { const on = x.dataset.tab === k; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); x.setAttribute('aria-selected', String(on)); }); $main.querySelectorAll('[data-ptab-panel]').forEach(p => { const on = p.dataset.ptabPanel === k; if (on && p.hidden && HW.v5.soft) { p.hidden = false; HW.v5.soft(p); } else p.hidden = !on; }); const tb = $main.querySelector('.aptabs'); if (tb) { const y = tb.getBoundingClientRect().top; if (y < 60 || !b.closest('.aptabs')) window.scrollTo(0, Math.max(0, window.scrollY + y - 56)); } };
+    HW.v5._ptabL = e => { const b = e.target.closest('[data-act="ptab"]'); if (!b) return; e.preventDefault(); const k = b.dataset.tab; if (HW.v5._pg && $main.querySelector('.pgr')) { HW.v5._pg.go(k); const tb = $main.querySelector('.aptabs'); if (tb && !b.closest('.aptabs')) window.scrollTo({ top: Math.max(0, window.scrollY + tb.getBoundingClientRect().top - 56), behavior: 'smooth' }); return; } $main.querySelectorAll('[data-act="ptab"]').forEach(x => { const on = x.dataset.tab === k; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); x.setAttribute('aria-selected', String(on)); }); $main.querySelectorAll('[data-ptab-panel]').forEach(p => { const on = p.dataset.ptabPanel === k; if (on && p.hidden && HW.v5.soft) { p.hidden = false; HW.v5.soft(p); } else p.hidden = !on; }); const tb = $main.querySelector('.aptabs'); if (tb) { const y = tb.getBoundingClientRect().top; if (y < 60 || !b.closest('.aptabs')) window.scrollTo(0, Math.max(0, window.scrollY + y - 56)); } };
     $main.addEventListener('click', HW.v5._ptabL);
+    { const tb = $main.querySelector('.aptabs'), sp = $main.querySelector('.pgstrip'); const bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--apb')) || 56; HW.v5._pg = pager(tb, { tabs: tb, strip: sp, start: ptab, stickTop: bar, onShow: k => store.set('v5:ptab', k) }); }
     document.title = `${a.displayName} · RIVL`;
     /* the RIVL rating: one number on the 40-99 scale with a line on what stands out, then the six traits as bars, each the
        share of players at his position he beats; a tap on a trait opens the numbers behind it */
@@ -1337,5 +1372,5 @@
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom < 64; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };
     window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(run); }, { passive: true }); document.addEventListener('rivl:rendered', run); }
   HW.v5 = Object.assign(HW.v5 || {}, { initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { duelCard, duelBlock, deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
+    _: { pager, duelCard, duelBlock, deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
 })();

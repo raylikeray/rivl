@@ -4449,3 +4449,14 @@ html body .approf .tw{overflow-x:auto!important;-webkit-overflow-scrolling:touch
 html body .approf .tw table th:first-child,html body .approf .tw table td:first-child{position:sticky!important;left:0!important;z-index:2!important;background:var(--surf)!important}
 html body .approf .tw table td:first-child::after,html body .approf .tw table th:first-child::after{content:""!important;display:block!important;position:absolute;top:0;bottom:0;right:-1px;width:1px;background:var(--line)}
 html body .approf .tw table th:first-child,html body .approf .tw table td:first-child{padding-right:12px!important}
+
+/* ===== v399: the pager ===== */
+.pgr{display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.pgr::-webkit-scrollbar{display:none}
+.pgp{flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always;will-change:transform}
+.pgp[hidden]{display:block!important}
+.aptabs.pgd .chip.on::after{display:none}
+.aptabs.pgd .chips{position:relative}
+.pgi{position:absolute;left:0;bottom:-.5px;height:3px;border-radius:2px;background:var(--a,#0A84FF);width:0;pointer-events:none;will-change:transform,width}
+.aptabs.pgd .chip{transition:color .15s}
+@media (prefers-reduced-motion:reduce){.pgr{scroll-behavior:auto}}
