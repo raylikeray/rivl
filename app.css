@@ -4413,3 +4413,10 @@ html body .sgcard.dkhost,html body .approf .sgcard.dkhost{margin:0 16px 22px!imp
 .fbrk .ft b{font-weight:700}
 .fic.brk{background:color-mix(in srgb,var(--live) 16%,transparent)}
 .fic.brk i{width:10px;height:10px;border-radius:50%;background:var(--live)}
+
+/* ===== v392: the team crest on the profile header stands on its own, lifted off the band ===== */
+html body .apcrest{width:76px!important;height:76px!important;background:none!important;box-shadow:none!important;border-radius:0!important}
+html body .apcrest img{width:76px!important;height:76px!important;object-fit:contain;
+  filter:drop-shadow(0 0 1px rgba(255,255,255,.55)) drop-shadow(0 2px 3px rgba(0,0,0,.28)) drop-shadow(0 10px 18px rgba(0,0,0,.35))!important}
+html body .apfx .apcrest.s{width:30px!important;height:30px!important}
+html body .apfx .apcrest.s img{width:30px!important;height:30px!important;filter:drop-shadow(0 0 1px rgba(255,255,255,.5)) drop-shadow(0 2px 4px rgba(0,0,0,.3))!important}
