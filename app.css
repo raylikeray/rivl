@@ -4337,3 +4337,35 @@ html body .o384 .gr.onb-team .ock{opacity:1!important}
 html body .o384.welcome{align-items:stretch!important}
 html body .o384.welcome .ofoot{width:100%!important;align-self:stretch!important}
 html body .o384 .gr.onb-team .ock{transform:none!important;min-width:26px}
+
+/* ===== v385: setup fixes ===== */
+/* the bars sit in the flow (sticky), not fixed: the panel's slide animation made a fixed bar ride along with the list */
+html body .o384 .otrail{position:sticky!important;top:calc(-12px - env(safe-area-inset-top,0px));display:block;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 10px;margin-top:calc(-12px - env(safe-area-inset-top,0px));border-bottom:0}
+.otrail .oseg{display:flex;gap:4px}
+.otrail .oseg i{flex:1;height:4px;border-radius:2px;background:var(--seg)}
+.otrail .oseg i.d{background:var(--ink);opacity:.55}
+.otrail .oseg i.on{background:var(--ink)}
+.otrail p{margin:8px 0 0;font-size:12.5px;font-weight:600;color:var(--ink-3)}
+html body .o384 .ofoot{position:sticky!important;bottom:calc(-18px - env(safe-area-inset-bottom,0px));margin-top:auto}
+html body .o384.welcome .ofoot{position:static!important}
+html body .o384 .oscroll{padding-bottom:24px}
+/* logos on a white disc, so black and navy marks read in dark mode and every crest sits the same in light */
+html body .o384 .gr.onb-team .logo{width:40px!important;height:40px!important;border-radius:50%!important;background:#fff!important;padding:6px!important;box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 1px 3px rgba(0,0,0,.08)!important;box-sizing:border-box}
+html body .o384 .gl .gr.onb-team + .gr.onb-team::before{left:66px}
+/* college: every conference is its own card; its header is the top row of that card */
+html body .o384 .onb-sec{background:var(--surf)!important;border-radius:var(--r-card)!important;padding:15px 14px!important;margin:10px 0 0!important}
+html body .o384 .onb-sec[aria-expanded="true"]{border-radius:var(--r-card) var(--r-card) 0 0!important}
+html body .o384 .onb-sec[aria-expanded="true"] + .fold .gl{border-radius:0 0 var(--r-card) var(--r-card);border-top:.5px solid var(--line)}
+html body .o384 .onb-sec + .fold .onb-note{background:var(--surf);margin:0;padding:0 14px 10px;border-radius:0}
+html body .o384 .onb-sec + .fold .onb-note + .gl{border-top:.5px solid var(--line)}
+/* players: each team's band is its own colour again, flat and clean; faces get a white ring so they read on any colour */
+html body .pp .thead.pp-team{background:var(--tc)!important;color:var(--ti,#fff)!important}
+html body .pp .thead.pp-team .tt b,html body .pp .thead.pp-team .tt small,html body .pp .thead.pp-team .chev{color:var(--ti,#fff)!important}
+html body .pp .thead.pp-team .tt small{opacity:.85}
+html body .pp .thead.pp-team .logo{width:36px;height:36px;border-radius:50%;background:#fff!important;padding:5px;box-sizing:border-box;box-shadow:none!important}
+html body .pp .faces i{box-shadow:0 0 0 2px #fff!important;background:#fff!important}
+html body .pp .faces u{color:var(--ti,#fff)!important}
+html body .pp .tgrp .rows{border-top:0}
+html body .panel.full .panel-in:has(.o384){padding:0!important}
+html body .o384 .otrail{top:0!important;margin-top:0!important;background:color-mix(in srgb,var(--bg) 92%,transparent)!important}
+html body .o384 .ofoot{bottom:0!important}

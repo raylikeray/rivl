@@ -543,10 +543,12 @@
   const allTeams = () => ORDER.reduce((c, k) => c + nTeams(k), 0);
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
   /* the trail: the four leagues, a green dot and a count once something is picked in one, a line under the one you're on */
-  const onbTrail = cur => `<div class="otrail" role="list">${ORDER.map((k, i) => { const n = nTeams(k); return `<button role="listitem" class="${cur === k ? 'on' : ''}${n ? ' done' : ''}" data-act="onb-next" data-step="${i}" data-lk="${k}"><span>${n ? '<i></i>' : ''}${esc(LEAGUES[k].label)}${n ? `<em> · ${n}</em>` : ''}</span></button>`; }).join('')}</div>`;
+  /* v385: progress, not a menu. A thin bar with one segment per step (filled up to where you are) and one quiet line
+     saying which step this is. The counts live in the bottom bar, so the top stays calm. */
+  const onbTrail = n => { const S2 = ONB(); const st = S2[n]; return `<div class="otrail" aria-label="Step ${n + 1} of ${S2.length}"><div class="oseg">${S2.map((_, i) => `<i class="${i < n ? 'd' : i === n ? 'on' : ''}"></i>`).join('')}</div><p>Step ${n + 1} of ${S2.length}${st && st.t === 'lg' ? ` · ${esc(LEAGUES[st.lk].label)}` : ''}</p></div>`; };
   const onbBar = (n, mid) => { const S2 = ONB(); const nx = S2[n + 1];
     return `<div class="obar">${n >= 0 ? `<button class="oback" data-act="${n === 0 ? 'onb-welcome' : 'onb-next'}" data-step="${n - 1}">Back</button>` : '<span></span>'}<span class="omid" id="onbMid">${mid || ''}</span>${nx ? `<button class="onext" data-act="onb-next" data-step="${n + 1}" id="onbNext">Next: ${esc(onbName(nx))}</button>` : `<button class="onext" data-act="onb-done">${standalone() ? 'Open Home' : 'Finish'}</button>`}</div>`; };
-  const onbMidText = n => { const st = ONB()[n]; if (!st) return ''; if (st.t === 'lg') { const c = nTeams(st.lk); return c ? `${plural(c, LEAGUES[st.lk].label + ' team')} picked` : 'None picked yet'; } if (st.t === 'players') { const c = V.fplayers.all().length; return `${plural(allTeams(), 'team')} · ${plural(c, 'player')}`; } return ''; };
+  const onbMidText = n => { const st = ONB()[n]; if (!st) return ''; if (st.t === 'lg') { const c = nTeams(st.lk); return c ? `${plural(c, LEAGUES[st.lk].label + ' team')} picked` : 'None picked yet'; } if (st.t === 'players') { const c = V.fplayers.all().length; return `${plural(c, 'player')} picked`; } return ''; };
   let onbAt = -1;
   function onbOpen(html, n) {
     const dir = !$panel.hidden && $panel.querySelector('.onb') ? (n > onbAt ? 'f' : n < onbAt ? 'b' : '') : '';
@@ -566,7 +568,7 @@
   async function onbStep(n) {
     const S2 = ONB(); n = Math.max(0, Math.min(n, S2.length - 1)); const st = S2[n];
     const noSave = store.broken() ? `<p class="legend warn">This browser isn't saving anything. Private browsing blocks it, so whatever you pick here will be gone when you close the tab.</p>` : '';
-    const page = (title, body, inner, trail = true) => onbOpen(`<div class="onb o384" data-step="${n}">${trail ? onbTrail(st.t === 'lg' ? st.lk : '') : ''}<div class="oscroll"><h2>${title}</h2><p class="olead">${body}</p>${noSave}<div class="onb-body">${inner}</div></div><div class="ofoot">${onbBar(n, onbMidText(n))}</div></div>`, n);
+    const page = (title, body, inner, trail = true) => onbOpen(`<div class="onb o384" data-step="${n}">${onbTrail(n)}<div class="oscroll"><h2>${title}</h2><p class="olead">${body}</p>${noSave}<div class="onb-body">${inner}</div></div><div class="ofoot">${onbBar(n, onbMidText(n))}</div></div>`, n);
     if (st.t === 'lg') {
       const lk = st.lk, L = LEAGUES[lk], first = n === 0;
       const body = first ? `Tap the teams you follow. They lead Home and Scores, and they're the only teams you get alerts about.` : `Tap the teams you follow, or skip ahead if you don't watch ${/^ncaa/.test(lk) ? 'college' : 'the ' + L.label}.`;
@@ -624,7 +626,6 @@
   const onbCount = () => {
     const root = $panel.querySelector('.o384'); if (!root || $panel.hidden) return;
     root.querySelectorAll('.onb-team').forEach(t => { const on = HW.favs.has(t.dataset.lk, t.dataset.id); t.classList.toggle('on', on); t.setAttribute('aria-pressed', String(on)); });
-    const tr = root.querySelector('.otrail'); if (tr) { const cur = (tr.querySelector('.on') || {}).dataset; tr.outerHTML = onbTrail(cur ? cur.lk : ''); }
     root.querySelectorAll('.onb-sec').forEach(h => { const f = h.nextElementSibling; const k = f ? f.querySelectorAll('.onb-team.on').length : 0; let em = h.querySelector('em'); if (k && !em) { em = document.createElement('em'); const ch = h.querySelector('.chev'); if (ch) ch.before(em); else h.appendChild(em); } if (em) { if (k) em.textContent = `${k} picked`; else em.remove(); } });
     const mid = document.getElementById('onbMid'); if (mid) mid.textContent = onbMidText(+root.dataset.step);
   };
