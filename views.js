@@ -430,7 +430,9 @@
         const on = idxs.includes(near); if (bt.classList.contains('on') !== on) { bt.classList.toggle('on', on); bt.setAttribute('aria-selected', String(on)); bt.setAttribute('aria-pressed', String(on)); }
         bt.style.opacity = String(.55 + .45 * Math.max(0, ...idxs.map(j => 1 - Math.abs(x - j)))); }); };
     const land = (i) => { if (i === cur) { fit(false); return; } ys[cur] = window.scrollY; const y = yFor(i); cur = i; panels.forEach(p => { p.style.transform = ''; }); fit(false); window.scrollTo(0, y); place();
-      if (!seen.has(i)) { seen.add(i); if (HW.v5.soft) HW.v5.soft(panels[i]); } if (onShow) onShow(keys[i]); };
+      if (!seen.has(i)) { seen.add(i); if (HW.v5.soft) HW.v5.soft(panels[i]); } if (onShow) onShow(keys[i]);
+      // a tab row wider than the screen keeps the current tab in view (v408)
+      const bt = btns[i], row = bt && bt.parentElement; if (row && row.scrollWidth > row.clientWidth + 2) { const x = bt.offsetLeft - (row.clientWidth - bt.offsetWidth) / 2; row.scrollTo({ left: Math.max(0, x), behavior: reduce ? 'auto' : 'smooth' }); } };
     let t = 0, moving = false, down = false;
     // v400: never settle while a finger is still on the glass (a pause mid-swipe is not the end of it)
     const settle = () => { clearTimeout(t); t = setTimeout(() => { if (down) return; const i = Math.round(strip.scrollLeft / W()); if (Math.abs(strip.scrollLeft - i * W()) > 1) { strip.scrollTo({ left: i * W(), behavior: reduce ? 'auto' : 'smooth' }); return; } moving = false; land(i); }, 120); };

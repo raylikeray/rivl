@@ -8,21 +8,15 @@ jobs:
           cat > p.mjs <<'JS'
           const S='https://site.api.espn.com/apis/site/v2/sports/basketball/';
           const U=[
-            ['mMar3', S+'mens-college-basketball/scoreboard?dates=202503&seasontype=3&groups=50&limit=400'],
-            ['mMar3g100', S+'mens-college-basketball/scoreboard?dates=202503&seasontype=3&groups=100&limit=400'],
-            ['mApr3', S+'mens-college-basketball/scoreboard?dates=202504&seasontype=3&groups=50&limit=400'],
-            ['wMar24', S+'womens-college-basketball/scoreboard?dates=202403&seasontype=3&groups=50&limit=400'],
-            ['wApr24', S+'womens-college-basketball/scoreboard?dates=202404&seasontype=3&groups=50&limit=400'],
-            ['nbaApr3', S+'nba/scoreboard?dates=202504&seasontype=3&limit=400'],
-            ['nbaJun3', S+'nba/scoreboard?dates=202506&seasontype=3&limit=400'],
-            ['wnbaSep3', S+'wnba/scoreboard?dates=202509&seasontype=3&limit=400'],
-            ['wnbaOct3', S+'wnba/scoreboard?dates=202510&seasontype=3&limit=400'],
-            ['m26Mar3', S+'mens-college-basketball/scoreboard?dates=202603&seasontype=3&groups=50&limit=400'],
+            ['nbaNov1000', S+'nba/scoreboard?dates=202511&limit=1000'],
+            ['mNov1000', S+'mens-college-basketball/scoreboard?dates=202511&groups=50&limit=1000'],
+            ['mNov2000', S+'mens-college-basketball/scoreboard?dates=202511&groups=50&limit=2000'],
+            ['wNov1000', S+'womens-college-basketball/scoreboard?dates=202511&groups=50&limit=1000'],
           ];
           for (const [k,u] of U) {
             try { const r = await fetch(u); const t = await r.text(); if (r.status!==200) console.log(' body:', t.slice(0,300)); const j = JSON.parse(t); const ev = j.events||[];
               console.log(`\n### ${k} status=${r.status} events=${ev.length}`);
-              ev.slice(0,1).forEach(e=>{ const c=e.competitions[0];
+              ev.slice(0,0).forEach(e=>{ const c=e.competitions[0];
                 console.log(' note:', JSON.stringify((c.notes||[]).map(n=>n.headline)), '| type:', e.season&&e.season.type, e.season&&e.season.slug);
                 c.competitors.forEach(x=>console.log('   ', x.team.abbreviation, 'rank', JSON.stringify(x.curatedRank), 'seed', x.seed??'', 'keys', Object.keys(x).join(',')));
                 if (c.series) console.log('   series', JSON.stringify(c.series).slice(0,200)); });
