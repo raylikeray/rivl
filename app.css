@@ -4637,3 +4637,10 @@ html body .g2 #gbody .cmp > div:not(:has(b.lead)) b{color:var(--ink)!important;o
 html body .g2 #gbody .cmp .cb i.lo{opacity:.35}
 /* a swipe panel contains its children's margins, so the strip's height never trims the last card */
 .pgp{display:flow-root}
+
+/* ===== v414: the game header scrolls away instead of fading in place =====
+   It used to stay pinned while the tabs slid up over it, fading as they passed, so halfway through its logos and the
+   date sat there half-transparent between the bar and the tabs. It now travels up with the page and slips under the
+   solid bar, the way any scrolled content does. */
+html body .g2 .g2top{position:relative;top:auto}
+html body .g2 .g2fx{z-index:30}

@@ -685,7 +685,7 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
       const top = page.querySelector('.g2top'), bar = page.querySelector('.g2fx'); if (!top || !bar) return;
       const span = Math.max(120, top.offsetHeight - bar.offsetHeight); const p = Math.min(1, Math.max(0, window.scrollY / span));
       const head = page.querySelector('#ghead'), strip = page.querySelector('#g2strip'), mini = page.querySelector('#g2mini');
-      const f = Math.min(1, Math.max(0, (p - .3) / .45)); set(head, 'opacity', (1 - f).toFixed(3)); set(head, 'transform', f ? `translateY(${(-16 * f).toFixed(1)}px) scale(${(1 - .04 * f).toFixed(3)})` : '');
+      set(head, 'opacity', ''); set(head, 'transform', '');   // v414: the head scrolls away whole, under the bar; it no longer fades on the way
       const so = Math.min(1, Math.max(0, 1 - (p - .55) / .15)); set(strip, 'opacity', so.toFixed(3)); set(strip, 'pointerEvents', so < .3 ? 'none' : '');
       const c = Math.min(1, Math.max(0, (p - .66) / .24)); set(mini, 'opacity', c.toFixed(3)); set(mini, 'transform', `translateY(${(8 * (1 - c)).toFixed(1)}px) scale(${(.92 + .08 * c).toFixed(3)})`);
     };
