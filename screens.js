@@ -482,6 +482,100 @@
     return `<div class="zones"><div class="zh"><span></span>${sides.map(sd => `<span>${sd.head}</span>`).join('')}</div>${ZONES.map(([k, label]) => `<div class="zr"><span>${label}</span>${cols.map(z => `<em>${cell(z[k])}</em>`).join('')}</div>`).join('')}<div class="zr tot"><span>All shots</span>${cols.map(z => { const t = Object.values(z).reduce((a, v) => [a[0] + v[0], a[1] + v[1]], [0, 0]); return `<em>${cell(t)}</em>`; }).join('')}</div></div>`;
   }
   V.shotChart = { shotsOf, shotsTrusted, courtSvg, zoneRows, zoneOf };
+
+  /* the home floor, drawn the way X draws it: seen from the stands at an angle, the far side narrower, a white stanchion
+     and glass backboard at each end. Projected in code (a pinhole camera over a 94 by 50 ft floor), so the lines, the
+     paint and the backboards all sit in the same perspective. */
+  function court3d({ c = '#860038', alt = '', logo = '', word = '', nba = true, uid = 'c' } = {}) {
+    const R = 190, el = 40 * Math.PI / 180, T = [47, 25, 0];
+    const C = [T[0], T[1] + R * Math.cos(el), T[2] + R * Math.sin(el)];
+    const fw = [0, -Math.cos(el), -Math.sin(el)], up = [0, -Math.sin(el), Math.cos(el)];
+    const P = (x, y, z = 0) => { const d = [x - C[0], y - C[1], z - C[2]]; const zc = d[0] * fw[0] + d[1] * fw[1] + d[2] * fw[2]; const xs = d[0] / zc * R; const ys = -(d[1] * up[1] + d[2] * up[2]) / zc * R; return [xs, ys]; };
+    const f = n => n.toFixed(2);
+    const pt = (x, y, z) => { const p = P(x, y, z); return `${f(p[0])} ${f(p[1])}`; };
+    const poly = (pts, z = 0) => 'M' + pts.map(([x, y, zz]) => pt(x, y, zz ?? z)).join('L') + 'Z';
+    const line = (pts, z = 0) => 'M' + pts.map(([x, y, zz]) => pt(x, y, zz ?? z)).join('L');
+    const arc = (cx, cy, r, a0, a1, n = 28) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / n; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; });
+    const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+    /* an affine stand-in for the perspective around one spot, for the logo and the words (small enough not to show the difference) */
+    const aff = (x, y) => { const o = P(x, y), a = P(x + 1, y), b = P(x, y + 1); return `matrix(${f(a[0] - o[0])} ${f(a[1] - o[1])} ${f(b[0] - o[0])} ${f(b[1] - o[1])} ${f(o[0])} ${f(o[1])})`; };
+    const arcR = nba ? 23.75 : 22.15, cor = nba ? 3 : 25 - 21.65, lane = nba ? 16 : 12;
+    const lx = Math.sqrt(arcR * arcR - (25 - cor) ** 2) + 5.25;
+    const ang = Math.asin((25 - cor) / arcR);
+    const half = flip => {
+      const X = v => flip ? 94 - v : v; const s = flip ? -1 : 1;
+      const three = [[X(0), cor], [X(lx), cor], ...arc(X(5.25), 25, arcR, flip ? Math.PI + ang : -ang, flip ? Math.PI - ang : ang).map(p => p).slice(0), [X(lx), 50 - cor], [X(0), 50 - cor]];
+      // the arc from the top corner round to the bottom corner, on the court side of the basket
+      const a3 = arc(X(5.25), 25, arcR, flip ? Math.PI + ang : -ang, flip ? Math.PI - ang : ang);
+      const ft = arc(X(19), 25, 6, -Math.PI / 2, Math.PI / 2).map(([x, y]) => [flip ? 94 - (x) + 0 : x, y]);
+      const ftc = arc(X(19), 25, 6, 0, Math.PI * 2, 40).map(([x, y]) => [x, y]);
+      return { paint: poly(rect(X(0), 25 - lane / 2, X(19), 25 + lane / 2)), three: line([[X(0), cor], ...a3.map(([x, y]) => [x, y]), [X(0), 50 - cor]]), ftc: line(ftc), ra: line(arc(X(5.25), 25, 4, -Math.PI / 2 * s, Math.PI / 2 * s).map(([x, y]) => [flip ? 94 - (x - 94) * -1 : x, y])) };
+    };
+    const L = half(false), Rr = half(true);
+    // planks: thin lines down the floor's length
+    const planks = Array.from({ length: 33 }, (_, i) => line([[0, 1.5 * (i + 1)], [94, 1.5 * (i + 1)]])).join('');
+    const lc = c;
+    const stan = flip => {
+      const X = v => flip ? 94 - v : v;
+      const base = [[X(-10), 22], [X(-4), 22], [X(-4), 28], [X(-10), 28]];
+      const top = poly(base, 3.2), front = poly([[X(-10), 28, 0], [X(-4), 28, 0], [X(-4), 28, 3.2], [X(-10), 28, 3.2]]);
+      const side = poly([[X(-4), 22, 0], [X(-4), 28, 0], [X(-4), 28, 3.2], [X(-4), 22, 3.2]]);
+      const end = poly([[X(-10), 22, 0], [X(-10), 28, 0], [X(-10), 28, 3.2], [X(-10), 22, 3.2]]);
+      const post = line([[X(-6.5), 25, 3.2], [X(-6.5), 25, 12.6]]);
+      const arm = line([[X(-6.5), 25, 12.6], [X(3.6), 25, 12.2]]);
+      const brace = line([[X(-6.5), 25, 8], [X(3.6), 25, 11]]);
+      const board = poly([[X(4), 22, 9], [X(4), 28, 9], [X(4), 28, 13], [X(4), 22, 13]]);
+      const box = poly([[X(4), 24, 10], [X(4), 26, 10], [X(4), 26, 11.5], [X(4), 24, 11.5]]);
+      const rim = line(arc(X(5.25), 25, .75, 0, Math.PI * 2, 24).map(([x, y]) => [x, y, 10]));
+      const net = [0, 1, 2, 3, 4, 5].map(i => { const a = i / 6 * Math.PI * 2; return line([[X(5.25) + .75 * Math.cos(a), 25 + .75 * Math.sin(a), 10], [X(5.25) + .45 * Math.cos(a), 25 + .45 * Math.sin(a), 8.6]]); }).join('');
+      return `<g class="st"><path d="${end}" fill="#cfd2d6"/><path d="${side}" fill="#e3e5e8"/><path d="${front}" fill="#f3f4f6"/><path d="${top}" fill="#fff"/>`
+        + `<path d="${post}" stroke="#eceef1" stroke-width="2.3" stroke-linecap="square" fill="none"/><path d="${brace}" stroke="#e1e3e6" stroke-width="1" fill="none"/><path d="${arm}" stroke="#f6f7f8" stroke-width="1.6" fill="none"/>`
+        + `<path d="${board}" fill="rgba(255,255,255,.28)" stroke="#fff" stroke-width=".55" stroke-linejoin="round"/><path d="${box}" fill="none" stroke="#fff" stroke-width=".3"/>`
+        + `<path d="${net}" stroke="rgba(255,255,255,.85)" stroke-width=".18" fill="none"/><path d="${rim}" stroke="#F26B1D" stroke-width=".38" fill="none"/></g>`;
+    };
+    const apron = poly([[-4, -4], [98, -4], [98, 54], [-4, 54]]);
+    const floor = poly([[0, 0], [94, 0], [94, 50], [0, 50]]);
+    const g1 = P(-4, -4), g2 = P(98, -4), b1 = P(-4, 46), b2 = P(98, 46);
+    const top = P(-6.5, 25, 13.4)[1];
+    const vx0 = Math.min(P(-10.5, 28)[0], b1[0]) - 1, vx1 = Math.max(P(104.5, 28)[0], b2[0]) + 1;
+    const vy0 = Math.min(top, g1[1]) - 1.5, vy1 = b1[1];
+    const wm = word ? [[19, 41], [75, 9]].map(([x, y]) => `<text transform="${aff(x, y)}" x="0" y="0" text-anchor="middle" dominant-baseline="middle" font-family="Inter,system-ui,sans-serif" font-weight="900" font-size="${Math.min(3.4, 30 / Math.max(4, word.length)).toFixed(2)}" letter-spacing=".1" fill="${alt || lc}" fill-opacity=".75" stroke="${lc}" stroke-opacity=".35" stroke-width=".12">${esc(word)}</text>`).join('') : '';
+    const logoEl = logo ? `<image href="${esc(logo)}" transform="${aff(47, 25)}" x="-6.5" y="-6.5" width="13" height="13"/>` : '';
+    return `<svg class="ct3" viewBox="${f(vx0)} ${f(vy0)} ${f(vx1 - vx0)} ${f(vy1 - vy0)}" preserveAspectRatio="xMidYMin slice" aria-hidden="true">`
+      + `<defs><linearGradient id="ctw${uid}" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#E2C496"/><stop offset=".5" stop-color="#EDD3A8"/><stop offset="1" stop-color="#E2C496"/></linearGradient></defs>`
+      + `<path d="${apron}" fill="${lc}"/><path d="${floor}" fill="url(#ctw${uid})"/><path d="${planks}" stroke="rgba(120,80,30,.09)" stroke-width=".12" fill="none"/>`
+      + `<path d="${L.paint}${Rr.paint}" fill="${lc}"/>`
+      + `<g fill="none" stroke="${lc}" stroke-width=".28" stroke-linejoin="round"><path d="${floor}"/><path d="${line([[47, 0], [47, 50]])}"/><path d="${line(arc(47, 25, 6, 0, Math.PI * 2, 48))}"/><path d="${L.three}${Rr.three}"/></g>`
+      + `<g fill="none" stroke="${alt || '#fff'}" stroke-opacity=".7" stroke-width=".22"><path d="${L.ftc}${Rr.ftc}"/></g>`
+      + logoEl + wm + stan(false) + stan(true) + `</svg>`;
+  }
+  
+  V.court3d = court3d;
+
+  /* the game page scrolls like X's: the head (colour, score, court) stays put and the black sheet with the tabs rides up
+     over it; the tabs pin under the bar. As the sheet nears the top the head's words fade, and in the bar the day's games
+     give way to this game's score. */
+  function g2Fit() {
+    const page = document.querySelector('#gpage.g2'); if (!page) return; const top = page.querySelector('.g2top');
+    const hh = top ? top.offsetHeight : 0; if (hh && page.style.getPropertyValue('--g2hh') !== hh + 'px') page.style.setProperty('--g2hh', hh + 'px');
+  }
+  function g2Scroll() {
+    if (g2Scroll.on) { g2Scroll.run(); return; }
+    const set = (el, k, v) => { if (el && el.style[k] !== v) el.style[k] = v; };
+    const run = () => {
+      const page = document.querySelector('#gpage.g2'); if (!page) return;
+      const top = page.querySelector('.g2top'), bar = page.querySelector('.g2fx'); if (!top || !bar) return;
+      const span = Math.max(120, top.offsetHeight - bar.offsetHeight); const p = Math.min(1, Math.max(0, window.scrollY / span));
+      const head = page.querySelector('#ghead'), strip = page.querySelector('#g2strip'), mini = page.querySelector('#g2mini');
+      const f = Math.min(1, Math.max(0, (p - .3) / .45)); set(head, 'opacity', (1 - f).toFixed(3)); set(head, 'transform', f ? `translateY(${(-16 * f).toFixed(1)}px) scale(${(1 - .04 * f).toFixed(3)})` : '');
+      const so = Math.min(1, Math.max(0, 1 - (p - .55) / .15)); set(strip, 'opacity', so.toFixed(3)); set(strip, 'pointerEvents', so < .3 ? 'none' : '');
+      const c = Math.min(1, Math.max(0, (p - .66) / .24)); set(mini, 'opacity', c.toFixed(3)); set(mini, 'transform', `translateY(${(8 * (1 - c)).toFixed(1)}px) scale(${(.92 + .08 * c).toFixed(3)})`);
+    };
+    let raf = 0; window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; run(); }); }, { passive: true });
+    window.addEventListener('resize', () => { g2Fit(); run(); });
+    g2Scroll.on = true; g2Scroll.run = run; run();
+  }
+  V._.g2Attach = () => { g2Fit(); g2Scroll(); };
   /* who is on the floor, and every five-man unit's minutes and plus-minus: the starters from the box score, then every
      substitution in the play-by-play. If a single substitution can't be read cleanly nothing is shown. */
   function lineupsOf(d, g, L) {
@@ -559,7 +653,6 @@
       const bx = d.boxscore && d.boxscore.players || [];
       const boxOf = side => bx.find(x => String(x.team.id) === side.id);
       const statOf = (p, label) => { const s = p && p.statistics && p.statistics[0]; if (!s) return null; const i = (s.labels || s.names || []).indexOf(label); return i < 0 ? null : { i, s }; };
-      const topFor = side => { const p = boxOf(side); const st = statOf(p, 'PTS'); if (!st) return null; const ath = (st.s.athletes || []).filter(a => a.stats && a.stats.length && !a.didNotPlay); if (!ath.length) return null; const best = ath.slice().sort((a, b) => (+b.stats[st.i] || 0) - (+a.stats[st.i] || 0))[0]; const get = l => { const k = (st.s.labels || []).indexOf(l); return k >= 0 ? best.stats[k] : ''; }; return { a: best.athlete, pts: get('PTS'), reb: get('REB'), ast: get('AST') }; };
       const tms = d.boxscore && d.boxscore.teams || [];
       const ta = tms.find(t => String(t.team.id) === g.away.id), th = tms.find(t => String(t.team.id) === g.home.id);
       const flat = t => (t && t.statistics || []).flatMap(x => x && x.displayValue != null ? [x] : (x && (x.stats || x.statistics) || []));
@@ -636,16 +729,18 @@
         body += lineScore;
         if (starters) body += starters;
         if (floor) body += floor;
-        const tp = g.state !== 'pre' ? [topFor(g.away), topFor(g.home)] : [null, null];
-        /* a player card: the team's colour as the ground, its logo as a watermark, the headshot crisp at the right, the jersey number
-           and position from the feed (shown only when the feed carries them), and the line in big figures */
-        const pcard = (ath, T, num, unit, chipsArr) => {
-          const c = V._.teamColor(T, L); const img = hsUrl(ath); const pos = ath.position && (ath.position.abbreviation || ath.position.name) || '';
-          const first = ath.firstName || (ath.displayName || '').split(' ')[0] || '', last = ath.lastName || V.lastName(ath.displayName || ath.shortName || '');
-          return `<a class="pc" href="${href.player(lk, ath.id)}" style="--a:${esc(V._.V_lift(c))};--ad:${esc(V._.V_deep(c))}"><div class="shot">${img ? `<img src="${esc(img)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</div><div class="in"><em>${esc([T.short || T.abbr, pos].filter(Boolean).join(' · '))}</em><b>${esc(first)}<br>${esc(last)}</b><span class="line">${esc(num)}${unit ? `<u>${esc(unit)}</u>` : ''}</span>${chipsArr && chipsArr.length ? `<span class="xs">${chipsArr.map(x => `<i>${esc(x)}</i>`).join('')}</span>` : ''}</div></a>`; };
-        const sideOf = team => String(team && team.id) === g.home.id ? g.home : String(team && team.id) === g.away.id ? g.away : (team && team.abbreviation === g.home.abbr ? g.home : g.away);
-        if (tp[0] || tp[1]) body += sec(g.state === 'post' ? 'Top performers' : 'Leading the way') + `<div class="perf">${tp.map((x, i) => x ? pcard(x.a, i ? g.home : g.away, x.pts, 'pts', [`${x.reb} reb`, `${x.ast} ast`]) : '<div></div>').join('')}</div>`;
-        else if (d.leaders && d.leaders.length) { const items = []; d.leaders.forEach(t => (t.leaders || []).slice(0, 1).forEach(cat => { const Ld = cat.leaders && cat.leaders[0]; if (Ld) items.push({ team: t.team, cat, Ld }); })); if (items.length) body += sec('Season leaders') + `<div class="perf">${items.map(({ team, cat, Ld }) => pcard(Ld.athlete, sideOf(team), (Ld.displayValue || '').split(' ')[0], cat.shortDisplayName || cat.abbreviation || cat.displayName.toLowerCase(), [])).join('')}</div>`; }
+        /* game leaders, head to head (X's card, Apple's bars): for points, rebounds and assists, each side's leader with a
+           headshot, the figure and the name, a bar split by the two figures, the bigger figure bright and the other dimmed.
+           From the box score once the game is on; before tip, the season averages the feed lists. */
+        const ldrOf = (side, label) => { const p = boxOf(side); const st = statOf(p, label); if (!st) return null; const ath = (st.s.athletes || []).filter(a => a.stats && a.stats.length && !a.didNotPlay); if (!ath.length) return null; const best = ath.slice().sort((a, b) => (+b.stats[st.i] || 0) - (+a.stats[st.i] || 0))[0]; return { a: best.athlete, v: String(best.stats[st.i] ?? '') }; };
+        const seasonOf = (side, cat) => { const t = (d.leaders || []).find(x => x.team && String(x.team.id) === side.id); const c = t && (t.leaders || []).find(x => x.name === cat); const Ld = c && c.leaders && c.leaders[0]; return Ld && Ld.athlete ? { a: Ld.athlete, v: String(Ld.displayValue || '').split(' ')[0] } : null; };
+        const CATS = [['PTS', 'points', 'Points'], ['REB', 'rebounds', 'Rebounds'], ['AST', 'assists', 'Assists']];
+        const ldRows = CATS.map(([k, cat, name]) => { const A = g.state !== 'pre' ? ldrOf(g.away, k) : seasonOf(g.away, cat), Hm = g.state !== 'pre' ? ldrOf(g.home, k) : seasonOf(g.home, cat); if (!A && !Hm) return '';
+          const av = parseFloat(A && A.v) || 0, hv = parseFloat(Hm && Hm.v) || 0; const tot = av + hv || 1; const [ca, ch] = V._.pairColors(L, g.away, g.home);
+          const who = (x, t, r) => x ? `<a class="ldp${r ? ' r' : ''}" href="${href.player(lk, x.a.id)}">${headshot(hsUrl(x.a), V._.teamColor(t, L), 40, x.a.displayName || '')}</a>` : '<span class="ldp"></span>';
+          const nm = x => x ? esc(V.lastName(x.a.displayName || x.a.shortName || '')) : '';
+          return `<div class="ld2"><div class="ld2k">${name}</div>${who(A, g.away)}<div class="ld2m"><div class="ld2t"><span><b class="${av >= hv ? 'hi' : ''}">${esc(A ? A.v : '–')}</b><em>${nm(A)}</em></span><span><em>${nm(Hm)}</em><b class="${hv >= av ? 'hi' : ''}">${esc(Hm ? Hm.v : '–')}</b></span></div><div class="ld2b"><i style="flex:${Math.max(.03, av / tot).toFixed(3)};background:${esc(V._.lift(ca))}"></i><i style="flex:${Math.max(.03, hv / tot).toFixed(3)};background:${esc(V._.lift(ch))}"></i></div></div>${who(Hm, g.home, true)}</div>`; }).join('');
+        if (ldRows) body += `<section class="g2card g2ld"><div class="ld2h"><span>${logo(g.away.logo, 's', V._.teamColor(g.away, L))}<b>${esc(g.away.abbr)}</b></span><h3>${g.state === 'pre' ? 'Season leaders' : 'Game leaders'}</h3><span><b>${esc(g.home.abbr)}</b>${logo(g.home.logo, 's', V._.teamColor(g.home, L))}</span></div>${ldRows}</section>`;
         body += tracker;
         if (f && prefs.get('forecast')) {
           const fav = f.pHome >= .5 ? g.home : g.away; const p = Math.max(f.pHome, 1 - f.pHome);
@@ -788,27 +883,51 @@
       const num = (t, o) => hasSc ? `<b class="g2n${lead(t, o) ? '' : ' lo'}">${esc(String(t.score))}</b>` : `<b class="g2n dash">–</b>`;
       const ph = f && Number.isFinite(f.pHome) ? Math.min(.99, Math.max(.01, f.pHome)) : null;
       const predWord = g.state === 'post' ? 'RIVL had' : g.state === 'in' ? 'Win chance' : 'RIVL pick';
-      const pred = ph != null && !g.tbd ? `<div class="g2p" role="img" aria-label="${esc(`${predWord}: ${g.away.abbr} ${pct(1 - ph)}, ${g.home.abbr} ${pct(ph)}`)}"><div class="g2pl"><b>${esc(g.away.abbr || '')} ${pct(1 - ph)}</b><span>${predWord}</span><b>${pct(ph)} ${esc(g.home.abbr || '')}</b></div><div class="g2pb"><i style="flex:${(1 - ph).toFixed(3)};background:${esc(lift(pc[0]))}"></i><i style="flex:${ph.toFixed(3)};background:${esc(lift(pc[1]))}"></i></div></div>` : '';
-      // the home court, for a game not yet played: wood, the home side's colour in the paint and on the border, its crest at centre court
-      const homeC = V._.deep(pc[1]);
-      const court = g.state === 'pre' && !g.tbd ? `<div class="g2court" aria-hidden="true"><svg viewBox="-3 -3 100 56"><rect x="-3" y="-3" width="100" height="56" rx="1.5" fill="${esc(homeC)}"/><rect x="0" y="0" width="94" height="50" fill="#E6C89A"/><g fill="none" stroke="rgba(255,255,255,.9)" stroke-width=".35"><rect x="0" y="0" width="94" height="50"/><line x1="47" y1="0" x2="47" y2="50"/><circle cx="47" cy="25" r="6"/></g><g fill="${esc(homeC)}"><rect x="0" y="17" width="19" height="16"/><rect x="75" y="17" width="19" height="16"/></g><g fill="none" stroke="rgba(255,255,255,.9)" stroke-width=".35"><path d="M19 19a6 6 0 0 1 0 12"/><path d="M75 19a6 6 0 0 0 0 12"/><path d="M0 3H14A23.75 23.75 0 0 1 14 47H0"/><path d="M94 3H80A23.75 23.75 0 0 0 80 47H94"/></g><g stroke="#fff" stroke-width=".5"><line x1="4" y1="22" x2="4" y2="28"/><line x1="90" y1="22" x2="90" y2="28"/></g><g fill="none" stroke="#FF7A1A" stroke-width=".35"><circle cx="5.25" cy="25" r=".75"/><circle cx="88.75" cy="25" r=".75"/></g>${g.home.logo ? `<image href="${esc(g.home.logo)}" x="40" y="18" width="14" height="14"/>` : ''}</svg></div>` : '';
+      /* the call under the score: before tip RIVL's pick, during the game the feed's own live win chance, after it what RIVL had */
+      const wpLast = g.state === 'in' && wpAll.length ? Math.min(.99, Math.max(.01, +wpAll[wpAll.length - 1].homeWinPercentage)) : null;
+      const pv2 = wpLast != null ? wpLast : ph;
+      const pred = pv2 != null && !g.tbd ? `<div class="g2p" role="img" aria-label="${esc(`${predWord}: ${g.away.abbr} ${pct(1 - pv2)}, ${g.home.abbr} ${pct(pv2)}`)}"><div class="g2pl"><b>${esc(g.away.abbr || '')} ${pct(1 - pv2)}</b><span>${predWord}</span><b>${pct(pv2)} ${esc(g.home.abbr || '')}</b></div><div class="g2pb"><i style="flex:${(1 - pv2).toFixed(3)};background:${esc(lift(pc[0]))}"></i><i style="flex:${pv2.toFixed(3)};background:${esc(lift(pc[1]))}"></i></div></div>` : '';
+      // the home floor, X's way: wood, the home side's colour on the border, paint and lines, its crest at centre, its name on the floor
+      const hcol = V._.teamColor(g.home, L); const altc = g.home.alt && V._.rgbDist && V._.rgbDist(g.home.alt, '#E9CFA3') > 60 && V._.rgbDist(g.home.alt, hcol) > 60 ? g.home.alt : '';
+      const court = !g.tbd ? `<div class="g2court">${court3d({ c: hcol, alt: altc, logo: g.home.logo || '', word: String(g.home.short || g.home.abbr || '').toUpperCase(), nba: L.key === 'nba', uid: String(id).replace(/\W/g, '') })}</div>` : '';
+      // the latest play, live
+      const lp = g.state === 'in' ? plays.slice(-1)[0] : null;
+      const lastPlay = lp && lp.text ? `<div class="g2lp"><b>Last play</b><span>${esc(lp.text)}</span></div>` : '';
       const backI = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg>`;
       const shareI = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>`;
-      const pill = g.tbd ? `<span class="g2tt">${title}</span>` : `<span class="g2tt">${g.away.logo ? V._.imgSized(g.away.logo, 48, 48, 'alt=""') : ''}<em>${g.neutral ? 'vs' : '@'}</em>${g.home.logo ? V._.imgSized(g.home.logo, 48, 48, 'alt=""') : ''}</span>`;
-      const headHtml = `<header class="g2h"><div class="g2bar"><a class="g2ib" href="#scores" data-act="back" aria-label="Back">${backI}</a>${pill}<button class="g2ib" data-act="share" data-title="${esc(title.replace(/<[^>]+>/g, ''))}"${card ? ` data-card='${esc(JSON.stringify(card))}'` : ''} aria-label="Share">${shareI}</button></div>`
-        + `<div class="g2row">${crest(g.away)}${num(g.away, g.home)}<div class="g2m${g.state === 'in' ? ' now' : ''}"><b>${g.state === 'in' ? '<i></i>' : ''}${stateTop}</b>${stateSub ? `<span>${stateSub}</span>` : ''}</div>${num(g.home, g.away)}${crest(g.home)}</div>`
-        + court + pred + (V._.seriesLine(g) ? `<p class="g2s">${esc(V._.seriesLine(g))}${spick ? ` · ${esc(spick)}` : ''}</p>` : '') + `</header>`;
+      /* the bar: Back and Share, and between them the day's other games as pills (X), this one in white. Scrolled down, the
+         pills give way to this game's score in one line: crest, score, clock, score, crest. */
+      let day = []; try { day = (await HW.scoreboard(L, ymdOf(g.date), 30000)) || []; } catch { }
+      const rank = x => x.state === 'in' ? 0 : x.state === 'pre' ? 1 : 2;
+      const dayG = day.filter(x => x && x.away && x.home).slice().sort((x, y) => rank(x) - rank(y) || String(x.date).localeCompare(String(y.date)));
+      const lgo = t => t.logo ? V._.imgSized(t.logo, 48, 48, 'alt=""') : `<i class="nl">${esc(t.abbr || '')}</i>`;
+      const tShort = x => esc(String(tipOf(x)).replace(/\s+(CT|ET|PT|MT|CST|CDT)$/, ''));
+      const gpill = x => { const cur = String(x.id) === String(id); const sc = x.state !== 'pre' && x.away.score != null && x.home.score != null; const mid = x.off ? `<em>${esc(x.off)}</em>` : sc ? `<b class="${+x.away.score >= +x.home.score ? '' : 'lo'}">${x.away.score}</b><b class="${+x.home.score >= +x.away.score ? '' : 'lo'}">${x.home.score}</b>${x.state === 'post' ? '<em>F</em>' : ''}` : `<em>${tShort(x)}</em>`; const inner = `${x.state === 'in' ? '<i class="lv"></i>' : ''}${lgo(x.away)}${mid}${lgo(x.home)}`; return cur ? `<span class="g2gp cur" aria-current="page">${inner}</span>` : `<a class="g2gp" href="${href.game(lk, x.id)}">${inner}</a>`; };
+      const strip = dayG.length > 1 ? dayG.map(gpill).join('') : (g.tbd ? `<span class="g2gp cur">${title}</span>` : gpill(g));
+      const perS = n => n > reg ? (n - reg > 1 ? `${n - reg}OT` : 'OT') : reg === 2 ? `${ord(n)} Half` : `${ord(n)} Qtr`;
+      const miniClock = g.off ? esc(g.off) : g.state === 'post' ? esc(finalWord(g)) : g.state === 'in' ? (/HALFTIME/.test(g.status || '') ? 'Half' : `${perS(+g.period || 1)}${stateSub ? `<br>${stateSub}` : ''}`) : `${esc(stateTop)}<br>${stateSub}`;
+      const mini = g.tbd ? `<span class="g2mn"><b>${title}</b></span>` : `<span class="g2mn">${lgo(g.away)}<b class="${hasSc && !lead(g.away, g.home) ? 'lo' : ''}">${hasSc ? g.away.score : ''}</b><span class="${g.state === 'in' ? 'now' : ''}">${miniClock}</span><b class="${hasSc && !lead(g.home, g.away) ? 'lo' : ''}">${hasSc ? g.home.score : ''}</b>${lgo(g.home)}</span>`;
+      const barHtml = `<div class="g2bar"><a class="g2ib" href="#scores" data-act="back" aria-label="Back">${backI}</a><div class="g2mid"><div class="g2strip" id="g2strip" data-h="${hashOf(strip)}">${strip}</div><div class="g2mini" id="g2mini">${mini}</div></div><button class="g2ib" data-act="share" data-title="${esc(title.replace(/<[^>]+>/g, ''))}"${card ? ` data-card='${esc(JSON.stringify(card))}'` : ''} aria-label="Share">${shareI}</button></div>`;
+      const headHtml = `<header class="g2h"><div class="g2row">${crest(g.away)}${num(g.away, g.home)}<div class="g2m${g.state === 'in' ? ' now' : ''}"><b>${g.state === 'in' ? '<i></i>' : ''}${stateTop}</b>${stateSub ? `<span>${stateSub}</span>` : ''}</div>${num(g.home, g.away)}${crest(g.home)}</div>`
+        + pred + court + lastPlay + (V._.seriesLine(g) ? `<p class="g2s">${esc(V._.seriesLine(g))}${spick ? ` · ${esc(spick)}` : ''}</p>` : '') + `</header>`;
       // how much of the aurora each side holds: the score's margin once it starts, RIVL's call before it
       const share = hasSc ? .5 + Math.max(-.32, Math.min(.32, (+g.home.score - +g.away.score) / 30)) : ph != null ? .5 + (ph - .5) * .7 : .5;
       const bgVars = `--ga:${pc[0]};--gh:${pc[1]};--sh:${share.toFixed(3)}`;
+      const blobs = `<i class="b1"></i><i class="b2"></i><i class="b3"></i>`;
       const hh = hashOf(headHtml), page = $main.querySelector('#gpage');
       if (page && page.dataset.gid === String(id)) {
         const head = page.querySelector('#ghead'); if (head.dataset.h !== hh) { head.innerHTML = headHtml; head.dataset.h = hh; }
+        const st = page.querySelector('#g2strip'); if (st && st.dataset.h !== hashOf(strip)) { const x = st.scrollLeft; st.innerHTML = strip; st.dataset.h = hashOf(strip); st.scrollLeft = x; }
+        const mn = page.querySelector('#g2mini'); if (mn && mn.innerHTML !== mini) mn.innerHTML = mini;
         const tabsEl = page.querySelector('#gtabs'); if (tabsEl.dataset.k !== tabKey) { tabsEl.innerHTML = tabs; tabsEl.dataset.k = tabKey; }
         else tabsEl.querySelectorAll('.chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); c.setAttribute('aria-selected', String(on)); });
         const bodyEl = page.querySelector('#gbody'); if (bodyEl.dataset.h !== hashOf(body) || bodyEl.dataset.tab !== tab) { const tabChanged = bodyEl.dataset.tab !== tab; bodyEl.innerHTML = body; if (tabChanged && V.soft) V.soft(bodyEl); bodyEl.dataset.h = hashOf(body); bodyEl.dataset.tab = tab; }
-        const bg = page.querySelector('.ghbg'); if (bg && bg.getAttribute('style') !== bgVars) bg.setAttribute('style', bgVars);
-      } else $main.innerHTML = `<div id="gpage" class="gdark g2" data-gid="${esc(String(id))}"><div class="g2top"><div class="ghbg" style="${bgVars}" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div><div id="ghead" data-h="${hh}">${headHtml}</div></div><div id="gtabs" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div>`;
+        page.querySelectorAll('.ghbg').forEach(bg => { if (bg.getAttribute('style') !== bgVars) bg.setAttribute('style', bgVars); });
+      } else {
+        $main.innerHTML = `<div id="gpage" class="gdark g2" data-gid="${esc(String(id))}"><div class="g2fx"><div class="ghbg" style="${bgVars}" aria-hidden="true">${blobs}</div>${barHtml}</div><div class="g2top"><div class="ghbg" style="${bgVars}" aria-hidden="true">${blobs}</div><div id="ghead" data-h="${hh}">${headHtml}</div></div><div id="gtabs" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div>`;
+        const cur = $main.querySelector('#g2strip .cur'); if (cur) { const st = cur.parentElement; st.scrollLeft = Math.max(0, cur.offsetLeft - (st.clientWidth - cur.offsetWidth) / 2); }
+      }
+      g2Fit(); requestAnimationFrame(g2Fit); g2Scroll();
       document.title = `${g.tbd ? 'Teams to be decided' : `${g.away.short} at ${g.home.short}`} · RIVL`;
       return g;
     };

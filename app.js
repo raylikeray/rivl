@@ -65,7 +65,7 @@
   const scrollMem = new Map();
   let navN = 0;   // each history entry is numbered the first time it is shown; an entry numbered below the one we left is a step back
   async function render() {
-    const r = route(); const my = ++seq; const wasGame = current && current.name === 'game'; current = r; V.refresh = null; closeSheet(); if (wasGame !== (r.name === 'game')) applyTheme();
+    const r = route(); const my = ++seq; const wasGame = current && current.name === 'game'; current = r; document.documentElement.dataset.page = r.name; V.refresh = null; closeSheet(); if (wasGame !== (r.name === 'game')) applyTheme();
     if (r.name !== 'scores' && V.todayPill) V.todayPill(false);   // the Scores screen's back-to-today pill goes with it
     const key = `${r.name}/${r.args.join('/')}`;
     const st = history.state; const back = !!(st && st.n != null && st.n < navN);
@@ -306,9 +306,9 @@
       $main.dispatchEvent(new CustomEvent('rivl:fav')); $panel.dispatchEvent(new CustomEvent('rivl:fav')); document.dispatchEvent(new CustomEvent('rivl:fav'));
     }
     if (a === 'expand') { e.preventDefault(); $main.querySelectorAll(`[data-more="${act.dataset.more}"]`).forEach(el => { el.hidden = false; }); act.remove(); }
-    if (a === 'clip') { e.preventDefault(); let list = act.previousElementSibling; if (list && !list.classList.contains('lclip')) list = list.querySelector('.lclip'); if (!list) return; const open = !list.classList.contains('open'); const y0 = act.getBoundingClientRect().top;
-      list.classList.toggle('open', open); act.setAttribute('aria-expanded', String(open)); act.textContent = open ? 'Show less' : act.textContent.replace(/^Show less$/, `Show all ${act.dataset.total}`);
-      if (!open) { act.textContent = `Show all ${act.dataset.total}`; const y1 = act.getBoundingClientRect().top; if (Math.abs(y1 - y0) > 1) window.scrollBy({ top: y1 - y0, behavior: 'instant' }); }
+    if (a === 'clip') { e.preventDefault(); let list = act.parentElement && act.parentElement.classList.contains('lclip') ? act.parentElement : act.previousElementSibling; if (list && !list.classList.contains('lclip')) list = list.querySelector('.lclip'); if (!list) return; const open = !list.classList.contains('open'); const y0 = act.getBoundingClientRect().top;
+      list.classList.toggle('open', open); act.setAttribute('aria-expanded', String(open)); const what = act.dataset.what ? ' ' + act.dataset.what : ''; act.textContent = open ? 'Show less' : `Show all ${act.dataset.total}${what}`;
+      if (!open) { const y1 = act.getBoundingClientRect().top; if (Math.abs(y1 - y0) > 1) window.scrollBy({ top: y1 - y0, behavior: 'instant' }); }
       return; }
     if (a === 'brk' || a === 'brkp') { e.preventDefault(); store.set(`v5:${a}:` + (current ? current.lk : 'nba'), act.dataset.k); if (a === 'brk') store.set('v5:brkp:' + (current ? current.lk : 'nba'), 'ff'); render(); return; }
     if (a === 'stab') { e.preventDefault(); store.set('v5:stab:' + (current ? current.lk : 'nba'), act.dataset.tab); render(); }

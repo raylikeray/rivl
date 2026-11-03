@@ -128,7 +128,7 @@
   /* a long list shows its first five; the rest open under them with Show all, and Show less folds them back without the page
      jumping: the button stays under the finger */
   const clip = (items, cls = 'rows', n = 5, what = '') => { const list = Array.isArray(items) ? items : [items]; const html = list.join('');
-    return list.length > n ? `<div class="${cls} lclip">${html}</div><button class="cliptog" data-act="clip" data-total="${list.length}" aria-expanded="false">Show all ${list.length}${what ? ' ' + esc(what) : ''}</button>` : `<div class="${cls}">${html}</div>`; };
+    return list.length > n ? `<div class="${cls} lclip">${html}<button class="cliptog" data-act="clip" data-total="${list.length}" data-what="${esc(what)}" aria-expanded="false">Show all ${list.length}${what ? ' ' + esc(what) : ''}</button></div>` : `<div class="${cls}">${html}</div>`; };
   /* one injury as a row: the face with the team's crest on it, the name, the team and the injury, the status pill with
      when they're expected back under it */
   const injRow = (L, key, x, team, p) => { const a = x.athlete || {}; const st = x.status || ''; const cls = /out/i.test(st) ? 'out' : /day|quest|doubt/i.test(st) ? 'q' : /prob|avail/i.test(st) ? 'ok' : 'q';
