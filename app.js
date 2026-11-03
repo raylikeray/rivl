@@ -260,7 +260,7 @@
   function paintLive() {
     if (!$live) return;
     const r = current || route();
-    const show = r && !['home', 'settings', 'search', 'game'].includes(r.name) && !document.body.classList.contains('onboarding');
+    const show = false && r;   // v383: the live strip is gone for good — live games live on Home's feed, Scores and the game page
     const list = show ? liveList() : [];
     const inner = $live.querySelector('.lb-in');
     if (!list.length) { if (!$live.hidden) { $live.hidden = true; inner.innerHTML = ''; } return; }

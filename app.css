@@ -4247,3 +4247,4 @@ html body .xans .xgloss > div{grid-template-columns:104px 1fr!important}
 html body .xans .xgloss p{margin:0!important;padding:0!important;border:0!important;line-height:1.4!important}
 html body .xans .xgloss p::before,html body .xans .xgloss p::after{display:none!important}
 html body .xgloss .tag{line-height:1.4!important;height:auto!important;min-height:0!important}
+#lbhome,#livebar,.livebar,.lb-slot{display:none!important}
