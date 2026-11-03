@@ -8,26 +8,29 @@ jobs:
           cat > p.mjs <<'JS'
           const S='https://site.api.espn.com/apis/site/v2/sports/basketball/';
           const U=[
-            ['nba25', S+'nba/scoreboard?dates=20250410-20250625&seasontype=3&limit=1000'],
-            ['nba25b', S+'nba/scoreboard?dates=20250410-20250625&limit=1000'],
-            ['nba25day', S+'nba/scoreboard?dates=20250420'],
-            ['w24', S+'womens-college-basketball/scoreboard?dates=20240315-20240410&groups=50&seasontype=3&limit=1000'],
-            ['w24b', S+'womens-college-basketball/scoreboard?dates=20240315-20240410&groups=100&limit=1000'],
-            ['w24day', S+'womens-college-basketball/scoreboard?dates=20240323&groups=100'],
-            ['m25', S+'mens-college-basketball/scoreboard?dates=20250315-20250410&groups=50&seasontype=3&limit=1000'],
-            ['m25b', S+'mens-college-basketball/scoreboard?dates=20250315-20250410&groups=100&limit=1000'],
-            ['m25day', S+'mens-college-basketball/scoreboard?dates=20250320&groups=100'],
-            ['m25day50', S+'mens-college-basketball/scoreboard?dates=20250320&groups=50'],
+            ['m25-nolim', S+'mens-college-basketball/scoreboard?dates=20250315-20250410&groups=50'],
+            ['m25-l300', S+'mens-college-basketball/scoreboard?dates=20250315-20250410&groups=50&limit=300'],
+            ['m25-l100', S+'mens-college-basketball/scoreboard?dates=20250315-20250410&groups=50&limit=100'],
+            ['m25-st3-l100', S+'mens-college-basketball/scoreboard?dates=20250315-20250410&groups=50&seasontype=3&limit=100'],
+            ['m25-late', S+'mens-college-basketball/scoreboard?dates=20250327-20250408&groups=50&limit=100'],
+            ['w25-late', S+'womens-college-basketball/scoreboard?dates=20250328-20250407&groups=50&limit=100'],
+            ['w24-l100', S+'womens-college-basketball/scoreboard?dates=20240315-20240410&groups=50&limit=100'],
+            ['nba25-l100', S+'nba/scoreboard?dates=20250410-20250625&limit=100'],
+            ['nba25-l300', S+'nba/scoreboard?dates=20250410-20250625&limit=300'],
+            ['nba25-may', S+'nba/scoreboard?dates=20250501-20250531&limit=100'],
+            ['nba25-jun', S+'nba/scoreboard?dates=20250601-20250625&limit=100'],
+            ['wnba25-l100', S+'wnba/scoreboard?dates=20250905-20251025&limit=100'],
           ];
           for (const [k,u] of U) {
             try { const r = await fetch(u); const j = await r.json(); const ev = j.events||[];
               console.log(`\n### ${k} status=${r.status} events=${ev.length}`);
-              ev.slice(0,3).forEach(e=>{ const c=e.competitions[0];
+              ev.slice(0,1).forEach(e=>{ const c=e.competitions[0];
                 console.log(' note:', JSON.stringify((c.notes||[]).map(n=>n.headline)), '| type:', e.season&&e.season.type, e.season&&e.season.slug);
                 c.competitors.forEach(x=>console.log('   ', x.team.abbreviation, 'rank', JSON.stringify(x.curatedRank), 'seed', x.seed??'', 'keys', Object.keys(x).join(',')));
                 if (c.series) console.log('   series', JSON.stringify(c.series).slice(0,200)); });
-              const notes={}; ev.forEach(e=>{const n=((e.competitions[0].notes||[])[0]||{}).headline||'(none)'; notes[n]=(notes[n]||0)+1;});
-              console.log(' distinct notes:', Object.keys(notes).length, JSON.stringify(Object.entries(notes).slice(0,12)));
+              const notes={}; ev.forEach(e=>{const n=(((e.competitions[0].notes||[])[0]||{}).headline||'(none)').replace(/ - Game \\d+/,' - Game N'); notes[n]=(notes[n]||0)+1;});
+              console.log(' distinct notes:', Object.keys(notes).length, JSON.stringify(Object.entries(notes).slice(0,40)));
+              const ds=ev.map(e=>e.date).sort(); console.log(' span', ds[0], ds[ds.length-1]);
             } catch (e) { console.log(k,'ERR',e.message); }
           }
           JS
