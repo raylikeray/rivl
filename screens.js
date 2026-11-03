@@ -193,7 +193,12 @@
       games = await B.range(L, T.from, T.to, T.extra).catch(() => []);
       if (!alive()) return;
       const mine = games.filter(g => T.match(g.note || ''));
-      F = B.applyResults(B.fieldFromGames(L, mine), mine);
+      // the pros' feed carries no seeds: they come from that season's final standings
+      let seeds = null;
+      if ((lk === 'nba' || lk === 'wnba') && T.year) { const st = await HW.standings(L, T.year).catch(() => null);
+        if (st) { seeds = {}; st.groups.forEach(g => g.rows.forEach(r => { if (r.seed) seeds[String(r.id)] = +r.seed; })); }
+        if (!alive()) return; }
+      F = B.applyResults(B.fieldFromGames(L, mine, seeds), mine);
     }
     if (F) {
       const picks = B.picksOf(lk, key); const n = B.filled(F, picks), total = F.all.length;

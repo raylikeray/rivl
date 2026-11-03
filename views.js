@@ -430,7 +430,9 @@
         const on = idxs.includes(near); if (bt.classList.contains('on') !== on) { bt.classList.toggle('on', on); bt.setAttribute('aria-selected', String(on)); bt.setAttribute('aria-pressed', String(on)); }
         bt.style.opacity = String(.55 + .45 * Math.max(0, ...idxs.map(j => 1 - Math.abs(x - j)))); }); };
     const land = (i) => { if (i === cur) { fit(false); return; } ys[cur] = window.scrollY; const y = yFor(i); cur = i; panels.forEach(p => { p.style.transform = ''; }); fit(false); window.scrollTo(0, y); place();
-      if (!seen.has(i)) { seen.add(i); if (HW.v5.soft) HW.v5.soft(panels[i]); } if (onShow) onShow(keys[i]); };
+      if (!seen.has(i)) { seen.add(i); if (HW.v5.soft) HW.v5.soft(panels[i]); } if (onShow) onShow(keys[i]);
+      // a tab row wider than the screen keeps the current tab in view (v408)
+      const bt = btns[i], row = bt && bt.parentElement; if (row && row.scrollWidth > row.clientWidth + 2) { const x = bt.offsetLeft - (row.clientWidth - bt.offsetWidth) / 2; row.scrollTo({ left: Math.max(0, x), behavior: reduce ? 'auto' : 'smooth' }); } };
     let t = 0, moving = false, down = false;
     // v400: never settle while a finger is still on the glass (a pause mid-swipe is not the end of it)
     const settle = () => { clearTimeout(t); t = setTimeout(() => { if (down) return; const i = Math.round(strip.scrollLeft / W()); if (Math.abs(strip.scrollLeft - i * W()) > 1) { strip.scrollTo({ left: i * W(), behavior: reduce ? 'auto' : 'smooth' }); return; } moving = false; land(i); }, 120); };
@@ -969,16 +971,17 @@
     const mark = (ymd, f) => { if (!ymd || ymd.slice(0, 7) !== ym) return; const d = days[ymd] || (days[ymd] = { n: 0, mine: false, has: false }); f(d); };
     const dayOf = e => { try { return HW.ymdOf(e.date); } catch { return ''; } };
     const d0 = `${ym}-01`, d1 = `${ym}-${String(last).padStart(2, '0')}`;
-    const spans = /^ncaa/.test(L.key) ? Array.from({ length: Math.ceil(last / 7) }, (_, i) => [`${ym}-${String(i * 7 + 1).padStart(2, '0')}`, `${ym}-${String(Math.min(last, i * 7 + 7)).padStart(2, '0')}`]) : [[d0, d1]];
     const params = L.sbParams.replace(/&limit=\d+/, '');
-    const weeks = Array.from({ length: Math.ceil(last / 7) }, (_, i) => [`${ym}-${String(i * 7 + 1).padStart(2, '0')}`, `${ym}-${String(Math.min(last, i * 7 + 7)).padStart(2, '0')}`]);
-    const span = ([a, b], lim) => fetchJson(`${API(L)}/scoreboard?dates=${HW.compact(addDays(a, -1))}-${HW.compact(addDays(b, 1))}${params}&limit=${lim}`, 30000);
+    /* v408: ESPN no longer answers a start-end range. The pros fit in one month request (dates=202511); a college month
+       is too big for it, so college asks one day at a time. */
     const ok = pg => pg && Array.isArray(pg.events);
+    const dayList = Array.from({ length: last }, (_, i) => `${ym}-${String(i + 1).padStart(2, '0')}`);
+    const reqs = /^ncaa/.test(L.key) ? dayList.map(d => fetchJson(`${API(L)}/scoreboard?dates=${HW.compact(d)}${params}&limit=400`, 30000))
+      : [fetchJson(`${API(L)}/scoreboard?dates=${ym.replace('-', '')}${params}&limit=1000`, 30000)];
     let [scheds, pages] = await Promise.all([
       Promise.all(mine.map(id => jSoft(`${API(L)}/teams/${id}/schedule`, 300000))),
-      Promise.all(spans.map(sp => span(sp, 1000)))
+      Promise.all(reqs)
     ]);
-    if (!pages.every(ok) && spans.length === 1) pages = await Promise.all(weeks.map(w => span(w, 400)));   // the month was too much in one go: a week at a time
     scheds.forEach(sc => (sc && sc.events || []).forEach(e => mark(dayOf(e), d => { d.mine = true; d.has = true; })));
     const counted = pages.length > 0 && pages.every(ok); let truncated = false;
     pages.forEach(pg => { const evs = pg && pg.events || []; if (evs.length >= 1000) truncated = true; evs.forEach(e => mark(dayOf(e), d => { d.n++; d.has = true; const comp = e.competitions && e.competitions[0]; if (comp && (comp.competitors || []).some(c => c.team && mineSet.has(String(c.team.id)))) d.mine = true; })); });

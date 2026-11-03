@@ -14,12 +14,25 @@
   const mem = {};
 
   /* ---------- fetching ---------- */
+  /* v408: ESPN stopped answering a start-end date range ("Failed to get events endpoint"). It still answers a whole month
+     (dates=202503), so a window is read month by month and trimmed back to its days. College asks for the full division
+     (groups=100): the top-conference list fills its 400 with conference tournaments and never reaches the NCAA field. */
+  const monthsOf = (a, b) => { const out = []; let y = +a.slice(0, 4), m = +a.slice(5, 7); const ye = +b.slice(0, 4), me = +b.slice(5, 7);
+    while (y < ye || (y === ye && m <= me)) { out.push(`${y}${String(m).padStart(2, '0')}`); m++; if (m > 12) { m = 1; y++; } } return out; };
   async function range(L, a, b, extra = '') {
-    const params = String(L.sbParams || '').replace(/&limit=\d+/, '');
-    const url = `${API(L)}/scoreboard?dates=${compact(a)}-${compact(b)}${params}${extra}&limit=1000`;
-    if (mem[url]) return mem[url];
-    const p = jSoft(url, a > todayCT() || b < addDays(todayCT(), -2) ? 6 * 3600000 : 300000).then(d => (d && d.events || []).map(e => { try { return parseEvent(e, L); } catch { return null; } }).filter(Boolean)).catch(() => []);
-    mem[url] = p; return p;
+    const base = String(L.sbParams || '').replace(/&limit=\d+/, '').replace(/&groups=50\b/, '&groups=100');
+    const key = `${L.key}|${a}|${b}|${extra}`; if (mem[key]) return mem[key];
+    const old = b < addDays(todayCT(), -2);
+    const one = ym => { const url = `${API(L)}/scoreboard?dates=${ym}${base}${extra}&limit=400`;
+      return jSoft(url, old ? 12 * 3600000 : a > todayCT() ? 6 * 3600000 : 300000).then(d => (d && d.events || []).map(e => { try { return parseEvent(e, L); } catch { return null; } }).filter(Boolean)).catch(() => []); };
+    // a college window outside the postseason (the holiday events) is too big for a month request: a day at a time
+    const daily = /^ncaa/.test(L.key) && !/seasontype=3/.test(extra);
+    const oneDay = d => jSoft(`${API(L)}/scoreboard?dates=${compact(d)}${String(L.sbParams || '').replace(/&limit=\d+/, '')}${extra}&limit=400`, d < addDays(todayCT(), -1) ? 6 * 3600000 : 300000)
+      .then(x => (x && x.events || []).map(e => { try { return parseEvent(e, L); } catch { return null; } }).filter(Boolean)).catch(() => []);
+    const days = []; if (daily) { let d = a; while (d <= b) { days.push(d); d = addDays(d, 1); } }
+    const p = Promise.all(daily ? days.map(oneDay) : monthsOf(a, b).map(one)).then(parts => { const seen = new Set();
+      return parts.flat().filter(g => { if (seen.has(g.id)) return false; seen.add(g.id); const d = ymdOf(g.date); return d >= addDays(a, -1) && d <= addDays(b, 1); }); });
+    mem[key] = p; return p;
   }
   const roundOf = note => { const parts = String(note || '').split(/\s+-\s+/).filter(p => !/^game\s*\d+$/i.test(p) && !/\bregion(al)?\b/i.test(p)); return parts.length > 1 ? parts.slice(1).join(' · ') : parts[0] || ''; };
   const nameOf = note => String(note || '').split(/\s+-\s+/)[0].trim();
@@ -38,14 +51,15 @@
     }
     if (L.key === 'ncaam' || L.key === 'ncaaw') {
       // the holiday events around now: any tournament with its games named in the feed
-      const games = await range(L, addDays(t, -14), addDays(t, 21));
+      const holiday = /^(11|12)-/.test(md);   // the November and December events
+      const games = holiday ? await range(L, addDays(t, -3), addDays(t, 10)) : [];
       const by = {};
-      games.forEach(g => { const n = nameOf(g.note); if (!n || /basketball championship|conference|^game\s*\d|regular season/i.test(n) || !/\s-\s/.test(g.note || '')) return; (by[n] = by[n] || []).push(g); });
+      games.forEach(g => { const n = nameOf(g.note); if (!n || /basketball championship|ncaa women'?s championship|\bnit\b|wbit|crown|conference|^game\s*\d|regular season/i.test(n) || !/\s-\s/.test(g.note || '')) return; (by[n] = by[n] || []).push(g); });
       Object.entries(by).filter(([, gs]) => gs.length >= 3).sort((a, b) => a[1].map(g => g.date).sort()[0] < b[1].map(g => g.date).sort()[0] ? -1 : 1)
-        .forEach(([n]) => out.push({ key: 'h:' + n, label: n, kind: 'games', from: addDays(t, -14), to: addDays(t, 21), extra: '', match: x => nameOf(x) === n }));
+        .forEach(([n]) => out.push({ key: 'h:' + n, label: n, kind: 'games', from: addDays(t, -3), to: addDays(t, 10), extra: '', match: x => nameOf(x) === n }));
       const yr = md >= '03-15' ? y : y - 1;
       for (let k = 0; k < 3; k++) { const Y = yr - k;
-        out.push({ key: `nc${Y}`, label: `${Y} NCAA Tournament`, short: String(Y), kind: 'games', from: `${Y}-03-15`, to: `${Y}-04-10`, extra: '&seasontype=3', match: n => /basketball championship/i.test(n) && !/first four/i.test(n), regions: true, pick: true, year: Y }); }
+        out.push({ key: `nc${Y}`, label: `${Y} NCAA Tournament`, short: String(Y), kind: 'games', from: `${Y}-03-15`, to: `${Y}-04-10`, extra: '&seasontype=3', match: n => /basketball championship|ncaa women'?s championship/i.test(n) && !/first four/i.test(n), regions: true, pick: true, year: Y }); }
     }
     return out;
   }
@@ -135,45 +149,66 @@
   const SEEDS16 = [[1, 16], [8, 9], [5, 12], [4, 13], [6, 11], [3, 14], [7, 10], [2, 15]];
   const SEEDS8 = [[1, 8], [4, 5], [3, 6], [2, 7]];
   const roundNames = n => n === 16 ? ['1st Round', '2nd Round', 'Sweet 16', 'Elite 8'] : ['1st Round', 'Semifinals', 'Conference Finals'];
-  const regionOf = note => { const p = String(note || '').split(/\s+-\s+/).find(x => /region/i.test(x)); return p ? p.replace(/\s*region(al)?s?\s*/i, '').trim() : ''; };
+  /* the region a game belongs to, in the feed's own words: "East Region" on the men's side, "Regional 2 in Albany" on the
+     women's (shown as Albany 2), and for the pros the conference that opens the note ("East 1st Round - Game 3") */
+  const regionOf = note => { const parts = String(note || '').split(/\s+-\s+/);
+    const w = parts.map(x => /regional\s*(\d+)\s+in\s+(.+)/i.exec(x)).find(Boolean); if (w) return `${w[2].trim()} ${w[1]}`;
+    const m = parts.find(x => /\bregion\b/i.test(x)); if (m) return m.replace(/\s*region\s*/i, '').trim();
+    const c = /^(east|west)(?:ern)?(?:\s+conference)?\s+(1st round|first round|semifinals?|finals?)/i.exec(parts[0] || ''); if (c) return c[1][0].toUpperCase() + c[1].slice(1).toLowerCase();
+    return ''; };
   const isFF = note => /final four|semifinal/i.test(note || '') && !/region/i.test(note || '');
   const isTitle = note => /national championship|championship game|\bfinals?\b/i.test(note || '') && !/region|semi|conference/i.test(note || '');
 
-  /* the first round's games, grouped into regions, each with its teams by seed */
-  function fieldFromGames(L, games) {
-    const first = games.filter(g => g.home && g.away && !g.home.tbd && !g.away.tbd);
+  /* the first round's games, grouped into regions, each with its teams by seed.
+     College: four regions of 16, the seed on every team (curatedRank, which in March is the tournament seed).
+     NBA: two conferences of 8 playing series; the feed carries no seeds, so they come from that season's standings
+     (`seedMap`), and where a seed is missing it is the partner's: in the first round the seeds of a pair add up to 9.
+     WNBA: one bracket of 8 seeded across the league; its semifinal winners meet in the final. */
+  const isFirst = note => /\b(1st|first) round\b/i.test(note || '') && !/first four/i.test(note || '');
+  function fieldFromGames(L, games, seedMap) {
+    const pro = L.key === 'nba' || L.key === 'wnba';
+    const first = games.filter(g => g.home && g.away && !g.home.tbd && !g.away.tbd && isFirst(g.note));
     const byReg = {};
-    first.forEach(g => { const r = regionOf(g.note) || (isFF(g.note) || isTitle(g.note) ? '' : 'Bracket'); if (!r) return; (byReg[r] = byReg[r] || []).push(g); });
+    first.forEach(g => { const r = regionOf(g.note) || (pro ? L.label : ''); if (!r) return;
+      const k = [g.home.id, g.away.id].sort().join('|');   // a series is one pairing, however many games it ran
+      const list = byReg[r] = byReg[r] || []; if (!list.some(x => x.k === k)) list.push({ k, g }); });
     const names = Object.keys(byReg); if (!names.length) return null;
-    const size = names.length >= 4 ? 16 : 8;   // four regions of 16, or two conferences of 8
+    const single = names.length === 1;
+    const size = names.length >= 4 ? 16 : 8;
     const pairs = size === 16 ? SEEDS16 : SEEDS8;
+    const seedFor = t => (t.rank >= 1 && t.rank <= size ? t.rank : null) || (seedMap && seedMap[String(t.id)]) || null;
     const regions = names.map(name => {
-      const gs = byReg[name].slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+      const gs = byReg[name].map(x => x.g).sort((a, b) => new Date(a.date) - new Date(b.date));
       const seeded = {};
-      gs.forEach(g => { [g.away, g.home].forEach(t => { const s = t.rank; if (s >= 1 && s <= size && !seeded[s]) seeded[s] = t; }); });
+      gs.forEach(g => { let sa = seedFor(g.away), sh = seedFor(g.home);
+        // the pros: a seed the standings did not give is the partner's complement (1 v 8, 4 v 5, ...)
+        if (pro && size === 8) { if (sa && !sh) sh = 9 - sa; else if (sh && !sa) sa = 9 - sh;
+          if (sa && sh && sa + sh !== 9) { const hi = Math.min(sa, sh); if (sa === hi) sh = 9 - hi; else sa = 9 - hi; } }
+        if (sa && !seeded[sa]) seeded[sa] = g.away; if (sh && !seeded[sh]) seeded[sh] = g.home; });
       const haveSeeds = pairs.every(([x, y]) => seeded[x] && seeded[y]);
       const slots = [];
-      const rounds = roundNames(size); const nR = rounds.length;
+      const rounds = single ? ['1st Round', 'Semifinals'] : roundNames(size); const nR = rounds.length;
       for (let r = 0; r < nR; r++) {
         const n = pairs.length >> r;
         for (let i = 0; i < n; i++) slots.push({ id: `${name}-${r}-${i}`, reg: name, r, i, round: rounds[r], a: null, b: null, feed: r ? [`${name}-${r - 1}-${i * 2}`, `${name}-${r - 1}-${i * 2 + 1}`] : null });
       }
-      // the first round, in the committee's order when the seeds are there and the feed's own order when they are not
       pairs.forEach(([x, y], i) => { const s = slots[i];
         if (haveSeeds) { s.a = seeded[x]; s.b = seeded[y]; s.sa = x; s.sb = y; }
-        else if (gs[i]) { const g = gs[i]; const ah = (g.away.rank || 99) <= (g.home.rank || 99); s.a = ah ? g.away : g.home; s.b = ah ? g.home : g.away; s.sa = s.a.rank; s.sb = s.b.rank; }
+        else if (gs[i]) { const g = gs[i]; const ah = (seedFor(g.away) || 99) <= (seedFor(g.home) || 99); s.a = ah ? g.away : g.home; s.b = ah ? g.home : g.away; s.sa = seedFor(s.a); s.sb = seedFor(s.b); }
       });
       return { name, slots, size };
     }).filter(x => x.slots[0].a && x.slots[0].b);
-    if (regions.length < 2) return null;
+    if (!regions.length || (regions.length < 2 && !single)) return null;
     const ff = [];
     if (regions.length === 4) { ff.push({ id: 'ff-0-0', reg: 'ff', r: 0, i: 0, round: 'Final Four', a: null, b: null, feed: [last(regions[0]), last(regions[1])] });
       ff.push({ id: 'ff-0-1', reg: 'ff', r: 0, i: 1, round: 'Final Four', a: null, b: null, feed: [last(regions[2]), last(regions[3])] });
       ff.push({ id: 'ff-1-0', reg: 'ff', r: 1, i: 0, round: 'Championship', a: null, b: null, feed: ['ff-0-0', 'ff-0-1'] }); }
+    else if (single) { const R = regions[0]; const semis = R.slots.filter(s => s.r === 1).map(s => s.id);
+      ff.push({ id: 'ff-1-0', reg: 'ff', r: 1, i: 0, round: 'Finals', a: null, b: null, feed: semis }); }
     else ff.push({ id: 'ff-1-0', reg: 'ff', r: 1, i: 0, round: 'Finals', a: null, b: null, feed: [last(regions[0]), last(regions[1])] });
     const all = regions.flatMap(r => r.slots).concat(ff);
     const byId = {}; all.forEach(s => { byId[s.id] = s; });
-    return { lk: L.key, regions, ff, all, byId, size: regions[0].size };
+    return { lk: L.key, regions, ff, all, byId, size: regions[0].size, single, pro };
   }
   const last = reg => reg.slots[reg.slots.length - 1].id;
 
@@ -182,22 +217,35 @@
   function applyResults(F, games) {
     if (!F) return F;
     const pool = games.filter(g => g.home && g.away && !g.home.tbd && !g.away.tbd);
-    const take = (slot, g) => { slot.game = g; const done = g.state === 'post' && !g.off && g.home.score != null && g.away.score != null;
-      slot.live = g.state === 'in'; slot.final = done;
-      slot.won = done ? (+g.home.score > +g.away.score ? g.home : g.away) : null; };
-    const match = (slot, within) => pool.find(g => within(g) && ((sameT(g.home, slot.a) && sameT(g.away, slot.b)) || (sameT(g.home, slot.b) && sameT(g.away, slot.a))));
+    const pairOf = (slot, g) => (sameT(g.home, slot.a) && sameT(g.away, slot.b)) || (sameT(g.home, slot.b) && sameT(g.away, slot.a));
+    const take = (slot, within) => {
+      const gs = pool.filter(g => within(g) && pairOf(slot, g)).sort((x, y) => new Date(x.date) - new Date(y.date)); if (!gs.length) return;
+      const fin = g => g.state === 'post' && !g.off && g.home.score != null && g.away.score != null;
+      const winOf = g => +g.home.score > +g.away.score ? g.home : g.away;
+      if (!F.pro) { const g = gs[0]; slot.game = g; slot.live = g.state === 'in'; slot.final = fin(g); slot.won = slot.final ? winOf(g) : null; return; }
+      // a series: wins counted from the games, or the feed's own count on its latest game; done when the feed says so
+      const wa = gs.filter(g => fin(g) && sameT(winOf(g), slot.a)).length, wb = gs.filter(g => fin(g) && sameT(winOf(g), slot.b)).length;
+      const lastG = gs[gs.length - 1], sr = lastG.series || {};
+      const fa = sr.hw != null ? (sameT(lastG.home, slot.a) ? sr.hw : sr.aw) : null, fb = sr.hw != null ? (sameT(lastG.home, slot.b) ? sr.hw : sr.aw) : null;
+      const A = Math.max(wa, fa || 0), Bw = Math.max(wb, fb || 0);
+      const need = sr.total ? Math.ceil(sr.total / 2) : (F.lk === 'wnba' && slot.r === 0 ? 2 : 4);
+      slot.series = { a: A, b: Bw, need, n: gs.length };
+      slot.game = gs.find(g => g.state !== 'post') || lastG; slot.live = gs.some(g => g.state === 'in');
+      const done = !!sr.done || A >= need || Bw >= need;
+      slot.final = done; slot.won = done ? (A > Bw ? slot.a : slot.b) : null;
+    };
     F.regions.forEach(reg => {
       reg.slots.forEach(s => {
         if (s.r > 0) { const [x, y] = s.feed.map(id => F.byId[id]); s.a = x && x.won; s.b = y && y.won; s.sa = seedOf(F, s.a); s.sb = seedOf(F, s.b); }
         if (!s.a || !s.b) return;
-        const g = match(s, g => regionOf(g.note) === reg.name || reg.name === 'Bracket');
-        if (g) take(s, g);
+        take(s, g => F.pro ? !isTitleFor(F, g.note) : (regionOf(g.note) === reg.name));
       });
     });
     F.ff.forEach(s => { const [x, y] = s.feed.map(id => F.byId[id]); s.a = x && x.won; s.b = y && y.won; s.sa = seedOf(F, s.a); s.sb = seedOf(F, s.b);
-      if (!s.a || !s.b) return; const g = match(s, g => s.r === 1 ? isTitle(g.note) : isFF(g.note)); if (g) take(s, g); });
+      if (!s.a || !s.b) return; take(s, g => s.r === 1 ? isTitleFor(F, g.note) : isFF(g.note)); });
     return F;
   }
+  const isTitleFor = (F, note) => F.pro ? /\b(nba|wnba) finals\b/i.test(note || '') : isTitle(note);
   const dp = c => (HW.v5 && HW.v5._ && HW.v5._.deepen) ? HW.v5._.deepen(c) : c;
   const sameT = (x, y) => x && y && String(x.id) === String(y.id);
   const seedOf = (F, t) => { if (!t) return null; const f = F.regions.flatMap(r => r.slots).find(s => s.r === 0 && (sameT(s.a, t) || sameT(s.b, t))); return !f ? null : sameT(f.a, t) ? f.sa : f.sb; };
@@ -232,7 +280,7 @@
     const perRound = {};
     order(F).forEach(s => {
       const w = s.won, got = m.win[s.id];
-      const depth = s.reg === 'ff' ? (F.size === 16 ? 4 + s.r : 3 + s.r) : s.r;
+      const nRR = F.regions[0].slots[F.regions[0].slots.length - 1].r + 1; const depth = s.reg === 'ff' ? nRR + (F.ff.some(x => x.r === 0) ? s.r : 0) : s.r;
       const val = 1 << depth;
       const row = perRound[s.round] = perRound[s.round] || { round: s.round, right: 0, of: 0, pts: 0 };
       if (!got) { if (w) { wrong++; row.of++; } else open++; return; }
@@ -273,7 +321,7 @@
       const beat = realW && !sameT(realW, t);
       const bust = picked && (realW ? !sameT(realW, t) : dead && dead.has(String(t.id)));
       const cls = [picked ? 'pk' : '', bust ? 'bust' : '', beat ? 'out' : '', realW && sameT(realW, t) ? 'adv' : ''].filter(Boolean).join(' ');
-      const sc = s.game && s.final ? (sameT(s.game.home, t) ? s.game.home.score : sameT(s.game.away, t) ? s.game.away.score : null) : null;
+      const sc = s.series ? (s.series.n ? (sameT(s.a, t) ? s.series.a : s.series.b) : null) : s.game && s.final ? (sameT(s.game.home, t) ? s.game.home.score : sameT(s.game.away, t) ? s.game.away.score : null) : null;
       return teamRow(L, t, seed, { cls, sc, pick: true, mark: picked ? tick : '' });
     };
     const open = a && b && !s.won;
