@@ -4581,3 +4581,12 @@ html.noscroll,html.noscroll body{overflow:hidden}
 .bkff4 .bkpc{width:38px;height:38px;margin:0 auto;background:var(--seg);box-shadow:none}
 .bkff4 b{display:block;font:750 12px/1 var(--ui);margin-top:7px}
 .bkcta{margin:14px 0 0;width:100%}
+
+/* ===== v409: the bracket bar sits flush with the pills; the gauntlet swipes like a deck of cards ===== */
+#stbody > .bkgo{margin:2px 16px 6px!important;width:calc(100% - 32px)}
+#stbody > .bkbar{margin:2px 16px 6px!important}
+.bkside .bk2k{transition:opacity .12s,transform .12s}
+.bkside.lean .bk2k{opacity:1;transform:scale(1)}
+.bkside.lean .bkpc{box-shadow:inset 0 0 0 2px #fff,0 0 0 3px rgba(255,255,255,.25)}
+.bkside.fade{opacity:.45}
+.bkduel{touch-action:pan-x;will-change:transform}

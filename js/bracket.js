@@ -422,7 +422,7 @@
         + `<div class="bkduel${dir ? ' in' : ''}" style="--ca:${esc(ca)};--cb:${esc(cb)}">`
         + `<span class="wm a">${esc(a.abbr || '')}</span><span class="wm h">${esc(b.abbr || '')}</span>`
         + `<p class="bkq">WHO ADVANCES?</p>${sideHtml(a, sa, myPick === String(a.id))}<span class="bkvs">VS</span>${sideHtml(b, sb, myPick === String(b.id))}`
-        + `<p class="bktap">${myPick ? 'Tap to change it, or swipe on' : "Tap the side you've got"}</p></div>`
+        + `<p class="bktap">${myPick ? 'Tap or swipe to change it' : `Swipe · ← ${esc(a.abbr || '')} / ${esc(b.abbr || '')} → · or tap`}</p></div>`
         + (nexts ? `<p class="bknxt">NEXT UP</p><div class="bkups">${nexts}</div>` : '<p class="bknxt"></p>')
         + `<p class="bkfoot">Picks save as you go · close and finish later</p>`;
       if (dir && !reduce) requestAnimationFrame(() => { const d = ov.querySelector('.bkduel'); if (d) d.classList.remove('in'); });
@@ -441,16 +441,43 @@
         + `<button class="bkgo bkcta" data-bko="x"><b>See your full bracket</b><span>Right picks turn green as the real games go final</span></button>`;
     };
 
-    ov.addEventListener('click', e => {
-      const x = e.target.closest('[data-bko]');
-      if (x) { e.preventDefault(); if (x.dataset.bko === 'x') close(); else if (x.dataset.bko === 'back' && idx > 0) { idx--; paint('b'); } return; }
-      const side = e.target.closest('.bkside'); if (!side) return;
-      e.preventDefault();
+    let settling = false;
+    const choose = (side, wait) => {
+      if (settling || !side) return; settling = true;
       const s = Q[idx]; picks.p = picks.p || {}; picks.p[s.id] = side.dataset.side;
       cleanse(F, picks); savePicks(lk, key, picks); picks = picksOf(lk, key);
       side.classList.add('on');
-      setTimeout(() => { if (idx + 1 >= total) { finish(); } else { idx++; paint('f'); } }, reduce ? 60 : 240);
+      setTimeout(() => { settling = false; if (idx + 1 >= total) { finish(); } else { idx++; paint('f'); } }, reduce ? 60 : wait);
+    };
+    ov.addEventListener('click', e => {
+      const x = e.target.closest('[data-bko]');
+      if (x) { e.preventDefault(); if (x.dataset.bko === 'x') close(); else if (x.dataset.bko === 'back' && idx > 0 && !settling) { idx--; paint('b'); } return; }
+      const side = e.target.closest('.bkside'); if (!side || drag && drag.moved) return;
+      e.preventDefault(); choose(side, 240);
     });
+    /* the deck swipe: drag the card left for the top side, right for the bottom. The card rides the finger, the side
+       being chosen lights its tick, and past a third of the screen the card flies off and the pick is made. */
+    let drag = null;
+    const sidesOf = d => d.querySelectorAll('.bkside');
+    ov.addEventListener('touchstart', e => { const d = e.target.closest('.bkduel'); if (!d || settling) return;
+      drag = { d, x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, moved: false }; }, { passive: true });
+    ov.addEventListener('touchmove', e => { if (!drag) return;
+      const dx = e.touches[0].clientX - drag.x, dy = e.touches[0].clientY - drag.y;
+      if (!drag.moved) { if (Math.abs(dx) < 8) { if (Math.abs(dy) > 16) drag = null; return; } drag.moved = true; drag.d.style.transition = 'none'; }
+      drag.dx = dx; drag.d.style.transform = `translateX(${dx}px) rotate(${(dx / 28).toFixed(2)}deg)`;
+      const [ta, tb] = sidesOf(drag.d);
+      if (ta && tb) { ta.classList.toggle('lean', dx < -36); ta.classList.toggle('fade', dx > 36);
+        tb.classList.toggle('lean', dx > 36); tb.classList.toggle('fade', dx < -36); } }, { passive: true });
+    const endDrag = () => { if (!drag) return; const { d, dx, moved } = drag; drag = null; if (!moved) return;
+      const [ta, tb] = sidesOf(d);
+      if (Math.abs(dx) > Math.max(96, d.clientWidth * .32)) {
+        const side = dx < 0 ? ta : tb;
+        if (!reduce) { d.style.transition = 'transform .24s ease,opacity .24s ease'; d.style.transform = `translateX(${(dx < 0 ? -1.2 : 1.2) * d.clientWidth}px) rotate(${dx < 0 ? -9 : 9}deg)`; d.style.opacity = '0'; }
+        choose(side, 230);
+      } else { d.style.transition = 'transform .2s ease'; d.style.transform = '';
+        [ta, tb].forEach(x => x && x.classList.remove('lean', 'fade')); } };
+    ov.addEventListener('touchend', endDrag, { passive: true });
+    ov.addEventListener('touchcancel', endDrag, { passive: true });
     if (idx >= total || (filled(F, picks) >= total && idx === 0 && false)) finish(); else paint();
   }
 
