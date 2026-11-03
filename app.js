@@ -95,6 +95,8 @@
   const clipApply = () => { if (!clipOpen.size) return; $main.querySelectorAll('.lclip:not(.open)').forEach(l => { if (!clipOpen.has(clipKey(l))) return; l.classList.add('open'); const b = l.querySelector(':scope > .cliptog') || (l.nextElementSibling && l.nextElementSibling.classList.contains('cliptog') ? l.nextElementSibling : null); if (b) { b.setAttribute('aria-expanded', 'true'); b.textContent = 'Show less'; } }); };
   new MutationObserver(clipApply).observe($main, { childList: true, subtree: true });
   store.set('v5:date', todayCT());   // v397: a fresh open of the app starts Scores on today
+  const TABS = ['home', 'scores', 'standings', 'stats', 'search'];
+  const tabLast = {};   // v398: where you were last in each tab
   let homeKeep = null;   // Home as you left it
   async function render() {
     const r = route(); const my = ++seq;
@@ -143,9 +145,11 @@
     paintPills(r.lk, leagueScreen);
     /* the bar lights the tab you are on; Teams, Players and a game, team or player page keep lit the tab you opened
        them from, so drilling in never leaves the bar blank */
-    const TABS = ['home', 'scores', 'standings', 'stats', 'search'];
     if (TABS.includes(r.name)) render.tab = r.name;
-    paintTabs(TABS.includes(r.name) ? r.name : (r.name === 'game' ? 'scores' : (render.tab || 'home')));
+    if (leagueChanged) Object.keys(tabLast).forEach(k => delete tabLast[k]);   // the screens kept belonged to the other league
+    const owner = TABS.includes(r.name) ? r.name : (render.tab || (r.name === 'game' ? 'scores' : 'home'));   // v398: a page belongs to the tab it was opened from
+    tabLast[owner] = location.hash || '#' + owner;
+    paintTabs(owner);
     document.title = leagueScreen ? `${TITLES[r.name]} · ${LEAGUES[r.lk].label} · RIVL` : `${TITLES[r.name] || ''} RIVL`.trim();
     const keep = r.name === 'home' && homeKeep && homeKeep.lk === r.lk && Date.now() - homeKeep.at < 20 * 60000 ? homeKeep : null; homeKeep = null;
     if (keep) {
@@ -180,14 +184,32 @@
     g.addEventListener('animationend', () => g.remove()); setTimeout(() => g.remove(), 1500);   // it fades once the new screen is ready (fadeIn adds .out); never outstays its welcome
   }
   window.addEventListener('hashchange', render);
-  /* v382: tapping the tab you are already on goes back to the top; on Home it also refreshes the feed */
+  /* v398: the tab bar works like the iPhone's. Each tab keeps its own trail.
+     · Tap another tab: back to it exactly as you left it (the page you were on inside it, the day, the scroll).
+     · Tap the tab you're in: first to its main screen if you're on a page inside it; then to the top; then a reset
+       (Home refreshes, Scores goes to today, Search clears). */
   document.getElementById('tabs').addEventListener('click', e => {
     const t = e.target.closest('.tab'); if (!t || !current) return;
-    if (t.dataset.tab !== current.name) return;
-    e.preventDefault(); homeKeep = null;
-    window.scrollTo({ top: 0, behavior: MOTION() ? 'smooth' : 'auto' });
-    if (current.name === 'home' && V.refresh) { const f = V.refresh; setTimeout(() => { if (V.refresh === f) f(); }, 450); }
+    const tab = t.dataset.tab; const cur = TABS.includes(current.name) ? current.name : (render.tab || 'home');
+    e.preventDefault();
+    if (tab !== cur) {
+      const to = tabLast[tab] || '#' + tab; render.tab = tab;
+      if (location.hash === to) render(); else location.hash = to;
+      return;
+    }
+    homeKeep = null;
+    const lk = current.lk || 'nba';
+    // 1 · on a page inside the tab: its main screen
+    if (current.name !== tab) { tabLast[tab] = '#' + tab; location.hash = '#' + tab; return; }
+    if (tab === 'standings') { const main = store.get('v5:stab0:' + lk, ''); const now = store.get('v5:stab:' + lk, ''); if (main && now && main !== now && document.querySelector('.sthead')) { store.set('v5:stab:' + lk, main); window.scrollTo(0, 0); render(); return; } }
+    // 2 · scrolled down: to the top
+    if (window.scrollY > 8) { window.scrollTo({ top: 0, behavior: MOTION() ? 'smooth' : 'auto' }); return; }
+    // 3 · at the top: the tab's reset
+    if (tab === 'home' && V.refresh) { V.refresh(); return; }
+    if (tab === 'scores') { const today = todayCT(); if (store.get('v5:date', today) !== today) { store.set('v5:date', today); render(); } return; }
+    if (tab === 'search') { const i = document.querySelector('#main .xbox input'); if (i) { i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); i.focus(); } return; }
   });
+
 
   /* ---------- polling: today's slate for every league, faster while something is live ---------- */
   let pollT = null, lastOk = 0;
