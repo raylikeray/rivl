@@ -349,7 +349,7 @@
      while the app is open never repaint what hasn't changed, and never move the page under your thumb. */
   const rankGame = g => (isFav(g) ? 1000 : 0) + (g.tv.national.length ? 100 : 0) + interest(g) / 1000;
   const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
-  const SECS = ['wire', 'unrivaled', 'hi', 'last', 'injuries', 'news', 'players', 'teams'];   // the wire first when it has something, then a game on now
+  const SECS = ['wire', 'unrivaled', 'hi', 'feed'];   // the wire first when it has something, then a game on now
   /* Home's rows unfold in place; the deck's dots follow the card in view */
   document.addEventListener('click', e => { const b = e.target.closest('[data-act="hrow"]'); if (!b) return; e.preventDefault(); const w = b.closest('.hrw'); const k = b.dataset.k; const open = !w.classList.contains('open'); w.classList.toggle('open', open); b.setAttribute('aria-expanded', String(open)); if (open) hOpen.add(k); else hOpen.delete(k); });
   document.addEventListener('scroll', e => { const d = e.target; if (!d || !d.classList || !d.classList.contains('dkdeck')) return; const i = Math.round(d.scrollLeft / Math.max(1, d.firstElementChild ? d.firstElementChild.offsetWidth + 10 : d.clientWidth)); const dots = d.parentElement.querySelector('.dkdots'); if (!dots) return; if (dots.classList.contains('n')) { const s = dots.querySelector('span'); if (s.textContent !== String(i + 1)) s.textContent = i + 1; } else [...dots.children].forEach((x, j) => x.classList.toggle('on', j === i)); }, true);
@@ -543,43 +543,61 @@
         if (arts.length) secs.news = sec('News', mineA.length && !rest.length ? 'your teams and players' : mineA.length ? 'yours first, then the league' : 'around the league') + `<div class="rows">${arts.map(a => HW.v5.newsRow(lk, a)).join('')}</div>`; else delete secs.news;
       } else delete secs.news;
 
-      /* ===== Home, Ray's pick (v377): a greeting, tonight's games for your teams as a deck of cards you swipe through,
-         then one quiet row each for last night, injuries, news, your players and your teams. A row shows its headline;
-         a tap unfolds everything under it. ===== */
-      const strip = h => String(h || '').replace(/^<div class="sec">[\s\S]*?<\/div>/, '').replace(/^<div class="brief"><div class="brief-h">[\s\S]*?<\/div>([\s\S]*)<\/div>$/, '$1');
-      const ICON = {
-        last: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.6 6.6 0 0 0 10.5 10.5z"/></svg>',
-        injuries: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
-        news: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M7.5 9h9M7.5 12.5h9M7.5 16h5"/></svg>',
-        players: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c.9-3.6 3.9-5.6 7.5-5.6s6.6 2 7.5 5.6"/></svg>',
-        teams: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 19 6v5.6c0 4.4-3 7.8-7 9-4-1.2-7-4.6-7-9V6z"/></svg>'
-      };
-      const hrow = (k, title, sub, body) => { const open = hOpen.has(k); return `<div class="hrw${open ? ' open' : ''}" data-k="${k}"><button class="hrow" data-act="hrow" data-k="${k}" aria-expanded="${open}"><span class="hic">${ICON[k]}</span><span class="t"><b>${esc(title)}</b><span>${sub}</span></span><i class="hch" aria-hidden="true"></i></button><div class="hbody"><div class="hbin">${body}</div></div></div>`; };
-      // last night
-      if (secs.last) {
-        const mineLast = last.filter(g => isDone(g) && isFav(g));
-        const rs = mineLast.map(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; return { us, them, won: +us.score > +them.score }; });
-        const w = rs.filter(r => r.won).length, l = rs.length - w;
-        const sub = offS ? 'Season recap' : rs.length === 1 ? esc(`${rs[0].us.short} ${rs[0].won ? 'beat' : 'lost to'} ${rs[0].them.short} ${rs[0].us.score}-${rs[0].them.score}`) : rs.length === 2 && w !== 1 ? esc(`${rs[0].us.short} and ${rs[1].us.short} both ${w ? 'won' : 'lost'}`) : rs.length ? `${w} win${w === 1 ? '' : 's'}, ${l} loss${l === 1 ? '' : 'es'} for your teams` : 'Your players’ lines';
-        secs.last = hrow('last', offS ? 'The season' : 'Last night', sub, strip(secs.last));
+      /* ===== Home (v380): the feed. Under the greeting and the deck, one running timeline of everything that happened
+         to your teams and players, newest first, in Apple's grouped card: a result, a player's line, an injury, a game
+         about to tip, a story. Each post is the finished thing and opens what it is about. ===== */
+      ['last', 'tonight', 'injuries', 'players', 'teams', 'news'].forEach(k => delete secs[k]);
+      const NOW = Date.now(); const posts = [];
+      const when = ts => { const d = (NOW - ts) / 6e4; if (d < -1) { const m = -d; return m < 60 ? `in ${Math.round(m)}m` : `in ${Math.round(m / 60)}h`; } if (d < 1) return 'now'; if (d < 60) return `${Math.round(d)}m`; if (d < 1440) return `${Math.round(d / 60)}h`; return `${Math.round(d / 1440)}d`; };
+      const crest = t => logo(t.logo, '', teamColor(t, L));
+      const post = (ts, to, av, who, kind, body, extra = '', act = '', lab = '') => posts.push({ ts, html: `<${to ? `a href="${to}"` : `button${act}`} class="fp">${`<span class="fav">${av}</span>`}<span class="fb"><span class="fh"><b>${who}</b>${kind ? `<span>${kind}</span>` : ''}<time>${lab || when(ts)}</time></span><span class="ft">${body}</span>${extra}</span></${to ? 'a' : 'button'}>` });
+      const leadOf = (t, name) => { const l = (t.leaders || []).find(x => new RegExp(name, 'i').test(x.name || '')); const a = l && l.leaders && l.leaders[0]; return a && a.athlete ? { n: a.athlete.shortName || a.athlete.displayName || '', v: a.displayValue || a.value } : null; };
+      const strip = (g) => { const cells = [[g.away, 'points'], [g.home, 'points'], [+g.home.score >= +g.away.score ? g.home : g.away, 'rebounds']].map(([t, k]) => { const x = leadOf(t, k); return x ? `<span><b>${esc(String(x.v).replace(/\s.*$/, ''))}</b><small>${esc(`${lastName(x.n)} · ${k === 'points' ? 'PTS' : 'REB'}`)}</small></span>` : ''; }).filter(Boolean); return cells.length ? `<span class="fx">${cells.join('')}</span>` : ''; };
+      const endTs = g => new Date(g.date).getTime() + 2.4 * 36e5;
+      if (P.brief) {
+        // results: yesterday's and today's finals for your teams
+        games.concat(last).filter((g, i, arr) => arr.findIndex(x => x.id === g.id) === i).filter(g => isDone(g) && !g.off && isFav(g)).forEach(g => {
+          const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = +us.score > +them.score;
+          const f = safeF(L, g, ctx); const ph = f && Number.isFinite(f.pHome) ? f.pHome : null; const pu = ph == null ? null : us === g.home ? ph : 1 - ph;
+          const note = pu == null ? '' : (pu >= .5) === won ? ' RIVL called it.' : ` ${won ? 'An upset:' : 'RIVL had them'} ${won ? `RIVL gave them ${pct(pu)}.` : `at ${pct(pu)}.`}`;
+          post(Math.min(endTs(g), NOW - 6e4), href.game(lk, g.id), crest(us), esc(us.short), esc(finalWord(g)), `${won ? 'Beat' : 'Lost to'} ${esc(them.short)} <b class="${won ? 'wl-w' : 'wl-l'}">${esc(String(us.score))}–${esc(String(them.score))}</b>.${esc(note)}`, strip(g));
+        });
+        // live: your games on now
+        games.filter(g => isLive(g) && isFav(g)).forEach(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const d = +us.score - +them.score;
+          post(NOW + 1e9, href.game(lk, g.id), crest(us), esc(us.short), `<i class="lvd"></i>Live · ${esc(HW.clockOf(g, L))}`, `${d > 0 ? `Up ${d} on` : d < 0 ? `Down ${-d} to` : 'Tied with'} ${esc(them.short)}, <b>${esc(String(us.score))}–${esc(String(them.score))}</b>.`, strip(g), '', 'now'); });
+        // coming up today: soonest first, kept at the top until they tip
+        games.filter(g => g.state === 'pre' && !g.off && isFav(g) && HW.ymdOf(g.date) === today).forEach(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const t0 = new Date(g.date).getTime();
+          const f = safeF(L, g, ctx); const pu = f && Number.isFinite(f.pHome) ? (us === g.home ? f.pHome : 1 - f.pHome) : null;
+          posts.push({ ts: NOW + 1e8 - (t0 - NOW) / 1e3, html: `<a href="${href.game(lk, g.id)}" class="fp"><span class="fav">${crest(us)}</span><span class="fb"><span class="fh"><b>${esc(us.short)}</b><span>Tonight</span><time>${esc(tipOf(g).replace(/\s*CT$/, ''))}</time></span><span class="ft">Face ${esc(them.short)} ${us === g.home ? 'at home' : 'on the road'}${tvLabel(g) ? ` on ${esc(tvLabel(g))}` : ''}.${pu != null ? ` RIVL gives them <b>${pct(pu)}</b>.` : ''}</span></span></a>` }); });
       }
-      // injuries
-      if (secs.injuries) {
-        const groups = (S0.inj && teams.map(t => S0.inj.byTeam[t.id]).filter(b => b && b.list.length)) || [];
-        const all = groups.flatMap(b => b.list); const n = all.length;
-        const lead = all.find(x => /out/i.test(x.status || '') && x.athlete); const ret = lead && lead.details && retInfo(L, lead.details.returnDate);
-        const sub = n ? `${n} on your teams${lead ? ` · ${esc(lastName(lead.athlete.displayName || ''))} out${ret && !ret.past ? ` ${esc(ret.far ? 'for the season' : ret.short.replace(/^back around /, 'to '))}` : ''}` : ''}` : 'Your players';
-        secs.injuries = hrow('injuries', 'Injuries', sub, strip(secs.injuries));
+      if (P.players) lines.forEach(x => { const t = x.g; post(Math.min(endTs(t), NOW - 6e4) - 1, `${href.game(lk, t.id)}/p/${esc(String(x.p.id))}`, headshot(x.p.img, x.us ? teamColor(x.us, L) : playerColor(x.p, L), 40, x.p.name), esc(x.p.short || x.p.name), esc(x.us ? x.us.abbr || '' : x.p.team || ''),
+        x.dnp ? `${esc(x.dnp)} ${x.us === t.home ? 'against' : 'at'} ${esc(x.them.short)}.` : `<b>${esc(String(x.pts))} pts</b>, ${esc(String(x.reb))} reb, ${esc(String(x.ast))} ast in a ${x.won ? 'win' : 'loss'} ${x.us === t.home ? 'over' : 'at'} ${esc(x.them.short)}.`); });
+      if (P.injuries && S0.inj) {
+        const pById = new Map(fp.map(p => [p.id, p]));
+        teams.forEach(t => { const b = S0.inj.byTeam[t.id]; (b && b.list || []).forEach((x, i) => { const a = x.athlete || {}; const p = pById.get(athId(a)) || null; const id = athId(a) || (p && p.id) || ''; const key = `h:${t.id}:${id}:${x.id || i}`; S.injuries = S.injuries || {}; S.injuries[key] = { x, id, team: t };
+          const st = statusWord(x.status || ''); const det = x.details || {}; const ret = retInfo(L, det.returnDate); const part = (det.type || det.location || det.detail || '').toLowerCase(); const nm = a.displayName || (p && p.name) || ''; const out = /out/i.test(st);
+          const txt = out ? `<b>${esc(nm)}</b> is out${part ? ` with ${/^[aeiou]/.test(part) ? 'an' : 'a'} ${esc(part)} injury` : ''}${ret && !ret.past ? (ret.far ? ' for the season.' : `, back around ${esc(ret.long)}.`) : '.'}` : `<b>${esc(nm)}</b> is ${esc(st.toLowerCase())}${part ? ` (${esc(part)})` : ''}.`;
+          const ts = x.date ? new Date(x.date).getTime() : NOW - 3 * 864e5;
+          post(ts, '', headshot(hsUrl(a) || (p && p.img) || '', teamColor(t, L), 40, nm), esc(t.short), 'Injury', txt, '', ` data-act="injury" data-key="${esc(key)}"`); }); });
       }
-      // news
-      if (secs.news) { const a0 = (S0.news && S0.news.articles || []).filter(HW.readable).find(a => tagged(a)) || (S0.news && S0.news.articles || []).filter(HW.readable)[0]; secs.news = hrow('news', 'News', a0 ? esc(a0.headline) : 'Around the league', strip(secs.news)); }
-      // your players
-      if (secs.players) { const on = fp.filter(p => { const is = teamOf(p); return games.some(g => HW.ymdOf(g.date) === today && (is(g.home) || is(g.away))); }); secs.players = hrow('players', 'My players', on.length ? esc(`${on[0].short || on[0].name}${on.length > 1 ? ` and ${on.length - 1} more play tonight` : ' plays tonight'}`) : fp.length ? `${fp.length} followed` : 'Follow players to see their lines', strip(secs.players) + `<a class="hedit" href="#players">Edit players</a>`); }
-      // your teams
-      if (secs.teams) { const nT = games.filter(g => HW.ymdOf(g.date) === today && isFav(g)).length; secs.teams = hrow('teams', 'My teams', `${mine.length} followed${nT ? ` · ${nT} game${nT === 1 ? '' : 's'} today` : ''}`, strip(secs.teams) + `<a class="hedit" href="#teams">Edit teams</a>`); }
+      if (P.news && S0.news) {
+        const all = (S0.news.articles || []).filter(HW.readable); const mineA = all.filter(a => tagged(a)); const arts = (mineA.length >= 3 ? mineA : mineA.concat(all.filter(a => !mineA.includes(a)).slice(0, 3 - mineA.length))).slice(0, 8);
+        arts.forEach(a => { const r = HW.v5.newsRow(lk, a); const hrefM = /^<a class="row" href="([^"]+)"/.exec(r); const vid = /data-vid="([^"]+)"/.exec(r); const im = /<img[^>]+src="([^"]+)"/.exec(r);
+          const tid = (a.categories || []).map(c => c.type === 'team' ? String(c.teamId || (c.team && c.team.id) || '') : '').find(id => id && S0.tIdx[id]); const tm = tid ? S0.tIdx[tid] : null;
+          const av = tm ? crest(tm) : `<span class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4.5" width="16" height="15" rx="2.5"/><path d="M8 9h8M8 12.5h8M8 16h5"/></svg></span>`;
+          const extra = im ? `<span class="fimg"><img src="${im[1]}" alt="" loading="lazy" onerror="this.parentNode.remove()">${vid ? '<i class="play"></i>' : ''}</span>` : '';
+          const ts = a.published ? new Date(a.published).getTime() : NOW - 864e5;
+          if (vid) post(ts, '', av, esc(tm ? tm.short : L.label), 'Video', esc(a.headline), extra, ` data-act="play" data-vid="${vid[1]}"`);
+          else post(ts, hrefM ? hrefM[1] : '', av, esc(tm ? tm.short : L.label), 'News', esc(a.headline), extra); });
+      }
+      posts.sort((a, b) => b.ts - a.ts);
+      const items = posts.map(p => p.html);
+      if (items.length) secs.feed = `<div class="gl feed${items.length > 12 ? ' lclip fclip' : ''}">${items.join('')}${items.length > 12 ? `<button class="cliptog" data-act="clip" data-total="${items.length}" aria-expanded="false">Show ${items.length - 12} more</button>` : ''}</div>`;
+      else if (!fp.length && !mine.length) delete secs.feed;
+      else secs.feed = `<div class="gl"><div class="gr ni"><span class="gm wrap"><b>Quiet for now</b><span>Results, injuries and news about your teams and players land here as they happen.</span></span></div></div>`;
 
       // the greeting and the deck
-      delete secs.live; delete secs.tonight;
+      delete secs.live;
       if (P.brief || P.live) {
         const hr = +new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'America/Chicago' }).format(new Date()) % 24;
         const hello = hr < 5 ? 'Good evening' : hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
@@ -920,7 +938,7 @@
       views.push(['sh', 'Shooting', `<div class="bars" style="${tcv(color)}">${bar('Field goals', stat('FG%'), crow('FG') != null ? '' : '')}${bar('Threes', stat('3P%'))}${bar('Free throws', stat('FT%'))}</div>` + (cur && ci('FG') >= 0 ? `<p class="ringnote">Per game: ${esc(String(cur.stats[ci('FG')]))} FG, ${esc(String(cur.stats[ci('3PT')] || ''))} 3PT, ${esc(String(cur.stats[ci('FT')] || ''))} FT (made-attempted)</p>` : '')]);
     }
     const avgCard = (views.length || grid.length) ? `<section class="card avg"><div class="card-h"><h2>Season averages</h2><small>${esc(seasonName)}</small></div>
-      ${views.length ? `<div class="chips" role="tablist">${views.map(([k, l], i) => `<button class="chip${i === 0 ? ' on' : ''}" role="tab" data-act="mix" data-mix="${k}" aria-selected="${i === 0}" aria-pressed="${i === 0}">${l}</button>`).join('')}</div>${views.map(([k, , html], i) => `<div data-mix-panel="${k}"${i === 0 ? '' : ' hidden'}>${html}</div>`).join('')}` : ''}
+      ${''/* v380: the numbers alone, as a hairline grid; the category switch and the split bar are gone */}
       ${grid.length ? `<div class="sgrid">${grid.map(x => `<div><b>${esc(fmt(x.v, x.k))}</b><span>${esc(x.l)}</span></div>`).join('')}</div>` : ''}
       <div class="card-f"><button data-act="ptab" data-tab="stats">All stats, game log and career</button></div></section>` : '';
 

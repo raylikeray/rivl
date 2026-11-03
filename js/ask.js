@@ -144,9 +144,9 @@
     if (has(/ injur| hurt| status| health| out /)) {
       const inj = await HW.injuries(L).catch(() => null); let x = null;
       if (inj && inj.byTeam) Object.values(inj.byTeam).forEach(t => (t.list || []).forEach(i => { if (String((i.athlete || {}).id || _.athId(i.athlete || {})) === e.id) x = i; }));
-      if (!x) return { html: card(who(e), `${esc(e.name)} is not on the injury report.`, [['Status', 'Available']], '', 'League injury report, through ESPN'), kind: 'intent' };
+      if (!x) return { html: card(who(e), `${esc(e.name)} is not on the injury report.`, [['Status', 'Available']], '', 'League injury report'), kind: 'intent' };
       const det = x.details || {}, ret = _.retInfo(L, det.returnDate), part = [det.side && det.side !== 'Not Specified' ? det.side : '', det.location || det.type || ''].filter(Boolean).join(' ');
-      return { html: card(who(e), `${esc(e.name)} is listed <b>${esc((_.statusWord(x.status) || x.status || 'out').toLowerCase())}</b>${part ? ` with a ${esc(part.toLowerCase())} injury` : ''}.`, [['Injury', part || det.detail], ['Back', ret ? ret.long || ret.short : 'No date given'], ['Updated', x.date ? new Date(x.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '']], x.longComment || x.shortComment ? esc(x.longComment || x.shortComment) : '', 'League injury report, through ESPN'), kind: 'intent' };
+      return { html: card(who(e), `${esc(e.name)} is listed <b>${esc((_.statusWord(x.status) || x.status || 'out').toLowerCase())}</b>${part ? ` with a ${esc(part.toLowerCase())} injury` : ''}.`, [['Injury', part || det.detail], ['Back', ret ? ret.long || ret.short : 'No date given'], ['Updated', x.date ? new Date(x.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '']], x.longComment || x.shortComment ? esc(x.longComment || x.shortComment) : '', 'League injury report'), kind: 'intent' };
     }
     if (has(/ tonight| today| playing| next game| when .* play/)) {
       const tm = e.team; if (tm) { const sc = await HW.jSoft(`${HW.API(L)}/teams/${tm.id}/schedule`, 300000).catch(() => null); const evs = (sc && sc.events || []).map(ev => HW.parseEvent ? HW.parseEvent(ev, L) : null).filter(Boolean); const nx = evs.find(g => g.state !== 'post');

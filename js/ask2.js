@@ -71,7 +71,7 @@
     const score = r => (r.rest ? 0 : r.sev) * 1000 + Math.min(999, days(r) + bad(r));
     return { rows: rows.slice().sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name)), how: 'most severe first' };
   }
-  const glossary = () => `<div class="xans"><span class="xk">What the injury words mean</span><div class="xgloss">${GLOSS.map(([w, c, d]) => `<div class="xgw"><span class="tag ${c}">${esc(w)}</span><p>${esc(d)}</p></div>`).join('')}</div><p class="xsrc">Statuses come from each league's official injury report, through ESPN.</p></div>`;
+  const glossary = () => `<div class="xans"><span class="xk">What the injury words mean</span><div class="xgloss">${GLOSS.map(([w, c, d]) => `<div class="xgw"><span class="tag ${c}">${esc(w)}</span><p>${esc(d)}</p></div>`).join('')}</div><p class="xsrc">Statuses come from each league's official injury report.</p></div>`;
   async function injuryOne(f, nq, has, lkWant, both) {
     /* search covers the whole app, not the league tab you happen to be on: with no league or team named, the NBA report
        is shown (college publishes none). Naming college still gets the note. */
@@ -100,7 +100,7 @@
     const SORTK = { 'most severe': 'most severe first', 'returning soonest': 'soonest back first', 'newest': 'newest first', 'longest out': 'longest out first' };
     const sortChips = sorted.length > 2 ? `<div class="xsorts">${[['most severe', 'Most severe'], ['returning soonest', 'Back soonest'], ['newest', 'Newest'], ['longest out', 'Longest out']].map(([k, l]) => `<button class="chip${SORTK[k] === how ? ' on' : ''}" aria-pressed="${SORTK[k] === how}" data-xq="${esc((team ? team.name : (mine ? 'my ' : both ? '' : L.label + ' ')) + ' injuries ' + k)}">${l}</button>`).join('')}</div>` : '';
     const head = team ? K().twho(team, title) : `<span class="xk">${esc(title)}</span>`;
-    return { html: (wantsGloss ? glossary() : '') + `<div class="xans xinjans">${head}<p class="xline">${line}</p>${both ? '' : sortChips}${list}${past}<p class="xsrc">Official injury report, through ESPN. Dates from RIVL's log.</p></div>`, kind: 'intent' };
+    return { html: (wantsGloss ? glossary() : '') + `<div class="xans xinjans">${head}<p class="xline">${line}</p>${both ? '' : sortChips}${list}${past}<p class="xsrc">The league's official injury report. Dates from RIVL's log.</p></div>`, kind: 'intent' };
   }  /* no league or team named: the NBA report, short, with Show all; the WNBA's right under it; one set of sort chips on top */
   async function injuryAnswer(f, nq, has) {
     const named = leagueIn(nq), team = f.ts[0] || null;

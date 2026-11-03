@@ -1,6 +1,6 @@
 /* One place the app reads its big data from: data/leaders.json (every player in every league, rookies tagged, last
    season alongside) and data/recruits.json, both built by the repo's own jobs every few hours. Search, Stats and the
-   rating all read these instead of each paging through ESPN on the phone. Kept in memory for the visit; the service
+   rating all read these instead of each paging on the phone. Kept in memory for the visit; the service
    worker keeps a copy for a warm start. */
 (function () {
   'use strict';

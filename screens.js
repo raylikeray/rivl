@@ -113,7 +113,9 @@
       const mvH = mv == null ? `<span class="ldm st ${/^W/.test(r.strk || '') ? 'w' : 'l'}">${esc(r.strk || '')}</span>` : `<span class="ldm ${mv > 0 ? 'up' : mv < 0 ? 'dn' : ''}" title="${mv > 0 ? `Up ${mv} this week` : mv < 0 ? `Down ${-mv} this week` : 'Same place as a week ago'}">${mv > 0 ? `<svg viewBox="0 0 10 10"><path d="M5 1.5 9 7.5H1z"/></svg>${mv}` : mv < 0 ? `<svg viewBox="0 0 10 10"><path d="M5 8.5 1 2.5h8z"/></svg>${-mv}` : '–'}</span>`;
       return band(i) + `<a class="ldr${me ? ' me' : ''}" href="${href.team(lk, r.id)}" style="--tc:${esc(tc)}"><span class="lds">${r.pos}</span>${logo(r.logo, '', tc)}<span class="ldn"><b>${rk && rk[r.id] ? `<i class="ap">${rk[r.id]}</i>` : ''}${esc(r.short || r.name)}${me ? ' <i class="fs">★</i>' : ''}</b>${clinchTag(r)}${gl || conf ? `<small>${esc([conf && r.conf ? `${r.conf} in conference` : '', gl].filter(Boolean).join(' · '))}</small>` : ''}</span><span class="ldw">${r.w}-${r.l}</span>${mvH}</a>`; }).join('');
     const lg2 = `<p class="legend">${tab === 'league' ? 'Every team by record.' : cuts.length === 2 ? `Top ${cuts[0]} go straight to the playoffs; ${cuts[0] + 1} through ${cuts[1]} play in.` : cuts.length === 1 ? `Top ${cuts[0]} make the playoffs.` : ''} ${hasMove ? 'Arrows show places moved in the last seven days, by record.' : ''}</p>`;
-    stPaint(items, tab, `<div class="ladder">${rungs}</div>` + lg2);
+    // v380: each band is its own grouped card under its label
+    const grouped = rungs.split(/(?=<div class="ldb)/).filter(Boolean).map(ch => { const m = ch.match(/^(<div class="ldb[^>]*>[\s\S]*?<\/div>)([\s\S]*)$/); return m ? m[1] + `<div class="ldg">${m[2]}</div>` : `<div class="ldg">${ch}</div>`; }).join('');
+    stPaint(items, tab, `<div class="ladder">${grouped}</div>` + lg2);
   }
   /* the NBA Cup: group standings built from the group-play results in the nightly schedule, then the knockout games.
      The groups are the NBA's own draw for 2026 (nba.com, July 2026); the schedule's group games are checked against it. */
@@ -186,14 +188,22 @@
   }
   /* standings: the chips stay put and only toggle; the table below them swaps */
   function stPaint(items, tab, body) {
-    const page = $main.querySelector('#stpage');
-    if (page && page.dataset.lk === (V.route && V.route() || {}).lk) {
-      const have = [...page.querySelectorAll('#stchips .chip')].map(c => c.dataset.tab).join();
-      if (have !== items.map(([k]) => k).join()) page.querySelector('#stchips').innerHTML = chips(items, tab, 'stab', 'tab');
-      else page.querySelectorAll('#stchips .chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); c.setAttribute('aria-selected', String(on)); });
-      const sb = page.querySelector('#stbody'); sb.innerHTML = body; if (V.soft) V.soft(sb);
-    } else $main.innerHTML = `<div id="stpage" data-lk="${esc((V.route && V.route() || {}).lk || '')}"><div id="stchips">${chips(items, tab, 'stab', 'tab')}</div><div id="stbody">${body}</div></div>`;
-    const on = $main.querySelector('#stchips .chip.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
+    /* v380: the conferences (and League) are one segmented control; Picture, Odds, Stats, Cup and Bracket live in a
+       More list under the ladder, and open as their own page with a way back */
+    const lk = (V.route && V.route() || {}).lk || '';
+    const MORE = { picture: 'Play-in and first-round matchups as of now', odds: 'Projected records and playoff chances', stats: 'Team numbers, side by side', cup: 'Group standings', bracket: 'Fills in as the games are set' };
+    const main = items.filter(([k]) => !MORE[k]), more = items.filter(([k]) => MORE[k]);
+    const isMore = !!MORE[tab];
+    if (!isMore) store.set('v5:stab0:' + lk, tab);
+    const back = store.get('v5:stab0:' + lk, main[0] ? main[0][0] : '');
+    const label = (items.find(([k]) => k === tab) || [, ''])[1];
+    const head = isMore
+      ? `<div class="sthead"><button class="stback" data-act="stab" data-tab="${esc(back)}"><svg viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2 2 10l8 8"/></svg>Standings</button><h1>${esc(label)}</h1></div>`
+      : `<div class="ptl"><h1>Standings</h1></div><div class="segc${main.length > 3 ? ' scroll' : ''}" role="tablist">${main.map(([k, l]) => `<button data-act="stab" data-tab="${esc(k)}" class="${k === tab ? 'on' : ''}" role="tab" aria-selected="${k === tab}">${esc(l)}</button>`).join('')}</div>`;
+    const moreList = !isMore && more.length ? `<div class="gcap" style="margin-top:22px">More</div><div class="gl">${more.map(([k, l]) => `<button class="gr ni" data-act="stab" data-tab="${esc(k)}"><span class="gm"><b>${esc(l)}</b><span>${esc(MORE[k])}</span></span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1.5 1.5 5 5-5 5"/></svg></button>`).join('')}</div>` : '';
+    $main.innerHTML = `<div id="stpage" class="st380" data-lk="${esc(lk)}">${head}<div id="stbody">${body}${moreList}</div></div>`;
+    const sb = $main.querySelector('#stbody'); if (V.soft) V.soft(sb);
+    const on = $main.querySelector('.segc .on'); if (on && on.scrollIntoView) on.scrollIntoView({ inline: 'center', block: 'nearest' });
   }
 
   /* ================= TEAMS ================= */
@@ -979,8 +989,10 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
       const headHtml = `<header class="g2h g2duel">${g.tbd ? '' : `<span class="g2wm a" style="color:${esc(wmC(g.away))}">${esc(g.away.abbr || '')}</span><span class="g2wm h" style="color:${esc(wmC(g.home))}">${esc(g.home.abbr || '')}</span>`}<div class="g2dg">${dside(g.away, g.home, false)}${chip}${dside(g.home, g.away, true)}</div>`
         + foot + (V._.seriesLine(g) ? `<p class="g2s">${esc(V._.seriesLine(g))}${spick ? ` · ${esc(spick)}` : ''}</p>` : '') + `</header>`;
       // where the seam sits: the away side's share of the win chance, kept inside the screen so both sides always show
-      const seam = pv2 != null ? Math.min(78, Math.max(22, 50 - (pv2 - .5) * 80)) : 50;
-      const share = pv2 != null ? pv2 : .5;
+      // v380: once there is a score, the seam follows the score, not the chance: each point of lead gives the leader more of
+      // the screen (a 15-point lead is the most it takes). Before the tip it sits at RIVL's call.
+      const share = hasSc ? .5 + Math.max(-.3, Math.min(.3, (+g.home.score - +g.away.score) / 50)) : pv2 != null ? pv2 : .5;
+      const seam = Math.min(76, Math.max(24, 50 - (share - .5) * 85));
       const bgVars = `--ga:${pc[0]};--gh:${pc[1]};--sh:${share.toFixed(3)};--seam:${seam.toFixed(1)}%`;
       const blobs = `<i class="b1"></i><i class="b2"></i><i class="b3"></i>`;
       const hh = hashOf(headHtml), page = $main.querySelector('#gpage');
@@ -1162,12 +1174,12 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
 
   /* ================= SETTINGS: what you follow, what Home shows, how it looks ================= */
   const PREFS = [
-    ['wire', 'Breaking', "ESPN's news posts about your teams and players — a surgery, a trade, a benching — at the top of Home for a few hours after they land"],
-    ['brief', 'Tonight and last night', "Your teams' games in one line, and last night's results with your players' lines"],
-    ['live', 'Live now', 'A big card when one of your teams is playing'],
-    ['teams', 'My teams', 'Record, the game that matters and the chance to win'],
-    ['players', 'My players', 'Scoring lines, one tap to the profile'],
-    ['injuries', 'Injuries', 'Reports on your teams and players'],
+    ['wire', 'Breaking', "Big news on your teams and players (a surgery, a trade, a benching) at the top of Home for a few hours after it lands"],
+    ['brief', 'Games and results', "Your teams' games today and how last night went, in the feed"],
+    ['live', 'Game cards', 'The swipeable cards for your teams\u2019 games today'],
+    ['teams', 'Team updates', 'Standings moves and team news in the feed'],
+    ['players', 'Player lines', "Your players' lines after every game"],
+    ['injuries', 'Injuries', 'Injury updates on your teams and players'],
     ['news', 'News', 'Stories about your teams and players']
   ];
   const sw = (k, on, title, body) => `<button class="row sw" data-act="pref" data-pref="${k}" role="switch" aria-checked="${on}"><span class="t"><b>${esc(title)}</b><span class="wrap">${esc(body)}</span></span><span class="switch"></span></button>`;
@@ -1203,7 +1215,12 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
     if (!here) {   // the index
       const nSvc = HW.myServices().length;
       const summary = { watch: nSvc ? `${nSvc} service${nSvc === 1 ? '' : 's'}` : 'None picked yet', following: `${nTeams} team${nTeams === 1 ? '' : 's'} · ${fp.length} player${fp.length === 1 ? '' : 's'}`, home: `${PREFS.filter(([k]) => P[k] !== false).length} of ${PREFS.length} sections on`, look: `${({ system: 'Match my phone', dark: 'Dark', light: 'Light' })[theme] || 'Match my phone'}`, alerts: V.alerts && V.alerts.available() ? (V.alerts.on() ? 'On' : 'Off') : 'Needs the RIVL server', sync: V.sync && V.sync.available() ? (V.sync.code() ? `Code ${V.sync.code()}` : 'Not backed up') : 'Needs the RIVL server', app: standalone ? 'Installed' : 'Add to home screen', about: '' };
-      $main.innerHTML = bar('Settings', '#home') + `<div class="rows setidx">${SETTINGS.map(([k, t, b]) => `<a class="row" href="#settings/${k}"><span class="sico">${ICONS[k]}</span><span class="t"><b>${esc(t)}</b><span>${esc(summary[k] || b)}</span></span>${chev}</a>`).join('')}</div>`;
+      // v380: iOS grouped settings — the look as a segmented control right at the top, then everything else as rows with a coloured square
+      const look = `<div class="gl setlook"><div class="gr ni"><span class="sico" data-k="look">${ICONS.look || ''}</span><span class="gm"><b>Appearance</b></span><div class="segc fit" role="radiogroup" aria-label="Appearance">${[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].map(([k, l]) => `<button class="${theme === k ? 'on' : ''}" data-act="theme" data-theme="${k}" role="radio" aria-checked="${theme === k}">${l}</button>`).join('')}</div></div></div>`;
+      const grp = keys => `<div class="gl">${SETTINGS.filter(([k]) => keys.includes(k)).map(([k, t, b]) => `<a class="gr" href="#settings/${k}"><span class="sico" data-k="${k}">${ICONS[k]}</span><span class="gm"><b>${esc(t)}</b><span>${esc(summary[k] || b)}</span></span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1.5 1.5 5 5-5 5"/></svg></a>`).join('')}</div>`;
+      const all = SETTINGS.map(([k]) => k).filter(k => k !== 'look');
+      const g1 = all.filter(k => ['following', 'home', 'watch', 'alerts'].includes(k)), g2 = all.filter(k => !g1.includes(k));
+      $main.innerHTML = `<div class="set380"><div class="ptl"><h1>Settings</h1></div>${look}${grp(g1)}${grp(g2)}</div>`;
       return;
     }
 

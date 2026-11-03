@@ -55,12 +55,26 @@
     // the phone's one bar: the league is a small chip; a red dot when anything in it is live
     const chip = document.getElementById('lgchip'); if (chip) { const n = chip.querySelector('.lgn'); if (n.textContent !== LEAGUES[lk].label) n.textContent = LEAGUES[lk].label; chip.querySelector('.lv').hidden = !S.today[lk].some(isLive); }
   }
-  /* the league switcher: a sheet with the four leagues, each with what is on today */
-  function openLeagues() {
-    const cur = current ? current.lk : 'nba';
-    const line = k => { const g = S.today[k] || []; const live = g.filter(isLive).length; return live ? `<span class="on">${live} live now</span>` : g.length ? `${g.length} game${g.length === 1 ? '' : 's'} today` : 'No games today'; };
-    openPanel(`<div class="lgsheet"><div class="grab" aria-hidden="true"></div><h2>League</h2><div class="lgl">${ORDER.map(k => `<a class="lgo${k === cur ? ' on' : ''}" href="#${k}" data-act="panel-close"${k === cur ? ' aria-current="true"' : ''}><b>${esc(LEAGUES[k].label)}</b><span>${line(k)}</span>${k === cur ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : ''}</a>`).join('')}</div></div>`);
+  /* the league switcher: a small menu that drops from the chip, with what is on today in each league */
+  function closeLeagues() {
+    const m = document.getElementById('lgmenu'); if (!m) return;
+    const chip = document.getElementById('lgchip'); if (chip) chip.setAttribute('aria-expanded', 'false');
+    m.classList.add('out'); setTimeout(() => m.remove(), 160);
   }
+  function openLeagues() {
+    if (document.getElementById('lgmenu')) { closeLeagues(); return; }
+    const cur = current ? current.lk : 'nba';
+    const line = k => { const g = S.today[k] || []; const live = g.filter(isLive).length; const n = g.length ? `${g.length} game${g.length === 1 ? '' : 's'} today` : 'No games today'; return live ? `<i class="lv"></i>${live} live · ${n}` : n; };
+    const chip = document.getElementById('lgchip'); const r = chip.getBoundingClientRect();
+    const m = document.createElement('div'); m.id = 'lgmenu'; m.className = 'lgmenu';
+    m.innerHTML = `<div class="lgscrim" data-lgx></div><div class="lgm" role="menu" style="top:${Math.round(r.bottom + 8)}px;left:${Math.round(r.left)}px">${ORDER.map(k => `<a class="lgi${k === cur ? ' on' : ''}" role="menuitemradio" aria-checked="${k === cur}" href="#${k}" data-lgx><span><b>${esc(LEAGUES[k].label)}</b><small>${line(k)}</small></span>${k === cur ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : ''}</a>`).join('')}</div>`;
+    m.addEventListener('click', e => { if (e.target.closest('[data-lgx]')) closeLeagues(); });
+    document.body.appendChild(m); chip.setAttribute('aria-expanded', 'true');
+    const first = m.querySelector('.lgi.on') || m.querySelector('.lgi'); if (first) first.focus({ preventScroll: true });
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLeagues(); });
+  window.addEventListener('hashchange', closeLeagues);
+  window.addEventListener('scroll', () => { if (document.getElementById('lgmenu')) closeLeagues(); }, { passive: true });
   function paintTabs(name) {
     $tabs.querySelectorAll('.tab').forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('on', on); if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
   }
@@ -442,7 +456,7 @@
 
   /* ---------- theme: match the phone, or force dark or light ---------- */
   function applyTheme() {
-    const t = current && current.name === 'game' ? 'dark' : store.get('v5:theme', 'system'); const root = document.documentElement;   // a game page is always dark, the way Apple Sports draws one
+    const t = store.get('v5:theme', 'system'); const root = document.documentElement;   // v380: the game page follows the phone like every other screen
     if (t === 'dark' || t === 'light') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme');
     // the status bar takes the top of the wash, so the screen is one surface from its top edge down; once the wash has scrolled
     // away it takes the plain ground, the way a translucent bar would show what is behind it
