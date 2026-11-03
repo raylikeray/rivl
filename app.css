@@ -4479,3 +4479,8 @@ html body .approf .tw table th:first-child,html body .approf .tw table td:first-
 
 /* ===== v402: a logo the same colour as its panel gets a thin light edge ===== */
 .dks .logo.ol img,html body .g2ds .g2dl.ol{filter:drop-shadow(0 0 .6px #fff) drop-shadow(0 0 .6px #fff) drop-shadow(0 0 .6px rgba(255,255,255,.9)) drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+
+/* ===== v405: no-logo teams and very dark logos ===== */
+.smono{display:grid;place-items:center;width:78%;aspect-ratio:1;border-radius:50%;background:var(--seg);color:var(--ink-2);font:800 11px/1 var(--ui);font-style:normal;letter-spacing:.02em;overflow:hidden;white-space:nowrap}
+:root[data-theme="dark"] .scr.lowc img,:root[data-theme="dark"] .logo.lowc img{filter:drop-shadow(0 0 .6px rgba(255,255,255,.9)) drop-shadow(0 0 .6px rgba(255,255,255,.9)) drop-shadow(0 0 .6px rgba(255,255,255,.75))}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .scr.lowc img,:root:not([data-theme="light"]) .logo.lowc img{filter:drop-shadow(0 0 .6px rgba(255,255,255,.9)) drop-shadow(0 0 .6px rgba(255,255,255,.9)) drop-shadow(0 0 .6px rgba(255,255,255,.75))} }

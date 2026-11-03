@@ -123,7 +123,12 @@
   const imgSized = (src, w, h, extra = '', then = "this.style.visibility='hidden'") => { const u = sized(src, w, h); return `<img src="${esc(u)}"${u !== src ? ` data-o="${esc(src)}"` : ''} alt="" ${extra} loading="lazy" ${fallback(then)}>`; };
   /* a logo disc; with a team colour it takes a tint and a ring in that colour */
   const LOGO_PX = { s: 96, m: 128, '': 128, l: 192, hero: 256 };
-  const logo = (src, size = '', color = '') => { const c = BAD(color) ? '' : hx(color); const px = LOGO_PX[size] || 128; return `<span class="logo ${size === 'hero' ? '' : size}${c ? ' tint' : ''}"${c ? ` style="${tcv(c)}"` : ''}>${imgSized(src, px, px)}</span>`; };
+  /* v405: a team with no logo (or one that fails to load) gets its letters in a plain disc instead of a hole; a logo
+     drawn in a very dark colour gets a thin light edge on the dark theme so it doesn't sink into the background */
+  const monoOf = a => `<i class="smono">${esc(String(a || '').slice(0, 4))}</i>`;
+  const monoSwap = a => `var i=document.createElement('i');i.className='smono';i.textContent='${esc(String(a || '').replace(/[^A-Za-z0-9&]/g, '').slice(0, 4))}';this.replaceWith(i)`;
+  const lowC = c => !BAD(c) && lumOf(hx(c)) < .13;
+  const logo = (src, size = '', color = '') => { const c = BAD(color) ? '' : hx(color); const px = LOGO_PX[size] || 128; return `<span class="logo ${size === 'hero' ? '' : size}${c ? ' tint' : ''}${c && lowC(c) ? ' lowc' : ''}"${c ? ` style="${tcv(c)}"` : ''}>${imgSized(src, px, px)}</span>`; };
   /* a player's id from whatever the feed gave us: the id field, the uid, the headshot file name or a link */
   const athId = a => { if (!a) return ''; if (a.id != null && a.id !== '') return String(a.id); let m = String(a.uid || '').match(/~a:(\d+)/); if (m) return m[1]; const hs = typeof a.headshot === 'string' ? a.headshot : a.headshot && a.headshot.href || ''; m = hs.match(/\/(\d+)\.png/); if (m) return m[1]; m = (a.links || []).map(l => l && l.href || '').join(' ').match(/\/id\/(\d+)/); return m ? m[1] : ''; };
   const hsUrl = a => { const h = a && a.headshot; return typeof h === 'string' ? h : h && h.href || ''; };
@@ -237,7 +242,7 @@
     const a = +g.away.score, h = +g.home.score, has = (live || fin) && g.away.score != null && g.home.score != null;
     const up = (x, y) => has && x > y, lo = (x, y) => fin && has && x < y;
     const star = `<i class="sstar" aria-label="Following"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg></i>`;
-    const side = (t, l) => { const f = HW.favs.has(L.key, t.id); return `<span class="stm${l ? ' lo' : ''}"><span class="scr">${t.logo ? imgSized(t.logo, 112, 112, 'alt=""') : `<b class="sab">${esc(t.abbr || '')}</b>`}${f ? star : ''}</span><b class="snm">${esc(t.short || t.abbr || '')}</b><b class="sab2">${esc(t.abbr || t.short || '')}</b></span>`; };
+    const side = (t, l) => { const f = HW.favs.has(L.key, t.id); return `<span class="stm${l ? ' lo' : ''}"><span class="scr${lowC(teamColor(t, L)) ? ' lowc' : ''}">${t.logo ? imgSized(t.logo, 112, 112, 'alt=""', monoSwap(t.abbr)) : monoOf(t.abbr)}${f ? star : ''}</span><b class="snm">${esc(t.short || t.abbr || '')}</b><b class="sab2">${esc(t.abbr || t.short || '')}</b></span>`; };
     const num = (t, u, l) => pre || t.score == null ? `<span class="ssc rec">${esc(t.rec || '')}</span>` : `<span class="ssc${u ? ' up' : ''}${l ? ' lo' : ''}">${esc(String(t.score))}</span>`;
     const f = !fin && !g.off && prefs.get('forecast') ? safeF(L, g, ctx) : null;
     const pick = f && Number.isFinite(f.pHome) ? `<small>${esc((f.pHome >= .5 ? g.home : g.away).abbr || '')} ${pct(Math.max(f.pHome, 1 - f.pHome))}</small>` : '';
