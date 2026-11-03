@@ -339,10 +339,20 @@
       const big = hrefM && im && /^#article\//.test(hrefM[1]) ? `<a class="trd" href="${hrefM[1]}"><img src="${esc(im.url)}" alt="" loading="lazy" onerror="this.remove()"><span class="trdt"><em>${esc([a.byline, a.published ? ago(a.published) : ''].filter(Boolean).join(' · ') || 'Story')}</em><b>${esc(a.headline || '')}</b></span></a>` : '';
       const rest = (big ? arts.slice(1) : arts).map(x => newsRow(lk, x)).join('');
       return `<div class="asec2"><h2>Top reads</h2><p>The latest on the ${esc(t0.name || t0.shortDisplayName || '')}.</p></div>${big}${rest ? `<div class="rows">${rest}</div>` : ''}`; })();
+    /* the Apple profile's grouped lists: a small heading, then one white card of rows, label left and value right */
+    const glist = (title, rows, extra = '') => rows.length ? `<h3 class="aph3">${title}</h3><div class="agl">${rows.map(([k, v, cls]) => `<div class="aglr"><span>${k}</span><b class="${cls || ''}">${v}</b></div>`).join('')}${extra}</div>` : '';
+    const formRow = last5.length ? `<div class="aglr"><span>Last ${last5.length}</span><b class="aform">${last5.map(g => { const us = g.home.id === String(id) ? g.home : g.away, them = us === g.home ? g.away : g.home; const w = +us.score > +them.score; return `<a class="${w ? 'w' : 'l'}" href="${href.game(lk, g.id)}" title="${esc(`${w ? 'W' : 'L'} ${us.score}-${them.score} ${us === g.home ? 'vs' : 'at'} ${them.short}`)}">${w ? 'W' : 'L'}</a>`; }).join('')}</b></div>` : '';
+    const seasonRows = r ? [['Record', `${r.w}-${r.l}`], r.ppg != null ? ['Points a game', (+r.ppg).toFixed(1)] : null, r.opp != null ? ['Allowed a game', (+r.opp).toFixed(1)] : null, r.diff != null ? ['Margin', sign(+r.diff), +r.diff > 0 ? 'pos' : +r.diff < 0 ? 'neg' : ''] : null, r.home ? ['Home', esc(r.home)] : null, r.road ? ['Road', esc(r.road)] : null, r.l10 ? ['Last 10', esc(r.l10)] : null, r.conf ? [L.standingsMode === 'conferences' ? 'In conference' : 'vs conference', esc(r.conf)] : null].filter(Boolean) : [];
+    const seasonHtml = glist('The season', seasonRows, formRow);
+    const leaders = sorted.filter(a => ppg[a.id]).slice(0, 3);
+    const leadersHtml = leaders.length ? `<h3 class="aph3">Leading scorers</h3><div class="agl">${leaders.map(a => `<a class="aglp" href="${href.player(lk, a.id)}">${headshot(hsUrl(a), color, 40, a.displayName)}<span class="t"><b>${esc(a.displayName)}</b><span>${esc([posWord(a.position && a.position.abbreviation), a.jersey ? `#${a.jersey}` : ''].filter(Boolean).join(' · '))}</span></span><b class="v">${ppg[a.id].pts.toFixed(1)}<small>PPG</small></b></a>`).join('')}</div>` : '';
+    const nextBlock = (next || lastDone) ? `<h3 class="aph3">${next && next.state === 'in' ? 'Live now' : next ? 'Up next' : 'Last game'}<button data-act="tptab" data-tab="schedule">Schedule</button></h3>` + (next ? gcard(next) : '') + (lastDone && (!next || next.state === 'pre') ? gcard(lastDone) : '') : '';
+    // the roster in grouped lists by position: face, name, position and number, any injury, points a game
+    const rosterList = sorted.length ? ['Guards', 'Forwards', 'Centers', 'Others'].map(h => [h, sorted.filter(a => grpOf(a.position && a.position.abbreviation) === h)]).filter(([, l]) => l.length).map(([h, l]) => `<h3 class="aph3">${h}<small>${l.length}</small></h3><div class="agl">${l.map(a => { const p = ppg[a.id]; const ij = ilBy[String(a.id)]; const cls = ij ? (/out/i.test(ij) ? 'out' : /prob|avail/i.test(ij) ? 'ok' : 'q') : ''; return `<a class="aglp" href="${href.player(lk, a.id)}">${headshot(hsUrl(a), color, 40, a.displayName)}<span class="t"><b>${esc(a.displayName)}</b><span>${esc([posWord(a.position && a.position.abbreviation).replace(/\/.*/, ''), a.jersey ? `#${a.jersey}` : '', a.displayHeight || ''].filter(Boolean).join(' · '))}${ij ? ` <i class="tag ${cls}">${esc(V._.tagWord(ij))}</i>` : ''}</span></span>${p && p.pts != null ? `<b class="v">${(+p.pts).toFixed(1)}<small>PPG</small></b>` : ''}</a>`; }).join('')}</div>`).join('') + '<p class="legend">Points per game this season.</p>' : '';
     const panels = {
-      overview: (nextGame + strip + form + injHtml + topReads) || empty('Nothing to show yet'),
+      overview: (nextBlock + seasonHtml + leadersHtml + injHtml + topReads) || empty('Nothing to show yet'),
       schedule: schedHtml || empty('No games listed'),
-      roster: rosterCards || empty('No roster listed'),
+      roster: rosterList || empty('No roster listed'),
       stats: (splitsHtml ? sec('Splits') + splitsHtml : '') + outlook + statsHtml || empty('No season numbers yet', '<p style="margin:6px 0 0">They show up once the team has played.</p>')
     };
     const TT = [['overview', 'Overview'], ['schedule', 'Schedule'], ['roster', 'Roster'], ['stats', 'Stats']];
@@ -355,14 +365,16 @@
     const band = `<header class="tband" style="--a:${esc(color)};--ad:${esc(dkc)}"><div class="tbtop"><a class="tbib" href="#teams" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a>`
       + `<div class="tbcap"><button class="star tbb${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(String(id))}" data-name="${esc(tnm)}" aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(tnm)}">${starI(on)}</button><button class="tbb" data-act="share" data-title="${esc(t0.displayName || tnm)}" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></div></div>`
       + `<div class="tbttl"><span class="tbcr">${V._.imgSized(lg, 160, 160, 'alt=""')}</span><h1 class="${tnm.length > 12 ? 'long' : ''}">${esc(tnm)}</h1></div><p class="tbsub">${esc([L.label, ...facts].join(' · '))}</p></header><div class="lb-slot"></div>`;
-    $main.innerHTML = band + `<div id="ttabs">${chips(TT, ttab, 'tptab', 'tab')}</div>`
-      + `<div class="tpanels">${TT.map(([k]) => `<div class="tpanel" data-tp="${k}"${k === ttab ? '' : ' hidden'}>${panels[k]}</div>`).join('')}</div>`;
+    const head = V._.apHead({ color, name: t0.displayName || tnm, sub: esc([L.label, ...facts].join(' · ')), img: lg, back: '#teams', star: { on, attrs: `data-act="fav" data-lk="${lk}" data-id="${esc(String(id))}" data-name="${esc(tnm)}"` }, share: t0.displayName || tnm });
+    $main.innerHTML = `<div class="approf">` + head + `<div class="lb-slot"></div><div id="ttabs" class="aptabs">${chips(TT, ttab, 'tptab', 'tab')}</div>`
+      + `<div class="tpanels">${TT.map(([k]) => `<div class="tpanel" data-tp="${k}"${k === ttab ? '' : ' hidden'}>${panels[k]}</div>`).join('')}</div></div>`;
     document.title = `${t0.displayName} · RIVL`;
     if (V._tptabL) $main.removeEventListener('click', V._tptabL);
     V._tptabL = e => { const b = e.target.closest('[data-act="tptab"]'); if (!b || !$main.querySelector('.tpanels')) return; e.preventDefault();
       const k = b.dataset.tab; store.set(tkey, k);
       $main.querySelectorAll('#ttabs .chip').forEach(x => { const o = x.dataset.tab === k; x.classList.toggle('on', o); x.setAttribute('aria-pressed', String(o)); x.setAttribute('aria-selected', String(o)); });
       $main.querySelectorAll('.tpanel').forEach(x => { x.hidden = x.dataset.tp !== k; });
+      const tb = $main.querySelector('#ttabs'); if (tb) { const y = tb.getBoundingClientRect().top; if (y < 60 || !b.closest('#ttabs')) window.scrollTo(0, Math.max(0, window.scrollY + y - 56)); }
  };
     $main.addEventListener('click', V._tptabL);
     if (simOk) outlookFill(L, String(id), r, { feed: HW.sim.ready(L) });   // fills in from the nightly file when there is one; otherwise the row above offers it
@@ -1190,7 +1202,7 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
 
     if (!here) {   // the index
       const nSvc = HW.myServices().length;
-      const summary = { watch: nSvc ? `${nSvc} service${nSvc === 1 ? '' : 's'}` : 'None picked yet', following: `${nTeams} team${nTeams === 1 ? '' : 's'} · ${fp.length} player${fp.length === 1 ? '' : 's'}`, home: `${PREFS.filter(([k]) => P[k] !== false).length} of ${PREFS.length} sections on`, look: `${({ system: 'Match my phone', dark: 'Dark', light: 'Light' })[theme] || 'Match my phone'} · ${V.ACCENTS && V.ACCENTS[accent] ? V.ACCENTS[accent][1] : 'black and white'}`, alerts: V.alerts && V.alerts.available() ? (V.alerts.on() ? 'On' : 'Off') : 'Needs the RIVL server', sync: V.sync && V.sync.available() ? (V.sync.code() ? `Code ${V.sync.code()}` : 'Not backed up') : 'Needs the RIVL server', app: standalone ? 'Installed' : 'Add to home screen', about: '' };
+      const summary = { watch: nSvc ? `${nSvc} service${nSvc === 1 ? '' : 's'}` : 'None picked yet', following: `${nTeams} team${nTeams === 1 ? '' : 's'} · ${fp.length} player${fp.length === 1 ? '' : 's'}`, home: `${PREFS.filter(([k]) => P[k] !== false).length} of ${PREFS.length} sections on`, look: `${({ system: 'Match my phone', dark: 'Dark', light: 'Light' })[theme] || 'Match my phone'}`, alerts: V.alerts && V.alerts.available() ? (V.alerts.on() ? 'On' : 'Off') : 'Needs the RIVL server', sync: V.sync && V.sync.available() ? (V.sync.code() ? `Code ${V.sync.code()}` : 'Not backed up') : 'Needs the RIVL server', app: standalone ? 'Installed' : 'Add to home screen', about: '' };
       $main.innerHTML = bar('Settings', '#home') + `<div class="rows setidx">${SETTINGS.map(([k, t, b]) => `<a class="row" href="#settings/${k}"><span class="sico">${ICONS[k]}</span><span class="t"><b>${esc(t)}</b><span>${esc(summary[k] || b)}</span></span>${chev}</a>`).join('')}</div>`;
       return;
     }

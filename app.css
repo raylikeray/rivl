@@ -3742,3 +3742,91 @@ html body #stchips .chip.on{color:var(--ink)}
 .sht td.spc b{font-size:13.5px;font-weight:800;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .sht td.spc small{font-size:10.5px;font-weight:700;color:var(--ink-3);flex:none}
 .sht tbody tr:active td{background:color-mix(in srgb,var(--ink) 4%,var(--surf))}
+
+/* ===== v379: the Apple profile — team and player pages =====
+   A band of the team's colour with a soft light wash: glass Back, Follow and Share; the crest (or the face) on a disc
+   beside the name; one line under it. Past the band, a slim bar of the same colour slides in with the name, and the
+   tabs, plain words with an underline, stay pinned under it. Everything below is grouped white cards. */
+.approf{--apb:calc(52px + env(safe-area-inset-top,0px))}
+html[data-page="team"] .hdr,html[data-page="player"] .hdr{display:none}
+.aph{position:relative;color:#fff;margin:calc(-1 * env(safe-area-inset-top,0px)) 0 0;padding:calc(env(safe-area-inset-top,0px) + 6px) 16px 18px;
+  background:linear-gradient(160deg,rgba(255,255,255,.17),rgba(255,255,255,0) 48%),linear-gradient(180deg,var(--a),color-mix(in srgb,var(--a) 82%,var(--ad)));overflow:hidden}
+.aptop,.apfx{display:flex;align-items:center;gap:8px}
+.aptop{height:50px}
+.apsp{flex:1}
+.apb{width:38px;height:38px;flex:none;border:0;border-radius:50%;display:grid;place-items:center;color:#fff;text-decoration:none;cursor:pointer;background:rgba(0,0,0,.2);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.22)}
+.apb svg{width:19px;height:19px}
+.apb.star.on{color:#FFD23F}
+.apb:active{transform:scale(.92)}
+.apid{display:flex;align-items:center;gap:14px;margin-top:6px}
+.apcrest{width:64px;height:64px;flex:none;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.96);box-shadow:0 6px 16px -6px rgba(0,0,0,.4)}
+.apcrest img{width:44px;height:44px;object-fit:contain}
+.apface{width:68px;height:68px;flex:none;border-radius:50%;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.12));box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35),0 6px 16px -6px rgba(0,0,0,.4)}
+.apface img{width:100%;height:100%;object-fit:cover;object-position:50% 12%}
+.apnm{flex:1;min-width:0}
+.apnm em{display:block;font-style:normal;font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
+.apnm h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.08;text-shadow:0 1px 10px rgba(0,0,0,.18)}
+.apnm h1.long{font-size:22px}
+.apnm p{margin:4px 0 0;font-size:13px;font-weight:600;opacity:.88;line-height:1.35}
+.apnm p a{color:#fff;text-decoration:none;font-weight:800}
+.aprt{display:none}
+.aprt.on{display:grid;place-items:center;flex:none;min-width:46px;height:36px;padding:0 8px;border-radius:12px;font:800 18px/1 var(--num);color:#fff;background:#24A148;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35),0 6px 14px -6px rgba(0,0,0,.4);font-variant-numeric:tabular-nums}
+.aprt.t4{background:#2E8B57}.aprt.t3{background:#B7950B}.aprt.t2{background:#C8691C}.aprt.t1{background:#8E8E93}
+/* the slim bar */
+.apfx{position:fixed;top:0;left:0;right:0;z-index:60;height:var(--apb);padding:env(safe-area-inset-top,0px) 12px 0;color:#fff;background:linear-gradient(180deg,var(--a),color-mix(in srgb,var(--a) 80%,var(--ad)));transform:translateY(-100%);transition:transform .28s var(--ease);box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.apfx.on{transform:none}
+.apfx b{font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.apfx .apb{width:34px;height:34px}
+.apfx .apcrest.s{width:30px;height:30px;box-shadow:none}
+.apfx .apcrest.s img{width:21px;height:21px}
+.apfx .apface.s{width:30px;height:30px}
+/* the tabs */
+.aptabs{position:sticky;top:var(--apb);z-index:40;background:var(--bg);border-bottom:.5px solid var(--line);margin:0 0 6px}
+.aptabs .chips{display:flex;gap:22px;padding:0 20px!important;margin:0!important;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}
+.aptabs .chips::-webkit-scrollbar{display:none}
+html body .aptabs .chip,html body .aptabs .chip.on{flex:none;height:46px;padding:0;border-radius:0;background:none!important;box-shadow:none!important;color:var(--ink-3);font-size:15.5px;font-weight:700;position:relative;border:0}
+html body .aptabs .chip.on{color:var(--ink)}
+.aptabs .chip.on::after{content:"";position:absolute;left:0;right:0;bottom:-.5px;height:3px;border-radius:2px;background:var(--a,#0A84FF)}
+.approf .aptabs{--a:var(--tint,#0A84FF)}
+/* grouped lists */
+.aph3{display:flex;align-items:baseline;gap:8px;margin:20px 20px 7px;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.aph3 small{font-size:12px;font-weight:700;letter-spacing:.02em;opacity:.8}
+.aph3 button{margin-left:auto;border:0;background:none;color:#0A84FF;font:700 13px/1 var(--ui);letter-spacing:0;text-transform:none;cursor:pointer;padding:4px 0}
+.agl{margin:0 16px;border-radius:16px;background:var(--surf);box-shadow:0 1px 2px rgba(16,24,40,.05);overflow:hidden}
+.aglr,.aglp{display:flex;align-items:center;gap:12px;padding:12px 16px;color:var(--ink);text-decoration:none;font-size:14.5px}
+.aglr + .aglr,.aglp + .aglp,.aglr + .aglp,.aglp + .aglr{border-top:.5px solid var(--line)}
+.aglr span{color:var(--ink-2);font-weight:600}
+.aglr b{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.aglr b.pos{color:#24A148}.aglr b.neg{color:#E5484D}
+.agll{width:20px;height:20px;object-fit:contain}
+.aform{gap:4px!important}
+.aform a{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:11px;font-weight:900;color:#fff;background:#24A148;text-decoration:none}
+.aform a.l{background:color-mix(in srgb,var(--ink) 14%,transparent);color:var(--ink-2)}
+.aglp .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.aglp .t b{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.aglp .t span{font-size:12.5px;color:var(--ink-3);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.aglp .t .tag{font-style:normal;margin-left:4px;font-size:10.5px;padding:2px 7px}
+.aglp .v{display:flex;flex-direction:column;align-items:flex-end;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.aglp .v small{font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--ink-3)}
+.aglr:active,.aglp:active{background:color-mix(in srgb,var(--ink) 4%,transparent)}
+/* the older sections inside a profile take the same grouped look */
+.approf .sec{margin:20px 20px 7px;padding:0}
+.approf .sec h2{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.approf .sec h2 small{letter-spacing:.02em;text-transform:none;font-size:12px}
+.approf .sec a,.approf .sec button{font-size:13px;font-weight:700;color:#0A84FF;background:none;box-shadow:none}
+.approf .rows,.approf .ijl,.approf .tw,.approf .card,.approf .games,.approf .giplate{margin-left:16px!important;margin-right:16px!important;border-radius:16px!important;background:var(--surf)!important;box-shadow:0 1px 2px rgba(16,24,40,.05)!important;border:0!important}
+.approf .tw{overflow-x:auto}
+.approf .sgcard{margin-left:16px;margin-right:16px}
+.approf .lb-slot:empty{display:none}
+/* the page's entrance slides with a transform, which would pin the fixed bar to the page: profiles fade in instead */
+#main.enter > .approf,#main > .approf{animation:g2in .22s ease-out both;transform:none}
+/* tables sitting straight in a profile get the card too; switches inside a card are a segmented control, not pills */
+.approf .tbl.kv,.approf .tbl.ff{display:table;width:calc(100% - 32px);margin:0 16px;border-radius:16px;overflow:hidden;background:var(--surf);box-shadow:0 1px 2px rgba(16,24,40,.05);border-collapse:separate;border-spacing:0}
+.approf .tbl.kv td,.approf .tbl.ff td,.approf .tbl.ff th{padding-left:16px;padding-right:16px}
+.approf .card .chips:not(.ptabs){display:flex;gap:0;margin:4px 0 12px;padding:3px;border-radius:12px;background:color-mix(in srgb,var(--ink) 7%,transparent);overflow:visible;flex-wrap:nowrap}
+html body .approf .card .chips:not(.ptabs) .chip{flex:1;min-width:0;height:32px;padding:0 4px;border-radius:9px;background:none!important;box-shadow:none!important;color:var(--ink-2);font-size:13px;font-weight:700;border:0}
+html body .approf .card .chips:not(.ptabs) .chip.on{background:var(--surf)!important;color:var(--ink);box-shadow:0 1px 3px rgba(16,24,40,.14)!important}
+.approf .asec2{margin:20px 20px 7px}
+.approf .asec2 h2{margin:0;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.approf .asec2 p{display:none}
+.approf .trd{margin:0 16px 10px;border-radius:16px;overflow:hidden}
