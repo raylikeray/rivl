@@ -993,7 +993,7 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
       // the screen (a 15-point lead is the most it takes). Before the tip it sits at RIVL's call.
       const share = hasSc ? .5 + Math.max(-.3, Math.min(.3, (+g.home.score - +g.away.score) / 50)) : pv2 != null ? pv2 : .5;
       const seam = Math.min(76, Math.max(24, 50 - (share - .5) * 85));
-      const bgVars = `--ga:${pc[0]};--gh:${pc[1]};--sh:${share.toFixed(3)};--seam:${seam.toFixed(1)}%`;
+      const bgVars = `--ga:${V._.deepen ? V._.deepen(pc[0]) : pc[0]};--gh:${V._.deepen ? V._.deepen(pc[1]) : pc[1]};--sh:${share.toFixed(3)};--seam:${seam.toFixed(1)}%`;
       const blobs = `<i class="b1"></i><i class="b2"></i><i class="b3"></i>`;
       const hh = hashOf(headHtml), page = $main.querySelector('#gpage');
       if (page && page.dataset.gid === String(id)) {

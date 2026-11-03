@@ -28,12 +28,15 @@ async function j(url, ttl = 60000) {
   if (hit && Date.now() - hit.t < ttl) return hit.v;
   if (!hit) { const w = await warm(url); if (w) { cache.set(url, w); return w.v; } }
   const ctl = new AbortController();
-  const to = setTimeout(() => ctl.abort(), 15000);
+  const to = setTimeout(() => ctl.abort(), 25000);
   try {
     const r = await fetch(url, { signal: ctl.signal });
     if (!r.ok) { const e = new Error('HTTP ' + r.status); e.status = r.status; throw e; }
     const v = await r.json();
-    cache.set(url, { t: Date.now(), v });
+    /* v386: an old copy handed back by the service worker (the network failed) keeps its real age, so the next poll asks
+       again instead of treating hours-old scores as fresh */
+    const st = +(r.headers.get('x-rivl-t') || 0);
+    cache.set(url, { t: st && Date.now() - st > 30000 ? st : Date.now(), v });
     return v;
   } catch (err) {
     const d = directOf(url); if (!d) throw err;   // a proxied call that failed: try ESPN itself once, and keep the answer under the url that was asked for

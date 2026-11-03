@@ -3,7 +3,7 @@
    ESPN's feeds go network-first with a short leash: a fresh answer when there is one, the last good copy
    when the network is slow, down, or ESPN is throttling (429/5xx). Logos, headshots and fonts are cached
    on first sight and served from cache after that. */
-const VERSION = 'rivl-v385';
+const VERSION = 'rivl-v386';
 const SHELL = `${VERSION}-shell`, DATA = 'rivl-data', MEDIA = 'rivl-media';   // feed copies and media outlive a version: the app reads the feed copies for a warm start
 const Q = `?v=${VERSION.replace(/^rivl-v/, '')}`;   // the same stamp index.html puts on its assets
 const SHELL_FILES = ['./', './index.html', ...['./app.css', './app.js', './views.js', './screens.js', './config.js', './js/core.js', './js/sim.js', './js/hub.js', './js/rating.js', './js/ask.js', './js/ask2.js', './js/stats.js', './js/recruit.js', './js/bracket.js', './more.js'].map(f => f + Q), './manifest.webmanifest', './img/mark.svg', './img/badge-96.png', './img/icon-192.png', './img/icon-512.png', './img/apple-touch-icon.png'];
@@ -52,7 +52,12 @@ self.addEventListener('fetch', e => {
     e.respondWith((async () => {
       const c = await caches.open(DATA);
       try {
-        const r = await withTimeout(fetch(req), DATA_TIMEOUT);
+        /* v386: a live scoreboard is never swapped for an old copy just because it was slow. College's opening-night board
+           is ~180 games and took longer than 6 seconds on a phone, so the old copy (from before tip-off) was served and the
+           app showed 6 PM games as not started at 8 PM. Scores and game pages wait up to 20 seconds; the old copy is only
+           for a real failure, and it says how old it is. */
+        const live = /\/(scoreboard|summary)\b/.test(url.pathname);
+        const r = await withTimeout(fetch(req), live ? 20000 : DATA_TIMEOUT);
         if (r.ok) { stamp(r).then(sr => c.put(req, sr)).catch(() => { }); return r; }
         const hit = await c.match(req); if (hit) return hit;   // throttled or broken upstream: the last good copy
         return r;

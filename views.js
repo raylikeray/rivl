@@ -47,6 +47,9 @@
   /* team colour on the two grounds: lifted toward white on black, deepened toward black on white */
   const rgbOf = c => { const s = String(c || ''); const m = s.match(/^rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/); if (m) return [+m[1], +m[2], +m[3]]; const h = s.replace('#', ''); return h.length >= 6 ? [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)) : null; };   // hex or an rgb() a lift produced
   const lumOf = c => { const v = rgbOf(c); return v ? (0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]) / 255 : .5; };
+  /* v386: a colour white type can sit on. Gold, sky blue and silver plates washed white names out (Michigan, Vanderbilt);
+     a light colour is darkened, keeping its hue, until white reads on it. Dark colours pass through unchanged. */
+  const deepen = c => { const v = rgbOf(c); if (!v) return c; const L0 = lumOf(c); if (L0 <= .3) return c; const f = Math.sqrt(.3 / L0) * .92; return '#' + v.map(x => Math.max(0, Math.min(255, Math.round(x * f))).toString(16).padStart(2, '0')).join(''); };
   const mixTo = (c, to, k) => { const v = rgbOf(c); if (!v) return c; const m = x => Math.round(x + (to - x) * k); return `rgb(${m(v[0])},${m(v[1])},${m(v[2])})`; };
   /* a colour for a number on the page: the team's hue at full saturation, lifted or deepened only as far as it must be to read.
      The old lift mixed toward white and came out pastel; this keeps the colour. */
@@ -652,7 +655,7 @@
           if (pre && S0.inj) { const A = outOf(g.away), H = outOf(g.home); const t = A.n > H.n || (A.n === H.n && A.pts > H.pts) ? g.away : g.home; const o = t === g.away ? A : H; if (o.n) foot = `${o.n} ${esc(t.short)} out${o.pts ? ` · ${o.pts.toFixed(1)} ppg sitting` : ''}`; }
           if (!foot && done && f && ph != null) { const pick = ph >= .5 ? g.home : g.away; foot = `RIVL had ${esc(pick.abbr)} ${pct(Math.max(ph, 1 - ph))}`; }
           if (!foot && tv) foot = esc(tv);
-          return `<a class="dk${live ? ' live' : ''}" href="${href.game(lk, g.id)}" style="--ca:${esc(ca)};--cb:${esc(cb)};--seam:${seam.toFixed(1)}%"><span class="wm a">${esc(g.away.abbr || '')}</span><span class="wm h">${esc(g.home.abbr || '')}</span><span class="dkk">${k}${tv && !pre ? '' : tv && foot !== esc(tv) ? ` · ${esc(tv)}` : ''}</span><span class="dkg">${side(g.away, g.home)}${mid}${side(g.home, g.away)}</span>${foot ? `<span class="dkf">${foot}</span>` : ''}</a>`;
+          return `<a class="dk${live ? ' live' : ''}" href="${href.game(lk, g.id)}" style="--ca:${esc(deepen(ca))};--cb:${esc(deepen(cb))};--seam:${seam.toFixed(1)}%"><span class="wm a">${esc(g.away.abbr || '')}</span><span class="wm h">${esc(g.home.abbr || '')}</span><span class="dkk">${k}${tv && !pre ? '' : tv && foot !== esc(tv) ? ` · ${esc(tv)}` : ''}</span><span class="dkg">${side(g.away, g.home)}${mid}${side(g.home, g.away)}</span>${foot ? `<span class="dkf">${foot}</span>` : ''}</a>`;
         };
         const dots = deck.length > 1 ? (deck.length <= 8 ? `<div class="dkdots" aria-hidden="true">${deck.map((_, i) => `<i${i ? '' : ' class="on"'}></i>`).join('')}</div>` : `<div class="dkdots n" aria-hidden="true"><span>1</span> / ${deck.length}</div>`) : '';
         const skel = !deck.length && mine.length && !S0.teams && !offS ? `<div class="dk skel"></div>` : '';
@@ -1248,5 +1251,5 @@
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom < 64; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };
     window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(run); }, { passive: true }); document.addEventListener('rivl:rendered', run); }
   HW.v5 = Object.assign(HW.v5 || {}, { initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
-    _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
+    _: { deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
 })();
