@@ -74,7 +74,8 @@
       stPaint(items, tab, (conf || groups.length > 1 ? groups.map(block).join('') : block({ rows: groups.flatMap(g => g.rows).sort((a, b) => (b.w - b.l) - (a.w - a.l) || (b.pct || 0) - (a.pct || 0) || (b.diff || 0) - (a.diff || 0)), name: L.label })) + legend);
       return;
     }
-    let rows, title;
+    // v400: every main tab's ladder is built, so East, West and League sit side by side and swipe
+    const ladderFor = tab => { let rows, title;
     if (tab === 'league') { rows = groups.flatMap(g => g.rows).sort((a, b) => (b.w - b.l) - (a.w - a.l) || (b.pct || 0) - (a.pct || 0) || (b.diff || 0) - (a.diff || 0)).map((r, i) => ({ ...r, pos: i + 1 })); title = L.label; }
     else { const g = groups.find(x => (x.abbr || x.name) === tab); rows = g.rows; title = g.name; }
     const cuts = tab === 'league' ? [] : (L.playoffLine || []);
@@ -115,7 +116,9 @@
     const lg2 = `<p class="legend">${tab === 'league' ? 'Every team by record.' : cuts.length === 2 ? `Top ${cuts[0]} go straight to the playoffs; ${cuts[0] + 1} through ${cuts[1]} play in.` : cuts.length === 1 ? `Top ${cuts[0]} make the playoffs.` : ''} ${hasMove ? 'Arrows show places moved in the last seven days, by record.' : ''}</p>`;
     // v380: each band is its own grouped card under its label
     const grouped = rungs.split(/(?=<div class="ldb)/).filter(Boolean).map(ch => { const m = ch.match(/^(<div class="ldb[^>]*>[\s\S]*?<\/div>)([\s\S]*)$/); return m ? m[1] + `<div class="ldg">${m[2]}</div>` : `<div class="ldg">${ch}</div>`; }).join('');
-    stPaint(items, tab, `<div class="ladder">${grouped}</div>` + lg2);
+    return `<div class="ladder">${grouped}</div>` + lg2; };
+    const panels = {}; items.filter(([k]) => !ST_MORE[k]).forEach(([k]) => { panels[k] = ladderFor(k); });
+    stPaint(items, tab, panels);
   }
   /* the NBA Cup: group standings built from the group-play results in the nightly schedule, then the knockout games.
      The groups are the NBA's own draw for 2026 (nba.com, July 2026); the schedule's group games are checked against it. */
@@ -187,6 +190,7 @@
     stPaint(items, tab, body);
   }
   /* standings: the chips stay put and only toggle; the table below them swaps */
+  const ST_MORE = { picture: 1, odds: 1, stats: 1, cup: 1, bracket: 1 };
   function stPaint(items, tab, body) {
     /* v380: the conferences (and League) are one segmented control; Picture, Odds, Stats, Cup and Bracket live in a
        More list under the ladder, and open as their own page with a way back */
@@ -201,8 +205,16 @@
       ? `<div class="sthead"><button class="stback" data-act="stab" data-tab="${esc(back)}"><svg viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2 2 10l8 8"/></svg>Standings</button><h1>${esc(label)}</h1></div>`
       : `<div class="ptl"><h1>Standings</h1></div><div class="segc${main.length > 3 ? ' scroll' : ''}" role="tablist">${main.map(([k, l]) => `<button data-act="stab" data-tab="${esc(k)}" class="${k === tab ? 'on' : ''}" role="tab" aria-selected="${k === tab}">${esc(l)}</button>`).join('')}</div>`;
     const moreList = !isMore && more.length ? `<div class="gcap" style="margin-top:22px">More</div><div class="gl">${more.map(([k, l]) => `<button class="gr ni" data-act="stab" data-tab="${esc(k)}"><span class="gm"><b>${esc(l)}</b><span>${esc(MORE[k])}</span></span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1.5 1.5 5 5-5 5"/></svg></button>`).join('')}</div>` : '';
-    $main.innerHTML = `<div id="stpage" class="st380" data-lk="${esc(lk)}">${head}<div id="stbody">${body}${moreList}</div></div>`;
-    const sb = $main.querySelector('#stbody'); if (V.soft) V.soft(sb);
+    if (body && typeof body === 'object') {   // v400: the main tabs as swipeable panels
+      $main.innerHTML = `<div id="stpage" class="st380" data-lk="${esc(lk)}">${head}<div id="stbody" class="stpanels">${main.filter(([k]) => body[k] != null).map(([k]) => `<div data-pg="${esc(k)}">${body[k]}${moreList}</div>`).join('')}</div></div>`;
+      const tb = $main.querySelector('.segc'), sp = $main.querySelector('#stbody'); const bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--apb')) || 56;
+      V._spg = V._.pager(tb, { tabs: tb, strip: sp, start: tab, stickTop: bar, thumb: true, onShow: k => { store.set('v5:stab:' + lk, k); store.set('v5:stab0:' + lk, k); } });
+      if (!V._spg) sp.querySelectorAll('[data-pg]').forEach(el => { el.hidden = el.dataset.pg !== tab; });
+      if (V.soft) V.soft(sp);
+    } else {
+      $main.innerHTML = `<div id="stpage" class="st380" data-lk="${esc(lk)}">${head}<div id="stbody">${body}${moreList}</div></div>`;
+      const sb = $main.querySelector('#stbody'); if (V.soft) V.soft(sb);
+    }
     const on = $main.querySelector('.segc .on'); if (on && on.scrollIntoView) on.scrollIntoView({ inline: 'center', block: 'nearest' });
   }
 
@@ -378,16 +390,18 @@
       + `<div class="tbttl"><span class="tbcr">${V._.imgSized(lg, 160, 160, 'alt=""')}</span><h1 class="${tnm.length > 12 ? 'long' : ''}">${esc(tnm)}</h1></div><p class="tbsub">${esc([L.label, ...facts].join(' · '))}</p></header><div class="lb-slot"></div>`;
     const head = V._.apHead({ color, name: t0.displayName || tnm, sub: esc([L.label, ...facts].join(' · ')), img: lg, back: '#teams', star: { on, attrs: `data-act="fav" data-lk="${lk}" data-id="${esc(String(id))}" data-name="${esc(tnm)}"` }, share: t0.displayName || tnm });
     $main.innerHTML = `<div class="approf">` + head + `<div class="lb-slot"></div><div id="ttabs" class="aptabs">${chips(TT, ttab, 'tptab', 'tab')}</div>`
-      + `<div class="tpanels">${TT.map(([k]) => `<div class="tpanel" data-tp="${k}"${k === ttab ? '' : ' hidden'}>${panels[k]}</div>`).join('')}</div></div>`;
+      + `<div class="tpanels">${TT.map(([k]) => `<div class="tpanel" data-tp="${k}" data-pg="${k}"${k === ttab ? '' : ' hidden'}>${panels[k]}</div>`).join('')}</div></div>`;
     document.title = `${t0.displayName} · RIVL`;
     if (V._tptabL) $main.removeEventListener('click', V._tptabL);
     V._tptabL = e => { const b = e.target.closest('[data-act="tptab"]'); if (!b || !$main.querySelector('.tpanels')) return; e.preventDefault();
       const k = b.dataset.tab; store.set(tkey, k);
+      if (V._tpg && $main.querySelector('.tpanels.pgr')) { V._tpg.go(k); const tb = $main.querySelector('#ttabs'); if (tb && !b.closest('#ttabs')) window.scrollTo({ top: Math.max(0, window.scrollY + tb.getBoundingClientRect().top - 56), behavior: 'smooth' }); return; }
       $main.querySelectorAll('#ttabs .chip').forEach(x => { const o = x.dataset.tab === k; x.classList.toggle('on', o); x.setAttribute('aria-pressed', String(o)); x.setAttribute('aria-selected', String(o)); });
       $main.querySelectorAll('.tpanel').forEach(x => { x.hidden = x.dataset.tp !== k; });
       const tb = $main.querySelector('#ttabs'); if (tb) { const y = tb.getBoundingClientRect().top; if (y < 60 || !b.closest('#ttabs')) window.scrollTo(0, Math.max(0, window.scrollY + y - 56)); }
  };
     $main.addEventListener('click', V._tptabL);
+    { const tb = $main.querySelector('#ttabs'), sp = $main.querySelector('.tpanels'); const bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--apb')) || 56; V._tpg = V._.pager(tb, { tabs: tb, strip: sp, start: ttab, stickTop: bar, onShow: k => store.set(tkey, k) }); }   // v400: swipe between the team's tabs
     if (simOk) outlookFill(L, String(id), r, { feed: HW.sim.ready(L) });   // fills in from the nightly file when there is one; otherwise the row above offers it
     V.refresh = next && next.state === 'in' ? async () => { const g2 = await liveOf(next, 15000); const host = $main.querySelector(`.tpanel[data-tp="overview"] .sgcard[data-gid="${CSS.escape(String(next.id))}"]`); if (!host || !g2) return; const h = gcard(g2); if (host.dataset.h !== hashOf(h)) { host.outerHTML = h.replace('<div class="sgcard dkhost"', `<div class="sgcard dkhost" data-h="${hashOf(h)}"`); } if (g2.state === 'post') V.refresh = null; } : null;
   }
@@ -799,7 +813,8 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
         const both = costCard(g.away) + costCard(g.home);
         report = sec('Injury report') + (both || `<p class="legend">Nobody listed on either side.</p>`);
       }
-      let body = '';
+      // v400: every tab's body is built, so the tabs can sit side by side and be swiped between
+      const bodyFor = tab => { let body = '';
       if (tab === 'summary') {
         body += lineScore;
         if (starters) body += starters;
@@ -936,6 +951,8 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
         const rows = ta && th ? cmpRows(flat(ta).map(x => x.name).filter(n => get(th, n))) : '';
         body = rows ? `<div class="cmp" style="padding-top:6px">${cmpHead}${rows}</div>` : empty(g.state === 'pre' ? 'Stats arrive at tip-off' : 'No team stats yet');
       }
+      return body; };
+      const bodies = {}; tabList.forEach(([k]) => { bodies[k] = bodyFor(k); });
       const scrollY = window.scrollY;
       const side = t => ({ short: t.short, abbr: t.abbr, logo: t.logo, color: V._.teamColor(t), score: t.score, rec: t.rec || '' });
       const card = g.state === 'pre' ? null : { kind: 'game', away: side(g.away), home: side(g.home), status: g.state === 'post' ? finalWord(g) : g.detail, sub: tvLabel(g) || (d.gameInfo && d.gameInfo.venue && d.gameInfo.venue.fullName) || '', date: dayLabel(ymdOf(g.date), { weekday: 'long', month: 'long', day: 'numeric' }), note: f && prefs.get('forecast') ? `RIVL had ${(f.pHome >= .5 ? g.home : g.away).short} ${pct(Math.max(f.pHome, 1 - f.pHome))}` : '', title: `${g.away.short} ${g.away.score ?? ''}, ${g.home.short} ${g.home.score ?? ''}`, text: `${g.away.short} ${g.away.score ?? ''}, ${g.home.short} ${g.home.score ?? ''} · ${g.state === 'post' ? finalWord(g) : g.detail}`, file: `${g.away.abbr}-${g.home.abbr}-${ymdOf(g.date)}` };
@@ -997,17 +1014,17 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
       const bgVars = `--ga:${V._.deepen ? V._.deepen(pc[0]) : pc[0]};--gh:${V._.deepen ? V._.deepen(pc[1]) : pc[1]};--sh:${share.toFixed(3)};--seam:${seam.toFixed(1)}%`;
       const blobs = `<i class="b1"></i><i class="b2"></i><i class="b3"></i>`;
       const hh = hashOf(headHtml), page = $main.querySelector('#gpage');
-      if (page && page.dataset.gid === String(id)) {
+      const pnl = k => `<div class="gpanel" data-pg="${k}" data-h="${hashOf(bodies[k])}">${bodies[k]}</div>`;
+      if (page && page.dataset.gid === String(id) && page.querySelector('#gtabs').dataset.k === tabKey) {
         const head = page.querySelector('#ghead'); if (head.dataset.h !== hh) { head.innerHTML = headHtml; head.dataset.h = hh; }
         const st = page.querySelector('#g2strip'); if (st && st.dataset.h !== hashOf(strip)) { const x = st.scrollLeft; st.innerHTML = strip; st.dataset.h = hashOf(strip); st.scrollLeft = x; }
         const mn = page.querySelector('#g2mini'); if (mn && mn.innerHTML !== mini) mn.innerHTML = mini;
-        const tabsEl = page.querySelector('#gtabs'); if (tabsEl.dataset.k !== tabKey) { tabsEl.innerHTML = tabs; tabsEl.dataset.k = tabKey; }
-        else tabsEl.querySelectorAll('.chip').forEach(c => { const on = c.dataset.tab === tab; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); c.setAttribute('aria-selected', String(on)); });
-        const bodyEl = page.querySelector('#gbody'); if (bodyEl.dataset.h !== hashOf(body) || bodyEl.dataset.tab !== tab) { const tabChanged = bodyEl.dataset.tab !== tab; bodyEl.innerHTML = body; if (tabChanged && V.soft) V.soft(bodyEl); bodyEl.dataset.h = hashOf(body); bodyEl.dataset.tab = tab; }
+        page.querySelectorAll('#gbody > .gpanel').forEach(el => { const k = el.dataset.pg, h = hashOf(bodies[k] || ''); if (el.dataset.h !== h) { el.innerHTML = bodies[k] || ''; el.dataset.h = h; } });
         page.querySelectorAll('.ghbg').forEach(bg => { if (bg.getAttribute('style') !== bgVars) bg.setAttribute('style', bgVars); });
       } else {
-        $main.innerHTML = `<div id="gpage" class="gdark g2" data-gid="${esc(String(id))}"><div class="g2fx"><div class="ghbg" style="${bgVars}" aria-hidden="true">${blobs}</div>${barHtml}</div><div class="g2top"><div class="ghbg" style="${bgVars}" aria-hidden="true">${blobs}</div><div id="ghead" data-h="${hh}">${headHtml}</div></div><div id="gtabs" data-k="${tabKey}">${tabs}</div><div id="gbody" data-tab="${tab}" data-h="${hashOf(body)}">${body}</div></div>`;
+        $main.innerHTML = `<div id="gpage" class="gdark g2" data-gid="${esc(String(id))}"><div class="g2fx"><div class="ghbg" style="${bgVars}" aria-hidden="true">${blobs}</div>${barHtml}</div><div class="g2top"><div class="ghbg" style="${bgVars}" aria-hidden="true">${blobs}</div><div id="ghead" data-h="${hh}">${headHtml}</div></div><div id="gtabs" data-k="${tabKey}">${tabs}</div><div id="gbody">${tabList.map(([k]) => pnl(k)).join('')}</div></div>`;
         const cur = $main.querySelector('#g2strip .cur'); if (cur) { const st = cur.parentElement; st.scrollLeft = Math.max(0, cur.offsetLeft - (st.clientWidth - cur.offsetWidth) / 2); }
+        { const tb = $main.querySelector('#gtabs'), sp = $main.querySelector('#gbody'); const bar = $main.querySelector('.g2fx'); V._gpg = V._.pager(tb, { tabs: tb, strip: sp, start: tab, stickTop: bar ? bar.offsetHeight : 56, inkW: .56, onShow: k => { tab = k; } }); if (!V._gpg) sp.querySelectorAll('.gpanel').forEach(el => { el.hidden = el.dataset.pg !== tab; }); }
       }
       g2Fit(); requestAnimationFrame(g2Fit); g2Scroll();
       document.title = `${g.tbd ? 'Teams to be decided' : `${g.away.short} at ${g.home.short}`} · RIVL`;
@@ -1016,7 +1033,7 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
     const g = await paint();
     V.refresh = async () => { if (!g || g.state === 'post') return; await paint(15000); };
     if (V._gtabL) $main.removeEventListener('click', V._gtabL);
-    V._gtabL = e => { const b = e.target.closest('[data-act="gtab"],[data-act="sv-q"],[data-act="pq"],[data-act="pscoring"],[data-act="sv-team"],[data-act="sv-pid"],[data-act="bsort"],[data-act="pf"]'); if (!b) return; const a = b.dataset.act; if (a === 'gtab') tab = b.dataset.tab; else if (a === 'pq') pv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'pscoring') pv.scoring = !pv.scoring; else if (a === 'sv-team') { sv.team = b.dataset.team; sv.pid = ''; } else if (a === 'sv-pid') sv.pid = b.dataset.pid; else if (a === 'sv-q') sv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'bsort') { const c = b.dataset.col; if (bv.col === c) { if (bv.dir === 'desc') bv.dir = 'asc'; else { bv.col = ''; bv.dir = 'desc'; } } else { bv.col = c; bv.dir = 'desc'; } } else if (a === 'pf') pf.pid = b.dataset.pid === pf.pid ? '' : b.dataset.pid; paint(); };
+    V._gtabL = e => { const b = e.target.closest('[data-act="gtab"],[data-act="sv-q"],[data-act="pq"],[data-act="pscoring"],[data-act="sv-team"],[data-act="sv-pid"],[data-act="bsort"],[data-act="pf"]'); if (!b) return; const a = b.dataset.act; if (a === 'gtab') { if (V._gpg && $main.querySelector('#gbody.pgr')) { e.preventDefault(); V._gpg.go(b.dataset.tab); const tb = $main.querySelector('#gtabs'); if (tb && !b.closest('#gtabs')) { const bar = $main.querySelector('.g2fx'); const y = tb.getBoundingClientRect().top + scrollY - (bar ? bar.offsetHeight : 56); if (scrollY > y) scrollTo({ top: y, behavior: 'smooth' }); } return; } tab = b.dataset.tab; } else if (a === 'pq') pv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'pscoring') pv.scoring = !pv.scoring; else if (a === 'sv-team') { sv.team = b.dataset.team; sv.pid = ''; } else if (a === 'sv-pid') sv.pid = b.dataset.pid; else if (a === 'sv-q') sv.q = b.dataset.q === 'all' ? 'all' : +b.dataset.q; else if (a === 'bsort') { const c = b.dataset.col; if (bv.col === c) { if (bv.dir === 'desc') bv.dir = 'asc'; else { bv.col = ''; bv.dir = 'desc'; } } else { bv.col = c; bv.dir = 'desc'; } } else if (a === 'pf') pf.pid = b.dataset.pid === pf.pid ? '' : b.dataset.pid; paint(); };
     $main.addEventListener('click', V._gtabL);
   }
 

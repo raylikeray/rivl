@@ -4460,3 +4460,19 @@ html body .approf .tw table th:first-child,html body .approf .tw table td:first-
 .pgi{position:absolute;left:0;bottom:-.5px;height:3px;border-radius:2px;background:var(--a,#0A84FF);width:0;pointer-events:none;will-change:transform,width}
 .aptabs.pgd .chip{transition:color .15s}
 @media (prefers-reduced-motion:reduce){.pgr{scroll-behavior:auto}}
+
+/* ===== v400: the pager on team and game pages ===== */
+.pgd .chip.on::after{display:none!important}
+.pgd .chips,#gtabs.pgd{position:relative}
+.g2 #gtabs.pgd .pgi{height:4px;border-radius:4px;bottom:-1px;background:#1D9BF0}
+.g2 #gtabs.pgd .chip{transition:color .15s}
+.segc.pgd{position:relative}
+.segc.pgd>button,.segc.pgd>a{position:relative;z-index:1;background:transparent!important;box-shadow:none!important}
+.segc.pgd .pgthumb{top:2px;bottom:2px;height:auto;left:0;border-radius:7px;background:var(--thumb);box-shadow:0 3px 8px rgba(0,0,0,.12),0 0 0 .5px rgba(0,0,0,.04);z-index:0}
+#stbody.pgr{margin-left:-16px;margin-right:-16px}
+#stbody.pgr>.pgp{padding:0 16px}
+.stseg.pgd{position:relative}
+.stseg.pgd>button,.stseg.pgd>button.on{position:relative;z-index:1;background:transparent!important;box-shadow:none!important}
+.stseg.pgd .pgthumb{top:2px;bottom:2px;height:auto;left:0;border-radius:7px;background:var(--thumb);box-shadow:0 3px 8px rgba(0,0,0,.12),0 0 0 .5px rgba(0,0,0,.04);z-index:0}
+#gbody>.gpanel>.tw:first-child>.tbl{margin-top:0}
+#gbody>.gpanel>.chips:first-child,#gbody>.gpanel>.pchips:first-child{padding-top:0}

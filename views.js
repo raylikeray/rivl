@@ -397,12 +397,12 @@
      the page scrolls to that place with the shift removed in the same frame, so nothing jumps.
      pager(root, { tabs, strip, key, onShow }) — tabs: the row of buttons with data-tab; strip: the element holding
      panels with data-pg="<tab>". */
-  function pager(root, { tabs, strip, start, onShow, stickTop = 0 } = {}) {
+  function pager(root, { tabs, strip, start, onShow, stickTop = 0, inkW = 1, thumb = false } = {}) {
     if (!tabs || !strip) return null;
     const panels = [...strip.children]; const keys = panels.map(p => p.dataset.pg); const btns = keys.map(k => tabs.querySelector(`[data-tab="${k}"]`));
     if (panels.length < 2 || btns.some(b => !b)) return null;
     strip.classList.add('pgr'); panels.forEach(p => { p.classList.add('pgp'); p.hidden = false; });
-    tabs.classList.add('pgd'); const ink = document.createElement('i'); ink.className = 'pgi'; (btns[0].parentElement).appendChild(ink);
+    tabs.classList.add('pgd'); const ink = document.createElement('i'); ink.className = thumb ? 'pgi pgthumb' : 'pgi'; (btns[0].parentElement).appendChild(ink);
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let cur = Math.max(0, keys.indexOf(start)); const ys = {}; const seen = new Set([cur]);
     const W = () => strip.clientWidth || 1;
@@ -412,12 +412,17 @@
     const place = () => { const y = window.scrollY; panels.forEach((p, i) => { p.style.transform = i === cur ? '' : `translateY(${y - yFor(i)}px)`; }); };
     const fit = (wide) => { const a = panels[cur].offsetHeight; const need = wide ? Math.max(a, window.scrollY + innerHeight - top0()) : a; strip.style.height = need + 'px'; };
     const inkTo = (x) => { const i = Math.floor(x), f = x - i; const a = btns[Math.max(0, Math.min(i, btns.length - 1))], b = btns[Math.max(0, Math.min(i + 1, btns.length - 1))];
-      const L = a.offsetLeft + (b.offsetLeft - a.offsetLeft) * f, Wd = a.offsetWidth + (b.offsetWidth - a.offsetWidth) * f; ink.style.transform = `translateX(${L}px)`; ink.style.width = Wd + 'px';
+      const L = a.offsetLeft + (b.offsetLeft - a.offsetLeft) * f, Wd = a.offsetWidth + (b.offsetWidth - a.offsetWidth) * f; ink.style.transform = `translateX(${L + Wd * (1 - inkW) / 2}px)`; ink.style.width = Wd * inkW + 'px';
       const near = Math.round(x); btns.forEach((bt, j) => { const on = j === near; if (bt.classList.contains('on') !== on) { bt.classList.toggle('on', on); bt.setAttribute('aria-selected', String(on)); bt.setAttribute('aria-pressed', String(on)); } bt.style.opacity = String(.55 + .45 * Math.max(0, 1 - Math.abs(x - j))); }); };
     const land = (i) => { if (i === cur) { fit(false); return; } ys[cur] = window.scrollY; const y = yFor(i); cur = i; panels.forEach(p => { p.style.transform = ''; }); fit(false); window.scrollTo(0, y); place();
       if (!seen.has(i)) { seen.add(i); if (HW.v5.soft) HW.v5.soft(panels[i]); } if (onShow) onShow(keys[i]); };
-    let t = 0, moving = false;
-    strip.addEventListener('scroll', () => { const x = strip.scrollLeft / W(); inkTo(x); if (!moving) { moving = true; place(); fit(true); } clearTimeout(t); t = setTimeout(() => { const i = Math.round(strip.scrollLeft / W()); if (Math.abs(strip.scrollLeft - i * W()) > 1) { strip.scrollTo({ left: i * W(), behavior: reduce ? 'auto' : 'smooth' }); return; } moving = false; land(i); }, 120); }, { passive: true });
+    let t = 0, moving = false, down = false;
+    // v400: never settle while a finger is still on the glass (a pause mid-swipe is not the end of it)
+    const settle = () => { clearTimeout(t); t = setTimeout(() => { if (down) return; const i = Math.round(strip.scrollLeft / W()); if (Math.abs(strip.scrollLeft - i * W()) > 1) { strip.scrollTo({ left: i * W(), behavior: reduce ? 'auto' : 'smooth' }); return; } moving = false; land(i); }, 120); };
+    strip.addEventListener('touchstart', () => { down = true; }, { passive: true });
+    const up = () => { down = false; if (moving) settle(); };
+    strip.addEventListener('touchend', up, { passive: true }); strip.addEventListener('touchcancel', up, { passive: true });
+    strip.addEventListener('scroll', () => { const x = strip.scrollLeft / W(); inkTo(x); if (!moving) { moving = true; place(); fit(true); } settle(); }, { passive: true });
     window.addEventListener('scroll', () => { if (strip.isConnected) place(); }, { passive: true });
     btns.forEach((b, i) => b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); if (i === cur && Math.abs(strip.scrollLeft - i * W()) < 2) { if (window.scrollY > stick()) window.scrollTo({ top: stick(), behavior: reduce ? 'auto' : 'smooth' }); return; } place(); fit(true); strip.scrollTo({ left: i * W(), behavior: reduce ? 'auto' : 'smooth' }); }, true));
     const ro = new ResizeObserver(() => { if (!moving) fit(false); inkTo(strip.scrollLeft / W()); }); panels.forEach(p => ro.observe(p)); ro.observe(strip);
