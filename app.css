@@ -3252,3 +3252,104 @@ html body .gdark #gtabs .chip.on{color:#fff}
 .gdark #gtabs .chip.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:3px;background:#fff}
 /* cards on the dark page read as glass */
 .gdark #gbody .card,.gdark #gbody .ijl,.gdark #gbody .srows{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.1)}
+/* ===== v372: the game page, one design with X and Apple Sports =====
+   The head holds the colour: the two teams' colours drift behind it like an aurora, the side ahead (or favoured) taking
+   more of it, and a dark sheet with rounded top corners slides over its bottom edge, so nothing bleeds into the stats.
+   Crest and abbreviation each side, the score, the state of the game spelled out between them, RIVL's call as a bar.
+   Before tip the home court sits under the teams. Cards, segmented switches and tabs are X's dark style. */
+.g2{--g2bg:#000;--g2card:#16181C;--g2line:rgba(255,255,255,.1);--g2mute:rgba(255,255,255,.55)}
+html:has(#gpage.g2),html:has(#gpage.g2) body{background:#000}
+html:has(#gpage.g2) .sbg{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+html:has(#gpage.g2) body::before{background:#05060a}
+.g2top{position:relative;isolation:isolate;overflow:hidden;margin-top:calc(-1 * env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);padding-bottom:30px}
+.g2 .ghbg{position:absolute;inset:0;height:auto;top:0;z-index:-1;overflow:hidden;background:#07080b}
+.g2 .ghbg::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 120%,rgba(0,0,0,.55),transparent 60%)}
+.g2 .ghbg i{position:absolute;display:block;border-radius:50%;filter:blur(46px);will-change:transform;opacity:1}
+.g2 .ghbg .b1{left:-25%;top:-35%;width:calc(55% + (1 - var(--sh,.5)) * 70%);height:120%;background:var(--ga);opacity:calc(.35 + (1 - var(--sh,.5)) * .8);animation:aur1 14s ease-in-out infinite alternate;transition:width 1.2s var(--ease),opacity 1.2s var(--ease)}
+.g2 .ghbg .b2{right:-25%;top:-30%;width:calc(55% + var(--sh,.5) * 70%);height:125%;background:var(--gh);opacity:calc(.35 + var(--sh,.5) * .8);animation:aur2 17s ease-in-out infinite alternate;transition:width 1.2s var(--ease),opacity 1.2s var(--ease)}
+.g2 .ghbg .b3{left:20%;top:30%;width:60%;height:70%;background:color-mix(in srgb,var(--ga) calc((1 - var(--sh,.5)) * 100%),var(--gh));opacity:.35;animation:aur3 21s ease-in-out infinite alternate}
+@keyframes aur1{0%{transform:translate3d(0,0,0) rotate(0) scale(1)}50%{transform:translate3d(12%,10%,0) rotate(12deg) scale(1.12)}100%{transform:translate3d(4%,18%,0) rotate(-6deg) scale(.95)}}
+@keyframes aur2{0%{transform:translate3d(0,0,0) rotate(0) scale(1.05)}50%{transform:translate3d(-14%,12%,0) rotate(-10deg) scale(.92)}100%{transform:translate3d(-5%,4%,0) rotate(8deg) scale(1.12)}}
+@keyframes aur3{0%{transform:translate3d(0,0,0) scale(.9)}50%{transform:translate3d(-12%,-8%,0) scale(1.15)}100%{transform:translate3d(10%,6%,0) scale(1)}}
+@media (prefers-reduced-motion:reduce){ .g2 .ghbg i{animation:none} }
+.g2h{color:#fff;padding:4px 16px 0}
+.g2bar{display:flex;align-items:center;justify-content:space-between;gap:10px;height:56px}
+.g2ib{flex:none;width:44px;height:44px;border:0;border-radius:50%;display:grid;place-items:center;color:#fff;text-decoration:none;cursor:pointer;background:rgba(0,0,0,.32);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.18)}
+.g2ib svg{width:21px;height:21px}
+.g2ib:active{transform:scale(.92)}
+.g2tt{display:inline-flex;align-items:center;gap:10px;height:44px;padding:0 18px;border-radius:999px;background:rgba(255,255,255,.16);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.2);font-size:14px;font-weight:700;min-width:0;white-space:nowrap;overflow:hidden}
+.g2tt img{width:26px;height:26px;object-fit:contain}
+.g2tt em{font-style:normal;font-size:17px;color:rgba(255,255,255,.75)}
+.g2row{display:grid;grid-template-columns:56px 1fr auto 1fr 56px;align-items:center;margin-top:18px}
+.g2c{display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;text-decoration:none}
+.g2c img,.g2c > i{width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))}
+.g2c b{font-size:15px;font-weight:700;letter-spacing:.01em}
+.g2n{font:700 40px/1 var(--num);letter-spacing:-.03em;font-variant-numeric:tabular-nums;text-align:center}
+.g2n.lo{color:rgba(255,255,255,.6)}
+.g2n.dash{color:#fff;font-weight:800}
+.g2m{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;min-width:88px;padding:0 2px}
+.g2m b{display:inline-flex;align-items:center;gap:6px;background:none;color:#fff;padding:0;font-size:15px;font-weight:700;white-space:nowrap}
+.g2m b i{width:7px;height:7px;border-radius:50%;background:#FF3B30;box-shadow:0 0 0 3px rgba(255,59,48,.25);animation:gmkp 1.8s ease-in-out infinite}
+.g2m span{font-size:16px;font-weight:600;color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
+.g2court{margin:18px -4px 0;perspective:700px;height:150px;display:flex;align-items:flex-end;justify-content:center}
+.g2court svg{width:112%;flex:none;transform:rotateX(52deg);transform-origin:50% 100%;filter:drop-shadow(0 18px 18px rgba(0,0,0,.45))}
+.g2p{margin-top:20px}
+.g2pl{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:13px}
+.g2pl b{font-weight:800;font-variant-numeric:tabular-nums}
+.g2pl span{color:rgba(255,255,255,.7);font-weight:600}
+.g2pb{display:flex;gap:4px;height:6px;margin-top:8px}
+.g2pb i{display:block;min-width:6px;border-radius:3px;transform-origin:left;animation:lbgrow .8s var(--ease) both}
+.g2s{margin:12px 0 0;text-align:center;font-size:13px;font-weight:700;color:rgba(255,255,255,.75)}
+/* the sheet: X's rounded top over the head, tabs as text with an underline */
+.g2 #gtabs{position:relative;z-index:2;margin-top:-22px;border-radius:22px 22px 0 0;background:var(--g2bg);border-top:.5px solid rgba(255,255,255,.14);border-bottom:1px solid var(--g2line);padding-top:6px}
+.g2 #gtabs .chips{display:flex;justify-content:space-around;gap:0;padding:0 8px;overflow:visible}
+html body .g2 #gtabs .chip,html body .g2 #gtabs .chip.on{flex:1;height:48px;padding:0;border-radius:0;background:none!important;box-shadow:none!important;color:var(--g2mute);font-size:16.5px;font-weight:700}
+html body .g2 #gtabs .chip.on{color:#fff}
+.g2 #gtabs .chip.on::after{content:"";position:absolute;left:50%;transform:translateX(-50%);width:56%;bottom:-1px;height:4px;border-radius:4px;background:#1D9BF0}
+.g2 #gbody{background:var(--g2bg);min-height:60vh;padding-top:12px;color:#E7E9EA}
+/* cards */
+.g2 #gbody .card,.g2 #gbody .cmp,.g2 #gbody .zones,.g2 #gbody .tw,.g2 #gbody .ijl,.g2 #gbody .rows,.g2card,.g2 #gbody .giplate,.g2 #gbody .five{background:var(--g2card)!important;border:1px solid var(--g2line)!important;border-radius:18px!important;box-shadow:none!important;-webkit-mask-image:none!important;mask-image:none!important}
+.g2 #gbody .cmp,.g2 #gbody .zones,.g2 #gbody .tw,.g2 #gbody .rows{margin-left:16px!important;margin-right:16px!important;padding:14px 16px!important}
+.g2 #gbody .tw{padding:6px 0!important}
+.g2 .tbl.box td:first-child,.g2 .tbl.box th:first-child{background:var(--g2card)!important;box-shadow:none!important}
+.tw.fades,.tw:has(> .tbl.box){-webkit-mask-image:none!important;mask-image:none!important}
+.tbl.box td:first-child,.tbl.box th:first-child{box-shadow:none}
+.g2card{margin:0 16px 14px;padding:16px}
+.g2card h3{margin:0 0 14px;font-size:18px;font-weight:800;color:#fff}
+/* segmented switches and pills */
+.seg,.g2 #gbody .chips:not(:has(> .chip:nth-child(6))){display:flex;gap:2px;width:fit-content;max-width:calc(100% - 32px);margin:14px auto 0;padding:3px;border-radius:999px;background:#2F3336;overflow:visible;flex-wrap:nowrap}
+.g2 #gbody .chips:not(:has(> .chip:nth-child(6))){margin:4px 16px 12px}
+.seg button,html body .g2 #gbody .chips:not(:has(> .chip:nth-child(6))) .chip{flex:1;min-width:52px;height:34px;padding:0 14px;border:0;border-radius:999px;background:transparent!important;box-shadow:none!important;color:#E7E9EA;font:700 14.5px/1 var(--ui);cursor:pointer;white-space:nowrap}
+.seg button.on,html body .g2 #gbody .chips:not(:has(> .chip:nth-child(6))) .chip.on{background:#fff!important;color:#0F1419}
+html body .g2 #gbody .chips:has(> .chip:nth-child(6)) .chip{background:#202327!important;box-shadow:none!important;color:#E7E9EA;border:0}
+html body .g2 #gbody .chips:has(> .chip:nth-child(6)) .chip.on{background:#fff!important;color:#0F1419}
+.g2 #gbody .sec h2{color:#fff}
+/* shot chart */
+.fcourt{display:block;width:100%;height:auto;border-radius:4px}
+.flegs{display:flex;justify-content:space-between;gap:10px;margin-top:14px}
+.fl{display:flex;flex-direction:column;gap:5px;min-width:0}
+.fl.r{align-items:flex-end}
+.fl b{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+.fl b img{width:24px;height:24px;object-fit:contain}
+.fl span{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;color:var(--g2mute)}
+.fl span i{width:9px;height:9px;border-radius:50%;margin-left:4px}
+.fl span i.o{background:none;border:2px solid;width:9px;height:9px;box-sizing:border-box}
+/* team stats, X's comparison: both numbers on top, the stat between, one bar split by share */
+.g2 .cmp > div:not(.cmph){display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"a l h" "bar bar bar";row-gap:8px;column-gap:8px}
+.g2 .cmp > div .lab{grid-area:l;margin:0;font-size:14.5px;font-weight:500;color:var(--g2mute);text-align:center}
+.g2 .cmp > div b:first-of-type{grid-area:a}
+.g2 .cmp > div b:last-of-type{grid-area:h;text-align:right}
+.g2 .cmp > div b{font:700 17px/1.1 var(--ui);color:#E7E9EA}
+.g2 .cmp > div b.lead{color:#fff}
+.cmp .cb{grid-area:bar;display:flex;gap:6px;height:7px}
+.cmp .cb i{display:block;border-radius:4px;min-width:4px}
+.cmp > div:not(.cmph):has(.cb){display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"a l h" "bar bar bar";row-gap:8px;column-gap:8px}
+.cmp > div .lab{grid-area:l}
+.cmp > div b:first-of-type{grid-area:a}
+.cmp > div b:last-of-type{grid-area:h;text-align:right}
+/* the bottom bar: the tab you are on takes the accent colour */
+html body #tabs .tab.on,html body #tabs .tab.srch.on{color:#0A84FF!important}
+:root[data-theme="dark"] body #tabs .tab.on,:root[data-theme="dark"] body #tabs .tab.srch.on{color:#3EA6FF!important}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) body #tabs .tab.on,:root:not([data-theme="light"]) body #tabs .tab.srch.on{color:#3EA6FF!important} }
+#tabs .tab svg{transition:transform .25s var(--ease)}
+#tabs .tab.on svg{transform:scale(1.08)}
