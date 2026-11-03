@@ -22,12 +22,16 @@
     const tab0 = store.get('v5:sttab', 'players'), board0 = '';
     // the title and tabs paint at once, so the screen is never blank while the numbers load
     { const up = $main.querySelector('.stpage'); if (!up || up.dataset.lk !== lk) $main.innerHTML = `<div class="stpage" data-lk="${lk}"><div class="page-h"><h1>Stats</h1><p>${esc(L.label)}</p></div>${(_.skeleton(1, 'card') + _.skeleton(3, 'card')).replace(/<!--skel-->/g, '')}</div>`; }   // the league's stats already up stay up while fresh numbers load
-    const [lg, idx, st0, TS] = await Promise.all([HW.hub.league(L).catch(() => null), V.teamsIndex(L).catch(() => ({})), HW.standings(L).catch(() => null), HW.teamStats ? HW.teamStats(L).catch(() => null) : null]);
+    let [lg, idx, st0, TS] = await Promise.all([HW.hub.league(L).catch(() => null), V.teamsIndex(L).catch(() => ({})), HW.standings(L).catch(() => null), HW.teamStats ? HW.teamStats(L).catch(() => null) : null]);
     /* team numbers come from the same season as the player numbers: when the league is showing last season (college before
        its games start), the team boards read last season's final standings, not this season's 0-0 table */
     const played = x => x && Object.values(x.byId || {}).some(r => r.w + r.l > 0);
     let st = st0; if (lg && (lg.lastSeason || !played(st0))) { const prev = await HW.standings(L, lg.lastSeason ? lg.year : HW.seasonYear() - 1).catch(() => null); if (played(prev)) st = prev; }
-    if (!lg || !lg.players || !lg.players.length) { $main.innerHTML = _.empty('No stats yet', '<p style="margin:6px 0 0">The league\'s numbers will show here once its season has games.</p>'); return; }
+    // v401: college keeps its Recruits tab even when the feed has no player numbers yet
+    const noNums = !lg || !lg.players || !lg.players.length;
+    const REC0 = noNums && lk.startsWith('ncaa') ? await HW.hub.recruits().catch(() => null) : null;
+    if (noNums && REC0 && REC0[lk === 'ncaaw' ? 'girls' : 'boys']) lg = { label: L.label, players: [], noNums: true };
+    else if (noNums) { $main.innerHTML = _.empty('No stats yet', '<p style="margin:6px 0 0">The league\'s numbers will show here once its season has games.</p>'); return; }
     const byAbbr = {}; Object.values(idx || {}).forEach(t => { if (t && t.abbr) byAbbr[t.abbr] = t; });
     const maxG = Math.max(1, ...lg.players.map(p => (p.s || {}).gp || 0));
     const qual = p => { const s = p.s || {}; return (s.gp || 0) >= Math.max(1, Math.ceil(maxG * .5)) && (s.min || 0) >= (lk.startsWith('ncaa') ? 10 : 12); };
@@ -36,9 +40,9 @@
     const recCls = REC && REC[recG] ? Object.keys(REC[recG]).filter(k => (REC[recG][k] || []).length).sort() : [];
     let rcls = store.get('v5:strcls', recCls[0] || '');
     if (!recCls.includes(rcls)) rcls = recCls[0] || '';
-    const tabs = [['players', 'Players'], ['teams', 'Teams']].concat(lg.players.some(p => p.rookie) ? [['rookies', 'Rookies']] : []).concat(recCls.length ? [['recruits', 'Recruits']] : []);
-    let tab = tabs.some(t => t[0] === tab0) ? tab0 : 'players', board = board0;
-    const note = lg.lastSeason ? `<p class="stnote">${esc(lg.label)} season. The new season's numbers take over once it has games.</p>` : '';
+    const tabs = (lg.noNums ? [] : [['players', 'Players'], ['teams', 'Teams']]).concat(lg.players.some(p => p.rookie) ? [['rookies', 'Rookies']] : []).concat(recCls.length ? [['recruits', 'Recruits']] : []);
+    let tab = tabs.some(t => t[0] === tab0) ? tab0 : tabs[0][0], board = board0;
+    const note = lg.noNums ? `<p class="stnote">Player and team numbers show here once the feed has them.</p>` : lg.lastSeason ? `<p class="stnote">${esc(lg.label)} season. The new season's numbers take over once it has games.</p>` : '';
 
     const face = (p, size) => _.headshot(p.img, _.teamColor({ abbr: p.team, id: (byAbbr[p.team] || {}).id }, L), size, p.n);
     const tLogo = (t, size) => t && t.logo ? `<img src="${esc(t.logo)}" alt="" width="${size}" height="${size}" loading="lazy" style="width:${size}px;height:${size}px;object-fit:contain">` : '';
@@ -125,7 +129,7 @@
     const panelHTML = k => k === 'recruits' ? recHTML(true) : sheetHTML(k);   // v400: each tab its own panel, side by side
     const lastNm = n => { const p = String(n || '').split(' '); return p.length > 1 ? p.slice(1).join(' ') : n; };
     function homeHTML() {
-      if (true) { const seg = `<div class="stseg" role="tablist">${tabs.map(([k, l]) => `<button class="${k === tab ? 'on' : ''}" data-tab="${k}" data-stt="${k}" aria-pressed="${k === tab}">${l}</button>`).join('')}</div>`; return `<div class="page-h"><h1>Stats</h1><p>${esc(lg.label || '')}${lg.lastSeason ? ', last season' : ''}</p></div>${seg}${note}<div class="stpanels">${tabs.map(([k]) => `<div data-pg="${k}">${panelHTML(k)}</div>`).join('')}</div>`; }
+      if (true) { const seg = `<div class="stseg" role="tablist">${tabs.map(([k, l]) => `<button class="${k === tab ? 'on' : ''}" data-tab="${k}" data-stt="${k}" aria-pressed="${k === tab}">${l}</button>`).join('')}</div>`; return `<div class="page-h"><h1>Stats</h1><p>${esc(lg.label || '')}${lg.lastSeason ? ', last season' : ''}</p></div>${tabs.length > 1 ? seg : ''}${note}<div class="stpanels">${tabs.map(([k]) => `<div data-pg="${k}">${panelHTML(k)}</div>`).join('')}</div>`; }
       const seg = `<div class="gxtabs sttabs" role="tablist">${tabs.map(([k, l]) => `<button class="chip${k === tab ? ' on' : ''}" data-stt="${k}" aria-pressed="${k === tab}">${l}</button>`).join('')}</div>`;
       const body = tab === 'teams' ? TCATS.map(c => tcard(c[0])).join('') || _.empty('No team numbers yet')
         : (tab === 'rookies' ? ROOK : CATS.map(c => c[0])).map(k => pcard(k, tab === 'rookies')).join('');

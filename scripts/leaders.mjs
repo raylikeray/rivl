@@ -84,9 +84,12 @@ for (const L of ['ncaam', 'ncaaw']) {
   const live = tNew.length > 0 && tNew.filter(x => tOld.includes(x)).length < 3;
   console.log(L, 'new season live?', live, tNew.slice(0, 3), tOld.slice(0, 3));
   if (live) {
-    const all = await pull(L, Y + 1, SORTS, 300, true);
-    out.leagues[L] = { label: `${Y}-${String(Y + 1).slice(2)}`, year: Y + 1, final: false, players: all.players };
-    continue;
+    /* the first week of a season, ESPN's "qualified" list can be empty (men's had 0 the morning after opening night), so
+       when it is thin the whole list is read instead; the app applies its own games and minutes bars */
+    let all = await pull(L, Y + 1, SORTS, 300, true);
+    if (all.players.length < 150) { const loose = await pull(L, Y + 1, SORTS, 300, false); console.log(L, 'qualified', all.players.length, 'all', loose.players.length); if (loose.players.length > all.players.length) all = loose; }
+    if (all.players.length) { out.leagues[L] = { label: `${Y}-${String(Y + 1).slice(2)}`, year: Y + 1, final: false, players: all.players }; continue; }
+    console.log(L, 'new season has no players yet, keeping last season');
   }
   const last = await pull(L, Y, SORTS, 300, true);
   const keep = [];
