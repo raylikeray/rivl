@@ -4644,3 +4644,6 @@ html body .g2 #gbody .cmp .cb i.lo{opacity:.35}
    solid bar, the way any scrolled content does. */
 html body .g2 .g2top{position:relative;top:auto}
 html body .g2 .g2fx{z-index:30}
+/* v415: the bar's diagonal seam is a see-through white stripe; under it the bar now has the page's own solid ground, so
+   the header scrolling beneath can't show through the stripe */
+html body .g2 .g2fx{background:var(--bg,#000)}
