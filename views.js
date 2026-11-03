@@ -689,7 +689,7 @@
           return `<a class="dk${live ? ' live' : ''}" href="${href.game(lk, g.id)}" style="--ca:${esc(deepen(ca))};--cb:${esc(deepen(cb))};--seam:${seam.toFixed(1)}%"><span class="wm a">${esc(g.away.abbr || '')}</span><span class="wm h">${esc(g.home.abbr || '')}</span><span class="dkk">${k}${tv && !pre ? '' : tv && foot !== esc(tv) ? ` · ${esc(tv)}` : ''}</span><span class="dkg">${side(g.away, g.home)}${mid}${side(g.home, g.away)}</span>${foot ? `<span class="dkf">${foot}</span>` : ''}</a>`;
         };
         const dots = deck.length > 1 ? (deck.length <= 8 ? `<div class="dkdots" aria-hidden="true">${deck.map((_, i) => `<i${i ? '' : ' class="on"'}></i>`).join('')}</div>` : `<div class="dkdots n" aria-hidden="true"><span>1</span> / ${deck.length}</div>`) : '';
-        const skel = !deck.length && mine.length && !S0.teams && !offS ? `<div class="dk skel"></div>` : '';
+        const skel = '';   // v390: no placeholder card. On a day with no games the grey slab just sat there; the deck appears when there is one to show
         secs.hi = `<div class="hhi"><h1>${hello}</h1>${sub ? `<p>${sub}</p>` : ''}</div>${deck.length ? (() => { const cards = deck.map(card); const loop = cards.length > 1; const cl = h => h.replace('<a class="dk', '<a tabindex="-1" aria-hidden="true" class="dkc dk'); return `<div class="dkw"><div class="dkdeck" data-n="${cards.length}" data-loop="${loop ? 1 : 0}" data-key="${esc(lk + ':' + today)}">${loop ? cl(cards[cards.length - 1]) : ''}${cards.join('')}${loop ? cl(cards[0]) : ''}</div>${dots}</div>`; })() : skel}`;
       } else delete secs.hi;
     };
