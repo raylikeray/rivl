@@ -86,6 +86,14 @@
      a link to a player, team, game or story always opens at the top, however far down it you were last time */
   const scrollMem = new Map();
   let navN = 0;   // each history entry is numbered the first time it is shown; an entry numbered below the one we left is a step back
+  /* v394: a "Show all" you opened stays open. Each list is keyed by the screen (with the Scores day) and its position
+     among the lists on it; whenever lists are drawn again (coming back from a game, a quiet refresh) they reopen before
+     the scroll is restored, so you land where you were. */
+  const clipOpen = new Set();
+  const clipKey = list => { const all = [...$main.querySelectorAll('.lclip')]; const day = current && current.name === 'scores' ? store.get('v5:date', '') : ''; return `${location.hash}|${day}|${all.indexOf(list)}`; };
+  const clipMem = (list, open) => { const k = clipKey(list); if (open) clipOpen.add(k); else clipOpen.delete(k); };
+  const clipApply = () => { if (!clipOpen.size) return; $main.querySelectorAll('.lclip:not(.open)').forEach(l => { if (!clipOpen.has(clipKey(l))) return; l.classList.add('open'); const b = l.querySelector(':scope > .cliptog') || (l.nextElementSibling && l.nextElementSibling.classList.contains('cliptog') ? l.nextElementSibling : null); if (b) { b.setAttribute('aria-expanded', 'true'); b.textContent = 'Show less'; } }); };
+  new MutationObserver(clipApply).observe($main, { childList: true, subtree: true });
   let homeKeep = null;   // Home as you left it
   async function render() {
     const r = route(); const my = ++seq;
@@ -353,7 +361,7 @@
     }
     if (a === 'expand') { e.preventDefault(); $main.querySelectorAll(`[data-more="${act.dataset.more}"]`).forEach(el => { el.hidden = false; }); act.remove(); }
     if (a === 'clip') { e.preventDefault(); let list = act.parentElement && act.parentElement.classList.contains('lclip') ? act.parentElement : act.previousElementSibling; if (list && !list.classList.contains('lclip')) list = list.querySelector('.lclip'); if (!list) return; const open = !list.classList.contains('open'); const y0 = act.getBoundingClientRect().top;
-      list.classList.toggle('open', open); act.setAttribute('aria-expanded', String(open)); const what = act.dataset.what ? ' ' + act.dataset.what : ''; act.textContent = open ? 'Show less' : `Show all ${act.dataset.total}${what}`;
+      list.classList.toggle('open', open); act.setAttribute('aria-expanded', String(open)); clipMem(list, open); const what = act.dataset.what ? ' ' + act.dataset.what : ''; act.textContent = open ? 'Show less' : `Show all ${act.dataset.total}${what}`;
       if (!open) { const y1 = act.getBoundingClientRect().top; if (Math.abs(y1 - y0) > 1) window.scrollBy({ top: y1 - y0, behavior: 'instant' }); }
       return; }
     if (a === 'brk' || a === 'brkp') { e.preventDefault(); store.set(`v5:${a}:` + (current ? current.lk : 'nba'), act.dataset.k); if (a === 'brk') store.set('v5:brkp:' + (current ? current.lk : 'nba'), 'ff'); render(); return; }
