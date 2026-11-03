@@ -4617,3 +4617,12 @@ html body .g2 #gbody .ld2t b{color:var(--ink-3)!important;opacity:.75}
 html body .g2 #gbody .ld2t b.hi{color:var(--ink)!important;opacity:1}
 html body .g2 #gbody .ld2t span:has(> b.hi) em{font-weight:750}
 html body .g2 #gbody .ld2b i.lo{opacity:.35}
+
+/* ===== v412: the compact bar never leaves a gap above the pinned tabs =====
+   It used to slide down over 0.28s while the tabs pinned at once, so rows scrolling underneath showed through the
+   half-empty strip. Now its colour is there the instant the big header stops covering that space, and only its title
+   and buttons fade in, so there is never anything to see through. */
+html body .apfx{transform:none;visibility:hidden;transition:none}
+html body .apfx.on{visibility:visible}
+html body .apfx > *{opacity:0;transform:translateY(6px);transition:opacity .18s var(--ease),transform .18s var(--ease)}
+html body .apfx.on > *{opacity:1;transform:none}
