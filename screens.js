@@ -483,73 +483,85 @@
   }
   V.shotChart = { shotsOf, shotsTrusted, courtSvg, zoneRows, zoneOf };
 
-  /* the home floor, drawn the way X draws it: seen from the stands at an angle, the far side narrower, a white stanchion
-     and glass backboard at each end. Projected in code (a pinhole camera over a 94 by 50 ft floor), so the lines, the
-     paint and the backboards all sit in the same perspective. */
-  function court3d({ c = '#860038', alt = '', logo = '', word = '', nba = true, uid = 'c' } = {}) {
-    const R = 190, el = 40 * Math.PI / 180, T = [47, 25, 0];
-    const C = [T[0], T[1] + R * Math.cos(el), T[2] + R * Math.sin(el)];
-    const fw = [0, -Math.cos(el), -Math.sin(el)], up = [0, -Math.sin(el), Math.cos(el)];
-    const P = (x, y, z = 0) => { const d = [x - C[0], y - C[1], z - C[2]]; const zc = d[0] * fw[0] + d[1] * fw[1] + d[2] * fw[2]; const xs = d[0] / zc * R; const ys = -(d[1] * up[1] + d[2] * up[2]) / zc * R; return [xs, ys]; };
-    const f = n => n.toFixed(2);
-    const pt = (x, y, z) => { const p = P(x, y, z); return `${f(p[0])} ${f(p[1])}`; };
-    const poly = (pts, z = 0) => 'M' + pts.map(([x, y, zz]) => pt(x, y, zz ?? z)).join('L') + 'Z';
-    const line = (pts, z = 0) => 'M' + pts.map(([x, y, zz]) => pt(x, y, zz ?? z)).join('L');
-    const arc = (cx, cy, r, a0, a1, n = 28) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / n; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; });
-    const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
-    /* an affine stand-in for the perspective around one spot, for the logo and the words (small enough not to show the difference) */
-    const aff = (x, y) => { const o = P(x, y), a = P(x + 1, y), b = P(x, y + 1); return `matrix(${f(a[0] - o[0])} ${f(a[1] - o[1])} ${f(b[0] - o[0])} ${f(b[1] - o[1])} ${f(o[0])} ${f(o[1])})`; };
-    const arcR = nba ? 23.75 : 22.15, cor = nba ? 3 : 25 - 21.65, lane = nba ? 16 : 12;
-    const lx = Math.sqrt(arcR * arcR - (25 - cor) ** 2) + 5.25;
-    const ang = Math.asin((25 - cor) / arcR);
-    const half = flip => {
-      const X = v => flip ? 94 - v : v; const s = flip ? -1 : 1;
-      const three = [[X(0), cor], [X(lx), cor], ...arc(X(5.25), 25, arcR, flip ? Math.PI + ang : -ang, flip ? Math.PI - ang : ang).map(p => p).slice(0), [X(lx), 50 - cor], [X(0), 50 - cor]];
-      // the arc from the top corner round to the bottom corner, on the court side of the basket
-      const a3 = arc(X(5.25), 25, arcR, flip ? Math.PI + ang : -ang, flip ? Math.PI - ang : ang);
-      const ft = arc(X(19), 25, 6, -Math.PI / 2, Math.PI / 2).map(([x, y]) => [flip ? 94 - (x) + 0 : x, y]);
-      const ftc = arc(X(19), 25, 6, 0, Math.PI * 2, 40).map(([x, y]) => [x, y]);
-      return { paint: poly(rect(X(0), 25 - lane / 2, X(19), 25 + lane / 2)), three: line([[X(0), cor], ...a3.map(([x, y]) => [x, y]), [X(0), 50 - cor]]), ftc: line(ftc), ra: line(arc(X(5.25), 25, 4, -Math.PI / 2 * s, Math.PI / 2 * s).map(([x, y]) => [flip ? 94 - (x - 94) * -1 : x, y])) };
+  /* the home floor, drawn X's way: a slab seen from the stands, the apron and sides in the home colour, the lines in the
+   home colour on pale wood, the home crest at centre with the visitor's beside it, and a chunky white goal standing on
+   the ground at each end. One pinhole camera projects everything, so floor, lines and goals share the same perspective. */
+function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, uid = 'c' } = {}) {
+  const R = 225, el = 47 * Math.PI / 180, T = [47, 25, 0];
+  const C = [T[0], T[1] + R * Math.cos(el), T[2] + R * Math.sin(el)];
+  const fw = [0, -Math.cos(el), -Math.sin(el)], up = [0, -Math.sin(el), Math.cos(el)];
+  const P = (x, y, z = 0) => { const d = [x - C[0], y - C[1], z - C[2]]; const zc = d[0] * fw[0] + d[1] * fw[1] + d[2] * fw[2]; return [d[0] / zc * R, -(d[1] * up[1] + d[2] * up[2]) / zc * R]; };
+  const f = n => n.toFixed(2);
+  const pt = (x, y, z = 0) => { const p = P(x, y, z); return `${f(p[0])} ${f(p[1])}`; };
+  const poly = pts => 'M' + pts.map(([x, y, z]) => pt(x, y, z || 0)).join('L') + 'Z';
+  const line = pts => 'M' + pts.map(([x, y, z]) => pt(x, y, z || 0)).join('L');
+  const arc = (cx, cy, r, a0, a1, n = 26) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / n; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; });
+  const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+  const aff = (x, y) => { const o = P(x, y), a = P(x + 1, y), b = P(x, y + 1); return `matrix(${f(a[0] - o[0])} ${f(a[1] - o[1])} ${f(b[0] - o[0])} ${f(b[1] - o[1])} ${f(o[0])} ${f(o[1])})`; };
+  const shade = (hex, k) => { const h = hex.replace('#', ''); const v = i => Math.round(parseInt(h.slice(i, i + 2), 16) * k); return `rgb(${v(0)},${v(2)},${v(4)})`; };
+  const arcR = nba ? 23.75 : 22.15, cor = nba ? 3 : 25 - 21.65, lane = nba ? 16 : 12;
+  const ang = Math.asin((25 - cor) / arcR);
+  // one end's lines: the key, the free-throw circle (dashed far half), the three-point line
+  const half = flip => {
+    const X = v => flip ? 94 - v : v;
+    const a3 = arc(X(5.25), 25, arcR, flip ? Math.PI + ang : -ang, flip ? Math.PI - ang : ang);
+    const ftA = arc(X(19), 25, 6, -Math.PI / 2, Math.PI / 2).map(([x, y]) => flip ? [94 - (x - (94 - 2 * 19)) , y] : [x, y]);
+    return {
+      paint: poly(rect(Math.min(X(0), X(19)), 25 - lane / 2, Math.max(X(0), X(19)), 25 + lane / 2)),
+      three: line([[X(0), cor], ...a3, [X(0), 50 - cor]]),
+      ft: line(arc(X(19), 25, 6, 0, Math.PI * 2, 36)),
+      ra: line(arc(X(5.25), 25, 4, flip ? Math.PI / 2 : -Math.PI / 2, flip ? Math.PI * 1.5 : Math.PI / 2))
     };
-    const L = half(false), Rr = half(true);
-    // planks: thin lines down the floor's length
-    const planks = Array.from({ length: 33 }, (_, i) => line([[0, 1.5 * (i + 1)], [94, 1.5 * (i + 1)]])).join('');
-    const lc = c;
-    const stan = flip => {
-      const X = v => flip ? 94 - v : v;
-      const base = [[X(-10), 22], [X(-4), 22], [X(-4), 28], [X(-10), 28]];
-      const top = poly(base, 3.2), front = poly([[X(-10), 28, 0], [X(-4), 28, 0], [X(-4), 28, 3.2], [X(-10), 28, 3.2]]);
-      const side = poly([[X(-4), 22, 0], [X(-4), 28, 0], [X(-4), 28, 3.2], [X(-4), 22, 3.2]]);
-      const end = poly([[X(-10), 22, 0], [X(-10), 28, 0], [X(-10), 28, 3.2], [X(-10), 22, 3.2]]);
-      const post = line([[X(-6.5), 25, 3.2], [X(-6.5), 25, 12.6]]);
-      const arm = line([[X(-6.5), 25, 12.6], [X(3.6), 25, 12.2]]);
-      const brace = line([[X(-6.5), 25, 8], [X(3.6), 25, 11]]);
-      const board = poly([[X(4), 22, 9], [X(4), 28, 9], [X(4), 28, 13], [X(4), 22, 13]]);
-      const box = poly([[X(4), 24, 10], [X(4), 26, 10], [X(4), 26, 11.5], [X(4), 24, 11.5]]);
-      const rim = line(arc(X(5.25), 25, .75, 0, Math.PI * 2, 24).map(([x, y]) => [x, y, 10]));
-      const net = [0, 1, 2, 3, 4, 5].map(i => { const a = i / 6 * Math.PI * 2; return line([[X(5.25) + .75 * Math.cos(a), 25 + .75 * Math.sin(a), 10], [X(5.25) + .45 * Math.cos(a), 25 + .45 * Math.sin(a), 8.6]]); }).join('');
-      return `<g class="st"><path d="${end}" fill="#cfd2d6"/><path d="${side}" fill="#e3e5e8"/><path d="${front}" fill="#f3f4f6"/><path d="${top}" fill="#fff"/>`
-        + `<path d="${post}" stroke="#eceef1" stroke-width="2.3" stroke-linecap="square" fill="none"/><path d="${brace}" stroke="#e1e3e6" stroke-width="1" fill="none"/><path d="${arm}" stroke="#f6f7f8" stroke-width="1.6" fill="none"/>`
-        + `<path d="${board}" fill="rgba(255,255,255,.28)" stroke="#fff" stroke-width=".55" stroke-linejoin="round"/><path d="${box}" fill="none" stroke="#fff" stroke-width=".3"/>`
-        + `<path d="${net}" stroke="rgba(255,255,255,.85)" stroke-width=".18" fill="none"/><path d="${rim}" stroke="#F26B1D" stroke-width=".38" fill="none"/></g>`;
+  };
+  const Lh = half(false), Rh = half(true);
+  const planks = Array.from({ length: 24 }, (_, i) => line([[0, 50 / 25 * (i + 1)], [94, 50 / 25 * (i + 1)]])).join('');
+  const boards = Array.from({ length: 11 }, (_, i) => line([[94 / 12 * (i + 1), 0], [94 / 12 * (i + 1), 50]])).join('');
+  /* the slab: the apron around the floor and the sides going down to the ground */
+  const ap = 3.2, th = 2.4;                       // the apron's reach and the slab's thickness
+  const A = [[-ap, -ap], [94 + ap, -ap], [94 + ap, 50 + ap], [-ap, 50 + ap]];
+  const apron = poly(A);
+  const sideF = poly([[A[3][0], A[3][1], 0], [A[2][0], A[2][1], 0], [A[2][0], A[2][1], -th], [A[3][0], A[3][1], -th]]);
+  const sideL = poly([[A[0][0], A[0][1], 0], [A[3][0], A[3][1], 0], [A[3][0], A[3][1], -th], [A[0][0], A[0][1], -th]]);
+  const sideR = poly([[A[1][0], A[1][1], 0], [A[2][0], A[2][1], 0], [A[2][0], A[2][1], -th], [A[1][0], A[1][1], -th]]);
+  const floor = poly(rect(0, 0, 94, 50));
+  /* the goal: everything off the floor's end, standing on the ground (the slab's base level) */
+  const goal = flip => {
+    const X = v => flip ? 94 - v : v, s = flip ? -1 : 1;
+    const box = (x0, x1, y0, y1, z0, z1) => {
+      const top = poly([[X(x0), y0, z1], [X(x1), y0, z1], [X(x1), y1, z1], [X(x0), y1, z1]]);
+      const front = poly([[X(x0), y1, z0], [X(x1), y1, z0], [X(x1), y1, z1], [X(x0), y1, z1]]);
+      const side = poly([[X(flip ? x0 : x1), y0, z0], [X(flip ? x0 : x1), y1, z0], [X(flip ? x0 : x1), y1, z1], [X(flip ? x0 : x1), y0, z1]]);
+      return `<path d="${side}" fill="#C9CDD4"/><path d="${front}" fill="#E4E7EB"/><path d="${top}" fill="#F7F8FA"/>`;
     };
-    const apron = poly([[-4, -4], [98, -4], [98, 54], [-4, 54]]);
-    const floor = poly([[0, 0], [94, 0], [94, 50], [0, 50]]);
-    const g1 = P(-4, -4), g2 = P(98, -4), b1 = P(-4, 46), b2 = P(98, 46);
-    const top = P(-6.5, 25, 13.4)[1];
-    const vx0 = Math.min(P(-10.5, 28)[0], b1[0]) - 1, vx1 = Math.max(P(104.5, 28)[0], b2[0]) + 1;
-    const vy0 = Math.min(top, g1[1]) - 1.5, vy1 = b1[1];
-    const wm = word ? [[19, 41], [75, 9]].map(([x, y]) => `<text transform="${aff(x, y)}" x="0" y="0" text-anchor="middle" dominant-baseline="middle" font-family="Inter,system-ui,sans-serif" font-weight="900" font-size="${Math.min(3.4, 30 / Math.max(4, word.length)).toFixed(2)}" letter-spacing=".1" fill="${alt || lc}" fill-opacity=".75" stroke="${lc}" stroke-opacity=".35" stroke-width=".12">${esc(word)}</text>`).join('') : '';
-    const logoEl = logo ? `<image href="${esc(logo)}" transform="${aff(47, 25)}" x="-6.5" y="-6.5" width="13" height="13"/>` : '';
-    return `<svg class="ct3" viewBox="${f(vx0)} ${f(vy0)} ${f(vx1 - vx0)} ${f(vy1 - vy0)}" preserveAspectRatio="xMidYMin slice" aria-hidden="true">`
-      + `<defs><linearGradient id="ctw${uid}" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#E2C496"/><stop offset=".5" stop-color="#EDD3A8"/><stop offset="1" stop-color="#E2C496"/></linearGradient></defs>`
-      + `<path d="${apron}" fill="${lc}"/><path d="${floor}" fill="url(#ctw${uid})"/><path d="${planks}" stroke="rgba(120,80,30,.09)" stroke-width=".12" fill="none"/>`
-      + `<path d="${L.paint}${Rr.paint}" fill="${lc}"/>`
-      + `<g fill="none" stroke="${lc}" stroke-width=".28" stroke-linejoin="round"><path d="${floor}"/><path d="${line([[47, 0], [47, 50]])}"/><path d="${line(arc(47, 25, 6, 0, Math.PI * 2, 48))}"/><path d="${L.three}${Rr.three}"/></g>`
-      + `<g fill="none" stroke="${alt || '#fff'}" stroke-opacity=".7" stroke-width=".22"><path d="${L.ftc}${Rr.ftc}"/></g>`
-      + logoEl + wm + stan(false) + stan(true) + `</svg>`;
-  }
-  
+    const base = box(-10.2, -5.6, 22.7, 27.3, -th, 0.5) + box(-9.0, -5.9, 23.5, 26.5, 0.5, 8.4);
+    const arm = `<path d="${poly([[X(-7.2), 24.3, 8.4], [X(-7.2), 25.7, 8.4], [X(2.4), 25.7, 12.3], [X(2.4), 24.3, 12.3]])}" fill="#EDEFF2"/><path d="${poly([[X(-7.2), 25.7, 8.4], [X(2.4), 25.7, 12.3], [X(2.4), 25.7, 11.5], [X(-7.2), 25.7, 7.6]])}" fill="#CBD0D6"/>`;
+    const bb = (y0, y1, z0, z1) => poly([[X(4), y0, z0], [X(4), y1, z0], [X(4), y1, z1], [X(4), y0, z1]]);
+    const board = `<path d="${bb(21.8, 28.2, 9.4, 13.6)}" fill="rgba(208,219,232,.6)" stroke="#FAFBFC" stroke-width="1.1" stroke-linejoin="round"/><path d="${bb(23.9, 26.1, 9.9, 11.5)}" fill="none" stroke="rgba(255,255,255,.95)" stroke-width=".4"/>`;
+    const ball = `<circle transform="translate(${pt(X(6.6), 24.2, 10.6).replace(' ', ',')})" r="1.9" fill="#E8732A"/>`; const rim = `<path d="${line(arc(X(5.25), 25, .75, 0, Math.PI * 2, 20).map(([x, y]) => [x, y, 10]))}" fill="none" stroke="#F26B1D" stroke-width=".65"/>`;
+    const net = [0, 1, 2, 3, 4].map(i => { const a = i / 4 * Math.PI - Math.PI / 2 * s; return `M${pt(X(5.25) + .72 * Math.cos(a), 25 + .72 * Math.sin(a), 10)}L${pt(X(5.25) + .4 * Math.cos(a), 25 + .4 * Math.sin(a), 8.7)}`; }).join('');
+    return `<g>${base}${arm}${board}<path d="${net}" stroke="rgba(255,255,255,.8)" stroke-width=".22" fill="none"/>${rim}${ball}</g>`;
+  };
+  const lc = c, dim = shade(c, .62), dark = shade(c, .45);
+  const crest = (href, x, y, r) => href ? `<image href="${esc(href)}" transform="${aff(x, y)}" x="${-r}" y="${-r}" width="${r * 2}" height="${r * 2}" preserveAspectRatio="xMidYMid meet"/>` : '';
+  const wsize = word ? Math.min(3.2, 26 / Math.max(4, word.length)) : 0;
+  const marks = nba || !word
+    ? crest(logo, 10, 42.5, 3.2) + crest(logo, 84, 7.5, 3.2)
+    : [[17, 43.5, 0], [77, 6.5, 0]].map(([x, y]) => `<text transform="${aff(x, y)}" text-anchor="middle" dominant-baseline="middle" font-family="Inter,system-ui,sans-serif" font-weight="800" font-size="${wsize.toFixed(2)}" letter-spacing=".14em" fill="rgba(255,255,255,.85)" stroke="${dark}" stroke-width=".1">${esc(word)}</text>`).join('');
+  const g1 = P(-ap - 11.5, 28, -th), g2 = P(94 + ap + 11.5, 28, -th);
+  const top = Math.min(P(-7, 25, 13.4)[1], P(0, 0, 0)[1]) - 1;
+  const vx0 = g1[0] - 1, vx1 = g2[0] + 1;
+  const vy0 = top, vy1 = P(0, 50 + ap, -th)[1] + 1.5;
+  return `<svg class="ct3" viewBox="${f(vx0)} ${f(vy0)} ${f(vx1 - vx0)} ${f(vy1 - vy0)}" aria-hidden="true">`
+    + `<defs><linearGradient id="ctw${uid}" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#E4C998"/><stop offset=".5" stop-color="#F0DBB2"/><stop offset="1" stop-color="#E4C998"/></linearGradient></defs>`
+    + `<path d="${sideL}" fill="${dark}"/><path d="${sideR}" fill="${dark}"/><path d="${sideF}" fill="${dim}"/>`
+    + `<path d="${apron}" fill="${lc}"/><path d="${floor}" fill="url(#ctw${uid})"/>`
+    + `<path d="${planks}" stroke="rgba(120,80,30,.10)" stroke-width=".1" fill="none"/><path d="${boards}" stroke="rgba(120,80,30,.05)" stroke-width=".1" fill="none"/>`
+    + `<path d="${Lh.paint}${Rh.paint}" fill="${lc}" fill-opacity=".92"/>`
+    + `<g fill="none" stroke="${lc}" stroke-width=".3" stroke-linejoin="round"><path d="${floor}"/><path d="${line([[47, 0], [47, 50]])}"/><path d="${Lh.three}${Rh.three}"/><path d="${Lh.ra}${Rh.ra}"/></g>`
+    + `<g fill="none" stroke="rgba(255,255,255,.85)" stroke-width=".26" stroke-dasharray="1.1 .8"><path d="${Lh.ft}${Rh.ft}"/></g>`
+    + marks + crest(logo, 47, 25, 7.5) + crest(away, 33.5, 25, 3.8)
+    + goal(false) + goal(true) + `</svg>`;
+}
   V.court3d = court3d;
 
   /* the game page scrolls like X's: the head (colour, score, court) stays put and the black sheet with the tabs rides up
@@ -887,12 +899,9 @@
       const wpLast = g.state === 'in' && wpAll.length ? Math.min(.99, Math.max(.01, +wpAll[wpAll.length - 1].homeWinPercentage)) : null;
       const pv2 = wpLast != null ? wpLast : ph;
       const pred = pv2 != null && !g.tbd ? `<div class="g2p" role="img" aria-label="${esc(`${predWord}: ${g.away.abbr} ${pct(1 - pv2)}, ${g.home.abbr} ${pct(pv2)}`)}"><div class="g2pl"><b>${esc(g.away.abbr || '')} ${pct(1 - pv2)}</b><span>${predWord}</span><b>${pct(pv2)} ${esc(g.home.abbr || '')}</b></div><div class="g2pb"><i style="flex:${(1 - pv2).toFixed(3)};background:${esc(lift(pc[0]))}"></i><i style="flex:${pv2.toFixed(3)};background:${esc(lift(pc[1]))}"></i></div></div>` : '';
-      // the home floor, X's way: wood, the home side's colour on the border, paint and lines, its crest at centre, its name on the floor
-      const hcol = V._.teamColor(g.home, L); const altc = g.home.alt && V._.rgbDist && V._.rgbDist(g.home.alt, '#E9CFA3') > 60 && V._.rgbDist(g.home.alt, hcol) > 60 ? g.home.alt : '';
-      const court = !g.tbd ? `<div class="g2court">${court3d({ c: hcol, alt: altc, logo: g.home.logo || '', word: String(g.home.short || g.home.abbr || '').toUpperCase(), nba: L.key === 'nba', uid: String(id).replace(/\W/g, '') })}</div>` : '';
-      // the latest play, live
-      const lp = g.state === 'in' ? plays.slice(-1)[0] : null;
-      const lastPlay = lp && lp.text ? `<div class="g2lp"><b>Last play</b><span>${esc(lp.text)}</span></div>` : '';
+      // the home floor, X's way: the slab, the apron and lines in the home colour, both crests at centre
+      const hcol = V._.teamColor(g.home, L);
+      const court = !g.tbd ? `<div class="g2court">${court3d({ c: hcol, logo: g.home.logo || '', away: g.away.logo || '', word: L.key.startsWith('ncaa') ? String(g.home.short || g.home.abbr || '').toUpperCase() : '', nba: L.key === 'nba', uid: String(id).replace(/\W/g, '') })}</div>` : '';
       const backI = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg>`;
       const shareI = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>`;
       /* the bar: Back and Share, and between them the day's other games as pills (X), this one in white. Scrolled down, the
@@ -909,7 +918,7 @@
       const mini = g.tbd ? `<span class="g2mn"><b>${title}</b></span>` : `<span class="g2mn">${lgo(g.away)}<b class="${hasSc && !lead(g.away, g.home) ? 'lo' : ''}">${hasSc ? g.away.score : ''}</b><span class="${g.state === 'in' ? 'now' : ''}">${miniClock}</span><b class="${hasSc && !lead(g.home, g.away) ? 'lo' : ''}">${hasSc ? g.home.score : ''}</b>${lgo(g.home)}</span>`;
       const barHtml = `<div class="g2bar"><a class="g2ib" href="#scores" data-act="back" aria-label="Back">${backI}</a><div class="g2mid"><div class="g2strip" id="g2strip" data-h="${hashOf(strip)}">${strip}</div><div class="g2mini" id="g2mini">${mini}</div></div><button class="g2ib" data-act="share" data-title="${esc(title.replace(/<[^>]+>/g, ''))}"${card ? ` data-card='${esc(JSON.stringify(card))}'` : ''} aria-label="Share">${shareI}</button></div>`;
       const headHtml = `<header class="g2h"><div class="g2row">${crest(g.away)}${num(g.away, g.home)}<div class="g2m${g.state === 'in' ? ' now' : ''}"><b>${g.state === 'in' ? '<i></i>' : ''}${stateTop}</b>${stateSub ? `<span>${stateSub}</span>` : ''}</div>${num(g.home, g.away)}${crest(g.home)}</div>`
-        + pred + court + lastPlay + (V._.seriesLine(g) ? `<p class="g2s">${esc(V._.seriesLine(g))}${spick ? ` · ${esc(spick)}` : ''}</p>` : '') + `</header>`;
+        + pred + court + (V._.seriesLine(g) ? `<p class="g2s">${esc(V._.seriesLine(g))}${spick ? ` · ${esc(spick)}` : ''}</p>` : '') + `</header>`;
       // how much of the aurora each side holds: the score's margin once it starts, RIVL's call before it
       const share = hasSc ? .5 + Math.max(-.32, Math.min(.32, (+g.home.score - +g.away.score) / 30)) : ph != null ? .5 + (ph - .5) * .7 : .5;
       const bgVars = `--ga:${pc[0]};--gh:${pc[1]};--sh:${share.toFixed(3)}`;
@@ -1106,7 +1115,7 @@
   const SETTINGS = [
     ['following', 'Following', 'Your teams and players, by league'],
     ['home', 'Home', 'What the Home screen shows'],
-    ['look', 'Appearance', 'Theme and accent'],
+    ['look', 'Appearance', 'Light or dark'],
     ['watch', 'Where you watch', 'Your TV and streaming services, for the watch links'],
     ['alerts', 'Alerts', 'Tip-off, close games, finals, injuries, breaking news'],
     ['sync', 'Sync', 'Carry your follows to another device'],
@@ -1124,7 +1133,7 @@
     about: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>'
   };
   async function settingsV(cat = '') {
-    const P = prefs.all(); const theme = store.get('v5:theme', 'system'); const accent = store.get('v5:accent', 'mono');
+    const P = prefs.all(); const theme = store.get('v5:theme', 'system');
     const F = favs.all(); const fp = fplayers.all();
     const here = SETTINGS.find(([k]) => k === cat);
     const bar = (title, backTo) => `<div class="topbar"><a class="ib" href="${backTo}" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a><span class="ttl">${esc(title)}</span></div>`;
@@ -1159,8 +1168,7 @@
       body = sec('Home shows') + `<div class="rows">${PREFS.map(([k, t, b]) => sw(k, P[k] !== false, t, b)).join('')}</div>` +
         sec('Game cards') + `<div class="rows">${sw('forecast', P.forecast !== false, 'Win chances', "RIVL's own estimate on each game card and game page")}</div>`;
     } else if (cat === 'look') {
-      body = sec('Theme') + `<div class="chips" role="radiogroup" aria-label="Theme">${[['system', 'Match my phone'], ['dark', 'Dark'], ['light', 'Light']].map(([k, l]) => `<button class="chip${theme === k ? ' on' : ''}" data-act="theme" data-theme="${k}" role="radio" aria-checked="${theme === k}">${l}</button>`).join('')}</div>` +
-        sec('Accent') + `<div class="chips" role="radiogroup" aria-label="Accent">${[['mono', 'Black and white']].map(([k, l]) => `<button class="chip${accent === k || !(V.ACCENTS && V.ACCENTS[accent]) ? ' on' : ''}" data-act="accent" data-accent="${k}" role="radio" aria-checked="${accent === k || !(V.ACCENTS && V.ACCENTS[accent])}">${l}</button>`).join('')}</div><div class="swatches" role="radiogroup" aria-label="Accent colour">${Object.entries(V.ACCENTS || {}).map(([k, [c, l]]) => `<button class="swatch${accent === k ? ' on' : ''}" data-act="accent" data-accent="${k}" role="radio" aria-checked="${accent === k}" style="--sw:${c}" aria-label="${esc(l)}"><i></i><span>${esc(l)}</span></button>`).join('')}</div><p class="legend">The accent runs through the whole app: the league switcher, selected chips, the tab bar, buttons and the glow behind the wordmark.</p>`;
+      body = sec('Theme') + `<div class="chips" role="radiogroup" aria-label="Theme">${[['system', 'Match my phone'], ['dark', 'Dark'], ['light', 'Light']].map(([k, l]) => `<button class="chip${theme === k ? ' on' : ''}" data-act="theme" data-theme="${k}" role="radio" aria-checked="${theme === k}">${l}</button>`).join('')}</div><p class="legend">Match my phone follows your phone's light or dark setting. Game pages are always dark.</p>`;
     } else if (cat === 'watch') {
       const mine = HW.myServices();
       body = (HW.SERVICE_GROUPS || []).map(gr => sec(gr.label) + `<div class="chips wrapchips" role="group" aria-label="${esc(gr.label)}">${gr.ids.filter(id => HW.SERVICES[id] && !['nfl', 'youtube', 'mlb'].includes(id)).map(id => `<button class="chip${mine.includes(id) ? ' on' : ''}" data-act="watch" data-id="${id}" aria-pressed="${mine.includes(id)}">${esc(HW.SERVICES[id].label)}</button>`).join('')}</div>`).join('') +

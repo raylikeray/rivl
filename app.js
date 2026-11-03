@@ -465,7 +465,7 @@
   V.ACCENTS = ACCENTS;
   const setAccent = (root, c, kind) => { const h = c.replace('#', ''); const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; root.style.setProperty('--acc', c); root.style.setProperty('--acc-ink', lum > 0.6 ? '#000' : '#fff'); root.setAttribute('data-accent', kind); };
   async function applyAccent() {
-    const root = document.documentElement; const mode = store.get('v5:accent', 'mono');
+    const root = document.documentElement; const mode = 'mono';   // accents are gone: black and white everywhere, light or dark by the phone
     if (ACCENTS[mode]) { setAccent(root, ACCENTS[mode][0], mode); applyTheme(); return; }
     root.removeAttribute('data-accent'); root.style.removeProperty('--acc'); root.style.removeProperty('--acc-ink');   // black and white (an old "team" setting lands here too)
     applyTheme();
