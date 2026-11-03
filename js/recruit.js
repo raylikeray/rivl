@@ -77,7 +77,12 @@
     const more = others.length ? _.sec(`More in the class of ${cls}`, '', `<a href="#stats">All ${list.length}</a>`)
       + `<div class="stboard">${others.map(x => `<a class="strow strec" href="${href(g, cls, x)}"><span class="strk">${x.rank || ''}</span>${_.headshot(x.img || '', '#5B6B8C', 40, x.n)}<span class="stwho"><b>${esc(x.n)}</b><em>${esc([x.pos, x.ht, x.hs].filter(Boolean).join(' · '))}</em></span><span class="strc${x.commitTo ? ' on' : ''}">${esc(x.commitTo || 'Uncommitted')}</span></a>`).join('')}</div>` : '';
 
-    $main.innerHTML = `<div class="rcpage">${back}${hero}${numsCard}${where}${commit}${services}${more}<p class="legend rcsrc">Rankings from PrepRanks, a blend of the major recruiting services.</p></div>`;
+    /* v382: the Apple profile, like a team or a player: the school's colour as the band (navy while uncommitted), the face,
+       the name, then grouped cards; schools in the running as a list, the class as grouped rows */
+    const head = _.apHead ? _.apHead({ color, name: r.n || '', sub: [r.pos, `Class of ${cls}`, r.ht, r.hs].filter(Boolean).join(' · '), img: r.img || '', face: true, back: '#stats', badge: r.rank ? `<span class="aprk">No. ${esc(String(r.rank))}</span>` : '' }) : back + hero;
+    const top2 = !school && !r.commitTo && r.top && r.top.length ? `<section class="card"><div class="card-h"><h2>Schools in the running</h2>${r.status ? `<small>${esc(String(r.status).toLowerCase())}</small>` : ''}</div><div class="rcrows">${r.top.map(s => `<div class="rcr"><b style="text-align:left">${esc(s)}</b></div>`).join('')}</div></section>` : commit;
+    const more2 = others.length ? `<div class="gh2"><h2>More in the class of ${esc(cls)}</h2><a href="#stats">All ${list.length}</a></div><div class="gl">${others.map(x => `<a class="gr strec" href="${href(g, cls, x)}"><span class="strk">${x.rank || ''}</span>${_.headshot(x.img || '', '#5B6B8C', 36, x.n)}<span class="stwho"><b>${esc(x.n)}</b><em>${esc([x.pos, x.ht, x.hs].filter(Boolean).join(' · '))}</em></span><span class="strc${x.commitTo ? ' on' : ''}">${esc(x.commitTo || 'Uncommitted')}</span></a>`).join('')}</div>` : '';
+    $main.innerHTML = `<div class="approf rc380">${head}<div class="rcbody">${numsCard}${where}${top2}${services}${more2}<p class="legend rcsrc">Rankings from PrepRanks, a blend of the major recruiting services.</p></div></div>`;
     document.title = `${r.n} · RIVL`;
   }
 

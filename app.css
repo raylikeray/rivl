@@ -3964,24 +3964,7 @@ a.gr:active,button.gr:active{background:var(--seg)}
 #main .hsec{margin:0 16px 28px!important;background:none!important;box-shadow:none!important;padding:0!important;border-radius:0!important}
 #main .hsec[data-sec="hi"]{margin-bottom:22px!important}
 .gr{text-align:left;font:inherit;width:100%;border:0;background:none;cursor:pointer}
-/* the deck in light mode: the same duel, drawn on paper. Pale planes of each team's colour meet at the seam, the
-   type goes to ink, the wordmarks stay as a faint watermark in each team's own colour. */
-:root[data-theme="light"] .dk{color:var(--ink);box-shadow:0 1px 2px rgba(16,24,40,.05);
-  background:linear-gradient(118deg,color-mix(in srgb,var(--ca) 15%,#fff) 0,color-mix(in srgb,var(--ca) 20%,#fff) calc(var(--seam) - .4%),color-mix(in srgb,var(--ink) 18%,#fff) calc(var(--seam) - .4%),color-mix(in srgb,var(--ink) 18%,#fff) calc(var(--seam) + .4%),color-mix(in srgb,var(--cb) 20%,#fff) calc(var(--seam) + .4%),color-mix(in srgb,var(--cb) 15%,#fff) 100%)}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .dk{color:var(--ink);box-shadow:0 1px 2px rgba(16,24,40,.05);
-  background:linear-gradient(118deg,color-mix(in srgb,var(--ca) 15%,#fff) 0,color-mix(in srgb,var(--ca) 20%,#fff) calc(var(--seam) - .4%),color-mix(in srgb,var(--ink) 18%,#fff) calc(var(--seam) - .4%),color-mix(in srgb,var(--ink) 18%,#fff) calc(var(--seam) + .4%),color-mix(in srgb,var(--cb) 20%,#fff) calc(var(--seam) + .4%),color-mix(in srgb,var(--cb) 15%,#fff) 100%)} }
-:root[data-theme="light"] .dk::after,:root[data-theme="light"] .dk::before{display:none}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .dk::after,:root:not([data-theme="dark"]) .dk::before{display:none} }
-:root[data-theme="light"] .dk .wm.a{color:var(--ca);opacity:.13} :root[data-theme="light"] .dk .wm.h{color:var(--cb);opacity:.13}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .dk .wm.a{color:var(--ca);opacity:.13} :root:not([data-theme="dark"]) .dk .wm.h{color:var(--cb);opacity:.13} }
-:root[data-theme="light"] .dk :is(.dkk,.dks b,.dks em,.dkf){text-shadow:none}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .dk :is(.dkk,.dks b,.dks em,.dkf){text-shadow:none} }
-:root[data-theme="light"] .dk .dks .logo{filter:none}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .dk .dks .logo{filter:none} }
-:root[data-theme="light"] .dk .dkm{background:rgba(255,255,255,.78);box-shadow:0 1px 3px rgba(16,24,40,.08)}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .dk .dkm{background:rgba(255,255,255,.78);box-shadow:0 1px 3px rgba(16,24,40,.08)} }
-:root[data-theme="light"] .dk .dks em.sc.lo{opacity:.45}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .dk .dks em.sc.lo{opacity:.45} }
+/* v382: the deck keeps its deep team colours in light mode too (Ray: never wash them out) */
 .dkdots i.on{background:var(--ink)}
 .hsec[data-sec="injuries"] .gm b{white-space:normal}
 /* every Show all in the app: a plain row at the foot of its card, never a floating pill half cut off */
@@ -4213,3 +4196,54 @@ html body .topbar .ttl{font-size:17px;font-weight:700;color:var(--ink)}
 /* the game card's extras read as plain lines, not pills */
 html body .sgx em{background:none!important;box-shadow:none!important;padding:0!important;border-radius:0!important;font-style:normal;font-size:13px!important;font-weight:600;color:var(--ink-3)!important;display:block}
 html body .sgx em.pk{color:var(--ink)!important;font-weight:700}
+
+/* ===== v382: fixes from the phone ===== */
+/* stars on follow lists: gold on a soft disc, readable in both modes */
+html body .row .star.on::before,html body button.row.prow.sel.on .star::before{background:color-mix(in srgb,#F5A623 18%,transparent)!important;box-shadow:none!important}
+html body .row .star.on,html body button.row.prow.sel.on .star{color:#F5A623!important}
+html body .row .star:not(.on){color:var(--ink-3)!important}
+html body .row .star:not(.on)::before{background:var(--seg)!important;box-shadow:none!important;opacity:1}
+/* the search glossary: room on the left, the word never collides with its meaning */
+html body .xans .xgloss > div{padding:12px 14px!important;grid-template-columns:116px 1fr!important;column-gap:10px!important}
+html body .xans .xgloss > div + div::before{left:14px!important}
+html body .xgloss .tag{white-space:nowrap;margin:0!important;position:static!important}
+html body .xgloss .tag::before{position:static!important;margin:0!important}
+/* odds and other wide tables under Standings scroll sideways inside their card */
+html body .st380 .tw{overflow-x:auto!important;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+html body .st380 .tw::-webkit-scrollbar{display:none}
+html body .st380 .tbl.stand td,html body .st380 .tbl.stand th{padding-left:8px!important;padding-right:8px!important}
+html body .st380 .tbl.stand td:first-child,html body .st380 .tbl.stand th:first-child{position:sticky!important;left:0;z-index:2}
+/* the shot chart's team switch: the same thumb as every other control */
+html body .g2 #gbody#gbody .chips .chip:is(.on,[aria-pressed="true"],[aria-checked="true"]){background:var(--thumb)!important;color:var(--ink)!important;opacity:1}
+html body .g2 #gbody#gbody .chips .chip:not(.on):not([aria-pressed="true"]){background:transparent!important;color:var(--ink)!important}
+/* v382: screens arrive without moving. The rise is opacity only, so nothing on the page shifts as a tab opens. */
+@keyframes rise{from{opacity:0}to{opacity:1}}
+#main.enter>*{animation:rise .18s ease-out both}
+/* the recruit page as the Apple profile */
+html[data-page="recruit"] .hdr{display:none}
+.rc380 .rcbody{padding:16px 16px 0;display:flex;flex-direction:column;gap:18px}
+.rc380 .rcbody > .card{margin:0!important}
+.rc380 .aprk{display:inline-block;padding:5px 10px;border-radius:10px;background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:15px}
+.rc380 .rcgrid{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:0!important;border-top:.5px solid var(--line);margin:0!important}
+.rc380 .rcgrid > div{background:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;padding:13px 14px!important;position:relative}
+.rc380 .rcgrid > div:not(:nth-child(3n+1))::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:.5px;background:var(--line)}
+.rc380 .rcgrid > div:nth-child(n+4){border-top:.5px solid var(--line)!important}
+.rc380 .rcgrid b{display:block;font-size:20px;font-weight:800}
+.rc380 .rcgrid span{display:block;font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.rc380 .card{padding:0!important;overflow:hidden;border:0!important;box-shadow:none!important}
+.rc380 .card-h{padding:14px 14px 10px!important;margin:0!important}
+.rc380 .rcr{display:flex;justify-content:space-between;gap:12px;padding:12px 14px;border-top:.5px solid var(--line)}
+.rc380 .rcr span{color:var(--ink-3)}
+.rc380 .rccommit{border-top:.5px solid var(--line);background:none!important;box-shadow:none!important;border-radius:0!important}
+.rc380 .rcsvc{border-top:.5px solid var(--line)}
+.rc380 .rcsvc > div{background:none!important;box-shadow:none!important;border-radius:0!important}
+.rc380 .gh2{margin-top:6px}
+.rc380 .gl .gr.strec+.gr.strec::before{left:76px}
+.rc380 .rcgrid,.rc380 .rcsvc{background:none!important;box-shadow:none!important;border-radius:0!important}
+html body .xans .xgloss{display:block!important}
+html body .xans .xgloss > div{display:grid!important;align-items:start!important}
+.xpast .xclr{width:auto!important;height:auto!important;display:flex!important;flex-direction:column;place-items:initial;border-radius:0}
+html body .xans .xgloss > div{grid-template-columns:104px 1fr!important}
+html body .xans .xgloss p{margin:0!important;padding:0!important;border:0!important;line-height:1.4!important}
+html body .xans .xgloss p::before,html body .xans .xgloss p::after{display:none!important}
+html body .xgloss .tag{line-height:1.4!important;height:auto!important;min-height:0!important}

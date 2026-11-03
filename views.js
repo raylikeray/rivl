@@ -352,7 +352,29 @@
   const SECS = ['wire', 'unrivaled', 'hi', 'feed'];   // the wire first when it has something, then a game on now
   /* Home's rows unfold in place; the deck's dots follow the card in view */
   document.addEventListener('click', e => { const b = e.target.closest('[data-act="hrow"]'); if (!b) return; e.preventDefault(); const w = b.closest('.hrw'); const k = b.dataset.k; const open = !w.classList.contains('open'); w.classList.toggle('open', open); b.setAttribute('aria-expanded', String(open)); if (open) hOpen.add(k); else hOpen.delete(k); });
-  document.addEventListener('scroll', e => { const d = e.target; if (!d || !d.classList || !d.classList.contains('dkdeck')) return; const i = Math.round(d.scrollLeft / Math.max(1, d.firstElementChild ? d.firstElementChild.offsetWidth + 10 : d.clientWidth)); const dots = d.parentElement.querySelector('.dkdots'); if (!dots) return; if (dots.classList.contains('n')) { const s = dots.querySelector('span'); if (s.textContent !== String(i + 1)) s.textContent = i + 1; } else [...dots.children].forEach((x, j) => x.classList.toggle('on', j === i)); }, true);
+  /* v382: the deck loops. A copy of the last card sits before the first and a copy of the first after the last; landing on
+     a copy jumps, without animation, to the real card it copies, so swiping left from game 1 lands on the last game. The
+     card you were on is kept across repaints and visits. */
+  const deckPos = { key: '', i: 0 };
+  const deckStep = d => { const c = d.querySelector('.dk'); return c ? c.offsetWidth + 10 : d.clientWidth; };
+  const deckDots = (d, real) => { const dots = d.parentElement.querySelector('.dkdots'); if (!dots) return; if (dots.classList.contains('n')) { const s = dots.querySelector('span'); if (s.textContent !== String(real + 1)) s.textContent = real + 1; } else [...dots.children].forEach((x, j) => x.classList.toggle('on', j === real)); };
+  const deckJump = (d, i) => { const snap = d.style.scrollSnapType; d.style.scrollSnapType = 'none'; d.scrollLeft = i * deckStep(d); requestAnimationFrame(() => { d.style.scrollSnapType = snap; }); };
+  function initDecks(root) {
+    (root || document).querySelectorAll('.dkdeck[data-n]:not([data-init])').forEach(d => {
+      d.dataset.init = '1'; const n = +d.dataset.n; const loop = d.dataset.loop === '1';
+      const i = d.dataset.key === deckPos.key ? Math.min(deckPos.i, n - 1) : 0;
+      requestAnimationFrame(() => { deckJump(d, i + (loop ? 1 : 0)); deckDots(d, i); });
+      let t = 0;
+      d.addEventListener('scroll', () => {
+        const raw = Math.round(d.scrollLeft / Math.max(1, deckStep(d)));
+        const real = loop ? (raw - 1 + n) % n : Math.min(raw, n - 1);
+        deckDots(d, real); deckPos.key = d.dataset.key; deckPos.i = real;
+        clearTimeout(t);
+        if (loop) t = setTimeout(() => { const r = Math.round(d.scrollLeft / Math.max(1, deckStep(d))); if (r === 0) deckJump(d, n); else if (r === n + 1) deckJump(d, 1); }, 110);
+      }, { passive: true });
+    });
+  }
+  // initDecks is exported with the rest below
   let homeToken = 0;
   const hOpen = new Set();   // the Home rows you have unfolded, kept while the app is open
   async function home(lk) {
@@ -371,7 +393,8 @@
     // two columns on a wide screen (the games and your people on the left, injuries and news on the right); one stack on a phone
     const SIDE = new Set();   // one column: the phone is the only screen
     const col = k => $main.querySelector(SIDE.has(k) ? '.hcol.side' : '.hcol.main') || $main;
-    const paint = (quiet = false) => {
+    const paint = (quiet = false) => { paint0(quiet); initDecks($main); };
+    const paint0 = (quiet = false) => {
       if (!alive()) return;
       if (!painted) {
         painted = true;
@@ -379,11 +402,16 @@
         $main.innerHTML = SECS.some(k => secs[k]) ? `<div class="hcols"><div class="hcol main">${colHtml(false)}</div><div class="hcol side">${colHtml(true)}</div></div>` : empty('Everything is switched off', '<p style="margin:6px 0 0">Turn some sections back on and Home fills up again.</p>', `<a class="btn" href="#settings">Settings</a>`);
         return;
       }
-      if (!$main.querySelector('.hcols')) { painted = false; return paint(quiet); }   // the empty state is on screen and something arrived
+      if (!$main.querySelector('.hcols')) { painted = false; return paint0(quiet); }   // the empty state is on screen and something arrived
       SECS.forEach(k => {
         const cur = $main.querySelector(`section[data-sec="${k}"]`);
         if (!secs[k]) { if (cur) cur.remove(); return; }
-        if (cur) { if (cur.dataset.h !== hashOf(secs[k])) cur.outerHTML = wrap(k, quiet); return; }
+        if (cur) { if (cur.dataset.h !== hashOf(secs[k])) {
+          // a quiet patch keeps what you opened: a list you expanded stays expanded
+          const open = [...cur.querySelectorAll('.lclip')].map(x => x.classList.contains('open'));
+          cur.insertAdjacentHTML('afterend', wrap(k, quiet)); const nu = cur.nextElementSibling; cur.remove();
+          [...nu.querySelectorAll('.lclip')].forEach((x, i) => { if (!open[i]) return; x.classList.add('open'); const b = x.querySelector(':scope > .cliptog'); if (b) { b.setAttribute('aria-expanded', 'true'); b.textContent = 'Show less'; } });
+        } return; }
         const after = SECS.slice(SECS.indexOf(k) + 1).filter(j => SIDE.has(j) === SIDE.has(k)).map(j => $main.querySelector(`section[data-sec="${j}"]`)).find(Boolean);
         if (after) after.insertAdjacentHTML('beforebegin', wrap(k, quiet)); else col(k).insertAdjacentHTML('beforeend', wrap(k, quiet));
       });
@@ -628,7 +656,7 @@
         };
         const dots = deck.length > 1 ? (deck.length <= 8 ? `<div class="dkdots" aria-hidden="true">${deck.map((_, i) => `<i${i ? '' : ' class="on"'}></i>`).join('')}</div>` : `<div class="dkdots n" aria-hidden="true"><span>1</span> / ${deck.length}</div>`) : '';
         const skel = !deck.length && mine.length && !S0.teams && !offS ? `<div class="dk skel"></div>` : '';
-        secs.hi = `<div class="hhi"><h1>${hello}</h1>${sub ? `<p>${sub}</p>` : ''}</div>${deck.length ? `<div class="dkw"><div class="dkdeck">${deck.map(card).join('')}</div>${dots}</div>` : skel}`;
+        secs.hi = `<div class="hhi"><h1>${hello}</h1>${sub ? `<p>${sub}</p>` : ''}</div>${deck.length ? (() => { const cards = deck.map(card); const loop = cards.length > 1; const cl = h => h.replace('<a class="dk', '<a tabindex="-1" aria-hidden="true" class="dkc dk'); return `<div class="dkw"><div class="dkdeck" data-n="${cards.length}" data-loop="${loop ? 1 : 0}" data-key="${esc(lk + ':' + today)}">${loop ? cl(cards[cards.length - 1]) : ''}${cards.join('')}${loop ? cl(cards[0]) : ''}</div>${dots}</div>`; })() : skel}`;
       } else delete secs.hi;
     };
 
@@ -1219,6 +1247,6 @@
   // the slim bar shows once the head has scrolled away
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom < 64; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };
     window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(run); }, { passive: true }); document.addEventListener('rivl:rendered', run); }
-  HW.v5 = Object.assign(HW.v5 || {}, { unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
+  HW.v5 = Object.assign(HW.v5 || {}, { initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
     _: { h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
 })();

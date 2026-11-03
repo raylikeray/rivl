@@ -86,8 +86,13 @@
      a link to a player, team, game or story always opens at the top, however far down it you were last time */
   const scrollMem = new Map();
   let navN = 0;   // each history entry is numbered the first time it is shown; an entry numbered below the one we left is a step back
+  let homeKeep = null;   // Home as you left it
   async function render() {
-    const r = route(); const my = ++seq; const wasGame = current && current.name === 'game'; current = r; document.documentElement.dataset.page = r.name; V.refresh = null; closeSheet(); if (wasGame !== (r.name === 'game')) applyTheme();
+    const r = route(); const my = ++seq;
+    /* v382: leaving Home keeps it as it stood — the feed, Show more opened, the card in the deck, the scroll — so coming back
+       lands exactly there, then refreshes quietly in place. Tapping Home while on Home goes to the top (handled below). */
+    if (current && current.name === 'home' && r.name !== 'home' && $main.querySelector('.hcols')) homeKeep = { lk: current.lk, html: $main.innerHTML.replace(/ data-init="1"/g, ''), y: window.scrollY, at: Date.now(), refresh: V.refresh };
+    const wasGame = current && current.name === 'game'; current = r; document.documentElement.dataset.page = r.name; V.refresh = null; closeSheet(); if (wasGame !== (r.name === 'game')) applyTheme();
     if (r.name !== 'scores' && V.todayPill) V.todayPill(false);   // the Scores screen's back-to-today pill goes with it
     const key = `${r.name}/${r.args.join('/')}`;
     const st = history.state; const back = !!(st && st.n != null && st.n < navN);
@@ -108,7 +113,7 @@
       $main.classList.remove('fade', 'enter'); $main.classList.add('hold');
       const fadeIn = () => { clearTimeout(render.holdT); $main.classList.remove('hold', 'fade', 'enter'); void $main.offsetWidth; $main.classList.add('fade', 'enter'); document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); }); };   // the snapshot lets go only now, so the two cross
       render.onReal = fadeIn;
-      render.holdT = setTimeout(() => { if (render.onReal === fadeIn && my === seq) { render.onReal = null; V.showSkeleton(); fadeIn(); render.onReal = () => { $main.classList.remove('enter'); void $main.offsetWidth; $main.classList.add('enter'); }; } }, 260);
+      render.holdT = setTimeout(() => { if (render.onReal === fadeIn && my === seq) { render.onReal = null; V.showSkeleton(); fadeIn(); render.onReal = null; } }, 260);   // v382: the real content replaces the skeleton in place, with no second entrance
     }
     if (leagueChanged) {
       /* A league switch is a new screen, not the old one refreshed: the old league never stays on screen while the new one
@@ -133,9 +138,18 @@
     if (TABS.includes(r.name)) render.tab = r.name;
     paintTabs(TABS.includes(r.name) ? r.name : (r.name === 'game' ? 'scores' : (render.tab || 'home')));
     document.title = leagueScreen ? `${TITLES[r.name]} · ${LEAGUES[r.lk].label} · RIVL` : `${TITLES[r.name] || ''} RIVL`.trim();
+    const keep = r.name === 'home' && homeKeep && homeKeep.lk === r.lk && Date.now() - homeKeep.at < 20 * 60000 ? homeKeep : null; homeKeep = null;
+    if (keep) {
+      $main.dataset.top = ''; $main.dataset.y = ''; $main.dataset.real = '1';
+      $main.innerHTML = keep.html; if (V.initDecks) V.initDecks($main);
+      window.scrollTo(0, keep.y); requestAnimationFrame(() => window.scrollTo(0, keep.y));
+      V.refresh = keep.refresh; if (render.onReal) render.onReal();
+      if (keep.refresh) setTimeout(() => { if (current === r && V.refresh === keep.refresh) keep.refresh(); }, 400);
+    } else {
     $main.dataset.top = '1';   // scroll to the top with the new screen's first real paint, not before it
     try { await (V[r.name] || V.home)(...r.args); }
     catch (err) { if (my === seq) $main.innerHTML = `<div class="empty"><b>Something went wrong</b><p style="margin:6px 0 0">${esc(err && err.message || 'Try again in a moment.')}</p></div>`; console.error(err); }
+    }
     if (my !== seq) return;
     V.settled();   // a view that painted into part of the screen (Scores' list, a standings chip, a refreshed game) made no full paint to clear the bar, the dimming and the slow note, or to land at its scroll
     paintPills(r.lk, leagueScreen);   // live counts may have arrived while the view loaded
@@ -157,6 +171,14 @@
     g.addEventListener('animationend', () => g.remove()); setTimeout(() => g.remove(), 1500);   // it fades once the new screen is ready (fadeIn adds .out); never outstays its welcome
   }
   window.addEventListener('hashchange', render);
+  /* v382: tapping the tab you are already on goes back to the top; on Home it also refreshes the feed */
+  document.getElementById('tabs').addEventListener('click', e => {
+    const t = e.target.closest('.tab'); if (!t || !current) return;
+    if (t.dataset.tab !== current.name) return;
+    e.preventDefault(); homeKeep = null;
+    window.scrollTo({ top: 0, behavior: MOTION() ? 'smooth' : 'auto' });
+    if (current.name === 'home' && V.refresh) { const f = V.refresh; setTimeout(() => { if (V.refresh === f) f(); }, 450); }
+  });
 
   /* ---------- polling: today's slate for every league, faster while something is live ---------- */
   let pollT = null, lastOk = 0;
