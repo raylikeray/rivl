@@ -4442,3 +4442,10 @@ html body .giplate .row{padding:13px 16px!important;position:relative}
 html body .giplate .row + .row::before,html body .giplate .rows > * + *::before{left:16px!important}
 html body .giplate .row .t > span:first-child,html body .giplate .row small{letter-spacing:.04em}
 html body .giplate{border:0!important;box-shadow:none!important;background:var(--surf)!important;border-radius:var(--r-card)!important}
+
+/* ===== v396: on profile tables (season averages, splits, by opponent, game log) the first column stays put while
+   the numbers scroll under it ===== */
+html body .approf .tw{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+html body .approf .tw table th:first-child,html body .approf .tw table td:first-child{position:sticky!important;left:0!important;z-index:2!important;background:var(--surf)!important}
+html body .approf .tw table td:first-child::after,html body .approf .tw table th:first-child::after{content:""!important;display:block!important;position:absolute;top:0;bottom:0;right:-1px;width:1px;background:var(--line)}
+html body .approf .tw table th:first-child,html body .approf .tw table td:first-child{padding-right:12px!important}
