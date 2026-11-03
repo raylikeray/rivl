@@ -4605,3 +4605,15 @@ html body .bkside.arm .bknm .bkadv{opacity:1;transform:scale(1);animation:bkpop 
 @keyframes bkpop{0%{transform:scale(.6)}100%{transform:scale(1)}}
 .bkside.dim{opacity:.55;filter:saturate(.75)}
 .bkside .bk2k{display:none}
+
+/* ===== v411: centred averages, full-size letter discs, a leader you can see ===== */
+/* season averages: each number sits in the middle of its third, not pinned left with empty room on the right */
+html body .approf .sgrid > div{align-items:center!important;padding:13px 6px 12px!important;text-align:center}
+html body .approf .sgrid b,html body .approf .sgrid span{text-align:center!important}
+/* a team with no logo: its letters fill a disc the size a logo would be */
+html body .smono{width:100%;height:100%;aspect-ratio:auto;font-size:10.5px;letter-spacing:0;padding:0 2px}
+/* game leaders: the higher number is the one that reads — full ink (white on dark), the other stays quiet; ties both read */
+html body .g2 #gbody .ld2t b{color:var(--ink-3)!important;opacity:.75}
+html body .g2 #gbody .ld2t b.hi{color:var(--ink)!important;opacity:1}
+html body .g2 #gbody .ld2t span:has(> b.hi) em{font-weight:750}
+html body .g2 #gbody .ld2b i.lo{opacity:.35}
