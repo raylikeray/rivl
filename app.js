@@ -181,6 +181,9 @@
     g.style.cssText = `left:${r.left}px;width:${r.width}px`;
     const c = $main.cloneNode(true); c.removeAttribute('id'); c.className = ''; c.style.cssText = `transform:translateY(${r.top}px)`;
     g.appendChild(c); document.body.appendChild(g);
+    // v403: a copy starts every sideways strip at its left edge; set each back to where it was (the Home deck showed the
+    // last game for a beat before the game page came in)
+    { const o = $main.querySelectorAll('*'), k = c.querySelectorAll('*'); for (let i = 0; i < o.length && i < k.length; i++) { const x = o[i].scrollLeft; if (x) { k[i].style.scrollBehavior = 'auto'; k[i].style.scrollSnapType = 'none'; k[i].scrollLeft = x; } } }
     g.addEventListener('animationend', () => g.remove()); setTimeout(() => g.remove(), 1500);   // it fades once the new screen is ready (fadeIn adds .out); never outstays its welcome
   }
   window.addEventListener('hashchange', render);

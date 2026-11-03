@@ -116,10 +116,8 @@
      pull the 500px original. If the combiner ever refuses, the image falls back to the original it was made from. */
   const sized = (src, w, h) => { const m = /^https:\/\/a\.espncdn\.com(\/i\/[^?]+\.png)(?:\?.*)?$/i.exec(String(src || '')); return m ? `https://a.espncdn.com/combiner/i?img=${m[1]}&w=${w}&h=${h}` : src || ''; };
   const fallback = then => `onerror="if(this.dataset.o){this.src=this.dataset.o;this.removeAttribute('data-o')}else{${then}}"`;
-  /* v402: on a team-colour panel, ESPN's logo made for dark grounds (falling back to the usual one), and a thin light
-     edge when the logo's colour is the panel's own (TCU purple on TCU purple) */
-  const darkLogo = src => String(src || '').replace(/(\/teamlogos\/[a-z]+\/)500\//i, '$1500-dark/');
-  const panelLogo = (src, px, extra = '') => { const d = darkLogo(src); return d === String(src || '') ? imgSized(src, px, px, extra) : imgSized(d, px, px, extra, `this.onerror=null;this.src='${sized(src, px, px)}'`); };
+  /* v402: a thin light edge on a logo when its colour is the panel's own (TCU purple on TCU purple) */
+  const panelLogo = (src, px, extra = '') => imgSized(src, px, px, extra);   // v403: the team's own logo; ESPN's dark-ground versions are often plain white
   const nearPanel = (t, panel, L) => rgbDist(teamColor(t, L), panel) < 120;
   // `extra` is written before loading="lazy" so a caller can pass loading="eager": with a duplicate attribute the first wins
   const imgSized = (src, w, h, extra = '', then = "this.style.visibility='hidden'") => { const u = sized(src, w, h); return `<img src="${esc(u)}"${u !== src ? ` data-o="${esc(src)}"` : ''} alt="" ${extra} loading="lazy" ${fallback(then)}>`; };
