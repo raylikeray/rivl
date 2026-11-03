@@ -4420,3 +4420,12 @@ html body .apcrest img{width:76px!important;height:76px!important;object-fit:con
   filter:drop-shadow(0 0 1px rgba(255,255,255,.55)) drop-shadow(0 2px 3px rgba(0,0,0,.28)) drop-shadow(0 10px 18px rgba(0,0,0,.35))!important}
 html body .apfx .apcrest.s{width:30px!important;height:30px!important}
 html body .apfx .apcrest.s img{width:30px!important;height:30px!important;filter:drop-shadow(0 0 1px rgba(255,255,255,.5)) drop-shadow(0 2px 4px rgba(0,0,0,.3))!important}
+
+/* ===== v393: the feed by importance ===== */
+.fclip:not(.open) > :nth-child(n+13):not(.cliptog){display:flex}
+.fclip:not(.open) > :nth-child(n+16):not(.cliptog){display:none}
+.feed .fp[hidden]{display:none!important}
+.fsit{display:block;margin-top:6px;font-size:13.5px;color:var(--ink-3);line-height:1.35}
+.fbig{font-style:normal;color:#F5A623!important;font-weight:700}
+.fmorebtn .ft{color:var(--tint-b);font-weight:650}
+.fmorebtn{align-items:center}
