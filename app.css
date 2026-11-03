@@ -3546,3 +3546,138 @@ html body #pills .pill.on,:root[data-theme="dark"] body #pills .pill.on{color:#f
 .icost .tag{padding:3px 8px;font-size:10.5px;flex:none}
 .ippg{flex:none;font:800 16px/1 var(--num);color:#fff;font-variant-numeric:tabular-nums;margin-right:2px}
 .icost .cliptog{margin-bottom:4px}
+
+/* ===== v377: one bar =====
+   The phone keeps only the bottom dock. The top is a quiet row that scrolls away with the page: the league as a small
+   chip on the left (it opens a sheet to switch), the version and settings on the right. The old wordmark and the
+   floating league bar are gone. */
+.lgchip{display:none}
+@media (max-width:1039px){
+  html body .pills,html body .hdr #pills.pills{display:none!important}
+  .hdr .top .lockup,.top .lockup{display:none}
+  .top{height:52px;padding:0 16px}
+  .lgchip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px 0 14px;border:0;border-radius:999px;cursor:pointer;
+    background:var(--surf);color:var(--ink);font:800 14.5px/1 var(--ui);letter-spacing:.01em;box-shadow:0 1px 2px rgba(16,24,40,.08),inset 0 0 0 .5px color-mix(in srgb,var(--ink) 8%,transparent)}
+  .lgchip svg{width:15px;height:15px;color:var(--ink-3)}
+  .lgchip .lv{width:7px;height:7px;border-radius:50%;background:#FF3B30;box-shadow:0 0 0 3px rgba(255,59,48,.18)}
+  .lgchip:active{transform:scale(.96)}
+  .top .sp{margin-left:auto}
+  .top .ib{width:36px;height:36px}
+  .top .ib svg{width:18px;height:18px}
+}
+/* the switcher sheet */
+.lgsheet .grab{width:36px;height:5px;border-radius:3px;background:var(--line-2);margin:-4px auto 12px}
+.lgsheet h2{font-size:20px;font-weight:800;margin:0 0 10px}
+.lgl{display:flex;flex-direction:column;gap:8px}
+.lgo{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:var(--surf-2,color-mix(in srgb,var(--ink) 4%,transparent));color:var(--ink);text-decoration:none}
+.lgo b{font-size:16.5px;font-weight:800;min-width:80px}
+.lgo span{font-size:13px;color:var(--ink-3);font-weight:600}
+.lgo span.on{color:#FF3B30;font-weight:700}
+.lgo svg{width:20px;height:20px;margin-left:auto;color:#0A84FF}
+.lgo.on{box-shadow:inset 0 0 0 2px #0A84FF}
+.lgo:active{transform:scale(.98)}
+
+/* ===== v377: Home =====
+   A greeting, tonight's games as a deck of duel cards you swipe through (the same diagonal planes as the game page),
+   then a quiet floating row for each of last night, injuries, news, your players and your teams. A row unfolds in
+   place to show everything under it. */
+.hsec[data-sec="hi"],.hsec[data-sec="last"],.hsec[data-sec="injuries"],.hsec[data-sec="news"],.hsec[data-sec="players"],.hsec[data-sec="teams"]{background:none!important;box-shadow:none!important;border-radius:0;padding:0;overflow:visible;margin:0 16px}
+.hhi{padding:6px 4px 12px}
+.hhi h1{margin:0;font-size:28px;font-weight:800;letter-spacing:-.025em;line-height:1.1}
+.hhi p{margin:3px 0 0;font-size:14px;color:var(--ink-3);font-weight:600}
+/* the deck */
+.dkw{margin:0 -16px 6px}
+.dkdeck{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;padding:2px 16px 10px;overscroll-behavior-x:contain;scroll-padding:0 16px}
+.dkdeck::-webkit-scrollbar{display:none}
+.dk{position:relative;flex:none;width:calc(100vw - 32px);max-width:420px;min-height:176px;scroll-snap-align:start;border-radius:22px;overflow:hidden;isolation:isolate;color:#fff;text-decoration:none;padding:15px 16px 14px;display:flex;flex-direction:column;
+  box-shadow:0 14px 28px -14px rgba(16,24,40,.45);
+  background:linear-gradient(118deg,color-mix(in srgb,var(--ca) 86%,#000) 0,color-mix(in srgb,var(--ca) 74%,#000) calc(var(--seam) - 1%),rgba(255,255,255,.38) calc(var(--seam) - .3%),rgba(255,255,255,.38) calc(var(--seam) + .3%),color-mix(in srgb,var(--cb) 74%,#000) calc(var(--seam) + 1%),color-mix(in srgb,var(--cb) 86%,#000) 100%)}
+.dk::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,0) 40%,rgba(0,0,0,.22))}
+.dk::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.35;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");background-size:160px}
+.dk > *{position:relative;z-index:1}
+.dk .wm{position:absolute;z-index:0;font:900 100px/1 var(--ui);letter-spacing:-.06em;opacity:.12;pointer-events:none;white-space:nowrap}
+.dk .wm.a{left:-14px;bottom:-22px}
+.dk .wm.h{right:-18px;top:-14px}
+.dkk{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.92;text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.dkk .dot{width:6px;height:6px;border-radius:50%;background:#FF453A;box-shadow:0 0 0 3px rgba(255,69,58,.3)}
+.dkg{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin:auto 0;padding:10px 0 6px}
+.dks{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+.dks .logo{width:46px;height:46px;filter:drop-shadow(0 3px 8px rgba(0,0,0,.35))}
+.dks b{font-size:14px;font-weight:800;letter-spacing:.02em;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+.dks em{font-style:normal;font-size:12px;font-weight:700;opacity:.82;font-variant-numeric:tabular-nums}
+.dks em.sc{font-size:30px;font-weight:800;opacity:1;letter-spacing:-.03em;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,.4)}
+.dks em.sc.lo{opacity:.62}
+.dkm{display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 12px;border-radius:14px;background:rgba(6,7,9,.42);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.14);font-size:11.5px;font-weight:700;white-space:nowrap}
+.dkm b{font-size:16.5px;font-weight:800;font-variant-numeric:tabular-nums}
+.dkf{font-size:12px;font-weight:700;text-align:center;opacity:.9;text-shadow:0 1px 6px rgba(0,0,0,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dk:active{transform:scale(.985)}
+.dk.skel{background:var(--surf);box-shadow:none;margin:0 16px;width:auto}
+.dkdots{display:flex;justify-content:center;gap:6px;margin-top:-2px}
+.dkdots i{width:6px;height:6px;border-radius:3px;background:color-mix(in srgb,var(--ink) 22%,transparent);transition:width .25s var(--ease),background .25s}
+.dkdots i.on{width:18px;background:#0A84FF}
+.dkdots.n{font-size:12px;font-weight:700;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.dkdots.n span{color:var(--ink)}
+/* the rows */
+.hrw{margin-top:10px;border-radius:18px;background:var(--surf);box-shadow:0 1px 2px rgba(16,24,40,.06),0 6px 16px -10px rgba(16,24,40,.14);overflow:hidden}
+.hrow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:0;background:none;color:var(--ink);text-align:left;cursor:pointer;font:inherit}
+.hic{width:36px;height:36px;border-radius:11px;flex:none;display:grid;place-items:center}
+.hic svg{width:19px;height:19px}
+.hrw[data-k="last"] .hic{background:color-mix(in srgb,#0A84FF 13%,transparent);color:#0A84FF}
+.hrw[data-k="injuries"] .hic{background:color-mix(in srgb,#FF3B30 13%,transparent);color:#E5484D}
+.hrw[data-k="news"] .hic{background:color-mix(in srgb,#7C5CFF 14%,transparent);color:#6E56E8}
+.hrw[data-k="players"] .hic{background:color-mix(in srgb,#2FB24C 14%,transparent);color:#24974A}
+.hrw[data-k="teams"] .hic{background:color-mix(in srgb,#F5A623 16%,transparent);color:#D08A0E}
+.hrow .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.hrow .t b{font-size:15.5px;font-weight:800}
+.hrow .t span{font-size:13px;color:var(--ink-3);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hch{width:9px;height:9px;flex:none;border-right:2.5px solid var(--ink-3);border-bottom:2.5px solid var(--ink-3);transform:rotate(-45deg);transition:transform .3s var(--ease);margin-right:4px;opacity:.7}
+.hrw.open .hch{transform:rotate(45deg) translate(-2px,-2px)}
+.hbody{display:grid;grid-template-rows:0fr;transition:grid-template-rows .34s var(--ease)}
+.hrw.open .hbody{grid-template-rows:1fr}
+.hbin{min-height:0;overflow:hidden;--gut:14px;--gut-r:14px}
+.hrw.open .hbin{border-top:.5px solid var(--line)}
+.hbin > .rows,.hbin > .ijl,.hbin > .rail,.hbin > .brief-row,.hbin > .lclip,.hbin > div{margin-left:0!important;margin-right:0!important;box-shadow:none!important;background:none!important}
+.hbin .brief-row{padding:12px 14px 4px}
+.hbin .rail{padding:12px 14px}
+.hedit{display:block;margin:4px 14px 12px;padding:11px 0;text-align:center;border-radius:12px;background:color-mix(in srgb,var(--ink) 5%,transparent);font-size:14px;font-weight:700;color:var(--ink);text-decoration:none}
+@media (prefers-reduced-motion:reduce){ .hbody{transition:none} }
+
+/* ===== v377: Scores, the day pager =====
+   No strip of dates: the day you are on is the title, arrows step a day either way, and a tap on the title opens the
+   month with your teams' days marked. The slate runs Live now, Your teams, Around the league, in compact rows. */
+#scpage .calrow,#scpage .dates{display:none}
+.dpg{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:6px;margin:2px 16px 4px}
+.dpa{width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;color:var(--ink);background:var(--surf);box-shadow:0 1px 2px rgba(16,24,40,.08),inset 0 0 0 .5px color-mix(in srgb,var(--ink) 7%,transparent)}
+.dpa svg{width:20px;height:20px}
+.dpa:active{transform:scale(.92)}
+.dpt{border:0;background:none;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;font:inherit;min-width:0}
+.dpt b{display:inline-flex;align-items:center;gap:6px;font-size:27px;font-weight:800;letter-spacing:-.025em;line-height:1.1}
+.dpt b svg{width:17px;height:17px;color:var(--ink-3);margin-top:3px}
+.dpt span{font-size:13px;font-weight:600;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dpt:active b{opacity:.7}
+#phase:empty{display:none}
+#phase{display:flex;justify-content:center;margin:2px 0 4px}
+.dpsec{display:flex;align-items:baseline;gap:8px;margin:18px 20px 8px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.dpsec b{display:inline-flex;align-items:center;gap:6px;font-weight:800}
+.dpsec span{font-weight:700;opacity:.8;letter-spacing:.02em}
+.dpsec .dot{width:6px;height:6px;border-radius:50%;background:var(--live,#FF3B30)}
+.dpsec:has(.dot) b{color:var(--live,#FF3B30)}
+/* compact rows on this page: crest, abbreviation and record (or score) each side, the time and the call in the middle */
+#scpage .srows{margin:0 16px;padding:0 14px;border-radius:20px}
+#scpage .srow{grid-template-columns:minmax(0,1fr) 40px minmax(78px,auto) 40px minmax(0,1fr);padding:12px 0}
+#scpage .stm{flex-direction:row;gap:9px;justify-content:flex-start}
+#scpage .srow > .stm:last-child{flex-direction:row-reverse}
+#scpage .scr{width:34px;height:34px}
+#scpage .snm{display:none}
+.sab2{display:none}
+#scpage .sab2{display:block;font-size:14.5px;font-weight:800;color:var(--ink);letter-spacing:.01em}
+#scpage .ssc{font-size:21px}
+#scpage .ssc.rec{font-size:12px;letter-spacing:.02em}
+#scpage .stt{font-size:15px}
+#scpage .smid small{font-size:11.5px}
+#scpage .sstar{width:16px;height:16px;right:-5px;bottom:-4px}
+#scpage .sstar svg{width:10px;height:10px}
+/* the month sheet */
+.cal-g .cd.mine i{background:#F5B915}
+.cal-f .dot{background:#F5B915}
+.cal-today{display:block;margin:12px auto 0;width:100%}

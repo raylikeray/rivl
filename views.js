@@ -231,7 +231,7 @@
     const a = +g.away.score, h = +g.home.score, has = (live || fin) && g.away.score != null && g.home.score != null;
     const up = (x, y) => has && x > y, lo = (x, y) => fin && has && x < y;
     const star = `<i class="sstar" aria-label="Following"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg></i>`;
-    const side = (t, l) => { const f = HW.favs.has(L.key, t.id); return `<span class="stm${l ? ' lo' : ''}"><span class="scr">${t.logo ? imgSized(t.logo, 112, 112, 'alt=""') : `<b class="sab">${esc(t.abbr || '')}</b>`}${f ? star : ''}</span><b class="snm">${esc(t.short || t.abbr || '')}</b></span>`; };
+    const side = (t, l) => { const f = HW.favs.has(L.key, t.id); return `<span class="stm${l ? ' lo' : ''}"><span class="scr">${t.logo ? imgSized(t.logo, 112, 112, 'alt=""') : `<b class="sab">${esc(t.abbr || '')}</b>`}${f ? star : ''}</span><b class="snm">${esc(t.short || t.abbr || '')}</b><b class="sab2">${esc(t.abbr || t.short || '')}</b></span>`; };
     const num = (t, u, l) => pre || t.score == null ? `<span class="ssc rec">${esc(t.rec || '')}</span>` : `<span class="ssc${u ? ' up' : ''}${l ? ' lo' : ''}">${esc(String(t.score))}</span>`;
     const f = !fin && !g.off && prefs.get('forecast') ? safeF(L, g, ctx) : null;
     const pick = f && Number.isFinite(f.pHome) ? `<small>${esc((f.pHome >= .5 ? g.home : g.away).abbr || '')} ${pct(Math.max(f.pHome, 1 - f.pHome))}</small>` : '';
@@ -349,8 +349,12 @@
      while the app is open never repaint what hasn't changed, and never move the page under your thumb. */
   const rankGame = g => (isFav(g) ? 1000 : 0) + (g.tv.national.length ? 100 : 0) + interest(g) / 1000;
   const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
-  const SECS = ['wire', 'unrivaled', 'live', 'tonight', 'last', 'teams', 'players', 'injuries', 'news'];   // the wire first when it has something, then a game on now
+  const SECS = ['wire', 'unrivaled', 'hi', 'last', 'injuries', 'news', 'players', 'teams'];   // the wire first when it has something, then a game on now
+  /* Home's rows unfold in place; the deck's dots follow the card in view */
+  document.addEventListener('click', e => { const b = e.target.closest('[data-act="hrow"]'); if (!b) return; e.preventDefault(); const w = b.closest('.hrw'); const k = b.dataset.k; const open = !w.classList.contains('open'); w.classList.toggle('open', open); b.setAttribute('aria-expanded', String(open)); if (open) hOpen.add(k); else hOpen.delete(k); });
+  document.addEventListener('scroll', e => { const d = e.target; if (!d || !d.classList || !d.classList.contains('dkdeck')) return; const i = Math.round(d.scrollLeft / Math.max(1, d.firstElementChild ? d.firstElementChild.offsetWidth + 10 : d.clientWidth)); const dots = d.parentElement.querySelector('.dkdots'); if (!dots) return; if (dots.classList.contains('n')) { const s = dots.querySelector('span'); if (s.textContent !== String(i + 1)) s.textContent = i + 1; } else [...dots.children].forEach((x, j) => x.classList.toggle('on', j === i)); }, true);
   let homeToken = 0;
+  const hOpen = new Set();   // the Home rows you have unfolded, kept while the app is open
   async function home(lk) {
     const L = LEAGUES[lk]; const today = todayCT(); const token = ++homeToken;
     const mine = favs.all()[lk] || [];
@@ -365,7 +369,7 @@
     const secs = {}; let painted = false;
     const wrap = (k, quiet) => `<section class="hsec${quiet ? ' quiet' : ''}" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;
     // two columns on a wide screen (the games and your people on the left, injuries and news on the right); one stack on a phone
-    const SIDE = new Set(['injuries', 'news']);
+    const SIDE = new Set();   // one column: the phone is the only screen
     const col = k => $main.querySelector(SIDE.has(k) ? '.hcol.side' : '.hcol.main') || $main;
     const paint = (quiet = false) => {
       if (!alive()) return;
@@ -538,6 +542,76 @@
         const arts = mineA.concat(rest);
         if (arts.length) secs.news = sec('News', mineA.length && !rest.length ? 'your teams and players' : mineA.length ? 'yours first, then the league' : 'around the league') + `<div class="rows">${arts.map(a => HW.v5.newsRow(lk, a)).join('')}</div>`; else delete secs.news;
       } else delete secs.news;
+
+      /* ===== Home, Ray's pick (v377): a greeting, tonight's games for your teams as a deck of cards you swipe through,
+         then one quiet row each for last night, injuries, news, your players and your teams. A row shows its headline;
+         a tap unfolds everything under it. ===== */
+      const strip = h => String(h || '').replace(/^<div class="sec">[\s\S]*?<\/div>/, '').replace(/^<div class="brief"><div class="brief-h">[\s\S]*?<\/div>([\s\S]*)<\/div>$/, '$1');
+      const ICON = {
+        last: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.6 6.6 0 0 0 10.5 10.5z"/></svg>',
+        injuries: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+        news: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M7.5 9h9M7.5 12.5h9M7.5 16h5"/></svg>',
+        players: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c.9-3.6 3.9-5.6 7.5-5.6s6.6 2 7.5 5.6"/></svg>',
+        teams: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 19 6v5.6c0 4.4-3 7.8-7 9-4-1.2-7-4.6-7-9V6z"/></svg>'
+      };
+      const hrow = (k, title, sub, body) => { const open = hOpen.has(k); return `<div class="hrw${open ? ' open' : ''}" data-k="${k}"><button class="hrow" data-act="hrow" data-k="${k}" aria-expanded="${open}"><span class="hic">${ICON[k]}</span><span class="t"><b>${esc(title)}</b><span>${sub}</span></span><i class="hch" aria-hidden="true"></i></button><div class="hbody"><div class="hbin">${body}</div></div></div>`; };
+      // last night
+      if (secs.last) {
+        const mineLast = last.filter(g => isDone(g) && isFav(g));
+        const rs = mineLast.map(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; return { us, them, won: +us.score > +them.score }; });
+        const w = rs.filter(r => r.won).length, l = rs.length - w;
+        const sub = offS ? 'Season recap' : rs.length === 1 ? esc(`${rs[0].us.short} ${rs[0].won ? 'beat' : 'lost to'} ${rs[0].them.short} ${rs[0].us.score}-${rs[0].them.score}`) : rs.length === 2 && w !== 1 ? esc(`${rs[0].us.short} and ${rs[1].us.short} both ${w ? 'won' : 'lost'}`) : rs.length ? `${w} win${w === 1 ? '' : 's'}, ${l} loss${l === 1 ? '' : 'es'} for your teams` : 'Your players’ lines';
+        secs.last = hrow('last', offS ? 'The season' : 'Last night', sub, strip(secs.last));
+      }
+      // injuries
+      if (secs.injuries) {
+        const groups = (S0.inj && teams.map(t => S0.inj.byTeam[t.id]).filter(b => b && b.list.length)) || [];
+        const all = groups.flatMap(b => b.list); const n = all.length;
+        const lead = all.find(x => /out/i.test(x.status || '') && x.athlete); const ret = lead && lead.details && retInfo(L, lead.details.returnDate);
+        const sub = n ? `${n} on your teams${lead ? ` · ${esc(lastName(lead.athlete.displayName || ''))} out${ret && !ret.past ? ` ${esc(ret.far ? 'for the season' : ret.short.replace(/^back around /, 'to '))}` : ''}` : ''}` : 'Your players';
+        secs.injuries = hrow('injuries', 'Injuries', sub, strip(secs.injuries));
+      }
+      // news
+      if (secs.news) { const a0 = (S0.news && S0.news.articles || []).filter(HW.readable).find(a => tagged(a)) || (S0.news && S0.news.articles || []).filter(HW.readable)[0]; secs.news = hrow('news', 'News', a0 ? esc(a0.headline) : 'Around the league', strip(secs.news)); }
+      // your players
+      if (secs.players) { const on = fp.filter(p => { const is = teamOf(p); return games.some(g => HW.ymdOf(g.date) === today && (is(g.home) || is(g.away))); }); secs.players = hrow('players', 'My players', on.length ? esc(`${on[0].short || on[0].name}${on.length > 1 ? ` and ${on.length - 1} more play tonight` : ' plays tonight'}`) : fp.length ? `${fp.length} followed` : 'Follow players to see their lines', strip(secs.players) + `<a class="hedit" href="#players">Edit players</a>`); }
+      // your teams
+      if (secs.teams) { const nT = games.filter(g => HW.ymdOf(g.date) === today && isFav(g)).length; secs.teams = hrow('teams', 'My teams', `${mine.length} followed${nT ? ` · ${nT} game${nT === 1 ? '' : 's'} today` : ''}`, strip(secs.teams) + `<a class="hedit" href="#teams">Edit teams</a>`); }
+
+      // the greeting and the deck
+      delete secs.live; delete secs.tonight;
+      if (P.brief || P.live) {
+        const hr = +new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'America/Chicago' }).format(new Date()) % 24;
+        const hello = hr < 5 ? 'Good evening' : hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+        const ord = g => isLive(g) ? 0 : g.state === 'pre' ? 1 : 2;
+        let deck = games.filter(g => HW.ymdOf(g.date) === today && isFav(g)).sort((a, b) => ord(a) - ord(b) || new Date(a.date) - new Date(b.date) || rankGame(b) - rankGame(a));
+        let nextMode = false;
+        if (!deck.length && !offS) { const seen = new Set(); deck = teams.map(t => t.next).filter(g => g && g.state === 'pre' && !seen.has(g.id) && seen.add(g.id)).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 6); nextMode = deck.length > 0; }
+        const nLive = deck.filter(isLive).length;
+        const sub = offS ? 'The season is over for your teams' : nextMode ? `Nothing tonight · next up ${esc(dayWord(HW.ymdOf(deck[0].date), true).replace('Tonight', 'later'))}` : deck.length ? `${nLive ? `${nLive} live now · ` : ''}${deck.length} game${deck.length === 1 ? '' : 's'} for your teams today${deck.length > 1 ? ' · swipe' : ''}` : (mine.length ? (S0.teams ? 'No games for your teams today' : '') : 'Follow a team to fill this screen');
+        const outOf = t => { const b = S0.inj && S0.inj.byTeam[t.id]; const outs = (b && b.list || []).filter(x => /out|suspen/i.test(x.status || '')); const pts = outs.reduce((n, x) => { const e = ctx && ctx.ppg && ctx.ppg[String(x.athlete && x.athlete.displayName || '').toLowerCase()]; return n + (e && isFinite(e.pts) ? +e.pts : 0); }, 0); return { n: outs.length, pts }; };
+        const card = (g, i) => {
+          const live = isLive(g), done = g.state === 'post' && !g.off, pre = !live && !done;
+          const [ca, cb] = pickColors(g);
+          const f = !g.off ? safeF(L, g, ctx) : null; const ph = f && Number.isFinite(f.pHome) ? Math.min(.99, Math.max(.01, f.pHome)) : null;
+          const hasSc = (live || done) && g.away.score != null && g.home.score != null;
+          const share = hasSc ? .5 + Math.max(-.3, Math.min(.3, (+g.home.score - +g.away.score) / 30)) : ph != null ? ph : .5;
+          const seam = Math.min(74, Math.max(26, 50 - (share - .5) * 80));
+          const k = live ? `<i class="dot"></i>${esc(HW.clockOf(g, L))}` : done ? esc(finalWord(g)) : g.off ? esc(g.off) : `${nextMode || relDay(HW.ymdOf(g.date)) !== 'Tonight' ? esc(dayWord(HW.ymdOf(g.date), true)) + ' · ' : (i === deck.findIndex(x => x.state === 'pre') ? 'Up next · ' : '')}${esc(tipOf(g))}`;
+          const tv = tvLabel(g);
+          const side = (t, o) => `<span class="dks">${logo(t.logo, '', teamColor(t, L))}<b>${esc(t.abbr || t.short)}</b>${hasSc ? `<em class="sc${+t.score >= +o.score ? '' : ' lo'}">${esc(String(t.score))}</em>` : `<em>${esc(t.rec || '')}</em>`}</span>`;
+          const fav = ph != null ? (ph >= .5 ? g.home : g.away) : null;
+          const mid = live || done ? (hasSc ? `<span class="dkm"><b>${live ? 'Live' : 'Final'}</b>${(() => { const lead = +g.home.score === +g.away.score ? null : (+g.home.score > +g.away.score ? g.home : g.away); return lead ? `${esc(lead.abbr)} ${live ? 'by' : 'won by'} ${Math.abs(+g.home.score - +g.away.score)}` : 'Level'; })()}</span>` : '') : fav ? `<span class="dkm"><b>${esc(fav.abbr)} ${pct(Math.max(ph, 1 - ph))}</b>to win</span>` : `<span class="dkm"><b>${esc(tipOf(g))}</b></span>`;
+          let foot = '';
+          if (pre && S0.inj) { const A = outOf(g.away), H = outOf(g.home); const t = A.n > H.n || (A.n === H.n && A.pts > H.pts) ? g.away : g.home; const o = t === g.away ? A : H; if (o.n) foot = `${o.n} ${esc(t.short)} out${o.pts ? ` · ${o.pts.toFixed(1)} ppg sitting` : ''}`; }
+          if (!foot && done && f && ph != null) { const pick = ph >= .5 ? g.home : g.away; foot = `RIVL had ${esc(pick.abbr)} ${pct(Math.max(ph, 1 - ph))}`; }
+          if (!foot && tv) foot = esc(tv);
+          return `<a class="dk${live ? ' live' : ''}" href="${href.game(lk, g.id)}" style="--ca:${esc(ca)};--cb:${esc(cb)};--seam:${seam.toFixed(1)}%"><span class="wm a">${esc(g.away.abbr || '')}</span><span class="wm h">${esc(g.home.abbr || '')}</span><span class="dkk">${k}${tv && !pre ? '' : tv && foot !== esc(tv) ? ` · ${esc(tv)}` : ''}</span><span class="dkg">${side(g.away, g.home)}${mid}${side(g.home, g.away)}</span>${foot ? `<span class="dkf">${foot}</span>` : ''}</a>`;
+        };
+        const dots = deck.length > 1 ? (deck.length <= 8 ? `<div class="dkdots" aria-hidden="true">${deck.map((_, i) => `<i${i ? '' : ' class="on"'}></i>`).join('')}</div>` : `<div class="dkdots n" aria-hidden="true"><span>1</span> / ${deck.length}</div>`) : '';
+        const skel = !deck.length && mine.length && !S0.teams && !offS ? `<div class="dk skel"></div>` : '';
+        secs.hi = `<div class="hhi"><h1>${hello}</h1>${sub ? `<p>${sub}</p>` : ''}</div>${deck.length ? `<div class="dkw"><div class="dkdeck">${deck.map(card).join('')}</div>${dots}</div>` : skel}`;
+      } else delete secs.hi;
     };
 
     // ----- phase 1: one round trip, then paint -----
@@ -627,10 +701,11 @@
     let ymd = store.get('v5:date', today); if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd) || Math.abs(new Date(ymd) - new Date(today)) > 200 * 864e5) ymd = today;
     const far = Math.abs(new Date(ymd) - new Date(today)) > 4 * 864e5; const center = far ? ymd : today;
     const mineOnly = !!store.get('v5:scmine', false) && (favs.all()[lk] || []).length > 0;
-    const days = Array.from({ length: 9 }, (_, i) => addDays(center, i - 4));
-    const dayBtn = (d, lab) => `<button class="day${d === ymd ? ' on' : ''}" data-act="date" data-ymd="${d}" aria-pressed="${d === ymd}"><em>${esc(lab)}</em><b>${d.slice(8) === '01' && lab !== 'Today' ? esc(dayLabel(d, { month: 'short' })) + ' ' : ''}${+d.slice(8)}</b></button>`;
-    const calPill = `<div class="calrow"><span id="phase"></span><button class="chip cal" data-act="calendar" data-ymd="${esc(ymd)}" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>${esc(dayLabel(ymd, { month: 'long', year: 'numeric' }))}<svg class="dn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>${(favs.all()[lk] || []).length ? `<button class="chip mine${mineOnly ? ' on' : ''}" data-act="scmine" aria-pressed="${mineOnly}">${starSvg}Mine</button>` : '<span></span>'}</div>`;
-    const strip = calPill + `<div class="dates" id="dates">${far ? dayBtn(today, 'Today') + '<span class="gap"></span>' : ''}${days.map(d => dayBtn(d, d === today ? 'Today' : dayLabel(d, { weekday: 'short' }))).join('')}</div>`;
+    /* the day pager (Ray's pick, Calendar A): you are always on one day. Its name is the title; the arrows step a day
+       either way; a tap on the title slides up the month, with your teams' days marked, to jump weeks or months ahead. */
+    const rel = d => d === today ? 'Today' : d === addDays(today, 1) ? 'Tomorrow' : d === addDays(today, -1) ? 'Yesterday' : dayLabel(d, { weekday: 'long' });
+    const chevL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 6-6 6 6 6"/></svg>', chevR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 6 6 6-6 6"/></svg>';
+    const strip = `<div class="dpg" id="dates"><button class="dpa" data-act="date" data-ymd="${addDays(ymd, -1)}" aria-label="Previous day">${chevL}</button><button class="dpt" data-act="calendar" data-ymd="${esc(ymd)}" aria-haspopup="dialog" aria-label="Pick a day"><b>${esc(rel(ymd))}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></b><span id="dpsub">${esc(dayLabel(ymd, { weekday: ymd === today || Math.abs(new Date(ymd) - new Date(today)) < 2 * 864e5 ? 'long' : undefined, month: 'long', day: 'numeric', year: ymd.slice(0, 4) !== today.slice(0, 4) ? 'numeric' : undefined }))}</span></button><button class="dpa" data-act="date" data-ymd="${addDays(ymd, 1)}" aria-label="Next day">${chevR}</button></div><div id="phase"></div>`;
     const unrMode = lk === 'wnba' && !!store.get('v5:scunr', false);
     const modes = lk === 'wnba' ? `<div class="chips scmode" role="tablist">${[['wnba', 'WNBA'], ['unrivaled', 'Unrivaled']].map(([k, l]) => `<button class="chip${(k === 'unrivaled') === unrMode ? ' on' : ''}" role="tab" data-act="scmode" data-mode="${k}" aria-pressed="${(k === 'unrivaled') === unrMode}">${l}</button>`).join('')}</div>` : '';
     if (unrMode) { HW.v5.refresh = null; const h = await unrivaledList(); if (store.get('v5:scunr', false)) $main.innerHTML = `<div id="unrpage">${modes}<div class="unrbody">${h}</div></div>`; return; }
@@ -646,11 +721,7 @@
       if (page && page.dataset.lk === lk) {
         const hd = page.querySelector('#schead'); const hh = hashOf(head);
         if (hd.dataset.h !== hh) {
-          const dates = hd.querySelector('#dates'); const same = dates && [...dates.querySelectorAll('.day')].map(b => b.dataset.ymd).join() === (far ? [today, ...days] : days).join();
-          if (same) {   // the same window of days: move the highlight, and refresh the small row above it (month, Mine) in place
-            dates.querySelectorAll('.day').forEach(b => { const on = b.dataset.ymd === ymd; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
-            const cr = hd.querySelector('.calrow'); if (cr) { const tmp = document.createElement('div'); tmp.innerHTML = calPill; cr.replaceWith(tmp.firstElementChild); }
-          } else hd.innerHTML = head;
+          hd.innerHTML = head;
           hd.dataset.h = hh;
         }
         const bd = page.querySelector('#scbody'); const bh = hashOf(body); if (bd.dataset.h !== bh) { const dayChanged = bd.dataset.d !== ymd; bd.innerHTML = body; bd.dataset.h = bh; bd.dataset.d = ymd; if (dayChanged && HW.v5.soft) HW.v5.soft(bd); }
@@ -660,7 +731,6 @@
     if (inPlace) { paint($main.querySelector("#scbody").innerHTML); if (HW.v5.busy) HW.v5.busy(true); } else $main.innerHTML = `<div id="scpage" data-lk="${lk}"><div id="schead" data-h="${hashOf(head)}">${head}</div><div id="scbody">${skeleton(4, 'card')}</div></div>`;
     const [games, ctx, meta] = await Promise.all([ymd === today && S.today[lk] && S.today[lk].length ? S.today[lk] : scoreboard(L, ymd).catch(() => null), forecastCtx(L, ymd).catch(() => null), sbMeta(L, ymd)]);
     if (ymd === today && games) S.today[lk] = games;
-    const el = $main.querySelector('#dates .on'); if (el) el.scrollIntoView({ inline: 'center', block: 'nearest' });
     todayPill(ymd !== today, today);
     const phase = ''; const phaseTag = meta.phase ? `<span class="phase">${esc(meta.phase)}</span>` : '';
     const setPhase = () => { const el = $main.querySelector('#phase'); if (el) el.innerHTML = phaseTag; };
@@ -673,14 +743,17 @@
       paint(phase + empty(`No ${L.label} games ${ymd === today ? 'today' : 'on ' + dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, body, next ? `<button class="btn" data-act="date" data-ymd="${esc(next)}">Jump to ${esc(dayLabel(next, { weekday: 'short', month: 'short', day: 'numeric' }))}</button>` : ''));
       setPhase(); return;
     }
-    const shown = mineOnly ? games.filter(g => isFav(g) || g.tbd) : games;   // your teams always sort first; Mine hides the rest (a game whose teams aren't set yet stays: it could be yours)
-    const by = st => shown.filter(g => g.state === st && !g.off).sort((a, b) => rankGame(b) - rankGame(a) || new Date(a.date) - new Date(b.date));
-    const live = by('in'), pre = by('pre'), post = by('post'), off = shown.filter(g => g.off);
-    const block = (title, list) => list.length ? sec(title, `${list.length}`) + clip(list.map(g => g.tbd ? `<div class="games">${gameCard(L, g, ctx, false, true)}</div>` : scoreRow(L, g, ctx)), 'srows', 5, 'games') : '';
-    const none = mineOnly && !shown.length ? empty(`None of your teams play ${ymd === today ? 'today' : dayLabel(ymd, { weekday: 'long', month: 'short', day: 'numeric' })}`, `<p style="margin:6px 0 0">${games.length} game${games.length === 1 ? '' : 's'} on the slate.</p>`, `<button class="btn ghost" data-act="scmine">Show all</button>`) : '';
-    paint(phase + none + block('Live', live) + block(ymd === today ? 'Upcoming' : 'Scheduled', pre) + block('Final', post) + block('Not played', off));
+    // the slate: anything live first, then your teams' games, then the rest of the league (by tip time, finals after)
+    const sub = $main.querySelector('#dpsub'); if (sub && !/games?$/.test(sub.textContent)) sub.textContent += ` · ${games.length} game${games.length === 1 ? '' : 's'}`;
+    const tOrd = g => (g.state === 'post' || g.off ? 1 : 0);
+    const byTip = (a, b) => tOrd(a) - tOrd(b) || new Date(a.date) - new Date(b.date) || rankGame(b) - rankGame(a);
+    const live = games.filter(g => isLive(g) && !g.off).sort((a, b) => rankGame(b) - rankGame(a));
+    const mineG = games.filter(g => !live.includes(g) && isFav(g)).sort(byTip);
+    const rest = games.filter(g => !live.includes(g) && !mineG.includes(g)).sort(byTip);
+    const row = g => g.tbd ? `<div class="games">${gameCard(L, g, ctx, false, true)}</div>` : scoreRow(L, g, ctx);
+    const block = (title, list, n = 6) => list.length ? `<div class="dpsec"><b>${title}</b><span>${list.length}</span></div>` + clip(list.map(row), 'srows', n, 'games') : '';
+    paint(phase + block('<i class="dot"></i>Live now', live, 8) + block('Your teams', mineG, 8) + block(mineG.length || live.length ? 'Around the league' : 'All games', rest, mineG.length ? 5 : 8));
     setPhase();
-    const el2 = $main.querySelector('#dates .on'); if (el2) el2.scrollIntoView({ inline: 'center', block: 'nearest' });
   }
   /* a pill that stays put above the tab bar while another day is shown: one tap back to today, wherever the strip is scrolled */
   function todayPill(show, today) {

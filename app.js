@@ -52,6 +52,14 @@
     if ($pills.children.length !== ORDER.length) $pills.innerHTML = ORDER.map(k => `<a class="pill" href="#${k}" data-lk="${k}"><span>${esc(LEAGUES[k].label)}</span></a>`).join('');
     ORDER.forEach((k, i) => { const el = $pills.children[i]; const on = k === lk; el.classList.toggle('on', on); if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); const n = S.today[k].filter(isLive).length; let ct = el.querySelector('.ct'); if (n && !ct) { ct = document.createElement('span'); ct.className = 'ct live'; el.appendChild(ct); } if (ct) { if (!n) ct.remove(); else if (ct.textContent !== String(n)) ct.textContent = n; } });
     $pills.style.setProperty('--n', ORDER.length); $pills.style.setProperty('--i', Math.max(0, ORDER.indexOf(lk)));   // the knob slides to the chosen league
+    // the phone's one bar: the league is a small chip; a red dot when anything in it is live
+    const chip = document.getElementById('lgchip'); if (chip) { const n = chip.querySelector('.lgn'); if (n.textContent !== LEAGUES[lk].label) n.textContent = LEAGUES[lk].label; chip.querySelector('.lv').hidden = !S.today[lk].some(isLive); }
+  }
+  /* the league switcher: a sheet with the four leagues, each with what is on today */
+  function openLeagues() {
+    const cur = current ? current.lk : 'nba';
+    const line = k => { const g = S.today[k] || []; const live = g.filter(isLive).length; return live ? `<span class="on">${live} live now</span>` : g.length ? `${g.length} game${g.length === 1 ? '' : 's'} today` : 'No games today'; };
+    openPanel(`<div class="lgsheet"><div class="grab" aria-hidden="true"></div><h2>League</h2><div class="lgl">${ORDER.map(k => `<a class="lgo${k === cur ? ' on' : ''}" href="#${k}" data-act="panel-close"${k === cur ? ' aria-current="true"' : ''}><b>${esc(LEAGUES[k].label)}</b><span>${line(k)}</span>${k === cur ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : ''}</a>`).join('')}</div></div>`);
   }
   function paintTabs(name) {
     $tabs.querySelectorAll('.tab').forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('on', on); if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
@@ -331,6 +339,7 @@
     if (a === 'wire-x') { e.preventDefault(); const ids = (act.dataset.ids || '').split(',').filter(Boolean); const seen = store.get('v5:wire:seen', []) || []; store.set('v5:wire:seen', [...new Set([...ids, ...seen])].slice(0, 80)); const sec = act.closest('section'); if (sec) sec.remove(); return; }
     if (a === 'scmode') { e.preventDefault(); store.set('v5:scunr', act.dataset.mode === 'unrivaled'); if (current && current.name === 'scores') render(); else location.hash = '#scores'; return; }
     if (a === 'scmine') { e.preventDefault(); store.set('v5:scmine', !store.get('v5:scmine', false)); render(); return; }
+    if (a === 'lgsheet') { e.preventDefault(); openLeagues(); return; }
     if (a === 'panel-close') { e.preventDefault(); closePanel(); const to = act.getAttribute('href'); if (to && to.startsWith('#')) location.hash = to; }
     if (a === 'date') { e.preventDefault(); store.set('v5:date', act.dataset.ymd); closePanel(); if (current && current.name === 'scores') render(); else location.hash = '#scores'; }
     if (a === 'calendar') { e.preventDefault(); openCalendar(act.dataset.ymd || store.get('v5:date', todayCT())); }
@@ -385,7 +394,7 @@
       <div class="cal-h"><button class="ib" data-act="cal-nav" data-ym="${prev}" aria-label="Previous month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button><h3>${esc(title)}<small>${esc(L.label)}</small></h3><button class="ib" data-act="cal-nav" data-ym="${next}" aria-label="Next month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button></div>
       <div class="cal-w">${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(w => `<span>${w}</span>`).join('')}</div>
       <div class="cal-g">${grid(days, counted)}</div>
-      <p class="cal-f"><i class="dot"></i> your teams play${counted ? ' · numbers are games that day' : ' · <u></u> games that day'}${note ? ` · ${esc(note)}` : ''}</p>`;
+      <p class="cal-f"><i class="dot"></i> your teams play${counted ? ' · numbers are games that day' : ' · <u></u> games that day'}${note ? ` · ${esc(note)}` : ''}</p>${sel !== today ? `<button class="btn cal-today" data-act="date" data-ymd="${today}">Back to today</button>` : ''}`;
     const html = (days, note, counted = true) => page(days, note, counted);
     if (!keep || $panel.hidden) openPanel(html(null, 'loading'), {}); else $panel.querySelector('.panel-in').innerHTML = html(null, 'loading');
     const r = await V.monthGames(L, ym).catch(() => null);
