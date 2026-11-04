@@ -4695,3 +4695,6 @@ html body #scpage .stm:has(.sab2.l5) .scr{width:26px;height:26px}
 .tbl th>button::after{content:'';position:absolute;inset:-12px -6px}
 .why-n a::after{content:'';position:absolute;inset:-14px -4px}
 td.spc>a::after,.nm>a::after{content:'';position:absolute;inset:-6px 0}
+
+/* v422 · the follow star sat outside the team box and got clipped; the box no longer clips (the abbreviation still clips itself) */
+html body #scpage .stm{overflow:visible}
