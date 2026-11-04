@@ -242,7 +242,7 @@
     const a = +g.away.score, h = +g.home.score, has = (live || fin) && g.away.score != null && g.home.score != null;
     const up = (x, y) => has && x > y, lo = (x, y) => fin && has && x < y;
     const star = `<i class="sstar" aria-label="Following"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg></i>`;
-    const side = (t, l) => { const f = HW.favs.has(L.key, t.id); return `<span class="stm${l ? ' lo' : ''}"><span class="scr${lowC(teamColor(t, L)) ? ' lowc' : ''}">${t.logo ? imgSized(t.logo, 112, 112, 'alt=""', monoSwap(t.abbr)) : monoOf(t.abbr)}${f ? star : ''}</span><b class="snm">${esc(t.short || t.abbr || '')}</b><b class="sab2">${esc(t.abbr || t.short || '')}</b></span>`; };
+    const side = (t, l) => { const f = HW.favs.has(L.key, t.id); return `<span class="stm${l ? ' lo' : ''}"><span class="scr${lowC(teamColor(t, L)) ? ' lowc' : ''}">${t.logo ? imgSized(t.logo, 112, 112, 'alt=""', monoSwap(t.abbr)) : monoOf(t.abbr)}${f ? star : ''}</span><b class="snm">${esc(t.short || t.abbr || '')}</b><b class="sab2${String(t.abbr || t.short || '').length > 4 ? ' l5' : ''}">${esc(t.abbr || t.short || '')}</b></span>`; };
     const num = (t, u, l) => pre || t.score == null ? `<span class="ssc rec">${esc(t.rec || '')}</span>` : `<span class="ssc${u ? ' up' : ''}${l ? ' lo' : ''}">${esc(String(t.score))}</span>`;
     const f = !fin && !g.off && prefs.get('forecast') ? safeF(L, g, ctx) : null;
     const pick = f && Number.isFinite(f.pHome) ? `<small>${esc((f.pHome >= .5 ? g.home : g.away).abbr || '')} ${pct(Math.max(f.pHome, 1 - f.pHome))}</small>` : '';
