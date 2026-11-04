@@ -1,0 +1,16 @@
+name: probe-ncaa
+on: push
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          D=$(date -u +%Y/%m/%d)
+          {
+          for u in "https://ncaa-api.henrygd.me/scoreboard/basketball-men/d1/$D/all-conf" "https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/$D/all-conf" "https://data.ncaa.com/casablanca/scoreboard/basketball-men/d1/$D/scoreboard.json" "https://sdataprod.ncaa.com/?meta=GetContests_web" ; do
+            echo "=== $u"; curl -s -m 20 -D - -o body.txt -H "Origin: https://raylikeray.github.io" "$u" | grep -i "^HTTP\|access-control\|content-type\|cache-control"; head -c 1500 body.txt; echo
+          done
+          } > probe.txt 2>&1
+          git config user.name probe; git config user.email probe@x; git add probe.txt; git commit -m probe; git push
