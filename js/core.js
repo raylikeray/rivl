@@ -322,7 +322,10 @@ async function scoreboard(L, ymd, ttl) {
   }));
   return gs.sort((a, b) => (order(a) - order(b)) || (new Date(a.date) - new Date(b.date)));
 }
-function statMap(stats) { const s = {}; (stats || []).forEach(x => { if (x.name) s[x.name] = x; if (x.type) s[x.type] = s[x.type] || x; if (x.displayName) s[x.displayName] = s[x.displayName] || x; if (x.abbreviation) s[x.abbreviation] = s[x.abbreviation] || x; }); return s; }
+/* v418: college standings send every stat once per split (overall, home, road, vs ranked, vs conference), all under the
+   same name and told apart only by `type` (wins, home_wins, ..., vsconf_wins). The overall one wins the plain name; a split
+   fills it only when there is no overall. Keeping the last one read every team's conference record (0-0 in November). */
+function statMap(stats) { const s = {}; (stats || []).forEach(x => { if (x.name) { const total = !x.type || String(x.type).toLowerCase() === String(x.name).toLowerCase(); if (total || !s[x.name]) s[x.name] = x; } if (x.type) s[x.type] = s[x.type] || x; if (x.displayName) s[x.displayName] = s[x.displayName] || x; if (x.abbreviation) s[x.abbreviation] = s[x.abbreviation] || x; }); return s; }
 function parseStandingRow(en, L, grp) {
   const s = statMap(en.stats); const val = k => s[k] ? (s[k].value ?? parseFloat(s[k].displayValue)) : null; const dv = k => s[k] ? s[k].displayValue : '';
   const t = en.team || {};
