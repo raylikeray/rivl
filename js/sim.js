@@ -34,15 +34,17 @@
     const today = DAY(), end = seasonEnd(L); if (today > end) return { games: [], source: 'feed' };
     const months = []; let d = today; while (d <= end) { const m = d.slice(0, 7); const [y, mo] = m.split('-').map(Number); const last = new Date(Date.UTC(y, mo, 0)).getUTCDate(); months.push([d, `${m}-${String(last).padStart(2, '0')}` > end ? end : `${m}-${String(last).padStart(2, '0')}`]); d = addDays(`${m}-${String(last).padStart(2, '0')}`, 1); }
     const params = L.sbParams.replace(/&limit=\d+/, '');
-    const span = ([a, b], lim) => jSoft(`${API(L)}/scoreboard?dates=${compact(a)}-${compact(b)}${params}&limit=${lim}`, 3600000);
+    /* ESPN stopped answering start-end ranges (v408): ask a month at a time (dates=202611), and day by day when a month won't come */
+    const ok = pg => pg && Array.isArray(pg.events);
     const games = []; let i = 0;
     for (const m of months) {
-      let pg = await span(m, 1000);
-      if (!pg || !Array.isArray(pg.events) || pg.events.length >= 1000) {   // too much in one go: week by week
-        const evs = []; let a = m[0]; while (a <= m[1]) { const b = addDays(a, 6) > m[1] ? m[1] : addDays(a, 6); const w = await span([a, b], 400); if (w && Array.isArray(w.events)) evs.push(...w.events); a = addDays(b, 1); }
+      let pg = await jSoft(`${API(L)}/scoreboard?dates=${compact(m[0]).slice(0, 6)}${params}&limit=1000`, 3600000);
+      if (!ok(pg) || pg.events.length >= 1000) {
+        const days = []; for (let a = m[0]; a <= m[1]; a = addDays(a, 1)) days.push(a);
+        const evs = []; for (let k = 0; k < days.length; k += 6) { const got = await Promise.all(days.slice(k, k + 6).map(a => jSoft(`${API(L)}/scoreboard?dates=${compact(a)}${params}&limit=400`, 3600000))); got.forEach(w => { if (ok(w)) evs.push(...w.events); }); }
         pg = { events: evs };
       }
-      (pg.events || []).forEach(e => { const g = compactEvent(e); if (g) games.push(g); });
+      (pg.events || []).forEach(e => { const g = compactEvent(e); if (g && g.d >= m[0] && g.d <= m[1]) games.push(g); });
       i++; if (onProgress) onProgress(i / months.length);
     }
     const seen = new Set(); return { games: games.filter(g => !seen.has(g.id) && seen.add(g.id)), source: 'feed' };
