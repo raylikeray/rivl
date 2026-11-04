@@ -1,0 +1,24 @@
+=== https://ncaa-api.henrygd.me/scoreboard/basketball-men/d1/2026/11/04/all-conf
+HTTP/2 200 
+content-type: application/json
+cache-control: public, max-age=60
+x-content-type-options: nosniff
+{"inputMD5Sum":"78cc3728656fe4b82fc63efbc2cce727","instanceId":"d41d8cd98f00b204e9800998ecf8427e","updated_at":"2026-11-04 15:27:40","games":[{"game":{"gameID":"6650270","away":{"score":"","names":{"char6":"FRAMST","short":"Framingham St.","seo":"framingham-st","full":""},"winner":false,"seed":"","description":"","rank":"","conferences":[{"conferenceName":"","conferenceSeo":"mascac"}]},"finalMessage":"","title":"Framingham St. Dartmouth","url":"/game/6650270","network":"","home":{"score":"","names":{"char6":"DART","short":"Dartmouth","seo":"dartmouth","full":""},"winner":false,"seed":"","description":"","rank":"","conferences":[{"conferenceName":"","conferenceSeo":"ivy-league"}]},"liveVideoEnabled":false,"startTime":"6:30 PM ET","startTimeEpoch":"1793835000","gameState":"pre","startDate":"11/04/2026","currentPeriod":"","contestClock":"0:00","bracketId":"","bracketRound":""}},{"game":{"gameID":"6649272","away":{"score":"","names":{"char6":"FDU","short":"FDU","seo":"fdu","full":""},"winner":false,"seed":"","description":"","rank":"","conferences":[{"conferenceName":"","conferenceSeo":"nec"}]},"finalMessage":"","title":"FDU Butler","url":"/game/6649272","network":"","home":{"score":"","names":{"char6":"BUTLER","short":"Butler","seo":"butler","full":""},"winner":false,"seed":"","description":"","rank":"","conferences":[{"conferenceName":"","conferenceSeo":"big-east"}]},"liveVideoEnabled":false,"startTime":"7:00 PM ET","startTimeEpoch":"1793836800","gameState":"pre","startDate":"1
+=== https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/2026/11/04/all-conf
+HTTP/2 200 
+content-type: application/json
+cache-control: public, max-age=60
+x-content-type-options: nosniff
+{"inputMD5Sum":"b06d20fa117d43387c72377c67ff5b9c","instanceId":"d41d8cd98f00b204e9800998ecf8427e","updated_at":"2026-11-04 15:27:20","games":[{"game":{"gameID":"6646282","away":{"score":"","names":{"char6":"WINGAT","short":"Wingate","seo":"wingate","full":""},"winner":false,"seed":"","description":"","rank":"","conferences":[{"conferenceName":"","conferenceSeo":"sac"}]},"finalMessage":"","title":"Wingate High Point","url":"/game/6646282","network":"","home":{"score":"","names":{"char6":"HIGHPT","short":"High Point","seo":"high-point","full":""},"winner":false,"seed":"","description":"","rank":"","conferences":[{"conferenceName":"","conferenceSeo":"big-south"}]},"liveVideoEnabled":false,"startTime":"12:00 PM ET","startTimeEpoch":"1793811600","gameState":"pre","startDate":"11/04/2026","currentPeriod":"","contestClock":"0:00","bracketId":"","bracketRound":""}},{"game":{"gameID":"6646719","away":{"score":"","names":{"char6":"DALLAS","short":"Dallas","seo":"dallas","full":""},"winner":false,"seed":"","description":"","rank":"","conferences":[{"conferenceName":"","conferenceSeo":"scac"}]},"finalMessage":"","title":"Dallas SFA","url":"/game/6646719","network":"","home":{"score":"","names":{"char6":"SFA","short":"SFA","seo":"stephen-f-austin","full":""},"winner":false,"seed":"","description":"","rank":"","conferences":[{"conferenceName":"","conferenceSeo":"southland"}]},"liveVideoEnabled":false,"startTime":"12:00 PM ET","startTimeEpoch":"1793811600","gameState":"pre","startDate":"11/
+=== https://data.ncaa.com/casablanca/scoreboard/basketball-men/d1/2026/11/04/scoreboard.json
+HTTP/2 404 
+content-type: application/xml
+cache-control: max-age=5
+<?xml version="1.0" encoding="UTF-8"?>
+<Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message><Key>casablanca/scoreboard/basketball-men/d1/2026/11/04/scoreboard.json</Key><RequestId>EKMTNJ9TEMXVEJ7Z</RequestId><HostId>QVhwYGST39fmyKOH9NjF1kmlsrF4rHxV3VGGIxUOCT8V4e/17pIV08fwFoNqfTZds5BBJPdGPdk=</HostId></Error>
+=== https://sdataprod.ncaa.com/?meta=GetContests_web
+HTTP/2 500 
+content-type: application/json; charset=utf-8
+cache-control: public, max-age=5
+{"errors":[{"message":"Context creation failed: Must use persistedQuery:  meta=GetContests_web","extensions":{"code":"INTERNAL_SERVER_ERROR"}}]}
+
