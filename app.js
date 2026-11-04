@@ -34,13 +34,14 @@
     const h = (location.hash || '#home').slice(1);
     let m;
     if ((m = h.match(/^(player|team|game|article|venue)\/([a-z]+)\/([A-Za-z0-9]+)(?:\/p\/(\d+))?$/))) return { name: m[1], lk: lkOf(m[2]), args: m[4] ? [lkOf(m[2]), m[3], m[4]] : [lkOf(m[2]), m[3]] };   // a game can open on one player: #game/nba/401/p/1966
-    if (LEAGUES[h]) { if (store.get('v5:lk') !== h) { store.set('v5:lk', h); if (V.applyAccent) V.applyAccent(); } return { name: store.get('v5:screen', 'home'), lk: h, args: [h] }; }
+    if (LEAGUES[h]) { if (store.get('v5:lk') !== h) { store.set('v5:lk', h); if (V.applyAccent) V.applyAccent(); } const nm = store.get('v5:screen', 'home'); if (nm === 'home') store.set('v5:hometab', h); return { name: nm, lk: h, args: [nm === 'home' ? h : h] }; }
     if (h === 'search') return { name: 'search', lk: lkOf(store.get('v5:lk', 'nba')), args: [] };
     let km; if ((km = h.match(/^recruit\/(boys|girls)\/(\d{4})\/([a-z0-9-]+)$/))) return { name: 'recruit', lk: km[1] === 'girls' ? 'ncaaw' : 'ncaam', args: [km[1], km[2], km[3]] };
     let rm; if ((rm = h.match(/^record(?:\/([a-z]+))?$/))) { const k = rm[1] && LEAGUES[rm[1]] ? rm[1] : lkOf(store.get('v5:lk', 'nba')); return { name: 'record', lk: k, args: [k] }; }
     let sm; if ((sm = h.match(/^settings(?:\/([a-z]+))?$/))) return { name: 'settings', lk: lkOf(store.get('v5:lk', 'nba')), args: [sm[1] || ''] };
     const name = SCREENS.includes(h) ? h : 'home';
     const lk = lkOf(store.get('v5:lk', 'nba'));
+    if (name === 'home') { const t = store.get('v5:hometab', 'following'); return { name, lk, args: [t === 'following' || LEAGUES[t] ? t : 'following'] }; }   // v423: Home is the Following feed, or one league's
     return { name, lk, args: [lk] };
   }
 
@@ -78,6 +79,115 @@
   function paintTabs(name) {
     $tabs.querySelectorAll('.tab').forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('on', on); if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
   }
+  /* ---------- v423: X-style tabs across the top of every league screen ----------
+     Home: Following, then a tab per league. Scores, Standings, Stats, Players, Teams: a tab per league. The league is
+     shared across screens (WNBA on Scores means WNBA on Standings); Home keeps its own tab. Tap or swipe the page. */
+  const $lgt = document.getElementById('lgtabs');
+  const tabsFor = r => r.name === 'home' ? ['following', ...ORDER] : ORDER;
+  const tabNow = r => r.name === 'home' ? r.args[0] : r.lk;
+  const tabLabel = k => k === 'following' ? 'Following' : LEAGUES[k].label;
+  function inkTo(i, frac = 0) {
+    const bs = $lgt.querySelectorAll('.lgt'); const ink = $lgt.querySelector('.lgink'); if (!bs.length || !ink) return;
+    const at = j => { const b = bs[Math.max(0, Math.min(bs.length - 1, j))]; const l = b.querySelector('span'); const r0 = $lgt.getBoundingClientRect(), r = l.getBoundingClientRect(); return { x: r.left - r0.left, w: r.width }; };
+    const a = at(i), b = at(i + Math.sign(frac)); const f = Math.abs(frac);
+    ink.style.width = `${a.w + (b.w - a.w) * f}px`; ink.style.transform = `translateX(${a.x + (b.x - a.x) * f}px)`;
+  }
+  function paintLgTabs(r, show) {
+    $lgt.hidden = !show; document.getElementById('htitle').hidden = !(show && r.name === 'home');
+    if (!show) return;
+    const tabs = tabsFor(r), cur = tabNow(r);
+    if ($lgt.dataset.set !== tabs.join(',')) {
+      $lgt.dataset.set = tabs.join(','); $lgt.dataset.n = tabs.length;
+      $lgt.innerHTML = tabs.map(k => `<button class="lgt" role="tab" data-lgt="${k}"><span>${esc(tabLabel(k))}<i class="lgd" hidden></i></span></button>`).join('') + '<i class="lgink" aria-hidden="true"></i>';
+      $lgt.classList.add('noanim'); requestAnimationFrame(() => requestAnimationFrame(() => $lgt.classList.remove('noanim')));
+    }
+    $lgt.querySelectorAll('.lgt').forEach(b => { const k = b.dataset.lgt; const on = k === cur; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on));
+      const d = b.querySelector('.lgd'); const live = k === 'following' ? ORDER.some(x => S.today[x].some(g => isLive(g) && HW.isFav(g))) : S.today[k].some(isLive); d.hidden = !live; });
+    inkTo(tabs.indexOf(cur));
+  }
+  window.addEventListener('resize', () => { if (current && !$lgt.hidden) inkTo(tabsFor(current).indexOf(tabNow(current))); });
+  /* choosing a tab: no new history entry (Back never walks through tabs), each tab lands where you left it */
+  function goTab(k, dir = 0) {
+    if (!current) return; const r = current;
+    if (k === tabNow(r)) return;
+    if (r.name === 'home') store.set('v5:hometab', k);
+    if (LEAGUES[k] && store.get('v5:lk') !== k) { store.set('v5:lk', k); if (V.applyAccent) V.applyAccent(); }
+    render.slide = dir; homeKeep = null;
+    render();
+  }
+  $lgt.addEventListener('click', e => {
+    const b = e.target.closest('.lgt'); if (!b || !current) return;
+    const tabs = tabsFor(current); const k = b.dataset.lgt;
+    if (k === tabNow(current)) { window.scrollTo({ top: 0, behavior: MOTION() ? 'smooth' : 'auto' }); return; }
+    const d = Math.sign(tabs.indexOf(k) - tabs.indexOf(tabNow(current)));
+    if (MOTION()) slideOut(d, () => goTab(k, d)); else goTab(k, 0);
+  });
+  /* the slide: the page leaves the way the finger went, the next one comes in from the other side */
+  function slideOut(d, then, from = 0) {
+    const W = window.innerWidth; $main.style.transition = 'transform .16s cubic-bezier(.3,.7,.4,1),opacity .16s';
+    $main.style.transform = `translate3d(${-d * W * .35}px,0,0)`; $main.style.opacity = '0';
+    const i = tabsFor(current).indexOf(tabNow(current)); inkTo(i + d);
+    setTimeout(() => { $main.style.transition = 'none'; then(); }, 150);
+  }
+  V.slideIn = d => {
+    if (!MOTION()) { $main.style.transform = ''; $main.style.opacity = ''; return; }
+    const W = window.innerWidth; $main.style.transition = 'none'; $main.style.transform = `translate3d(${d * W * .3}px,0,0)`; $main.style.opacity = '0'; void $main.offsetWidth;
+    $main.style.transition = 'transform .26s cubic-bezier(.2,.8,.2,1),opacity .2s'; $main.style.transform = ''; $main.style.opacity = '';
+    setTimeout(() => { $main.style.transition = ''; }, 300);
+  };
+  /* swiping the page sideways turns the tab. Anything that scrolls sideways itself (a wide table, a strip of chips, a
+     pager inside the page) keeps the swipe until it reaches its end; a table's frozen first column always turns the page. */
+  {
+    let t0 = null, mode = '', dx = 0, lastX = 0, lastT = 0, vx = 0;
+    const scroller = (el, dir) => {
+      if (el.closest('[data-noswipe],input,textarea,select,.dkdeck,.bkov')) return true;
+      const room = x => { const max = x.scrollWidth - x.clientWidth; return max > 1 && (dir < 0 ? x.scrollLeft < max - 1 : x.scrollLeft > 1); };
+      const pg = el.closest('.pgr'); if (pg && room(pg)) return true;   // a pager inside the page turns its own pages first
+      let frozen = false;
+      for (let x = el; x && x !== $main && x !== pg; x = x.parentElement) {
+        if ((x.tagName === 'TD' || x.tagName === 'TH') && getComputedStyle(x).position === 'sticky') { frozen = true; continue; }   // the frozen column turns the page
+        const cs = getComputedStyle(x); if (/(auto|scroll)/.test(cs.overflowX) && x.scrollWidth > x.clientWidth + 1) { if (frozen) { frozen = false; continue; } if (room(x)) return true; }
+      }
+      return false; };
+    const can = () => current && !$lgt.hidden && !document.querySelector('.sheet.on,#lgmenu,.bkov');
+    $main.addEventListener('touchstart', e => { if (!can() || e.touches.length !== 1) { t0 = null; return; } const t = e.touches[0]; t0 = { x: t.clientX, y: t.clientY, el: e.target }; mode = ''; dx = 0; lastX = t.clientX; lastT = e.timeStamp; vx = 0; }, { passive: true });
+    $main.addEventListener('touchmove', e => {
+      if (!t0) return; const t = e.touches[0]; const ddx = t.clientX - t0.x, ddy = t.clientY - t0.y;
+      if (!mode) { if (Math.abs(ddx) < 10 && Math.abs(ddy) < 10) return; if (Math.abs(ddy) >= Math.abs(ddx) * .8) { mode = 'v'; return; } mode = scroller(t0.el, Math.sign(ddx)) ? 'inner' : 'page'; if (mode === 'page') { $main.style.transition = 'none'; } }
+      if (mode !== 'page') return;
+      e.preventDefault();
+      const tabs = tabsFor(current), i = tabs.indexOf(tabNow(current)); const W = window.innerWidth;
+      dx = ddx; const edge = (dx > 0 && i === 0) || (dx < 0 && i === tabs.length - 1); const shown = edge ? dx * .25 : dx;
+      const dt = Math.max(1, e.timeStamp - lastT); vx = vx * .6 + ((t.clientX - lastX) / dt) * .4; lastX = t.clientX; lastT = e.timeStamp;
+      $main.style.transform = `translate3d(${shown}px,0,0)`; $main.style.opacity = String(1 - Math.min(.5, Math.abs(shown) / W * .6));
+      if (!edge) inkTo(i, Math.max(-1, Math.min(1, -dx / W)));
+    }, { passive: false });
+    const end = () => {
+      if (!t0) return; const was = mode; t0 = null; mode = ''; if (was !== 'page') return;
+      const tabs = tabsFor(current), i = tabs.indexOf(tabNow(current)); const W = window.innerWidth; const d = dx < 0 ? 1 : -1;
+      const go = (Math.abs(dx) > W * .35 || (Math.abs(vx) > .25 && Math.sign(vx) === -d)) && tabs[i + d];
+      if (go) { $main.style.transition = 'transform .14s ease-out,opacity .14s'; $main.style.transform = `translate3d(${-d * W * .5}px,0,0)`; $main.style.opacity = '0'; inkTo(i + d); setTimeout(() => { $main.style.transition = 'none'; goTab(tabs[i + d], d); }, 130); }
+      else { $main.style.transition = 'transform .24s cubic-bezier(.2,.8,.2,1),opacity .2s'; $main.style.transform = ''; $main.style.opacity = ''; inkTo(i); setTimeout(() => { $main.style.transition = ''; }, 260); }
+    };
+    $main.addEventListener('touchend', end, { passive: true }); $main.addEventListener('touchcancel', end, { passive: true });
+  }
+  /* ---------- v423: the header slides away as you scroll down and comes back the moment you scroll up (X's), tied to
+     the finger; at rest it settles fully in or fully out ---------- */
+  {
+    const hdr = document.getElementById('hdr'); let off = 0, lastY = window.scrollY, idleT = 0;
+    const H = () => hdr.offsetHeight;
+    const set = (v, anim) => { off = v; hdr.style.transition = anim ? 'transform .22s cubic-bezier(.2,.8,.2,1)' : 'none'; hdr.style.transform = v ? `translate3d(0,${-v}px,0)` : ''; document.documentElement.style.setProperty('--hdro', `${v}px`); };
+    V.hdrReset = () => { lastY = window.scrollY; set(0, false); };
+    window.addEventListener('scroll', () => {
+      const y = window.scrollY; const d = y - lastY; lastY = y;
+      if (document.getElementById('top').hidden) return;
+      const h = H(); if (!MOTION()) { if (off) set(0, false); return; }
+      if (y <= 0) { if (off) set(0, false); return; }
+      if (Math.abs(d) > 250) return;   // a jump (a page landing at its remembered place), not a scroll
+      const nv = Math.max(0, Math.min(h, off + d)); if (nv !== off) set(nv, false);
+      clearTimeout(idleT); idleT = setTimeout(() => { if (off > 0 && off < h) set(off > h / 2 && window.scrollY > h ? h : 0, true); }, 140);
+    }, { passive: true });
+  }
   const TITLES = { home: 'Home', scores: 'Scores', standings: 'Standings', players: 'Players', teams: 'Teams', search: 'Search', settings: 'Settings', record: 'Record' };
 
   /* ---------- render ---------- */
@@ -102,7 +212,7 @@
     const r = route(); const my = ++seq;
     /* v382: leaving Home keeps it as it stood — the feed, Show more opened, the card in the deck, the scroll — so coming back
        lands exactly there, then refreshes quietly in place. Tapping Home while on Home goes to the top (handled below). */
-    if (current && current.name === 'home' && r.name !== 'home' && $main.querySelector('.hcols')) homeKeep = { lk: current.lk, html: $main.innerHTML.replace(/ data-init="1"/g, ''), y: window.scrollY, at: Date.now(), refresh: V.refresh };
+    if (current && current.name === 'home' && r.name !== 'home' && $main.querySelector('.hfeed')) homeKeep = { lk: current.args[0], html: $main.innerHTML.replace(/ data-init="1"/g, ''), y: window.scrollY, at: Date.now(), refresh: V.refresh };
     const wasGame = current && current.name === 'game'; current = r; document.documentElement.dataset.page = r.name; V.refresh = null; closeSheet(); if (wasGame !== (r.name === 'game')) applyTheme();
     if (r.name !== 'scores' && V.todayPill) V.todayPill(false);   // the Scores screen's back-to-today pill goes with it
     const key = `${r.name}/${r.args.join('/')}`;
@@ -110,13 +220,15 @@
     if (st && st.n != null) navN = st.n; else { navN += 1; try { history.replaceState({ n: navN }, ''); } catch { } }
     const leagueScreen = SCREENS.includes(r.name);
     if (render.key && render.key !== key) scrollMem.set(render.key, window.scrollY);
-    const leagueChanged = leagueScreen && render.lk && render.lk !== r.lk;   // a tap on the league switch starts the new league at the top
-    $main.dataset.y = render.key !== key ? ((back || (leagueScreen && !leagueChanged)) ? String(scrollMem.get(key) || 0) : '0') : '';
+    const tabOf = x => x.name === 'home' ? x.args[0] : x.lk;
+    const leagueChanged = leagueScreen && render.lk && render.lk !== tabOf(r) && render.screen === r.name;   // a tap on the league switch starts the new league at the top
+    $main.dataset.y = render.key !== key ? ((back || leagueScreen) ? String(scrollMem.get(key) || 0) : '0') : '';   // v423: each league tab keeps its own place, like X's
     // a page that starts at the top goes there now, before its skeleton replaces the old screen — otherwise the old scroll
     // position clamps as the document shrinks and the eye sees two moves instead of one
     const fresh = render.key !== key;
     clearTimeout(render.holdT); render.onReal = null;
-    if (fresh && MOTION()) {
+    const slid = render.slide; render.slide = 0;
+    if (fresh && MOTION() && !slid) {
       /* a crossfade, not a blink: a snapshot of the old screen is laid over the page and fades out while the new screen, held
          invisible until its real content has painted, fades in beneath it. If the content takes longer than a beat, the skeleton
          is shown instead so the hold never ends in a blank. */
@@ -131,10 +243,10 @@
          loads (its skeleton paints instead), and a scroll still coasting from a flick is stopped before the jump to the top,
          so iOS cannot carry the page on down or bounce it back after the new league lands. */
       $main.dataset.real = '0';
-      const de = document.documentElement; de.style.overflow = 'hidden'; window.scrollTo(0, 0); void de.offsetHeight;
-      requestAnimationFrame(() => { de.style.overflow = ''; window.scrollTo(0, 0); });
+      const de = document.documentElement; de.style.overflow = 'hidden'; void de.offsetHeight;
+      requestAnimationFrame(() => { de.style.overflow = ''; });
     } else if ($main.dataset.y === '0' && fresh) window.scrollTo(0, 0);
-    render.lk = r.lk;
+    render.lk = tabOf(r); render.screen = r.name;
     if (!['team', 'player', 'game'].includes(r.name) && V._.tint) V._.tint('');   // only a team's, a player's or a game's page wears a team colour
     if (leagueScreen) store.set('v5:screen', r.name);
     /* The Scores date goes back to today when you move to another tab — Home, Standings, Teams, Players — so a day you
@@ -142,7 +254,7 @@
        team or a player from a score card: those are children of the day you were on, and coming back lands on that day. */
     // v397: the Scores day stays put while you move between tabs; it goes back to today only when the app is opened fresh (see boot)
     document.getElementById('top').hidden = !leagueScreen;
-    paintPills(r.lk, leagueScreen);
+    paintPills(r.lk, leagueScreen); paintLgTabs(r, leagueScreen); HW.v5.hdrReset && HW.v5.hdrReset();
     /* the bar lights the tab you are on; Teams, Players and a game, team or player page keep lit the tab you opened
        them from, so drilling in never leaves the bar blank */
     if (TABS.includes(r.name)) render.tab = r.name;
@@ -150,8 +262,8 @@
     const owner = TABS.includes(r.name) ? r.name : (render.tab || (r.name === 'game' ? 'scores' : 'home'));   // v398: a page belongs to the tab it was opened from
     tabLast[owner] = location.hash || '#' + owner;
     paintTabs(owner);
-    document.title = leagueScreen ? `${TITLES[r.name]} · ${LEAGUES[r.lk].label} · RIVL` : `${TITLES[r.name] || ''} RIVL`.trim();
-    const keep = r.name === 'home' && homeKeep && homeKeep.lk === r.lk && Date.now() - homeKeep.at < 20 * 60000 ? homeKeep : null; homeKeep = null;
+    document.title = r.name === 'home' && r.args[0] === 'following' ? 'Home · RIVL' : leagueScreen ? `${TITLES[r.name]} · ${LEAGUES[r.name === 'home' ? r.args[0] : r.lk].label} · RIVL` : `${TITLES[r.name] || ''} RIVL`.trim();
+    const keep = r.name === 'home' && homeKeep && homeKeep.lk === r.args[0] && Date.now() - homeKeep.at < 20 * 60000 ? homeKeep : null; homeKeep = null;
     if (keep) {
       $main.dataset.top = ''; $main.dataset.y = ''; $main.dataset.real = '1';
       $main.innerHTML = keep.html; if (V.initDecks) V.initDecks($main);
@@ -160,12 +272,12 @@
       if (keep.refresh) setTimeout(() => { if (current === r && V.refresh === keep.refresh) keep.refresh(); }, 400);
     } else {
     $main.dataset.top = '1';   // scroll to the top with the new screen's first real paint, not before it
-    try { await (V[r.name] || V.home)(...r.args); }
-    catch (err) { if (my === seq) $main.innerHTML = `<div class="empty"><b>Something went wrong</b><p style="margin:6px 0 0">${esc(err && err.message || 'Try again in a moment.')}</p></div>`; console.error(err); }
+    try { const pr = (V[r.name] || V.home)(...r.args); if (slid && V.slideIn) { V.slideIn(slid); } await pr; }
+    catch (err) { $main.style.transform = ''; $main.style.opacity = ''; if (my === seq) $main.innerHTML = `<div class="empty"><b>Something went wrong</b><p style="margin:6px 0 0">${esc(err && err.message || 'Try again in a moment.')}</p></div>`; console.error(err); }
     }
     if (my !== seq) return;
     V.settled();   // a view that painted into part of the screen (Scores' list, a standings chip, a refreshed game) made no full paint to clear the bar, the dimming and the slow note, or to land at its scroll
-    paintPills(r.lk, leagueScreen);   // live counts may have arrived while the view loaded
+    paintPills(r.lk, leagueScreen); paintLgTabs(r, leagueScreen);   // live counts may have arrived while the view loaded
     // the rise plays for a new screen; a screen repainting itself (another day on Scores, another conference) keeps still
     if (key !== render.key) { if (!$main.classList.contains('enter')) { void $main.offsetWidth; $main.classList.add('enter'); } } else $main.classList.remove('enter'); render.key = key;
     $main.classList.remove('hold'); clearTimeout(render.holdT); render.onReal = null; document.querySelectorAll('.xghost:not(.out)').forEach(g => { g.classList.add('out'); setTimeout(() => g.remove(), 500); });   // whatever happened, nothing stays held once the view has returned

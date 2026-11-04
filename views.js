@@ -503,175 +503,40 @@
   // initDecks is exported with the rest below
   let homeToken = 0;
   const hOpen = new Set();   // the Home rows you have unfolded, kept while the app is open
-  async function home(lk) {
-    const L = LEAGUES[lk]; const today = todayCT(); const token = ++homeToken;
+  /* ===== v423: Home is one Following feed across every league, with a tab per league (Ray's pick: A's flat timeline,
+     the inline "Since last night", X's tabs). Each league's data is a source, loaded once and kept for a few minutes;
+     the Following tab merges every source, a league tab shows its own. Order: live games, breaking, tonight's strip,
+     since last night, then the river (injury changes, standings moves, news) newest first, leagues mixed on time alone. ===== */
+  const feedSrc = {};
+  const HTABS = ['following', ...ORDER];
+  const followsIn = lk => (favs.all()[lk] || []).length > 0 || fplayers.all().some(p => p.lk === lk);
+  function feedSource(lk) {
+    const today = todayCT(); let s = feedSrc[lk];
+    if (s && s.day === today && Date.now() - s.at < 10 * 60000 && s.sig === JSON.stringify([favs.all()[lk] || [], fplayers.all().filter(p => p.lk === lk).map(p => p.id), prefs.all()])) return s;
+    s = feedSrc[lk] = { lk, day: today, at: Date.now(), sig: JSON.stringify([favs.all()[lk] || [], fplayers.all().filter(p => p.lk === lk).map(p => p.id), prefs.all()]), out: null, subs: new Set(), refresh: null };
+    s.ready = loadFeed(s).catch(err => { console.error(err); s.failed = true; s.subs.forEach(f => f()); });
+    return s;
+  }
+  async function loadFeed(s) {
+    const lk = s.lk; const L = LEAGUES[lk]; const today = todayCT();
     const mine = favs.all()[lk] || [];
     const fp = fplayers.all().filter(p => p.lk === lk);
-    if (!mine.length && !fp.length) {
-      $main.innerHTML = `<div class="page-h"><h1>Make it yours</h1><p>Home shows only the teams and players you follow.</p></div>` + empty('Nothing followed yet', '<p style="margin:6px 0 0">Pick a few teams and players and this screen fills with their games, lines, injuries and news.</p>', `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><a class="btn" href="#teams">Choose teams</a><a class="btn ghost" href="#players">Find players</a></div>`);
-      return;
-    }
-    $main.innerHTML = skeleton(1, 'card') + skeleton(4, 'row');
     const P = prefs.all(); const yday = addDays(today, -1);
-    const alive = () => { if (token !== homeToken) return false; const r = HW.v5.route && HW.v5.route(); return !r || (r.name === 'home' && r.lk === lk); };   // still the screen being shown, even while the old one is kept on screen during the load
-    const secs = {}; let painted = false;
-    const wrap = (k, quiet) => `<section class="hsec${quiet ? ' quiet' : ''}" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;
-    // two columns on a wide screen (the games and your people on the left, injuries and news on the right); one stack on a phone
-    const SIDE = new Set();   // one column: the phone is the only screen
-    const col = k => $main.querySelector(SIDE.has(k) ? '.hcol.side' : '.hcol.main') || $main;
-    const paint = (quiet = false) => { paint0(quiet); initDecks($main); };
-    const paint0 = (quiet = false) => {
-      if (!alive()) return;
-      if (!painted) {
-        painted = true;
-        const colHtml = side => SECS.filter(k => SIDE.has(k) === side && secs[k]).map(k => wrap(k, false)).join('');
-        $main.innerHTML = SECS.some(k => secs[k]) ? `<div class="hcols"><div class="hcol main">${colHtml(false)}</div><div class="hcol side">${colHtml(true)}</div></div>` : empty('Everything is switched off', '<p style="margin:6px 0 0">Turn some sections back on and Home fills up again.</p>', `<a class="btn" href="#settings">Settings</a>`);
-        return;
-      }
-      if (!$main.querySelector('.hcols')) { painted = false; return paint0(quiet); }   // the empty state is on screen and something arrived
-      SECS.forEach(k => {
-        const cur = $main.querySelector(`section[data-sec="${k}"]`);
-        if (!secs[k]) { if (cur) cur.remove(); return; }
-        if (cur) { if (cur.dataset.h !== hashOf(secs[k])) {
-          // a quiet patch keeps what you opened: a list you expanded stays expanded
-          const open = [...cur.querySelectorAll('.lclip')].map(x => x.classList.contains('open'));
-          cur.insertAdjacentHTML('afterend', wrap(k, quiet)); const nu = cur.nextElementSibling; cur.remove();
-          [...nu.querySelectorAll('.lclip')].forEach((x, i) => { if (!open[i]) return; x.classList.add('open'); const b = x.querySelector(':scope > .cliptog'); if (b) { b.setAttribute('aria-expanded', 'true'); b.textContent = 'Show less'; } });
-        } return; }
-        const after = SECS.slice(SECS.indexOf(k) + 1).filter(j => SIDE.has(j) === SIDE.has(k)).map(j => $main.querySelector(`section[data-sec="${j}"]`)).find(Boolean);
-        if (after) after.insertAdjacentHTML('beforebegin', wrap(k, quiet)); else col(k).insertAdjacentHTML('beforeend', wrap(k, quiet));
-      });
-    };
-
-    // ----- what everything is built from -----
+    const dead = () => feedSrc[lk] !== s;
     const S0 = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null };
     const favTeam = t => mine.includes(String(t.id));
     const teamOf = p => { const k = String(p.team || '').toLowerCase(); return t => (p.teamId && String(t.id) === String(p.teamId)) || (k && [t.abbr, t.short, t.name].some(x => String(x || '').toLowerCase() === k)); };
-    const chipOf = g => { const sc = g.off ? `<span>${esc(g.off)}</span>` : g.state === 'pre' ? `<span>${esc(tipOf(g))}</span>` : g.state === 'in' ? `<span class="on">${g.away.score}–${g.home.score} · ${esc(g.detail)}</span>` : `<span>${g.away.score}–${g.home.score} · ${esc(finalWord(g))}</span>`; return `<a class="bchip" href="${href.game(lk, g.id)}">${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b>${sc}${seriesShort(g) ? `<em class="po">${esc(seriesShort(g))}</em>` : ''}</a>`; };
-    // one game on a timeline: an open ring before the final, a check once it's over, both teams stacked with their
-    // scores, the result or tip time on the right, and RIVL's pregame pick as a two-colour bar underneath
-    const pickColors = g => {
-      let a = teamColor(g.away, L), b = teamColor(g.home, L);
-      if (rgbDist(a, b) < 110) {
-        const ok = c => c && !BAD(c) && lumOf(c) >= .06 && lumOf(c) <= .6;
-        const aa = teamAlt(g.away, L), ba = teamAlt(g.home, L);
-        const opts = [[a, b, rgbDist(a, b)]]; if (ok(ba)) opts.push([a, ba, rgbDist(a, ba)]); if (ok(aa)) opts.push([aa, b, rgbDist(aa, b)]);
-        [a, b] = opts.sort((x, y) => y[2] - x[2])[0];
-      }
-      return [a, b];
-    };
-    const rowOf = g => {
-      const live = g.state === 'in', done = g.state === 'post' && !g.off, showSc = (live || done) && !g.off;
-      const side = (t, which) => `<span class="gt ${which}">${logo(t.logo, 's', teamColor(t, L))}<b>${esc(t.abbr || t.short)}</b></span><span class="gsc ${which}">${showSc ? (t.score ?? '–') : ''}</span>`;
-      const status = g.off ? esc(g.off) : live ? esc(g.detail) : done ? esc(finalWord(g)) : esc(tipOf(g));
-      const mark = done ? `<i class="gmk ok" aria-label="Final"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12.5l4 4 8-9"/></svg></i>` : `<i class="gmk${live ? ' on' : ''}"></i>`;
-      let bar = '';
-      const f = !done && !g.off ? safeF(L, g, S0.ctx) : null;
-      if (f && Number.isFinite(f.pHome)) {
-        const ph = Math.min(.99, Math.max(.01, f.pHome)), pa = 1 - ph; const [ca, cb] = pickColors(g);
-        const fav = ph >= .5 ? g.home : g.away, fp = Math.max(ph, pa);
-        bar = `<span class="gpk"><span class="gbar"><i style="flex:${pa.toFixed(3)};${tcv(ca, teamAlt(g.away, L))}"></i><i style="flex:${ph.toFixed(3)};${tcv(cb, teamAlt(g.home, L))}"></i></span><b>${esc(fav.abbr || fav.short)} ${pct(fp)}</b></span>`;
-      }
-      return `<a class="grow${live ? ' on' : ''}${done ? ' done' : ''}${bar ? ' pk' : ''}" href="${href.game(lk, g.id)}">${mark}${side(g.away, 'away')}${side(g.home, 'home')}<span class="gst">${status}</span>${bar}${seriesShort(g) ? `<em class="po">${esc(seriesShort(g))}</em>` : ''}</a>`;
-    };
-    const dayWord = (ymd, long) => { const rd = relDay(ymd); return rd === 'Tomorrow' || rd === 'Tonight' ? rd : dayLabel(ymd, { weekday: long ? 'long' : 'short' }); };
-    const nextChip = g => `<a class="bchip next" href="${href.game(lk, g.id)}"><em>${esc(dayWord(HW.ymdOf(g.date)))}</em>${logo(g.away.logo, 's', teamColor(g.away, L))}<b>${esc(g.away.abbr || g.away.short)}</b><i>${g.neutral ? 'vs' : 'at'}</i>${logo(g.home.logo, 's', teamColor(g.home, L))}<b>${esc(g.home.abbr || g.home.short)}</b><span>${esc(tipOf(g))}</span></a>`;
     const basicTeam = id => { const t = S0.tIdx[id]; const r = S0.st && S0.st.byId && S0.st.byId[id]; if (!t && !r) return null; return { id, abbr: t ? t.abbr : r.abbr, name: t ? t.name : r.name, short: t ? t.short : r.short, loc: t ? t.loc : r.loc, color: teamColor({ id, color: t && t.color }, L), logo: (t && t.logo) || (r && r.logo) || '', rec: r ? `${r.w}-${r.l}` : '', standing: r && L.standingsMode !== 'conferences' ? `${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}` : '', row: r || null, next: null, last: null }; };
     const teamList = () => S0.teams ? S0.teams.filter(Boolean) : mine.map(basicTeam).filter(Boolean);
-
     const build = () => {
+      if (dead()) return;
       const { games, last, ctx } = S0; const teams = teamList();
-      const byTeam = new Map(); games.forEach(g => { byTeam.set(g.home.id, g); byTeam.set(g.away.id, g); });
-      /* the off-season: no games today, and every team you follow last played more than three days ago with nothing on the
-         calendar for three weeks. Tonight goes, Last night becomes a short season recap, and team rows stop showing a
-         result from weeks back. */
       const DAY = 864e5, now = Date.now();
       const offS = !games.length && !!S0.teams && teams.length > 0 && teams.every(t => (!t.next || new Date(t.next.date) - now > 21 * DAY) && (!t.last || now - new Date(t.last.date) > 3 * DAY));
       // Unrivaled leads the WNBA's Home once its season is over
-      if (lk === 'wnba' && S0.unr && (offS || !S0.teams && !games.length)) secs.unrivaled = S0.unr; else delete secs.unrivaled;
-      // tonight: your games, or the next ones on the calendar once the schedules are in
-      const liveMine = games.filter(g => isLive(g) && isFav(g));
-      if (P.brief && mine.length && !offS && !(P.live && liveMine.length && games.filter(isFav).length === liveMine.length)) {   // when every game of yours is on now, the hero says it all
-        const tonight = games.filter(g => isFav(g) && !(P.live && isLive(g))).sort((a, b) => new Date(a.date) - new Date(b.date) || rankGame(b) - rankGame(a));   // a timeline: in the order they tip
-        let body = '', note = '', title = 'Tonight';
-        if (tonight.length) { note = `${tonight.length} ${P.live && liveMine.length ? 'more ' : ''}game${tonight.length === 1 ? '' : 's'} for your teams${tonight.every(g => g.state === 'post') ? ' · all final' : ''}`; body = clip(tonight.map(rowOf), 'glist'); }
-        else {
-          // nothing tonight: the block is the next games instead, headed by when they are, so a chip never sits under "no games"
-          const seen = new Set(); const next = teams.map(t => t.next).filter(g => g && g.state === 'pre' && !seen.has(g.id) && seen.add(g.id)).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 4);
-          if (next.length) { const d0 = HW.ymdOf(next[0].date); const w = dayWord(d0, true); title = 'Next up'; note = `${esc(w === 'Tonight' ? 'later tonight' : w === 'Tomorrow' ? 'tomorrow' : w)} · nothing tonight`; body = `<div class="brief-row">${next.map(nextChip).join('')}</div>`; }
-          else note = S0.teams ? 'no games for your teams' : 'no games tonight';
-        }
-        secs.tonight = `<div class="brief"><div class="brief-h"><b>${title}</b><span>${note}</span></div>${body}</div>`;
-      } else delete secs.tonight;
-      // last night: results, then your players' lines once the box scores are in
+      const unr = lk === 'wnba' && S0.unr && (offS || !S0.teams && !games.length) ? S0.unr : '';
       const pGames = fp.map(p => { const is = teamOf(p); const g = last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? { p, g } : null; }).filter(Boolean);
       const lines = pGames.map(({ p, g }) => { const d = S0.sums[g.id]; const bx = d && d.boxscore && d.boxscore.players || []; for (const side of bx) { const st = side.statistics && side.statistics[0]; if (!st) continue; const labels = st.labels || st.names || []; const a = (st.athletes || []).find(x => x.athlete && String(x.athlete.id) === p.id); if (!a) continue; if (a.didNotPlay || !a.stats || !a.stats.length) return { p, g, dnp: a.reason || 'Did not play' }; const get = l => { const i = labels.indexOf(l); return i >= 0 ? a.stats[i] : ''; }; const is = teamOf(p); const us = is(g.home) ? g.home : g.away, them = is(g.home) ? g.away : g.home; return { p, g, pts: get('PTS'), reb: get('REB'), ast: get('AST'), min: get('MIN'), won: us.score > them.score, us, them }; } return null; }).filter(Boolean);
-      const lineBy = {}; lines.forEach(x => { lineBy[x.p.id] = x; });
-      if (P.brief && offS) {
-        /* the season recap: each team's final record and standing and how its season closed; your players' season lines */
-        const season = (() => { const y = teams.map(t => t.last && t.last.date).filter(Boolean).sort().pop(); return y ? new Date(y).getFullYear() : ''; })();
-        const trow = t => { const g = t.last; const us = g ? (g.home.id === t.id ? g.home : g.away) : null, them = g ? (g.home.id === t.id ? g.away : g.home) : null;
-          const won = us && them && +us.score > +them.score; const lastW = g && us && them && us.score != null ? `${won ? 'W' : 'L'} ${us.score}-${them.score}` : '';
-          return `<a class="row" href="${href.team(lk, t.id)}">${logo(t.logo, '', teamColor(t, L))}<span class="t"><b>${esc(t.short)}</b><span>${esc([t.rec ? `Finished ${t.rec}` : '', t.standing].filter(Boolean).join(', '))}</span></span>${g ? `<span class="r"><b class="res ${won ? 'w' : 'l'}" style="font-size:14px">${esc(lastW)}</b><span>${esc(`${g.home.id === t.id ? 'vs' : 'at'} ${them.abbr || them.short || ''}, ${dayLabel(HW.ymdOf(g.date), { month: 'short', day: 'numeric' })}`)}</span></span>` : ''}</a>`; };
-        const pl = S0.lp && S0.lp.rows ? fp.map(p => S0.lp.rows.find(r => r.id === String(p.id))).filter(r => r && r.gp) : [];
-        const prow = r => { const p = fp.find(x => String(x.id) === r.id) || {}; return `<a class="row" href="${href.player(lk, r.id)}">${headshot(r.img || p.img, playerColor(p, L), 44, r.name)}<span class="t"><b>${esc(p.short || r.short || r.name)}</b><span>${esc(`${r.pts.toFixed(1)} pts, ${r.reb.toFixed(1)} reb, ${r.ast.toFixed(1)} ast a game over ${r.gp} games`)}</span></span><span class="r"><b>${r.pts.toFixed(1)}</b><span>ppg</span></span></a>`; };
-        secs.last = `<div class="brief"><div class="brief-h"><b>Season recap</b><span>${esc(`${season ? season + ' ' : ''}season is over`)}</span></div><div class="rows brief-rows">${teams.map(trow).join('')}${pl.map(prow).join('')}</div></div>`;
-      } else if (P.brief) {
-        const mineLast = last.filter(g => isDone(g) && isFav(g));
-        if (mineLast.length || lines.length) {
-          const res = mineLast.map(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = us.score > them.score; return `<a class="bchip res" href="${href.game(lk, g.id)}">${logo(us.logo, 's', teamColor(us, L))}<b class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</b><span>${us.score}–${them.score} ${us === g.home ? 'vs' : 'at'} ${esc(them.abbr || them.short)}</span></a>`; });
-          const rows = lines.map(x => `<a class="row" href="${href.game(lk, x.g.id)}/p/${esc(String(x.p.id))}">${headshot(x.p.img, x.us ? teamColor(x.us, L) : playerColor(x.p, L), 44, x.p.name)}<span class="t"><b>${esc(x.p.short || x.p.name)}</b><span>${x.dnp ? esc(x.dnp) : `${esc(x.pts)} pts, ${esc(x.reb)} reb, ${esc(x.ast)} ast in a ${x.won ? 'win' : 'loss'} ${x.us === x.g.home ? 'vs' : 'at'} ${esc(x.them.short)}`}</span></span>${x.dnp ? '' : `<span class="r"><b>${esc(x.pts)}</b><span>pts</span></span>`}</a>`);
-          secs.last = `<div class="brief"><div class="brief-h"><b>Last night</b><span>${esc(dayLabel(yday, { weekday: 'long' }))}</span></div>${res.length ? `<div class="brief-row">${res.join('')}</div>` : ''}${rows.length ? clip(rows, 'rows brief-rows', 5, 'players') : ''}</div>`;
-        } else delete secs.last;
-      }
-      // your teams playing right now: the hero
-      const live = games.filter(g => isLive(g) && isFav(g)).sort((a, b) => rankGame(b) - rankGame(a));
-      if (live.length && P.live) secs.live = sec('Live now') + `<div class="heroes nheroes">${live.map(g => nowCard(L, lk, g, ctx)).join('')}</div>`; else delete secs.live;
-      // my teams: record, what's next or how it's going, win chance
-      if (P.teams) {
-        const rows = teams.map(t => {
-          const g0 = byTeam.get(t.id) || t.next || t.last; const g = offS && g0 === t.last ? null : g0; const f = g ? safeF(L, g, ctx) : null;
-          const us = g ? (g.home.id === t.id ? g.home : g.away) : null, them = g ? (g.home.id === t.id ? g.away : g.home) : null;
-          let line = offS ? `Season over${t.standing ? `, ${t.standing}` : ''}` : t.standing || (S0.teams ? 'No game scheduled' : ''), right = '';
-          if (g) {
-            const home = g.home.id === t.id; const vs = `${home ? 'vs' : 'at'} ${esc(them.short)}`;
-            if (g.state === 'in') { const lead = us.score - them.score; line = `${lead > 0 ? `Leading ${esc(them.short)} by ${lead}` : lead < 0 ? `Trailing ${esc(them.short)} by ${-lead}` : `Tied with ${esc(them.short)}`}, ${esc(g.detail)}`; }
-            else if (g.off) line = `${esc(g.off)} ${vs}`;
-            else if (g.state === 'post') line = `${us.score > them.score ? 'Won' : 'Lost'} ${esc(String(us.score))}-${esc(String(them.score))} ${vs}`;
-            else line = `<em>${esc(relDay(HW.ymdOf(g.date)))} ${vs}, ${esc(tipOf(g))}</em>${tvLabel(g) ? `<i class="tvt">${esc(tvLabel(g))}</i>` : ''}`;
-            if (f && g.state !== 'post') { const p = home ? f.pHome : 1 - f.pHome; right = `<span class="r"><b>${pct(p)}</b><span>to win</span></span>`; }
-            else if (g.state === 'post' && !g.off) right = `<span class="r"><b class="${us.score > them.score ? 'res w' : 'res l'}" style="font-size:22px">${us.score > them.score ? 'W' : 'L'}</b></span>`;
-          }
-          const to = g ? href.game(lk, g.id) : href.team(lk, t.id);
-          return `<div class="row prow teamrow"><a class="go" href="${href.team(lk, t.id)}" aria-label="${esc(t.name || t.short)} team page">${logo(t.logo, '', teamColor(t, L))}</a><a class="t2" href="${to}"><span class="t"><b>${esc(t.short)}<small>${esc(t.rec)}</small></b><span class="${line.includes('<em>') ? 'sub2' : ''}">${line || '&nbsp;'}</span></span>${right || chev}</a></div>`;
-        });
-        secs.teams = sec('My teams', '', `<a href="#teams">Edit</a>`) + (rows.length ? clip(rows, 'rows', 5, 'teams') : mine.length ? skeleton(mine.length, 'row') : empty('No teams yet', '', `<a class="btn" href="#teams">Choose teams</a>`));
-      } else delete secs.teams;
-      // my players
-      if (P.players) {
-        const ppgOf = p => { const r = ctx && ctx.ppg && ctx.ppg[(p.name || '').toLowerCase()]; return r && r.pts != null ? `${(+r.pts).toFixed(1)} ppg` : ''; };
-        secs.players = sec('My players', '', `<a href="#players">${fp.length ? 'Edit' : 'Find players'}</a>`) + (fp.length
-          ? `<div class="rail">${fp.map(p => { const is = teamOf(p); const g = games.find(g => is(g.home) || is(g.away)); const us = g ? (is(g.home) ? g.home : g.away) : null, them = g ? (is(g.home) ? g.away : g.home) : null;
-            // under the average: the game tonight, short (on now, the tip, or the result); last night's line lives in the Last night block above
-            const now = g && !g.off ? (g.state === 'in' ? `<i class="on">${us.score}–${them.score}</i> ${esc(g.detail)}` : g.state === 'post' ? `${us.score > them.score ? 'W' : 'L'} ${us.score}–${them.score}` : `${esc(tipOf(g))} ${g.neutral ? 'vs' : is(g.home) ? 'vs' : 'at'} ${esc(them.abbr)}`) : '';
-            return `<a class="pl" href="${href.player(lk, p.id)}" style="${tcv(playerColor(p, L))}">${headshot(p.img, playerColor(p, L), 64, p.name)}<b>${esc(p.short || p.name)}</b><span>${esc(ppgOf(p) || p.team || '')}</span>${now ? `<em class="nx">${now}</em>` : ''}</a>`; }).join('')}</div>`
-          : empty('Follow the players you watch', '<p style="margin:6px 0 0">They show up here with their scoring line, and their profile is one tap away.</p>', `<a class="btn" href="#players">Find players</a>`));
-      } else delete secs.players;
-      // injuries: one list grouped by team. Your teams show every report, with your players marked; a team you don't
-      // follow appears only for the players you follow on it. Rows are keyed by the report, so two reports on one player never collide.
-      const inj = S0.inj;
-      if (inj && P.injuries) {
-        S.injuries = S.injuries || {};
-        const pById = new Map(fp.map(p => [p.id, p]));
-        const row = (x, i, t, p) => { const a = x.athlete || {}; const id = athId(a) || (p && p.id) || ''; const key = `h:${t.id}:${id}:${x.id || i}`; S.injuries[key] = { x, id, team: t }; const st = x.status || ''; const cls = /out/i.test(st) ? 'out' : /day|quest|doubt/i.test(st) ? 'q' : /prob|avail/i.test(st) ? 'ok' : ''; const det = x.details || {}; const ret = retInfo(L, det.returnDate); const why = [det.type || det.detail, ret ? ret.short : ''].filter(Boolean).join(', '); const name = a.displayName || (p && p.name) || ''; return `<button class="row${p ? ' fav' : ''}" data-act="injury" data-key="${esc(key)}">${headshot(hsUrl(a) || (p && p.img) || '', teamColor(t, L), 44, name)}<span class="t"><b>${esc(name)}${p ? `<i class="fstar" title="You follow them">${starSvg}</i>` : ''}</b><span>${esc(why || (x.shortComment || '').slice(0, 80))}</span></span><span class="tag ${cls}">${esc(tagWord(st))}</span></button>`; };
-        const groups = [];
-        teams.forEach(t => { const b = inj.byTeam[t.id]; if (b && b.list.length) groups.push({ t, rows: b.list.map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })) }); });
-        const have = new Set(groups.map(g => g.t.id));
-        if (fp.length) (inj.teams || []).forEach(tt => { const tid = String(tt.id || ''); if (!tid || have.has(tid)) return; const rows = (tt.injuries || []).map((x, i) => ({ x, i, p: pById.get(athId(x.athlete)) || null })).filter(r => r.p); if (!rows.length) return; const ti = S0.tIdx[tid] || {}; groups.push({ t: { id: tid, short: ti.short || tt.displayName || rows[0].p.team || '', logo: ti.logo || '', color: ti.color || playerColor(rows[0].p, L) }, rows, only: true }); });
-        const flat = groups.flatMap(({ t, rows }) => rows.map(({ x, i, p }) => { const id = athId(x.athlete) || (p && p.id) || ''; const key = `h:${t.id}:${id}:${x.id || i}`; S.injuries[key] = { x, id, team: t }; return injRow(L, key, x, t, p); }));
-        if (flat.length) secs.injuries = sec('Injuries', 'your teams and players') + clip(flat, 'ijl'); else delete secs.injuries;
-      } else delete secs.injuries;
-      // news about my teams and players: ESPN tags every story with the teams and athletes it covers; full names are the fallback
       const news = S0.news;
       const tIds = new Set(mine.map(String)), pIds = new Set(fp.map(p => p.id));
       const tagged = a => (a.categories || []).some(c => (c.type === 'team' && tIds.has(String(c.teamId || (c.team && c.team.id) || ''))) || (c.type === 'athlete' && pIds.has(String(c.athleteId || (c.athlete && c.athlete.id) || ''))));
@@ -682,25 +547,9 @@
         if (items.length) {
           const who = a => { const t = HW.wireTeams(a).map(id => (S0.tIdx[id] || {}).short).filter(Boolean); const p = (a.categories || []).filter(c => c.type === 'athlete' && pIds.has(String(c.athleteId || (c.athlete && c.athlete.id) || ''))).map(c => c.description).filter(Boolean); return [...new Set([...p, ...t])].slice(0, 2).join(' · '); };
           const more = items.slice(1);
-          S0.wireItems = items; S0.wireWho = who; delete secs.wire;   // v391: breaking stories are pinned posts at the top of the feed
-        } else { S0.wireItems = []; delete secs.wire; }
-      } else { S0.wireItems = []; delete secs.wire; }
-      if (P.news && news) {
-        const tNames = teams.flatMap(t => [t.name, t.short, t.loc]).filter(n => n && n.length > 3);
-        const pNames = fp.map(p => p.name).filter(n => n && n.length > 3);
-        const named = a => { const txt = `${a.headline || ''} ${a.description || ''}`; return pNames.some(n => txt.includes(n)) || tNames.some(n => txt.includes(n)); };
-        // yours first; when the feed has little or nothing on your teams and players, the league's own stories fill the column
-        const all = (news.articles || []).filter(HW.readable);
-        const mineA = all.filter(a => tagged(a) || named(a)).slice(0, 6);
-        const rest = mineA.length < 3 ? all.filter(a => !mineA.includes(a)).slice(0, 6 - mineA.length) : [];
-        const arts = mineA.concat(rest);
-        if (arts.length) secs.news = sec('News', mineA.length && !rest.length ? 'your teams and players' : mineA.length ? 'yours first, then the league' : 'around the league') + `<div class="rows">${arts.map(a => HW.v5.newsRow(lk, a)).join('')}</div>`; else delete secs.news;
-      } else delete secs.news;
-
-      /* ===== Home (v380): the feed. Under the greeting and the deck, one running timeline of everything that happened
-         to your teams and players, newest first, in Apple's grouped card: a result, a player's line, an injury, a game
-         about to tip, a story. Each post is the finished thing and opens what it is about. ===== */
-      ['last', 'tonight', 'injuries', 'players', 'teams', 'news'].forEach(k => delete secs[k]);
+          S0.wireItems = items; S0.wireWho = who;   // v391: breaking stories are pinned posts at the top of the feed
+        } else { S0.wireItems = []; }
+      } else { S0.wireItems = []; }
       const NOW = Date.now(); const posts = []; const wireIds = new Set((S0.wireItems || []).map(a => String(a.id)));
       const when = ts => { const d = (NOW - ts) / 6e4; if (d < -1) { const m = -d; return m < 60 ? `in ${Math.round(m)}m` : `in ${Math.round(m / 60)}h`; } if (d < 1) return 'now'; if (d < 60) return `${Math.round(d)}m`; if (d < 1440) return `${Math.round(d / 60)}h`; return `${Math.round(d / 1440)}d`; };
       const crest = t => logo(t.logo, '', teamColor(t, L));
@@ -715,31 +564,6 @@
       const endTs = g => Math.min(new Date(g.date).getTime() + 2.4 * 36e5, NOW - 6e4);
       const outsOf = t => { const b = S0.inj && S0.inj.byTeam[t.id]; return (b && b.list || []).filter(x => /out|suspen/i.test(x.status || '')).map(x => lastName((x.athlete || {}).displayName || '')).filter(Boolean); };
       const without = (t) => { const o = outsOf(t); return o.length ? `${esc(t.short)} without ${esc(o.length > 2 ? `${o.slice(0, 2).join(', ')} and ${o.length - 2} more` : o.join(' and '))}.` : ''; };
-      // 1 · live
-      tier = 1;
-      if (P.teams) games.filter(g => isLive(g) && isFav(g)).forEach(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const d = +us.score - +them.score;
-        post(NOW, href.game(lk, g.id), crest(us), esc(us.short), `<i class="lvd"></i>Live · ${esc(HW.clockOf(g, L))}`, `${d > 0 ? `Up ${d} on` : d < 0 ? `Down ${-d} to` : 'Tied with'} ${esc(them.short)}, <b>${esc(String(us.score))}–${esc(String(them.score))}</b>.`, strip(g), '', 'now'); });
-      // 2 · results, each with your players' lines from that game right under it
-      tier = 2;
-      const linesBy = {}; lines.forEach(x => { (linesBy[x.g.id] = linesBy[x.g.id] || []).push(x); });
-      const lineLabel = x => { const big = !x.dnp && (+x.pts >= 30 || (+x.pts >= 10 && +x.reb >= 10 && +x.ast >= 10)); return { big, txt: x.dnp ? `${esc(x.dnp)} ${x.us === x.g.home ? 'against' : 'at'} ${esc(x.them.short)}.` : `<b>${esc(String(x.pts))} pts</b>, ${esc(String(x.reb))} reb, ${esc(String(x.ast))} ast in a ${x.won ? 'win' : 'loss'} ${x.us === x.g.home ? 'over' : 'at'} ${esc(x.them.short)}.` }; };
-      const linePost = (x, k) => { const { big, txt } = lineLabel(x); post(k, `${href.game(lk, x.g.id)}/p/${esc(String(x.p.id))}`, headshot(x.p.img, x.us ? teamColor(x.us, L) : playerColor(x.p, L), 40, x.p.name), esc(x.p.short || x.p.name), big ? '<em class="fbig">Big night</em>' : esc(x.us ? x.us.abbr || '' : x.p.team || ''), txt, '', '', '', big ? 'fstand' : ''); };
-      const shown = new Set();
-      if (P.brief) games.concat(last).filter((g, i, arr) => arr.findIndex(x => x.id === g.id) === i).filter(g => isDone(g) && !g.off && isFav(g)).forEach(g => {
-        const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = +us.score > +them.score;
-        const f = safeF(L, g, ctx); const ph = f && Number.isFinite(f.pHome) ? f.pHome : null; const pu = ph == null ? null : us === g.home ? ph : 1 - ph;
-        const note = pu == null ? '' : (pu >= .5) === won ? ' RIVL called it.' : won ? ` An upset: RIVL gave them ${pct(pu)}.` : ` RIVL had them at ${pct(pu)}.`;
-        const k = endTs(g);
-        post(k, href.game(lk, g.id), crest(us), esc(us.short), esc(finalWord(g)), `${won ? 'Beat' : 'Lost to'} ${esc(them.short)} <b class="${won ? 'wl-w' : 'wl-l'}">${esc(String(us.score))}–${esc(String(them.score))}</b>.${esc(note)}`, strip(g));
-        if (P.players) (linesBy[g.id] || []).forEach((x, i) => { linePost(x, k - 1 - i); shown.add(x); });
-      });
-      if (P.players) lines.filter(x => !shown.has(x)).forEach(x => linePost(x, endTs(x.g)));
-      // 3 · today's games, soonest first, with who's sitting
-      tier = 3;
-      if (P.teams) games.filter(g => g.state === 'pre' && !g.off && isFav(g) && HW.ymdOf(g.date) === today).forEach(g => { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const t0 = new Date(g.date).getTime();
-        const f = safeF(L, g, ctx); const pu = f && Number.isFinite(f.pHome) ? (us === g.home ? f.pHome : 1 - f.pHome) : null;
-        const sit = [without(us), without(them)].filter(Boolean).join(' ');
-        post(-t0, href.game(lk, g.id), crest(us), esc(us.short), +new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: HW.TZ || 'America/Chicago' }).format(new Date(t0)) % 24 >= 17 ? 'Tonight' : 'Today', `Face ${esc(them.short)} ${us === g.home ? 'at home' : 'on the road'}${tvLabel(g) ? ` on ${esc(tvLabel(g))}` : ''}.${pu != null ? ` RIVL gives them <b>${pct(pu)}</b>.` : ''}${sit ? `<span class="fsit">${sit}</span>` : ''}`, '', '', esc(tipOf(g).replace(/\s*CT$/, ''))); });
       // 4 · injury changes, from the phone's own log
       tier = 4;
       if (P.injuries && S0.inj && (S0.inj.teams || []).length) {
@@ -778,18 +602,23 @@
         teams.forEach(t => { const a = snap.prev[t.id], b = snap.cur[t.id]; const r = S0.st.byId[t.id]; if (!a || !b || a === b || !r) return;
           const up = b < a; post(NOW - 864e5 / 2, href.team(lk, t.id), crest(t), esc(t.short), 'Standings', `${up ? 'Climb' : 'Slip'} to <b>${ordinal(b)} in the ${esc(confName(r.group, r.groupAbbr))}</b>, ${up ? 'up' : 'down'} from ${ordinal(a)}. ${esc(`${r.w}-${r.l}`)}.`, '', '', 'today'); });
       }
-      // 6 · news from the last two days
+      // 6 · news from the last two days: yours, plus the league's big stories (the wire) for the Following tab
       tier = 6;
       if (P.news && S0.news) {
         const fresh = a => !a.published || NOW - new Date(a.published).getTime() < 2 * 864e5;
-        const all = (S0.news.articles || []).filter(HW.readable).filter(fresh); const mineA = all.filter(a => tagged(a)); const arts = (mineA.length >= 3 ? mineA : mineA.concat(all.filter(a => !mineA.includes(a)).slice(0, 3 - mineA.length))).slice(0, 6);
-        arts.filter(a => !wireIds.has(String(a.id))).forEach(a => { const r = HW.v5.newsRow(lk, a); const hrefM = /^<a class="row" href="([^"]+)"/.exec(r); const vid = /data-vid="([^"]+)"/.exec(r); const im = /<img[^>]+src="([^"]+)"/.exec(r);
+        const all = (S0.news.articles || []).filter(HW.readable).filter(fresh); const mineA = all.filter(a => tagged(a));
+        const fill = mineA.length >= 3 ? [] : all.filter(a => !mineA.includes(a)).slice(0, 3 - mineA.length);
+        const big = all.filter(a => !mineA.includes(a) && HW.isWire(a) && a.published && NOW - new Date(a.published).getTime() < 864e5).slice(0, 2);
+        const arts = [...mineA.slice(0, 6).map(a => [a, 'mine']), ...fill.map(a => [a, 'fill']), ...big.filter(a => !fill.includes(a)).map(a => [a, 'big'])];
+        const fillIds = new Set(fill.map(a => String(a.id))), bigIds = new Set(big.map(a => String(a.id)));
+        arts.filter(([a]) => !wireIds.has(String(a.id))).forEach(([a, why]) => { const r = HW.v5.newsRow(lk, a); const hrefM = /^<a class="row" href="([^"]+)"/.exec(r); const vid = /data-vid="([^"]+)"/.exec(r); const im = /<img[^>]+src="([^"]+)"/.exec(r);
           const tid = (a.categories || []).map(c => c.type === 'team' ? String(c.teamId || (c.team && c.team.id) || '') : '').find(id => id && S0.tIdx[id]); const tm = tid ? S0.tIdx[tid] : null;
           const av = tm ? crest(tm) : `<span class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4.5" width="16" height="15" rx="2.5"/><path d="M8 9h8M8 12.5h8M8 16h5"/></svg></span>`;
           const extra = im ? `<span class="fimg"><img src="${im[1]}" alt="" loading="lazy" onerror="this.parentNode.remove()">${vid ? '<i class="play"></i>' : ''}</span>` : '';
-          const ts = a.published ? new Date(a.published).getTime() : NOW - 864e5;
+          const ts = a.published ? new Date(a.published).getTime() : NOW - 864e5; const n0 = posts.length;
           if (vid) post(ts, '', av, esc(tm ? tm.short : L.label), 'Video', esc(a.headline), extra, ` data-act="play" data-vid="${vid[1]}"`);
-          else post(ts, hrefM ? hrefM[1] : '', av, esc(tm ? tm.short : L.label), 'News', esc(a.headline), extra); });
+          else post(ts, hrefM ? hrefM[1] : '', av, esc(tm ? tm.short : L.label), 'News', esc(a.headline), extra);
+          posts.slice(n0).forEach(pp => { pp.fill = fillIds.has(String(a.id)) && why !== 'mine'; pp.big = bigIds.has(String(a.id)) && why !== 'mine'; }); });
       }
       // 0 · breaking, pinned above everything (v391, Ray's pick A)
       tier = 0;
@@ -797,49 +626,28 @@
         const tid = HW.wireTeams ? HW.wireTeams(a).find(id => S0.tIdx[id]) : null; const tm = tid ? S0.tIdx[tid] : null;
         const av = tm ? crest(tm) : `<span class="fic brk"><i></i></span>`; const ts = a.published ? new Date(a.published).getTime() : NOW;
         posts.push({ tier: 0, k: ts - i, html: `<div class="fp fbrk"><a class="fpa" href="#article/${lk}/${esc(String(a.id))}" aria-label="${esc(a.headline)}"></a><span class="fav">${av}</span><span class="fb"><span class="fh"><span class="fbk"><i></i>Breaking</span>${tm ? `<span>${esc(tm.short)}</span>` : ''}<time>${when(ts)}</time><button class="fx2" data-act="wire-x" data-ids="${esc(String(a.id))}" aria-label="Dismiss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span><span class="ft"><b>${esc(a.headline)}</b></span></span></div>` }); });
-      posts.sort((a, b) => (a.tier - b.tier) || (b.k - a.k));
-      const items = posts.slice(0, 30).map(p => p.html);
-      const SHOW = 15;
-      if (items.length) secs.feed = `<div class="gl feed${items.length > SHOW ? ' lclip fclip' : ''}">${items.join('')}${items.length > SHOW ? `<button class="cliptog" data-act="clip" data-total="${items.length}" aria-expanded="false">Show ${items.length - SHOW} more</button>` : ''}</div>`;
-      else if (!fp.length && !mine.length) delete secs.feed;
-      else secs.feed = `<div class="gl"><div class="gr ni"><span class="gm wrap"><b>Quiet for now</b><span>Results, injury changes and news about your teams and players land here as they happen.</span></span></div></div>`;
-
-      // the greeting and the deck
-      delete secs.live;
-      if (P.brief || P.live) {
-        const hr = +new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: HW.TZ || 'America/Chicago' }).format(new Date()) % 24;
-        const hello = hr < 5 ? 'Good evening' : hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
-        const ord = g => isLive(g) ? 0 : g.state === 'pre' ? 1 : 2;
-        let deck = games.filter(g => HW.ymdOf(g.date) === today && isFav(g)).sort((a, b) => ord(a) - ord(b) || new Date(a.date) - new Date(b.date) || rankGame(b) - rankGame(a));
-        let nextMode = false;
-        if (!deck.length && !offS) { const seen = new Set(); deck = teams.map(t => t.next).filter(g => g && g.state === 'pre' && !seen.has(g.id) && seen.add(g.id)).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 6); nextMode = deck.length > 0; }
-        const nLive = deck.filter(isLive).length;
-        const sub = offS ? 'The season is over for your teams' : nextMode ? `Nothing tonight · next up ${esc(dayWord(HW.ymdOf(deck[0].date), true).replace('Tonight', 'later'))}` : deck.length ? `${nLive ? `${nLive} live now · ` : ''}${deck.length} game${deck.length === 1 ? '' : 's'} for your teams today${deck.length > 1 ? ' · swipe' : ''}` : (mine.length ? (S0.teams ? 'No games for your teams today' : '') : 'Follow a team to fill this screen');
-        const outOf = t => { const b = S0.inj && S0.inj.byTeam[t.id]; const outs = (b && b.list || []).filter(x => /out|suspen/i.test(x.status || '')); const pts = outs.reduce((n, x) => { const e = ctx && ctx.ppg && ctx.ppg[String(x.athlete && x.athlete.displayName || '').toLowerCase()]; return n + (e && isFinite(e.pts) ? +e.pts : 0); }, 0); return { n: outs.length, pts }; };
-        const card = (g, i) => {
-          const live = isLive(g), done = g.state === 'post' && !g.off, pre = !live && !done;
-          const [ca, cb] = duelPair(g, L);   // v404: the same colours as the game page
-          const f = !g.off ? safeF(L, g, ctx) : null; const ph = f && Number.isFinite(f.pHome) ? Math.min(.99, Math.max(.01, f.pHome)) : null;
-          const hasSc = (live || done) && g.away.score != null && g.home.score != null;
-          const share = hasSc ? .5 + Math.max(-.3, Math.min(.3, (+g.home.score - +g.away.score) / 30)) : ph != null ? ph : .5;
-          const seam = Math.min(74, Math.max(26, 50 - (share - .5) * 80));
-          const k = live ? `<i class="dot"></i>${esc(HW.clockOf(g, L))}` : done ? esc(finalWord(g)) : g.off ? esc(g.off) : `${nextMode || relDay(HW.ymdOf(g.date)) !== 'Tonight' ? esc(dayWord(HW.ymdOf(g.date), true)) + ' · ' : (i === deck.findIndex(x => x.state === 'pre') ? 'Up next · ' : '')}${esc(tipOf(g))}`;
-          const tv = tvLabel(g);
-          const side = (t, o) => `<span class="dks"><span class="logo${nearPanel(t, deepen(t === g.away ? ca : cb), L) ? ' ol' : ''}">${panelLogo(t.logo, 128)}</span><b>${esc(t.abbr || t.short)}</b>${hasSc ? `<em class="sc${+t.score >= +o.score ? '' : ' lo'}">${esc(String(t.score))}</em>` : `<em>${esc(t.rec || '')}</em>`}</span>`;
-          const fav = ph != null ? (ph >= .5 ? g.home : g.away) : null;
-          const mid = live || done ? (hasSc ? `<span class="dkm"><b>${live ? 'Live' : 'Final'}</b>${(() => { const lead = +g.home.score === +g.away.score ? null : (+g.home.score > +g.away.score ? g.home : g.away); return lead ? `${esc(lead.abbr)} ${live ? 'by' : 'won by'} ${Math.abs(+g.home.score - +g.away.score)}` : 'Level'; })()}</span>` : '') : fav ? `<span class="dkm"><b>${esc(fav.abbr)} ${pct(Math.max(ph, 1 - ph))}</b>to win</span>` : `<span class="dkm"><b>${esc(tipOf(g))}</b></span>`;
-          let foot = '';
-          if (pre && S0.inj) { const A = outOf(g.away), H = outOf(g.home); const t = A.n > H.n || (A.n === H.n && A.pts > H.pts) ? g.away : g.home; const o = t === g.away ? A : H; if (o.n) foot = `${o.n} ${esc(t.short)} out${o.pts ? ` · ${o.pts.toFixed(1)} ppg sitting` : ''}`; }
-          if (!foot && done && f && ph != null) { const pick = ph >= .5 ? g.home : g.away; foot = `RIVL had ${esc(pick.abbr)} ${pct(Math.max(ph, 1 - ph))}`; }
-          if (!foot && tv) foot = esc(tv);
-          return `<a class="dk${live ? ' live' : ''}" href="${href.game(lk, g.id)}" style="--ca:${esc(deepen(ca))};--cb:${esc(deepen(cb))};--seam:${seam.toFixed(1)}%"><span class="wm a">${esc(g.away.abbr || '')}</span><span class="wm h">${esc(g.home.abbr || '')}</span><span class="dkk">${k}${tv && !pre ? '' : tv && foot !== esc(tv) ? ` · ${esc(tv)}` : ''}</span><span class="dkg">${side(g.away, g.home)}${mid}${side(g.home, g.away)}</span>${foot ? `<span class="dkf">${foot}</span>` : ''}</a>`;
-        };
-        const dots = deck.length > 1 ? (deck.length <= 8 ? `<div class="dkdots" aria-hidden="true">${deck.map((_, i) => `<i${i ? '' : ' class="on"'}></i>`).join('')}</div>` : `<div class="dkdots n" aria-hidden="true"><span>1</span> / ${deck.length}</div>`) : '';
-        const skel = '';   // v390: no placeholder card. On a day with no games the grey slab just sat there; the deck appears when there is one to show
-        secs.hi = `<div class="hhi"><h1>${hello}</h1>${sub ? `<p>${sub}</p>` : ''}</div>${deck.length ? (() => { const cards = deck.map(card); const loop = cards.length > 1; const cl = h => h.replace('<a class="dk', '<a tabindex="-1" aria-hidden="true" class="dkc dk'); return `<div class="dkw"><div class="dkdeck" data-n="${cards.length}" data-loop="${loop ? 1 : 0}" data-key="${esc(lk + ':' + today)}">${loop ? cl(cards[cards.length - 1]) : ''}${cards.join('')}${loop ? cl(cards[0]) : ''}</div>${dots}</div>`; })() : skel}`;
-      } else delete secs.hi;
+      /* the live games, the strip and since last night, from the scoreboards */
+      const NOWD = new Date(); const isToday = g => HW.ymdOf(g.date) === today;
+      const margin = g => Math.abs((+g.home.score || 0) - (+g.away.score || 0));
+      const liveAll = games.filter(isLive).sort((a, b) => (isFav(b) - isFav(a)) || margin(a) - margin(b) || rankGame(b) - rankGame(a));
+      const preAll = games.filter(g => g.state === 'pre' && !g.off && isToday(g)).sort((a, b) => new Date(a.date) - new Date(b.date) || rankGame(b) - rankGame(a));
+      const slateStarted = games.some(g => isToday(g) && !g.off && (g.state !== 'pre' || new Date(g.date) <= NOWD));
+      const digest = [];
+      if (P.brief || P.players) {
+        const fin = games.concat(last).filter((g, i, arr) => arr.findIndex(x => x.id === g.id) === i).filter(g => isDone(g) && !g.off && isFav(g) && (isToday(g) || (HW.ymdOf(g.date) === yday && !slateStarted)));
+        const linesBy = {}; lines.forEach(x => { (linesBy[x.g.id] = linesBy[x.g.id] || []).push(x); });
+        fin.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(g => {
+          const y = HW.ymdOf(g.date) === yday; const k = new Date(g.date).getTime();
+          if (P.brief) { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = +us.score > +them.score; const ot = /OT/.test(finalWord(g)) ? ` in ${esc(finalWord(g).replace(/^Final\/?\s*/i, '') || 'OT')}` : '';
+            digest.push({ k, y, html: `<a class="dgr" href="${href.game(lk, g.id)}"><span class="dgav">${crest(us)}</span><span class="dgt"><b>${esc(us.short)}</b> ${won ? 'beat' : 'lost to'} ${esc(them.short)}, <b class="${won ? 'wl-w' : 'wl-l'}">${esc(String(us.score))}-${esc(String(them.score))}</b>${ot}</span><i class="flg">${esc(L.label)}</i></a>` }); }
+          if (P.players) (linesBy[g.id] || []).forEach((x, i) => digest.push({ k: k - 1 - i, y, html: `<a class="dgr" href="${href.game(lk, x.g.id)}/p/${esc(String(x.p.id))}"><span class="dgav">${headshot(x.p.img, x.us ? teamColor(x.us, L) : playerColor(x.p, L), 30, x.p.name)}</span><span class="dgt"><b>${esc(x.p.short || x.p.name)}</b> ${x.dnp ? esc(x.dnp.toLowerCase()) : `${esc(String(x.pts))} pts, ${esc(String(x.reb))} reb, ${esc(String(x.ast))} ast`}</span><i class="flg">${esc(L.label)}</i></a>` }));
+        });
+      }
+      s.out = { L, lk, ctx, follows: mine.length > 0 || fp.length > 0, offS, unr, liveAll, preAll, digest,
+        wire: posts.filter(p => p.tier === 0), river: posts.filter(p => p.tier >= 4) };
+      s.at = Date.now();
+      s.subs.forEach(f => f());
     };
-
     // ----- phase 1: one round trip, then paint -----
     let [tIdx, games, last, ctx, st] = await Promise.all([
       teamsIndex(L),
@@ -848,47 +656,135 @@
       forecastCtx(L, today).catch(() => null),
       standings(L).catch(() => null)
     ]);
-    if (!alive()) return;
+    if (dead()) return;
     /* out of season the feed answers a date with no games by sending the last games it has (weeks old): only games on the
        day asked for are kept, so last season's final never sits under Tonight or Last night */
     const onDay = (list, d0, d1) => (list || []).filter(g => { const y = HW.ymdOf(g.date); return y >= d0 && y <= d1; });
     games = onDay(games, yday, addDays(today, 1)); last = onDay(last, yday, yday);
     Object.assign(S0, { tIdx, games, last, ctx, st, inj: ctx && ctx.inj ? ctx.inj : null });
     S.today[lk] = games;
-    build(); paint();
+    build();
 
     // ----- phase 2: schedules, box scores, news — each patches its section as it lands -----
     const later = [];
-    if (mine.length) later.push((async () => { const teams = await Promise.all(mine.map(id => teamInfo(L, id, { idx: tIdx, st }).catch(() => null))); if (!alive()) return; S0.teams = teams; build(); paint(); })());
+    if (mine.length) later.push((async () => { const teams = await Promise.all(mine.map(id => teamInfo(L, id, { idx: tIdx, st }).catch(() => null))); if (dead()) return; S0.teams = teams; build(); })());
     if (P.brief && fp.length) later.push((async () => {
       const ids = [...new Set(fp.map(p => { const is = teamOf(p); const g = last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? g.id : null; }).filter(Boolean))];
       await Promise.all(ids.map(async id => { S0.sums[id] = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 3600000); }));
-      if (!alive()) return; build(); paint();
+      if (dead()) return; build();
     })());
-    if (P.news || P.wire) later.push((async () => { S0.news = await jSoft(`${API(L)}/news?limit=25`, 600000); if (!alive()) return; build(); paint(); })());
-    if (lk === 'wnba' && HW.hub) later.push((async () => { S0.unr = await unrivaledCard(true).catch(() => ''); if (!alive() || !S0.unr) return; build(); paint(); })());
-    if (P.brief && fp.length && !games.length) later.push((async () => { S0.lp = await leaguePlayers(L).catch(() => null); if (!alive()) return; build(); paint(); })());
-    if (!S0.inj && mine.length && P.injuries) later.push((async () => { S0.inj = await injuries(L).catch(() => null); if (!alive()) return; build(); paint(); })());
+    if (P.news || P.wire) later.push((async () => { S0.news = await jSoft(`${API(L)}/news?limit=25`, 600000); if (dead()) return; build(); })());
+    if (lk === 'wnba' && HW.hub) later.push((async () => { S0.unr = await unrivaledCard(true).catch(() => ''); if (dead() || !S0.unr) return; build(); })());
+    if (P.brief && fp.length && !games.length) later.push((async () => { S0.lp = await leaguePlayers(L).catch(() => null); if (dead()) return; build(); })());
+    if (!S0.inj && mine.length && P.injuries) later.push((async () => { S0.inj = await injuries(L).catch(() => null); if (dead()) return; build(); })());
     Promise.all(later).catch(() => { });
 
     // ----- while the app sits on Home: scores every pass, the rest every few minutes, patched quietly -----
     let quietAt = Date.now();
-    HW.v5.refresh = async () => {
-      if (!alive()) return;
+    s.refresh = async () => {
+      if (dead()) return;
       S0.games = S.today[lk] ? S.today[lk].filter(g => { const y = HW.ymdOf(g.date); return y >= yday && y <= addDays(today, 1); }) : S0.games;
       const due = Date.now() - quietAt > 180000;
       if (due) {
         quietAt = Date.now();
         try { for (const k of [...HW.cache.keys()]) if (/\/injuries|\/news\?|\/summary\?event=/.test(k) && k.includes(L.path)) HW.cache.delete(k); } catch { }
         const [last2, inj2, news2] = await Promise.all([scoreboard(L, yday, 0).catch(() => null), mine.length && P.injuries ? injuries(L).catch(() => null) : null, P.news || P.wire ? jSoft(`${API(L)}/news?limit=25`, 0) : null]);
-        if (!alive()) return;
+        if (dead()) return;
         if (last2) S0.last = last2.filter(g => HW.ymdOf(g.date) === yday); if (inj2) S0.inj = inj2; if (news2) S0.news = news2;
         if (fp.length) { const ids = [...new Set(fp.map(p => { const is = teamOf(p); const g = S0.last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? g.id : null; }).filter(Boolean))]; await Promise.all(ids.map(async id => { const d = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 0); if (d) S0.sums[id] = d; })); }
-        if (!alive()) return;
+        if (dead()) return;
       }
-      build(); paint(true);
+      build();
     };
+  }
+  const tagLg = (html, L) => html.replace('<time>', `<i class="flg">${esc(L.label)}</i><time>`);
+  const homeSkel = () => skeleton(1, 'card') + skeleton(5, 'row');
+  async function home(tab) {
+    if (!HTABS.includes(tab)) tab = 'following';
+    const token = ++homeToken; const today = todayCT();
+    const alive = () => { if (token !== homeToken) return false; const r = HW.v5.route && HW.v5.route(); return !r || (r.name === 'home' && r.args[0] === tab); };
+    const anyFollow = ORDER.some(followsIn);
+    if (tab === 'following' && !anyFollow) {
+      $main.innerHTML = `<div class="hfeed"><div class="page-h"><h1>Make it yours</h1><p>Following shows the teams and players you follow, from every league in one feed.</p></div>` + empty('Nothing followed yet', '<p style="margin:6px 0 0">Pick a few teams and players and this tab fills with their games, lines, injuries and news.</p>', `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><a class="btn" href="#teams">Choose teams</a><a class="btn ghost" href="#players">Find players</a></div>`) + '</div>';
+      return;
+    }
+    const leagues = tab === 'following' ? ORDER : [tab];
+    const srcs = leagues.map(feedSource);
+    const P = prefs.all();
+    const secs = {}; const ORD = ['unr', 'live', 'wire', 'strip', 'digest', 'river'];
+    let painted = false;
+    const wrap = k => `<section class="hsec2" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;
+    const compose = () => {
+      const outs = srcs.map(s => s.out).filter(Boolean);
+      const fol = tab === 'following';
+      ORD.forEach(k => delete secs[k]);
+      const one = !fol ? outs[0] : null;
+      if (one && one.unr) secs.unr = one.unr;
+      // live: your games on now (a league tab with nothing of yours on shows the league's)
+      if (P.live) {
+        let rows = [];
+        outs.forEach(o => { const mineL = o.liveAll.filter(isFav); const list = mineL.length || fol ? mineL : (o.follows ? [] : o.liveAll.slice(0, 3)); list.forEach(g => rows.push({ o, g })); });
+        rows.sort((a, b) => Math.abs(+a.g.home.score - +a.g.away.score) - Math.abs(+b.g.home.score - +b.g.away.score));
+        if (rows.length) secs.live = `<div class="hhd lv"><i class="dot"></i>Live now<span>${rows.length}</span></div><div class="srows hlv">${rows.map(({ o, g }) => { const r = scoreRow(o.L, g, o.ctx); return fol ? r.replace('<span class="smid">', `<span class="smid"><i class="slg">${esc(o.L.label)}</i>`) : r; }).join('')}</div>`;
+      }
+      // breaking, pinned
+      const wire = outs.flatMap(o => o.wire.map(p => ({ k: p.k, html: fol ? tagLg(p.html, o.L) : p.html }))).sort((a, b) => b.k - a.k);
+      if (wire.length) secs.wire = `<div class="feed hfl">${wire.map(p => p.html).join('')}</div>`;
+      // tonight: a strip of the games still to come (yours; a league tab adds the rest of its slate)
+      if (P.teams) {
+        const chips = [];
+        outs.forEach(o => { const mineP = o.preAll.filter(isFav); const list = fol ? mineP : mineP.concat(o.preAll.filter(g => !isFav(g))).slice(0, 12); list.forEach(g => chips.push({ o, g })); });
+        if (fol) chips.sort((a, b) => new Date(a.g.date) - new Date(b.g.date));
+        if (chips.length) secs.strip = `<div class="hstrip">${chips.map(({ o, g }) => { const L = o.L; const f = prefs.get('forecast') ? safeF(L, g, o.ctx) : null; const fav = f && Number.isFinite(f.pHome) ? `${esc((f.pHome >= .5 ? g.home : g.away).abbr || '')} ${pct(Math.max(f.pHome, 1 - f.pHome))}` : '';
+          const tipT = esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT|EST|EDT|PST|PDT|MST|MDT)$/, ''));
+          const lg = (t) => `<span class="hsl">${t.logo ? imgSized(t.logo, 56, 56, 'alt=""', monoSwap(t.abbr)) : monoOf(t.abbr)}</span>`;
+          return `<a class="hchip" href="${href.game(L.key, g.id)}"><span class="hsd">${lg(g.away)}${lg(g.home)}</span><span class="hsv"><b>${esc(g.away.abbr || g.away.short)} ${g.neutral ? 'vs' : '@'} ${esc(g.home.abbr || g.home.short)}</b><span>${tipT}${fav ? ` · ${fav}` : ''}${fol ? ` · ${esc(L.label)}` : ''}</span></span></a>`; }).join('')}</div>`;
+      }
+      // since last night
+      const dg = outs.flatMap(o => o.digest).sort((a, b) => b.k - a.k);
+      if (dg.length) { const y = dg.some(d => d.y);
+        secs.digest = `<div class="hdg${fol ? '' : ' one'}"><div class="hhd">${y ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20.4 14.2A8.5 8.5 0 1 1 9.8 3.6a7 7 0 0 0 10.6 10.6z"/></svg>Since last night' : 'Earlier today'}</div>${clip(dg.map(d => d.html), 'dgl', 5, 'results')}</div>`; }
+      // the river: everything else, newest first, leagues mixed
+      const river = outs.flatMap(o => o.river.filter(p => !fol || !p.fill || p.big).map(p => ({ k: p.k, html: fol ? tagLg(p.html, o.L) : p.html }))).sort((a, b) => b.k - a.k);
+      const SHOW = 15;
+      if (river.length) secs.river = `<div class="feed hfl${river.length > SHOW ? ' lclip fclip' : ''}">${river.slice(0, 40).map(p => p.html).join('')}${river.length > SHOW ? `<button class="cliptog" data-act="clip" data-total="${Math.min(40, river.length)}" aria-expanded="false">Show ${Math.min(40, river.length) - SHOW} more</button>` : ''}</div>`;
+    };
+    const paint = () => {
+      if (!alive()) return;
+      compose();
+      const ready = srcs.every(s => s.out || s.failed); const some = srcs.some(s => s.out);
+      if (!some) { if (!painted) $main.innerHTML = homeSkel(); return; }
+      const has = ORD.some(k => secs[k]);
+      if (!painted || !$main.querySelector('.hfeed')) {
+        painted = true;
+        const quiet = `<div class="hquiet"><b>${tab === 'following' ? 'Quiet for now' : `Nothing in ${esc(LEAGUES[tab].label)} yet`}</b><span>${tab === 'following' || followsIn(tab) ? 'Games, results, injury changes and news about your teams and players land here as they happen.' : `Follow ${esc(LEAGUES[tab].label)} teams and players and their games and news land here.`}</span>${tab !== 'following' && !followsIn(tab) ? '<a class="btn" href="#teams">Choose teams</a>' : ''}</div>`;
+        $main.innerHTML = `<div class="hfeed" data-tab="${tab}">${has ? ORD.filter(k => secs[k]).map(wrap).join('') : ready ? quiet : homeSkel()}</div>`;
+        if (!has && !ready) painted = false;
+        return;
+      }
+      const root = $main.querySelector('.hfeed');
+      if (!has) { if (ready && !root.querySelector('.hquiet')) { painted = false; paint(); } return; }
+      if (root.querySelector('.hquiet,.skel')) { painted = false; return paint(); }
+      ORD.forEach(k => {
+        const cur = root.querySelector(`section[data-sec="${k}"]`);
+        if (!secs[k]) { if (cur) cur.remove(); return; }
+        if (cur) { if (cur.dataset.h !== hashOf(secs[k])) { const open = [...cur.querySelectorAll('.lclip')].map(x => x.classList.contains('open')); const sl = (cur.querySelector('.hstrip') || {}).scrollLeft || 0;
+          cur.insertAdjacentHTML('afterend', wrap(k)); const nu = cur.nextElementSibling; cur.remove();
+          [...nu.querySelectorAll('.lclip')].forEach((x, i) => { if (!open[i]) return; x.classList.add('open'); const b = x.querySelector(':scope > .cliptog'); if (b) { b.setAttribute('aria-expanded', 'true'); b.textContent = 'Show less'; } });
+          const st = nu.querySelector('.hstrip'); if (st && sl) st.scrollLeft = sl; } return; }
+        const after = ORD.slice(ORD.indexOf(k) + 1).map(j => root.querySelector(`section[data-sec="${j}"]`)).find(Boolean);
+        if (after) after.insertAdjacentHTML('beforebegin', wrap(k)); else root.insertAdjacentHTML('beforeend', wrap(k));
+      });
+    };
+    let raf = 0; const sched = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; paint(); }); };
+    srcs.forEach(s => s.subs.add(sched));
+    const unsub = () => srcs.forEach(s => s.subs.delete(sched));
+    if (srcs.some(s => s.out)) paint(); else $main.innerHTML = homeSkel();
+    HW.v5.refresh = async () => { if (!alive()) { unsub(); return; } await Promise.all(srcs.map(s => s.refresh ? s.refresh().catch(() => { }) : null)); };
     HW.v5.refresh.every = 90000;
+    await Promise.race([Promise.all(srcs.map(s => s.ready)), new Promise(r => setTimeout(r, 6000))]);
+    if (!alive()) { unsub(); return; }
+    paint();
   }
 
   /* ================= SCORES: every game, compact ================= */
@@ -1435,6 +1331,6 @@
   // the slim bar shows once the head has scrolled away
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom <= fx.offsetHeight + 1; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };   // v412: the bar takes over the moment the header no longer covers its space
     window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(run); }, { passive: true }); document.addEventListener('rivl:rendered', run); }
-  HW.v5 = Object.assign(HW.v5 || {}, { initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
+  HW.v5 = Object.assign(HW.v5 || {}, { feedSrc, initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
     _: { pager, duelPair, panelLogo, nearPanel, duelCard, duelBlock, deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
 })();

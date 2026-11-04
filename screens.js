@@ -1246,13 +1246,13 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
 
   /* ================= SETTINGS: what you follow, what Home shows, how it looks ================= */
   const PREFS = [
-    ['wire', 'Breaking', "Big news on your teams and players (a surgery, a trade, a benching) at the top of Home for a few hours after it lands"],
-    ['brief', 'Results', "How your teams' games went, in the feed"],
-    ['live', 'Game cards', 'The swipeable cards for your teams\u2019 games today'],
-    ['teams', 'Live and upcoming', "Your teams' games on now and later today, in the feed"],
-    ['players', 'Player lines', "Your players' lines after every game"],
-    ['injuries', 'Injuries', 'Injury updates on your teams and players'],
-    ['news', 'News', 'Stories about your teams and players']
+    ['wire', 'Breaking', "Big news on your teams and players (a surgery, a trade, a benching) pinned near the top of Home for a few hours"],
+    ['live', 'Live now', "Your teams' games in progress, at the top of Home"],
+    ['teams', 'Tonight', "A strip of your teams' games still to come today"],
+    ['brief', 'Since last night', "How your teams' last games went, in one short list"],
+    ['players', 'Player lines', "Your players' lines, under Since last night"],
+    ['injuries', 'Injuries', 'Injury changes on your teams and players'],
+    ['news', 'News', 'Stories about your teams and players, plus the biggest league stories']
   ];
   const sw = (k, on, title, body) => `<button class="row sw" data-act="pref" data-pref="${k}" role="switch" aria-checked="${on}"><span class="t"><b>${esc(title)}</b><span class="wrap">${esc(body)}</span></span><span class="switch"></span></button>`;
   /* Settings is an index of categories; each opens its own screen at #settings/<category>. */

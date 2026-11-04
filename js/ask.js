@@ -429,10 +429,10 @@
 
   /* ---------- the screen ---------- */
   /* what people can ask, by kind, so nobody has to guess what the box understands */
-  const TRY = [['Injuries', ['Who is hurt on the Celtics', 'Most severe injuries in the NBA', 'Who returns soonest', 'What does day to day mean']],
+  const TRY = [['Injuries', ['Who is hurt on the Celtics', 'Who is hurt on Duke', 'Most severe injuries in the WNBA', 'What does day to day mean']],
     ['Last night', ["Curry's shot chart last night", 'How many shots did Shai take', 'Thunder box score last night', 'Who scored the most last night']],
     ['What if', ['Lakers without LeBron tonight', 'What if Haliburton played'], ],
-    ['Players and teams', ['Shai vs Luka', 'Wemby height', 'Thunder schedule', 'Who coaches the Knicks', 'UConn vs South Carolina']],
+    ['Players and teams', ['Shai vs Luka', 'Wemby height', 'Duke schedule', 'Who coaches Kansas', 'UConn vs South Carolina']],
     ['Champions', ['Who won the 2024 NBA championship', 'How many titles do the Lakers have', 'WNBA champions', 'Who won March Madness']],
     ['Recruits', ['Top high school player', 'Where is AJ Dybantsa from', 'Flagg vs Acuff vs Harper']]];
   const FILTERS = [['all', 'All'], ['players', 'Players'], ['teams', 'Teams'], ['rookies', 'Rookies'], ['college', 'College'], ['recruits', 'Recruits']];

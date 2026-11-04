@@ -3645,7 +3645,7 @@ html body #pills .pill.on,:root[data-theme="dark"] body #pills .pill.on{color:#f
 /* ===== v377: Scores, the day pager =====
    No strip of dates: the day you are on is the title, arrows step a day either way, and a tap on the title opens the
    month with your teams' days marked. The slate runs Live now, Your teams, Around the league, in compact rows. */
-#scpage .calrow,#scpage .dates{display:none}
+:is(#scpage,.hlv) .calrow,:is(#scpage,.hlv) .dates{display:none}
 .dpg{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:6px;margin:2px 16px 4px}
 .dpa{width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;color:var(--ink);background:var(--surf);box-shadow:0 1px 2px rgba(16,24,40,.08),inset 0 0 0 .5px color-mix(in srgb,var(--ink) 7%,transparent)}
 .dpa svg{width:20px;height:20px}
@@ -3663,20 +3663,20 @@ html body #pills .pill.on,:root[data-theme="dark"] body #pills .pill.on{color:#f
 .dpsec .dot{width:6px;height:6px;border-radius:50%;background:var(--live,#FF3B30)}
 .dpsec:has(.dot) b{color:var(--live,#FF3B30)}
 /* compact rows on this page: crest, abbreviation and record (or score) each side, the time and the call in the middle */
-#scpage .srows{margin:0 16px;padding:0 14px;border-radius:20px}
-#scpage .srow{grid-template-columns:minmax(0,1fr) 40px minmax(78px,auto) 40px minmax(0,1fr);padding:12px 0}
-#scpage .stm{flex-direction:row;gap:9px;justify-content:flex-start}
-#scpage .srow > .stm:last-child{flex-direction:row-reverse}
-#scpage .scr{width:34px;height:34px}
-#scpage .snm{display:none}
+:is(#scpage,.hlv) .srows{margin:0 16px;padding:0 14px;border-radius:20px}
+:is(#scpage,.hlv) .srow{grid-template-columns:minmax(0,1fr) 40px minmax(78px,auto) 40px minmax(0,1fr);padding:12px 0}
+:is(#scpage,.hlv) .stm{flex-direction:row;gap:9px;justify-content:flex-start}
+:is(#scpage,.hlv) .srow > .stm:last-child{flex-direction:row-reverse}
+:is(#scpage,.hlv) .scr{width:34px;height:34px}
+:is(#scpage,.hlv) .snm{display:none}
 .sab2{display:none}
-#scpage .sab2{display:block;font-size:14.5px;font-weight:800;color:var(--ink);letter-spacing:.01em}
-#scpage .ssc{font-size:21px}
-#scpage .ssc.rec{font-size:12px;letter-spacing:.02em}
-#scpage .stt{font-size:15px}
-#scpage .smid small{font-size:11.5px}
-#scpage .sstar{width:16px;height:16px;right:-5px;bottom:-4px}
-#scpage .sstar svg{width:10px;height:10px}
+:is(#scpage,.hlv) .sab2{display:block;font-size:14.5px;font-weight:800;color:var(--ink);letter-spacing:.01em}
+:is(#scpage,.hlv) .ssc{font-size:21px}
+:is(#scpage,.hlv) .ssc.rec{font-size:12px;letter-spacing:.02em}
+:is(#scpage,.hlv) .stt{font-size:15px}
+:is(#scpage,.hlv) .smid small{font-size:11.5px}
+:is(#scpage,.hlv) .sstar{width:16px;height:16px;right:-5px;bottom:-4px}
+:is(#scpage,.hlv) .sstar svg{width:10px;height:10px}
 /* the month sheet */
 .cal-g .cd.mine i{background:#F5B915}
 .cal-f .dot{background:#F5B915}
@@ -4662,29 +4662,29 @@ html body .smono.l4{font-size:8.5px;letter-spacing:-.01em}
    card's width, so names spilled into scores (63UNCG, 0-0NMSU). The parts now fit by design: the score column grows to
    its number, there is always clear air between a score and a name, the pieces are sized to fit four-letter names and
    three-digit scores side by side, and only as a last resort does a name trim with an ellipsis. */
-html body #scpage .srows{padding:0 12px}
-html body #scpage .srow{grid-template-columns:minmax(0,1fr) minmax(26px,max-content) minmax(74px,max-content) minmax(26px,max-content) minmax(0,1fr);column-gap:8px}
-html body #scpage .stm{gap:7px;min-width:0;overflow:hidden}
-html body #scpage .scr{width:30px;height:30px}
-html body #scpage .sab2{font-size:14px;min-width:0;flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:clip;letter-spacing:0}
-html body #scpage .ssc{font-size:20px;white-space:nowrap}
-html body #scpage .ssc.rec{font-size:11.5px;letter-spacing:0}
-html body #scpage .slv{padding:4px 8px;font-size:12.5px;gap:4px}
-html body #scpage .stt{font-size:14.5px}
+html body :is(#scpage,.hlv) .srows{padding:0 12px}
+html body :is(#scpage,.hlv) .srow{grid-template-columns:minmax(0,1fr) minmax(26px,max-content) minmax(74px,max-content) minmax(26px,max-content) minmax(0,1fr);column-gap:8px}
+html body :is(#scpage,.hlv) .stm{gap:7px;min-width:0;overflow:hidden}
+html body :is(#scpage,.hlv) .scr{width:30px;height:30px}
+html body :is(#scpage,.hlv) .sab2{font-size:14px;min-width:0;flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:clip;letter-spacing:0}
+html body :is(#scpage,.hlv) .ssc{font-size:20px;white-space:nowrap}
+html body :is(#scpage,.hlv) .ssc.rec{font-size:11.5px;letter-spacing:0}
+html body :is(#scpage,.hlv) .slv{padding:4px 8px;font-size:12.5px;gap:4px}
+html body :is(#scpage,.hlv) .stt{font-size:14.5px}
 @media (max-width:374px){
-  html body #scpage .srows{padding:0 10px}
-  html body #scpage .srow{column-gap:6px;grid-template-columns:minmax(0,1fr) minmax(22px,max-content) minmax(66px,max-content) minmax(22px,max-content) minmax(0,1fr)}
-  html body #scpage .scr{width:26px;height:26px}
-  html body #scpage .stm{gap:5px}
-  html body #scpage .sab2{font-size:13px}
-  html body #scpage .ssc{font-size:18px}
-  html body #scpage .slv{padding:3px 7px;font-size:11.5px}
-  html body #scpage .smid small{font-size:10.5px}
+  html body :is(#scpage,.hlv) .srows{padding:0 10px}
+  html body :is(#scpage,.hlv) .srow{column-gap:6px;grid-template-columns:minmax(0,1fr) minmax(22px,max-content) minmax(66px,max-content) minmax(22px,max-content) minmax(0,1fr)}
+  html body :is(#scpage,.hlv) .scr{width:26px;height:26px}
+  html body :is(#scpage,.hlv) .stm{gap:5px}
+  html body :is(#scpage,.hlv) .sab2{font-size:13px}
+  html body :is(#scpage,.hlv) .ssc{font-size:18px}
+  html body :is(#scpage,.hlv) .slv{padding:3px 7px;font-size:11.5px}
+  html body :is(#scpage,.hlv) .smid small{font-size:10.5px}
 }
-html body #scpage .sab2.l5{font-size:11.5px;letter-spacing:-.02em}
-@media (max-width:374px){ html body #scpage .sab2.l5{font-size:11px} }
-html body #scpage .stm:has(.sab2.l5){gap:5px}
-html body #scpage .stm:has(.sab2.l5) .scr{width:26px;height:26px}
+html body :is(#scpage,.hlv) .sab2.l5{font-size:11.5px;letter-spacing:-.02em}
+@media (max-width:374px){ html body :is(#scpage,.hlv) .sab2.l5{font-size:11px} }
+html body :is(#scpage,.hlv) .stm:has(.sab2.l5){gap:5px}
+html body :is(#scpage,.hlv) .stm:has(.sab2.l5) .scr{width:26px;height:26px}
 
 /* v419 · audit fixes */
 /* Picture: an open slot facing a real team keeps the same shape (a dashed disc where the logo goes), so its label sits under the seed tag, not beside it */
@@ -4697,4 +4697,83 @@ html body #scpage .stm:has(.sab2.l5) .scr{width:26px;height:26px}
 td.spc>a::after,.nm>a::after{content:'';position:absolute;inset:-6px 0}
 
 /* v422 · the follow star sat outside the team box and got clipped; the box no longer clips (the abbreviation still clips itself) */
-html body #scpage .stm{overflow:visible}
+html body :is(#scpage,.hlv) .stm{overflow:visible}
+
+/* ===== v423 · X-style tabs on every league screen, a header that slides away, and Home as one Following feed ===== */
+/* the header: the title row and the league tabs ride together, pinned under the status bar */
+html body .hdr{display:block!important;position:sticky!important;top:env(safe-area-inset-top,0px)!important;z-index:39!important;margin:0!important;padding:0!important;background:var(--bg)!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;will-change:transform;max-width:none!important;width:auto!important}
+html body .hdr:has(.top[hidden]){display:none!important}
+html body .hdr .top{display:flex!important;align-items:center;height:52px!important;padding:0 14px 0 18px!important;gap:10px;width:auto!important}
+html body .hdr .top .sp{margin-left:auto!important;display:flex;align-items:center;gap:10px}
+.htitle{margin:0;font-size:28px;font-weight:800;letter-spacing:-.025em;line-height:1;color:var(--ink)}
+.htitle[hidden]{display:none}
+/* the tabs: evenly spaced, the one you're on in ink with a bar under it that rides with the finger */
+.lgtabs{position:relative;display:flex;margin:0;padding:0 4px;border-bottom:.5px solid var(--line-2)}
+.lgtabs[hidden]{display:none}
+.lgt{flex:1 1 0;min-width:0;display:grid;place-items:center;height:46px;padding:0;border:0;background:none;cursor:pointer;color:var(--ink-3);font:700 15px/1 var(--ui);letter-spacing:-.01em;-webkit-tap-highlight-color:transparent;transition:color .2s}
+.lgt span{position:relative;white-space:nowrap;padding:0 1px}
+.lgt.on{color:var(--ink);font-weight:800}
+.lgt:active{opacity:.6}
+.lgd{position:absolute;top:-3px;right:-8px;width:6px;height:6px;border-radius:50%;background:var(--live)}
+.lgd[hidden]{display:none}
+.lgink{position:absolute;left:0;bottom:-.5px;height:3px;width:0;border-radius:3px;background:#1D9BF0;transition:transform .26s cubic-bezier(.2,.8,.2,1),width .26s cubic-bezier(.2,.8,.2,1)}
+:root[data-theme="dark"] .lgink{background:#3EA6FF}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .lgink{background:#3EA6FF} }
+.lgtabs.noanim .lgink{transition:none}
+.lgtabs[data-n="5"] .lgt{font-size:14.5px}
+@media (max-width:374px){ .lgtabs[data-n="5"] .lgt{font-size:13.5px;letter-spacing:-.02em} .lgt{font-size:14px} }
+@media (prefers-reduced-motion:reduce){ .lgink,.lgt{transition:none} }
+#main{touch-action:pan-y pinch-zoom}
+
+/* Home is a flat timeline: a white page in light mode (black in dark), hairlines between items, no cards */
+@media (prefers-color-scheme:light){ html:root[data-page="home"]:not([data-theme="dark"]){--bg:#FFFFFF} }
+html:root[data-page="home"][data-theme="light"]{--bg:#FFFFFF}
+.hfeed{padding-bottom:12px}
+.hfeed .hsec2{margin:0;padding:0}
+.hfeed .hsec2 + .hsec2{border-top:.5px solid var(--line)}
+.hhd{display:flex;align-items:center;gap:7px;padding:16px 18px 2px;font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.hhd span{font-weight:700;letter-spacing:0;opacity:.75}
+.hhd svg{width:14px;height:14px}
+.hhd.lv{color:var(--live)}
+.hhd .dot{width:7px;height:7px;border-radius:50%;background:var(--live)}
+/* live: the Scores row, full width, with the league over the clock on Following */
+html body .hfeed .srows.hlv{margin:0!important;padding:0 16px!important;border-radius:0!important;background:none!important;box-shadow:none!important}
+.hlv .slg{display:block;font-style:normal;font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--ink-3);margin-bottom:3px;text-transform:uppercase}
+/* tonight's strip */
+.hstrip{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:14px 16px;scroll-padding:0 16px;background:color-mix(in srgb,var(--ink) 2.5%,var(--bg))}
+.hstrip::-webkit-scrollbar{display:none}
+.hchip{flex:none;display:flex;align-items:center;gap:10px;padding:10px 14px 10px 11px;border-radius:18px;background:var(--bg);box-shadow:inset 0 0 0 .5px var(--line-2);color:var(--ink);text-decoration:none}
+.hchip:active{opacity:.7}
+.hsd{display:flex;flex:none}
+.hsl{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surf-2);box-shadow:0 0 0 2px var(--bg);overflow:hidden}
+.hsl + .hsl{margin-left:-8px}
+.hsl img{width:24px;height:24px;object-fit:contain}
+.hsl .mono,.hsl > span{font-size:9px}
+.hsv{display:flex;flex-direction:column;gap:2px;min-width:0}
+.hsv b{font-size:14.5px;font-weight:800;white-space:nowrap;letter-spacing:-.01em}
+.hsv span{font-size:12px;font-weight:600;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+/* since last night */
+.hdg{padding-bottom:4px}
+.hdg .dgl{margin:0;padding:0 16px;background:none;box-shadow:none;border-radius:0}
+.dgr{display:flex;align-items:center;gap:11px;min-height:48px;padding:9px 0;color:var(--ink);text-decoration:none;border-bottom:.5px solid var(--line)}
+.dgl > .dgr:last-of-type,.dgl > .dgr:nth-last-child(1){border-bottom:0}
+.dgr:active{opacity:.6}
+.dgav{flex:none;width:30px;height:30px;display:grid;place-items:center}
+.dgav .logo,.dgav .hs{width:30px!important;height:30px!important}
+.dgt{flex:1;min-width:0;font-size:15px;line-height:1.3;font-weight:500}
+.dgt b{font-weight:800}
+.dgt .wl-w{color:var(--win)} .dgt .wl-l{color:var(--ink-2)}
+.flg{font-style:normal;flex:none;font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase}
+.hdg.one .flg{display:none}
+.hdg .cliptog{border-top:.5px solid var(--line)!important}
+/* the river and the wire, flat */
+html body .hfeed .feed.hfl{margin:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;padding:0!important}
+.hfeed .feed.hfl .fp{padding:14px 16px}
+.hfeed .feed.hfl .fp+.fp::before{left:0}
+.hfeed .fh .flg{margin-left:auto;padding-left:8px;font-size:10.5px}
+.hfeed .fh .flg + time{margin-left:0}
+.hquiet{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:28px 18px}
+.hquiet b{font-size:17px;font-weight:800}
+.hquiet span{color:var(--ink-3);font-size:15px;line-height:1.4}
+.hquiet .btn{margin-top:8px}
+.hfeed > .skel:first-child{margin-top:12px}
