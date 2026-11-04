@@ -5,19 +5,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          cat > p.mjs <<'JS'
-          const V='https://site.api.espn.com/apis/v2/sports/basketball/';
-          const U=[];
-          for (const lg of ['mens-college-basketball','womens-college-basketball']) {
-            U.push([lg+' app-url', V+lg+'/standings?group=50&level=3']);
-            U.push([lg+' season2027', V+lg+'/standings?season=2027&group=50&level=3']);
-            U.push([lg+' plain', V+lg+'/standings']);
-          }
-          for (const [k,u] of U) { try { const r=await fetch(u); const j=await r.json();
-            const kids=j.children||[]; let teams=0, played=0, sample='';
-            const walk=o=>{ (o.children||[]).forEach(walk); const es=(o.standings&&o.standings.entries)||[]; es.forEach(e=>{teams++; const w=(e.stats||[]).find(s=>s.name==='wins'), l=(e.stats||[]).find(s=>s.name==='losses'); if (w&&l&&(w.value+l.value)>0) played++; if(!sample&&w) sample=e.team.displayName+' '+w.value+'-'+(l&&l.value)+' (stats: '+(e.stats||[]).map(s=>s.name).slice(0,8).join(',')+')';}); };
-            walk(j);
-            console.log(`### ${k} status=${r.status} season=${j.seasons?JSON.stringify(j.seasons):(j.season&&JSON.stringify(j.season))} groups=${kids.length} names=${kids.slice(0,4).map(c=>c.abbreviation||c.name).join('|')} teams=${teams} withGames=${played} sample=${sample}`);
-          } catch(e){ console.log(k,'ERR',e.message);} }
-          JS
-          node p.mjs
+          mkdir out
+          curl -s 'https://site.api.espn.com/apis/v2/sports/basketball/mens-college-basketball/standings?group=50&level=3' -o out/m.json
+          curl -s 'https://site.api.espn.com/apis/v2/sports/basketball/womens-college-basketball/standings?group=50&level=3' -o out/w.json
+          curl -s 'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams?groups=50&limit=400' -o out/mt.json
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with: { name: stand, path: out }
