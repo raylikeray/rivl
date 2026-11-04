@@ -1290,7 +1290,7 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
       // v380: iOS grouped settings — the look as a segmented control right at the top, then everything else as rows with a coloured square
       const look = `<div class="gl setlook"><div class="gr ni"><span class="sico" data-k="look">${ICONS.look || ''}</span><span class="gm"><b>Appearance</b></span><div class="segc fit" role="radiogroup" aria-label="Appearance">${[['system', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].map(([k, l]) => `<button class="${theme === k ? 'on' : ''}" data-act="theme" data-theme="${k}" role="radio" aria-checked="${theme === k}">${l}</button>`).join('')}</div></div></div>`;
       const grp = keys => `<div class="gl">${SETTINGS.filter(([k]) => keys.includes(k)).map(([k, t, b]) => `<a class="gr" href="#settings/${k}"><span class="sico" data-k="${k}">${ICONS[k]}</span><span class="gm"><b>${esc(t)}</b><span>${esc(summary[k] || b)}</span></span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1.5 1.5 5 5-5 5"/></svg></a>`).join('')}</div>`;
-      const all = SETTINGS.map(([k]) => k).filter(k => k !== 'look');
+      const all = SETTINGS.map(([k]) => k).filter(k => k !== 'look' && !(k === 'alerts' && !(V.alerts && V.alerts.available())) && !(k === 'sync' && !(V.sync && V.sync.available())));   // v421: no rows for features that need the server while it's down
       const g1 = all.filter(k => ['following', 'home', 'watch', 'alerts'].includes(k)), g2 = all.filter(k => !g1.includes(k));
       $main.innerHTML = `<div class="set380"><div class="ptl"><h1>Settings</h1></div>${look}${grp(g1)}${grp(g2)}</div>`;
       return;

@@ -751,7 +751,7 @@
         Object.entries(cur).forEach(([id, c]) => { const prev = log[id];
           if (!prev || prev.s !== c.s) { if (seeded) changes.push({ id, c, from: prev ? prev.s : '' }); log[id] = { s: c.s, at: seeded ? NOW : 0, team: c.t.id, nm: c.a.displayName || '' }; dirty = true; } });
         Object.entries(log).forEach(([id, e]) => { if (id === '__seeded' || cur[id] || e.s === 'cleared') return; if (!teams.some(t => t.id === e.team)) return; log[id] = { s: 'cleared', at: NOW, team: e.team, nm: e.nm }; dirty = true; });
-        Object.entries(log).forEach(([id, e]) => { if (id !== '__seeded' && e.s === 'cleared' && NOW - e.at > 7 * 864e5) { delete log[id]; dirty = true; } });
+        Object.entries(log).forEach(([id, e]) => { if (id !== '__seeded' && ((e.s === 'cleared' && NOW - e.at > 7 * 864e5) || (!teams.some(t => t.id === e.team) && NOW - (e.at || 0) > 7 * 864e5))) { delete log[id]; dirty = true; } });   // v421: unfollowed teams' entries go too
         if (dirty) { log.__seeded = true; store.set(LOGK, log); }
         // what posts: anything whose status changed in the last 48 hours, rest days only for players you follow
         const recent = Object.entries(log).filter(([id, e]) => id !== '__seeded' && e.at && NOW - e.at < 48 * 36e5);
