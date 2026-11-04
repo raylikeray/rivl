@@ -1,0 +1,20 @@
+name: Probe
+on: { push: { branches: [probe-live] } }
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          cat > p.mjs <<'JS'
+          const S='https://site.api.espn.com/apis/site/v2/sports/basketball/';
+          for (const lg of ['mens-college-basketball','womens-college-basketball']) for (const g of ['50','100']) {
+            const u = S+lg+'/scoreboard?dates=20261103&groups='+g+'&limit=400';
+            const j = await (await fetch(u)).json();
+            (j.events||[]).filter(e => /NCAT|N\.?C\.? A&T|WNWL|NCA&T/i.test(JSON.stringify(e.competitions[0].competitors.map(c=>c.team.abbreviation+' '+c.team.displayName)))).forEach(e => {
+              const c=e.competitions[0], st=c.status||e.status;
+              console.log(lg, 'groups', g, '|', e.name, '| date', e.date, '| state', st.type.state, st.type.name, st.type.detail, '| clock', st.displayClock, 'period', st.period, '| timeValid', c.timeValid, '| broadcasts', JSON.stringify((c.broadcasts||[]).map(b=>b.names)), '| scores', c.competitors.map(x=>x.team.abbreviation+':'+x.score).join(' '));
+            });
+          }
+          // the summary endpoint for the same game
+          JS
+          node p.mjs
