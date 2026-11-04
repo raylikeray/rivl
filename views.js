@@ -125,8 +125,8 @@
   const LOGO_PX = { s: 96, m: 128, '': 128, l: 192, hero: 256 };
   /* v405: a team with no logo (or one that fails to load) gets its letters in a plain disc instead of a hole; a logo
      drawn in a very dark colour gets a thin light edge on the dark theme so it doesn't sink into the background */
-  const monoOf = a => `<i class="smono">${esc(String(a || '').slice(0, 4))}</i>`;
-  const monoSwap = a => `var i=document.createElement('i');i.className='smono';i.textContent='${esc(String(a || '').replace(/[^A-Za-z0-9&]/g, '').slice(0, 4))}';this.replaceWith(i)`;
+  const monoOf = a => { const t = String(a || '').slice(0, 4); return `<i class="smono${t.length > 3 ? ' l4' : ''}">${esc(t)}</i>`; };
+  const monoSwap = a => { const t = String(a || '').replace(/[^A-Za-z0-9&]/g, '').slice(0, 4); return `var i=document.createElement('i');i.className='smono${t.length > 3 ? ' l4' : ''}';i.textContent='${esc(t)}';this.replaceWith(i)`; };
   const lowC = c => !BAD(c) && lumOf(hx(c)) < .13;
   const logo = (src, size = '', color = '') => { const c = BAD(color) ? '' : hx(color); const px = LOGO_PX[size] || 128; return `<span class="logo ${size === 'hero' ? '' : size}${c ? ' tint' : ''}${c && lowC(c) ? ' lowc' : ''}"${c ? ` style="${tcv(c)}"` : ''}>${imgSized(src, px, px)}</span>`; };
   /* a player's id from whatever the feed gave us: the id field, the uid, the headshot file name or a link */
@@ -246,7 +246,11 @@
     const num = (t, u, l) => pre || t.score == null ? `<span class="ssc rec">${esc(t.rec || '')}</span>` : `<span class="ssc${u ? ' up' : ''}${l ? ' lo' : ''}">${esc(String(t.score))}</span>`;
     const f = !fin && !g.off && prefs.get('forecast') ? safeF(L, g, ctx) : null;
     const pick = f && Number.isFinite(f.pHome) ? `<small>${esc((f.pHome >= .5 ? g.home : g.away).abbr || '')} ${pct(Math.max(f.pHome, 1 - f.pHome))}</small>` : '';
-    const mid = g.off ? `<span class="sft">${esc(g.off)}</span>` : live ? `<span class="slv"><i></i>${esc(g.detail || 'Live')}</span>${pick}` : fin ? `<span class="sft">${esc(finalWord(g))}</span>` : `<b class="stt">${esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT)$/, ''))}</b>${pick}`;
+    /* v416: a game well past its tip that the feed still files as scheduled is one ESPN isn't covering live (small-school
+       games on streaming-only services). It reads as such rather than as a game still to come. */
+    const stale = pre && !g.off && g.timeValid !== false && g.date && Date.now() - new Date(g.date).getTime() > 15 * 60000 && Date.now() - new Date(g.date).getTime() < 5 * 3600000;
+    const tipT = esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT|EST|EDT|PST|PDT|MST|MDT)$/, ''));
+    const mid = g.off ? `<span class="sft">${esc(g.off)}</span>` : live ? `<span class="slv"><i></i>${esc(g.detail || 'Live')}</span>${pick}` : fin ? `<span class="sft">${esc(finalWord(g))}</span>` : stale ? `<span class="snl">Under way</span><small>No live score</small>` : `<b class="stt">${tipT}</b>${pick}`;
     const key = [g.state, g.away.score, g.home.score, g.detail, g.off || ''].join('|');
     return `<a class="srow${live ? ' on' : ''}" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}" data-k="${esc(key)}">${side(g.away, lo(a, h))}${num(g.away, up(a, h), lo(a, h))}<span class="smid">${mid}</span>${num(g.home, up(h, a), lo(h, a))}${side(g.home, lo(h, a))}</a>`;
   }

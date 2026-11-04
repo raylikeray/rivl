@@ -4647,3 +4647,12 @@ html body .g2 .g2fx{z-index:30}
 /* v415: the bar's diagonal seam is a see-through white stripe; under it the bar now has the page's own solid ground, so
    the header scrolling beneath can't show through the stripe */
 html body .g2 .g2fx{background:var(--bg,#000)}
+
+/* ===== v416 ===== */
+/* a team with no logo: the letter disc never gives up width to a long name beside it (it was squeezed into an oval) */
+.scr{flex:none}
+html body .smono{flex:none;width:100%;height:100%;font-size:10px}
+html body .smono.l4{font-size:8.5px;letter-spacing:-.01em}
+/* a game past tip that the feed isn't covering live */
+.snl{display:block;font:750 15px/1.15 var(--ui);color:var(--ink-2)}
+.smid small:has(+ *),.smid .snl + small{white-space:nowrap}
