@@ -523,7 +523,8 @@
     const fp = fplayers.all().filter(p => p.lk === lk);
     const P = prefs.all(); const yday = addDays(today, -1);
     const dead = () => feedSrc[lk] !== s;
-    const S0 = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null };
+    const S0 = { games: [], last: [], ctx: null, st: null, tIdx: {}, teams: null, sums: {}, news: null, inj: null, older: {}, rec: null };
+    s.depth = 0;   // v425: how many days before yesterday the river has reached (continuous scroll reaches back about a week)
     const favTeam = t => mine.includes(String(t.id));
     const teamOf = p => { const k = String(p.team || '').toLowerCase(); return t => (p.teamId && String(t.id) === String(p.teamId)) || (k && [t.abbr, t.short, t.name].some(x => String(x || '').toLowerCase() === k)); };
     const basicTeam = id => { const t = S0.tIdx[id]; const r = S0.st && S0.st.byId && S0.st.byId[id]; if (!t && !r) return null; return { id, abbr: t ? t.abbr : r.abbr, name: t ? t.name : r.name, short: t ? t.short : r.short, loc: t ? t.loc : r.loc, color: teamColor({ id, color: t && t.color }, L), logo: (t && t.logo) || (r && r.logo) || '', rec: r ? `${r.w}-${r.l}` : '', standing: r && L.standingsMode !== 'conferences' ? `${ordinal(r.pos)} in the ${confName(r.group, r.groupAbbr)}` : '', row: r || null, next: null, last: null }; };
@@ -588,8 +589,8 @@
           const txt = out ? `<b>${esc(nm)}</b> is out${part && !rest ? ` with ${/^[aeiou]/.test(part) ? 'an' : 'a'} ${esc(part)} injury` : ''}${ret && !ret.past ? (ret.far ? ' for the season.' : `, back around ${esc(ret.long)}.`) : '.'}` : `<b>${esc(nm)}</b> is ${esc(st.toLowerCase())}${part ? ` (${esc(part)})` : ''}.`;
           return { k: e.at, imp: c.s === 'season' ? 4 : c.s === 'out' ? 3 : c.s === 'doubtful' ? 2 : 1, html: () => post(e.at, '', headshot(hsUrl(c.a) || (p && p.img) || '', teamColor(t, L), 40, nm), esc(t.short), 'Injury', txt, '', ` data-act="injury" data-key="${esc(key)}"`, '', 'finj') };
         }).filter(Boolean).sort((a, b) => (b.imp - a.imp) || (b.k - a.k));
-        rows.slice(0, 5).forEach(r => r.html());
-        if (rows.length > 5) { const n0 = posts.length; rows.slice(5).forEach(r => r.html()); posts.slice(n0).forEach(pp => { pp.html = pp.html.replace('class="fp finj"', 'class="fp finj fmore" hidden'); });
+        rows.forEach(r => r.html());
+        if (false) { const n0 = posts.length; rows.slice(5).forEach(r => r.html()); posts.slice(n0).forEach(pp => { pp.html = pp.html.replace('class="fp finj"', 'class="fp finj fmore" hidden'); });
           posts.push({ tier, k: -Infinity, html: `<button class="fp fmorebtn" data-act="injmore"><span class="fav"><span class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></span><span class="fb"><span class="ft">${rows.length - 5} more injury update${rows.length - 5 === 1 ? '' : 's'}</span></span></button>` }); }
       }
       // 5 · standings moves since yesterday
@@ -600,26 +601,82 @@
         if (snap.day !== today) snap = { day: today, prev: snap.cur || {}, cur: now }; else snap.cur = Object.assign({}, snap.cur, now);
         store.set(SK, snap);
         teams.forEach(t => { const a = snap.prev[t.id], b = snap.cur[t.id]; const r = S0.st.byId[t.id]; if (!a || !b || a === b || !r) return;
-          const up = b < a; post(NOW - 864e5 / 2, href.team(lk, t.id), crest(t), esc(t.short), 'Standings', `${up ? 'Climb' : 'Slip'} to <b>${ordinal(b)} in the ${esc(confName(r.group, r.groupAbbr))}</b>, ${up ? 'up' : 'down'} from ${ordinal(a)}. ${esc(`${r.w}-${r.l}`)}.`, '', '', 'today'); });
+          const up = b < a; const cf = esc(confName(r.group, r.groupAbbr)); post(NOW - 864e5 / 2, href.team(lk, t.id), crest(t), esc(t.short), 'Standings', b === 1 && up ? `Take over <b>1st in the ${cf}</b>. ${esc(`${r.w}-${r.l}`)}.` : `${up ? 'Up' : 'Down'} to <b>${ordinal(b)} in the ${cf}</b>, from ${ordinal(a)}. ${esc(`${r.w}-${r.l}`)}.`, '', '', 'today'); });
       }
-      // 6 · news from the last two days: yours, plus the league's big stories (the wire) for the Following tab
+      // 6 · news: yours for the week (the scroll reaches back), the league's fill for two days, the big stories for a day
       tier = 6;
+      const LIST = /power rankings?|rankings?:|takeaways|winners and losers|grades|things (we|to) (learned|know|watch)|best bets|picks|predictions|biggest questions|ranking every|top \d+/i;
       if (P.news && S0.news) {
-        const fresh = a => !a.published || NOW - new Date(a.published).getTime() < 2 * 864e5;
-        const all = (S0.news.articles || []).filter(HW.readable).filter(fresh); const mineA = all.filter(a => tagged(a));
-        const fill = mineA.length >= 3 ? [] : all.filter(a => !mineA.includes(a)).slice(0, 3 - mineA.length);
-        const big = all.filter(a => !mineA.includes(a) && HW.isWire(a) && a.published && NOW - new Date(a.published).getTime() < 864e5).slice(0, 2);
-        const arts = [...mineA.slice(0, 6).map(a => [a, 'mine']), ...fill.map(a => [a, 'fill']), ...big.filter(a => !fill.includes(a)).map(a => [a, 'big'])];
+        const age = a => a.published ? NOW - new Date(a.published).getTime() : 864e5;
+        const all = (S0.news.articles || []).filter(HW.readable).filter(a => age(a) < 7 * 864e5); const mineA = all.filter(a => tagged(a));
+        const fresh2 = all.filter(a => age(a) < 2 * 864e5 && !mineA.includes(a));
+        const fill = mineA.filter(a => age(a) < 2 * 864e5).length >= 3 ? [] : fresh2.slice(0, 3 - mineA.filter(a => age(a) < 2 * 864e5).length);
+        const big = fresh2.filter(a => HW.isWire(a) && age(a) < 864e5).slice(0, 2);
         const fillIds = new Set(fill.map(a => String(a.id))), bigIds = new Set(big.map(a => String(a.id)));
-        arts.filter(([a]) => !wireIds.has(String(a.id))).forEach(([a, why]) => { const r = HW.v5.newsRow(lk, a); const hrefM = /^<a class="row" href="([^"]+)"/.exec(r); const vid = /data-vid="([^"]+)"/.exec(r); const im = /<img[^>]+src="([^"]+)"/.exec(r);
+        const listDays = new Set();   // one listicle (power rankings and the like) a day
+        const arts = [...new Set([...mineA, ...fill, ...big])].filter(a => !wireIds.has(String(a.id))).filter(a => { if (!LIST.test(a.headline || '')) return true; const d = HW.ymdOf(a.published || new Date().toISOString()); if (listDays.has(d)) return false; listDays.add(d); return true; });
+        arts.forEach(a => { const r = HW.v5.newsRow(lk, a); const hrefM = /^<a class="row" href="([^"]+)"/.exec(r); const vid = /data-vid="([^"]+)"/.exec(r);
           const tid = (a.categories || []).map(c => c.type === 'team' ? String(c.teamId || (c.team && c.team.id) || '') : '').find(id => id && S0.tIdx[id]); const tm = tid ? S0.tIdx[tid] : null;
           const av = tm ? crest(tm) : `<span class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4.5" width="16" height="15" rx="2.5"/><path d="M8 9h8M8 12.5h8M8 16h5"/></svg></span>`;
-          const extra = im ? `<span class="fimg"><img src="${im[1]}" alt="" loading="lazy" onerror="this.parentNode.remove()">${vid ? '<i class="play"></i>' : ''}</span>` : '';
+          // a real photo is wide and big; a square or small image is a logo and never runs
+          const ph = (a.images || []).filter(x => x && x.url && (+x.width || 0) >= 400 && (+x.height || 1) > 0 && (+x.width / (+x.height || 1)) >= 1.3).sort((x, y) => (+y.width || 0) - (+x.width || 0))[0];
           const ts = a.published ? new Date(a.published).getTime() : NOW - 864e5; const n0 = posts.length;
-          if (vid) post(ts, '', av, esc(tm ? tm.short : L.label), 'Video', esc(a.headline), extra, ` data-act="play" data-vid="${vid[1]}"`);
-          else post(ts, hrefM ? hrefM[1] : '', av, esc(tm ? tm.short : L.label), 'News', esc(a.headline), extra);
-          posts.slice(n0).forEach(pp => { pp.fill = fillIds.has(String(a.id)) && why !== 'mine'; pp.big = bigIds.has(String(a.id)) && why !== 'mine'; }); });
+          const who = esc(tm ? tm.short : L.label); const desc = a.description && a.description !== a.headline ? `<span class="fd">${esc(a.description)}</span>` : '';
+          if (vid) { const im = /<img[^>]+src="([^"]+)"/.exec(r); post(ts, '', av, who, 'Video', esc(a.headline), im ? `<span class="fimg"><img src="${im[1]}" alt="" loading="lazy" onerror="this.parentNode.remove()"><i class="play"></i></span>` : '', ` data-act="play" data-vid="${vid[1]}"`); }
+          else post(ts, hrefM ? hrefM[1] : '', av, who, 'News', `<span class="fhl">${esc(a.headline)}</span>${desc}`, ph ? `<span class="fth"><img src="${esc(ph.url)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>` : '', '', '', 'fnw' + (ph ? ' hth' : ''));
+          posts.slice(n0).forEach(pp => { pp.t = 'news'; pp.fill = fillIds.has(String(a.id)) && !mineA.includes(a); pp.big = bigIds.has(String(a.id)) && !mineA.includes(a);
+            if (ph && !vid && HW.isWire(a) && age(a) < 864e5) pp.hero = pp.html.replace('class="fp fnw hth"', 'class="fp fnw fhero"').replace(/<span class="fth">(<img[^>]+>)<\/span>/, '<span class="fimg">$1</span>'); }); });
       }
+      /* 7 · the games: your older finals (the scroll reaches back), the league's games worth a look (upsets, a top-10
+         meeting, overtime, a one-possession finish), the big nights, and your teams' streaks */
+      tier = 7;
+      const pastG = [...last, ...games.filter(g => HW.ymdOf(g.date) === today), ...Object.values(S0.older).flat()].filter((g, i, arr) => isDone(g) && !g.off && arr.findIndex(x => x.id === g.id) === i);
+      const byDay = {}; pastG.forEach(g => { (byDay[HW.ymdOf(g.date)] = byDay[HW.ymdOf(g.date)] || []).push(g); });
+      const fpIds = new Set(fp.map(p => String(p.id)));
+      const scoreTxt = (w, l) => `${esc(String(w.score))}-${esc(String(l.score))}`;
+      const rk = t => t.rank ? `No. ${t.rank} ` : '';
+      Object.entries(byDay).forEach(([day, list]) => {
+        const recent = day >= yday;   // the last two days are Since last night's; older finals of yours post in the river
+        list.forEach(g => { if (recent || !isFav(g) || !P.brief) return; const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = +us.score > +them.score;
+          post(endTs(g), href.game(lk, g.id), crest(us), esc(us.short), 'Final', `${won ? 'Beat' : 'Lost to'} ${esc(them.short)}, <b>${won ? scoreTxt(us, them) : scoreTxt(us, them)}</b>${/OT/.test(finalWord(g)) ? ` in ${esc(finalWord(g).replace(/^Final\/?\s*/i, '') || 'OT')}` : ''}.`, strip(g)); posts[posts.length - 1].t = 'game'; });
+        if (!P.news) return;
+        // the league's games worth a look (never yours: those are above)
+        const others = list.filter(g => !isFav(g)); let nUp = 0, nClose = 0;
+        others.map(g => { const w = +g.home.score > +g.away.score ? g.home : g.away, l = w === g.home ? g.away : g.home; const m = +w.score - +l.score; const ot = /OT/.test(finalWord(g));
+          const upset = L.hasRankings && l.rank && (!w.rank || w.rank > l.rank + 4); const top = L.hasRankings && w.rank && l.rank && w.rank <= 10 && l.rank <= 10;
+          return { g, w, l, m, ot, upset, top, close: m <= 3 || ot }; })
+          .filter(x => x.upset || x.top || x.close).sort((a, b) => (b.upset - a.upset) || (b.top - a.top) || (a.m - b.m))
+          .forEach(x => { const { g, w, l } = x; let txt;
+            if ((x.upset || x.top) && nUp < 2) { nUp++; txt = x.upset ? `${w.rank ? `No. ${w.rank}` : 'Unranked'} ${esc(w.short)} ${x.m <= 3 ? 'edge' : 'knock off'} No. ${l.rank} ${esc(l.short)}, <b>${scoreTxt(w, l)}</b>.` : `${rk(w)}${esc(w.short)} beat ${rk(l)}${esc(l.short)}, <b>${scoreTxt(w, l)}</b>.`; }
+            else if (x.close && !x.upset && !x.top && nClose < 2) { nClose++; txt = x.ot ? `${rk(w)}${esc(w.short)} beat ${rk(l)}${esc(l.short)} in ${esc(finalWord(g).replace(/^Final\/?\s*/i, '') || 'OT')}, <b>${scoreTxt(w, l)}</b>.` : `${rk(w)}${esc(w.short)} ${x.m === 1 ? 'edge' : 'hold off'} ${rk(l)}${esc(l.short)} by ${x.m}, <b>${scoreTxt(w, l)}</b>.`; }
+            if (!txt) return; post(endTs(g), href.game(lk, g.id), crest(w), esc(w.short), x.upset ? 'Upset' : 'Final', txt, strip(g)); const pp = posts[posts.length - 1]; pp.t = 'game'; pp.big = true; pp.fill = true; });
+        // big nights, from each side's leaders: 40 points (35 in college), 20 boards, 15 assists, or 10 or more in all three
+        const PTS = L.standingsMode === 'conferences' ? 35 : 40; const nights = [];
+        list.forEach(g => [g.home, g.away].forEach(t => { const by = {}; (t.leaders || []).forEach(c => { const a = c.leaders && c.leaders[0]; if (!a || !a.athlete) return; const nm = (c.name || '').toLowerCase(); const k = /point/.test(nm) && !/per/.test(nm) ? 'pts' : /rebound/.test(nm) && !/per/.test(nm) ? 'reb' : /assist/.test(nm) && !/per/.test(nm) ? 'ast' : ''; if (!k) return; const id = athId(a.athlete); (by[id] = by[id] || { a: a.athlete, s: {} }).s[k] = +(a.value ?? parseFloat(a.displayValue)); });
+          Object.entries(by).forEach(([id, x]) => { const st = x.s; const tri = st.pts >= 10 && st.reb >= 10 && st.ast >= 10; const score = (st.pts >= PTS ? st.pts : 0) + (st.reb >= 20 ? st.reb * 2 : 0) + (st.ast >= 15 ? st.ast * 2 : 0) + (tri ? 60 : 0); if (!score) return; nights.push({ g, t, id, a: x.a, st, tri, score, mine: fpIds.has(id) }); }); }));
+        nights.filter(x => !(recent && x.mine)).sort((a, b) => (b.mine - a.mine) || (b.score - a.score)).filter((x, i, arr) => x.mine || arr.filter(y => !y.mine).indexOf(x) < 3).forEach(x => {
+          const { g, t, a, st } = x; const them = t === g.home ? g.away : g.home; const won = +t.score > +them.score;
+          const chips = [['pts', 'PTS'], ['reb', 'REB'], ['ast', 'AST']].filter(([k]) => Number.isFinite(st[k])).map(([k, l]) => `<s>${esc(String(st[k]))}<em>${l}</em></s>`).join('');
+          post(endTs(g), `${href.game(lk, g.id)}/p/${esc(athId(a))}`, headshot(hsUrl(a), teamColor(t, L), 40, a.displayName || ''), esc(a.shortName || a.displayName || ''), x.tri ? 'Triple-double' : 'Big night', `<span class="fchips">${chips}</span><span class="ffin">${esc(t.short)} ${won ? 'beat' : 'lost to'} ${esc(them.short)}, ${esc(String(t.score))}-${esc(String(them.score))}</span>`, '', '', '', 'fperf');
+          const pp = posts[posts.length - 1]; pp.t = 'perf'; if (!x.mine) { pp.big = true; pp.fill = true; } });
+      });
+      // streaks: five or more either way, posted at the end of the latest game
+      if (P.teams && S0.st && S0.st.byId) teams.forEach(t => { const r = S0.st.byId[t.id]; const m = r && /^([WL])\s*(\d+)$/i.exec(String(r.strk || '').trim()); if (!m || +m[2] < 5) return;
+        const g = pastG.filter(g => favTeam(g.home) && g.home.id === String(t.id) || favTeam(g.away) && g.away.id === String(t.id)).sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+        post(g ? endTs(g) : NOW - 864e5 / 2, href.team(lk, t.id), crest(t), esc(t.short), 'Streak', /w/i.test(m[1]) ? `<b>${m[2]} straight wins.</b> ${esc(`${r.w}-${r.l}`)}.` : `<b>${m[2]} straight losses.</b> ${esc(`${r.w}-${r.l}`)}.`); posts[posts.length - 1].t = 'x'; });
+      /* 8 · RIVL's own voice: the game of the night in the afternoon, how the calls went in the morning */
+      tier = 8;
+      const RV = `<span class="frv"><img src="img/apple-touch-icon.png" alt=""></span>`;
+      const at = (h) => { const d = new Date(); d.setHours(h, 0, 0, 0); return d.getTime(); };
+      if (prefs.get('forecast') && ctx && NOW >= at(11)) {
+        const cand = games.filter(g => g.state === 'pre' && !g.off && HW.ymdOf(g.date) === today && new Date(g.date).getTime() > NOW).map(g => ({ g, f: safeF(L, g, ctx) })).filter(x => x.f && Number.isFinite(x.f.pHome)).sort((a, b) => rankGame(b.g) - rankGame(a.g)).slice(0, 6);
+        const best = cand.sort((a, b) => Math.abs(a.f.pHome - .5) - Math.abs(b.f.pHome - .5))[0];
+        if (best) { const { g, f } = best; const favT = f.pHome >= .5 ? g.home : g.away; const pc = Math.round(Math.max(f.pHome, 1 - f.pHome) * 100); const tip = esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT|EST|EDT|PST|PDT|MST|MDT)$/, ''));
+          post(Math.min(at(12), NOW - 6e4), href.game(lk, g.id), RV, 'RIVL', 'Game of the night', `<b>${esc(g.away.short)} ${g.neutral ? 'vs' : 'at'} ${esc(g.home.short)}</b>, ${tip}. ${pc <= 52 ? 'A coin flip' : `${esc(favT.short)} at ${pc}%`}${cand.length >= 3 && pc <= 60 ? ', the closest call of the night' : ''}.`, '', '', '', 'frivl'); const pp = posts[posts.length - 1]; pp.t = 'rivl'; pp.rivl = true; }
+      }
+      const rg = S0.rec && Array.isArray(S0.rec.games) ? S0.rec.games.filter(x => x.date === yday && Number.isFinite(+x.hs) && Number.isFinite(+x.as) && Number.isFinite(+x.p) && +x.hs !== +x.as) : [];
+      if (rg.length >= 4 && NOW >= at(7)) { const hit = rg.filter(x => (+x.p >= .5) === (+x.hs > +x.as)).length;
+        post(Math.min(at(8), NOW - 6e4), '#record', RV, 'RIVL', 'The calls', `RIVL went <b>${hit} of ${rg.length}</b> on yesterday's ${esc(L.label)} calls.`, '', '', '', 'frivl'); const pp = posts[posts.length - 1]; pp.t = 'rivl'; pp.rivl = true; }
       // 0 · breaking, pinned above everything (v391, Ray's pick A)
       tier = 0;
       (S0.wireItems || []).forEach((a, i) => {
@@ -644,7 +701,7 @@
         });
       }
       s.out = { L, lk, ctx, follows: mine.length > 0 || fp.length > 0, offS, unr, liveAll, preAll, digest,
-        wire: posts.filter(p => p.tier === 0), river: posts.filter(p => p.tier >= 4) };
+        wire: posts.filter(p => p.tier === 0), river: posts.filter(p => p.tier >= 4), deep: s.depth < 7 };
       s.at = Date.now();
       s.subs.forEach(f => f());
     };
@@ -673,10 +730,11 @@
       await Promise.all(ids.map(async id => { S0.sums[id] = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 3600000); }));
       if (dead()) return; build();
     })());
-    if (P.news || P.wire) later.push((async () => { S0.news = await jSoft(`${API(L)}/news?limit=25`, 600000); if (dead()) return; build(); })());
+    if (P.news || P.wire) later.push((async () => { S0.news = await jSoft(`${API(L)}/news?limit=50`, 600000); if (dead()) return; build(); })());
     if (lk === 'wnba' && HW.hub) later.push((async () => { S0.unr = await unrivaledCard(true).catch(() => ''); if (dead() || !S0.unr) return; build(); })());
     if (P.brief && fp.length && !games.length) later.push((async () => { S0.lp = await leaguePlayers(L).catch(() => null); if (dead()) return; build(); })());
     if (!S0.inj && mine.length && P.injuries) later.push((async () => { S0.inj = await injuries(L).catch(() => null); if (dead()) return; build(); })());
+    later.push((async () => { S0.rec = HW.record ? await HW.record(L).catch(() => null) : null; if (dead()) return; build(); })());
     Promise.all(later).catch(() => { });
 
     // ----- while the app sits on Home: scores every pass, the rest every few minutes, patched quietly -----
@@ -688,7 +746,7 @@
       if (due) {
         quietAt = Date.now();
         try { for (const k of [...HW.cache.keys()]) if (/\/injuries|\/news\?|\/summary\?event=/.test(k) && k.includes(L.path)) HW.cache.delete(k); } catch { }
-        const [last2, inj2, news2] = await Promise.all([scoreboard(L, yday, 0).catch(() => null), mine.length && P.injuries ? injuries(L).catch(() => null) : null, P.news || P.wire ? jSoft(`${API(L)}/news?limit=25`, 0) : null]);
+        const [last2, inj2, news2] = await Promise.all([scoreboard(L, yday, 0).catch(() => null), mine.length && P.injuries ? injuries(L).catch(() => null) : null, P.news || P.wire ? jSoft(`${API(L)}/news?limit=50`, 0) : null]);
         if (dead()) return;
         if (last2) S0.last = last2.filter(g => HW.ymdOf(g.date) === yday); if (inj2) S0.inj = inj2; if (news2) S0.news = news2;
         if (fp.length) { const ids = [...new Set(fp.map(p => { const is = teamOf(p); const g = S0.last.find(g => isDone(g) && (is(g.home) || is(g.away))); return g ? g.id : null; }).filter(Boolean))]; await Promise.all(ids.map(async id => { const d = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(id)}`, 0); if (d) S0.sums[id] = d; })); }
@@ -696,9 +754,17 @@
       }
       build();
     };
+    /* v425: continuous scroll reaches back a day at a time, about a week deep */
+    s.older = async () => {
+      if (dead() || s.depth >= 7) return false;
+      const n = s.depth + 1; const day = addDays(today, -1 - n);
+      const gs = await scoreboard(L, day, 3600000).catch(() => []); if (dead()) return false;
+      S0.older[day] = onDay(gs, day, day); s.depth = n; build(); return true;
+    };
   }
   const tagLg = (html, L) => html.replace('<time>', `<i class="flg">${esc(L.label)}</i><time>`);
   const homeSkel = () => skeleton(1, 'card') + skeleton(5, 'row');
+  const homeShown = {};   // v425: how far down each Home tab has scrolled into the river, so a return lands where it was
   async function home(tab) {
     if (!HTABS.includes(tab)) tab = 'following';
     const token = ++homeToken; const today = todayCT();
@@ -715,7 +781,7 @@
     let painted = false;
     const wrap = k => `<section class="hsec2" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;
     const compose = () => {
-      const outs = srcs.map(s => s.out).filter(Boolean);
+      const outs = srcs.map(s => s.out).filter(Boolean); const NOW0 = Date.now();
       const fol = tab === 'following';
       ORD.forEach(k => delete secs[k]);
       const one = !fol ? outs[0] : null;
@@ -743,11 +809,20 @@
       // since last night
       const dg = outs.flatMap(o => o.digest).sort((a, b) => b.k - a.k);
       if (dg.length) { const y = dg.some(d => d.y);
-        secs.digest = `<div class="hdg${fol ? '' : ' one'}"><div class="hhd">${y ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20.4 14.2A8.5 8.5 0 1 1 9.8 3.6a7 7 0 0 0 10.6 10.6z"/></svg>Since last night' : 'Earlier today'}</div>${clip(dg.map(d => d.html), 'dgl', 5, 'results')}</div>`; }
-      // the river: everything else, newest first, leagues mixed
-      const river = outs.flatMap(o => o.river.filter(p => !fol || !p.fill || p.big).map(p => ({ k: p.k, html: fol ? tagLg(p.html, o.L) : p.html }))).sort((a, b) => b.k - a.k);
-      const SHOW = 15;
-      if (river.length) secs.river = `<div class="feed hfl${river.length > SHOW ? ' lclip fclip' : ''}">${river.slice(0, 40).map(p => p.html).join('')}${river.length > SHOW ? `<button class="cliptog" data-act="clip" data-total="${Math.min(40, river.length)}" aria-expanded="false">Show ${Math.min(40, river.length) - SHOW} more</button>` : ''}</div>`;
+        secs.digest = `<div class="hdg${fol ? '' : ' one'}"><div class="hhd">${y ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20.4 14.2A8.5 8.5 0 1 1 9.8 3.6a7 7 0 0 0 10.6 10.6z"/></svg>Since last night' : 'Earlier today'}</div><div class="dgl">${dg.map(d => d.html).join('')}</div></div>`; }
+      // the river: everything else, newest first, leagues mixed. Following carries everything about what you follow,
+      // and from the rest of a league only its big moments (and those only for leagues you follow something in)
+      let river = outs.flatMap(o => o.river.filter(p => !fol || (o.follows ? (!p.fill || p.big) : (p.big && p.t === 'news'))).map(p => ({ k: p.k, t: p.t || 'x', html: fol ? tagLg(p.html, o.L) : p.html, hero: p.hero ? (fol ? tagLg(p.hero, o.L) : p.hero) : '' }))).sort((a, b) => b.k - a.k);
+      // never three stories in a row when something else from the same few hours can sit between them
+      { const out = [], rest = river.slice(); while (rest.length) { const x = rest.shift(); const n = out.length;
+          if (x.t === 'news' && n >= 2 && out[n - 1].t === 'news' && out[n - 2].t === 'news') { const j2 = rest.findIndex(y => y.t !== 'news' && x.k - y.k <= 6 * 36e5); if (j2 >= 0) { out.push(rest.splice(j2, 1)[0]); rest.unshift(x); continue; } }
+          out.push(x); } river = out; }
+      // one big picture a day: the newest big story with a real photo
+      const hi = river.findIndex(p => p.hero && NOW0 - p.k < 864e5); if (hi >= 0) river[hi] = Object.assign({}, river[hi], { html: river[hi].hero });
+      secs.riverAll = river;
+      const deep = outs.some(o => o.deep);
+      const shown = Math.min(river.length, homeShown[tab] || 15);
+      if (river.length) secs.river = `<div class="feed hfl" data-n="${shown}" data-h0="${hashOf(river.slice(0, shown).map(p => p.html).join(''))}">${river.slice(0, shown).map(p => p.html).join('')}${shown < river.length || deep ? '<div class="hmore" data-more><i></i><i></i><i></i></div>' : '<div class="hend">You’re caught up</div>'}</div>`;
     };
     const paint = () => {
       if (!alive()) return;
@@ -760,7 +835,7 @@
         const quiet = `<div class="hquiet"><b>${tab === 'following' ? 'Quiet for now' : `Nothing in ${esc(LEAGUES[tab].label)} yet`}</b><span>${tab === 'following' || followsIn(tab) ? 'Games, results, injury changes and news about your teams and players land here as they happen.' : `Follow ${esc(LEAGUES[tab].label)} teams and players and their games and news land here.`}</span>${tab !== 'following' && !followsIn(tab) ? '<a class="btn" href="#teams">Choose teams</a>' : ''}</div>`;
         $main.innerHTML = `<div class="hfeed" data-tab="${tab}">${has ? ORD.filter(k => secs[k]).map(wrap).join('') : ready ? quiet : homeSkel()}</div>`;
         if (!has && !ready) painted = false;
-        return;
+        watchMore(); return;
       }
       const root = $main.querySelector('.hfeed');
       if (!has) { if (ready && !root.querySelector('.hquiet')) { painted = false; paint(); } return; }
@@ -768,6 +843,16 @@
       ORD.forEach(k => {
         const cur = root.querySelector(`section[data-sec="${k}"]`);
         if (!secs[k]) { if (cur) cur.remove(); return; }
+        if (cur && k === 'river' && cur.dataset.h !== hashOf(secs[k])) {   // the river grows at the bottom: when what's there is unchanged, only the new rows go in
+          const f = cur.querySelector('.feed.hfl'); const n = f ? +f.dataset.n : 0; const all = secs.riverAll || []; const shown = Math.min(all.length, homeShown[tab] || 15);
+          if (f && n && shown >= n && f.dataset.h0 === hashOf(all.slice(0, n).map(p => p.html).join(''))) {
+            const tail = f.querySelector(':scope > .hmore,:scope > .hend'); const add = all.slice(n, shown).map(p => p.html).join('');
+            if (tail) tail.insertAdjacentHTML('beforebegin', add); else f.insertAdjacentHTML('beforeend', add);
+            const end = shown < all.length || outsDeep() ? '<div class="hmore" data-more><i></i><i></i><i></i></div>' : '<div class="hend">You\u2019re caught up</div>';
+            if (tail) tail.outerHTML = end; else f.insertAdjacentHTML('beforeend', end);
+            f.dataset.n = shown; f.dataset.h0 = hashOf(all.slice(0, shown).map(p => p.html).join('')); cur.dataset.h = hashOf(secs[k]); return;
+          }
+        }
         if (cur) { if (cur.dataset.h !== hashOf(secs[k])) { const open = [...cur.querySelectorAll('.lclip')].map(x => x.classList.contains('open')); const sl = (cur.querySelector('.hstrip') || {}).scrollLeft || 0;
           cur.insertAdjacentHTML('afterend', wrap(k)); const nu = cur.nextElementSibling; cur.remove();
           [...nu.querySelectorAll('.lclip')].forEach((x, i) => { if (!open[i]) return; x.classList.add('open'); const b = x.querySelector(':scope > .cliptog'); if (b) { b.setAttribute('aria-expanded', 'true'); b.textContent = 'Show less'; } });
@@ -775,7 +860,26 @@
         const after = ORD.slice(ORD.indexOf(k) + 1).map(j => root.querySelector(`section[data-sec="${j}"]`)).find(Boolean);
         if (after) after.insertAdjacentHTML('beforebegin', wrap(k)); else root.insertAdjacentHTML('beforeend', wrap(k));
       });
+      watchMore();
     };
+    /* continuous scroll: when the bottom of the river comes near, the next rows go in; when the days in hand run out,
+       every source reaches back one more day, up to about a week */
+    const outsDeep = () => srcs.some(s => s.out && s.out.deep);
+    let io = null, loadingMore = false;
+    const more = async () => {
+      if (loadingMore || !alive()) return; loadingMore = true;
+      try {
+        const all = secs.riverAll || []; const shown = Math.min(all.length, homeShown[tab] || 15);
+        if (all.length - shown < 15 && outsDeep()) await Promise.all(srcs.map(s => s.older ? s.older().catch(() => false) : false));
+        homeShown[tab] = shown + 15; if (alive()) paint();
+      } finally { loadingMore = false; }
+      requestAnimationFrame(() => { const m = $main.querySelector('.hfeed [data-more]'); if (m && m.getBoundingClientRect().top < innerHeight + 600) more(); });
+    };
+    function watchMore() {
+      if (!('IntersectionObserver' in window)) return;
+      if (!io) io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) more(); }, { rootMargin: '0px 0px 900px 0px' });
+      io.disconnect(); const m = $main.querySelector('.hfeed [data-more]'); if (m) io.observe(m);
+    }
     let raf = 0; const sched = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; paint(); }); };
     srcs.forEach(s => s.subs.add(sched));
     const unsub = () => srcs.forEach(s => s.subs.delete(sched));
@@ -783,7 +887,7 @@
     HW.v5.refresh = async () => { if (!alive()) { unsub(); return; } await Promise.all(srcs.map(s => s.refresh ? s.refresh().catch(() => { }) : null)); };
     HW.v5.refresh.every = 90000;
     await Promise.race([Promise.all(srcs.map(s => s.ready)), new Promise(r => setTimeout(r, 6000))]);
-    if (!alive()) { unsub(); return; }
+    if (!alive()) { unsub(); if (io) io.disconnect(); return; }
     paint();
   }
 

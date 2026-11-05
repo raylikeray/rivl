@@ -4787,3 +4787,40 @@ html body .reader img.imsm{width:auto!important;height:auto!important;max-width:
 html body .approf .stats.tsg{margin-bottom:0}
 html body .approf .stats.tsg + .tbl.ff{margin-top:14px!important}
 html body .approf .stats.tsg b{font-size:clamp(21px,6.2vw,29px);letter-spacing:-.03em}
+
+/* ===== v425 · the feed: compact stories with a thumb, one big picture a day, big nights, RIVL's voice, endless scroll ===== */
+/* a story: headline, one line of the story, a small photo on the right when it has a real one */
+.fp.fnw .ft{display:flex;flex-direction:column;gap:3px}
+.fp.fnw .fhl{font-weight:650;letter-spacing:-.005em}
+.fp.fnw .fd{font-size:14px;line-height:1.35;color:var(--ink-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fp.fnw.hth .fb{display:grid;grid-template-columns:minmax(0,1fr) 74px;column-gap:12px;align-items:start}
+.fp.fnw.hth .fh{grid-column:1/-1}
+.fp.fnw.hth .ft{grid-column:1;grid-row:2}
+.fth{grid-column:2;grid-row:2;width:74px;height:74px;border-radius:12px;overflow:hidden;background:var(--surf-3);margin-top:4px}
+.fth img{width:100%;height:100%;object-fit:cover;display:block}
+.fth:has(img.imsm){display:none}
+/* the day's big picture */
+.fp.fhero .fimg{aspect-ratio:16/9;margin-top:10px}
+.fp.fhero .fhl{font-size:17px;font-weight:750;line-height:1.3}
+/* a big night: the line as chips, the final under it */
+.fchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:3px}
+.fchips s{text-decoration:none;display:inline-flex;align-items:baseline;gap:4px;padding:5px 10px;border-radius:10px;background:var(--surf-2);font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+.fchips s em{font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--ink-3)}
+.ffin{display:block;margin-top:7px;font-size:13px;font-weight:600;color:var(--ink-3)}
+/* RIVL's own posts: the app icon, a blue name */
+.frv{width:40px;height:40px;border-radius:50%;overflow:hidden;display:block;box-shadow:inset 0 0 0 .5px var(--line-2)}
+.frv img{width:100%;height:100%;display:block}
+.fp.frivl .fh b{color:#1D9BF0}
+:root[data-theme="dark"] .fp.frivl .fh b{color:#3EA6FF}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .fp.frivl .fh b{color:#3EA6FF} }
+/* the bottom of the river: three dots while the next rows load, a quiet line when there's nothing older */
+.hmore{display:flex;justify-content:center;gap:6px;padding:22px 0 10px}
+.hmore i{width:6px;height:6px;border-radius:50%;background:var(--ink-3);opacity:.35;animation:hmd 1s ease-in-out infinite}
+.hmore i:nth-child(2){animation-delay:.15s}.hmore i:nth-child(3){animation-delay:.3s}
+@keyframes hmd{50%{opacity:.9;transform:translateY(-2px)}}
+@media (prefers-reduced-motion:reduce){ .hmore i{animation:none} }
+.hend{text-align:center;padding:22px 0 8px;font-size:13px;font-weight:600;color:var(--ink-3)}
+/* since last night lists every row now: no "show more" */
+.hdg .dgl > .dgr:last-child{border-bottom:0}
+/* the Unrivaled card sits inside the page's side margins on the flat feed */
+.hfeed .hsec2[data-sec="unr"]{padding:8px 16px 16px}
