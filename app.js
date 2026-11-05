@@ -188,6 +188,12 @@
       clearTimeout(idleT); idleT = setTimeout(() => { if (off > 0 && off < h) set(off > h / 2 && window.scrollY > h ? h : 0, true); }, 140);
     }, { passive: true });
   }
+  /* v424: a story's small square images are team logos, not photos: show them at logo size, never stretched full width */
+  document.addEventListener('load', e => {
+    const im = e.target; if (!im || im.tagName !== 'IMG' || !im.closest('.reader,.fimg')) return;
+    const w = im.naturalWidth, h = im.naturalHeight; if (!w || !h) return; const ar = w / h;
+    if (w < 300 || (ar > .8 && ar < 1.25)) { im.classList.add('imsm'); const f = im.closest('.fimg'); if (f) f.classList.add('imsm'); }
+  }, true);
   const TITLES = { home: 'Home', scores: 'Scores', standings: 'Standings', players: 'Players', teams: 'Teams', search: 'Search', settings: 'Settings', record: 'Record' };
 
   /* ---------- render ---------- */
