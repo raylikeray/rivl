@@ -4824,3 +4824,65 @@ html body .approf .stats.tsg b{font-size:clamp(21px,6.2vw,29px);letter-spacing:-
 .hdg .dgl > .dgr:last-child{border-bottom:0}
 /* the Unrivaled card sits inside the page's side margins on the flat feed */
 .hfeed .hsec2[data-sec="unr"]{padding:8px 16px 16px}
+
+/* ===== v428: Glass — the team and player pages =====
+   The head is an aurora in the team's colours under film grain: the deep primary as the ground, the alternate and a vivid
+   primary as two soft lights drifting slowly. Crest on a frosted tile (or the face in a ring), centred over the name, then up
+   to three glass tiles. Below the tabs the cards are glass on the page: a hairline edge, a light top rim and a soft shadow.
+   Nothing below the tabs takes team colour, so the colour stays up top. */
+:root{--g-card:#131315;--g-edge:rgba(255,255,255,.1);--g-rim:rgba(255,255,255,.09);--g-sh:0 10px 26px -8px rgba(0,0,0,.6)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){--g-card:#FFFFFF;--g-edge:rgba(10,11,14,.06);--g-rim:#FFFFFF;--g-sh:0 8px 22px -10px rgba(16,24,40,.16)} }
+:root[data-theme="light"]{--g-card:#FFFFFF;--g-edge:rgba(10,11,14,.06);--g-rim:#FFFFFF;--g-sh:0 8px 22px -10px rgba(16,24,40,.16)}
+
+html body .aph.glass{background:var(--ad);isolation:isolate;text-align:center;padding:calc(env(safe-area-inset-top,0px) + 6px) 16px 18px}
+.aph.glass .apau,.aph.glass .apgr{position:absolute;pointer-events:none}
+.aph.glass .apau{inset:-25%;z-index:-2;filter:blur(20px);will-change:transform;
+  background:radial-gradient(36% 30% at 84% 14%,color-mix(in srgb,var(--a2) 56%,transparent),transparent 70%),
+    radial-gradient(40% 34% at 58% 34%,color-mix(in srgb,var(--a3) 34%,transparent),transparent 70%),
+    radial-gradient(48% 42% at 14% 70%,color-mix(in srgb,var(--a3) 62%,transparent),transparent 70%),
+    radial-gradient(58% 48% at 40% 10%,color-mix(in srgb,var(--a) 80%,transparent),transparent 70%),
+    radial-gradient(46% 40% at 72% 96%,color-mix(in srgb,var(--ad) 70%,#000),transparent 72%);
+  animation:apau 26s ease-in-out infinite alternate}
+@keyframes apau{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-4%,3%,0) scale(1.06) rotate(4deg)}100%{transform:translate3d(3%,-2%,0) scale(1.03) rotate(-3deg)}}
+@media (prefers-reduced-motion:reduce){.aph.glass .apau{animation:none}}
+.aph.glass .apgr{inset:0;z-index:-1;opacity:.1;mix-blend-mode:overlay;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>")}
+.aph.glass::after{content:"";position:absolute;left:0;right:0;bottom:0;height:70px;z-index:-1;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.28));pointer-events:none}
+.aph.glass .apb{background:rgba(255,255,255,.16);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:inset 0 0 0 .6px rgba(255,255,255,.35),inset 0 1px 0 rgba(255,255,255,.28),0 4px 14px rgba(0,0,0,.16)}
+.aph.glass .apid{flex-direction:column;align-items:center;gap:0;margin-top:2px}
+html body .aph.glass .apcrest{width:104px!important;height:104px!important;border-radius:30px!important;display:grid;place-items:center;background:rgba(255,255,255,.14)!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:inset 0 0 0 .6px rgba(255,255,255,.4),inset 0 1px 0 rgba(255,255,255,.35),0 10px 30px rgba(0,0,0,.22)!important}
+html body .aph.glass .apcrest img{width:80px!important;height:80px!important;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.28))!important}
+.aph.glass .apface{width:108px;height:108px;box-shadow:0 0 0 4px rgba(255,255,255,.2),0 10px 30px rgba(0,0,0,.3)}
+.aph.glass .apnm{flex:none;width:100%}
+.aph.glass .apnm h1{margin-top:14px;font-size:30px;letter-spacing:-.03em;line-height:1.06;text-shadow:0 2px 12px rgba(0,0,0,.22);text-wrap:balance}
+.aph.glass .apnm h1.long{font-size:26px}
+.aph.glass .apnm p{margin-top:5px;font-size:14px;opacity:.8;text-wrap:balance}
+html body .aph.glass .aprt.on{display:inline-flex;align-items:center;gap:8px;min-width:0;height:auto;margin-top:12px;padding:6px 14px 6px 6px;border-radius:999px;background:rgba(255,255,255,.16)!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 .6px rgba(255,255,255,.4),inset 0 1px 0 rgba(255,255,255,.28);font:700 14px/1 var(--ui);color:#fff}
+.aph.glass .aprt.on b{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:800 14px/1 var(--num);font-variant-numeric:tabular-nums;background:#30D158;color:#05290F}
+.aph.glass .aprt.t4 b{background:#34C77B}.aph.glass .aprt.t3 b{background:#E8B90F;color:#3A2A00}.aph.glass .aprt.t2 b{background:#F08A2A;color:#3A1A00}.aph.glass .aprt.t1 b{background:#AEAEB2;color:#1C1C1E}
+.aptl{display:flex;justify-content:center;gap:8px;margin-top:16px}
+.aptl > div{flex:1;min-width:0;max-width:150px;border-radius:18px;padding:11px 6px 10px;background:rgba(255,255,255,.13);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);box-shadow:inset 0 0 0 .6px rgba(255,255,255,.32),inset 0 1px 0 rgba(255,255,255,.26)}
+.aptl b{display:block;font:800 22px/1.1 var(--num);letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.aptl span{display:block;margin-top:3px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;opacity:.72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body .apfx{background:var(--ad)}
+
+/* the glass cards */
+html body .approf :is(.agl,.rows,.ijl,.tw,.card,.games,.giplate,.apg),html body .approf .tbl.kv,html body .approf .tbl.ff{border-radius:22px!important;background:var(--g-card)!important;box-shadow:inset 0 0 0 .6px var(--g-edge),inset 0 1px 0 var(--g-rim),var(--g-sh)!important}
+html body .approf .card .card,html body .approf .card .rows,html body .approf .card .tw{box-shadow:none!important;border-radius:0!important}
+html body .approf .tw table th:first-child,html body .approf .tw table td:first-child{background:var(--g-card)!important}
+
+/* a finished game: the score row */
+.apg{display:block;margin:0 16px;padding:16px 12px 14px;color:var(--ink);text-decoration:none}
+.apgr{display:grid;grid-template-columns:1fr 56px 74px 56px 1fr;align-items:center;gap:2px}
+.apgs{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+.apgs b{font-size:12.5px;font-weight:600;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.apgl{width:40px;height:40px;display:grid}
+.apgl img{grid-area:1/1;width:40px;height:40px;object-fit:contain}
+.apgl .apld{display:none}
+.apgr em{font:800 34px/1 var(--num);font-style:normal;text-align:center;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.apgr .lo{opacity:.42}
+.apgm{text-align:center}.apgm b{display:block;font-size:14px;font-weight:700}.apgm span{font-size:12px;font-weight:600;color:var(--ink-2)}
+.apgn{display:block;margin-top:12px;text-align:center;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.apg:active{transform:scale(.985)}
+:root:not([data-theme="light"]) .apgl .apld{display:block}
+:root:not([data-theme="light"]) .apgl .apll:not(.keep){visibility:hidden}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .apgl .apld{display:none} :root:not([data-theme="dark"]) .apgl .apll:not(.keep){visibility:visible} }

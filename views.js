@@ -1110,7 +1110,7 @@
     }
     // the game log: regular-season games, newest first
     let evRows = [];
-    if (gl && gl.events && gl.seasonTypes) { const types = gl.seasonTypes.filter(t => /regular/i.test(t.displayName || '')).length ? gl.seasonTypes.filter(t => /regular/i.test(t.displayName || '')) : gl.seasonTypes; types.forEach(stp => (stp.categories || []).forEach(c => (c.events || []).forEach(e => { const meta = gl.events[e.eventId]; if (meta) evRows.push({ meta, stats: e.stats || [], id: e.eventId }); }))); evRows.sort((x, y) => new Date(y.meta.gameDate) - new Date(x.meta.gameDate)); }
+    if (gl && gl.events && gl.seasonTypes) { const types = gl.seasonTypes.filter(t => /regular/i.test(t.displayName || '')).length ? gl.seasonTypes.filter(t => /regular/i.test(t.displayName || '')) : gl.seasonTypes; types.forEach(stp => (stp.categories || []).forEach(c => (c.events || []).forEach(e => { const meta = gl.events[e.eventId]; if (meta && !/all-star|rising stars/i.test(meta.eventNote || '')) evRows.push({ meta, stats: e.stats || [], id: e.eventId }); }))); evRows.sort((x, y) => new Date(y.meta.gameDate) - new Date(x.meta.gameDate)); }
     const gLabels = gl && gl.labels || [];
     const gi = l => gLabels.indexOf(l);
     const made = (r, l) => { const i = gi(l); const v = i >= 0 ? String(r.stats[i] || '') : ''; const m = v.match(/^(\d+)-(\d+)$/); return m ? [+m[1], +m[2]] : [0, 0]; };
@@ -1236,7 +1236,7 @@
     const ptab = 'summary';   // every player opens on Overview
     const ptabs = `<div class="chips ptabs" role="tablist" style="padding-top:14px">${[['summary', 'Overview'], ['stats', 'Stats'], ['bio', 'Bio'], ['news', 'News']].map(([k, l]) => `<button class="chip${k === ptab ? ' on' : ''}" role="tab" data-act="ptab" data-tab="${k}" aria-selected="${k === ptab}" aria-pressed="${k === ptab}">${l}</button>`).join('')}</div>`;
     const pSub = `${tm.id ? `<a href="${href.team(lk, tm.id)}">${esc(tm.shortDisplayName || tm.name || '')}</a>` : ''}${[a.jersey ? `#${a.jersey}` : '', posWordP].filter(Boolean).map(x => ` · ${esc(x)}`).join('')}`.replace(/^ · /, '');
-    const pHead = apHead({ color, name: a.displayName || '', sub: pSub, img: a.headshot && a.headshot.href, face: true, back: '#home', star: { on: following, attrs: `data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}'` }, share: a.displayName || '', badge: L.sport === 'basketball' && HW.rating ? `<span class="aprt" data-pid="${esc(String(id))}"></span>` : '' });
+    const pHead = apHead({ color, alt: teamAlt({ id: tm.id, abbr: tm.abbreviation, alt: tm.alternateColor }, L), name: a.displayName || '', sub: pSub, img: a.headshot && a.headshot.href, face: true, back: '#home', star: { on: following, attrs: `data-act="follow-player" data-snap='${esc(JSON.stringify(snap))}'` }, share: a.displayName || '', badge: L.sport === 'basketball' && HW.rating ? `<span class="aprt" data-pid="${esc(String(id))}"></span>` : '' });
     $main.innerHTML = `<div class="approf">` + pHead + `<div class="lb-slot"></div><div class="aptabs">${ptabs}</div><div class="pgstrip">` + Object.entries(panels).map(([k, html]) => `<div data-ptab-panel="${k}" data-pg="${k}"${k === ptab ? '' : ' hidden'}>${html}</div>`).join('') + `</div></div>`;
     if (HW.v5._ptabL) $main.removeEventListener('click', HW.v5._ptabL);
     HW.v5._ptabL = e => { const b = e.target.closest('[data-act="ptab"]'); if (!b) return; e.preventDefault(); const k = b.dataset.tab; if (HW.v5._pg && $main.querySelector('.pgr')) { HW.v5._pg.go(k); const tb = $main.querySelector('.aptabs'); if (tb && !b.closest('.aptabs')) window.scrollTo({ top: Math.max(0, window.scrollY + tb.getBoundingClientRect().top - 56), behavior: 'smooth' }); return; } $main.querySelectorAll('[data-act="ptab"]').forEach(x => { const on = x.dataset.tab === k; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); x.setAttribute('aria-selected', String(on)); }); $main.querySelectorAll('[data-ptab-panel]').forEach(p => { const on = p.dataset.ptabPanel === k; if (on && p.hidden && HW.v5.soft) { p.hidden = false; HW.v5.soft(p); } else p.hidden = !on; }); const tb = $main.querySelector('.aptabs'); if (tb) { const y = tb.getBoundingClientRect().top; if (y < 60 || !b.closest('.aptabs')) window.scrollTo(0, Math.max(0, window.scrollY + y - 56)); } };
@@ -1246,7 +1246,7 @@
     /* the RIVL rating: one number on the 40-99 scale with a line on what stands out, then the six traits as bars, each the
        share of players at his position he beats; a tap on a trait opens the numbers behind it */
     if (L.sport === 'basketball' && HW.rating) {
-      const fill = R => { const bd = R && $main.querySelector(`.aprt[data-pid="${CSS.escape(String(id))}"]`); if (bd && bd.textContent !== String(R.ovr)) { bd.textContent = R.ovr; bd.className = `aprt on ${R.ovr >= 90 ? 't5' : R.ovr >= 80 ? 't4' : R.ovr >= 70 ? 't3' : R.ovr >= 60 ? 't2' : 't1'}`; bd.title = 'RIVL rating'; }
+      const fill = R => { const bd = R && $main.querySelector(`.aprt[data-pid="${CSS.escape(String(id))}"]`); if (bd && bd.dataset.v !== String(R.ovr)) { bd.dataset.v = String(R.ovr); bd.innerHTML = `<b>${R.ovr}</b>RIVL rating`; bd.className = `aprt on ${R.ovr >= 90 ? 't5' : R.ovr >= 80 ? 't4' : R.ovr >= 70 ? 't3' : R.ovr >= 60 ? 't2' : 't1'}`; bd.title = 'RIVL rating'; }
         const el = $main.querySelector(`.prate2[data-pid="${CSS.escape(String(id))}"]`); if (!el || !R) return; const key = String(R.ovr) + R.traits.map(t => t.pct).join(); if (el.dataset.k === key) return; el.dataset.k = key;
         const tier = o => o >= 90 ? 't5' : o >= 80 ? 't4' : o >= 70 ? 't3' : o >= 60 ? 't2' : 't1'; const g = Object.assign({}, R.raw || {});
         /* v426: the rating's numbers come from the data file, rebuilt a few times a day; this page's own game log comes
@@ -1426,14 +1426,28 @@
     starOn: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>',
     starOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>'
   };
-  function apHead({ color, name, sub, img, face = false, back = '#home', star, share, badge = '', kicker = '' }) {
+  /* v428 Glass: the head is an aurora in the team's own colours (the deep primary as the ground, the alternate colour and a lifted
+     primary as two soft lights, a darker pool low down) under film grain. The crest sits on a frosted tile, or the face in a ring,
+     centred over the name; up to three glass tiles carry the numbers that matter. alt picks the second light; a missing,
+     white or near-black alternate falls back to the lifted primary so every team gets two lights of its own hue. */
+  const glassVars = (c, alt) => {
+    let d = c; for (let k = 0; k < 8 && lumOf(d) > .2; k++) d = mixTo(d, 0, .2);
+    const lift = V_vivid(c, true);
+    const a2 = alt && !BAD(alt) && lumOf(alt) > .12 && lumOf(alt) < .92 && rgbDist(alt, c) > 60 ? alt : lift;
+    return `--a:${esc(c)};--ad:${esc(d)};--a2:${esc(a2)};--a3:${esc(lift)}`;
+  };
+  function apHead({ color, name, sub, img, face = false, back = '#home', star, share, badge = '', kicker = '', alt = '', tiles = [] }) {
     const c = BAD(color) ? '#3A3D44' : color; let d = c; for (let k = 0; k < 8 && lumOf(d) > .22; k++) d = mixTo(d, 0, .18);
-    const pic = img ? (face ? `<span class="apface"><img src="${esc(img)}" alt="" loading="eager" onerror="this.remove()"></span>` : `<span class="apcrest">${imgSized(img, 160, 160, 'alt=""')}</span>`) : '';
-    const starB = star ? `<button class="apb star${star.on ? ' on' : ''}" ${star.attrs} aria-pressed="${star.on}" aria-label="${star.on ? 'Unfollow' : 'Follow'}">${star.on ? apIcons.starOn : apIcons.starOff}</button>` : '';
-    const shareB = share ? `<button class="apb" data-act="share" data-title="${esc(share)}" aria-label="Share">${apIcons.share}</button>` : '';
-    return `<header class="aph" style="--a:${esc(c)};--ad:${esc(d)}"><div class="aptop"><a class="apb" href="${back}" data-act="back" aria-label="Back">${apIcons.back}</a><span class="apsp"></span>${starB}${shareB}</div>`
-      + `<div class="apid">${pic}<div class="apnm">${kicker ? `<em>${kicker}</em>` : ''}<h1 class="${String(name).length > 16 ? 'long' : ''}">${esc(name)}</h1>${sub ? `<p>${sub}</p>` : ''}</div>${badge}</div></header>`
-      + `<div class="apfx" style="--a:${esc(c)};--ad:${esc(d)}" aria-hidden="true"><a class="apb" href="${back}" data-act="back" aria-label="Back" tabindex="-1">${apIcons.back}</a>${img ? (face ? `<span class="apface s"><img src="${esc(img)}" alt="" onerror="this.remove()"></span>` : `<span class="apcrest s">${imgSized(img, 64, 64, 'alt=""')}</span>`) : ''}<b>${esc(name)}</b><span class="apsp"></span>${starB.replace('class="apb', 'class="apb sm').replace(/aria-label="[^"]*"/, 'tabindex="-1" aria-hidden="true"')}</div>`;
+    const pic = img ? (face ? `<span class="apface"><img src="${esc(img)}" alt="" loading="eager" onerror="this.remove()"></span>` : `<span class="apcrest">${imgSized(img, 200, 200, 'alt=""')}</span>`) : '';
+    const tl = tiles.filter(t => t && t.v);
+    const tilesH = tl.length ? `<div class="aptl">${tl.map(t => `<div><b>${esc(t.v)}</b><span>${esc(t.l)}</span></div>`).join('')}</div>` : '';
+    return `<header class="aph glass${face ? ' apf' : ''}" style="${glassVars(c, alt)}"><i class="apau" aria-hidden="true"></i><i class="apgr" aria-hidden="true"></i><div class="aptop"><a class="apb" href="${back}" data-act="back" aria-label="Back">${apIcons.back}</a><span class="apsp"></span>${star ? `<button class="apb star${star.on ? ' on' : ''}" ${star.attrs} aria-pressed="${star.on}" aria-label="${star.on ? 'Unfollow' : 'Follow'}">${star.on ? apIcons.starOn : apIcons.starOff}</button>` : ''}${share ? `<button class="apb" data-act="share" data-title="${esc(share)}" aria-label="Share">${apIcons.share}</button>` : ''}</div>`
+      + `<div class="apid">${pic}<div class="apnm">${kicker ? `<em>${kicker}</em>` : ''}<h1 class="${String(name).length > 18 ? 'long' : ''}">${esc(name)}</h1>${sub ? `<p>${sub}</p>` : ''}</div>${badge}</div>${tilesH}</header>`
+      + apBar(c, d, name, img, face, back, star);
+  }
+  function apBar(c, d, name, img, face, back, star) {
+    const starB = star ? `<button class="apb sm star${star.on ? ' on' : ''}" ${star.attrs} aria-pressed="${star.on}" tabindex="-1" aria-hidden="true">${star.on ? apIcons.starOn : apIcons.starOff}</button>` : '';
+    return `<div class="apfx" style="--a:${esc(c)};--ad:${esc(d)}" aria-hidden="true"><a class="apb" href="${back}" data-act="back" aria-label="Back" tabindex="-1">${apIcons.back}</a>${img ? (face ? `<span class="apface s"><img src="${esc(img)}" alt="" onerror="this.remove()"></span>` : `<span class="apcrest s">${imgSized(img, 64, 64, 'alt=""')}</span>`) : ''}<b>${esc(name)}</b><span class="apsp"></span>${starB}</div>`;
   }
   // the slim bar shows once the head has scrolled away
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom <= fx.offsetHeight + 1; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };   // v412: the bar takes over the moment the header no longer covers its space

@@ -401,7 +401,14 @@
     const rosterCards = sorted.length ? `<div class="rgroups" style="--rc:${esc(color)};--rc2:${esc(V._.teamAlt({ id: String(id), abbr: t0.abbreviation, alt: t0.alternateColor }, L) || color)}">${['Guards', 'Forwards', 'Centers', 'Others'].map(h => [h, sorted.filter(a => grpOf(a.position && a.position.abbreviation) === h)]).filter(([, l]) => l.length).map(([h, l]) => sec(h, String(l.length)) + `<div class="rrail2">${l.map(rcard).join('')}</div>`).join('')}<p class="legend">Points per game this season.</p></div>` : '';
     /* Scores & Schedule, as Apple lays it out: the two crests on the left with rank and abbreviation (the scores under them
        once the game starts), and on the right the day and time, what the game is, where, the TV, and RIVL's pick */
-    const gcard = g => g ? V._.duelBlock(L, g, ctx, id) : '';
+    /* v428: a finished game is a plain score row on a glass card (crest, name, the two scores, Final and the day, then the round
+       and the arena), the losing side dimmed. On dark, the crest is ESPN's dark-ground version where one exists. */
+    const dLogo = u => { if (!u) return ''; const d = /\/500\//.test(u) ? u.replace('/500/', '/500-dark/') : ''; return `<img class="apll" src="${esc(u)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">${d ? `<img class="apld" src="${esc(d)}" alt="" loading="lazy" onerror="this.previousElementSibling.classList.add('keep');this.remove()">` : ''}`; };
+    const finRow = g => { const a = g.away, h = g.home; const aw = +a.score > +h.score; const side = (t, lo) => `<span class="apgs${lo ? ' lo' : ''}"><span class="apgl">${dLogo(t.logo)}</span><b>${esc(t.short || t.abbr || '')}</b></span>`;
+      const day = new Date(g.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: HW.TZ });
+      const note = [g.note, g.venue ? `at ${g.venue}` : ''].filter(Boolean).join(' · ');
+      return `<a class="apg" href="${href.game(lk, g.id)}" data-gid="${esc(g.id)}"><span class="apgr">${side(a, !aw)}<em class="${aw ? '' : 'lo'}">${esc(String(a.score))}</em><span class="apgm"><b>${esc(finalWord(g))}</b><span>${esc(day)}</span></span><em class="${aw ? 'lo' : ''}">${esc(String(h.score))}</em>${side(h, aw)}</span>${note ? `<span class="apgn">${esc(note)}</span>` : ''}</a>`; };
+    const gcard = g => !g ? '' : g.state === 'post' && !g.off && g.away.score != null && g.home.score != null ? finRow(g) : V._.duelBlock(L, g, ctx, id);
     const gcardOld = g => { if (!g) return ''; const f = g.state !== 'post' && !g.off ? safeF(L, g, ctx) : null; const has = g.state !== 'pre' && !g.off && g.away.score != null && g.home.score != null;
       const rk = t => { const x = R && R.ranks.find(y => y.team.id === String(t.id)); return x ? `<small>#${x.rank}</small>` : ''; };
       const lead = (t, o) => has && +t.score > +o.score;
@@ -445,7 +452,15 @@
     const band = `<header class="tband" style="--a:${esc(color)};--ad:${esc(dkc)}"><div class="tbtop"><a class="tbib" href="#teams" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></a>`
       + `<div class="tbcap"><button class="star tbb${on ? ' on' : ''}" data-act="fav" data-lk="${lk}" data-id="${esc(String(id))}" data-name="${esc(tnm)}" aria-pressed="${on}" aria-label="${on ? 'Unfollow' : 'Follow'} ${esc(tnm)}">${starI(on)}</button><button class="tbb" data-act="share" data-title="${esc(t0.displayName || tnm)}" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></div></div>`
       + `<div class="tbttl"><span class="tbcr">${V._.imgSized(lg, 160, 160, 'alt=""')}</span><h1 class="${tnm.length > 12 ? 'long' : ''}">${esc(tnm)}</h1></div><p class="tbsub">${esc([L.label, ...facts].join(' · '))}</p></header><div class="lb-slot"></div>`;
-    const head = V._.apHead({ color, name: t0.displayName || tnm, sub: esc([L.label, ...facts].join(' · ')), img: lg, back: '#teams', star: { on, attrs: `data-act="fav" data-lk="${lk}" data-id="${esc(String(id))}" data-name="${esc(tnm)}"` }, share: t0.displayName || tnm });
+    /* v428 Glass: the three numbers as tiles in the head (record; place in the conference or the poll rank; last ten, else the
+       streak), and the line under the name carries the league, the conference and the streak */
+    const strkW = r && /^[WL]\d+$/.test(r.strk || '') ? (/^W/.test(r.strk) ? `Won ${r.strk.slice(1)} straight` : `Lost ${r.strk.slice(1)} straight`) : '';
+    const isCol = L.standingsMode === 'conferences';
+    const gTiles = [{ v: r ? `${r.w}-${r.l}` : (t0.recordSummary || ''), l: 'Record' },
+      rank ? { v: `No. ${rank}`, l: 'Ranked' } : r && !isCol && r.pos ? { v: ordinal(r.pos), l: `In the ${confName(r.group, r.groupAbbr)}` } : r && r.conf ? { v: r.conf, l: 'In conference' } : null,
+      r && r.l10 ? { v: r.l10, l: 'Last 10' } : strkW ? { v: r.strk, l: 'Streak' } : null].filter(Boolean);
+    const subG = [L.label, r && r.group ? (isCol ? confName(r.group, r.groupAbbr) : r.group) : (t0.standingSummary || ''), r && r.l10 ? strkW : ''].filter(Boolean);
+    const head = V._.apHead({ color, alt: V._.teamAlt({ id: String(id), abbr: t0.abbreviation, alt: t0.alternateColor }, L), tiles: gTiles, name: t0.displayName || tnm, sub: esc(subG.join(' · ')), img: lg, back: '#teams', star: { on, attrs: `data-act="fav" data-lk="${lk}" data-id="${esc(String(id))}" data-name="${esc(tnm)}"` }, share: t0.displayName || tnm });
     $main.innerHTML = `<div class="approf">` + head + `<div class="lb-slot"></div><div id="ttabs" class="aptabs">${chips(TT, ttab, 'tptab', 'tab')}</div>`
       + `<div class="tpanels">${TT.map(([k]) => `<div class="tpanel" data-tp="${k}" data-pg="${k}"${k === ttab ? '' : ' hidden'}>${panels[k]}</div>`).join('')}</div></div>`;
     document.title = `${t0.displayName} · RIVL`;
