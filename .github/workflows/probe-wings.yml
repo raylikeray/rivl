@@ -1,0 +1,23 @@
+name: probe-wings
+on: push
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p pw
+          B=https://site.api.espn.com/apis/site/v2/sports/basketball/wnba
+          curl -s -o pw/team.json "$B/teams/dal"
+          curl -s -o pw/schedule.json "$B/teams/dal/schedule?season=2026"
+          curl -s -o pw/schedule-post.json "$B/teams/dal/schedule?season=2026&seasontype=3"
+          curl -s -o pw/roster.json "$B/teams/dal/roster"
+          curl -s -o pw/teams.json "$B/teams?limit=40"
+          curl -s -o pw/standings.json "https://site.web.api.espn.com/apis/v2/sports/basketball/wnba/standings?season=2026"
+          curl -s -o pw/overview.json "https://site.web.api.espn.com/apis/common/v3/sports/basketball/wnba/athletes/4433730/overview"
+          curl -s -o pw/gamelog.json "https://site.web.api.espn.com/apis/common/v3/sports/basketball/wnba/athletes/4433730/gamelog"
+          curl -s -o pw/athlete.json "https://site.web.api.espn.com/apis/common/v3/sports/basketball/wnba/athletes/4433730"
+          for ab in atl chi conn dal ind lv la min ny phx sea wsh gs tor por; do curl -s -o pw/logo-$ab.png "https://a.espncdn.com/i/teamlogos/wnba/500/$ab.png"; curl -s -o pw/logo-dark-$ab.png "https://a.espncdn.com/i/teamlogos/wnba/500-dark/$ab.png"; done
+          ls -la pw
+          git config user.name probe; git config user.email probe@x; git add pw; git commit -m probe; git push
