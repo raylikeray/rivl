@@ -1,0 +1,39 @@
+GAME 401925779 Purdue Fort Wayne Mastodons at Duquesne Dukes
+ SB points 5311955 Kerem Konan https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5311955.png
+ SB rebounds 5311955 Kerem Konan https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5311955.png
+ SB assists 5239617 Izaiah Pasha https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5239617.png
+ SB rating 5311955 Kerem Konan https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5311955.png
+ SB points 5176937 DeAndre Craig Jr. https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5176937.png
+ SB rebounds 5176937 DeAndre Craig Jr. https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5176937.png
+ SB assists 5176937 DeAndre Craig Jr. https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5176937.png
+ SB rating 5176937 DeAndre Craig Jr. https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5176937.png
+ SUM points 5311955 Kerem Konan {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5311955.png', 'alt': 'Kerem Konan'}
+ SUM assists 5239617 Izaiah Pasha {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5239617.png', 'alt': 'Izaiah Pasha'}
+ SUM rebounds 5311955 Kerem Konan {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5311955.png', 'alt': 'Kerem Konan'}
+ SUM points 5176937 DeAndre Craig Jr. {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5176937.png', 'alt': 'DeAndre Craig Jr.'}
+ SUM assists 5176937 DeAndre Craig Jr. {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5176937.png', 'alt': 'DeAndre Craig Jr.'}
+ SUM rebounds 5176937 DeAndre Craig Jr. {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5176937.png', 'alt': 'DeAndre Craig Jr.'}
+GAME 401909563 Coastal Carolina Chanticleers at Duke Blue Devils
+ SB points 4873209 Patrick Ngongba II https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4873209.png
+ SB rebounds 5144150 Sebastian Wilkins https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5144150.png
+ SB assists 5041937 Cayden Boozer https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5041937.png
+ SB rating 4873209 Patrick Ngongba II https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4873209.png
+ SB points 5313368 Trey Perry None
+ SB rebounds 5316314 Jaevian Alston None
+ SB assists 5312344 Darius Washington III None
+ SB rating 5316314 Jaevian Alston None
+ SUM points 4873209 Patrick Ngongba II {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4873209.png', 'alt': 'Patrick Ngongba II'}
+ SUM assists 5041937 Cayden Boozer {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5041937.png', 'alt': 'Cayden Boozer'}
+ SUM rebounds 5144150 Sebastian Wilkins {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5144150.png', 'alt': 'Sebastian Wilkins'}
+ SUM points 5313368 Trey Perry None
+ SUM assists 5312344 Darius Washington III None
+ SUM rebounds 5316314 Jaevian Alston None
+ BOX 4873209 Patrick Ngongba II {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4873209.png', 'alt': 'Patrick Ngongba II'}
+ BOX 5041937 Cayden Boozer {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5041937.png', 'alt': 'Cayden Boozer'}
+ BOX 5144150 Sebastian Wilkins {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5144150.png', 'alt': 'Sebastian Wilkins'}
+ROSTER 5041937 Cayden Boozer {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5041937.png', 'alt': 'Cayden Boozer'}
+ROSTER 4873209 Patrick Ngongba II {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4873209.png', 'alt': 'Patrick Ngongba II'}
+ROSTER 5144150 Sebastian Wilkins {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5144150.png', 'alt': 'Sebastian Wilkins'}
+ATH 5041937 Cayden Boozer {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5041937.png', 'alt': 'Cayden Boozer'}
+ATH 4873209 Patrick Ngongba II {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4873209.png', 'alt': 'Patrick Ngongba II'}
+ATH 5144150 Sebastian Wilkins {'href': 'https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5144150.png', 'alt': 'Sebastian Wilkins'}
