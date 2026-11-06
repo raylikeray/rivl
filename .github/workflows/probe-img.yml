@@ -1,0 +1,16 @@
+name: probe-img
+on: push
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p pimg
+          for id in 4873209 5144150; do
+            curl -s -o pimg/$id-full.png "https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/$id.png"
+            for w in 80 96 128 160 192 216 256; do curl -s -o pimg/$id-w$w.png "https://a.espncdn.com/combiner/i?img=/i/headshots/mens-college-basketball/players/full/$id.png&w=$w&h=$w"; done
+            curl -sI "https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/$id.png" | grep -i "last-modified\|age:\|date:" > pimg/$id-head.txt
+          done
+          git config user.name probe; git config user.email probe@x; git add pimg; git commit -m probe; git push
