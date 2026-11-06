@@ -196,7 +196,7 @@
   async function league(L) { if (!L || L.sport !== 'basketball') return null; await get(L, '__'); return memo[L.key] ? memo[L.key].p : null; }
   async function get(L, id) {
     if (!L || L.sport !== 'basketball') return null;
-    const k = L.key; if (!memo[k] || Date.now() - memo[k].t > 3 * 3600000) memo[k] = { t: Date.now(), p: (async () => {
+    const k = L.key; if (!memo[k] || Date.now() - memo[k].t > 30 * 60000) memo[k] = { t: Date.now(), p: (async () => {
       /* first choice: the app's own data file, one download for the whole league with last season alongside */
       const lg = HW.hub ? await HW.hub.league(L).catch(() => null) : null;
       if (lg && lg.players && lg.players.length > 30 && (lg.lastSeason || lg.players.some(p => p.prev && p.prev.fga != null))) {   // only once the file carries last season's full lines

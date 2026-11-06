@@ -1248,7 +1248,10 @@
     if (L.sport === 'basketball' && HW.rating) {
       const fill = R => { const bd = R && $main.querySelector(`.aprt[data-pid="${CSS.escape(String(id))}"]`); if (bd && bd.textContent !== String(R.ovr)) { bd.textContent = R.ovr; bd.className = `aprt on ${R.ovr >= 90 ? 't5' : R.ovr >= 80 ? 't4' : R.ovr >= 70 ? 't3' : R.ovr >= 60 ? 't2' : 't1'}`; bd.title = 'RIVL rating'; }
         const el = $main.querySelector(`.prate2[data-pid="${CSS.escape(String(id))}"]`); if (!el || !R) return; const key = String(R.ovr) + R.traits.map(t => t.pct).join(); if (el.dataset.k === key) return; el.dataset.k = key;
-        const tier = o => o >= 90 ? 't5' : o >= 80 ? 't4' : o >= 70 ? 't3' : o >= 60 ? 't2' : 't1'; const g = R.raw || {};
+        const tier = o => o >= 90 ? 't5' : o >= 80 ? 't4' : o >= 70 ? 't3' : o >= 60 ? 't2' : 't1'; const g = Object.assign({}, R.raw || {});
+        /* v426: the rating's numbers come from the data file, rebuilt a few times a day; this page's own game log comes
+           straight from the feed. When the log is ahead (a game since the file was built), the card shows the log's count and average */
+        if (evRows.length > (g.gp || 0) && gi('PTS') >= 0) { const pv = evRows.map(r => parseFloat(r.stats[gi('PTS')])).filter(Number.isFinite); if (pv.length === evRows.length) { g.gp = evRows.length; g.pts = pv.reduce((t, x) => t + x, 0) / pv.length; } }
         const season = R.season ? String(R.season).replace(/ Regular Season$/i, '') : seasonName.replace(/ Regular Season$/i, '');
         el.innerHTML = `<section class="card prc"><div class="prh"><span class="prl">${esc(L.short || L.label)}</span><b>${esc(season || 'This season')}</b></div>`
           + `<div class="prrow"><div><b>${esc(String(g.gp ?? '—'))}</b><span>Games</span></div><div><b>${g.pts != null ? (Math.round(g.pts * 10) / 10).toFixed(1) : '—'}</b><span>Points</span></div><div><b class="rtb ${tier(R.ovr)}">${R.ovr}</b><span>RIVL rating</span></div></div>`
