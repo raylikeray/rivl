@@ -331,7 +331,11 @@
     const r = st && st.byId[String(id)];
     const rank = R && (R.ranks.find(x => x.team.id === String(id)) || {}).rank;
     const on = favs.has(lk, id);
-    const evs = (sched && sched.events || []).map(e => { try { return parseEvent(e, L); } catch { return null; } }).filter(Boolean);
+    let evs = (sched && sched.events || []).map(e => { try { return parseEvent(e, L); } catch { return null; } }).filter(Boolean);
+    /* v429: once the season is over, a postponed or cancelled game that was never made up is dropped. Over means everything left
+       on the schedule is such a game and its date is behind the last game played. */
+    { const left = evs.filter(g => !isDone(g)); const last = evs.filter(isDone).slice(-1)[0];
+      if (left.length && last && left.every(g => g.off && new Date(g.date) < new Date(last.date))) evs = evs.filter(isDone); }
     let next = evs.find(g => g.state !== 'post');
     /* the schedule feed carries no score while a game is on; the day's scoreboard does, with the records and the leaders, so a live
        game is taken from there — and the card is repainted on each poll while it plays */
