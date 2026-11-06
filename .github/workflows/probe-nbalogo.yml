@@ -1,0 +1,14 @@
+name: probe-nbalogo
+on: push
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p pn
+          for ab in mil bos cha phi cle gs den okc ny lal; do curl -s -o pn/$ab.png "https://a.espncdn.com/i/teamlogos/nba/500/$ab.png"; curl -s -o pn/dark-$ab.png "https://a.espncdn.com/i/teamlogos/nba/500-dark/$ab.png"; done
+          curl -s -o pn/bc.png "https://a.espncdn.com/i/teamlogos/ncaa/500/103.png"; curl -s -o pn/umass.png "https://a.espncdn.com/i/teamlogos/ncaa/500/113.png"
+          ls -la pn
+          git config user.name probe; git config user.email probe@x; git add pn; git commit -m probe; git push
