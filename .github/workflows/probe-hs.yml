@@ -1,0 +1,44 @@
+name: probe-hs
+on: push
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          B=https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball
+          for d in 20261103 20261104 20261105; do curl -s "$B/scoreboard?dates=$d&groups=50&limit=400" > sb$d.json; done
+          python3 - <<'PY' > probe.txt
+          import json, urllib.request
+          B='https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball'
+          def get(u):
+              try: return json.load(urllib.request.urlopen(u, timeout=20))
+              except Exception as e: return {'err': str(e)}
+          for d in ['20261103','20261104','20261105']:
+              sb=json.load(open(f'sb{d}.json'))
+              for e in sb.get('events',[]):
+                  if 'Duke' in e['name']:
+                      print('GAME', e['id'], e['name'])
+                      c=e['competitions'][0]
+                      for x in c['competitors']:
+                          for L in x.get('leaders',[]):
+                              a=L['leaders'][0]['athlete']; print(' SB', L['name'], a.get('id'), a.get('displayName'), a.get('headshot'))
+                      s=get(f"{B}/summary?event={e['id']}")
+                      for t in s.get('leaders',[]):
+                          for L in t.get('leaders',[]):
+                              for x in L.get('leaders',[])[:1]:
+                                  a=x['athlete']; print(' SUM', L['name'], a.get('id'), a.get('displayName'), a.get('headshot'))
+                      for t in s.get('boxscore',{}).get('players',[]):
+                          for st in t.get('statistics',[]):
+                              for x in st.get('athletes',[]):
+                                  a=x['athlete']
+                                  if any(n in a.get('displayName','') for n in ['Ngongba','Wilkins','Boozer']): print(' BOX', a.get('id'), a.get('displayName'), a.get('headshot'))
+          r=get(f'{B}/teams/150/roster')
+          for a in r.get('athletes',[]):
+              if any(n in a.get('displayName','') for n in ['Ngongba','Wilkins','Boozer']): print('ROSTER', a.get('id'), a.get('displayName'), a.get('headshot'))
+          for aid in set():
+              pass
+          PY
+          for n in $(grep -o "ROSTER [0-9]*" probe.txt | awk '{print $2}'); do echo "ATH $n $(curl -s https://site.web.api.espn.com/apis/common/v3/sports/basketball/mens-college-basketball/athletes/$n | python3 -c 'import json,sys; d=json.load(sys.stdin).get("athlete",{}); print(d.get("displayName"), d.get("headshot"))')" >> probe.txt; done
+          git config user.name probe; git config user.email probe@x; git add probe.txt; git commit -m probe; git push
