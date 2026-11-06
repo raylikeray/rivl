@@ -3,8 +3,8 @@
    ESPN's feeds go network-first with a short leash: a fresh answer when there is one, the last good copy
    when the network is slow, down, or ESPN is throttling (429/5xx). Logos, headshots and fonts are cached
    on first sight and served from cache after that. */
-const VERSION = 'rivl-v426';
-const SHELL = `${VERSION}-shell`, DATA = 'rivl-data', MEDIA = 'rivl-media';   // feed copies and media outlive a version: the app reads the feed copies for a warm start
+const VERSION = 'rivl-v427';
+const SHELL = `${VERSION}-shell`, DATA = 'rivl-data', MEDIA = 'rivl-media-2';   // feed copies and media outlive a version: the app reads the feed copies for a warm start
 const Q = `?v=${VERSION.replace(/^rivl-v/, '')}`;   // the same stamp index.html puts on its assets
 const SHELL_FILES = ['./', './index.html', ...['./app.css', './app.js', './views.js', './screens.js', './config.js', './js/core.js', './js/sim.js', './js/hub.js', './js/rating.js', './js/ask.js', './js/ask2.js', './js/stats.js', './js/recruit.js', './js/bracket.js', './more.js'].map(f => f + Q), './manifest.webmanifest', './img/mark.svg', './img/badge-96.png', './img/icon-192.png', './img/icon-512.png', './img/apple-touch-icon.png'];
 const FEED = /(^|\.)espn\.com$|\.workers\.dev$|(^|\.)wikipedia\.org$|(^|\.)wikidata\.org$/;   // the venue and official lookups answer from the last copy when the network is slow
@@ -79,9 +79,18 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (MEDIA_HOST.test(url.hostname)) {
+    /* v427: pictures come from the saved copy, but a player's photo is checked again after three days in the background:
+       ESPN swaps in new headshots at the same address each season, and a copy kept forever showed one player two faces
+       (the game page's small photo and the player page's large one were saved in different years) */
     e.respondWith((async () => {
-      const c = await caches.open(MEDIA); const hit = await c.match(req); if (hit) return hit;
-      try { const r = await fetch(req); if (r.ok || r.type === 'opaque') c.put(req, r.clone()); return r; } catch { return Response.error(); }
+      const c = await caches.open(MEDIA); const hit = await c.match(req);
+      const tKey = (() => { const u = new URL(req.url); u.searchParams.set('__rivlt', '1'); return u.href; })();
+      const refresh = async () => { try { const r = await fetch(req); if (r.ok || r.type === 'opaque') { await c.put(req, r.clone()); await c.put(tKey, new Response(String(Date.now()))); } return r; } catch { return null; } };
+      if (hit) {
+        if (/headshots/.test(url.href)) { const t = await c.match(tKey); const at = t ? +(await t.text()) : 0; if (Date.now() - at > 3 * 86400000) e.waitUntil(refresh()); }
+        return hit;
+      }
+      return (await refresh()) || Response.error();
     })());
   }
 });
