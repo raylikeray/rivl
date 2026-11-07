@@ -682,7 +682,10 @@
       (S0.wireItems || []).forEach((a, i) => {
         const tid = HW.wireTeams ? HW.wireTeams(a).find(id => S0.tIdx[id]) : null; const tm = tid ? S0.tIdx[tid] : null;
         const av = tm ? crest(tm) : `<span class="fic brk"><i></i></span>`; const ts = a.published ? new Date(a.published).getTime() : NOW;
-        posts.push({ tier: 0, k: ts - i, html: `<div class="fp fbrk"><a class="fpa" href="#article/${lk}/${esc(String(a.id))}" aria-label="${esc(a.headline)}"></a><span class="fav">${av}</span><span class="fb"><span class="fh"><span class="fbk"><i></i>Breaking</span>${tm ? `<span>${esc(tm.short)}</span>` : ''}<time>${when(ts)}</time><button class="fx2" data-act="wire-x" data-ids="${esc(String(a.id))}" aria-label="Dismiss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span><span class="ft"><b>${esc(a.headline)}</b></span></span></div>` }); });
+        /* v430 Aurora: the breaking post carries its team's aurora, shown when it leads the feed as the hero card */
+        const hc = tm ? teamColor(tm, L) : '#5a1418'; const hv = glassVars(BAD(hc) ? '#3A3D44' : hc, tm ? teamAlt({ id: tm.id, abbr: tm.abbr }, L) : '#ff453a');
+        const wm = tm && tm.logo ? `<img class="fwm" src="${esc(tm.logo)}" alt="" aria-hidden="true" loading="lazy" onerror="this.remove()">` : '';
+        posts.push({ tier: 0, k: ts - i, html: `<div class="fp fbrk" style="${hv}"><i class="fau" aria-hidden="true"></i><i class="fgr" aria-hidden="true"></i>${wm}<a class="fpa" href="#article/${lk}/${esc(String(a.id))}" aria-label="${esc(a.headline)}"></a><span class="fav">${av}</span><span class="fb"><span class="fh"><span class="fbk"><i></i>Breaking</span>${tm ? `<span>${esc(tm.short)}</span>` : ''}<time>${when(ts)}</time><button class="fx2" data-act="wire-x" data-ids="${esc(String(a.id))}" aria-label="Dismiss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span><span class="ft"><b>${esc(a.headline)}</b></span></span></div>` }); });
       /* the live games, the strip and since last night, from the scoreboards */
       const NOWD = new Date(); const isToday = g => HW.ymdOf(g.date) === today;
       const margin = g => Math.abs((+g.home.score || 0) - (+g.away.score || 0));
@@ -767,6 +770,7 @@
   const homeShown = {};   // v425: how far down each Home tab has scrolled into the river, so a return lands where it was
   async function home(tab) {
     if (!HTABS.includes(tab)) tab = 'following';
+    document.documentElement.dataset.htab = tab;   // v430: the sky at the top of Home takes the tab's colour
     const token = ++homeToken; const today = todayCT();
     const alive = () => { if (token !== homeToken) return false; const r = HW.v5.route && HW.v5.route(); return !r || (r.name === 'home' && r.args[0] === tab); };
     const anyFollow = ORDER.some(followsIn);
@@ -795,7 +799,7 @@
       }
       // breaking, pinned
       const wire = outs.flatMap(o => o.wire.map(p => ({ k: p.k, html: fol ? tagLg(p.html, o.L) : p.html }))).sort((a, b) => b.k - a.k);
-      if (wire.length) secs.wire = `<div class="feed hfl">${wire.map(p => p.html).join('')}</div>`;
+      if (wire.length) secs.wire = `<div class="feed hfl hwire">${wire.map((p, i) => i ? p.html : p.html.replace('class="fp fbrk"', 'class="fp fbrk fh2"')).join('')}</div>`;
       // tonight: a strip of the games still to come (yours; a league tab adds the rest of its slate)
       if (P.teams) {
         const chips = [];
