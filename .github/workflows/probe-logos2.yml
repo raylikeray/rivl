@@ -1,0 +1,14 @@
+name: probe-logos2
+on: push
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p pn
+          for ab in chi ind mia dal hou min atl bkn sa mem por sac tor utah wsh det orl no lac; do curl -s -o pn/$ab.png "https://a.espncdn.com/i/teamlogos/nba/500/$ab.png"; curl -s -o pn/dark-$ab.png "https://a.espncdn.com/i/teamlogos/nba/500-dark/$ab.png"; done
+          for id in 150 153 41 2305 26 2509 130 127 2633 12; do curl -s -o pn/c$id.png "https://a.espncdn.com/i/teamlogos/ncaa/500/$id.png"; curl -s -o pn/cdark-$id.png "https://a.espncdn.com/i/teamlogos/ncaa/500-dark/$id.png"; done
+          ls pn | wc -l
+          git config user.name probe; git config user.email probe@x; git add pn; git commit -m probe; git push
