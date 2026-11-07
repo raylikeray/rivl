@@ -96,7 +96,8 @@
   /* v433: X-style row. It is wider than the screen; the active tab slides into view with the one before it peeking */
   function lgScroll(i, smooth = true) {
     const sc = $lgt.querySelector('.lgsc'); const bs = $lgt.querySelectorAll('.lgt'); if (!sc || !bs[i]) return;
-    const x = Math.max(0, Math.min(sc.scrollWidth - sc.clientWidth, bs[i].offsetLeft - (i ? 44 : 0)));
+    const gut = bs[0].offsetLeft;   // the row's left gutter: tab 0 rests at 0, any other leaves the previous tab peeking
+    const x = Math.max(0, Math.min(sc.scrollWidth - sc.clientWidth, bs[i].offsetLeft - gut - (i ? 44 : 0)));
     if (Math.abs(sc.scrollLeft - x) < 2) return;
     try { sc.scrollTo({ left: x, behavior: smooth && !matchMedia('(prefers-reduced-motion:reduce)').matches ? 'smooth' : 'auto' }); } catch (e) { sc.scrollLeft = x; }
   }
@@ -116,7 +117,7 @@
     const fresh = $lgt.classList.contains('noanim');
     inkTo(tabs.indexOf(cur)); lgScroll(tabs.indexOf(cur), !fresh);
   }
-  window.addEventListener('resize', () => { if (current && !$lgt.hidden) inkTo(tabsFor(current).indexOf(tabNow(current))); });
+  window.addEventListener('resize', () => { if (current && !$lgt.hidden) { const i = tabsFor(current).indexOf(tabNow(current)); inkTo(i); lgScroll(i, false); } });
   /* choosing a tab: no new history entry (Back never walks through tabs), each tab lands where you left it */
   function goTab(k, dir = 0) {
     if (!current) return; const r = current;
