@@ -559,7 +559,7 @@
          first (today's games: soonest first). ESPN re-stamps its whole injury report overnight, so the report's own dates
          can't say what's new: the phone keeps a log of each player's last status and posts only when it changes. */
       let tier = 9;
-      const post = (k, to, av, who, kind, body, extra = '', act = '', lab = '', cls = '') => posts.push({ tier, k, html: `<${to ? `a href="${to}"` : `button${act}`} class="fp${cls ? ' ' + cls : ''}">${`<span class="fav">${av}</span>`}<span class="fb"><span class="fh"><b>${who}</b>${kind ? `<span>${kind}</span>` : ''}<time>${lab || when(k)}</time></span><span class="ft">${body}</span>${extra}</span></${to ? 'a' : 'button'}>` });
+      const post = (k, to, av, who, kind, body, extra = '', act = '', lab = '', cls = '') => posts.push({ tier, k, html: `<${to ? `a href="${to}"` : `button${act}`} class="fp${cls ? ' ' + cls : ''}"${kvOf(av)}>${`<span class="fav">${av}</span>`}<span class="fb"><span class="fh"><b>${who}</b>${kind ? `<span>${kind}</span>` : ''}<time>${lab || when(k)}</time></span><span class="ft">${body}</span>${extra}</span></${to ? 'a' : 'button'}>` });
       const leadOf = (t, name) => { const l = (t.leaders || []).find(x => new RegExp(name, 'i').test(x.name || '')); const a = l && l.leaders && l.leaders[0]; return a && a.athlete ? { n: a.athlete.shortName || a.athlete.displayName || '', v: a.displayValue || a.value } : null; };
       const strip = (g) => { const cells = [[g.away, 'points'], [g.home, 'points'], [+g.home.score >= +g.away.score ? g.home : g.away, 'rebounds']].map(([t, k]) => { const x = leadOf(t, k); return x ? `<span><b>${esc(String(x.v).replace(/\s.*$/, ''))}</b><small>${esc(`${lastName(x.n)} · ${k === 'points' ? 'PTS' : 'REB'}`)}</small></span>` : ''; }).filter(Boolean); return cells.length ? `<span class="fx">${cells.join('')}</span>` : ''; };
       const endTs = g => Math.min(new Date(g.date).getTime() + 2.4 * 36e5, NOW - 6e4);
@@ -625,7 +625,7 @@
           if (vid) { const im = /<img[^>]+src="([^"]+)"/.exec(r); post(ts, '', av, who, 'Video', esc(a.headline), im ? `<span class="fimg"><img src="${im[1]}" alt="" loading="lazy" onerror="this.parentNode.remove()"><i class="play"></i></span>` : '', ` data-act="play" data-vid="${vid[1]}"`); }
           else post(ts, hrefM ? hrefM[1] : '', av, who, 'News', `<span class="fhl">${esc(a.headline)}</span>${desc}`, ph ? `<span class="fth"><img src="${esc(ph.url)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>` : '', '', '', 'fnw' + (ph ? ' hth' : ''));
           posts.slice(n0).forEach(pp => { pp.t = 'news'; pp.fill = fillIds.has(String(a.id)) && !mineA.includes(a); pp.big = bigIds.has(String(a.id)) && !mineA.includes(a);
-            if (ph && !vid && HW.isWire(a) && age(a) < 864e5) pp.hero = pp.html.replace('class="fp fnw hth"', 'class="fp fnw fhero"').replace(/<span class="fth">(<img[^>]+>)<\/span>/, '<span class="fimg">$1</span>'); }); });
+            if (ph && !vid && age(a) < 864e5) pp.hero = pp.html.replace('class="fp fnw hth"', 'class="fp fnw fhero"').replace(/<span class="fth">(<img[^>]+>)<\/span>/, '<span class="fimg">$1</span>'); }); });
       }
       /* 7 · the games: your older finals (the scroll reaches back), the league's games worth a look (upsets, a top-10
          meeting, overtime, a one-possession finish), the big nights, and your teams' streaks */
@@ -682,7 +682,7 @@
       (S0.wireItems || []).forEach((a, i) => {
         const tid = HW.wireTeams ? HW.wireTeams(a).find(id => S0.tIdx[id]) : null; const tm = tid ? S0.tIdx[tid] : null;
         const av = tm ? crest(tm) : `<span class="fic brk"><i></i></span>`; const ts = a.published ? new Date(a.published).getTime() : NOW;
-        posts.push({ tier: 0, k: ts - i, html: `<div class="fp fbrk"><a class="fpa" href="#article/${lk}/${esc(String(a.id))}" aria-label="${esc(a.headline)}"></a><span class="fav">${av}</span><span class="fb"><span class="fh"><span class="fbk"><i></i>Breaking</span>${tm ? `<span>${esc(tm.short)}</span>` : ''}<time>${when(ts)}</time><button class="fx2" data-act="wire-x" data-ids="${esc(String(a.id))}" aria-label="Dismiss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span><span class="ft"><b>${esc(a.headline)}</b></span></span></div>` }); });
+        posts.push({ tier: 0, k: ts - i, html: `<div class="fp fbrk"${kvOf(av)}><a class="fpa" href="#article/${lk}/${esc(String(a.id))}" aria-label="${esc(a.headline)}"></a><span class="fav">${av}</span><span class="fb"><span class="fh"><span class="fbk"><i></i>Breaking</span>${tm ? `<span>${esc(tm.short)}</span>` : ''}<time>${when(ts)}</time><button class="fx2" data-act="wire-x" data-ids="${esc(String(a.id))}" aria-label="Dismiss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span><span class="ft"><b>${esc(a.headline)}</b></span></span></div>` }); });
       /* the live games, the strip and since last night, from the scoreboards */
       const NOWD = new Date(); const isToday = g => HW.ymdOf(g.date) === today;
       const margin = g => Math.abs((+g.home.score || 0) - (+g.away.score || 0));
@@ -696,8 +696,8 @@
         fin.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(g => {
           const y = HW.ymdOf(g.date) === yday; const k = new Date(g.date).getTime();
           if (P.brief) { const us = favTeam(g.home) ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = +us.score > +them.score; const ot = /OT/.test(finalWord(g)) ? ` in ${esc(finalWord(g).replace(/^Final\/?\s*/i, '') || 'OT')}` : '';
-            digest.push({ k, y, html: `<a class="dgr" href="${href.game(lk, g.id)}"><span class="dgav">${crest(us)}</span><span class="dgt"><b>${esc(us.short)}</b> ${won ? 'beat' : 'lost to'} ${esc(them.short)}, <b class="${won ? 'wl-w' : 'wl-l'}">${esc(String(us.score))}-${esc(String(them.score))}</b>${ot}</span><i class="flg">${esc(L.label)}</i></a>` }); }
-          if (P.players) (linesBy[g.id] || []).forEach((x, i) => digest.push({ k: k - 1 - i, y, pl: 1, html: `<a class="dgr" href="${href.game(lk, x.g.id)}/p/${esc(String(x.p.id))}"><span class="dgav">${headshot(x.p.img, x.us ? teamColor(x.us, L) : playerColor(x.p, L), 30, x.p.name)}</span><span class="dgt"><b>${esc(x.p.short || x.p.name)}</b> ${x.dnp ? esc(x.dnp.toLowerCase()) : `${esc(String(x.pts))} pts, ${esc(String(x.reb))} reb, ${esc(String(x.ast))} ast`}</span><i class="flg">${esc(L.label)}</i></a>` }));
+            digest.push({ k, y, html: `<a class="fp fdg" href="${href.game(lk, g.id)}"${kvOf(crest(us))}><span class="fav">${crest(us)}</span><span class="fb"><span class="fh"><b>${esc(us.short)}</b><span>Final</span><time>${when(endTs(g))}</time></span><span class="ft"><b>${esc(us.short)}</b> ${won ? 'beat' : 'lost to'} ${esc(them.short)}, <b class="${won ? 'wl-w' : 'wl-l'}">${esc(String(us.score))}-${esc(String(them.score))}</b>${ot}</span></span></a>` }); }
+          if (P.players) (linesBy[g.id] || []).forEach((x, i) => { const hs = headshot(x.p.img, x.us ? teamColor(x.us, L) : playerColor(x.p, L), 30, x.p.name); digest.push({ k: k - 1 - i, y, pl: 1, html: `<a class="fp fdg" href="${href.game(lk, x.g.id)}/p/${esc(String(x.p.id))}"${kvOf(hs)}><span class="fav">${hs}</span><span class="fb"><span class="fh"><b>${esc(x.p.short || x.p.name)}</b><span>${x.dnp ? 'Did not play' : 'Stat line'}</span><time>${when(endTs(g))}</time></span><span class="ft">${x.dnp ? `<b>${esc(x.p.short || x.p.name)}</b> ${esc(x.dnp.toLowerCase())}` : `<b>${esc(String(x.pts))}</b> pts, <b>${esc(String(x.reb))}</b> reb, <b>${esc(String(x.ast))}</b> ast${x.us ? ` for the ${esc(x.us.short)}` : ''}`}</span></span></a>` }); });
         });
       }
       /* v431 Pulse: the finished games in hand (for settling picks), your teams in this league with their standing and
@@ -771,75 +771,27 @@
       S0.older[day] = onDay(gs, day, day); s.depth = n; build(); return true;
     };
   }
-  const tagLg = (html, L) => html.replace('<time>', `<i class="flg">${esc(L.label)}</i><time>`);
+  const tagLg = (html, L) => html.includes(`<b>${esc(L.label)}</b>`) ? html : html.replace('<time>', `<i class="flg">${esc(L.label)}</i><time>`);
   const homeSkel = () => skeleton(1, 'card') + skeleton(5, 'row');
-  /* ===== v431 Pulse: Home is a scoreboard first =====
-     a live rail of glass chips (your games on now, then later today, then today's finals); tonight's games as pick rows
-     (tap a side; the bar is RIVL's lean; your week against RIVL's underneath); your teams with record and streak; last
-     night's finals; your players' lines; then the latest stories and posts. */
-  const PICKS = 'v5:picks';
-  const picksAll = () => { const p = store.get(PICKS, {}); return p && typeof p === 'object' ? p : {}; };
-  const picksSave = p => { const cut = Date.now() - 21 * 864e5; Object.keys(p).forEach(k => { if (!p[k] || new Date(p[k].d).getTime() < cut) delete p[k]; }); store.set(PICKS, p); };
-  const shortTip = g => esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT|EST|EDT|PST|PDT|MST|MDT)$/, ''));
+  /* ===== v432 Ink: Home reads like a front page =====
+     a one-line ticker of your games today, the date set large, the day's lead story with its photo, then one stream:
+     breaking, last night, your players' lines, injuries, news and RIVL's posts. Every item opens with a small crest and a
+     kicker in its team's colour; the rest of the page is black and white type. */
+  const kvOf = av => { const d = /--tf-d:([^;"]+)/.exec(av || ''), l = /--tf-l:([^;"]+)/.exec(av || ''); return d && l ? ` style="--kd:${d[1]};--kl:${l[1]}"` : ''; };
   const clk = g => { const d = String(g.detail || ''); let m;
     if (/half ?time/i.test(d)) return 'Half';
-    if ((m = /(\d)(?:st|nd|rd|th)\s+(?:Qtr|Quarter)/i.exec(d))) return `Q${m[1]}${g.clock && g.clock !== '0.0' ? ' ' + esc(g.clock) : ''}`;
-    if ((m = /(\d)(?:st|nd)\s+Half/i.exec(d))) return `H${m[1]}${g.clock && g.clock !== '0.0' ? ' ' + esc(g.clock) : ''}`;
-    if (/OT/i.test(d)) return `${esc(d.replace(/.*?(\d*OT).*/i, '$1'))}${g.clock && g.clock !== '0.0' ? ' ' + esc(g.clock) : ''}`;
-    if (/end/i.test(d)) return esc(d.replace(/ of (the )?/i, ' ').replace(/(\d)(st|nd|rd|th) (Qtr|Quarter)/i, 'Q$1'));
+    if ((m = /(\d)(?:st|nd|rd|th)\s+(?:Qtr|Quarter)/i.exec(d))) return `Q${m[1]}`;
+    if ((m = /(\d)(?:st|nd)\s+Half/i.exec(d))) return `H${m[1]}`;
+    if (/OT/i.test(d)) return esc(d.replace(/.*?(\d*OT).*/i, '$1'));
+    if (/end/i.test(d)) return esc(d.replace(/^End (of )?(the )?/i, 'End ').replace(/(\d)(st|nd|rd|th) (Qtr|Quarter)/i, 'Q$1'));
     return esc(d); };
-  const plogo = (t, n) => `<span class="plg">${t.logo ? imgSized(t.logo, n * 2, n * 2, 'alt=""', monoSwap(t.abbr)) : monoOf(t.abbr)}</span>`;
-  const ab = t => esc(t.abbr || t.short || '');
   const winSide = g => +g.home.score > +g.away.score ? 'h' : +g.away.score > +g.home.score ? 'a' : '';
-  function railChip(L, g, fol) {
-    const lv = isLive(g), fin = isDone(g); const w = fin ? winSide(g) : '';
-    const sd = (t, k) => `<span class="rcs${w && w !== k ? ' lo' : ''}">${k === 'a' ? plogo(t, 24) : ''}${lv || fin ? `<b class="num">${esc(String(t.score))}</b>` : ''}<i>${ab(t)}</i>${k === 'h' ? plogo(t, 24) : ''}</span>`;
-    return `<a class="rc${lv ? ' lv' : ''}" href="${href.game(L.key, g.id)}">${sd(g.away, 'a')}${sd(g.home, 'h')}<span class="rcc${lv ? ' on' : ''}">${lv ? clk(g) : fin ? esc(finalWord(g)) : shortTip(g)}${fol ? `<em>${esc(L.label)}</em>` : ''}</span></a>`;
+  function tickItem(L, g, fol) {
+    const lv = isLive(g), w = isDone(g) ? winSide(g) : ''; const ab = t => esc(t.abbr || t.short || '');
+    const sd = (t, k) => `<span class="${w && w !== k ? 'lo' : ''}">${ab(t)} <b>${esc(String(t.score ?? ''))}</b></span>`;
+    return `<a class="itk" href="${href.game(L.key, g.id)}">${sd(g.away, 'a')}${sd(g.home, 'h')}${lv ? `<i class="on">${clk(g)}</i>` : `<i>${isDone(g) ? 'F' : ''}</i>`}${fol ? '' : ''}</a>`;
   }
-  function pickRow(L, g, ctx, fol, pk) {
-    const f = safeF(L, g, ctx); const pH = f && Number.isFinite(f.pHome) ? f.pHome : null;
-    const pre = g.state === 'pre' && new Date(g.date) > new Date(); const fin = isDone(g); const w = fin ? winSide(g) : '';
-    const mine = pk && pk.s; const showF = prefs.get('forecast') && pH != null;
-    const side = (t, k) => { const on = mine === k; const res = fin && on ? (w === k ? ' ok' : ' no') : '';
-      return `<button class="pks ${k}${on ? ' on' : ''}${res}${pre ? '' : ' lock'}" ${pre ? `data-pick="${k}"` : 'disabled'} style="--pc:${esc(teamColor(t, L))}" aria-pressed="${on}" aria-label="Pick ${esc(t.short || t.abbr || '')}">${k === 'h' && on ? CHK : ''}${k === 'a' ? plogo(t, 30) : ''}<b>${ab(t)}</b>${k === 'h' ? plogo(t, 30) : ''}${k === 'a' && on ? CHK : ''}</button>`; };
-    const mid = isLive(g) ? `<span class="pkt"><b class="num">${esc(String(g.away.score))}-${esc(String(g.home.score))}</b> <i class="lvt">${clk(g)}</i></span>` : fin ? `<span class="pkt"><b class="num">${esc(String(g.away.score))}-${esc(String(g.home.score))}</b> ${esc(finalWord(g))}</span>` : `<span class="pkt">${shortTip(g)}</span>`;
-    const bar = showF ? `<span class="pkb" style="--p:${Math.round((1 - pH) * 100)}%;--b1:${esc(teamColor(g.away, L))};--b2:${esc(teamColor(g.home, L))}"></span><span class="pkl">${ab(pH >= .5 ? g.home : g.away)} ${pct(Math.max(pH, 1 - pH))}${fol ? ` · ${esc(L.label)}` : ''}</span>` : `<span class="pkl">${pre ? 'Pick a side' : mine ? 'Picked' : ''}${fol ? `${pre || mine ? ' · ' : ''}${esc(L.label)}` : ''}</span>`;
-    return `<div class="pkr" data-gid="${esc(g.id)}" data-lk="${esc(L.key)}" data-d="${esc(g.date)}" data-rp="${pH == null ? '' : pH >= .5 ? 'h' : 'a'}">${side(g.away, 'a')}<a class="pkm" href="${href.game(L.key, g.id)}">${mid}${bar}</a>${side(g.home, 'h')}</div>`;
-  }
-  const CHK = '<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
-  const WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
-  function weekLine() {
-    const cut = Date.now() - 7 * 864e5; const p = Object.values(picksAll()).filter(x => x && x.res != null && new Date(x.d).getTime() >= cut);
-    if (!p.length) return `<div class="pkf"><span>Tap a team to pick it.${prefs.get('forecast') ? ' The bar is RIVL’s lean.' : ''}</span></div>`;
-    const mw = p.filter(x => x.res === 1).length, ml = p.length - mw; const rp = p.filter(x => x.rres != null); const rw = rp.filter(x => x.rres === 1).length, rl = rp.length - rw;
-    const d = mw - rw; const say = d === 0 ? 'Level with RIVL' : `${WORDS[Math.abs(d)] || Math.abs(d)} ${d > 0 ? 'ahead' : 'behind'}`;
-    return `<div class="pkf"><span>Your week <b>${mw}-${ml}</b>${rp.length ? ` · RIVL <b>${rw}-${rl}</b>` : ''}</span>${rp.length ? `<span class="${d > 0 ? 'g' : d < 0 ? 'r' : ''}">${say}</span>` : ''}</div>`;
-  }
-  function settlePicks(outs) {
-    const p = picksAll(); let ch = false; const done = {}; outs.forEach(o => (o.doneAll || []).forEach(g => { done[o.L.key + ':' + g.id] = g; }));
-    Object.entries(p).forEach(([k, x]) => { if (!x || x.res != null) return; const g = done[k]; if (!g) return; const w = winSide(g); if (!w) return; x.res = x.s === w ? 1 : 0; x.rres = x.r ? (x.r === w ? 1 : 0) : null; ch = true; });
-    if (ch) picksSave(p);
-  }
-  function teamRow(L, t, fol) {
-    const nx = t.live ? `<span class="lvt">Live · ${esc(String((String(t.live.home.id) === t.id ? t.live.home : t.live.away).score))}-${esc(String((String(t.live.home.id) === t.id ? t.live.away : t.live.home).score))}</span>`
-      : t.nx ? `${String(t.nx.home.id) === t.id ? 'vs' : 'at'} ${ab(String(t.nx.home.id) === t.id ? t.nx.away : t.nx.home)} · ${shortTip(t.nx)}` : '';
-    const sub = [t.standing, nx].filter(Boolean).join(' · ') || (fol ? esc(L.label) : '');
-    return `<a class="pqr" href="${href.team(L.key, t.id)}">${plogo(t, 36)}<span class="ptn"><b>${t.rank ? `<i>${t.rank}</i>` : ''}${esc(t.short || t.name || '')}</b><span>${sub}</span></span>${t.strk ? `<span class="pst${t.strk[0] === 'L' ? ' l' : ''}">${esc(t.strk)}</span>` : ''}${t.rec ? `<span class="prec num">${esc(t.rec)}</span>` : ''}</a>`;
-  }
-  function finRowH(L, g, fol) {
-    const w = winSide(g); const sd = (t, k) => `<span class="pfs ${k}${w && w !== k ? ' lo' : ''}">${k === 'a' ? plogo(t, 28) : ''}<b>${ab(t)}</b>${k === 'h' ? plogo(t, 28) : ''}</span>`;
-    return `<a class="pfr" href="${href.game(L.key, g.id)}">${sd(g.away, 'a')}<b class="num pfc${w === 'h' ? ' lo' : ''}">${esc(String(g.away.score))}</b><span class="pfm">${esc(finalWord(g))}${fol ? `<em>${esc(L.label)}</em>` : ''}</span><b class="num pfc${w === 'a' ? ' lo' : ''}">${esc(String(g.home.score))}</b>${sd(g.home, 'h')}</a>`;
-  }
-  document.addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('.pkr .pks[data-pick]'); if (!b) return;
-    e.preventDefault(); e.stopPropagation();
-    const r = b.closest('.pkr'); const k = r.dataset.lk + ':' + r.dataset.gid; const p = picksAll(); const s = b.dataset.pick;
-    if (new Date(r.dataset.d) <= new Date()) return;
-    if (p[k] && p[k].s === s) delete p[k]; else p[k] = { s, d: r.dataset.d, r: r.dataset.rp || null, res: null, rres: null };
-    picksSave(p); try { navigator.vibrate && navigator.vibrate(8); } catch {}
-    r.querySelectorAll('.pks').forEach(x => { const on = p[k] && x.dataset.pick === p[k].s; x.classList.toggle('on', !!on); x.setAttribute('aria-pressed', String(!!on)); x.querySelectorAll('.ck').forEach(c => c.remove()); if (on) x.insertAdjacentHTML(x.classList.contains('h') ? 'afterbegin' : 'beforeend', CHK); });
-    b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
-  }, true);
+  const dayMark = () => { const d = new Date(); const z = HW.TZ || 'America/Chicago'; return `<div class="idate"><span>${esc(d.toLocaleDateString('en-US', { weekday: 'long', timeZone: z }))}</span><b>${esc(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: z }))}</b></div>`; };
   const homeShown = {};   // v425: how far down each Home tab has scrolled into the river, so a return lands where it was
   async function home(tab) {
     if (!HTABS.includes(tab)) tab = 'following';
@@ -853,7 +805,7 @@
     const leagues = tab === 'following' ? ORDER : [tab];
     const srcs = leagues.map(feedSource);
     const P = prefs.all();
-    const secs = {}; const ORD = ['unr', 'rail', 'wire', 'picks', 'teams', 'last', 'digest', 'river'];
+    const secs = {}; const ORD = ['unr', 'tick', 'date', 'lead', 'wire', 'digest', 'river'];
     let painted = false;
     const wrap = k => `<section class="hsec2" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;
     const compose = () => {
@@ -862,40 +814,19 @@
       ORD.forEach(k => delete secs[k]);
       const one = !fol ? outs[0] : null;
       if (one && one.unr) secs.unr = one.unr;
-      settlePicks(outs);
-      const hh = (t, n, a) => `<div class="hhd">${t}${n ? `<span>${n}</span>` : ''}${a || ''}</div>`;
-      // the rail: your games on now, then later today, then today's finals (a league tab shows its whole day)
+      // the ticker: your games today (a league tab shows its day), live first, then finals
       if (P.live) {
-        const rows = []; outs.forEach(o => (o.todayAll || []).filter(g => !fol || isFav(g)).forEach(g => rows.push({ o, g })));
-        const rk = g => isLive(g) ? 0 : g.state === 'pre' ? 1 : 2;
-        rows.sort((x, y) => rk(x.g) - rk(y.g) || (isFav(y.g) - isFav(x.g)) || (rk(x.g) === 2 ? new Date(y.g.date) - new Date(x.g.date) : new Date(x.g.date) - new Date(y.g.date)));
-        const list = rows.slice(0, 14);
-        if (list.length && list.some(({ g }) => isLive(g) || g.state === 'pre')) secs.rail = `<div class="prail">${list.map(({ o, g }) => railChip(o.L, g, fol)).join('')}</div>`;
+        const rows = []; outs.forEach(o => (o.todayAll || []).filter(g => (!fol || isFav(g)) && (isLive(g) || isDone(g))).forEach(g => rows.push({ o, g })));
+        rows.sort((x, y) => (isLive(y.g) - isLive(x.g)) || (isFav(y.g) - isFav(x.g)) || new Date(y.g.date) - new Date(x.g.date));
+        if (rows.length) secs.tick = `<div class="itick">${rows.slice(0, 16).map(({ o, g }) => tickItem(o.L, g, fol)).join('')}</div>`;
       }
+      secs.date = dayMark();
       // breaking, pinned
       const wire = outs.flatMap(o => o.wire.map(p => ({ k: p.k, html: fol ? tagLg(p.html, o.L) : p.html }))).sort((a, b) => b.k - a.k);
       if (wire.length) secs.wire = `<div class="feed hfl">${wire.map(p => p.html).join('')}</div>`;
-      // tonight: tap to pick (yours on Following; a league tab picks from its whole slate)
-      if (P.teams) {
-        const pk = picksAll(); const rows = [];
-        outs.forEach(o => (o.todayAll || []).filter(g => (!fol || isFav(g)) && (g.state === 'pre' || pk[o.L.key + ':' + g.id])).forEach(g => rows.push({ o, g })));
-        rows.sort((x, y) => (fol ? 0 : isFav(y.g) - isFav(x.g)) || new Date(x.g.date) - new Date(y.g.date));
-        if (rows.some(({ o, g }) => g.state === 'pre' || pk[o.L.key + ':' + g.id])) {
-          const left = rows.filter(({ g }) => g.state === 'pre').length;
-          secs.picks = hh(left ? 'Tonight · tap to pick' : 'Tonight', left ? `${left} to pick` : '') + `<div class="pslab">${clip(rows.map(({ o, g }) => pickRow(o.L, g, o.ctx, fol, pk[o.L.key + ':' + g.id])), 'pkl0', fol ? 8 : 6, 'games')}${weekLine()}</div>`;
-        }
-        // your teams
-        const tms = outs.flatMap(o => (o.myTeams || []).map(t => ({ o, t })));
-        if (tms.length) secs.teams = hh('Your teams', '', `<a class="hhl" href="#standings">Standings</a>`) + `<div class="pslab">${clip(tms.map(({ o, t }) => teamRow(o.L, t, fol)), 'ptl0', 6, 'teams')}</div>`;
-      }
-      // last night's finals (yours; a league tab with none of yours gets the league's closest)
-      if (P.brief) {
-        const fs = outs.flatMap(o => ((o.lastF || []).length || fol ? o.lastF || [] : o.lastL || []).map(g => ({ o, g })));
-        if (fs.length) { const y = fs.some(({ g }) => HW.ymdOf(g.date) !== todayCT()); secs.last = hh(y ? 'Last night' : 'Earlier today') + `<div class="pslab">${fs.map(({ o, g }) => finRowH(o.L, g, fol)).join('')}</div>`; }
-      }
-      // your players' lines
-      const dg = outs.flatMap(o => o.digest.filter(d => d.pl)).sort((a, b) => b.k - a.k);
-      if (dg.length) secs.digest = `<div class="hdg${fol ? '' : ' one'}">${hh('Your players')}<div class="dgl pslab">${dg.map(d => d.html).join('')}</div></div>`;
+      // since last night: your results and your players' lines, as items
+      const dg = outs.flatMap(o => o.digest.map(d => ({ k: d.k, y: d.y, html: fol ? tagLg(d.html, o.L) : d.html }))).sort((a, b) => b.k - a.k);
+      if (dg.length) { const y = dg.some(d => d.y); secs.digest = `<div class="irule">${y ? 'Since last night' : 'Earlier today'}</div><div class="feed hfl">${dg.map(d => d.html).join('')}</div>`; }
       // the river: everything else, newest first, leagues mixed. Following carries everything about what you follow,
       // and from the rest of a league only its big moments (and those only for leagues you follow something in)
       let river = outs.flatMap(o => o.river.filter(p => !fol || (o.follows ? (!p.fill || p.big) : (p.big && p.t === 'news'))).map(p => ({ k: p.k, t: p.t || 'x', html: fol ? tagLg(p.html, o.L) : p.html, hero: p.hero ? (fol ? tagLg(p.hero, o.L) : p.hero) : '' }))).sort((a, b) => b.k - a.k);
@@ -904,18 +835,18 @@
           if (x.t === 'news' && n >= 2 && out[n - 1].t === 'news' && out[n - 2].t === 'news') { const j2 = rest.findIndex(y => y.t !== 'news' && x.k - y.k <= 6 * 36e5); if (j2 >= 0) { out.push(rest.splice(j2, 1)[0]); rest.unshift(x); continue; } }
           out.push(x); } river = out; }
       // one big picture a day: the newest big story with a real photo
-      const hi = river.findIndex(p => p.hero && NOW0 - p.k < 864e5); if (hi >= 0) river[hi] = Object.assign({}, river[hi], { html: river[hi].hero });
+      const hi = river.findIndex(p => p.hero && NOW0 - p.k < 864e5); if (hi >= 0) { secs.lead = `<div class="feed hfl">${river[hi].hero}</div>`; river.splice(hi, 1); }
       secs.riverAll = river;
       const deep = outs.some(o => o.deep);
       const shown = Math.min(river.length, homeShown[tab] || 15);
-      if (river.length) secs.river = `${ORD.slice(0, -1).some(k => secs[k] && k !== 'unr') ? '<div class="hhd">Latest</div>' : ''}<div class="feed hfl" data-n="${shown}" data-h0="${hashOf(river.slice(0, shown).map(p => p.html).join(''))}">${river.slice(0, shown).map(p => p.html).join('')}${shown < river.length || deep ? '<div class="hmore" data-more><i></i><i></i><i></i></div>' : '<div class="hend">You’re caught up</div>'}</div>`;
+      if (river.length) secs.river = `${secs.digest || secs.wire ? '<div class="irule">Latest</div>' : ''}<div class="feed hfl" data-n="${shown}" data-h0="${hashOf(river.slice(0, shown).map(p => p.html).join(''))}">${river.slice(0, shown).map(p => p.html).join('')}${shown < river.length || deep ? '<div class="hmore" data-more><i></i><i></i><i></i></div>' : '<div class="hend">You’re caught up</div>'}</div>`;
     };
     const paint = () => {
       if (!alive()) return;
       compose();
       const ready = srcs.every(s => s.out || s.failed); const some = srcs.some(s => s.out);
       if (!some) { if (!painted) $main.innerHTML = homeSkel(); return; }
-      const has = ORD.some(k => secs[k]);
+      const has = ORD.some(k => secs[k] && k !== 'date');
       if (!painted || !$main.querySelector('.hfeed')) {
         painted = true;
         const quiet = `<div class="hquiet"><b>${tab === 'following' ? 'Quiet for now' : `Nothing in ${esc(LEAGUES[tab].label)} yet`}</b><span>${tab === 'following' || followsIn(tab) ? 'Games, results, injury changes and news about your teams and players land here as they happen.' : `Follow ${esc(LEAGUES[tab].label)} teams and players and their games and news land here.`}</span>${tab !== 'following' && !followsIn(tab) ? '<a class="btn" href="#teams">Choose teams</a>' : ''}</div>`;
@@ -939,10 +870,10 @@
             f.dataset.n = shown; f.dataset.h0 = hashOf(all.slice(0, shown).map(p => p.html).join('')); cur.dataset.h = hashOf(secs[k]); return;
           }
         }
-        if (cur) { if (cur.dataset.h !== hashOf(secs[k])) { const open = [...cur.querySelectorAll('.lclip')].map(x => x.classList.contains('open')); const sl = (cur.querySelector('.prail') || {}).scrollLeft || 0;
+        if (cur) { if (cur.dataset.h !== hashOf(secs[k])) { const open = [...cur.querySelectorAll('.lclip')].map(x => x.classList.contains('open')); const sl = (cur.querySelector('.itick') || {}).scrollLeft || 0;
           cur.insertAdjacentHTML('afterend', wrap(k)); const nu = cur.nextElementSibling; cur.remove();
           [...nu.querySelectorAll('.lclip')].forEach((x, i) => { if (!open[i]) return; x.classList.add('open'); const b = x.querySelector(':scope > .cliptog'); if (b) { b.setAttribute('aria-expanded', 'true'); b.textContent = 'Show less'; } });
-          const st = nu.querySelector('.prail'); if (st && sl) st.scrollLeft = sl; } return; }
+          const st = nu.querySelector('.itick'); if (st && sl) st.scrollLeft = sl; } return; }
         const after = ORD.slice(ORD.indexOf(k) + 1).map(j => root.querySelector(`section[data-sec="${j}"]`)).find(Boolean);
         if (after) after.insertAdjacentHTML('beforebegin', wrap(k)); else root.insertAdjacentHTML('beforeend', wrap(k));
       });

@@ -94,11 +94,13 @@
   }
   function paintLgTabs(r, show) {
     $lgt.hidden = !show; document.getElementById('htitle').hidden = !(show && r.name === 'home');
+    document.getElementById('hdr').classList.toggle('tabhd', !!show);   // v432: where there are league tabs, they are the header (the gear rides at the end)
     if (!show) return;
     const tabs = tabsFor(r), cur = tabNow(r);
     if ($lgt.dataset.set !== tabs.join(',')) {
       $lgt.dataset.set = tabs.join(','); $lgt.dataset.n = tabs.length;
-      $lgt.innerHTML = tabs.map(k => `<button class="lgt" role="tab" data-lgt="${k}"><span>${esc(tabLabel(k))}<i class="lgd" hidden></i></span></button>`).join('') + '<i class="lgink" aria-hidden="true"></i>';
+      $lgt.innerHTML = tabs.map(k => `<button class="lgt" role="tab" data-lgt="${k}"><span>${esc(tabLabel(k))}<i class="lgd" hidden></i></span></button>`).join('') + '<i class="lgink" aria-hidden="true"></i>'
+        + '<a class="lggear" href="#settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>';
       $lgt.classList.add('noanim'); requestAnimationFrame(() => requestAnimationFrame(() => $lgt.classList.remove('noanim')));
     }
     $lgt.querySelectorAll('.lgt').forEach(b => { const k = b.dataset.lgt; const on = k === cur; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on));

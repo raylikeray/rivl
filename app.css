@@ -4888,85 +4888,108 @@ html body .approf .tw table th:first-child,html body .approf .tw table td:first-
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .apgl .apld{display:none} :root:not([data-theme="dark"]) .apgl .apll:not(.keep){visibility:visible} }
 
 
-/* ===== v431: Pulse Home =====
-   A scoreboard first: a live rail of glass chips, tonight's games as pick rows (tap a side; the bar is RIVL's lean),
-   your week against RIVL's, your teams with record and streak, last night's finals Apple Sports style, your players'
-   lines, then the latest. Rounded slabs with hairlines inside; colour only in logos, the lean bar and the side you pick. */
-:root{--ps:#1C1C1E;--ps-l:rgba(84,84,88,.55);--rcg:rgba(255,255,255,.09);--rce:rgba(255,255,255,.16);--rct:rgba(255,255,255,.12)}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){--ps:#F2F2F7;--ps-l:rgba(60,60,67,.18);--rcg:rgba(0,0,0,.045);--rce:rgba(0,0,0,.07);--rct:rgba(255,255,255,.9)} }
-:root[data-theme="light"]{--ps:#F2F2F7;--ps-l:rgba(60,60,67,.18);--rcg:rgba(0,0,0,.045);--rce:rgba(0,0,0,.07);--rct:rgba(255,255,255,.9)}
-.hfeed .hsec2:is([data-sec="rail"],[data-sec="picks"],[data-sec="teams"],[data-sec="last"],[data-sec="digest"]),.hfeed .hsec2:is([data-sec="rail"],[data-sec="picks"],[data-sec="teams"],[data-sec="last"],[data-sec="digest"]) + .hsec2{border-top:0!important}
-.hhd .hhl{margin-left:auto;text-transform:none;letter-spacing:0;font-size:14px;font-weight:600;color:var(--accent,#3EA6FF);text-decoration:none}
-.num{font-variant-numeric:tabular-nums}
-.plg{display:inline-grid;place-items:center;flex:none}
-.plg img{width:100%;height:100%;object-fit:contain}
-.plg .smono{font-size:10px}
-.lvt{font-style:normal;color:var(--live);font-weight:700}
 
-/* the rail */
-.prail{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:12px 14px 4px;scroll-padding:0 14px;overscroll-behavior-x:contain}
-.prail::-webkit-scrollbar{display:none}
-.rc{flex:none;display:flex;align-items:center;gap:9px;height:44px;padding:0 13px 0 9px;border-radius:999px;color:var(--ink);text-decoration:none;background:var(--rcg);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:inset 0 0 0 .6px var(--rce),inset 0 1px 0 var(--rct)}
-.rc:active{transform:scale(.97)}
-.rcs{display:flex;align-items:center;gap:5px}
-.rcs .plg{width:24px;height:24px}
-.rcs b{font-size:15.5px;font-weight:800;letter-spacing:-.02em}
-.rcs i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--ink-3)}
-.rcs.lo{opacity:.45}
-.rcc{display:flex;flex-direction:column;align-items:flex-start;font-size:12px;font-weight:700;color:var(--ink-3);white-space:nowrap;line-height:1.15;font-variant-numeric:tabular-nums}
-.rcc.on{color:var(--live)}
-.rcc em{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.07em;color:var(--ink-3)}
+/* ===== v432: Ink =====
+   Home reads like a front page: a one-line ticker of your games, the date set large, the day's lead story with its
+   photo, then one stream of items. Each item opens with an 18px crest and a kicker (team and kind) in the team's colour;
+   everything else is black and white type on hairlines. The league tabs are the header; the bottom bar has new symbols. */
+:root{--kc:var(--kd,#3EA6FF)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .hfeed{--kc:var(--kl,#0F62C8)} :root:not([data-theme="dark"]) .hfeed [style*="--kl"]{--kc:var(--kl)} }
+:root[data-theme="light"] .hfeed [style*="--kl"]{--kc:var(--kl)}
+:root[data-theme="light"] .hfeed{--kc:var(--kl,#0F62C8)}
+.hfeed [style*="--kd"]{--kc:var(--kd)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .hfeed [style*="--kd"]{--kc:var(--kl)} }
 
-/* slabs */
-.pslab{margin:8px 14px 2px;border-radius:18px;background:var(--ps);overflow:hidden}
-.pslab .lclip > .cliptog{border-top:.5px solid var(--ps-l)!important;background:none!important}
-.pslab.dgl{padding:0 14px}
+/* the header: the tabs are the top row, the one you're on set larger, the gear at the end */
+html body .hdr.tabhd .top{display:none!important}
+html body .hdr.tabhd{border-bottom:.5px solid var(--line-2)}
+html body .hdr.tabhd .lgtabs{display:flex;align-items:center;gap:2px;height:54px;padding:0 12px 0 14px;border-bottom:0}
+html body .hdr.tabhd .lgt{flex:1 1 auto;min-width:0;height:54px;padding:0 3px;font-size:15.5px;font-weight:600;color:var(--ink-3);place-items:end center;padding-bottom:15px}
+html body .hdr.tabhd .lgt.on{font-size:20px;font-weight:800;color:var(--ink);padding-bottom:13px;letter-spacing:-.02em}
+html body .hdr.tabhd .lgtabs[data-n="5"] .lgt{font-size:15px}
+html body .hdr.tabhd .lgtabs[data-n="5"] .lgt.on{font-size:19px}
+html body .hdr.tabhd .lgink{bottom:0}
+.lggear{margin-left:6px;flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--ink);background:color-mix(in srgb,var(--ink) 9%,transparent)}
+.lggear svg{width:21px;height:21px}
+.lggear:active{opacity:.6}
+.lgtabs:not(.tabhd *) .lggear{display:none}
+@media (max-width:389px){ html body .hdr.tabhd .lgt{padding:0 2px 15px;font-size:13.5px!important} html body .hdr.tabhd .lgt.on{font-size:17px!important;padding-bottom:13px} .lggear{width:34px;height:34px} }
 
-/* tonight: pick rows */
-.pkr{display:grid;grid-template-columns:92px minmax(0,1fr) 92px;align-items:center;gap:6px;padding:9px 10px}
-.pkr + .pkr{border-top:.5px solid var(--ps-l)}
-.pks{display:flex;align-items:center;gap:7px;height:46px;padding:0 8px;border:0;border-radius:14px;background:none;color:var(--ink);font:800 14px/1 var(--ui);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color .18s,box-shadow .18s,transform .12s}
-.pks.h{justify-content:flex-end}
-.pks .plg{width:30px;height:30px}
-.pks .ck{width:15px;height:15px;color:var(--pc);flex:none}
-.pks:active:not(.lock){transform:scale(.95)}
-.pks.on{background:color-mix(in srgb,var(--pc) 22%,transparent);box-shadow:inset 0 0 0 1.4px var(--pc)}
-.pks.lock{cursor:default}
-.pks.lock:not(.on){opacity:.85}
-.pks.on.ok{background:color-mix(in srgb,var(--win,#30D158) 20%,transparent);box-shadow:inset 0 0 0 1.4px var(--win,#30D158)}.pks.on.ok .ck{color:var(--win,#30D158)}
-.pks.on.no{background:none;box-shadow:inset 0 0 0 1.2px var(--ps-l);opacity:.6}.pks.on.no .ck{color:var(--ink-3)}
-.pks.pop{animation:pkpop .32s cubic-bezier(.3,1.6,.5,1)}
-@keyframes pkpop{0%{transform:scale(.92)}60%{transform:scale(1.05)}100%{transform:scale(1)}}
-@media (prefers-reduced-motion:reduce){.pks.pop{animation:none}}
-.pkm{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;color:var(--ink);text-decoration:none;padding:4px 0}
-.pkt{font-size:13.5px;font-weight:700;white-space:nowrap}.pkt b{font-weight:800}
-.pkb{display:block;width:100%;height:6px;border-radius:6px;background:var(--b2);position:relative;overflow:hidden}
-.pkb::after{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--p);background:var(--b1);border-right:2px solid var(--ps)}
-.pkl{font-size:11.5px;font-weight:700;color:var(--ink-3);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.pkf{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-top:.5px solid var(--ps-l);font-size:13.5px;font-weight:600;color:var(--ink-3)}
-.pkf b{color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums}
-.pkf .g{color:var(--win,#30D158);font-weight:700}.pkf .r{color:var(--ink-2);font-weight:700}
+/* the ticker */
+.itick{display:flex;gap:20px;overflow-x:auto;scrollbar-width:none;padding:12px 20px 11px;border-bottom:.5px solid var(--line);overscroll-behavior-x:contain}
+.itick::-webkit-scrollbar{display:none}
+.itk{flex:none;display:flex;align-items:baseline;gap:7px;font-size:13px;font-weight:700;letter-spacing:.02em;color:var(--ink-3);text-decoration:none;font-variant-numeric:tabular-nums;white-space:nowrap}
+.itk b{color:var(--ink);font-weight:800}
+.itk .lo,.itk .lo b{color:var(--ink-3)}
+.itk i{font-style:normal;font-size:12px;font-weight:800;color:var(--ink-3)}
+.itk i.on{color:var(--live)}
+.itk:active{opacity:.6}
+/* the date */
+.idate{padding:18px 20px 2px}
+.idate span{display:block;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.idate b{display:block;font-size:32px;font-weight:800;letter-spacing:-.04em;line-height:1.05;text-transform:uppercase;color:var(--ink)}
+.irule{padding:22px 20px 2px;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+html body .hfeed .hsec2:is([data-sec="tick"],[data-sec="date"],[data-sec="lead"],[data-sec="wire"],[data-sec="digest"],[data-sec="river"]){border-top:0!important}
 
-/* your teams */
-.pqr{display:flex;align-items:center;gap:12px;padding:11px 14px;color:var(--ink);text-decoration:none}
-.pqr + .pqr{border-top:.5px solid var(--ps-l)}
-.pqr:active{background:color-mix(in srgb,var(--ink) 5%,transparent)}
-.pqr .plg{width:36px;height:36px}
-.ptn{flex:1;min-width:0}
-.ptn b{display:flex;align-items:baseline;gap:5px;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ptn b i{font-style:normal;font-size:11.5px;font-weight:800;color:var(--ink-3)}
-.ptn > span{display:block;margin-top:2px;font-size:13px;font-weight:500;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pst{flex:none;font-size:12px;font-weight:800;padding:4px 8px;border-radius:8px;background:color-mix(in srgb,var(--win,#30D158) 16%,transparent);color:var(--win,#30D158)}
-.pst.l{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink-3)}
-.prec{flex:none;min-width:52px;text-align:right;font-size:22px;font-weight:800;letter-spacing:-.03em}
+/* an item */
+html body .hfeed .feed.hfl .fp{display:block;position:relative;padding:15px 20px 15px;margin:0;border:0;background:none;color:var(--ink);text-decoration:none;text-align:left;width:100%}
+html body .hfeed .feed.hfl .fp::before{content:"";position:absolute;left:20px;right:20px;top:0;height:.5px;background:var(--line);display:block}
+html body .hfeed .feed.hfl .fp:first-child::before{display:none}
+html body .hfeed .fp .fav{position:absolute;left:20px;top:14px;width:20px;height:20px;margin:0;display:grid;place-items:center}
+html body .hfeed .fp .fav :is(.logo,.hs,.fic,img){width:20px!important;height:20px!important;min-width:0;font-size:8px!important;box-shadow:none}
+html body .hfeed .fp .fav .hs{border-radius:50%}
+html body .hfeed .fp .fb{display:block!important;min-width:0}
+html body .hfeed .fp .fh{display:flex;align-items:center;gap:0;min-height:20px;padding-left:28px;font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--kc);line-height:1.2;white-space:nowrap;overflow:hidden}
+html body .hfeed .fp .fh b{font-weight:800;color:var(--kc);overflow:hidden;text-overflow:ellipsis}
+html body .hfeed .fp .fh > span{color:var(--kc);font-weight:800;flex:none}
+html body .hfeed .fp .fh > span::before{content:"\00b7";margin:0 6px}
+html body .hfeed .fp .fh .fbk{color:var(--ink)!important;font-size:11.5px!important;letter-spacing:.1em}
+html body .hfeed .fp .fh .fbk::before{content:none}
+html body .hfeed .fp .fh .fbk i{display:none}
+html body .hfeed .fp .fh .fbk + span{margin-left:0}
+html body .hfeed .fp .fh time,html body .hfeed .fp .fh .flg{margin-left:auto;padding-left:10px;font-size:11.5px;font-weight:800;letter-spacing:.06em;color:var(--ink-3);flex:none}
+html body .hfeed .fp .fh .flg + time{margin-left:0;padding-left:8px}
+html body .hfeed .fp .fh .flg::before{content:none}
+html body .hfeed .fp .fh .fx2{margin-left:10px}
+html body .hfeed .fp .ft{display:block;margin-top:6px;font-size:18px;font-weight:500;line-height:1.28;letter-spacing:-.02em;color:var(--ink)}
+html body .hfeed .fp .ft b{font-weight:800}
+html body .hfeed .fp .ft .wl-w{color:var(--ink)}
+html body .hfeed .fp .ft .wl-l{color:var(--ink)}
+/* stories: the headline is the design */
+html body .hfeed .fp.fnw .ft{display:flex;flex-direction:column;gap:6px}
+html body .hfeed .fp.fnw .fhl{font-size:23px;font-weight:800;line-height:1.13;letter-spacing:-.035em;text-wrap:balance}
+html body .hfeed .fp.fnw .fd{font-size:15px;font-weight:400;line-height:1.4;letter-spacing:-.005em;color:var(--ink-2);-webkit-line-clamp:3}
+html body .hfeed .fp .fth{display:none}
+html body .hfeed .fp.fbrk .ft b{font-size:23px;font-weight:800;line-height:1.13;letter-spacing:-.035em;display:block;text-wrap:balance}
+/* big nights: the numbers set large */
+html body .hfeed .fp.fperf .fchips{display:flex;gap:18px;margin:6px 0 2px;background:none;padding:0}
+html body .hfeed .fp.fperf .fchips > *{background:none!important;padding:0!important;box-shadow:none!important;display:inline-flex;align-items:baseline;gap:4px;font-size:12px;font-weight:800;letter-spacing:.06em;color:var(--ink-3)}
+html body .hfeed .fp.fperf .fchips b{font-size:36px;font-weight:800;letter-spacing:-.045em;color:var(--ink);line-height:1}
+html body .hfeed .fp.fperf .ft{font-size:15px;color:var(--ink-2);font-weight:400}
+/* the lead */
+html body .hfeed [data-sec="lead"] .fp{padding-top:14px;padding-bottom:18px}
+html body .hfeed [data-sec="lead"] .fp .fhl{font-size:31px;line-height:1.06;letter-spacing:-.04em}
+html body .hfeed .fp.fhero .fimg{display:block;margin:12px 0 2px;border-radius:14px;overflow:hidden;aspect-ratio:16/10;background:var(--surf-3)}
+html body .hfeed .fp.fhero .fimg img{width:100%;height:100%;object-fit:cover;display:block}
+html body .hfeed .fp.fhero .ft{display:flex;flex-direction:column}
+html body .hfeed .fp.fhero .fd{order:3;margin-top:10px}
+html body .hfeed [data-sec="lead"] .feed.hfl .fp::before{display:none}
+/* RIVL speaking */
+html body .hfeed .fp.frivl{--kc:var(--accent,#3EA6FF)}
+html body .hfeed .fp.frivl .fav :is(img){border-radius:5px}
+/* videos keep their frame */
+html body .hfeed .fp .fimg:not(.fhero .fimg){display:block;margin-top:10px;border-radius:14px;overflow:hidden}
+.hfeed .hend{color:var(--ink-3)}
 
-/* last night */
-.pfr{display:grid;grid-template-columns:minmax(0,1fr) 48px 76px 48px minmax(0,1fr);align-items:center;padding:11px 12px;color:var(--ink);text-decoration:none}
-.pfr + .pfr{border-top:.5px solid var(--ps-l)}
-.pfs{display:flex;align-items:center;gap:8px;min-width:0;font-size:14px}.pfs.h{justify-content:flex-end}
-.pfs .plg{width:28px;height:28px}
-.pfs b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pfc{font-size:24px;font-weight:800;text-align:center;letter-spacing:-.03em}
-.pfm{display:flex;flex-direction:column;align-items:center;font-size:12.5px;font-weight:700;color:var(--ink-3);line-height:1.2}
-.pfm em{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.07em}
-.pfr .lo{opacity:.42}
+/* the bottom bar: new symbols; the tab you're on is a solid disc */
+html body #tabs .tab svg{width:25px;height:25px}
+html:root:not(.x) body #tabs .tabpill .tab.on{background:var(--ink)!important;color:var(--bg)!important;box-shadow:none!important}
+html body #tabs .tabpill .tab.on svg{color:var(--bg)}
+html:root:not(.x) body #tabs .tab.srch.on{background:var(--ink)!important;color:var(--bg)!important}
+html body .hfeed .fp.fhero .fb{display:flex!important;flex-direction:column}
+html body .hfeed .fp.fhero .ft{display:contents}
+html body .hfeed .fp.fhero .fhl{order:1;margin-top:6px}
+html body .hfeed .fp.fhero .fimg{order:2}
+html body .hfeed .fp.fhero .fd{order:3;margin-top:12px}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) html body .hfeed .fp.frivl,:root:not([data-theme="dark"]) .hfeed .fp.frivl{--kc:#0F62C8} }
+:root[data-theme="light"] .hfeed .fp.frivl{--kc:#0F62C8}
