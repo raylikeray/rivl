@@ -4887,60 +4887,86 @@ html body .approf .tw table th:first-child,html body .approf .tw table td:first-
 :root:not([data-theme="light"]) .apgl .apll:not(.keep){visibility:hidden}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .apgl .apld{display:none} :root:not([data-theme="dark"]) .apgl .apll:not(.keep){visibility:visible} }
 
-/* ===== v430: Aurora Home =====
-   The top of Home is a soft aurora in the tab's colour (blue for Following, the league's for a league tab) that the title and
-   tabs sit on until you scroll. The breaking story that leads the feed is a hero card in its team's aurora with the crest as a
-   watermark; tonight's games sit under it as glass pills. Everything after is the plain stream. */
-:root{--sk1:#2878E6;--sk2:#6A44E0;--skA:72%}
-:root[data-htab="nba"]{--sk1:#1D5FD8;--sk2:#D8303F}
-:root[data-htab="wnba"]{--sk1:#FF6A1A;--sk2:#F2A33A}
-:root[data-htab="ncaam"]{--sk1:#1E4FC8;--sk2:#16A0E0}
-:root[data-htab="ncaaw"]{--sk1:#7C46E0;--sk2:#D2479E}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){--skA:34%} }
-:root[data-theme="light"]{--skA:34%}
-.hsky{position:absolute;left:0;right:0;top:0;height:560px;z-index:-1;pointer-events:none;overflow:hidden;display:none}
-html[data-page="home"] .hsky{display:block}
-html[data-page="home"] body{background:transparent!important}
-.hsky i{position:absolute;inset:-12% -30% -10%;filter:blur(28px);will-change:transform;
-  background:radial-gradient(58% 34% at 20% 32%,color-mix(in srgb,var(--sk1) var(--skA),transparent),transparent 70%),
-    radial-gradient(50% 30% at 84% 20%,color-mix(in srgb,var(--sk2) calc(var(--skA) - 10%),transparent),transparent 70%);
-  animation:apau 30s ease-in-out infinite alternate;transition:background .4s}
-.hsky::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,0) 40%,var(--bg) 98%)}
-@media (prefers-reduced-motion:reduce){.hsky i{animation:none}}
-/* the title, the tabs and the status bar ride on the sky at the top of Home, and take the page colour once you scroll */
-html[data-page="home"]:not(.scrolled) .hdr,html[data-page="home"]:not(.scrolled) .sbg{background:transparent!important}
-html[data-page="home"] .hdr{transition:background-color .2s}
-html[data-page="home"] .lgtabs{border-bottom-color:color-mix(in srgb,var(--ink) 10%,transparent)}
-html[data-page="home"] .hfeed .hsec2[data-sec="wire"],html[data-page="home"] .hfeed .hsec2[data-sec="strip"]{border-top:0}
 
-/* the hero: the first breaking story */
-.fbrk .fau,.fbrk .fgr,.fbrk .fwm{display:none}
-html body .hfeed .feed.hfl .fp.fh2{display:flex;flex-direction:column;justify-content:flex-end;position:relative;isolation:isolate;overflow:hidden;
-  min-height:206px;width:auto!important;max-width:none;margin:10px 14px 0!important;padding:58px 18px 16px!important;border-radius:24px;background:var(--ad);color:#fff;
-  box-shadow:inset 0 0 0 .6px rgba(255,255,255,.14),inset 0 1px 0 rgba(255,255,255,.16),0 14px 30px -12px rgba(0,0,0,.55)}
-.hfeed .feed.hfl .fp.fh2::before{display:none}
-.fp.fh2 .fau{display:block;position:absolute;inset:-25%;z-index:-3;filter:blur(20px);will-change:transform;
-  background:radial-gradient(38% 32% at 86% 14%,color-mix(in srgb,var(--a2) 56%,transparent),transparent 70%),
-    radial-gradient(50% 44% at 14% 82%,color-mix(in srgb,var(--a3) 55%,transparent),transparent 70%),
-    radial-gradient(60% 50% at 40% 8%,color-mix(in srgb,var(--a) 82%,transparent),transparent 70%),
-    radial-gradient(46% 40% at 72% 96%,color-mix(in srgb,var(--ad) 70%,#000),transparent 72%);
-  animation:apau 26s ease-in-out infinite alternate}
-.fp.fh2 .fgr{display:block;position:absolute;inset:0;z-index:-2;opacity:.11;mix-blend-mode:overlay;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>")}
-.fp.fh2 .fwm{display:block;position:absolute;right:-34px;top:-18px;width:200px;height:200px;object-fit:contain;opacity:.15;filter:grayscale(1) brightness(2.4);z-index:-1;pointer-events:none}
-.fp.fh2::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(rgba(0,0,0,0) 35%,rgba(0,0,0,.4));pointer-events:none}
-@media (prefers-reduced-motion:reduce){.fp.fh2 .fau{animation:none}}
-.fp.fh2 .fav{position:absolute;left:16px;top:14px;width:34px;height:34px;margin:0}
-.fp.fh2 .fav :is(.logo,img){width:34px!important;height:34px!important;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
-.fp.fh2 .fb{width:100%}
-.fp.fh2 .fh{color:rgba(255,255,255,.78)!important}
-.fp.fh2 .fh :is(span,time,.flg){color:rgba(255,255,255,.78)!important}
-.fp.fh2 .fbk{color:#FF6B61!important}.fp.fh2 .fbk i{background:#FF6B61}
-.fp.fh2 .ft{margin-top:6px}
-.fp.fh2 .ft b{display:block;font-size:22px;font-weight:750;line-height:1.2;letter-spacing:-.025em;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.3);text-wrap:balance}
-html body .fp.fh2 .fx2{position:absolute!important;top:14px;right:14px;z-index:2;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;background:rgba(255,255,255,.18);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:inset 0 0 0 .6px rgba(255,255,255,.35)}
-.fp.fh2:active{transform:scale(.99)}
+/* ===== v431: Pulse Home =====
+   A scoreboard first: a live rail of glass chips, tonight's games as pick rows (tap a side; the bar is RIVL's lean),
+   your week against RIVL's, your teams with record and streak, last night's finals Apple Sports style, your players'
+   lines, then the latest. Rounded slabs with hairlines inside; colour only in logos, the lean bar and the side you pick. */
+:root{--ps:#1C1C1E;--ps-l:rgba(84,84,88,.55);--rcg:rgba(255,255,255,.09);--rce:rgba(255,255,255,.16);--rct:rgba(255,255,255,.12)}
+@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){--ps:#F2F2F7;--ps-l:rgba(60,60,67,.18);--rcg:rgba(0,0,0,.045);--rce:rgba(0,0,0,.07);--rct:rgba(255,255,255,.9)} }
+:root[data-theme="light"]{--ps:#F2F2F7;--ps-l:rgba(60,60,67,.18);--rcg:rgba(0,0,0,.045);--rce:rgba(0,0,0,.07);--rct:rgba(255,255,255,.9)}
+.hfeed .hsec2:is([data-sec="rail"],[data-sec="picks"],[data-sec="teams"],[data-sec="last"],[data-sec="digest"]),.hfeed .hsec2:is([data-sec="rail"],[data-sec="picks"],[data-sec="teams"],[data-sec="last"],[data-sec="digest"]) + .hsec2{border-top:0!important}
+.hhd .hhl{margin-left:auto;text-transform:none;letter-spacing:0;font-size:14px;font-weight:600;color:var(--accent,#3EA6FF);text-decoration:none}
+.num{font-variant-numeric:tabular-nums}
+.plg{display:inline-grid;place-items:center;flex:none}
+.plg img{width:100%;height:100%;object-fit:contain}
+.plg .smono{font-size:10px}
+.lvt{font-style:normal;color:var(--live);font-weight:700}
 
-/* tonight: glass pills */
-html body .hfeed .hstrip{background:none;padding:12px 14px 10px;gap:8px}
-html body .hfeed .hchip{border-radius:999px;padding:8px 14px 8px 8px;background:color-mix(in srgb,var(--ink) 9%,transparent);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);box-shadow:inset 0 0 0 .6px color-mix(in srgb,var(--ink) 16%,transparent),inset 0 1px 0 rgba(255,255,255,.14)}
-html body .hfeed .hchip .hsv span{color:var(--ink-2)}
+/* the rail */
+.prail{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:12px 14px 4px;scroll-padding:0 14px;overscroll-behavior-x:contain}
+.prail::-webkit-scrollbar{display:none}
+.rc{flex:none;display:flex;align-items:center;gap:9px;height:44px;padding:0 13px 0 9px;border-radius:999px;color:var(--ink);text-decoration:none;background:var(--rcg);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:inset 0 0 0 .6px var(--rce),inset 0 1px 0 var(--rct)}
+.rc:active{transform:scale(.97)}
+.rcs{display:flex;align-items:center;gap:5px}
+.rcs .plg{width:24px;height:24px}
+.rcs b{font-size:15.5px;font-weight:800;letter-spacing:-.02em}
+.rcs i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--ink-3)}
+.rcs.lo{opacity:.45}
+.rcc{display:flex;flex-direction:column;align-items:flex-start;font-size:12px;font-weight:700;color:var(--ink-3);white-space:nowrap;line-height:1.15;font-variant-numeric:tabular-nums}
+.rcc.on{color:var(--live)}
+.rcc em{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.07em;color:var(--ink-3)}
+
+/* slabs */
+.pslab{margin:8px 14px 2px;border-radius:18px;background:var(--ps);overflow:hidden}
+.pslab .lclip > .cliptog{border-top:.5px solid var(--ps-l)!important;background:none!important}
+.pslab.dgl{padding:0 14px}
+
+/* tonight: pick rows */
+.pkr{display:grid;grid-template-columns:92px minmax(0,1fr) 92px;align-items:center;gap:6px;padding:9px 10px}
+.pkr + .pkr{border-top:.5px solid var(--ps-l)}
+.pks{display:flex;align-items:center;gap:7px;height:46px;padding:0 8px;border:0;border-radius:14px;background:none;color:var(--ink);font:800 14px/1 var(--ui);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color .18s,box-shadow .18s,transform .12s}
+.pks.h{justify-content:flex-end}
+.pks .plg{width:30px;height:30px}
+.pks .ck{width:15px;height:15px;color:var(--pc);flex:none}
+.pks:active:not(.lock){transform:scale(.95)}
+.pks.on{background:color-mix(in srgb,var(--pc) 22%,transparent);box-shadow:inset 0 0 0 1.4px var(--pc)}
+.pks.lock{cursor:default}
+.pks.lock:not(.on){opacity:.85}
+.pks.on.ok{background:color-mix(in srgb,var(--win,#30D158) 20%,transparent);box-shadow:inset 0 0 0 1.4px var(--win,#30D158)}.pks.on.ok .ck{color:var(--win,#30D158)}
+.pks.on.no{background:none;box-shadow:inset 0 0 0 1.2px var(--ps-l);opacity:.6}.pks.on.no .ck{color:var(--ink-3)}
+.pks.pop{animation:pkpop .32s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pkpop{0%{transform:scale(.92)}60%{transform:scale(1.05)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.pks.pop{animation:none}}
+.pkm{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;color:var(--ink);text-decoration:none;padding:4px 0}
+.pkt{font-size:13.5px;font-weight:700;white-space:nowrap}.pkt b{font-weight:800}
+.pkb{display:block;width:100%;height:6px;border-radius:6px;background:var(--b2);position:relative;overflow:hidden}
+.pkb::after{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--p);background:var(--b1);border-right:2px solid var(--ps)}
+.pkl{font-size:11.5px;font-weight:700;color:var(--ink-3);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.pkf{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-top:.5px solid var(--ps-l);font-size:13.5px;font-weight:600;color:var(--ink-3)}
+.pkf b{color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums}
+.pkf .g{color:var(--win,#30D158);font-weight:700}.pkf .r{color:var(--ink-2);font-weight:700}
+
+/* your teams */
+.pqr{display:flex;align-items:center;gap:12px;padding:11px 14px;color:var(--ink);text-decoration:none}
+.pqr + .pqr{border-top:.5px solid var(--ps-l)}
+.pqr:active{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.pqr .plg{width:36px;height:36px}
+.ptn{flex:1;min-width:0}
+.ptn b{display:flex;align-items:baseline;gap:5px;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ptn b i{font-style:normal;font-size:11.5px;font-weight:800;color:var(--ink-3)}
+.ptn > span{display:block;margin-top:2px;font-size:13px;font-weight:500;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pst{flex:none;font-size:12px;font-weight:800;padding:4px 8px;border-radius:8px;background:color-mix(in srgb,var(--win,#30D158) 16%,transparent);color:var(--win,#30D158)}
+.pst.l{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink-3)}
+.prec{flex:none;min-width:52px;text-align:right;font-size:22px;font-weight:800;letter-spacing:-.03em}
+
+/* last night */
+.pfr{display:grid;grid-template-columns:minmax(0,1fr) 48px 76px 48px minmax(0,1fr);align-items:center;padding:11px 12px;color:var(--ink);text-decoration:none}
+.pfr + .pfr{border-top:.5px solid var(--ps-l)}
+.pfs{display:flex;align-items:center;gap:8px;min-width:0;font-size:14px}.pfs.h{justify-content:flex-end}
+.pfs .plg{width:28px;height:28px}
+.pfs b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pfc{font-size:24px;font-weight:800;text-align:center;letter-spacing:-.03em}
+.pfm{display:flex;flex-direction:column;align-items:center;font-size:12.5px;font-weight:700;color:var(--ink-3);line-height:1.2}
+.pfm em{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.07em}
+.pfr .lo{opacity:.42}
