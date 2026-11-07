@@ -87,10 +87,18 @@
   const tabNow = r => r.name === 'home' ? r.args[0] : r.lk;
   const tabLabel = k => k === 'following' ? 'Following' : LEAGUES[k].label;
   function inkTo(i, frac = 0) {
-    const bs = $lgt.querySelectorAll('.lgt'); const ink = $lgt.querySelector('.lgink'); if (!bs.length || !ink) return;
-    const at = j => { const b = bs[Math.max(0, Math.min(bs.length - 1, j))]; const l = b.querySelector('span'); const r0 = $lgt.getBoundingClientRect(), r = l.getBoundingClientRect(); return { x: r.left - r0.left, w: r.width }; };
+    const sc = $lgt.querySelector('.lgsc'); const bs = $lgt.querySelectorAll('.lgt'); const ink = $lgt.querySelector('.lgink'); if (!sc || !bs.length || !ink) return;
+    const r0 = sc.getBoundingClientRect();
+    const at = j => { const b = bs[Math.max(0, Math.min(bs.length - 1, j))]; const r = b.querySelector('span').getBoundingClientRect(); return { x: r.left - r0.left + sc.scrollLeft, w: r.width }; };
     const a = at(i), b = at(i + Math.sign(frac)); const f = Math.abs(frac);
     ink.style.width = `${a.w + (b.w - a.w) * f}px`; ink.style.transform = `translateX(${a.x + (b.x - a.x) * f}px)`;
+  }
+  /* v433: X-style row. It is wider than the screen; the active tab slides into view with the one before it peeking */
+  function lgScroll(i, smooth = true) {
+    const sc = $lgt.querySelector('.lgsc'); const bs = $lgt.querySelectorAll('.lgt'); if (!sc || !bs[i]) return;
+    const x = Math.max(0, Math.min(sc.scrollWidth - sc.clientWidth, bs[i].offsetLeft - (i ? 44 : 0)));
+    if (Math.abs(sc.scrollLeft - x) < 2) return;
+    try { sc.scrollTo({ left: x, behavior: smooth && !matchMedia('(prefers-reduced-motion:reduce)').matches ? 'smooth' : 'auto' }); } catch (e) { sc.scrollLeft = x; }
   }
   function paintLgTabs(r, show) {
     $lgt.hidden = !show; document.getElementById('htitle').hidden = !(show && r.name === 'home');
@@ -99,13 +107,14 @@
     const tabs = tabsFor(r), cur = tabNow(r);
     if ($lgt.dataset.set !== tabs.join(',')) {
       $lgt.dataset.set = tabs.join(','); $lgt.dataset.n = tabs.length;
-      $lgt.innerHTML = tabs.map(k => `<button class="lgt" role="tab" data-lgt="${k}"><span>${esc(tabLabel(k))}<i class="lgd" hidden></i></span></button>`).join('') + '<i class="lgink" aria-hidden="true"></i>'
+      $lgt.innerHTML = '<div class="lgsc">' + tabs.map(k => `<button class="lgt" role="tab" data-lgt="${k}"><span>${esc(tabLabel(k))}<i class="lgd" hidden></i></span></button>`).join('') + '<i class="lgink" aria-hidden="true"></i></div>'
         + '<a class="lggear" href="#settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>';
       $lgt.classList.add('noanim'); requestAnimationFrame(() => requestAnimationFrame(() => $lgt.classList.remove('noanim')));
     }
     $lgt.querySelectorAll('.lgt').forEach(b => { const k = b.dataset.lgt; const on = k === cur; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on));
       const d = b.querySelector('.lgd'); const live = k === 'following' ? ORDER.some(x => S.today[x].some(g => isLive(g) && HW.isFav(g))) : S.today[k].some(isLive); d.hidden = !live; });
-    inkTo(tabs.indexOf(cur));
+    const fresh = $lgt.classList.contains('noanim');
+    inkTo(tabs.indexOf(cur)); lgScroll(tabs.indexOf(cur), !fresh);
   }
   window.addEventListener('resize', () => { if (current && !$lgt.hidden) inkTo(tabsFor(current).indexOf(tabNow(current))); });
   /* choosing a tab: no new history entry (Back never walks through tabs), each tab lands where you left it */

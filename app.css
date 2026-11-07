@@ -4993,3 +4993,14 @@ html body .hfeed .fp.fhero .fimg{order:2}
 html body .hfeed .fp.fhero .fd{order:3;margin-top:12px}
 @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) html body .hfeed .fp.frivl,:root:not([data-theme="dark"]) .hfeed .fp.frivl{--kc:#0F62C8} }
 :root[data-theme="light"] .hfeed .fp.frivl{--kc:#0F62C8}
+
+/* v433: X-style league row. The row scrolls sideways, tabs keep their natural width, the gear stays pinned at the end */
+html body .hdr.tabhd .lgtabs{gap:0;padding:0 12px 0 0}
+.lgsc{position:relative;display:flex;flex:1 1 auto;min-width:0;height:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scroll-padding:0 20px;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 34px),transparent);mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 34px),transparent)}
+.lgsc::-webkit-scrollbar{display:none}
+.lgtabs:not(.tabhd *) .lgsc{-webkit-mask-image:none;mask-image:none}
+html body .hdr.tabhd .lgsc{gap:26px;padding:0 34px 0 20px}
+html body .hdr.tabhd .lgt,html body .hdr.tabhd .lgtabs[data-n="5"] .lgt{flex:none;padding:0 0 15px;font-size:17px;font-weight:600}
+html body .hdr.tabhd .lgt.on,html body .hdr.tabhd .lgtabs[data-n="5"] .lgt.on{font-size:20px;padding-bottom:13px}
+@media (max-width:389px){ html body .hdr.tabhd .lgsc{gap:22px;padding-left:16px} html body .hdr.tabhd .lgt{padding:0 0 15px;font-size:16px!important} html body .hdr.tabhd .lgt.on{font-size:19px!important} }
