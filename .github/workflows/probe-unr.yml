@@ -1,4 +1,4 @@
-name: probe-unr
+name: probe-unr2
 on: push
 jobs:
   p:
@@ -7,13 +7,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          mkdir -p pu
-          UA='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile Safari/604.1'
-          B=https://www.unrivaled.basketball
-          for p in schedule teams stats players standings; do curl -sL -A "$UA" -o pu/$p.html "$B/$p"; done
-          curl -sL -A "$UA" -o pu/team-laces.html "$B/teams/laces"
-          curl -sL -A "$UA" -o pu/team-laces2.html "$B/laces"
-          curl -sL -A "$UA" -o pu/sitemap.xml "$B/sitemap.xml"
-          curl -sL -A "$UA" -o pu/robots.txt "$B/robots.txt"
-          ls -la pu
-          git config user.name probe; git config user.email probe@x; git add pu; git commit -m probe; git push origin HEAD:probe-unr
+          mkdir -p pu2
+          U=https://pub-ad8cc693759b4b55a181a76af041efa0.r2.dev/players/paige-bueckers/images/2027/breeze-headshot.1793838163956.webp
+          curl -s -D pu2/h1.txt -o pu2/a.webp -H 'Referer: https://raylikeray.github.io/rivl/' -H 'Origin: https://raylikeray.github.io' "$U"
+          curl -s -D pu2/h2.txt -o pu2/b.png -H 'Referer: https://raylikeray.github.io/rivl/' "https://pub-ad8cc693759b4b55a181a76af041efa0.r2.dev/teams/breeze/images/logo/primary.png?v=1757509054167"
+          ls -la pu2 > pu2/ls.txt; rm -f pu2/*.webp pu2/*.png
+          git config user.name probe; git config user.email probe@x; git add pu2; git commit -m probe; git push -f origin HEAD:probe-unr2
