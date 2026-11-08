@@ -131,6 +131,8 @@
   const logo = (src, size = '', color = '') => { const c = BAD(color) ? '' : hx(color); const px = LOGO_PX[size] || 128; return `<span class="logo ${size === 'hero' ? '' : size}${c ? ' tint' : ''}${c && lowC(c) ? ' lowc' : ''}"${c ? ` style="${tcv(c)}"` : ''}>${imgSized(src, px, px)}</span>`; };
   /* a player's id from whatever the feed gave us: the id field, the uid, the headshot file name or a link */
   const athId = a => { if (!a) return ''; if (a.id != null && a.id !== '') return String(a.id); let m = String(a.uid || '').match(/~a:(\d+)/); if (m) return m[1]; const hs = typeof a.headshot === 'string' ? a.headshot : a.headshot && a.headshot.href || ''; m = hs.match(/\/(\d+)\.png/); if (m) return m[1]; m = (a.links || []).map(l => l && l.href || '').join(' ').match(/\/id\/(\d+)/); return m ? m[1] : ''; };
+  /* v436: ESPN's headshot for a player id, for posts that only have the id (a player just off the report) */
+  const idHs = (L, id) => id && L && L.path ? `https://a.espncdn.com/i/headshots/${L.path.split('/').pop()}/players/full/${id}.png` : '';
   const hsUrl = a => { const h = a && a.headshot; return typeof h === 'string' ? h : h && h.href || ''; };
   const initials = name => String(name || '').replace(/[^A-Za-z\s'-]/g, '').trim().split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   /* headshot disc: the photo when the feed has one, the player's initials on the team colour when it doesn't */
@@ -586,12 +588,12 @@
         const recent = Object.entries(log).filter(([id, e]) => id !== '__seeded' && e.at && NOW - e.at < 48 * 36e5);
         const rows = recent.map(([id, e]) => {
           const c = cur[id]; const p = pById.get(id) || null; const t = c ? c.t : (teams.find(x => x.id === e.team) || {}); const nm = e.nm || (p && p.name) || '';
-          if (!c) return { k: e.at, imp: 1, html: () => post(e.at, href.player(lk, id), headshot('', teamColor(t, L), 40, nm), esc(t.short || ''), 'Injury', `<b>${esc(nm)}</b> is off the injury report.`, '', '', '', 'finj') };
+          if (!c) return { k: e.at, imp: 1, html: () => post(e.at, href.player(lk, id), headshot((p && p.img) || idHs(L, id), teamColor(t, L), 40, nm), esc(t.short || ''), 'Injury', `<b>${esc(nm)}</b> is off the injury report.`, '', '', '', 'finj') };
           const x = c.x; const det = x.details || {}; const rest = /rest/i.test(`${det.type || ''} ${det.detail || ''} ${x.shortComment || ''}`); if (rest && !p) return null;
           const key = `h:${t.id}:${id}:${x.id || c.i}`; S.injuries = S.injuries || {}; S.injuries[key] = { x, id, team: t };
           const st = statusWord(x.status || ''); const ret = retInfo(L, det.returnDate); const part = (det.type || det.location || det.detail || '').toLowerCase(); const out = /out/i.test(st);
           const txt = out ? `<b>${esc(nm)}</b> is out${part && !rest ? ` with ${/^[aeiou]/.test(part) ? 'an' : 'a'} ${esc(part)} injury` : ''}${ret && !ret.past ? (ret.far ? ' for the season.' : `, back around ${esc(ret.long)}.`) : '.'}` : `<b>${esc(nm)}</b> is ${esc(st.toLowerCase())}${part ? ` (${esc(part)})` : ''}.`;
-          return { k: e.at, imp: c.s === 'season' ? 4 : c.s === 'out' ? 3 : c.s === 'doubtful' ? 2 : 1, html: () => post(e.at, '', headshot(hsUrl(c.a) || (p && p.img) || '', teamColor(t, L), 40, nm), esc(t.short), 'Injury', txt, '', ` data-act="injury" data-key="${esc(key)}"`, '', 'finj') };
+          return { k: e.at, imp: c.s === 'season' ? 4 : c.s === 'out' ? 3 : c.s === 'doubtful' ? 2 : 1, html: () => post(e.at, '', headshot(hsUrl(c.a) || (p && p.img) || idHs(L, id), teamColor(t, L), 40, nm), esc(t.short), 'Injury', txt, '', ` data-act="injury" data-key="${esc(key)}"`, '', 'finj') };
         }).filter(Boolean).sort((a, b) => (b.imp - a.imp) || (b.k - a.k));
         rows.forEach(r => r.html());
         if (false) { const n0 = posts.length; rows.slice(5).forEach(r => r.html()); posts.slice(n0).forEach(pp => { pp.html = pp.html.replace('class="fp finj"', 'class="fp finj fmore" hidden'); });
@@ -918,8 +920,9 @@
      league sets the matchups. */
   const unrDays = d => {
     const toYmd = x => { const t = new Date(String(x).replace(/^\w+,\s*/, '') + ' 12:00'); return isNaN(t) ? '' : `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };
-    const days = {}; (d.games || []).forEach(g => { const y = toYmd(g.date); if (!y) return; const k = y + '|' + (g.arena || ''); (days[k] = days[k] || { y, arena: g.arena, city: g.city, games: [] }).games.push(g); });
-    return Object.values(days).sort((a, b) => a.y < b.y ? -1 : a.y > b.y ? 1 : 0);
+    // v436: the 2027 file names each night (a tour stop, or a home night in Miami); two stops can share a date
+    const days = {}; (d.games || []).forEach(g => { const y = g.ymd || toYmd(g.date); if (!y) return; const k = y + '|' + (g.night || g.arena || ''); (days[k] = days[k] || { y, arena: g.arena, city: g.city, name: g.kicker ? g.name : '', games: [] }).games.push(g); });
+    return Object.values(days).sort((a, b) => a.y < b.y ? -1 : a.y > b.y ? 1 : (a.games[0].at || '') < (b.games[0].at || '') ? -1 : 1);
   };
   /* v413: Unrivaled's times come in Eastern; they show on the viewer's own clock (it used to subtract an hour for Central) */
   const zoneMin = (tz, d) => { try { const p = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).formatToParts(d).reduce((o, x) => (o[x.type] = x.value, o), {});
@@ -928,13 +931,14 @@
     const h = (+m[1] % 12) + (/PM/i.test(m[3]) ? 12 : 0); const day = ymd || todayCT();
     const guess = new Date(`${day}T${String(h).padStart(2, '0')}:${m[2]}:00Z`); const utc = new Date(guess.getTime() - zoneMin('America/New_York', guess) * 60000);
     try { return utc.toLocaleTimeString('en-US', { timeZone: HW.TZ, hour: 'numeric', minute: '2-digit' }); } catch { return tm; } };
+  const unrTime = (g, ymd) => { if (g.at) { try { return new Date(g.at).toLocaleTimeString('en-US', { timeZone: HW.TZ, hour: 'numeric', minute: '2-digit' }); } catch { } } return unrCT(g.time, ymd); };
   const unrLogo = (d, name) => { const c = (d.clubs || []).find(x => x.name === name); return c && c.logo ? `<img src="${esc(c.logo)}" alt="" loading="lazy" onerror="this.remove()">` : ''; };
   async function unrivaledCard() {
     const d = HW.hub ? await HW.hub.file('unrivaled.json').catch(() => null) : null; if (!d || !d.games || !d.games.length) return '';
     const today = todayCT(); const list = unrDays(d); const ahead = list.filter(x => x.y >= today); const nx = ahead[0]; if (!nx) return '';
     const n = Math.round((new Date(nx.y + 'T12:00:00Z') - new Date(today + 'T12:00:00Z')) / 864e5);
     const tv = [...new Set(nx.games.flatMap(g => g.tv || []))];
-    const games = nx.games.map(g => `<div class="ung">${g.teams && g.teams.length === 2 ? `<span class="unt">${unrLogo(d, g.teams[0])}<b>${esc(g.teams[0])}</b></span><i>vs</i><span class="unt">${unrLogo(d, g.teams[1])}<b>${esc(g.teams[1])}</b></span>` : '<span class="unt tbd"><b>Teams to be set</b></span>'}<em>${esc(unrCT(g.time, nx.y))} CT</em></div>`).join('');
+    const games = nx.games.map(g => `<div class="ung">${g.teams && g.teams.length === 2 ? `<span class="unt">${unrLogo(d, g.teams[0])}<b>${esc(g.teams[0])}</b></span><i>vs</i><span class="unt">${unrLogo(d, g.teams[1])}<b>${esc(g.teams[1])}</b></span>` : '<span class="unt tbd"><b>Teams to be set</b></span>'}<em>${esc(unrTime(g, nx.y))}</em></div>`).join('');
     return `<div class="unrv"><div class="brief-h"><b>Unrivaled</b><span>${n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`}</span></div><p class="unote">The 3-on-3 league where WNBA stars play in the offseason.</p>`
       + `<div class="unx"><div class="unh"><b>${esc(dayLabel(nx.y, { weekday: 'long', month: 'long', day: 'numeric' }))}</b><span>${esc([nx.arena, nx.city].filter(Boolean).join(' · '))}</span></div>${games}${tv.length ? `<div class="untv">${tv.map(x => `<em>${esc(x)}</em>`).join('')}</div>` : ''}</div>`
       + `<button class="btn ghost unbtn" data-act="scmode" data-mode="unrivaled">See the full schedule · ${ahead.reduce((a, x) => a + x.games.length, 0)} games</button></div>`;
@@ -943,9 +947,13 @@
     const d = HW.hub ? await HW.hub.file('unrivaled.json').catch(() => null) : null;
     if (!d || !d.games || !d.games.length) return empty('No Unrivaled schedule yet', '<p style="margin:6px 0 0">It shows here once the league posts it.</p>');
     const today = todayCT(); const list = unrDays(d); const ahead = list.filter(x => x.y >= today), done = list.filter(x => x.y < today).reverse();
-    const dayCard = x => `<div class="unx"><div class="unh"><b>${esc(dayLabel(x.y, { weekday: 'short', month: 'short', day: 'numeric' }))}</b><span>${esc([x.arena, x.city].filter(Boolean).join(' · '))}</span></div>${x.games.map(g => `<div class="ung">${g.teams && g.teams.length === 2 ? `<span class="unt">${unrLogo(d, g.teams[0])}<b>${esc(g.teams[0])}</b></span><i>vs</i><span class="unt">${unrLogo(d, g.teams[1])}<b>${esc(g.teams[1])}</b></span>` : '<span class="unt tbd"><b>Teams to be set</b></span>'}<em>${g.score ? `<b>${esc(String(g.score[0]))}-${esc(String(g.score[1]))}</b>` : `${esc(unrCT(g.time, x.y))} CT`}</em></div>`).join('')}${(x.games[0] && x.games[0].tv || []).length ? `<div class="untv">${x.games[0].tv.map(t => `<em>${esc(t)}</em>`).join('')}</div>` : ''}</div>`;
+    const dayCard = x => `<div class="unx"><div class="unh"><b>${esc(dayLabel(x.y, { weekday: 'short', month: 'short', day: 'numeric' }))}${x.name ? ` · ${esc(x.name.replace(/ is Unrivaled$/, ''))}` : ''}</b><span>${esc([x.arena, x.city].filter(Boolean).join(' · '))}</span></div>${x.games.map(g => `<div class="ung">${g.teams && g.teams.length === 2 ? `<span class="unt">${unrLogo(d, g.teams[0])}<b>${esc(g.teams[0])}</b></span><i>vs</i><span class="unt">${unrLogo(d, g.teams[1])}<b>${esc(g.teams[1])}</b></span>` : '<span class="unt tbd"><b>Teams to be set</b></span>'}<em>${g.score ? `<b>${esc(String(g.score[0]))}-${esc(String(g.score[1]))}</b>` : esc(unrTime(g, x.y))}</em></div>`).join('')}${(x.games[0] && x.games[0].tv || []).length ? `<div class="untv">${x.games[0].tv.map(t => `<em>${esc(t)}</em>`).join('')}</div>` : ''}</div>`;
     const byMonth = {}; ahead.forEach(x => { const k = dayLabel(x.y, { month: 'long', year: 'numeric' }); (byMonth[k] = byMonth[k] || []).push(x); });
-    return `<p class="unote" style="margin-top:4px">The 3-on-3 league where WNBA stars play in the offseason. ${ahead.length ? `${ahead.reduce((a, x) => a + x.games.length, 0)} games to come.` : ''}</p>`
+    /* v436: the eight clubs and their rosters, headshots from the league's own site */
+    const clubs = (d.clubs || []).filter(c => c.players && c.players.length);
+    const face = p => `<span class="unp">${headshot(p.img || '', '', 52, p.name)}<b>${esc(p.last || p.name)}</b><small>${esc([p.pos, p.ht].filter(Boolean).join(' · '))}</small></span>`;
+    const rail = clubs.length ? sec('Clubs', `${clubs.length} teams · ${clubs.reduce((a, c) => a + c.players.length, 0)} players`) + `<div class="unclubs">${clubs.map(c => `<div class="uncl"><div class="unclh">${c.logo ? `<img src="${esc(c.logo)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<b>${esc(c.name)}</b></div><div class="unps">${c.players.map(face).join('')}</div></div>`).join('')}</div>` : '';
+    return `<p class="unote" style="margin-top:4px">The 3-on-3 league where WNBA stars play in the offseason. ${ahead.length ? `${ahead.reduce((a, x) => a + x.games.length, 0)} games to come.` : ''}</p>` + rail
       + Object.entries(byMonth).map(([m, xs]) => sec(m, `${xs.length} game days`) + `<div class="unrv">${xs.map(dayCard).join('')}</div>`).join('')
       + (done.length ? sec('Results', 'newest first') + `<div class="unrv">${done.slice(0, 12).map(dayCard).join('')}</div>` : '');
   }
