@@ -1,0 +1,7 @@
+User-Agent: *
+Disallow: /admin
+Disallow: /in-venue
+Disallow: /kiosk
+Disallow: /media
+Disallow: /staff
+
