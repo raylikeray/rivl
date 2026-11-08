@@ -1,0 +1,12 @@
+HTTP/1.1 200 OK
+Date: Sun, 08 Nov 2026 21:14:04 GMT
+Content-Type: image/png
+Content-Length: 768901
+Connection: keep-alive
+Accept-Ranges: bytes
+ETag: "cbcec9b44279d0cfa2f47c381674586b"
+Last-Modified: Wed, 10 Sep 2025 12:57:33 GMT
+Vary: Origin
+Server: cloudflare
+CF-RAY: a57795cf8e8287a3-IAD
+

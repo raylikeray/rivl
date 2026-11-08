@@ -1,0 +1,8 @@
+total 820
+drwxr-xr-x  2 runner runner   4096 Nov  8 21:14 .
+drwxr-xr-x 13 runner runner   4096 Nov  8 21:14 ..
+-rw-r--r--  1 runner runner  52558 Nov  8 21:14 a.webp
+-rw-r--r--  1 runner runner 768901 Nov  8 21:14 b.png
+-rw-r--r--  1 runner runner    303 Nov  8 21:14 h1.txt
+-rw-r--r--  1 runner runner    303 Nov  8 21:14 h2.txt
+-rw-r--r--  1 runner runner      0 Nov  8 21:14 ls.txt
