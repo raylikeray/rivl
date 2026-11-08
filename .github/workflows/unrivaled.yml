@@ -17,4 +17,4 @@ jobs:
       - run: node scripts/unrivaled.mjs
       - run: |
           git config user.name "RIVL bot"; git config user.email "actions@users.noreply.github.com"
-          git add data/; git diff --cached --quiet || git commit -m "Unrivaled: update"; git pull --rebase -q && git push
+          git add data/; git diff --cached --quiet || git commit -m "Unrivaled: update"; git pull --rebase -X theirs -q && git push
