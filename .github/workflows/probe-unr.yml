@@ -1,0 +1,19 @@
+name: probe-unr
+on: push
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p pu
+          UA='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile Safari/604.1'
+          B=https://www.unrivaled.basketball
+          for p in schedule teams stats players standings; do curl -sL -A "$UA" -o pu/$p.html "$B/$p"; done
+          curl -sL -A "$UA" -o pu/team-laces.html "$B/teams/laces"
+          curl -sL -A "$UA" -o pu/team-laces2.html "$B/laces"
+          curl -sL -A "$UA" -o pu/sitemap.xml "$B/sitemap.xml"
+          curl -sL -A "$UA" -o pu/robots.txt "$B/robots.txt"
+          ls -la pu
+          git config user.name probe; git config user.email probe@x; git add pu; git commit -m probe; git push origin HEAD:probe-unr
