@@ -23,6 +23,11 @@
       set(v) { const s = String(v); const keep = s.includes('<!--skel-->') && $main.dataset.real === '1'; if (keep) { pendingSkel = s; showBar(); return; } proto.set.call($main, s); clearTimeout(slowT); if (!s.includes('<!--skel-->')) settle(); else { $main.dataset.real = '0'; slowT = setTimeout(() => { if ($main.dataset.real === '0' && !$main.querySelector('.slow')) $main.insertAdjacentHTML('beforeend', '<p class="legend slow">The feed is slow to answer. It usually clears within a minute; pull down to try again.</p>'); }, 7000); } }
     }); }
   S.today = S.today || {}; ORDER.forEach(k => { S.today[k] = S.today[k] || []; });
+  HW.alerts = {
+    all() { const m = store.get('v5:alerts', {}) || {}; const cut = Date.now() - 2 * 864e5; let ch = false; for (const k in m) if (!m[k] || !(m[k].t > cut)) { delete m[k]; ch = true; } if (ch) store.set('v5:alerts', m); return m; },
+    get(id) { const x = this.all()[id]; return x ? x.m : null; },
+    set(id, m, t) { const all = this.all(); all[id] = { m, t: new Date(t).getTime() }; store.set('v5:alerts', all); }
+  };
 
   /* ---------- routes ----------
      #home #scores #standings #players #teams          league screens (league from the pills, remembered)
@@ -461,6 +466,43 @@
   function toast(msg) { $toast.textContent = msg; $toast.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => $toast.classList.remove('on'), Math.min(9000, 1800 + String(msg).length * 55)); }   // a sentence needs longer on screen than a word
   V.toast = toast; V.rerender = () => render(); V.route = () => current;
   V.refreshAll = async () => { try { HW.cache.clear(); } catch { } await render(); poll(); };
+  /* ---------- v435: game reminders. A bell on an upcoming game hands the phone's calendar an event with an alert, so
+     the phone itself rings at tip-off (or 15 minutes / an hour before) even with RIVL closed. No server, no account. ---------- */
+  const ALRT = [[0, 'Tip-off'], [15, '15 min before'], [60, '1 hr before']];
+  function icsFor(b, mins) {
+    const t = new Date(b.dataset.t); const z = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const x = s => String(s || '').replace(/[\;,]/g, m => '\\' + m).replace(/\n/g, '\\n');
+    const L = LEAGUES[b.dataset.lk]; const desc = [L ? L.label : '', b.dataset.tv ? `On ${b.dataset.tv}` : ''].filter(Boolean).join(' · ');
+    const title = b.dataset.ttl;
+    return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//RIVL//Games//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+      `UID:rivl-${b.dataset.lk}-${b.dataset.gid}@raylikeray.github.io`, `DTSTAMP:${z(new Date())}`, `DTSTART:${z(t)}`, `DTEND:${z(new Date(t.getTime() + 150 * 60000))}`,
+      `SUMMARY:${x(title)}`, b.dataset.loc ? `LOCATION:${x(b.dataset.loc)}` : '', desc ? `DESCRIPTION:${x(desc)}` : '', `URL:${location.origin}${location.pathname}#game/${b.dataset.lk}/${b.dataset.gid}`,
+      'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${x(mins ? `${title} tips off in ${mins === 60 ? '1 hour' : mins + ' minutes'}` : `${title} is tipping off`)}`, `TRIGGER:-PT${mins}M`, 'END:VALARM',
+      'END:VEVENT', 'END:VCALENDAR'].filter(Boolean).join('\r\n');
+  }
+  async function sendIcs(b, mins) {
+    const name = `${b.dataset.ttl.replace(/[^\w ]+/g, '').replace(/\s+/g, '-')}.ics`; const body = icsFor(b, mins);
+    const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (!ios) { try { const f = new File([body], name, { type: 'text/calendar' }); if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: b.dataset.ttl }); return true; } } catch (e) { if (e && e.name === 'AbortError') return false; } }
+    const url = URL.createObjectURL(new Blob([body], { type: 'text/calendar;charset=utf-8' }));
+    const l = document.createElement('a'); l.href = url; l.download = name; document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000); return true;
+  }
+  function bellOpen(b) {
+    const row = b.closest('.srow'); if (!row) return;
+    const nx = row.nextElementSibling; const was = nx && nx.classList.contains('salrt') && nx.dataset.gid === b.dataset.gid;
+    $main.querySelectorAll('.salrt').forEach(x => x.remove()); if (was) return;
+    const cur = HW.alerts.get(b.dataset.gid);
+    row.insertAdjacentHTML('afterend', `<div class="salrt" data-gid="${esc(b.dataset.gid)}">${ALRT.map(([m, t]) => `<button class="${cur === m ? 'on' : ''}" data-act="bellset" data-m="${m}">${t}</button>`).join('')}</div>`);
+  }
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-act="bell"]'); if (b) { e.preventDefault(); e.stopPropagation(); bellOpen(b); return; }
+    const s = e.target.closest('[data-act="bellset"]'); if (!s) return;
+    e.preventDefault(); const box = s.closest('.salrt'); const bell = $main.querySelector(`.sbell[data-gid="${CSS.escape(box.dataset.gid)}"]`); if (!bell) { box.remove(); return; }
+    const m = +s.dataset.m; const ok = await sendIcs(bell, m); if (!ok) return;
+    HW.alerts.set(bell.dataset.gid, m, bell.dataset.t); box.remove();
+    bell.classList.add('on'); bell.setAttribute('aria-label', 'Reminder set'); bell.querySelector('svg').setAttribute('fill', 'currentColor');
+    toast(m ? `Added to your calendar · ${ALRT.find(x => x[0] === m)[1]}` : 'Added to your calendar · at tip-off');
+  }, true);
   document.addEventListener('click', e => {
     const back = e.target.closest('[data-act="back"]');
     if (back) { if (history.length > 1) { e.preventDefault(); history.back(); } return; }

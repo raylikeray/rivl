@@ -250,8 +250,12 @@
        games on streaming-only services). It reads as such rather than as a game still to come. */
     const stale = pre && !g.off && g.timeValid !== false && g.date && Date.now() - new Date(g.date).getTime() > 15 * 60000 && Date.now() - new Date(g.date).getTime() < 5 * 3600000;
     const tipT = esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT|EST|EDT|PST|PDT|MST|MDT)$/, ''));
-    const mid = g.off ? `<span class="sft">${esc(g.off)}</span>` : live ? `<span class="slv"><i></i>${esc(g.detail || 'Live')}</span>${pick}` : fin ? `<span class="sft">${esc(finalWord(g))}</span>` : stale ? `<span class="snl">Under way</span><small>No live score</small>` : `<b class="stt">${tipT}</b>${pick}`;
-    const key = [g.state, g.away.score, g.home.score, g.detail, g.off || ''].join('|');
+    /* v435: a bell beside the tip time bookmarks the game; the alert itself is a calendar event, so the phone rings it */
+    const canBell = pre && !stale && !g.off && g.timeValid !== false && g.date && new Date(g.date).getTime() > Date.now() && !g.away.tbd && !g.home.tbd;
+    const bset = canBell && HW.alerts ? HW.alerts.get(g.id) : null;
+    const bell = canBell ? `<button class="sbell${bset != null ? ' on' : ''}" data-act="bell" data-lk="${esc(L.key)}" data-gid="${esc(g.id)}" data-t="${esc(g.date)}" data-ttl="${esc(`${g.away.short || g.away.abbr || ''} at ${g.home.short || g.home.abbr || ''}`)}" data-loc="${esc([g.venue, g.city].filter(Boolean).join(', '))}" data-tv="${esc(tvLabel(g))}" aria-label="${bset != null ? 'Reminder set' : 'Remind me'}"><svg viewBox="0 0 24 24" fill="${bset != null ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg></button>` : '';
+    const mid = g.off ? `<span class="sft">${esc(g.off)}</span>` : live ? `<span class="slv"><i></i>${esc(g.detail || 'Live')}</span>${pick}` : fin ? `<span class="sft">${esc(finalWord(g))}</span>` : stale ? `<span class="snl">Under way</span><small>No live score</small>` : `<b class="stt">${tipT}${bell}</b>${pick}`;
+    const key = [g.state, g.away.score, g.home.score, g.detail, g.off || '', bset == null ? '' : bset].join('|');
     return `<a class="srow${live ? ' on' : ''}" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}" data-k="${esc(key)}">${side(g.away, lo(a, h))}${num(g.away, up(a, h), lo(a, h))}<span class="smid">${mid}</span>${num(g.home, up(h, a), lo(h, a))}${side(g.home, lo(h, a))}</a>`;
   }
   /* v389: the duel card, one renderer for Home's deck and the team and player pages. Two deep planes of the teams'
