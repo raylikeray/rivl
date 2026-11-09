@@ -1,0 +1,340 @@
+{
+ "mediaCount": 13,
+ "allTypes": [
+  "Media",
+  "Recap",
+  "Recap",
+  "Media",
+  "Recap",
+  "Media",
+  "Recap",
+  "Media",
+  "HeadlineNews",
+  "Media",
+  "HeadlineNews",
+  "Media",
+  "Recap",
+  "HeadlineNews",
+  "HeadlineNews",
+  "Story",
+  "HeadlineNews",
+  "HeadlineNews",
+  "Story",
+  "Story",
+  "Story",
+  "Preview",
+  "Preview",
+  "Preview",
+  "Preview",
+  "Preview",
+  "Recap",
+  "Media",
+  "HeadlineNews",
+  "Recap",
+  "Media",
+  "Recap",
+  "Media",
+  "Recap",
+  "Media",
+  "Recap",
+  "Recap",
+  "Media",
+  "Media",
+  "Media",
+  "Recap",
+  "Story",
+  "HeadlineNews",
+  "Story",
+  "Story",
+  "Preview",
+  "HeadlineNews",
+  "Preview",
+  "Preview",
+  "Preview"
+ ],
+ "mediaRaw": [
+  "{\"id\":50429111,\"nowId\":\"1-50429111\",\"contentKey\":\"50429111-1-293-1\",\"dataSourceIdentifier\":\"8ebaa46d9a9f8\",\"type\":\"Media\",\"headline\":\"Boston Celtics vs. Milwaukee Bucks: Game Highlights\",\"description\":\"Boston Celtics vs. Milwaukee Bucks: Game Highlights\",\"lastModified\":\"2026-11-09T03:39:15Z\",\"published\":\"2026-11-09T03:39:15Z\",\"images\":[{\"name\":\"Boston Celtics vs. Milwaukee Bucks: Game Highlights\",\"caption\":\"Boston Celtics vs. Milwaukee Bucks: Game Highlights\",\"alt\":\"\",\"height\":324,\"width\":576,\"url\":\"https://espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1109/82008229-8702-4a4d-8731-995a6cabf188/82008229-8702-4a4d-8731-995a6cabf188.jpg\"}],\"categories\":[{\"id\":76403,\"type\":\"athlete\",\"uid\":\"s:40~l:46~a:4251\",\"guid\":\"d7e5e918-d53f-018e-9d15-f9005b2390ad\",\"description\":\"Paul George\",\"sportId\":46,\"athleteId\":4251,\"athlete\":{\"id\":4251,\"description\":\"Paul George\",\"links\":{\"mobile\":{\"athletes\":{\"href\":\"https://www.espn.com/nba/player/_/id/4251/paul-george\"}},\"web\":{\"athletes\":{\"href\":\"https://www.espn.com/nba/player/_/id/4251/paul-george\"}}}}},{\"id\":168976,\"type\":\"athlete\",\"uid\":\"s:40~l:46~a:4065648\",\"guid\":\"ed3343b0-2ffa-f6b4-e422-3a1920938c81\",\"description\":\"Jayson Tatum\",\"sportId\":46,\"athleteId\":4065648,\"athlete\":{\"id\":4065648,\"description\":\"Jayson Tatum\",\"links\":{\"mobile\":{\"athletes\":{\"href\":\"https://www.espn.com/nba/player/_/id/4065648/jayson-tatum\"}},\"web\":{\"athletes\":{\"href\":\"https://www.espn.com/nba/player/_/id/4065648/jayson-tatum\"}}}}},{\"id\":410338,\"type\":\"athlete\",\"uid\":\"s:40~l:46~a:4593841\",\"guid\":\"98335afa-2ed6-325b-8317-63f2140f8ac5\",\"description\":\"Baylor Scheierman\",\"sportId\":46,\"athleteId\":4593841,\"athlete\":{\"id\":4593841,\"description\":\"Baylor Scheierman\",\"links\":{\"mobile\":{\"athletes\":{\"href\":\"https://www.espn.com/nba/player/_/id/4593841/baylor-scheierman\"}},\"web\":{\"athletes\":{\"href\":\"https://www.espn.com/nba/player/_/id/4593841/baylor-scheierman\"}}}}},{\"id\":4245,\"type\":\"team\",\"uid\":\"s:40~l:46~t:2\",\"guid\":\"2ca761df-5f60-b2e9-22ed-e099c46d889b\",\"description\":\"Boston Celtics\",\"sportId\":46,\"teamId\":2,\"team\":{\"id\":2,\"description\":\"Boston Celtics\",\"abbreviation\":\"BOS\",\"shortDisplayName\":\"Celtics\",\"links\":{\"mobile\":{\"teams\":{\"href\":\"https://www.espn.com/nba/team/_/name/bos/boston-celtics\"}},\"web\":{\"teams\":{\"href\":\"https://www.espn.com/nba/team/_/name/bos/boston-celtics\"}}}}},{\"id\":711821,\"type\":\"editorialindicator\",\"guid\":\"f3e05446-8d07-3064-a239-c10c32884ea2\",\"description\":\"SC4U - Full Highlight\"},{\"id\":9577,\"type\":\"league\",\"uid\":\"s:40~l:46\",\"guid\":\"7b3729c9-7f69-308a-bf8a-ee15a6aba154\",\"description\":\"NBA\",\"sportId\":46,\"leagueId\":46,\"league\":{\"id\":46,\"description\":\"NBA\",\"abbreviation\":\"NBA\",\"links\":{\"mobile\":{\"leagues\":{\"href\":\"https://www.espn.com/nba/\"}},\"web\":{\"leagues\":{\"href\":\"https://www.espn.com/nba/\"}}}}},{\"id\":140955,\"type\":\"athlete\",\"uid\":\"s:40~l:46~a:3133628\",\"guid\":\"a61d70b4-d544-33c8-3eb9-aa6e5074f97e\",\"description\":\"Myles Turner\",\"sportId\":46,\"athleteId\":3133628,\"athlete\":{\"id\":3133628,\"description\":\"Myles Turner\",\"links\":{\"",
+  "{\"id\":50429019,\"nowId\":\"1-50429019\",\"contentKey\":\"50429019-1-293-1\",\"dataSourceIdentifier\":\"902491486a07e\",\"type\":\"Media\",\"headline\":\"Mavericks win big over the Nets at home\",\"description\":\"Mavericks win big over the Nets at home\",\"lastModified\":\"2026-11-09T03:22:16Z\",\"published\":\"2026-11-09T03:22:16Z\",\"images\":[{\"name\":\"Mavericks win big over the Nets at home\",\"caption\":\"Mavericks win big over the Nets at home\",\"alt\":\"\",\"height\":324,\"width\":576,\"url\":\"https://espnmedia-cdn.akamaized.net/espn/media/common/2026/1108/5f54b0933e404649bdbad03e3d0bf1361341/5f54b0933e404649bdbad03e3d0bf1361341.jpg\"}],\"categories\":[{\"id\":92019,\"type\":\"athlete\",\"uid\":\"s:40~l:46~a:6442\",\"guid\":\"4fb2e3fc-ad79-d9bc-ddd9-bbb09f29ead3\",\"description\":\"Kyrie Irving\",\"sportId\":46,\"athleteId\":6442,\"athlete\":{\"id\":6442,\"description\":\"Kyrie Irving\",\"links\":{\"mobile\":{\"athletes\":{\"href\":\"https://www.espn.com/nba/player/_/id/6442/kyrie-irving\"}},\"web\":{\"athletes\":{\"href\":\"https://www.espn.com/nba/player/_/id/6442/kyrie-irving\"}}}}},{\"id\":4485,\"type\":\"team\",\"uid\":\"s:40~l:46~t:6\",\"guid\":\"f00d1f4e-4ce6-d581-466c-5b52531cf7ad\",\"description\":\"Dallas Mavericks\",\"sportId\":46,\"teamId\":6,\"team\":{\"id\":6,\"description\":\"Dallas Mavericks\",\"abbreviation\":\"DAL\",\"shortDisplayName\":\"Mavericks\",\"links\":{\"mobile\":{\"teams\":{\"href\":\"https://www.espn.com/nba/team/_/name/dal/dallas-mavericks\"}},\"web\":{\"teams\":{\"href\":\"https://www.espn.com/nba/team/_/name/dal/dallas-mavericks\"}}}}},{\"id\":187287,\"type\":\"athlete\",\"uid\":\"s:40~l:46~a:4278104\",\"guid\":\"84f89e6d-8dd8-5b8b-bfe7-83ba59ee5121\",\"description\":\"Michael Porter Jr\",\"sportId\":46,\"athleteId\":4278104,\"athlete\":{\"id\":4278104,\"description\":\"Michael Porter Jr\",\"links\":{\"mobile\":{\"athletes\":{\"href\":\"https://www.espn.com/nba/player/_/id/4278104/michael-porter-jr\"}},\"web\":{\"athletes\":{\"href\":\"https://www.espn.com/nba/player/_/id/4278104/michael-porter-jr\"}}}}},{\"id\":711821,\"type\":\"editorialindicator\",\"guid\":\"f3e05446-8d07-3064-a239-c10c32884ea2\",\"description\":\"SC4U - Full Highlight\"},{\"id\":9577,\"type\":\"league\",\"uid\":\"s:40~l:46\",\"guid\":\"7b3729c9-7f69-308a-bf8a-ee15a6aba154\",\"description\":\"NBA\",\"sportId\":46,\"leagueId\":46,\"league\":{\"id\":46,\"description\":\"NBA\",\"abbreviation\":\"NBA\",\"links\":{\"mobile\":{\"leagues\":{\"href\":\"https://www.espn.com/nba/\"}},\"web\":{\"leagues\":{\"href\":\"https://www.espn.com/nba/\"}}}}},{\"id\":711824,\"type\":\"editorialindicator\",\"guid\":\"d348c764-47d9-3e31-bd75-d39dfde52c26\",\"description\":\"SC4U  - Eligible\"},{\"id\":507881,\"type\":\"athlete\",\"uid\":\"s:40~l:46~a:4896372\",\"guid\":\"dc279d66-e643-3e3c-8fb4-8b772c3f402b\",\"description\":\"Walter Clayton Jr\",\"sportId\":46,\"athleteId\":4896372,\"athlete\":{\"id\":4896372,\"description\":\"Walter Clayton Jr\",\"links\":{\"mobile\":{\"athletes\":{\"href\":\"https://www.espn.com/nba/player/_/id/4896372/walter-clayton-jr\"}},\"web\":{\"athletes\":{\"href\":\"https://www.espn.com/nba/player/_/id/4896372/walter-clayton-jr\"}}}}},{\"id\":711828,\"type\":\"editorialindicator\",\"guid\":\"b14f9e1f-2d2c-3b10-b39d-d781f4c4aba7\",\"description\":\"4 Star Rating\"},{\"id\":68"
+ ],
+ "mediaHeads": [
+  {
+   "head": "Boston Celtics vs. Milwaukee Bucks: Game Highlights",
+   "pub": "2026-11-09T03:39",
+   "cats": [
+    "athlete:Paul George",
+    "athlete:Jayson Tatum",
+    "athlete:Baylor Scheierman",
+    "team:Boston Celtics",
+    "editorialindicator:SC4U - Full Highlight",
+    "league:NBA"
+   ],
+   "web": "https://www.espn.com/video/clip/_/id/50429111/game-highlights",
+   "api": "{\"artwork\":{\"href\":\"https://artwork.api.espn.com/artwork/collections/media/2d21ae92-421c-469e-bfb8-f807e9088847\"},\"self\":{\"href\":\"https://content.core.api.espn.com/v1/video/clips/50429111\"}}",
+   "dataSourceIdentifier": "8ebaa46d9a9f8",
+   "id": 50429111
+  },
+  {
+   "head": "Mavericks win big over the Nets at home",
+   "pub": "2026-11-09T03:22",
+   "cats": [
+    "athlete:Kyrie Irving",
+    "team:Dallas Mavericks",
+    "athlete:Michael Porter Jr",
+    "editorialindicator:SC4U - Full Highlight",
+    "league:NBA",
+    "editorialindicator:SC4U  - Eligible"
+   ],
+   "web": "https://www.espn.com/video/clip/_/id/50429019/mavericks-win-big-nets-home",
+   "api": "{\"artwork\":{\"href\":\"https://artwork.api.espn.com/artwork/collections/media/bb0003ee-3585-4ea9-a915-6df34510270e\"},\"self\":{\"href\":\"https://content.core.api.espn.com/v1/video/clips/50429019\"}}",
+   "dataSourceIdentifier": "902491486a07e",
+   "id": 50429019
+  },
+  {
+   "head": "Utah Jazz vs. Minnesota Timberwolves: Game Highlights",
+   "pub": "2026-11-09T02:49",
+   "cats": [
+    "athlete:Darryn Peterson",
+    "athlete:Rudy Gobert",
+    "team:Utah Jazz",
+    "athlete:Josh Green",
+    "team:Minnesota Timberwolves",
+    "athlete:Jonathan Kuminga"
+   ],
+   "web": "https://www.espn.com/video/clip/_/id/50428774/game-highlights",
+   "api": "{\"artwork\":{\"href\":\"https://artwork.api.espn.com/artwork/collections/media/9c3ce584-29a2-44cf-aa1f-604e9b4ba296\"},\"self\":{\"href\":\"https://content.core.api.espn.com/v1/video/clips/50428774\"}}",
+   "dataSourceIdentifier": "32e4acfef9f78",
+   "id": 50428774
+  },
+  {
+   "head": "Los Angeles Lakers vs. Detroit Pistons: Game Highlights",
+   "pub": "2026-11-09T01:53",
+   "cats": [
+    "athlete:Walker Kessler",
+    "team:Detroit Pistons",
+    "team:Los Angeles Lakers",
+    "editorialindicator:SC4U - Full Highlight",
+    "athlete:Austin Reaves",
+    "league:NBA"
+   ],
+   "web": "https://www.espn.com/video/clip/_/id/50428357/game-highlights",
+   "api": "{\"artwork\":{\"href\":\"https://artwork.api.espn.com/artwork/collections/media/05769ef1-6c70-4354-82b6-04ce84d8b975\"},\"self\":{\"href\":\"https://content.core.api.espn.com/v1/video/clips/50428357\"}}",
+   "dataSourceIdentifier": "b2049d7836443",
+   "id": 50428357
+  },
+  {
+   "head": "Giddey balls out with 19 points and 15 assists vs. 76ers",
+   "pub": "2026-11-08T23:42",
+   "cats": [
+    "team:Chicago Bulls",
+    "league:NBA",
+    "team:Philadelphia 76ers",
+    "event:Philadelphia 76ers @ Chicago Bulls"
+   ],
+   "web": "https://www.espn.com/video/clip/_/id/50426881/giddey-balls-19-points-15-assists-vs-76ers",
+   "api": "{\"artwork\":{\"href\":\"https://artwork.api.espn.com/artwork/collections/media/a0729092-95a1-4013-b5a8-916cbe8cd923\"},\"self\":{\"href\":\"https://content.core.api.espn.com/v1/video/clips/50426881\"}}",
+   "dataSourceIdentifier": "ac6f8debb6a31",
+   "id": 50426881
+  },
+  {
+   "head": "Philadelphia 76ers vs. Chicago Bulls: Game Highlights",
+   "pub": "2026-11-08T23:12",
+   "cats": [
+    "team:Philadelphia 76ers",
+    "athlete:Caleb Wilson",
+    "editorialindicator:SC4U - Full Highlight",
+    "team:Chicago Bulls",
+    "league:NBA",
+    "editorialindicator:3 Star Rating"
+   ],
+   "web": "https://www.espn.com/video/clip/_/id/50426236/game-highlights",
+   "api": "{\"artwork\":{\"href\":\"https://artwork.api.espn.com/artwork/collections/media/9a63718b-482f-48bb-851c-3dfd16cfe57c\"},\"self\":{\"href\":\"https://content.core.api.espn.com/v1/video/clips/50426236\"}}",
+   "dataSourceIdentifier": "0dbc80dc7f684",
+   "id": 50426236
+  },
+  {
+   "head": "Spurs win 8 in a row after knocking off the Blazers on the road",
+   "pub": "2026-11-08T05:53",
+   "cats": [
+    "athlete:Deni Avdija",
+    "athlete:Tarris Reed Jr",
+    "team:Portland Trail Blazers",
+    "athlete:Donovan Clingan",
+    "team:San Antonio Spurs",
+    "athlete:Victor Wembanyama"
+   ],
+   "web": "https://www.espn.com/video/clip/_/id/50417459/spurs-win-8-row-knocking-blazers-road",
+   "api": "{\"artwork\":{\"href\":\"https://artwork.api.espn.com/artwork/collections/media/3b14cc63-d95f-4d48-bf30-061f914a7d3d\"},\"self\":{\"href\":\"https://content.core.api.espn.com/v1/video/clips/50417459\"}}",
+   "dataSourceIdentifier": "53721ad049da5",
+   "id": 50417459
+  },
+  {
+   "head": "Orlando Magic vs. Golden State Warriors: Game Highlights",
+   "pub": "2026-11-08T04:52",
+   "cats": [
+    "athlete:Stephen Curry",
+    "team:Orlando Magic",
+    "athlete:Yaxel Lendeborg",
+    "editorialindicator:SC4U - Full Highlight",
+    "team:Golden State Warriors",
+    "league:NBA"
+   ],
+   "web": "https://www.espn.com/video/clip/_/id/50417013/game-highlights",
+   "api": "{\"artwork\":{\"href\":\"https://artwork.api.espn.com/artwork/collections/media/f0077af8-f250-40e7-a975-bd66d0a015dc\"},\"self\":{\"href\":\"https://content.core.api.espn.com/v1/video/clips/50417013\"}}",
+   "dataSourceIdentifier": "5925344a3e760",
+   "id": 50417013
+  },
+  {
+   "head": "Houston Rockets vs. Phoenix Suns: Game Highlights",
+   "pub": "2026-11-08T04:40",
+   "cats": [
+    "athlete:Kevin Durant",
+    "team:Phoenix Suns",
+    "team:Houston Rockets",
+    "editorialindicator:SC4U - Full Highlight",
+    "league:NBA",
+    "editorialindicator:3 Star Rating"
+   ],
+   "web": "https://www.espn.com/video/clip/_/id/50416909/game-highlights",
+   "api": "{\"artwork\":{\"href\":\"https://artwork.api.espn.com/artwork/collections/media/fb37b71a-b371-4e71-bd33-be9c14e4fccf\"},\"self\":{\"href\":\"https://content.core.api.espn.com/v1/video/clips/50416909\"}}",
+   "dataSourceIdentifier": "7c6333cd0a8fd",
+   "id": 50416909
+  },
+  {
+   "head": "New York Knicks vs. Cleveland Cavaliers: Game Highlights",
+   "pub": "2026-11-08T03:36",
+   "cats": [
+    "athlete:Donovan Mitchell",
+    "team:New York Knicks",
+    "athlete:Jalen Brunson",
+    "athlete:Evan Mobley",
+    "editorialindicator:SC4U - Full Highlight",
+    "team:Cleveland Cavaliers"
+   ],
+   "web": "https://www.espn.com/video/clip/_/id/50416318/game-highlights",
+   "api": "{\"artwork\":{\"href\":\"https://artwork.api.espn.com/artwork/collections/media/7de8f759-d08c-4703-8450-b97ef894685d\"},\"self\":{\"href\":\"https://content.core.api.espn.com/v1/video/clips/50416318\"}}",
+   "dataSourceIdentifier": "d75c3074c3dad",
+   "id": 50416318
+  },
+  {
+   "head": "Washington Wizards vs. Oklahoma City Thunder: Game Highlights",
+   "pub": "2026-11-08T03:52",
+   "cats": [
+    "athlete:Tre Johnson",
+    "athlete:Kenrich Williams",
+    "team:Washington Wizards",
+    "athlete:Bennett Stirtz",
+    "team:Oklahoma City Thunder",
+    "editorialindicator:SC4U - Full Highlight"
+   ],
+   "web": "https://www.espn.com/video/clip/_/id/50416229/game-highlights",
+   "api": "{\"artwork\":{\"href\":\"https://artwork.api.espn.com/artwork/collections/media/9f35dc5d-36ae-442f-b53f-8299bba9c75d\"},\"self\":{\"href\":\"https://content.core.api.espn.com/v1/video/clips/50416229\"}}",
+   "dataSourceIdentifier": "7425e68675e11",
+   "id": 50416229
+  },
+  {
+   "head": "Brooklyn Nets vs. Atlanta Hawks: Game Highlights",
+   "pub": "2026-11-08T03:26",
+   "cats": [
+    "athlete:Jalen Johnson",
+    "athlete:Aaron Wiggins",
+    "team:Atlanta Hawks",
+    "editorialindicator:SC4U - Full Highlight",
+    "league:NBA",
+    "editorialindicator:3 Star Rating"
+   ],
+   "web": "https://www.espn.com/video/clip/_/id/50416193/game-highlights",
+   "api": "{\"artwork\":{\"href\":\"https://artwork.api.espn.com/artwork/collections/media/acd9f70f-0111-449e-87e9-11862d46d35e\"},\"self\":{\"href\":\"https://content.core.api.espn.com/v1/video/clips/50416193\"}}",
+   "dataSourceIdentifier": "4328b62bdae40",
+   "id": 50416193
+  },
+  {
+   "head": "Denver Nuggets vs. Indiana Pacers: Game Highlights",
+   "pub": "2026-11-08T01:22",
+   "cats": [
+    "athlete:Jamal Murray",
+    "athlete:Pascal Siakam",
+    "athlete:Cameron Johnson",
+    "team:Indiana Pacers",
+    "team:Denver Nuggets",
+    "editorialindicator:SC4U - Full Highlight"
+   ],
+   "web": "https://www.espn.com/video/clip/_/id/50414938/game-highlights",
+   "api": "{\"artwork\":{\"href\":\"https://artwork.api.espn.com/artwork/collections/media/cc43baaa-bc70-4dc1-b40d-b164195c996a\"},\"self\":{\"href\":\"https://content.core.api.espn.com/v1/video/clips/50414938\"}}",
+   "dataSourceIdentifier": "bd956196110c9",
+   "id": 50414938
+  }
+ ],
+ "chase": {
+  "https://content.core.api.espn.com/v1/video/clips/50429111": {
+   "status": 200,
+   "keys": [
+    "resultsCount",
+    "resultsLimit",
+    "resultsOffset",
+    "videos",
+    "timestamp",
+    "status"
+   ],
+   "mp4": "https://espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1109/82008229-8702-4a4d-8731-995a6cabf188/82008229-8702-4a4",
+   "snippet": "{\"resultsCount\":1,\"resultsLimit\":10,\"resultsOffset\":0,\"videos\":[{\"id\":50429111,\"dataSourceIdentifier\":\"8ebaa46d9a9f8\",\"cerebroId\":\"6af13db6f141af21719fd311\",\"pccId\":\"2d21ae92-421c-469e-bfb8-f807e9088847\",\"source\":\"espn\",\"headline\":\"Boston Celtics vs. Milwaukee Bucks: Game Highlights\",\"shortHeadline\":\"Boston Celtics vs. Milwaukee Bucks: Game Highlights\",\"caption\":\"Boston Celtics vs. Milwaukee Bucks: Game Highlights\",\"title\":\"Boston Celtics vs. Milwaukee Bucks: Game Highlights\",\"description\":\"Bost"
+  },
+  "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news/50429111": {
+   "status": 404,
+   "keys": [
+    "code"
+   ],
+   "mp4": "",
+   "snippet": "{\"code\":404}"
+  },
+  "https://site.web.api.espn.com/apis/v2/video/clips/50429111": {
+   "status": 404,
+   "keys": [
+    "code"
+   ],
+   "mp4": "",
+   "snippet": "{\"code\":404}"
+  },
+  "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news?limit=50&enable=video": {
+   "status": 200,
+   "keys": [
+    "header",
+    "link",
+    "articles"
+   ],
+   "mp4": "",
+   "snippet": "{\"header\":\"NBA News\",\"link\":{\"language\":\"en\",\"rel\":[\"index\",\"desktop\",\"league\"],\"href\":\"https://www.espn.com/nba/\",\"text\":\"All NBA News\",\"shortText\":\"All News\",\"isExternal\":false,\"isPremium\":false},\"articles\":[{\"id\":50429111,\"nowId\":\"1-50429111\",\"contentKey\":\"50429111-1-293-1\",\"dataSourceIdentifier\":\"8ebaa46d9a9f8\",\"type\":\"Media\",\"headline\":\"Boston Celtics vs. Milwaukee Bucks: Game Highlights\",\"description\":\"Boston Celtics vs. Milwaukee Bucks: Game Highlights\",\"lastModified\":\"2026-11-09T03:39:15"
+  }
+ },
+ "athleteFeed": {
+  "n": 50,
+  "media": 13,
+  "heads": [
+   "2026-11-09 Boston Celtics vs. Milwaukee Bucks: Game Highlights",
+   "2026-11-09 Mavericks win big over the Nets at home",
+   "2026-11-09 Utah Jazz vs. Minnesota Timberwolves: Game Highlights",
+   "2026-11-09 Los Angeles Lakers vs. Detroit Pistons: Game Highlights",
+   "2026-11-08 Giddey balls out with 19 points and 15 assists vs. 76ers",
+   "2026-11-08 Philadelphia 76ers vs. Chicago Bulls: Game Highlights",
+   "2026-11-08 Spurs win 8 in a row after knocking off the Blazers on the road",
+   "2026-11-08 Orlando Magic vs. Golden State Warriors: Game Highlights",
+   "2026-11-08 Houston Rockets vs. Phoenix Suns: Game Highlights",
+   "2026-11-08 New York Knicks vs. Cleveland Cavaliers: Game Highlights"
+  ]
+ },
+ "teamFeed": {
+  "n": 50,
+  "media": 11,
+  "heads": [
+   "2026-11-09 Los Angeles Lakers vs. Detroit Pistons: Game Highlights",
+   "2026-11-07 Luka goes off for 53 points to lead Lakers past Trail Blazers",
+   "2026-11-07 Portland Trail Blazers vs. Los Angeles Lakers: Game Highlights",
+   "2026-11-05 Jason Kidd: Luka Doncic is on a different level this season",
+   "2026-11-05 Los Angeles Lakers vs. Sacramento Kings: Game Highlights",
+   "2026-11-03 Shams to McAfee: Luka Doncic has been a treat to watch",
+   "2026-11-03 Miami Heat vs. Los Angeles Lakers: Game Highlights",
+   "2026-11-02 Luka shines as Lakers down Raptors at home",
+   "2026-10-31 Warriors erase big early deficit and beat the Lakers at home",
+   "2026-10-29 Los Angeles Lakers vs. LA Clippers: Game Highlights"
+  ]
+ }
+}
