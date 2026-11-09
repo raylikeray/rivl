@@ -494,6 +494,19 @@
     const cur = HW.alerts.get(b.dataset.gid);
     row.insertAdjacentHTML('afterend', `<div class="salrt" data-gid="${esc(b.dataset.gid)}">${ALRT.map(([m, t]) => `<button class="${cur === m ? 'on' : ''}" data-act="bellset" data-m="${m}">${t}</button>`).join('')}</div>`);
   }
+  /* v437: the conference finder filters as you type, by conference name or any team in it; a team match says which
+     team put the conference on the list, so "Gonzaga" shows the West Coast with Gonzaga named under it */
+  document.addEventListener('input', e => {
+    const q0 = e.target && e.target.id === 'stconfq' ? e.target.value : null; if (q0 == null) return;
+    const q = q0.trim().toLowerCase(); const page = e.target.closest('[data-pg]') || document; let any = false;
+    page.querySelectorAll('.stcf').forEach(b => { const hit = !q || b.dataset.q.includes(q); b.hidden = !hit; if (hit) any = true;
+      const sub = b.querySelector('.stcfs'); if (!sub) return;
+      const names = (b.dataset.names || '').split('|').map(n => n.split('~')); const hitN = q.length > 1 ? names.find(n => n.some(x => x.toLowerCase().includes(q))) : null; const t = hitN ? hitN[0] : null;
+      sub.textContent = t && !b.querySelector('b').textContent.toLowerCase().includes(q) ? `${t} plays here` : sub.dataset.base; });
+    page.querySelectorAll('.stcg').forEach(g => { g.hidden = !g.querySelector('.stcf:not([hidden])'); });
+    if (q) { const seen = new Set(); page.querySelectorAll('.stcf:not([hidden])').forEach(b => { if (seen.has(b.dataset.tab)) b.hidden = true; else seen.add(b.dataset.tab); }); page.querySelectorAll('.stcg').forEach(g => { g.hidden = !g.querySelector('.stcf:not([hidden])'); }); }
+    const none = page.querySelector('.stnone'); if (none) none.hidden = any;
+  });
   document.addEventListener('click', async e => {
     const b = e.target.closest('[data-act="bell"]'); if (b) { e.preventDefault(); e.stopPropagation(); bellOpen(b); return; }
     const s = e.target.closest('[data-act="bellset"]'); if (!s) return;
@@ -569,6 +582,10 @@
       return; }
     if (a === 'brkplay') { e.preventDefault(); const V2 = HW.v5; if (HW.bracket && V2._bkF) HW.bracket.play(LEAGUES[current ? current.lk : 'nba'], V2._bkKey || act.dataset.k, V2._bkF); return; }
     if (a === 'brk' || a === 'brkp') { e.preventDefault(); store.set(`v5:${a}:` + (current ? current.lk : 'nba'), act.dataset.k); if (a === 'brk') store.set('v5:brkp:' + (current ? current.lk : 'nba'), 'ff'); render(); return; }
+    if (a === 'yt') { e.preventDefault(); const id = String(act.dataset.yt || '').replace(/[^\w-]/g, ''); if (!id) return;   // v437: the video plays in place, YouTube's own player
+      const f = document.createElement('iframe'); f.className = 'fytp'; f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&rel=0&modestbranding=1`; f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen'; f.allowFullscreen = true; f.title = act.getAttribute('aria-label') || 'Video';
+      act.replaceWith(f); return; }
+    if (a === 'pcarm') { e.preventDefault(); const m = act.dataset.m === 'tot' ? 'tot' : 'avg'; store.set('v5:pcarm', m); const w = act.closest('.pcarsec') && act.closest('.pcarsec').nextElementSibling; if (w && w.classList.contains('pcarw')) w.dataset.m = m; act.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === act)); return; }
     if (a === 'stab') { e.preventDefault(); store.set('v5:stab:' + (current ? current.lk : 'nba'), act.dataset.tab); render(); }
     if (a === 'play') { e.preventDefault(); openSheet(act.dataset.vid); }
     if (a === 'injury') { e.preventDefault(); openInjury(act.dataset.key); }

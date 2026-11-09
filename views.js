@@ -798,6 +798,19 @@
     return `<a class="itk" href="${href.game(L.key, g.id)}">${sd(g.away, 'a')}${sd(g.home, 'h')}${lv ? `<i class="on">${clk(g)}</i>` : `<i>${isDone(g) ? 'F' : ''}</i>`}${fol ? '' : ''}</a>`;
   }
   const dayMark = () => { const d = new Date(); const z = HW.TZ || 'America/Chicago'; return `<div class="idate"><span>${esc(d.toLocaleDateString('en-US', { weekday: 'long', timeZone: z }))}</span><b>${esc(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: z }))}</b></div>`; };
+  /* v437: Top 10 plays, from data/plays.json (the leagues' official YouTube channels, built by the repo's Plays job).
+     The newest night's video for the leagues on this tab, while it's no older than two days. Tapping it swaps the picture
+     for YouTube's own player in place, so it plays inside RIVL. */
+  let playsD = null, playsAt = 0, homeRepaint = null;
+  const playsLoad = () => { if (Date.now() - playsAt < 30 * 60000 || !HW.hub) return; playsAt = Date.now(); HW.hub.file('plays.json').then(d => { if (d && d.items) { playsD = d; if (homeRepaint) homeRepaint(); } }).catch(() => {}); };
+  const playsCard = lks => {
+    playsLoad(); if (!playsD || !lks.length) return '';
+    const cut = addDays(todayCT(), -2);
+    const it = playsD.items.filter(x => lks.includes(x.lk) && x.kind === 'night' && x.date >= cut).sort((a, b) => b.date.localeCompare(a.date))[0]; if (!it) return '';
+    const L = LEAGUES[it.lk]; const day = dayLabel(it.date, { weekday: 'long', month: 'short', day: 'numeric' });
+    const head = `Top ${it.top || 10} plays of the night`;
+    return `<div class="feed hfl"><div class="fp fnw fhero fplay"><span class="fav"><span class="fic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.8c0-1 1.1-1.6 2-1.1l8.9 5.9c.8.5.8 1.7 0 2.2L10 18.7c-.9.5-2-.1-2-1.1z"/></svg></span></span><span class="fb"><span class="fh"><b>${esc(L.label)}</b><span>Plays</span><time>${esc(dayLabel(it.date, { weekday: 'short' }))}</time></span><span class="ft"><span class="fhl">${esc(head)}</span></span><button class="fyt" data-act="yt" data-yt="${esc(it.id)}" aria-label="Play ${esc(head)}"><img src="https://i.ytimg.com/vi/${esc(it.id)}/hqdefault.jpg" alt="" loading="lazy" onerror="this.remove()"><i class="play"></i>${it.len ? `<em>${esc(it.len)}</em>` : ''}</button><span class="fd">${esc(day)} · from the ${esc(L.label)}'s channel</span></span></div></div>`;
+  };
   const homeShown = {};   // v425: how far down each Home tab has scrolled into the river, so a return lands where it was
   async function home(tab) {
     if (!HTABS.includes(tab)) tab = 'following';
@@ -811,7 +824,7 @@
     const leagues = tab === 'following' ? ORDER : [tab];
     const srcs = leagues.map(feedSource);
     const P = prefs.all();
-    const secs = {}; const ORD = ['unr', 'tick', 'date', 'lead', 'wire', 'digest', 'river'];
+    const secs = {}; const ORD = ['unr', 'tick', 'date', 'lead', 'plays', 'wire', 'digest', 'river'];
     let painted = false;
     const wrap = k => `<section class="hsec2" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;
     const compose = () => {
@@ -827,6 +840,8 @@
         if (rows.length) secs.tick = `<div class="itick">${rows.slice(0, 16).map(({ o, g }) => tickItem(o.L, g, fol)).join('')}</div>`;
       }
       secs.date = dayMark();
+      // v437: the league's own Top 10 plays of the night, once a day, under the lead story; it plays right in the card
+      { const pd = playsCard(fol ? ORDER.filter(followsIn) : leagues); if (pd) secs.plays = pd; }
       // breaking, pinned
       const wire = outs.flatMap(o => o.wire.map(p => ({ k: p.k, html: fol ? tagLg(p.html, o.L) : p.html }))).sort((a, b) => b.k - a.k);
       if (wire.length) secs.wire = `<div class="feed hfl">${wire.map(p => p.html).join('')}</div>`;
@@ -847,6 +862,7 @@
       const shown = Math.min(river.length, homeShown[tab] || 15);
       if (river.length) secs.river = `${secs.digest || secs.wire ? '<div class="irule">Latest</div>' : ''}<div class="feed hfl" data-n="${shown}" data-h0="${hashOf(river.slice(0, shown).map(p => p.html).join(''))}">${river.slice(0, shown).map(p => p.html).join('')}${shown < river.length || deep ? '<div class="hmore" data-more><i></i><i></i><i></i></div>' : '<div class="hend">You’re caught up</div>'}</div>`;
     };
+    homeRepaint = () => paint();
     const paint = () => {
       if (!alive()) return;
       compose();
@@ -1205,12 +1221,44 @@
     const moments = clips.length ? sec('Top moments') + `<div class="media">${clips.map(n => { const v = (n.video || n.videos)[0]; const im = (n.images && n.images[0] && n.images[0].url) || v.thumbnail; return `<button class="clip" data-act="play" data-vid="${esc(String(v.id))}"><div class="th">${im ? `<img src="${esc(im)}" alt="" loading="lazy">` : ''}<i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12-7.5z"/></svg></i>${v.duration ? `<em>${Math.floor(v.duration / 60)}:${String(v.duration % 60).padStart(2, '0')}</em>` : ''}</div><b>${esc(n.headline)}</b><span>${esc(n.published ? ago(n.published) : '')}</span></button>`; }).join('')}</div>` : '';
     const latest = moments + (stories.length ? sec('Stories') + `<div class="rows">${stories.map(n => HW.v5.newsRow(lk, n)).join('')}</div>` : '');
 
-    // career, by season
+    // career, by season (v437): a card of lifetime numbers, then the season table with a Per game / Totals switch and a
+    // Career row from ESPN's own career line (so a season split by a trade isn't counted twice)
     let careerT = '';
-    if (cat && cat.statistics && cat.statistics.length) {
-      const want = [['GP', 'GP'], ['PTS', 'PPG'], ['REB', 'RPG'], ['AST', 'APG'], ['FG%', 'FG%']].filter(([k]) => ci(k) >= 0);
-      const rows = cat.statistics.slice().reverse();
-      careerT = sec('Career', 'per game') + `<div class="tw"><table class="tbl"><thead><tr><th>Season</th>${want.map(([, l]) => `<th>${l}</th>`).join('')}</tr></thead><tbody>${rows.map((r, i) => `<tr${i === 0 ? ' class="hi"' : ''}><td>${esc(r.season && (r.season.displayName || r.season.year) || '')} <span class="mut" style="color:var(--ink-3)">${esc((r.teamSlug || '').toUpperCase().slice(0, 3))}</span></td>${want.map(([k]) => `<td>${k === 'PTS' ? `<b>${esc(r.stats[ci(k)])}</b>` : esc(r.stats[ci(k)])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    const catOf = re => career && career.categories && career.categories.find(c => re.test(c.name || ''));
+    const avgC = cat, totC = catOf(/^totals$/i);
+    if (avgC && avgC.statistics && avgC.statistics.length) {
+      const al = avgC.labels || [], tl = (totC && totC.labels) || [];
+      const ai = k => al.indexOf(k), ti = k => tl.indexOf(k);
+      const aCar = avgC.totals || [], tCar = (totC && totC.totals) || [];
+      const num = x => { const n = parseFloat(String(x || '').replace(/,/g, '')); return isNaN(n) ? null : n; };
+      const big = n => n == null ? '' : Math.round(n).toLocaleString('en-US');
+      const tv = k => ti(k) >= 0 ? num(tCar[ti(k)]) : null;
+      const gp = ai('GP') >= 0 ? num(aCar[ai('GP')]) : null;
+      const seasonsN = new Set(avgC.statistics.map(r => r.season && r.season.year)).size;
+      // where they played, in order: "Dallas 2018-22 · New York since 2022"
+      const TM = career.teams || {}; const runs = [];
+      avgC.statistics.forEach(r => { const y = r.season && r.season.year; const slug = r.teamSlug || ''; const last = runs[runs.length - 1]; if (last && last.slug === slug) last.to = y; else runs.push({ slug, from: y, to: y }); });
+      const place = s => { const t = TM[s] || {}; return t.location || t.shortDisplayName || (s ? s.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ') : ''); };
+      const yr = y => String(y).slice(-2);
+      const thisYr = (avgC.statistics[avgC.statistics.length - 1].season || {}).year;
+      const hist = runs.filter(r => r.slug).map((r, k) => { const isNow = k === runs.length - 1 && r.to === thisYr && runs.length > 1; return isNow ? `${place(r.slug)} since ${r.from - 1}` : `${place(r.slug)} ${r.from - 1}-${yr(r.to)}`; }).join(' · ');
+      const cells = [['Points', big(tv('PTS'))], ['Assists', big(tv('AST'))], ['Rebounds', big(tv('REB'))], ['Steals', big(tv('STL'))], ['Blocks', big(tv('BLK'))], [college ? 'PPG' : 'PPG', ai('PTS') >= 0 && aCar[ai('PTS')] ? String(aCar[ai('PTS')]) : '']].filter(([, x]) => x !== '');
+      const pct = [['FG', 'FG%'], ['3PT', '3P%'], ['FT', 'FT%']].map(([l, k]) => ai(k) >= 0 && aCar[ai(k)] ? `<span>${l} <b>${esc(String(aCar[ai(k)]))}%</b></span>` : '').join('');
+      const careerCard = cells.length >= 3 ? `<div class="pcar"><div class="pcarg">${cells.map(([l, x]) => `<div><b>${esc(x)}</b><small>${esc(l)}</small></div>`).join('')}</div>${pct ? `<div class="pcarp">${pct}</div>` : ''}${hist && runs.length > 1 ? `<div class="pcarh">${esc(hist)}</div>` : ''}</div>` : '';
+      // the season table: the same seasons as per-game averages or as totals
+      const AV = [['GP', 'GP'], ['PTS', 'PTS'], ['REB', 'REB'], ['AST', 'AST'], ['STL', 'STL'], ['BLK', 'BLK'], ['FG%', 'FG%'], ['3P%', '3P%'], ['FT%', 'FT%']].filter(([k]) => ai(k) >= 0);
+      const TT = [['GP', 'GP', 'a'], ['PTS', 'PTS', 't'], ['REB', 'REB', 't'], ['AST', 'AST', 't'], ['STL', 'STL', 't'], ['BLK', 'BLK', 't'], ['3PT', '3PM', 't3'], ['FG%', 'FG%', 'a'], ['3P%', '3P%', 'a'], ['FT%', 'FT%', 'a']].filter(([k, , s]) => s === 'a' ? ai(k) >= 0 : ti(k) >= 0);
+      const totRows = totC && totC.statistics || [];
+      const totOf = (r, idx) => totRows[idx] && (totRows[idx].season || {}).year === (r.season || {}).year && totRows[idx].teamSlug === r.teamSlug ? totRows[idx] : totRows.find(x => (x.season || {}).year === (r.season || {}).year && x.teamSlug === r.teamSlug);
+      const rowsA = avgC.statistics.map((r, idx) => ({ r, t: totOf(r, idx) })).reverse();
+      const fmtT = (k, s, r, t) => { if (s === 'a') return esc(r.stats[ai(k)] || ''); if (!t) return '–'; const x = t.stats[ti(k)]; if (s === 't3') return esc(String(x || '').split('-')[0] || '–'); const n = num(x); return n == null ? esc(x || '') : Math.round(n).toLocaleString('en-US'); };
+      const seasonCell = r => `<td>${esc(r.season && (r.season.displayName || r.season.year) || '')} <span class="mut" style="color:var(--ink-3)">${esc(((TM[r.teamSlug] || {}).abbreviation || (r.teamSlug || '').slice(0, 3)).toUpperCase())}</span></td>`;
+      const avgT = `<table class="tbl pcart"><thead><tr><th>Season</th>${AV.map(([, l]) => `<th>${l}</th>`).join('')}</tr></thead><tbody>${rowsA.map(({ r }, n) => `<tr${n === 0 ? ' class="hi"' : ''}>${seasonCell(r)}${AV.map(([k]) => `<td>${k === 'PTS' ? `<b>${esc(r.stats[ai(k)])}</b>` : esc(r.stats[ai(k)])}</td>`).join('')}</tr>`).join('')}${aCar.length ? `<tr class="pcarr"><td>Career</td>${AV.map(([k]) => `<td>${esc(aCar[ai(k)] || '')}</td>`).join('')}</tr>` : ''}</tbody></table>`;
+      const totT = totC ? `<table class="tbl pcart"><thead><tr><th>Season</th>${TT.map(([, l]) => `<th>${l}</th>`).join('')}</tr></thead><tbody>${rowsA.map(({ r, t }, n) => `<tr${n === 0 ? ' class="hi"' : ''}>${seasonCell(r)}${TT.map(([k, , s]) => `<td>${k === 'PTS' ? `<b>${fmtT(k, s, r, t)}</b>` : fmtT(k, s, r, t)}</td>`).join('')}</tr>`).join('')}<tr class="pcarr"><td>Career</td>${TT.map(([k, , s]) => { if (s === 'a') return `<td>${esc(aCar[ai(k)] || '')}</td>`; const x = tCar[ti(k)]; if (s === 't3') return `<td>${esc(String(x || '').split('-')[0] || '')}</td>`; const n = num(x); return `<td>${n == null ? esc(x || '') : Math.round(n).toLocaleString('en-US')}</td>`; }).join('')}</tr></tbody></table>` : '';
+      const mode = store.get('v5:pcarm', 'avg') === 'tot' && totT ? 'tot' : 'avg';
+      const tog = totT ? `<div class="pcartog" role="tablist"><button data-act="pcarm" data-m="avg" class="${mode === 'avg' ? 'on' : ''}">Per game</button><button data-act="pcarm" data-m="tot" class="${mode === 'tot' ? 'on' : ''}">Totals</button></div>` : '';
+      careerT = `<div class="sec pcarsec"><h2>Career${gp ? `<small>${seasonsN} season${seasonsN === 1 ? '' : 's'} · ${Math.round(gp).toLocaleString('en-US')} games</small>` : ''}</h2></div>` + careerCard
+        + `<div class="sec pcarsec"><h2>By season</h2>${tog}</div><div class="pcarw" data-m="${mode}"><div class="tw pcar-avg">${avgT}</div>${totT ? `<div class="tw pcar-tot">${totT}</div>` : ''}</div>`;
     }
 
     // about: everything the two feeds say about the person, one row each
@@ -1258,7 +1306,7 @@
     const details = detRows.length || tm.id ? `<h3 class="aph3">Details</h3><div class="agl">${detRows.map(([k, v]) => `<div class="aglr"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}${tm.id ? `<a class="aglr" href="${href.team(lk, tm.id)}"><span>Team</span><b>${tlogo ? `<img class="agll" src="${esc(tlogo)}" alt="" ${hide}>` : ''}${esc(tm.displayName || tm.shortDisplayName || tm.name || '')} ›</b></a>` : ''}</div>` : '';
     const panels = {
       summary: injStrip + (L.sport === 'basketball' && HW.rating ? `<div class="prate2" data-pid="${esc(String(id))}" style="${tcv(color)}"></div>` : '') + avgCard + next + log + details + moments,
-      stats: (splitsT + cutsT + (evRows.length && L.sport === 'basketball' ? sec('Shot chart', `last ${Math.min(5, evRows.length)} game${Math.min(5, evRows.length) === 1 ? '' : 's'}`) + `<div class="pshots"><div class="rows"><button class="row" data-act="pshots" data-lk="${lk}" data-pid="${esc(String(id))}" data-name="${esc(a.displayName || '')}" data-color="${esc(color)}" data-games="${esc(evRows.slice(0, 5).map(r => r.id).join(','))}"><span class="t"><b>Show the shot chart</b><span class="wrap">Every attempt from the last ${Math.min(5, evRows.length)} games, on the court</span></span>${chev}</button></div></div>` : '') + fullLog + careerT) || empty('No stats yet', '<p style="margin:6px 0 0">Stats start with the first game of the season.</p>'),
+      stats: (careerT + splitsT + cutsT + (evRows.length && L.sport === 'basketball' ? sec('Shot chart', `last ${Math.min(5, evRows.length)} game${Math.min(5, evRows.length) === 1 ? '' : 's'}`) + `<div class="pshots"><div class="rows"><button class="row" data-act="pshots" data-lk="${lk}" data-pid="${esc(String(id))}" data-name="${esc(a.displayName || '')}" data-color="${esc(color)}" data-games="${esc(evRows.slice(0, 5).map(r => r.id).join(','))}"><span class="t"><b>Show the shot chart</b><span class="wrap">Every attempt from the last ${Math.min(5, evRows.length)} games, on the court</span></span>${chev}</button></div></div>` : '') + fullLog) || empty('No stats yet', '<p style="margin:6px 0 0">Stats start with the first game of the season.</p>'),
       bio: (injury ? sec('Injury') + injT : '') + (aboutT || sec('About') + empty('Nothing on file', '<p style="margin:6px 0 0">The feed has no bio for this player yet.</p>')),
       news: (moments + (stories.length ? sec('Stories') + `<div class="rows">${stories.map(n => HW.v5.newsRow(lk, n)).join('')}</div>` : '')) || empty('Nothing recent', '<p style="margin:6px 0 0">No stories or clips on this player in the feed right now.</p>')
     };

@@ -39,6 +39,7 @@
     const conf = L.standingsMode === 'conferences';
     const groups = st.groups;
     let tab = store.get('v5:stab:' + lk, groups[0].abbr || groups[0].name);
+    if (conf && !store.get('v5:st437:' + lk)) { store.set('v5:st437:' + lk, true); tab = 'top25'; store.set('v5:stab:' + lk, tab); store.set('v5:stab0:' + lk, tab); }   // v437: college opens on the Top 25, not the last conference pill
     const items = conf ? groups.map(g => [g.abbr || g.name, confName(g.name, g.abbr)]) : [...groups.map(g => [g.abbr || g.name, confName(g.name, g.abbr)]), ['league', 'League']];
     if ((L.playoffLine || []).length) items.push(['picture', 'Picture']);
     // the odds chip: NBA and WNBA, while regular-season games remain (the nightly schedule says; without it the chip stays)
@@ -52,7 +53,18 @@
     const cupOn = cupGames.length && todayCT() >= addDays(cupGames.map(g => g.d).sort()[0], -7) && todayCT() <= addDays(cupGames.map(g => g.d).sort().pop(), 2);
     if (cupOn) items.push(['cup', 'Cup']);
     if (HW.bracket) items.push(['bracket', 'Bracket']);
-    if (!items.some(([k]) => k === tab)) tab = items[0][0];
+    /* v437: college has 30-odd conferences, so the conference pills are gone. Standings opens on the AP Top 25; the
+       second mode is a finder (search a conference or any team, the majors, then A to Z). A conference opens as its own
+       page with a way back to the finder. */
+    const gKey = g => g.abbr || g.name;
+    let confPage = null;
+    if (conf) {
+      if (groups.some(g => gKey(g) === tab)) confPage = tab;
+      const extra = items.filter(([k]) => ST_MORE[k]);
+      items.splice(0, items.length, ...(R && R.ranks && R.ranks.length ? [['top25', 'Top 25']] : []), ['confs', 'Conferences'], ...extra);
+      if (!confPage && !items.some(([k]) => k === tab)) tab = items[0][0];
+    }
+    if (!confPage && !items.some(([k]) => k === tab)) tab = items[0][0];
     if (tab === 'odds') { await oddsTab(L, items, tab, st); return; }
     if (tab === 'stats') { statsTab(L, items, tab, st, TS); return; }
     if (tab === 'cup') { cupTab(L, items, tab, st, cupGames, idx); return; }
@@ -117,6 +129,42 @@
     // v380: each band is its own grouped card under its label
     const grouped = rungs.split(/(?=<div class="ldb)/).filter(Boolean).map(ch => { const m = ch.match(/^(<div class="ldb[^>]*>[\s\S]*?<\/div>)([\s\S]*)$/); return m ? m[1] + `<div class="ldg">${m[2]}</div>` : `<div class="ldg">${ch}</div>`; }).join('');
     return `<div class="ladder">${grouped}</div>` + lg2; };
+    if (conf) {
+      if (confPage) {
+        const g = groups.find(x => gKey(x) === confPage);
+        $main.innerHTML = `<div id="stpage" class="st380" data-lk="${esc(lk)}"><div class="sthead"><button class="stback" data-act="stab" data-tab="confs"><svg viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2 2 10l8 8"/></svg>Conferences</button><h1>${esc(confName(g.name, g.abbr))}</h1></div><div id="stbody">${ladderFor(confPage)}</div></div>`;
+        const sb = $main.querySelector('#stbody'); if (V.soft) V.soft(sb);
+        return;
+      }
+      const panels = {};
+      // the poll: rank, crest, record, the conference, how far it moved since last week
+      if (R && R.ranks && R.ranks.length) {
+        const hasPrev = R.ranks.some(r => +r.prev > 0);   // the preseason poll has nothing to move from
+        const pollWk = /preseason/i.test(R.week || '') ? 'Preseason' : ((/week\s*\d+/i.exec(R.week || '') || [''])[0].replace(/^w/, 'W'));
+        const rows = R.ranks.slice(0, 25).map(r => { const t = r.team; const row = st.byId && st.byId[t.id]; const tc = teamColor({ id: t.id, abbr: t.abbr }, L); const me = favs.has(lk, t.id);
+          const prev = +r.prev || 0; const mv = prev ? prev - r.rank : null;
+          const mvH = !hasPrev ? (row && /^[WL]\d/.test(row.strk || '') ? `<span class="ldm st ${/^W/.test(row.strk) ? 'w' : 'l'}">${esc(row.strk)}</span>` : '<span class="ldm st"></span>') : mv == null ? '<span class="ldm nw">New</span>' : `<span class="ldm ${mv > 0 ? 'up' : mv < 0 ? 'dn' : ''}" title="${mv > 0 ? `Up ${mv} from last week` : mv < 0 ? `Down ${-mv} from last week` : 'Same as last week'}">${mv > 0 ? `<svg viewBox="0 0 10 10"><path d="M5 1.5 9 7.5H1z"/></svg>${mv}` : mv < 0 ? `<svg viewBox="0 0 10 10"><path d="M5 8.5 1 2.5h8z"/></svg>${-mv}` : '–'}</span>`;
+          const sub = [row ? confName(row.group, row.groupAbbr) : '', r.first ? `${r.first} first-place vote${r.first === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ');
+          return `<a class="ldr${me ? ' me' : ''}" href="${href.team(lk, t.id)}" style="--tc:${esc(tc)}"><span class="lds">${r.rank}</span>${logo(t.logo || (row && row.logo), '', tc)}<span class="ldn"><b>${esc(t.short || t.name)}${me ? ' <i class="fs">★</i>' : ''}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span><span class="ldw">${esc(row ? `${row.w}-${row.l}` : (r.rec || ''))}</span>${mvH}</a>`; }).join('');
+        panels.top25 = `<div class="stpoll">${esc(['AP Top 25', pollWk].filter(Boolean).join(' · '))}</div><div class="ladder"><div class="ldg">${rows}</div></div><p class="legend">${hasPrev ? 'Arrows show places moved since last week\'s poll.' : 'The first in-season poll adds how far each team moved.'} Records are this season's.</p>`;
+      }
+      // the finder: what a conference is called, how many teams, the top three crests; searchable by any team in it
+      const MAJ = ['SEC', 'Big Ten', 'Big 12', 'ACC', 'Big East'];
+      const mine = new Set(groups.filter(g => g.rows.some(r => favs.has(lk, r.id))).map(gKey));
+      const cRow = g => { const nm = confName(g.name, g.abbr); const top = g.rows.slice(0, 3); const myT = g.rows.filter(r => favs.has(lk, r.id)).map(r => r.short || r.name);
+        const q = [nm, g.name, ...g.rows.map(r => `${r.name || ''}|${r.short || ''}|${r.abbr || ''}`)].join('|').toLowerCase();
+        return `<button class="gr ni stcf" data-act="stab" data-tab="${esc(gKey(g))}" data-q="${esc(q)}" data-names="${esc(g.rows.map(r => `${r.short || r.name}~${r.name || ''}~${r.abbr || ''}`).join('|'))}"><span class="gm"><b>${esc(nm)}</b><span class="stcfs" data-base="${esc(`${g.rows.length} teams${myT.length ? ` · ${myT.join(', ')}` : ''}`)}">${esc(`${g.rows.length} teams${myT.length ? ` · ${myT.join(', ')}` : ''}`)}</span></span><span class="stcl">${top.map(r => logo(r.logo, 's', teamColor({ id: r.id, abbr: r.abbr }, L))).join('')}</span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1.5 1.5 5 5-5 5"/></svg></button>`; };
+      const byName = g => confName(g.name, g.abbr);
+      const majors = MAJ.map(m => groups.find(g => byName(g) === m)).filter(Boolean);
+      const yours = groups.filter(g => mine.has(gKey(g))).sort((a, b) => byName(a).localeCompare(byName(b)));
+      const rest = groups.filter(g => !majors.includes(g)).sort((a, b) => byName(a).localeCompare(byName(b)));
+      const grp = (cap, list, id) => list.length ? `<div class="stcg" data-g="${id}"><div class="gcap">${esc(cap)}</div><div class="gl">${list.map(cRow).join('')}</div></div>` : '';
+      panels.confs = `<label class="stq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg><input id="stconfq" type="search" placeholder="Search a conference or a team" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search"></label>`
+        + grp('Your conferences', yours, 'mine') + grp('Majors', majors, 'maj') + grp(`A to Z · ${groups.length} conferences`, rest, 'all')
+        + `<div class="stnone" hidden>No conference or team by that name.</div>`;
+      stPaint(items, tab, panels);
+      return;
+    }
     const panels = {}; items.filter(([k]) => !ST_MORE[k]).forEach(([k]) => { panels[k] = ladderFor(k); });
     stPaint(items, tab, panels);
   }
@@ -323,7 +371,14 @@
   async function teamV(lk, id) {
     const L = LEAGUES[lk]; if (!L || !id) { $main.innerHTML = empty('Team not found'); return; }
     $main.innerHTML = topbar('') + skeleton(1, 'card') + skeleton(6, 'row');
-    const [roster, sched, st, inj, lp, news, R] = await Promise.all([jSoft(`${API(L)}/teams/${id}/roster`, 900000), jSoft(`${API(L)}/teams/${id}/schedule`, 300000), standings(L).catch(() => null), injuries(L), L.sport === 'basketball' ? leaguePlayers(L).catch(() => null) : null, jSoft(`${API(L)}/news?limit=10&team=${id}`, 600000), rankings(L), teamsIndex(L).catch(() => null)]);
+    let [roster, sched, st, inj, lp, news, R] = await Promise.all([jSoft(`${API(L)}/teams/${id}/roster`, 900000), jSoft(`${API(L)}/teams/${id}/schedule`, 300000), standings(L).catch(() => null), injuries(L), L.sport === 'basketball' ? leaguePlayers(L).catch(() => null) : null, jSoft(`${API(L)}/news?limit=10&team=${id}`, 600000), rankings(L), teamsIndex(L).catch(() => null)]);
+    /* v437: the team's roster feed sometimes answers empty (a dropped request, or the season turning over) while the
+       same roster is there when asked for by season. Ask by this season, then last season, before calling it empty. */
+    let rosterNote = '';
+    if (!(roster && (roster.athletes || []).length)) {
+      const now = new Date(); const y = (roster && roster.season && roster.season.year) || (now.getMonth() >= 7 ? now.getFullYear() + 1 : now.getFullYear());
+      for (const yr of [y, y - 1]) { const r2 = await jSoft(`${API(L)}/teams/${id}/roster?season=${yr}`, 300000); if (r2 && (r2.athletes || []).length) { roster = { ...r2, team: (roster && roster.team) || r2.team }; if (yr !== y) rosterNote = 'Last season’s roster. This season’s isn’t published yet.'; break; } }
+    }
     const t0 = (roster && roster.team) || (sched && sched.team);
     if (!t0) { $main.innerHTML = topbar('Team') + empty("Couldn't load this team", '<p style="margin:6px 0 0">The feed didn\'t answer. Pull down to try again.</p>'); return; }
     learn(L, { id: String(id), ...t0 }); const color = teamColor({ id: String(id), abbr: t0.abbreviation, color: t0.color }, L); V._.tint(color);
@@ -443,7 +498,7 @@
     const panels = {
       overview: (nextBlock + seasonHtml + leadersHtml + injHtml + topReads) || empty('Nothing to show yet'),
       schedule: schedHtml || empty('No games listed'),
-      roster: rosterList || empty('No roster listed'),
+      roster: rosterList ? (rosterNote ? `<p class="legend" style="margin-top:0">${rosterNote}</p>` : '') + rosterList : empty('No roster published yet', '<p style="margin:6px 0 0">The league hasn’t posted this team’s players to the feed. It shows here as soon as it does.</p>'),
       stats: (splitsHtml ? sec('Splits') + splitsHtml : '') + outlook + statsHtml || empty('No season numbers yet', '<p style="margin:6px 0 0">They show up once the team has played.</p>')
     };
     const TT = [['overview', 'Overview'], ['schedule', 'Schedule'], ['roster', 'Roster'], ['stats', 'Stats']];

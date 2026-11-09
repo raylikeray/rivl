@@ -1,0 +1,20 @@
+name: Plays
+on:
+  schedule:
+    - cron: '41 */3 * * *'
+  workflow_dispatch:
+  push:
+    paths: ['scripts/plays.mjs', '.github/workflows/plays.yml']
+permissions:
+  contents: write
+concurrency: { group: data-commit, cancel-in-progress: false }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/plays.mjs
+      - run: |
+          git config user.name "RIVL bot"; git config user.email "actions@users.noreply.github.com"
+          git add data/; git diff --cached --quiet || git commit -m "Plays: update"; git pull --rebase -X theirs -q && git push
