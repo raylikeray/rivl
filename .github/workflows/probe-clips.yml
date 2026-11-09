@@ -10,5 +10,5 @@ jobs:
       - run: |
           node pcl/probe.mjs || true
           git config user.name probe; git config user.email probe@x
-          git add pcl; git commit -qm "probe results" || echo nothing
+          git add pcl data 2>/dev/null || git add pcl; git commit -qm "probe results" || echo nothing
           git push -q origin HEAD:probe-clips
