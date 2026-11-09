@@ -820,6 +820,105 @@
     const head = `Top ${it.top || 10} plays of the night`;
     return `<div class="feed hfl"><div class="fp fnw fhero fplay"><span class="fav"><span class="fic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.8c0-1 1.1-1.6 2-1.1l8.9 5.9c.8.5.8 1.7 0 2.2L10 18.7c-.9.5-2-.1-2-1.1z"/></svg></span></span><span class="fb"><span class="fh"><b>${esc(L.label)}</b><span>Plays</span><time>${esc(dayLabel(it.date, { weekday: 'short' }))}</time></span><span class="ft"><span class="fhl">${esc(head)}</span></span><button class="fyt" data-act="yt" data-yt="${esc(it.id)}" aria-label="Play ${esc(head)}"><img src="https://i.ytimg.com/vi/${esc(it.id)}/hqdefault.jpg" alt="" loading="lazy" onerror="this.remove()"><i class="play"></i>${it.len ? `<em>${esc(it.len)}</em>` : ''}</button><span class="fd">${esc(day)} · from the ${esc(L.label)}'s channel</span></span></div></div>`;
   };
+  /* v440: team stories. Each followed team gets a bubble at the top of Following; tapping it plays that team's night
+     full screen: last night's final first, then recent clips from the team's own YouTube channel (data/clips.json, built
+     by the repo's Clips job). The ring is lit in team colors while something in it hasn't been seen on this phone. */
+  let clipsD = null, clipsAt = 0;
+  const clipsLoad = () => { if (Date.now() - clipsAt < 30 * 60000 || !HW.hub) return; clipsAt = Date.now(); HW.hub.file('clips.json').then(d => { if (d && d.teams) { clipsD = d; if (homeRepaint) homeRepaint(); } }).catch(() => {}); };
+  const stSeen = () => store.get('v5:storyseen', {}) || {};
+  const stMark = (key, id) => { const s = stSeen(); s[key] = [...new Set([...(s[key] || []), id])].slice(-40); store.set('v5:storyseen', s); };
+  const lenSecs = t => { const m = /^(?:(\d+):)?(\d{1,2}):(\d{2})$/.exec(String(t || '').trim()); return m ? (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + (+m[3]) : 0; };
+  function storyItems(o, t) {
+    const items = []; const tid = String(t.id); const now = Date.now();
+    const g = [...(o.lastF || []), ...(o.doneAll || [])].filter((g, i, arr) => arr.findIndex(x => x.id === g.id) === i)
+      .filter(g => String(g.home.id) === tid || String(g.away.id) === tid)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+    if (g && now - new Date(g.date).getTime() < 42 * 36e5) items.push({ t: 'score', id: 'g' + g.id, g });
+    const c = clipsD && clipsD.teams && clipsD.teams[o.lk + ':' + tid];
+    ((c && c.clips) || []).forEach(v => { if (items.length < 6 && v.id && now - Date.parse(v.date + 'T12:00:00Z') < 7 * 864e5) items.push({ t: 'clip', id: v.id, v }); });
+    return items;
+  }
+  const storySeq = () => { const seq = []; ORDER.forEach(lk => { const s = feedSrc[lk]; const o = s && s.out; if (!o) return; (o.myTeams || []).forEach(t => { const its = storyItems(o, t); if (its.length) seq.push({ o, t, its, key: lk + ':' + t.id }); }); }); return seq; };
+  function bubbles() {
+    const seq = storySeq(); if (!seq.length) return '';
+    const seen = stSeen();
+    const bb = seq.map(x => { const sn = new Set(seen[x.key] || []); const un = x.its.some(it => !sn.has(it.id));
+      return { un, html: `<button class="sbub${un ? '' : ' seen'}" data-act="story" data-lk="${x.o.lk}" data-id="${esc(String(x.t.id))}" style="--c1:${x.t.color}" aria-label="${esc(x.t.name)} stories"><span class="ring"><span>${x.t.logo ? imgSized(x.t.logo, 60, 60) : `<b>${esc(x.t.abbr || '')}</b>`}</span></span><small>${esc(x.t.short)}</small></button>` }; });
+    return `<div class="sbubs">${[...bb.filter(b => b.un), ...bb.filter(b => !b.un)].map(b => b.html).join('')}</div>`;
+  }
+  /* the viewer itself: one full-screen layer, segments on top, tap right for the next thing, left for back,
+     swipe down (or the phone's back) to leave, swipe across for the next team's night */
+  let stEl = null, stPop = null, stAdv = 0, ytP = null, ytQ = null;
+  const ytApi = () => { if (ytQ) return ytQ; ytQ = new Promise(res => { if (window.YT && window.YT.Player) return res(); const prev = window.onYouTubeIframeAPIReady; window.onYouTubeIframeAPIReady = () => { if (prev) prev(); res(); }; const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); }); return ytQ; };
+  function stClose(viaUI) {
+    if (!stEl) return;
+    clearTimeout(stAdv); if (stPop) { removeEventListener('popstate', stPop); stPop = null; }
+    try { if (ytP) ytP.destroy(); } catch (e) {} ytP = null;
+    stEl.remove(); stEl = null; document.documentElement.classList.remove('stlock');
+    if (viaUI) { try { history.back(); } catch (e) {} }
+    if (homeRepaint) homeRepaint();
+  }
+  function storyOpen(lk0, id0) {
+    if (stEl) stClose(false);
+    const seq = storySeq();
+    let ti = seq.findIndex(x => x.o.lk === lk0 && String(x.t.id) === String(id0)); if (ti < 0) return;
+    const el = document.createElement('div'); el.className = 'story'; el.innerHTML = '<div class="stbg"></div><div class="stv"><div class="styt" hidden><div id="stplayer"></div></div><div class="stsc" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stcap"></div></div><button class="stz l" aria-label="Back"></button><button class="stz r" aria-label="Next"></button>';
+    document.body.appendChild(el); stEl = el; document.documentElement.classList.add('stlock');
+    try { history.pushState({ story: 1 }, '', location.href); } catch (e) {}
+    stPop = () => stClose(false); addEventListener('popstate', stPop);
+    let ii = 0;
+    const team = () => seq[ti];
+    const loadClip = vid => { ytApi().then(() => { if (!stEl) return;
+      if (ytP) { try { ytP.loadVideoById(vid); } catch (e) {} return; }
+      ytP = new YT.Player(el.querySelector('#stplayer'), { host: 'https://www.youtube-nocookie.com', width: '100%', height: '100%', videoId: vid,
+        playerVars: { autoplay: 1, playsinline: 1, rel: 0, modestbranding: 1, controls: 0, fs: 0, iv_load_policy: 3, disablekb: 1 },
+        events: { onStateChange: e => { if (e.data === 0) nxt(); } } }); }); };
+    const segs = (its, i, dur) => `<div class="stsegs">${its.map((x, j) => `<i class="${j < i ? 'done' : j === i ? 'on' : ''}">${j === i ? `<b style="transition-duration:${dur}ms"></b>` : ''}</i>`).join('')}</div>`;
+    const show = (i, dir) => {
+      clearTimeout(stAdv);
+      const { o, t, its, key } = team();
+      if (i < 0) { if (ti > 0) { ti--; ii = 0; return show(0); } return stClose(true); }
+      if (i >= its.length) { if (ti < seq.length - 1) { ti++; ii = 0; return show(0); } return stClose(true); }
+      ii = i; const it = its[i]; stMark(key, it.id);
+      const L = o.L; const hd = el.querySelector('.sthd'), cap = el.querySelector('.stcap'), bg = el.querySelector('.stbg'), sc = el.querySelector('.stsc'), yt = el.querySelector('.styt');
+      let dur = 5500;
+      if (it.t === 'score') {
+        const g = it.g; const home = String(g.home.id) === String(t.id); const us = home ? g.home : g.away, them = home ? g.away : g.home;
+        const cu = teamColor(us, L), ct = teamColor(them, L); const won = +us.score > +them.score;
+        bg.style.background = `linear-gradient(160deg, ${ct} -30%, #0a0a0c 44%, ${cu} 160%)`;
+        const nClips = its.filter(x => x.t === 'clip').length;
+        sc.innerHTML = `<span class="fin">Final · ${won ? `${esc(us.short)} win` : `${esc(them.short)} win`}</span>
+          <div class="srw">${us.logo ? imgSized(us.logo, 96, 96) : ''}<b class="${won ? '' : 'lo'}">${esc(String(us.score))}</b><b class="${won ? 'lo' : ''}">${esc(String(them.score))}</b>${them.logo ? imgSized(them.logo, 96, 96) : ''}</div>
+          <div class="tms"><span>${esc(us.short)}</span><span>${esc(them.short)}</span></div>
+          <span class="then">${nClips ? `Then the highlights · ${nClips} clip${nClips === 1 ? '' : 's'}` : 'That was the night'}</span>`;
+        sc.hidden = false; yt.hidden = true; cap.textContent = ''; cap.hidden = true;
+        try { if (ytP) ytP.pauseVideo(); } catch (e) {}
+        const first = its.find(x => x.t === 'clip'); if (first && !ytP) ytApi().then(() => { if (!stEl || ytP) return; ytP = new YT.Player(el.querySelector('#stplayer'), { host: 'https://www.youtube-nocookie.com', width: '100%', height: '100%', videoId: first.id, playerVars: { autoplay: 0, playsinline: 1, rel: 0, modestbranding: 1, controls: 0, fs: 0, iv_load_policy: 3, disablekb: 1 }, events: { onStateChange: e => { if (e.data === 0) nxt(); } } }); });
+      } else {
+        const v = it.v; dur = Math.min(Math.max((lenSecs(v.len) || 45) + 3, 10), 190) * 1000;
+        bg.style.background = `linear-gradient(160deg, #0a0a0c 30%, ${t.color} 170%)`;
+        sc.hidden = true; yt.hidden = false;
+        if (ytP && i === its.findIndex(x => x.t === 'clip') && !dir) { try { ytP.loadVideoById(v.id); } catch (e) { loadClip(v.id); } } else loadClip(v.id);
+        cap.innerHTML = `<b>${esc(v.title || '')}</b><small>From the ${esc(t.short)}’${/s$/i.test(t.short || '') ? '' : 's'} channel${v.date ? ` · ${esc(dayLabel(v.date, { weekday: 'short' }))}` : ''}</small>`; cap.hidden = false;
+      }
+      hd.innerHTML = `<span class="ring" style="--c1:${t.color}"><span>${t.logo ? imgSized(t.logo, 44, 44) : `<b>${esc(t.abbr || '')}</b>`}</span></span><span class="who"><b>${esc(t.short)}</b><small>${i + 1} of ${its.length}${it.t === 'score' ? ' · last night' : ''}</small></span><button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
+      el.querySelector('.stsegs').outerHTML = segs(its, i, dur);
+      requestAnimationFrame(() => requestAnimationFrame(() => { const b = el.querySelector('.stsegs i.on b'); if (b) b.style.width = '100%'; }));
+      stAdv = setTimeout(nxt, dur);
+    };
+    const nxt = () => { if (stEl) show(ii + 1); };
+    el.addEventListener('click', e => {
+      if (e.target.closest('[data-stx]')) { stClose(true); return; }
+      const z = e.target.closest('.stz'); if (!z) return;
+      if (z.classList.contains('r')) show(ii + 1, 1); else (ii > 0 ? show(ii - 1, 1) : (ti > 0 ? (ti--, ii = 0, show(0, 1)) : stClose(true)));
+    });
+    let tx = 0, ty = 0;
+    el.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+    el.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+      if (dy > 80 && Math.abs(dx) < 60) { stClose(true); return; }
+      if (Math.abs(dx) > 70 && Math.abs(dy) < 60) { if (dx < 0) { if (ti < seq.length - 1) { ti++; ii = 0; show(0, 1); } else stClose(true); } else if (ti > 0) { ti--; ii = 0; show(0, 1); } } }, { passive: true });
+    show(0);
+  }
   const homeShown = {};   // v425: how far down each Home tab has scrolled into the river, so a return lands where it was
   async function home(tab) {
     if (!HTABS.includes(tab)) tab = 'following';
@@ -833,7 +932,8 @@
     const leagues = tab === 'following' ? ORDER : [tab];
     const srcs = leagues.map(feedSource);
     const P = prefs.all();
-    const secs = {}; const ORD = ['unr', 'tick', 'date', 'lead', 'plays', 'wire', 'digest', 'river'];
+    clipsLoad();
+    const secs = {}; const ORD = ['bub', 'unr', 'tick', 'date', 'lead', 'plays', 'wire', 'digest', 'river'];
     let painted = false;
     const wrap = k => `<section class="hsec2" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;
     const compose = () => {
@@ -842,6 +942,8 @@
       ORD.forEach(k => delete secs[k]);
       const one = !fol ? outs[0] : null;
       if (one && one.unr) secs.unr = one.unr;
+      // v440: team story bubbles, Following only
+      if (fol) { const bb = bubbles(); if (bb) secs.bub = bb; }
       // the ticker: your games today (a league tab shows its day), live first, then finals
       if (P.live) {
         const rows = []; outs.forEach(o => (o.todayAll || []).filter(g => (!fol || isFav(g)) && (isLive(g) || isDone(g))).forEach(g => rows.push({ o, g })));
@@ -1543,6 +1645,6 @@
   // the slim bar shows once the head has scrolled away
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom <= fx.offsetHeight + 1; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };   // v412: the bar takes over the moment the header no longer covers its space
     window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(run); }, { passive: true }); document.addEventListener('rivl:rendered', run); }
-  HW.v5 = Object.assign(HW.v5 || {}, { feedSrc, initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard,
+  HW.v5 = Object.assign(HW.v5 || {}, { feedSrc, initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard, storyOpen,
     _: { pager, duelPair, panelLogo, nearPanel, duelCard, duelBlock, deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
 })();
