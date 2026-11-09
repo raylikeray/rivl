@@ -5076,3 +5076,33 @@ html body .pcartog button.on{background:var(--ink);color:var(--bg)}
 .stcl .logo{width:24px;height:24px;margin-left:-6px;border-radius:50%;background:var(--surf);box-shadow:0 0 0 2px var(--surf)}
 .stcl .logo:first-child{margin-left:0}
 .stnone{margin:0 20px;font-size:14px;color:var(--ink-3)}
+
+/* v438: the Rail scores list. Left: where the game stands. Middle: the teams. Right: the scores, or the bell before tip */
+html body .srows.rlrows{padding:0;border-radius:20px;overflow:hidden}
+html body :is(#scpage,.hlv) .srow.rl,html body .srow.rl{display:grid;grid-template-columns:78px minmax(0,1fr) auto;align-items:center;column-gap:0;padding:12px 16px 12px 0;min-height:76px}
+.srow.rl + .srow.rl{border-top:1px solid var(--line)}
+.srow.rl .rt{align-self:stretch;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:0 8px 0 16px;border-right:1px solid var(--line);font-variant-numeric:tabular-nums;min-width:0}
+.srow.rl .rtm{padding-left:14px}
+.srow.rl .rt b{font-size:14px;font-weight:800;color:var(--ink);line-height:1.15;white-space:nowrap}
+.srow.rl .rt small{font-size:12px;font-weight:700;color:var(--ink-3);line-height:1.15}
+.srow.rl .rt.lv b,.srow.rl .rt.lv small{color:var(--live,#ff453a)}
+.srow.rl .rt.st b{font-size:12.5px;color:var(--ink-2)}
+.srow.rl .rtm{display:flex;flex-direction:column;gap:10px;min-width:0}
+.srow.rl .rr{display:flex;align-items:center;gap:10px;min-width:0}
+.srow.rl .rr .scr{width:26px;height:26px;flex:none;display:grid;place-items:center}
+.srow.rl .rr .scr img{width:26px;height:26px;object-fit:contain}
+.srow.rl .rn{font-size:16.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+html body .srow.rl .sstar{position:static;inset:auto;width:13px;height:13px;flex:none;color:#F5B915;display:inline-grid;place-items:center;background:none;border:0;box-shadow:none;border-radius:0;transform:none;margin:0}
+html body .srow.rl .sstar svg{width:13px;height:13px;display:block}
+.srow.rl .rfv{flex:none;font-style:normal;font-size:11.5px;font-weight:800;color:var(--ink-2);background:color-mix(in srgb,var(--ink) 8%,transparent);border-radius:7px;padding:3px 7px;font-variant-numeric:tabular-nums}
+.srow.rl .rs{display:flex;flex-direction:column;gap:10px;align-items:flex-end;padding-left:12px}
+.srow.rl .rsc{display:flex;align-items:center;height:26px;font-size:20px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.srow.rl .rw{width:7px;height:11px;margin-left:6px;fill:var(--ink)}
+.srow.rl .rr.lo,.srow.rl .rsc.lo{opacity:.42}
+.srow.rl .rs.rb{justify-content:center}
+.srow.rl .rs.rb .sbell{width:32px;height:32px;margin:0}
+.srow.rl .rs.rb .sbell svg{width:15px;height:15px}
+.dpsec.rlsec.lv b{color:var(--live,#ff453a)}
+.srows.rlrows + .dpsec{margin-top:24px}
+.salrt{padding-top:2px}
+@media (max-width:359px){ html body :is(#scpage,.hlv) .srow.rl,html body .srow.rl{grid-template-columns:70px minmax(0,1fr) auto} .srow.rl .rt{padding-left:12px} .srow.rl .rtm{padding-left:10px} .srow.rl .rn{font-size:15px} .srow.rl .rsc{font-size:18px} }

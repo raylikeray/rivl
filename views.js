@@ -238,27 +238,36 @@
   /* a game as a row of the Scores list: each team's crest and name on its own side (a gold star on the crest when you
      follow it), its record beside it before tip and its score once it starts, and between them the time with RIVL's pick,
      the clock, or Final. Rows sit together in one card per section. */
+  /* v438: the Rail. One game is three columns: where it stands on the left (the quarter and clock in red, the tip
+     time, or Final), the two teams stacked in the middle with their crests and full names, and the scores on the right.
+     Before tip the favourite carries a small chance chip on its own line and the bell sits where the scores will be.
+     A final dims the loser and points a small arrow at the winner's score. */
   function scoreRow(L, g, ctx) {
-    scoreRow.ctx = scoreRow.ctx || {}; if (ctx) scoreRow.ctx[L.key] = ctx; else ctx = scoreRow.ctx[L.key] || null;   // a live repaint comes without the context: the last one stands in so the pick never drops out
+    scoreRow.ctx = scoreRow.ctx || {}; if (ctx) scoreRow.ctx[L.key] = ctx; else ctx = scoreRow.ctx[L.key] || null;
     const live = g.state === 'in', fin = g.state === 'post' && !g.off, pre = !live && !fin;
     const a = +g.away.score, h = +g.home.score, has = (live || fin) && g.away.score != null && g.home.score != null;
-    const up = (x, y) => has && x > y, lo = (x, y) => fin && has && x < y;
-    const star = `<i class="sstar" aria-label="Following"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg></i>`;
-    const side = (t, l) => { const f = HW.favs.has(L.key, t.id); return `<span class="stm${l ? ' lo' : ''}"><span class="scr${lowC(teamColor(t, L)) ? ' lowc' : ''}">${t.logo ? imgSized(t.logo, 112, 112, 'alt=""', monoSwap(t.abbr)) : monoOf(t.abbr)}${f ? star : ''}</span><b class="snm">${esc(t.short || t.abbr || '')}</b><b class="sab2${String(t.abbr || t.short || '').length > 4 ? ' l5' : ''}">${esc(t.abbr || t.short || '')}</b></span>`; };
-    const num = (t, u, l) => pre || t.score == null ? `<span class="ssc rec">${esc(t.rec || '')}</span>` : `<span class="ssc${u ? ' up' : ''}${l ? ' lo' : ''}">${esc(String(t.score))}</span>`;
-    const f = !fin && !g.off && prefs.get('forecast') ? safeF(L, g, ctx) : null;
-    const pick = f && Number.isFinite(f.pHome) ? `<small>${esc((f.pHome >= .5 ? g.home : g.away).abbr || '')} ${pct(Math.max(f.pHome, 1 - f.pHome))}</small>` : '';
-    /* v416: a game well past its tip that the feed still files as scheduled is one ESPN isn't covering live (small-school
-       games on streaming-only services). It reads as such rather than as a game still to come. */
     const stale = pre && !g.off && g.timeValid !== false && g.date && Date.now() - new Date(g.date).getTime() > 15 * 60000 && Date.now() - new Date(g.date).getTime() < 5 * 3600000;
-    const tipT = esc(String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT|EST|EDT|PST|PDT|MST|MDT)$/, ''));
-    /* v435: a bell beside the tip time bookmarks the game; the alert itself is a calendar event, so the phone rings it */
+    const f = pre && !g.off && !stale && prefs.get('forecast') ? safeF(L, g, ctx) : null;
+    const fav = f && Number.isFinite(f.pHome) ? (f.pHome >= .5 ? 'home' : 'away') : null; const fp = fav ? pct(Math.max(f.pHome, 1 - f.pHome)) : '';
+    const tipT = String(tipOf(g)).replace(/\s+(CT|ET|PT|MT|CST|CDT|EST|EDT|PST|PDT|MST|MDT)$/, '');
     const canBell = pre && !stale && !g.off && g.timeValid !== false && g.date && new Date(g.date).getTime() > Date.now() && !g.away.tbd && !g.home.tbd;
     const bset = canBell && HW.alerts ? HW.alerts.get(g.id) : null;
     const bell = canBell ? `<button class="sbell${bset != null ? ' on' : ''}" data-act="bell" data-lk="${esc(L.key)}" data-gid="${esc(g.id)}" data-t="${esc(g.date)}" data-ttl="${esc(`${g.away.short || g.away.abbr || ''} at ${g.home.short || g.home.abbr || ''}`)}" data-loc="${esc([g.venue, g.city].filter(Boolean).join(', '))}" data-tv="${esc(tvLabel(g))}" aria-label="${bset != null ? 'Reminder set' : 'Remind me'}"><svg viewBox="0 0 24 24" fill="${bset != null ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg></button>` : '';
-    const mid = g.off ? `<span class="sft">${esc(g.off)}</span>` : live ? `<span class="slv"><i></i>${esc(g.detail || 'Live')}</span>${pick}` : fin ? `<span class="sft">${esc(finalWord(g))}</span>` : stale ? `<span class="snl">Under way</span><small>No live score</small>` : `<b class="stt">${tipT}${bell}</b>${pick}`;
+    // the left column
+    let c1 = '', c2 = '', lvC = false;
+    if (g.off) { c1 = g.off; }
+    else if (live) { lvC = true; const ck = HW.clockOf(g, L); const m = /^(.*\S)\s+(\d{1,2}:\d{2}(?:\.\d)?|\d{1,2}\.\d)$/.exec(ck); if (/^halftime$/i.test(ck)) c1 = 'Half'; else if (/^end of /i.test(ck)) { c1 = 'End'; c2 = ck.replace(/^end of /i, ''); } else if (m) { c1 = m[1]; c2 = m[2]; } else c1 = ck; }
+    else if (fin) { const fw = finalWord(g); const m = /^Final\W*(.+)$/i.exec(fw); if (m) { c1 = 'Final'; c2 = m[1]; } else c1 = fw; }
+    else if (stale) { c1 = 'Under way'; c2 = 'No score'; }
+    else { const m = /^(\d{1,2}:\d{2})\s*([AP]M)$/i.exec(tipT); if (m) { c1 = m[1]; c2 = m[2].toUpperCase(); } else c1 = tipT || 'TBD'; }
+    const star = `<i class="sstar" aria-label="Following"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg></i>`;
+    const loA = fin && has && a < h, loH = fin && has && h < a;
+    const line = (t, side, lo) => `<span class="rr${lo ? ' lo' : ''}"><span class="scr${lowC(teamColor(t, L)) ? ' lowc' : ''}">${t.logo ? imgSized(t.logo, 72, 72, 'alt=""', monoSwap(t.abbr)) : monoOf(t.abbr)}</span><b class="rn">${esc(t.short || t.abbr || '')}</b>${HW.favs.has(L.key, t.id) ? star : ''}${fav === side ? `<em class="rfv" title="RIVL's chance to win">${esc(fp)}</em>` : ''}</span>`;
+    const arrow = '<svg class="rw" viewBox="0 0 8 12" aria-label="Won"><path d="M8 0v12L1.5 6z"/></svg>';
+    const num = (t, lo, won) => `<b class="rsc${lo ? ' lo' : ''}">${esc(String(t.score))}${won ? arrow : ''}</b>`;
+    const right = has ? `<span class="rs">${num(g.away, loA, fin && a > h)}${num(g.home, loH, fin && h > a)}</span>` : canBell ? `<span class="rs rb">${bell}</span>` : '<span class="rs"></span>';
     const key = [g.state, g.away.score, g.home.score, g.detail, g.off || '', bset == null ? '' : bset].join('|');
-    return `<a class="srow${live ? ' on' : ''}" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}" data-k="${esc(key)}">${side(g.away, lo(a, h))}${num(g.away, up(a, h), lo(a, h))}<span class="smid">${mid}</span>${num(g.home, up(h, a), lo(h, a))}${side(g.home, lo(h, a))}</a>`;
+    return `<a class="srow rl${live ? ' on' : ''}" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}" data-k="${esc(key)}"><span class="rt${lvC ? ' lv' : ''}${stale ? ' st' : ''}"><b>${esc(c1)}</b>${c2 ? `<small>${esc(c2)}</small>` : ''}</span><span class="rtm">${line(g.away, 'away', loA)}${line(g.home, 'home', loH)}</span>${right}</a>`;
   }
   /* v389: the duel card, one renderer for Home's deck and the team and player pages. Two deep planes of the teams'
      colours split on a seam that follows the score (RIVL's pick before tip), the clock or tip and TV on top, the score
@@ -1024,12 +1033,17 @@
     const sub = $main.querySelector('#dpsub'); if (sub && !/games?$/.test(sub.textContent)) sub.textContent += ` · ${games.length} game${games.length === 1 ? '' : 's'}`;
     const tOrd = g => (g.state === 'post' || g.off ? 1 : 0);
     const byTip = (a, b) => tOrd(a) - tOrd(b) || new Date(a.date) - new Date(b.date) || rankGame(b) - rankGame(a);
-    const live = games.filter(g => isLive(g) && !g.off).sort((a, b) => rankGame(b) - rankGame(a));
-    const mineG = games.filter(g => !live.includes(g) && isFav(g)).sort(byTip);
-    const rest = games.filter(g => !live.includes(g) && !mineG.includes(g)).sort(byTip);
+    /* v438: three plain sections by where the game stands: Live, then what's still to come, then Final. Your teams
+       aren't a section of their own any more; they lead inside each one and carry a star. */
+    const staleG = g => g.state !== 'in' && g.state !== 'post' && !g.off && g.timeValid !== false && g.date && Date.now() - new Date(g.date).getTime() > 15 * 60000 && Date.now() - new Date(g.date).getTime() < 5 * 3600000;
+    const mineFirst = (x, y) => isFav(y) - isFav(x);
+    const live = games.filter(g => (isLive(g) || staleG(g)) && !g.off).sort((a, b) => mineFirst(a, b) || rankGame(b) - rankGame(a));
+    const done = games.filter(g => !live.includes(g) && (g.state === 'post' || g.off)).sort((a, b) => mineFirst(a, b) || new Date(b.date) - new Date(a.date));
+    const ahead = games.filter(g => !live.includes(g) && !done.includes(g)).sort((a, b) => new Date(a.date) - new Date(b.date) || mineFirst(a, b) || rankGame(b) - rankGame(a));
     const row = g => g.tbd ? `<div class="games">${gameCard(L, g, ctx, false, true)}</div>` : scoreRow(L, g, ctx);
-    const block = (title, list, n = 6) => list.length ? `<div class="dpsec"><b>${title}</b><span>${list.length}</span></div>` + clip(list.map(row), 'srows', n, 'games') : '';
-    paint(phase + block('<i class="dot"></i>Live now', live, 8) + block('Your teams', mineG, 8) + block(mineG.length || live.length ? 'Around the league' : 'All games', rest, mineG.length ? 5 : 8));
+    const block = (title, list, n = 6, cls = '') => list.length ? `<div class="dpsec rlsec${cls}"><b>${title}</b><span>${list.length}</span></div>` + clip(list.map(row), 'srows rlrows', n, 'games') : '';
+    const aheadT = ymd === today ? (ahead.every(g => new Date(g.date).getHours() >= 16) ? 'Tonight' : 'Later today') : ymd > today ? 'Scheduled' : 'Not played';
+    paint(phase + block('<i class="dot"></i>Live', live, 10, ' lv') + block(aheadT, ahead, 12) + block('Final', done, 10));
     setPhase();
   }
   /* a pill that stays put above the tab bar while another day is shown: one tap back to today, wherever the strip is scrolled */
