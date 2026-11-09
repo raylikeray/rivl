@@ -1,0 +1,14 @@
+name: probe-clips
+on: push
+jobs:
+  p:
+    if: github.ref == 'refs/heads/probe-clips'
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          node pcl/probe.mjs || true
+          git config user.name probe; git config user.email probe@x
+          git add pcl; git commit -qm "probe results" || echo nothing
+          git push -q origin HEAD:probe-clips
