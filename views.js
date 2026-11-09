@@ -820,23 +820,18 @@
     const head = `Top ${it.top || 10} plays of the night`;
     return `<div class="feed hfl"><div class="fp fnw fhero fplay"><span class="fav"><span class="fic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.8c0-1 1.1-1.6 2-1.1l8.9 5.9c.8.5.8 1.7 0 2.2L10 18.7c-.9.5-2-.1-2-1.1z"/></svg></span></span><span class="fb"><span class="fh"><b>${esc(L.label)}</b><span>Plays</span><time>${esc(dayLabel(it.date, { weekday: 'short' }))}</time></span><span class="ft"><span class="fhl">${esc(head)}</span></span><button class="fyt" data-act="yt" data-yt="${esc(it.id)}" aria-label="Play ${esc(head)}"><img src="https://i.ytimg.com/vi/${esc(it.id)}/hqdefault.jpg" alt="" loading="lazy" onerror="this.remove()"><i class="play"></i>${it.len ? `<em>${esc(it.len)}</em>` : ''}</button><span class="fd">${esc(day)} · from the ${esc(L.label)}'s channel</span></span></div></div>`;
   };
-  /* v440: team stories. Each followed team gets a bubble at the top of Following; tapping it plays that team's night
-     full screen: last night's final first, then recent clips from the team's own YouTube channel (data/clips.json, built
-     by the repo's Clips job). The ring is lit in team colors while something in it hasn't been seen on this phone. */
-  let clipsD = null, clipsAt = 0;
-  const clipsLoad = () => { if (Date.now() - clipsAt < 30 * 60000 || !HW.hub) return; clipsAt = Date.now(); HW.hub.file('clips.json').then(d => { if (d && d.teams) { clipsD = d; if (homeRepaint) homeRepaint(); } }).catch(() => {}); };
+  /* v441: team stories. Each followed team that played in the last day and a half gets a bubble at the top of
+     Following; tapping it plays that team's night full screen: the final first, then the game's own highlight clips,
+     which the feed carries as plain video files, so they start at once, fill the screen and carry no ads. The ring
+     stays lit until the night has been seen on this phone. */
   const stSeen = () => store.get('v5:storyseen', {}) || {};
   const stMark = (key, id) => { const s = stSeen(); s[key] = [...new Set([...(s[key] || []), id])].slice(-40); store.set('v5:storyseen', s); };
-  const lenSecs = t => { const m = /^(?:(\d+):)?(\d{1,2}):(\d{2})$/.exec(String(t || '').trim()); return m ? (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + (+m[3]) : 0; };
   function storyItems(o, t) {
-    const items = []; const tid = String(t.id); const now = Date.now();
+    const tid = String(t.id); const now = Date.now();
     const g = [...(o.lastF || []), ...(o.doneAll || [])].filter((g, i, arr) => arr.findIndex(x => x.id === g.id) === i)
       .filter(g => String(g.home.id) === tid || String(g.away.id) === tid)
       .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-    if (g && now - new Date(g.date).getTime() < 42 * 36e5) items.push({ t: 'score', id: 'g' + g.id, g });
-    const c = clipsD && clipsD.teams && clipsD.teams[o.lk + ':' + tid];
-    ((c && c.clips) || []).forEach(v => { if (items.length < 6 && v.id && now - Date.parse(v.date + 'T12:00:00Z') < 7 * 864e5) items.push({ t: 'clip', id: v.id, v }); });
-    return items;
+    return g && now - new Date(g.date).getTime() < 42 * 36e5 ? [{ t: 'score', id: 'g' + g.id, g }] : [];
   }
   const storySeq = () => { const seq = []; ORDER.forEach(lk => { const s = feedSrc[lk]; const o = s && s.out; if (!o) return; (o.myTeams || []).forEach(t => { const its = storyItems(o, t); if (its.length) seq.push({ o, t, its, key: lk + ':' + t.id }); }); }); return seq; };
   function bubbles() {
@@ -846,14 +841,14 @@
       return { un, html: `<button class="sbub${un ? '' : ' seen'}" data-act="story" data-lk="${x.o.lk}" data-id="${esc(String(x.t.id))}" style="--c1:${x.t.color}" aria-label="${esc(x.t.name)} stories"><span class="ring"><span>${x.t.logo ? imgSized(x.t.logo, 60, 60) : `<b>${esc(x.t.abbr || '')}</b>`}</span></span><small>${esc(x.t.short)}</small></button>` }; });
     return `<div class="sbubs">${[...bb.filter(b => b.un), ...bb.filter(b => !b.un)].map(b => b.html).join('')}</div>`;
   }
-  /* the viewer itself: one full-screen layer, segments on top, tap right for the next thing, left for back,
-     swipe down (or the phone's back) to leave, swipe across for the next team's night */
-  let stEl = null, stPop = null, stAdv = 0, ytP = null, ytQ = null;
-  const ytApi = () => { if (ytQ) return ytQ; ytQ = new Promise(res => { if (window.YT && window.YT.Player) return res(); const prev = window.onYouTubeIframeAPIReady; window.onYouTubeIframeAPIReady = () => { if (prev) prev(); res(); }; const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); }); return ytQ; };
+  /* the viewer itself: one full-screen layer, segments on top, tap right for the next clip, left for back,
+     swipe down (or the phone's back) to leave, swipe across for the next team's night. The clips ride one <video>
+     element, created by the opening tap, so sound is allowed and each one starts the moment it's shown. */
+  let stEl = null, stPop = null, stAdv = 0;
   function stClose(viaUI) {
     if (!stEl) return;
     clearTimeout(stAdv); if (stPop) { removeEventListener('popstate', stPop); stPop = null; }
-    try { if (ytP) ytP.destroy(); } catch (e) {} ytP = null;
+    const vd = stEl.querySelector('video'); if (vd) { try { vd.pause(); vd.removeAttribute('src'); vd.load(); } catch (e) {} }
     stEl.remove(); stEl = null; document.documentElement.classList.remove('stlock');
     if (viaUI) { try { history.back(); } catch (e) {} }
     if (homeRepaint) homeRepaint();
@@ -862,61 +857,97 @@
     if (stEl) stClose(false);
     const seq = storySeq();
     let ti = seq.findIndex(x => x.o.lk === lk0 && String(x.t.id) === String(id0)); if (ti < 0) return;
-    const el = document.createElement('div'); el.className = 'story'; el.innerHTML = '<div class="stbg"></div><div class="stv"><div class="styt" hidden><div id="stplayer"></div></div><div class="stsc" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stcap"></div></div><button class="stz l" aria-label="Back"></button><button class="stz r" aria-label="Next"></button>';
+    const el = document.createElement('div'); el.className = 'story';
+    el.innerHTML = '<div class="stbg"></div><div class="stv"><div class="stvdw" hidden><video playsinline preload="auto"></video></div><div class="stsc" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stcap"></div></div><button class="stz l" aria-label="Back"></button><button class="stz r" aria-label="Next"></button>';
     document.body.appendChild(el); stEl = el; document.documentElement.classList.add('stlock');
     try { history.pushState({ story: 1 }, '', location.href); } catch (e) {}
     stPop = () => stClose(false); addEventListener('popstate', stPop);
-    let ii = 0;
+    let ii = 0, wait = 0;
     const team = () => seq[ti];
-    const loadClip = vid => { ytApi().then(() => { if (!stEl) return;
-      if (ytP) { try { ytP.loadVideoById(vid); } catch (e) {} return; }
-      ytP = new YT.Player(el.querySelector('#stplayer'), { host: 'https://www.youtube-nocookie.com', width: '100%', height: '100%', videoId: vid,
-        playerVars: { autoplay: 1, playsinline: 1, rel: 0, modestbranding: 1, controls: 0, fs: 0, iv_load_policy: 3, disablekb: 1 },
-        events: { onStateChange: e => { if (e.data === 0) nxt(); } } }); }); };
-    const segs = (its, i, dur) => `<div class="stsegs">${its.map((x, j) => `<i class="${j < i ? 'done' : j === i ? 'on' : ''}">${j === i ? `<b style="transition-duration:${dur}ms"></b>` : ''}</i>`).join('')}</div>`;
-    const show = (i, dir) => {
-      clearTimeout(stAdv);
-      const { o, t, its, key } = team();
+    const vd = el.querySelector('video');
+    // the game's clips come from its own feed the moment the story opens; the score card holds until they land
+    const addClips = x => {
+      if (x.loaded) return; x.loaded = 1;
+      const g = x.its[0] && x.its[0].g; if (!g) { x.fail = 1; return; }
+      jSoft(`${API(x.o.L)}/summary?event=${g.id}`).then(d => {
+        const vids = (((d || {}).videos) || []).map(v => {
+          const s = ((v || {}).links || {}).source || {};
+          const url = (s.mp4 && s.mp4.href) || s.href || (s.HD && s.HD.href) || (s.full && s.full.href) || '';
+          return url && v.headline && !v.premium ? { t: 'vid', id: 'v' + (v.id || url.slice(-20)), url, title: String(v.headline), dur: Math.min(Math.max(+v.duration || 30, 5), 300), thumb: String(v.thumbnail || '') } : null;
+        }).filter(Boolean).slice(0, 8);
+        x.its = [...x.its, ...vids]; if (!vids.length) x.fail = 1;
+        if (stEl && team() === x) paintMeta();
+      }).catch(() => { x.fail = 1; if (stEl && team() === x) paintMeta(); });
+    };
+    const segs = (its, i, dur, man) => `<div class="stsegs">${its.map((x, j) => `<i class="${j < i ? 'done' : j === i ? 'on' : ''}">${j === i ? `<b${man ? ' data-man' : ` style="transition-duration:${dur}ms"`}></b>` : ''}</i>`).join('')}</div>`;
+    // texts and the segment count catch up when the clips arrive mid-card
+    const paintMeta = () => {
+      const x = team(); const it = x && x.its[ii]; if (!it) return;
+      const n = x.its.filter(y => y.t === 'vid').length;
+      const th = el.querySelector('.stsc .then'); if (th) th.textContent = n ? `Then the highlights \u00b7 ${n} clip${n === 1 ? '' : 's'}` : x.fail ? 'That was the night' : 'Pulling up the highlights';
+      const sm = el.querySelector('.sthd .who small'); if (sm) sm.textContent = `${ii + 1} of ${x.its.length}${it.t === 'score' ? ' \u00b7 last night' : ''}`;
+      const cur = el.querySelector('.stsegs');
+      if (cur && cur.children.length !== x.its.length) {
+        cur.outerHTML = segs(x.its, ii, 5500, it.t === 'vid');
+        if (it.t === 'score') requestAnimationFrame(() => requestAnimationFrame(() => { const b = el.querySelector('.stsegs i.on b'); if (b) b.style.width = '100%'; }));
+      }
+    };
+    const show = i => {
+      clearTimeout(stAdv); wait = 0;
+      const x = team(); if (!x) return stClose(true);
       if (i < 0) { if (ti > 0) { ti--; ii = 0; return show(0); } return stClose(true); }
-      if (i >= its.length) { if (ti < seq.length - 1) { ti++; ii = 0; return show(0); } return stClose(true); }
-      ii = i; const it = its[i]; stMark(key, it.id);
-      const L = o.L; const hd = el.querySelector('.sthd'), cap = el.querySelector('.stcap'), bg = el.querySelector('.stbg'), sc = el.querySelector('.stsc'), yt = el.querySelector('.styt');
-      let dur = 5500;
+      if (i >= x.its.length) { if (ti < seq.length - 1) { ti++; ii = 0; return show(0); } return stClose(true); }
+      ii = i; const it = x.its[i]; stMark(x.key, it.id);
+      const { o, t } = x; const L = o.L;
+      const cap = el.querySelector('.stcap'), bg = el.querySelector('.stbg'), sc = el.querySelector('.stsc'), vw = el.querySelector('.stvdw');
       if (it.t === 'score') {
         const g = it.g; const home = String(g.home.id) === String(t.id); const us = home ? g.home : g.away, them = home ? g.away : g.home;
         const cu = teamColor(us, L), ct = teamColor(them, L); const won = +us.score > +them.score;
         bg.style.background = `linear-gradient(160deg, ${ct} -30%, #0a0a0c 44%, ${cu} 160%)`;
-        const nClips = its.filter(x => x.t === 'clip').length;
-        sc.innerHTML = `<span class="fin">Final · ${won ? `${esc(us.short)} win` : `${esc(them.short)} win`}</span>
+        sc.innerHTML = `<span class="fin">Final \u00b7 ${won ? `${esc(us.short)} win` : `${esc(them.short)} win`}</span>
           <div class="srw">${us.logo ? imgSized(us.logo, 96, 96) : ''}<b class="${won ? '' : 'lo'}">${esc(String(us.score))}</b><b class="${won ? 'lo' : ''}">${esc(String(them.score))}</b>${them.logo ? imgSized(them.logo, 96, 96) : ''}</div>
           <div class="tms"><span>${esc(us.short)}</span><span>${esc(them.short)}</span></div>
-          <span class="then">${nClips ? `Then the highlights · ${nClips} clip${nClips === 1 ? '' : 's'}` : 'That was the night'}</span>`;
-        sc.hidden = false; yt.hidden = true; cap.textContent = ''; cap.hidden = true;
-        try { if (ytP) ytP.pauseVideo(); } catch (e) {}
-        const first = its.find(x => x.t === 'clip'); if (first && !ytP) ytApi().then(() => { if (!stEl || ytP) return; ytP = new YT.Player(el.querySelector('#stplayer'), { host: 'https://www.youtube-nocookie.com', width: '100%', height: '100%', videoId: first.id, playerVars: { autoplay: 0, playsinline: 1, rel: 0, modestbranding: 1, controls: 0, fs: 0, iv_load_policy: 3, disablekb: 1 }, events: { onStateChange: e => { if (e.data === 0) nxt(); } } }); });
+          <span class="then"></span>`;
+        sc.hidden = false; vw.hidden = true; cap.textContent = ''; cap.hidden = true;
+        try { vd.pause(); } catch (e) {}
+        el.querySelector('.stsegs').outerHTML = segs(x.its, i, 5500, false);
+        requestAnimationFrame(() => requestAnimationFrame(() => { const b = el.querySelector('.stsegs i.on b'); if (b) b.style.width = '100%'; }));
+        stAdv = setTimeout(nxt, 5500);
+        addClips(x);
       } else {
-        const v = it.v; dur = Math.min(Math.max((lenSecs(v.len) || 45) + 3, 10), 190) * 1000;
         bg.style.background = `linear-gradient(160deg, #0a0a0c 30%, ${t.color} 170%)`;
-        sc.hidden = true; yt.hidden = false;
-        if (ytP && i === its.findIndex(x => x.t === 'clip') && !dir) { try { ytP.loadVideoById(v.id); } catch (e) { loadClip(v.id); } } else loadClip(v.id);
-        cap.innerHTML = `<b>${esc(v.title || '')}</b><small>From the ${esc(t.short)}’${/s$/i.test(t.short || '') ? '' : 's'} channel${v.date ? ` · ${esc(dayLabel(v.date, { weekday: 'short' }))}` : ''}</small>`; cap.hidden = false;
+        sc.hidden = true; vw.hidden = false;
+        try { vd.poster = it.thumb || ''; if (!vd.src || !vd.src.endsWith(it.url.slice(-40))) vd.src = it.url; else vd.currentTime = 0; const p = vd.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+        cap.innerHTML = `<b>${esc(it.title)}</b><small>${esc(t.short)} \u00b7 ${esc(dayLabel(HW.ymdOf(x.its[0].g.date), { weekday: 'long' }))}\u2019s game</small>`; cap.hidden = false;
+        el.querySelector('.stsegs').outerHTML = segs(x.its, i, 0, true);
+        stAdv = setTimeout(nxt, (it.dur + 12) * 1000);   // a net under the video's own ended event
       }
-      hd.innerHTML = `<span class="ring" style="--c1:${t.color}"><span>${t.logo ? imgSized(t.logo, 44, 44) : `<b>${esc(t.abbr || '')}</b>`}</span></span><span class="who"><b>${esc(t.short)}</b><small>${i + 1} of ${its.length}${it.t === 'score' ? ' · last night' : ''}</small></span><button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
-      el.querySelector('.stsegs').outerHTML = segs(its, i, dur);
-      requestAnimationFrame(() => requestAnimationFrame(() => { const b = el.querySelector('.stsegs i.on b'); if (b) b.style.width = '100%'; }));
-      stAdv = setTimeout(nxt, dur);
+      el.querySelector('.sthd').innerHTML = `<span class="ring" style="--c1:${t.color}"><span>${t.logo ? imgSized(t.logo, 44, 44) : `<b>${esc(t.abbr || '')}</b>`}</span></span><span class="who"><b>${esc(t.short)}</b><small></small></span><button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
+      paintMeta();
     };
-    const nxt = () => { if (stEl) show(ii + 1); };
+    const nxt = () => {
+      if (!stEl) return; const x = team();
+      // the score card waits a touch longer when the clips are still in flight
+      if (x && ii === x.its.length - 1 && x.loaded && !x.fail && !x.its.some(y => y.t === 'vid') && wait < 8) { wait++; stAdv = setTimeout(nxt, 700); return; }
+      show(ii + 1);
+    };
+    vd.addEventListener('timeupdate', () => {
+      const x = team(); const it = x && x.its[ii]; if (!it || it.t !== 'vid') return;
+      const d = vd.duration || it.dur; const b = el.querySelector('.stsegs i.on b[data-man]');
+      if (b && d) b.style.width = Math.min(100, vd.currentTime / d * 100) + '%';
+    });
+    vd.addEventListener('ended', () => nxt());
+    vd.addEventListener('error', () => { const x = team(); if (x && x.its[ii] && x.its[ii].t === 'vid') nxt(); });
     el.addEventListener('click', e => {
       if (e.target.closest('[data-stx]')) { stClose(true); return; }
       const z = e.target.closest('.stz'); if (!z) return;
-      if (z.classList.contains('r')) show(ii + 1, 1); else (ii > 0 ? show(ii - 1, 1) : (ti > 0 ? (ti--, ii = 0, show(0, 1)) : stClose(true)));
+      if (z.classList.contains('r')) show(ii + 1); else (ii > 0 ? show(ii - 1) : (ti > 0 ? (ti--, ii = 0, show(0)) : stClose(true)));
     });
     let tx = 0, ty = 0;
     el.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
     el.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
       if (dy > 80 && Math.abs(dx) < 60) { stClose(true); return; }
-      if (Math.abs(dx) > 70 && Math.abs(dy) < 60) { if (dx < 0) { if (ti < seq.length - 1) { ti++; ii = 0; show(0, 1); } else stClose(true); } else if (ti > 0) { ti--; ii = 0; show(0, 1); } } }, { passive: true });
+      if (Math.abs(dx) > 70 && Math.abs(dy) < 60) { if (dx < 0) { if (ti < seq.length - 1) { ti++; ii = 0; show(0); } else stClose(true); } else if (ti > 0) { ti--; ii = 0; show(0); } } }, { passive: true });
     show(0);
   }
   const homeShown = {};   // v425: how far down each Home tab has scrolled into the river, so a return lands where it was
@@ -932,7 +963,6 @@
     const leagues = tab === 'following' ? ORDER : [tab];
     const srcs = leagues.map(feedSource);
     const P = prefs.all();
-    clipsLoad();
     const secs = {}; const ORD = ['bub', 'unr', 'tick', 'date', 'lead', 'plays', 'wire', 'digest', 'river'];
     let painted = false;
     const wrap = k => `<section class="hsec2" data-sec="${k}" data-h="${hashOf(secs[k])}">${secs[k]}</section>`;

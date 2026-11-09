@@ -5111,8 +5111,9 @@ html body .srow.rl .sstar svg{width:13px;height:13px;display:block}
 .sbubs{display:flex;gap:16px;padding:14px 20px 6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .sbubs::-webkit-scrollbar{display:none}
 .sbub{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;width:62px;border:0;background:none;padding:0;font:inherit;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent}
-.sbub .ring{display:block;width:58px;height:58px;border-radius:50%;padding:3px;background:conic-gradient(var(--c1),color-mix(in srgb,var(--c1) 35%,#fff),var(--c1))}
-.sbub.seen .ring{background:var(--sep)}
+.sbub .ring{display:block;width:58px;height:58px;border-radius:50%;padding:3px;background:conic-gradient(from 210deg,#4a9ae6,#8a5cf6 30%,#ff5e7a 55%,#ffb03a 75%,#4a9ae6)}
+.sbub.seen .ring{padding:2px;background:none;box-shadow:inset 0 0 0 2px var(--sep)}
+.sbub.seen{opacity:.72}
 .sbub .ring>span{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:var(--surf-2);box-shadow:inset 0 0 0 2.5px var(--bg,#000)}
 .sbub .ring img{width:30px;height:30px;object-fit:contain}
 .sbub .ring b{font-size:12px;font-weight:800}
@@ -5121,7 +5122,8 @@ html.stlock,html.stlock body{overflow:hidden}
 .story{position:fixed;inset:0;z-index:300;background:#000;color:#fff;touch-action:pan-y}
 .story .stbg{position:absolute;inset:0;transition:background .5s}
 .story .stv{position:absolute;inset:0}
-.story .styt,.story .styt #stplayer,.story .styt iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.story .stvdw{position:absolute;inset:0;display:grid;place-items:center}
+.story .stvdw video{width:100%;max-height:100%;background:#000;box-shadow:0 18px 60px rgba(0,0,0,.5)}
 .story .stsc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0 24px;text-align:center}
 .story .stsc .fin{font-size:12px;font-weight:850;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.8)}
 .story .stsc .srw{display:flex;align-items:center;gap:16px;margin-top:16px}
@@ -5136,7 +5138,7 @@ html.stlock,html.stlock body{overflow:hidden}
 .story .stsegs i.done{background:#fff}
 .story .stsegs i b{display:block;width:0;height:100%;background:#fff;transition-property:width;transition-timing-function:linear}
 .story .sthd{position:absolute;top:calc(env(safe-area-inset-top, 8px) + 20px);left:14px;right:14px;display:flex;align-items:center;gap:10px;pointer-events:none}
-.story .sthd .ring{display:block;flex:none;width:40px;height:40px;border-radius:50%;padding:2.5px;background:conic-gradient(var(--c1),color-mix(in srgb,var(--c1) 35%,#fff),var(--c1))}
+.story .sthd .ring{display:block;flex:none;width:40px;height:40px;border-radius:50%;padding:2.5px;background:conic-gradient(from 210deg,#4a9ae6,#8a5cf6 30%,#ff5e7a 55%,#ffb03a 75%,#4a9ae6)}
 .story .sthd .ring>span{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:#101214;box-shadow:inset 0 0 0 2px #000}
 .story .sthd .ring img{width:22px;height:22px;object-fit:contain}
 .story .sthd .who b{display:block;font-size:15px;font-weight:800;text-shadow:0 1px 8px rgba(0,0,0,.6)}
