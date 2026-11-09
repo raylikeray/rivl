@@ -1,0 +1,20 @@
+name: probe-v439
+on: push
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p pv3; cd pv3
+          W=https://site.web.api.espn.com/apis/common/v3/sports/basketball/womens-college-basketball
+          S=https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball
+          curl -s "$W/statistics/byathlete?region=us&lang=en&isqualified=false&limit=50&team=41" -o ba-team.json
+          curl -s "$W/statistics/byathlete?region=us&lang=en&isqualified=false&limit=50&teamId=41" -o ba-teamid.json
+          curl -s "$S/teams/41/statistics" -o tstats.json
+          curl -s "https://site.web.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams/41/roster?enable=stats" -o roster-stats.json
+          curl -s "https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/seasons/2027/types/2/teams/41/statistics" -o core-team.json
+          curl -s "https://site.web.api.espn.com/apis/common/v3/sports/basketball/womens-college-basketball/teams/41/athletes/statistics" -o w-tas.json
+          ls -la
+          cd ..; git config user.name probe; git config user.email probe@x; git add pv3; git commit -qm probe; git push -q origin HEAD:probe-v439
