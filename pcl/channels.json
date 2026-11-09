@@ -1,0 +1,975 @@
+{
+ "nba": {
+  "Atlanta Hawks": [
+   {
+    "id": "UCpfcwELvR1wtcRJ0UxNXHYw",
+    "title": "Atlanta Hawks",
+    "handle": "@ATLHawks",
+    "subs": "109K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCizhvgN6Nbkx4WaNfzG2DPQ",
+    "title": "Locked On Hawks",
+    "handle": "@LockedOnHawks",
+    "subs": "8.83K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UC60PSkBTXJwXzv29xlt-OLg",
+    "title": "Charlotte Hornets at Atlanta Hawks",
+    "handle": "",
+    "subs": "",
+    "badge": ""
+   }
+  ],
+  "Boston Celtics": [
+   {
+    "id": "UCe4NAy5uDRk44tB-c6fYyDg",
+    "title": "Boston Celtics ",
+    "handle": "@DensusPlus-ur1ws",
+    "subs": "5 subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCV3leUkP_gEzNBrXbE9hw_A",
+    "title": "You Got Boston: a Celtics podcast with Noa Dalzell",
+    "handle": "@YouGotBostonPodcast",
+    "subs": "3.35K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCMfT9dr6xC_RIWoA9hI0meQ",
+    "title": "Boston Celtics",
+    "handle": "@Celtics",
+    "subs": "275K subscribers",
+    "badge": "verified"
+   }
+  ],
+  "Brooklyn Nets": [
+   {
+    "id": "UCTenKHt0h3VjdMvRWP6Lbvw",
+    "title": "Brooklyn Nets",
+    "handle": "@brooklynnets",
+    "subs": "175K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCWsWu_BVwFloXha-e_eyiNQ",
+    "title": "Locked On Nets",
+    "handle": "@LockedOnNets",
+    "subs": "10.7K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCXyrfNPmBFzSc4Oyy7K3i4Q",
+    "title": "Brooklyn Nets Press Conferences",
+    "handle": "@BrooklynNetsPressConferences",
+    "subs": "156 subscribers",
+    "badge": ""
+   }
+  ],
+  "Charlotte Hornets": [
+   {
+    "id": "UCUwPOyS1gVeoO_rgaz8X6ig",
+    "title": "Locked On Hornets",
+    "handle": "@LockedOnHornets",
+    "subs": "12K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCPhFI5lIFnSggz7HgY9UuuQ",
+    "title": "Charlotte Hornets",
+    "handle": "@hornets",
+    "subs": "61.9K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UC60PSkBTXJwXzv29xlt-OLg",
+    "title": "Charlotte Hornets at Atlanta Hawks",
+    "handle": "",
+    "subs": "",
+    "badge": ""
+   }
+  ],
+  "Chicago Bulls": [
+   {
+    "id": "UCvZi1jVVZ2yq0k5kkjzmuGw",
+    "title": "Chicago Bulls",
+    "handle": "@ChicagoBulls",
+    "subs": "381K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCnem_RWeVxgJJeCkG7alL0g",
+    "title": "CHICAGO BULLS HQ",
+    "handle": "@newschicagobullsHQ",
+    "subs": "9 subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UC9Ss4LiRz6lc2Q9CR03uBUA",
+    "title": "Chicago Bulls Central",
+    "handle": "@ChiBullsCentral",
+    "subs": "35.5K subscribers",
+    "badge": ""
+   }
+  ],
+  "Cleveland Cavaliers": [
+   {
+    "id": "UCOdS-I1sYkKWhtTjMUWP_TA",
+    "title": "Cleveland Cavaliers",
+    "handle": "@cavs",
+    "subs": "157K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCGq71v5PhzOkkwcpaIdw09g",
+    "title": "Locked On Cavs",
+    "handle": "@LockedOnCavs",
+    "subs": "8.71K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCqtAJBbMzm3zY1n1TAQCvXQ",
+    "title": "Cleveland Cavaliers on cleveland.com",
+    "handle": "@clevelandcavaliersonclevel2123",
+    "subs": "28.9K subscribers",
+    "badge": "verified"
+   }
+  ],
+  "Dallas Mavericks": [
+   {
+    "id": "UC6_uLdHZRKzKIB6Ae_E4DjQ",
+    "title": "Locked On Mavericks",
+    "handle": "@LockedOnMavericks",
+    "subs": "48.9K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCZywaCS_y9YOSSAC9z3dIeg",
+    "title": "Dallas Mavericks",
+    "handle": "@mavericks",
+    "subs": "227K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UC8F4x-CyWviUjQCheqKc_cQ",
+    "title": "Mavericks Today by Chat Sports",
+    "handle": "@MavsTV",
+    "subs": "33.7K subscribers",
+    "badge": ""
+   }
+  ],
+  "Denver Nuggets": [
+   {
+    "id": "UCl8hzdP5wVlhuzNG3WCJa1w",
+    "title": "Denver Nuggets",
+    "handle": "@DenverNuggets",
+    "subs": "208K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCDfVqMBTxstChZ5YVrrXPPQ",
+    "title": "Locked On Nuggets",
+    "handle": "@LockedOnNuggets",
+    "subs": "12.5K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCq59uEjacgESFDxr4AxLNbQ",
+    "title": "Denver Nuggets at Chicago Bulls",
+    "handle": "",
+    "subs": "",
+    "badge": ""
+   }
+  ],
+  "Detroit Pistons": [
+   {
+    "id": "UCtcSBo9EzOtXHxiPhU6RN8A",
+    "title": "Detroit Pistons",
+    "handle": "@PistonsTV",
+    "subs": "103K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCqH6JgHydtydftU935Fe4Fg",
+    "title": "Locked On Pistons",
+    "handle": "@LockedOnPistons",
+    "subs": "14.9K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UC7_t_wGG44mzrYMgyF_R9xw",
+    "title": "Detroit Pistons Content",
+    "handle": "@DETROlTPlSTONS",
+    "subs": "189 subscribers",
+    "badge": ""
+   }
+  ],
+  "Golden State Warriors": [
+   {
+    "id": "UCUi2obAF-jE0gXtGFhzQDrQ",
+    "title": "Warriors Today by Chat Sports",
+    "handle": "@WarriorsTV",
+    "subs": "106K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UC2-mxN1j8U2fevRbJHiTRwA",
+    "title": "Golden State Warriors News Fan",
+    "handle": "@GoldenStateWarriorsNewsFan",
+    "subs": "208 subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCHPJMQokRWscYp-OJJfiJ-w",
+    "title": "News Golden State Warriors Channel",
+    "handle": "@newsgoldenstatewarriors751",
+    "subs": "353 subscribers",
+    "badge": ""
+   }
+  ],
+  "Houston Rockets": [],
+  "Indiana Pacers": [
+   {
+    "id": "UCUQDCnAwU-35cOo8WCzg6zA",
+    "title": "Indiana Pacers",
+    "handle": "@pacers",
+    "subs": "129K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCKaJsU7eEpuYea4CE1Y0nDQ",
+    "title": "Locked On Pacers",
+    "handle": "@LockedOnPacers",
+    "subs": "7.96K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCNgd8pGezOPqza4kkhySBpg",
+    "title": "Indiana Pacers at New York Knicks",
+    "handle": "",
+    "subs": "",
+    "badge": ""
+   }
+  ],
+  "LA Clippers": [
+   {
+    "id": "UCSHqBxMQxs3MY3FI03nePJw",
+    "title": "Locked On Clippers",
+    "handle": "@LockedOnClippers",
+    "subs": "8.56K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCoK6pw3iIVF9WAWnQd3hj-g",
+    "title": "LA Clippers",
+    "handle": "@laclippers",
+    "subs": "228K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCpzSL40WCqS_xnDmRJgl9Mw",
+    "title": "Clippers Talk",
+    "handle": "@ClippersTalk",
+    "subs": "5.85K subscribers",
+    "badge": ""
+   }
+  ],
+  "Los Angeles Lakers": [
+   {
+    "id": "UCXFArKhxvvccjoGZqqDJpbQ",
+    "title": "Los Angeles Lakers™",
+    "handle": "@losangeleslakers5558",
+    "subs": "8 subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCbNWe0snu7U9H2qioNH2nvg",
+    "title": "Lakers Nation",
+    "handle": "@LakersNation",
+    "subs": "535K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCMmMELqjHukM5hyQ2E1PZ8A",
+    "title": "Lakers Collective",
+    "handle": "@LakersCollective",
+    "subs": "23.1K subscribers",
+    "badge": ""
+   }
+  ],
+  "Memphis Grizzlies": [
+   {
+    "id": "UCxpOJSF3SM2jdLh_8P7Y_2g",
+    "title": "Locked On Grizzlies",
+    "handle": "@LockedonGrizzlies",
+    "subs": "6.54K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCCK5EpWKYrAmILfaZThCV-Q",
+    "title": "Memphis Grizzlies",
+    "handle": "@MemphisGrizzlies",
+    "subs": "116K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCtrPM3uIthORv5wUxetDe9w",
+    "title": "Memphis Grizzlies at Minnesota Timberwolves",
+    "handle": "",
+    "subs": "",
+    "badge": ""
+   }
+  ],
+  "Miami Heat": [
+   {
+    "id": "UCeDSZqEPJPOnTnksnlbzEvQ",
+    "title": "Locked On Heat",
+    "handle": "@LockedOnHeat",
+    "subs": "20.5K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCZx9x86Zqu-_1Xs-_2WtFgw",
+    "title": "Heat Report By Chat Sports",
+    "handle": "@heatreport",
+    "subs": "32.6K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCi_KCPXC28s0LP1le0d_jvA",
+    "title": "MIAMI HEAT 365",
+    "handle": "@jcmiamiheat3",
+    "subs": "11.7K subscribers",
+    "badge": ""
+   }
+  ],
+  "Milwaukee Bucks": [
+   {
+    "id": "UCRZDEVva3Z8h_Q0VetTgDUA",
+    "title": "Milwaukee Bucks",
+    "handle": "@bucks",
+    "subs": "456K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCUuy2plwFImXNfYk4Wnlg_Q",
+    "title": "Locked On Bucks",
+    "handle": "@LockedOnBucks",
+    "subs": "12.4K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCD0_Mc4deLMSqPT_E4GkU1Q",
+    "title": "Milwaukee Bucks at Philadelphia 76ers",
+    "handle": "",
+    "subs": "",
+    "badge": ""
+   }
+  ],
+  "Minnesota Timberwolves": [
+   {
+    "id": "UCXWDN5NKVFgnPt25CMh98Cg",
+    "title": "Minnesota Timberwolves",
+    "handle": "@timberwolves",
+    "subs": "185K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UC5qUvidylm-_Km8hAk4q1vg",
+    "title": "Flagrant Howls | Minnesota Timberwolves Podcast",
+    "handle": "@FlagrantHowls",
+    "subs": "12.6K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCtrPM3uIthORv5wUxetDe9w",
+    "title": "Memphis Grizzlies at Minnesota Timberwolves",
+    "handle": "",
+    "subs": "",
+    "badge": ""
+   }
+  ],
+  "New Orleans Pelicans": [
+   {
+    "id": "UCHvG7tf62PwI04ZRfoptRSw",
+    "title": "New Orleans Pelicans",
+    "handle": "@NBAPelicans",
+    "subs": "170K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCYVsDBl8aGNeinWx--BkJ-w",
+    "title": "Locked On Pelicans",
+    "handle": "@LockedOnPelicans",
+    "subs": "13K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UChuNNju7-Ounr3xusdTtX9w",
+    "title": "New Orleans Pelicans at San Antonio Spurs",
+    "handle": "",
+    "subs": "",
+    "badge": ""
+   }
+  ],
+  "New York Knicks": [
+   {
+    "id": "UC0hb8f0OXHEzDrJDUq-YVVw",
+    "title": "New York Knicks",
+    "handle": "@NYKnicks",
+    "subs": "200K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCjuSAS6zindcyhPMu6EzEnw",
+    "title": "Locked On Knicks",
+    "handle": "@LockedOnKnicks",
+    "subs": "12.7K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UC8yCeH8T4bfh2LzS35joBWg",
+    "title": "Your Knicks - Daily New York Knicks News & Updates",
+    "handle": "@YourKnicks",
+    "subs": "1.63K subscribers",
+    "badge": ""
+   }
+  ],
+  "Oklahoma City Thunder": [
+   {
+    "id": "UCpXdQhy6kb5CTD8hKlmOL3w",
+    "title": "Oklahoma City Thunder",
+    "handle": "@okcthunder",
+    "subs": "229K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCjlN5XsmfH8ruXg6mWyPyHA",
+    "title": "Locked On Thunder",
+    "handle": "@LockedOnThunder",
+    "subs": "10.5K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UC7xc62Teta60suyo5zHlVFQ",
+    "title": "Topic: Thunder - an Oklahoma City Thunder Podcast",
+    "handle": "@OKCTopicThunder",
+    "subs": "1.2K subscribers",
+    "badge": ""
+   }
+  ],
+  "Orlando Magic": [
+   {
+    "id": "UCxHFH-yfbhUrsWY4prPx3oQ",
+    "title": "Orlando Magic",
+    "handle": "@OrlandoMagic",
+    "subs": "872K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCfGfaeDbd7YvB3qKs01odDg",
+    "title": "Locked On Magic",
+    "handle": "@LockedOnMagic",
+    "subs": "5.87K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UC1_yDHi591_F_b54Yp8-w_w",
+    "title": "The Sixth Man Show - Orlando Magic Podcast",
+    "handle": "@SixthManShow",
+    "subs": "7.19K subscribers",
+    "badge": ""
+   }
+  ],
+  "Philadelphia 76ers": [],
+  "Phoenix Suns": [
+   {
+    "id": "UCLxlWVVHz2a8SdCfxzVXzQw",
+    "title": "Phoenix Suns",
+    "handle": "@suns",
+    "subs": "160K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCBzL8XS_08NDMTlDwwVWEWA",
+    "title": "Locked On Suns",
+    "handle": "@LockedOnSuns",
+    "subs": "10K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCTMBkcsQj_REvUxSmRpB0fw",
+    "title": "Suns JAM Session Podcast",
+    "handle": "@SunsJAM",
+    "subs": "4.21K subscribers",
+    "badge": ""
+   }
+  ],
+  "Portland Trail Blazers": [
+   {
+    "id": "UCXk66yyzXo7-2M1BMqLhltQ",
+    "title": "Portland Trail Blazers",
+    "handle": "@trailblazers",
+    "subs": "146K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCeE7WdPaNWwA-IZGfHek90Q",
+    "title": "Locked On Blazers",
+    "handle": "@LockedOnBlazers",
+    "subs": "13.7K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCeOaHZET7Ym6tBx2hNSqCOw",
+    "title": "Wake Up RipCity! | Portland Trail Blazers Podcast",
+    "handle": "@wakeupripcity",
+    "subs": "1.17K subscribers",
+    "badge": ""
+   }
+  ],
+  "Sacramento Kings": [
+   {
+    "id": "UCSgFigczGdNMilV1K23JgUQ",
+    "title": "Sacramento Kings",
+    "handle": "@SacramentoKings",
+    "subs": "320K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCer6XxOVaMbmW2HBLpuLkzQ",
+    "title": "Locked On Kings (Sacramento)",
+    "handle": "@LockedOnKings",
+    "subs": "13.1K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCR6FEYbJbPqb1jG-umjNpiA",
+    "title": "Sacramento Kings at Los Angeles Lakers",
+    "handle": "",
+    "subs": "",
+    "badge": ""
+   }
+  ],
+  "San Antonio Spurs": [
+   {
+    "id": "UCEZHE-0CoHqeL1LGFa2EmQw",
+    "title": "San Antonio Spurs",
+    "handle": "@spurs",
+    "subs": "288K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCq-QiExqgmOS4qUNJQaLKcA",
+    "title": "Locked On Spurs",
+    "handle": "@LockedOnSpurs",
+    "subs": "14K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UC-nOvA7BtcrtPknzma5eoPw",
+    "title": "Spurs Digest",
+    "handle": "@SpursDigest",
+    "subs": "16.2K subscribers",
+    "badge": ""
+   }
+  ],
+  "Toronto Raptors": [
+   {
+    "id": "UCYBFE432C2AmNRDGEXE4uVg",
+    "title": "Toronto Raptors",
+    "handle": "@TorontoRaptors",
+    "subs": "183K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UC1Avd3XGqFtPwW-HPmS6Nhw",
+    "title": "Raptors Nation",
+    "handle": "@RaptorsNation",
+    "subs": "34.9K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCnh_Q8aWS8PxQWGlodwlJaw",
+    "title": "Raptors Digest",
+    "handle": "@raptorsdigest",
+    "subs": "45.1K subscribers",
+    "badge": ""
+   }
+  ],
+  "Utah Jazz": [
+   {
+    "id": "UCv9iSdeI9IzWfV8yTDsMYWA",
+    "title": "Utah Jazz",
+    "handle": "@utahjazz",
+    "subs": "263K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCQxdULfeeOoUeT60tEvrDTg",
+    "title": "Locked On Jazz",
+    "handle": "@LockedOnJazz",
+    "subs": "12.2K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UClPkOrLeDeP9uoeY1yRELEw",
+    "title": "Jackpotting Around: A Utah Jazz Podcast",
+    "handle": "@JackpottingAround",
+    "subs": "104 subscribers",
+    "badge": ""
+   }
+  ],
+  "Washington Wizards": [
+   {
+    "id": "UChvzoBPvORuNGtHTMzjUsIQ",
+    "title": "Washington Wizards",
+    "handle": "@WashingtonWizards",
+    "subs": "83.2K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCPfuts4r3XoF0XBZF-emhoQ",
+    "title": "Locked On Wizards",
+    "handle": "@LockedOnWizards",
+    "subs": "8.6K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCGTanyMigApoa_OsrbpG2nA",
+    "title": "The Dirty Bucket",
+    "handle": "@TheDirtyBucket",
+    "subs": "4.53K subscribers",
+    "badge": ""
+   }
+  ]
+ },
+ "wnba": {
+  "Atlanta Dream": [
+   {
+    "id": "UCRNuFQZsMUcmp0o9sVxzaaQ",
+    "title": "AtlantaDream",
+    "handle": "@AtlantaDream",
+    "subs": "26.7K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCIBYfCvW9_ZU8SIWXm673kw",
+    "title": "Atlanta Dream",
+    "handle": "@lngdah_lXLc",
+    "subs": "1 subscriber",
+    "badge": ""
+   },
+   {
+    "id": "UC10WLT6-UV5fbsvKR8zjyNA",
+    "title": "Atlanta Dream🎼",
+    "handle": "@atlantadream220",
+    "subs": "7 subscribers",
+    "badge": ""
+   }
+  ],
+  "Chicago Sky": [
+   {
+    "id": "UClV7t67vIenYud872co7Z2Q",
+    "title": "Chicago Sky",
+    "handle": "@ChicagoSky",
+    "subs": "21.2K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCAxY2oNJAp_V0DWkh3b9VZg",
+    "title": "Chicago Sky Central",
+    "handle": "@chicagoskycentral",
+    "subs": "6.49K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCnOOENzzKQFERam1ekNmchw",
+    "title": "Chicago Sky Sentinel",
+    "handle": "@ChicagoSkySentinel",
+    "subs": "475 subscribers",
+    "badge": ""
+   }
+  ],
+  "Connecticut Sun": [
+   {
+    "id": "UCdv3UUxlSXgkrWU_IGT8cKw",
+    "title": "Connecticut Sun",
+    "handle": "@ConnecticutSun",
+    "subs": "4.26K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCzu46OZUTiH2BXFZnM3nzVg",
+    "title": "The Connecticut Sun",
+    "handle": "@TheConnecticutSun-v2n",
+    "subs": "",
+    "badge": ""
+   },
+   {
+    "id": "UCfqhWI3-9Ko7qCp9dA2pacA",
+    "title": "No Shade: A CT Sun Podcast",
+    "handle": "@NoShadeCTSun",
+    "subs": "45 subscribers",
+    "badge": ""
+   }
+  ],
+  "Dallas Wings": [
+   {
+    "id": "UCp_qKS__cK3lqbS1B189K4w",
+    "title": "Dallas Wings",
+    "handle": "@WNBADallasWings",
+    "subs": "18.6K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UClsozBBjuw_nd09YyDhN6uA",
+    "title": "Dallas Wings Live",
+    "handle": "@DallasWingsLive",
+    "subs": "143 subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCXM7Nk5xFz3ZQl01e97PlrA",
+    "title": "Dallas wings ",
+    "handle": "@Sports-m4c",
+    "subs": "5 subscribers",
+    "badge": ""
+   }
+  ],
+  "Golden State Valkyries": [],
+  "Indiana Fever": [
+   {
+    "id": "UC2FefohmBAtGBvZ8QHiy30A",
+    "title": "Indiana Fever",
+    "handle": "@IndianaFever",
+    "subs": "257K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCV-oJDt3c8sdNhXP1UQ281w",
+    "title": "Scott Agness | Fieldhouse Files",
+    "handle": "@ScottAgness",
+    "subs": "25.4K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCCC5eJZoQUV7H9XWMjyzsPQ",
+    "title": "IndyStarTV: Fever",
+    "handle": "@IndyStarTVFever",
+    "subs": "3.26K subscribers",
+    "badge": ""
+   }
+  ],
+  "Las Vegas Aces": [
+   {
+    "id": "UCHRbuUvu9pVUQT6Fv9DGy_Q",
+    "title": "Las Vegas Aces",
+    "handle": "@LVAces",
+    "subs": "101K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCwPvMdYJS7Mt0oBo5-I_jaA",
+    "title": "Vegas Aces",
+    "handle": "@VegasAces",
+    "subs": "15.9K subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCPY6-5HefsMIOSZk_LXPocg",
+    "title": "Vegas Aces 14REN 26-27",
+    "handle": "@VegasAces14ren",
+    "subs": "225 subscribers",
+    "badge": ""
+   }
+  ],
+  "Los Angeles Sparks": [
+   {
+    "id": "UCxhSLhRmf_3JDuOF4ezqMKQ",
+    "title": "The Official Page of the Los Angeles Sparks",
+    "handle": "@TheLosAngelesSparks",
+    "subs": "13.3K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCd1Qu7kchb6P6MKwaVpcaqA",
+    "title": "Los Angeles Sparks",
+    "handle": "@losangelessparks2711",
+    "subs": "1 subscriber",
+    "badge": ""
+   },
+   {
+    "id": "UCPHayvUkSLdVrLh3WgZam4w",
+    "title": "Los Angeles Sparks",
+    "handle": "@losangelessparks9191",
+    "subs": "",
+    "badge": ""
+   }
+  ],
+  "Minnesota Lynx": [
+   {
+    "id": "UC3rZAG71b0xSrWdn6NCvbkQ",
+    "title": "Minnesota Lynx",
+    "handle": "@MinnesotaLynx",
+    "subs": "21.6K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCfZRpLAfQFBiIo0Lsk-OjSg",
+    "title": "Minnesota Lynx",
+    "handle": "@minnesotalynx5403",
+    "subs": "60 subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCNeS2Bgas7feZ2ln-SsvqSA",
+    "title": "RainmakerNYC",
+    "handle": "@RainmakerNYC",
+    "subs": "234K subscribers",
+    "badge": ""
+   }
+  ],
+  "New York Liberty": [
+   {
+    "id": "UCWSENPwIesalIOfEdwTGZlw",
+    "title": "New York Liberty",
+    "handle": "@NewYorkLiberty",
+    "subs": "22.9K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCmhZweoo3h1k6p4VfdFnnKg",
+    "title": "New York Liberty",
+    "handle": "@newyorklibertygca",
+    "subs": "7 subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCvWfyClPAOlFfzM2P3x71Ow",
+    "title": "New York Liberty",
+    "handle": "@nyliberty",
+    "subs": "31 subscribers",
+    "badge": ""
+   }
+  ],
+  "Phoenix Mercury": [
+   {
+    "id": "UCcjwUjOqddcuhf813plJJPg",
+    "title": "Phoenix Mercury",
+    "handle": "@PhoenixMercuryVideos",
+    "subs": "10.4K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UC8Pi-jrzMCoOXbxc4veuTAw",
+    "title": "Phoenix Mercury",
+    "handle": "@PhoenixMercury24",
+    "subs": "1 subscriber",
+    "badge": ""
+   },
+   {
+    "id": "UCekyA--qu_UHduKc1L1iBpw",
+    "title": "Phoenix Mercury",
+    "handle": "@phoenixmercury2416",
+    "subs": "7 subscribers",
+    "badge": ""
+   }
+  ],
+  "Portland Fire": [
+   {
+    "id": "UChRPulEHWRKS8RC0OcGrEqw",
+    "title": "Portland Fire",
+    "handle": "@ThePortlandFire",
+    "subs": "4.22K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UC3lg-CR4ghK1xoCWqlybLKw",
+    "title": "Portland Fire Fan",
+    "handle": "@portlandfirefan",
+    "subs": "65 subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UC_R04gK0epq95ACeL5VXL_A",
+    "title": "Gresham & Portland OR Fire Buff",
+    "handle": "@GreshamPortlandORFireBuff2009",
+    "subs": "750 subscribers",
+    "badge": ""
+   }
+  ],
+  "Seattle Storm": [
+   {
+    "id": "UC8NTLY0hX2Mb0wdjxGhSITA",
+    "title": "Seattle Storm on Emerald City Spectrum",
+    "handle": "@Storm_EmeraldCitySpectrum",
+    "subs": "1 subscriber",
+    "badge": ""
+   },
+   {
+    "id": "UCv4xLXLA_aElluuaTWXN1jA",
+    "title": "Seattle Storm Official",
+    "handle": "@SeattleStormOfficial",
+    "subs": "9.57K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCvmHW1lIfuuevNShd89OttQ",
+    "title": "Seattle Storm",
+    "handle": "@NRBLSeattleStorm",
+    "subs": "1 subscriber",
+    "badge": ""
+   }
+  ],
+  "Toronto Tempo": [
+   {
+    "id": "UCz0TK83I5Lv69Ou0zxb0EpQ",
+    "title": "Toronto Tempo",
+    "handle": "@TorontoTempo",
+    "subs": "5.21K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCnVP3FHgpUQm3pBZOJSgAoA",
+    "title": "Toronto Tempo",
+    "handle": "@TorontoTempo-j6t",
+    "subs": "",
+    "badge": ""
+   },
+   {
+    "id": "UCw2c1rcTxpNituaTFjgxO5w",
+    "title": "Talking Tempo",
+    "handle": "@TalkingTempo",
+    "subs": "88 subscribers",
+    "badge": ""
+   }
+  ],
+  "Washington Mystics": [
+   {
+    "id": "UCRha9IKwKJc3i4fZdstGsvQ",
+    "title": "Washington Mystics",
+    "handle": "@WashMystics",
+    "subs": "6.81K subscribers",
+    "badge": "verified"
+   },
+   {
+    "id": "UCrQC_MPZYag_T_ROPhuX1Cg",
+    "title": "Washington Mystics Unfiltered",
+    "handle": "@WashingtonMysticsUnfiltered",
+    "subs": "529 subscribers",
+    "badge": ""
+   },
+   {
+    "id": "UCXMEmFWmoscuQfbyyhqFcRQ",
+    "title": "Britt Waters",
+    "handle": "@ItsBrittWaters",
+    "subs": "2.47K subscribers",
+    "badge": ""
+   }
+  ]
+ }
+}
