@@ -1,0 +1,15 @@
+name: probe-v439b
+on: push
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p pv4; cd pv4
+          S=https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball
+          curl -s "$S/teams/41/schedule" -o sched.json
+          for id in $(python3 -c "import json;d=json.load(open('sched.json'));print(' '.join(e['id'] for e in d['events'] if e['competitions'][0]['status']['type']['completed']))"); do curl -s "$S/summary?event=$id" -o "sum-$id.json"; done
+          ls -la
+          cd ..; git config user.name probe; git config user.email probe@x; git add pv4; git commit -qm probe; git push -q origin HEAD:probe-v439b
