@@ -1,0 +1,31 @@
+name: probe-v437
+on: push
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p pv; cd pv
+          W=https://site.web.api.espn.com/apis/common/v3/sports/basketball
+          S=https://site.api.espn.com/apis/site/v2/sports/basketball
+          curl -s "$W/nba/athletes/3945274/stats" -o luka-stats.json
+          curl -s "$W/nba/athletes/3934672/stats" -o brunson-stats.json
+          curl -s "$W/mens-college-basketball/athletes/5041939/stats" -o ncaa-stats.json
+          curl -s "$S/womens-college-basketball/teams?limit=500" -o wteams.json
+          BID=$(python3 -c "import json;d=json.load(open('wteams.json'));print([t['team']['id'] for t in d['sports'][0]['leagues'][0]['teams'] if 'Bryant' in t['team']['displayName']][0])")
+          echo "$BID" > bid.txt
+          curl -s "$S/womens-college-basketball/teams/$BID/roster" -o b-roster.json
+          curl -s "$S/womens-college-basketball/teams/$BID/roster?season=2027" -o b-roster27.json
+          curl -s "$S/womens-college-basketball/teams/$BID/roster?season=2026" -o b-roster26.json
+          curl -s "https://site.web.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams/$BID/roster" -o b-roster-web.json
+          curl -s "https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/seasons/2027/teams/$BID/athletes?limit=50" -o b-core27.json
+          curl -s "https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/seasons/2026/teams/$BID/athletes?limit=50" -o b-core26.json
+          curl -s "$S/mens-college-basketball/rankings" -o mrank.json
+          curl -s "$S/womens-college-basketball/rankings" -o wrank.json
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36'
+          for h in NBA WNBA marchmadness NCAAW BallisLife; do curl -sL -A "$UA" "https://www.youtube.com/@$h" | grep -o '"externalId":"[^"]*"' | head -1 > yt-$h.txt; done
+          for h in NBA WNBA marchmadness NCAAW; do C=$(cut -d'"' -f4 yt-$h.txt); [ -n "$C" ] && curl -s "https://www.youtube.com/feeds/videos.xml?channel_id=$C" -o feed-$h.xml; done
+          ls -la
+          cd ..; git config user.name probe; git config user.email probe@x; git add pv; git commit -qm probe; git push -q origin HEAD:probe-v437
