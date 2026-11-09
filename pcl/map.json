@@ -1,0 +1,320 @@
+{
+ "map": {
+  "nba|Atlanta Hawks": {
+   "id": "UCpfcwELvR1wtcRJ0UxNXHYw",
+   "title": "Atlanta Hawks",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Boston Celtics": {
+   "id": "UCe4NAy5uDRk44tB-c6fYyDg",
+   "title": "Boston Celtics ",
+   "videos": 5,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Brooklyn Nets": {
+   "id": "UCTenKHt0h3VjdMvRWP6Lbvw",
+   "title": "Brooklyn Nets",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Charlotte Hornets": {
+   "id": "UCPhFI5lIFnSggz7HgY9UuuQ",
+   "title": "Charlotte Hornets",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Chicago Bulls": {
+   "id": "UCvZi1jVVZ2yq0k5kkjzmuGw",
+   "title": "Chicago Bulls",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Cleveland Cavaliers": {
+   "id": "UCOdS-I1sYkKWhtTjMUWP_TA",
+   "title": "Cleveland Cavaliers",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Dallas Mavericks": {
+   "id": "UCZywaCS_y9YOSSAC9z3dIeg",
+   "title": "Dallas Mavericks",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Denver Nuggets": {
+   "id": "UCl8hzdP5wVlhuzNG3WCJa1w",
+   "title": "Denver Nuggets",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Detroit Pistons": {
+   "id": "UCtcSBo9EzOtXHxiPhU6RN8A",
+   "title": "Detroit Pistons",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Golden State Warriors": {
+   "id": "UCUi2obAF-jE0gXtGFhzQDrQ",
+   "title": "Warriors Today by Chat Sports",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Houston Rockets": {
+   "id": "UChdTjGHWrl-scbthhYSGB3g",
+   "title": "HoustonRockets",
+   "videos": 1,
+   "shorts": 0,
+   "via": "handle"
+  },
+  "nba|Indiana Pacers": {
+   "id": "UCUQDCnAwU-35cOo8WCzg6zA",
+   "title": "Indiana Pacers",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|LA Clippers": {
+   "id": "UCoK6pw3iIVF9WAWnQd3hj-g",
+   "title": "LA Clippers",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Los Angeles Lakers": {
+   "id": "UCXFArKhxvvccjoGZqqDJpbQ",
+   "title": "Los Angeles Lakers™",
+   "videos": 18,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Memphis Grizzlies": {
+   "id": "UCCK5EpWKYrAmILfaZThCV-Q",
+   "title": "Memphis Grizzlies",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Miami Heat": {
+   "id": "UCi_KCPXC28s0LP1le0d_jvA",
+   "title": "MIAMI HEAT 365",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Milwaukee Bucks": {
+   "id": "UCRZDEVva3Z8h_Q0VetTgDUA",
+   "title": "Milwaukee Bucks",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Minnesota Timberwolves": {
+   "id": "UCXWDN5NKVFgnPt25CMh98Cg",
+   "title": "Minnesota Timberwolves",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|New Orleans Pelicans": {
+   "id": "UCHvG7tf62PwI04ZRfoptRSw",
+   "title": "New Orleans Pelicans",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|New York Knicks": {
+   "id": "UC0hb8f0OXHEzDrJDUq-YVVw",
+   "title": "New York Knicks",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Oklahoma City Thunder": {
+   "id": "UCpXdQhy6kb5CTD8hKlmOL3w",
+   "title": "Oklahoma City Thunder",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Orlando Magic": {
+   "id": "UCxHFH-yfbhUrsWY4prPx3oQ",
+   "title": "Orlando Magic",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Philadelphia 76ers": {
+   "id": "UC5qJUyng_ezl0TVjVJFqtfQ",
+   "title": "Philadelphia 76ers",
+   "videos": 30,
+   "shorts": 0,
+   "via": "handle"
+  },
+  "nba|Phoenix Suns": {
+   "id": "UCLxlWVVHz2a8SdCfxzVXzQw",
+   "title": "Phoenix Suns",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Portland Trail Blazers": {
+   "id": "UCXk66yyzXo7-2M1BMqLhltQ",
+   "title": "Portland Trail Blazers",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Sacramento Kings": {
+   "id": "UCSgFigczGdNMilV1K23JgUQ",
+   "title": "Sacramento Kings",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|San Antonio Spurs": {
+   "id": "UCEZHE-0CoHqeL1LGFa2EmQw",
+   "title": "San Antonio Spurs",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Toronto Raptors": {
+   "id": "UCYBFE432C2AmNRDGEXE4uVg",
+   "title": "Toronto Raptors",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Utah Jazz": {
+   "id": "UCv9iSdeI9IzWfV8yTDsMYWA",
+   "title": "Utah Jazz",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "nba|Washington Wizards": {
+   "id": "UChvzoBPvORuNGtHTMzjUsIQ",
+   "title": "Washington Wizards",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "wnba|Atlanta Dream": {
+   "id": "UCRNuFQZsMUcmp0o9sVxzaaQ",
+   "title": "AtlantaDream",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "wnba|Chicago Sky": {
+   "id": "UClV7t67vIenYud872co7Z2Q",
+   "title": "Chicago Sky",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "wnba|Connecticut Sun": {
+   "id": "UCdv3UUxlSXgkrWU_IGT8cKw",
+   "title": "Connecticut Sun",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "wnba|Dallas Wings": {
+   "id": "UCp_qKS__cK3lqbS1B189K4w",
+   "title": "Dallas Wings",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "wnba|Golden State Valkyries": {
+   "id": "UCSJRoRdznOH4VgmNhxof7Dw",
+   "title": "Valkyries",
+   "videos": 0,
+   "shorts": 0,
+   "via": "handle"
+  },
+  "wnba|Indiana Fever": {
+   "id": "UC2FefohmBAtGBvZ8QHiy30A",
+   "title": "Indiana Fever",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "wnba|Las Vegas Aces": {
+   "id": "UCHRbuUvu9pVUQT6Fv9DGy_Q",
+   "title": "Las Vegas Aces",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "wnba|Los Angeles Sparks": {
+   "id": "UCxhSLhRmf_3JDuOF4ezqMKQ",
+   "title": "The Official Page of the Los Angeles Sparks",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "wnba|Minnesota Lynx": {
+   "id": "UC3rZAG71b0xSrWdn6NCvbkQ",
+   "title": "Minnesota Lynx",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "wnba|New York Liberty": {
+   "id": "UCWSENPwIesalIOfEdwTGZlw",
+   "title": "New York Liberty",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "wnba|Phoenix Mercury": {
+   "id": "UCcjwUjOqddcuhf813plJJPg",
+   "title": "Phoenix Mercury",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "wnba|Portland Fire": {
+   "id": "UChRPulEHWRKS8RC0OcGrEqw",
+   "title": "Portland Fire",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "wnba|Seattle Storm": {
+   "id": "UC8NTLY0hX2Mb0wdjxGhSITA",
+   "title": "Seattle Storm on Emerald City Spectrum",
+   "videos": 0,
+   "shorts": 1,
+   "via": "search"
+  },
+  "wnba|Toronto Tempo": {
+   "id": "UCz0TK83I5Lv69Ou0zxb0EpQ",
+   "title": "Toronto Tempo",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  },
+  "wnba|Washington Mystics": {
+   "id": "UCRha9IKwKJc3i4fZdstGsvQ",
+   "title": "Washington Mystics",
+   "videos": 30,
+   "shorts": 0,
+   "via": "search"
+  }
+ },
+ "probs": []
+}
