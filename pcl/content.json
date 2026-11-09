@@ -1,0 +1,162 @@
+{
+ "nbaNews": {
+  "status": 200,
+  "articles": 50,
+  "withVideo": 0,
+  "types": [
+   "Media",
+   "Recap",
+   "HeadlineNews",
+   "Story",
+   "Preview"
+  ],
+  "sample": []
+ },
+ "wnbaNews": {
+  "status": 200,
+  "articles": 30,
+  "withVideo": 0,
+  "types": [
+   "HeadlineNews",
+   "Story",
+   "Recap",
+   "Media"
+  ],
+  "sample": []
+ },
+ "ncaamNews": {
+  "status": 200,
+  "articles": 30,
+  "withVideo": 0,
+  "types": [
+   "Recap",
+   "Media"
+  ],
+  "sample": []
+ },
+ "teamNews13": {
+  "status": 200,
+  "articles": 50,
+  "withVideo": 0,
+  "types": [
+   "Story",
+   "Recap",
+   "Media",
+   "HeadlineNews",
+   "Preview"
+  ],
+  "sample": []
+ },
+ "athlete": {
+  "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news?athlete=3934672&limit=20": {
+   "status": 200,
+   "keys": [
+    "header",
+    "link",
+    "articles"
+   ],
+   "articles": 20,
+   "withVideo": 0,
+   "videos": 0,
+   "sample": [
+    "Boston Celtics vs. Milwaukee Bucks: Game Highlights",
+    "Paul George and Jayson Tatum lead Celtics to a 117-97 victor"
+   ]
+  },
+  "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/athletes/3934672/news?limit=20": {
+   "status": 200,
+   "keys": [
+    "header",
+    "articles"
+   ],
+   "articles": 0,
+   "withVideo": 0,
+   "videos": 0,
+   "sample": []
+  },
+  "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3934672/overview": {
+   "status": 200,
+   "keys": [
+    "statistics",
+    "news",
+    "nextGame",
+    "gameLog",
+    "rotowire",
+    "awards",
+    "fantasy"
+   ],
+   "articles": 0,
+   "withVideo": 0,
+   "videos": 0,
+   "sample": []
+  },
+  "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3934672/news?limit=20": {
+   "status": 404,
+   "keys": [
+    "code",
+    "message"
+   ],
+   "articles": 0,
+   "withVideo": 0,
+   "videos": 0,
+   "sample": []
+  },
+  "https://site.web.api.espn.com/apis/v2/sports/basketball/nba/athletes/3934672/videos?limit=10": {
+   "status": 404,
+   "keys": [
+    "code"
+   ],
+   "articles": 0,
+   "withVideo": 0,
+   "videos": 0,
+   "sample": []
+  },
+  "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/videos?limit=10": {
+   "status": 400,
+   "keys": [
+    "code",
+    "message"
+   ],
+   "articles": 0,
+   "withVideo": 0,
+   "videos": 0,
+   "sample": []
+  },
+  "https://site.web.api.espn.com/apis/v2/sports/basketball/nba/videos?limit=10": {
+   "status": 404,
+   "keys": [
+    "code"
+   ],
+   "articles": 0,
+   "withVideo": 0,
+   "videos": 0,
+   "sample": []
+  }
+ },
+ "nba": {
+  "https://content-api-prod.nba.com/public/1/endeavor/video-list?page=1&count=8&types=video": {
+   "status": 404,
+   "keys": [
+    "error"
+   ],
+   "n": 0,
+   "sample": []
+  },
+  "https://content-api-prod.nba.com/public/1/endeavor/video-list?page=1&count=8&types=video&tags=team%2Flakers": {
+   "status": 404,
+   "keys": [
+    "error"
+   ],
+   "n": 0,
+   "sample": []
+  },
+  "https://content-api-prod.nba.com/public/1/endeavor/video-list?page=1&count=8&types=video&tags=player%2Fluka-doncic": {
+   "status": 404,
+   "keys": [
+    "error"
+   ],
+   "n": 0,
+   "sample": []
+  }
+ }
+}
