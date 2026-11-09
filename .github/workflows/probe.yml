@@ -1,0 +1,20 @@
+name: probe-v437b
+on: push
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p pv2; cd pv2
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36'
+          curl -sL -A "$UA" -o rss-pl.xml "https://www.youtube.com/feeds/videos.xml?playlist_id=UUWJ2lWNubArHWmf3FIHbfcQ"
+          curl -sL -A "$UA" -o rss-ch.xml "https://www.youtube.com/feeds/videos.xml?channel_id=UCWJ2lWNubArHWmf3FIHbfcQ"
+          curl -sL -A "$UA" -H 'Accept-Language: en-US' -o nba-videos.html "https://www.youtube.com/@NBA/videos"
+          curl -sL -A "$UA" -H 'Accept-Language: en-US' -o nba-search.html "https://www.youtube.com/@NBA/search?query=top%2010%20plays"
+          curl -sL -A "$UA" -H 'Accept-Language: en-US' -o wnba-videos.html "https://www.youtube.com/@WNBA/videos"
+          curl -sL -A "$UA" -H 'Accept-Language: en-US' -o mm-videos.html "https://www.youtube.com/@marchmadness/videos"
+          curl -s -o oembed.json "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ&format=json"
+          ls -la
+          cd ..; git config user.name probe; git config user.email probe@x; git add pv2; git commit -qm probe; git push -q origin HEAD:probe-v437b
