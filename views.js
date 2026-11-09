@@ -820,135 +820,170 @@
     const head = `Top ${it.top || 10} plays of the night`;
     return `<div class="feed hfl"><div class="fp fnw fhero fplay"><span class="fav"><span class="fic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.8c0-1 1.1-1.6 2-1.1l8.9 5.9c.8.5.8 1.7 0 2.2L10 18.7c-.9.5-2-.1-2-1.1z"/></svg></span></span><span class="fb"><span class="fh"><b>${esc(L.label)}</b><span>Plays</span><time>${esc(dayLabel(it.date, { weekday: 'short' }))}</time></span><span class="ft"><span class="fhl">${esc(head)}</span></span><button class="fyt" data-act="yt" data-yt="${esc(it.id)}" aria-label="Play ${esc(head)}"><img src="https://i.ytimg.com/vi/${esc(it.id)}/hqdefault.jpg" alt="" loading="lazy" onerror="this.remove()"><i class="play"></i>${it.len ? `<em>${esc(it.len)}</em>` : ''}</button><span class="fd">${esc(day)} · from the ${esc(L.label)}'s channel</span></span></div></div>`;
   };
-  /* v441: team stories. Each followed team that played in the last day and a half gets a bubble at the top of
-     Following; tapping it plays that team's night full screen: the final first, then the game's own highlight clips,
-     which the feed carries as plain video files, so they start at once, fill the screen and carry no ads. The ring
-     stays lit until the night has been seen on this phone. */
+  /* v442: stories, like the apps people already live in. Every team AND player you follow gets a bubble while there's
+     something from the last 48 hours: the final, a player's stat line, the game's own clips (every bucket and block the
+     feed cuts), and the video posts the news feeds tag them in (highlights, interviews, show segments; data/stories.json,
+     built by the Stories job). All of it is plain video files: no ads, starts on the tap. Oldest to newest, opening on
+     the first thing not yet seen; the ring stays lit until everything in it has been. */
+  const ST_WIN = 48 * 36e5;
+  let storiesD = null, storiesAt = 0;
+  const storiesLoad = () => { if (Date.now() - storiesAt < 20 * 60000 || !HW.hub) return; storiesAt = Date.now(); HW.hub.file('stories.json').then(d => { if (d && d.items) { storiesD = d; if (homeRepaint && !stEl) homeRepaint(); } }).catch(() => {}); };
   const stSeen = () => store.get('v5:storyseen', {}) || {};
-  const stMark = (key, id) => { const s = stSeen(); s[key] = [...new Set([...(s[key] || []), id])].slice(-40); store.set('v5:storyseen', s); };
-  function storyItems(o, t) {
-    const tid = String(t.id); const now = Date.now();
-    const g = [...(o.lastF || []), ...(o.doneAll || [])].filter((g, i, arr) => arr.findIndex(x => x.id === g.id) === i)
-      .filter(g => String(g.home.id) === tid || String(g.away.id) === tid)
-      .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-    return g && now - new Date(g.date).getTime() < 42 * 36e5 ? [{ t: 'score', id: 'g' + g.id, g }] : [];
+  const stMark = (key, id) => { const s = stSeen(); if ((s[key] || []).includes(id)) return; s[key] = [...(s[key] || []), id].slice(-80); store.set('v5:storyseen', s); };
+  const gEnd = g => Math.min(new Date(g.date).getTime() + 2.4 * 36e5, Date.now() - 6e4);
+  const SUMS = {};
+  const sumGet = (L, g) => { const k = L.key + ':' + g.id; if (SUMS[k]) return SUMS[k]; SUMS[k] = { st: 'load' };
+    jSoft(`${API(L)}/summary?event=${g.id}`).then(d => { SUMS[k] = d ? { st: 'ok', d } : { st: 'fail' }; if (homeRepaint && !stEl) homeRepaint(); }).catch(() => { SUMS[k] = { st: 'fail' }; }); return SUMS[k]; };
+  const vidUrl = v => { const s = ((v || {}).links || {}).source || {}; return (s.mp4 && s.mp4.href) || (s.HD && s.HD.href) || s.href || (s.full && s.full.href) || ''; };
+  const gameVids = (d, g, L) => ((d && d.videos) || []).map((v, i) => { const url = vidUrl(v); if (!url || !v.headline || v.premium) return null;
+    const ts = Date.parse(v.originalPublishDate || v.lastModified || '') || (gEnd(g) + 6e4 + i * 1000);
+    const aths = (v.categories || []).filter(c => c.type === 'athlete').map(c => String(c.athleteId || (c.athlete && c.athlete.id) || ''));
+    return { kind: 'vid', id: 'v' + (v.id || url.slice(-24)), ts, url, title: String(v.headline), dur: +v.duration || 30, thumb: String(v.thumbnail || ''), aths, sub: `${g.away.short} at ${g.home.short}`, L }; }).filter(Boolean);
+  const postItem = (p, L) => ({ kind: 'vid', id: 'v' + p.id, ts: Date.parse(p.ts), url: p.url, title: p.title, dur: p.dur || 30, thumb: p.thumb || '', aths: p.aths || [], sub: '', L });
+  function lineOf(d, pid) {
+    for (const side of ((d && d.boxscore && d.boxscore.players) || [])) { const st = side.statistics && side.statistics[0]; if (!st) continue; const lb = st.labels || st.names || [];
+      const a = (st.athletes || []).find(x => x.athlete && String(x.athlete.id) === pid); if (!a) continue; if (a.didNotPlay || !a.stats || !a.stats.length) return null;
+      const get = l => { const i = lb.indexOf(l); return i >= 0 ? a.stats[i] : ''; }; const tp = String(get('3PT') || '').split('-')[0];
+      return { pts: get('PTS'), reb: get('REB'), ast: get('AST'), tpm: tp, min: get('MIN'), teamId: String((side.team || {}).id || ''), hs: hsUrl(a.athlete) }; }
+    return null;
   }
-  const storySeq = () => { const seq = []; ORDER.forEach(lk => { const s = feedSrc[lk]; const o = s && s.out; if (!o) return; (o.myTeams || []).forEach(t => { const its = storyItems(o, t); if (its.length) seq.push({ o, t, its, key: lk + ':' + t.id }); }); }); return seq; };
+  const nameHit = (title, nm) => { const last = String(nm || '').trim().split(/\s+/).slice(-1)[0] || ''; return last.length >= 4 && new RegExp(`(^|[^\\w])${last.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\w])`, 'i').test(title); };
+  function storySubjects() {
+    storiesLoad(); const now = Date.now(); const subs = []; const posts = (storiesD && storiesD.items) || []; const seen = stSeen();
+    ORDER.forEach(lk => {
+      const s = feedSrc[lk]; const o = s && s.out; if (!o) return; const L = o.L;
+      const games = [...(o.lastF || []), ...(o.doneAll || [])].filter((g, i, arr) => arr.findIndex(x => x.id === g.id) === i).filter(g => isDone(g) && !g.off && now - gEnd(g) < ST_WIN);
+      const lp = posts.filter(p => p.lk === lk && p.url && now - Date.parse(p.ts) < ST_WIN);
+      const finish = (sub, its) => { const m = new Map(); its.forEach(x => { if (!m.has(x.id)) m.set(x.id, x); }); sub.its = [...m.values()].sort((a, b) => a.ts - b.ts); if (!sub.its.length) return;
+        const sn = new Set(seen[sub.key] || []); sub.un = sub.its.some(x => !sn.has(x.id)); sub.last = sub.its[sub.its.length - 1].ts; subs.push(sub); };
+      (o.myTeams || []).forEach(t => { const tid = String(t.id); const its = [];
+        games.filter(g => String(g.home.id) === tid || String(g.away.id) === tid).forEach(g => { its.push({ kind: 'final', id: 'g' + g.id, ts: gEnd(g), g, L, tid }); const S = sumGet(L, g); if (S.st === 'ok') its.push(...gameVids(S.d, g, L)); });
+        lp.filter(p => (p.teams || []).includes(tid)).forEach(p => its.push(postItem(p, L)));
+        finish({ key: `${lk}:t${tid}`, lk, kind: 'team', id: tid, name: t.short, color: t.color, logo: t.logo, abbr: t.abbr }, its); });
+      fplayers.all().filter(p => p.lk === lk).forEach(p => { const pid = String(p.id); const its = []; let color = playerColor(p, L), hs = p.img || '';
+        const k = String(p.team || '').toLowerCase(); const is = t => (p.teamId && String(t.id) === String(p.teamId)) || (k && [t.abbr, t.short, t.name].some(x => String(x || '').toLowerCase() === k));
+        games.filter(g => is(g.home) || is(g.away)).forEach(g => { const S = sumGet(L, g); if (S.st !== 'ok') return; const ln = lineOf(S.d, pid);
+          if (ln) { const us = String(g.home.id) === ln.teamId ? g.home : g.away; color = teamColor(us, L); hs = hs || ln.hs; its.push({ kind: 'line', id: 'l' + g.id, ts: gEnd(g) + 1, g, L, ln }); }
+          gameVids(S.d, g, L).filter(v => v.aths.includes(pid) || nameHit(v.title, p.name)).forEach(v => its.push(v)); });
+        lp.filter(x => (x.aths || []).includes(pid)).forEach(x => its.push(postItem(x, L)));
+        finish({ key: `${lk}:p${pid}`, lk, kind: 'player', id: pid, name: p.short || lastName(p.name || ''), full: p.name || '', color, hs }, its); });
+    });
+    return subs.sort((a, b) => (b.un - a.un) || (b.last - a.last));
+  }
+  const stAvatar = (x, size) => x.kind === 'player' ? headshot(x.hs, x.color, size, x.full || x.name) : x.logo ? imgSized(x.logo, size * 2, size * 2) : `<b>${esc(x.abbr || '')}</b>`;
   function bubbles() {
-    const seq = storySeq(); if (!seq.length) return '';
-    const seen = stSeen();
-    const bb = seq.map(x => { const sn = new Set(seen[x.key] || []); const un = x.its.some(it => !sn.has(it.id));
-      return { un, html: `<button class="sbub${un ? '' : ' seen'}" data-act="story" data-lk="${x.o.lk}" data-id="${esc(String(x.t.id))}" style="--c1:${x.t.color}" aria-label="${esc(x.t.name)} stories"><span class="ring"><span>${x.t.logo ? imgSized(x.t.logo, 60, 60) : `<b>${esc(x.t.abbr || '')}</b>`}</span></span><small>${esc(x.t.short)}</small></button>` }; });
-    return `<div class="sbubs">${[...bb.filter(b => b.un), ...bb.filter(b => !b.un)].map(b => b.html).join('')}</div>`;
+    const subs = storySubjects(); if (!subs.length) return '';
+    return `<div class="sbubs">${subs.map(x => `<button class="sbub${x.un ? '' : ' seen'}${x.kind === 'player' ? ' pl' : ''}" data-act="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span class="ring"><span>${stAvatar(x, x.kind === 'player' ? 52 : 30)}</span></span><small>${esc(x.name)}</small></button>`).join('')}</div>`;
   }
-  /* the viewer itself: one full-screen layer, segments on top, tap right for the next clip, left for back,
-     swipe down (or the phone's back) to leave, swipe across for the next team's night. The clips ride one <video>
-     element, created by the opening tap, so sound is allowed and each one starts the moment it's shown. */
-  let stEl = null, stPop = null, stAdv = 0;
-  function stClose(viaUI) {
-    if (!stEl) return;
-    clearTimeout(stAdv); if (stPop) { removeEventListener('popstate', stPop); stPop = null; }
-    const vd = stEl.querySelector('video'); if (vd) { try { vd.pause(); vd.removeAttribute('src'); vd.load(); } catch (e) {} }
-    stEl.remove(); stEl = null; document.documentElement.classList.remove('stlock');
-    if (viaUI) { try { history.back(); } catch (e) {} }
-    if (homeRepaint) homeRepaint();
-  }
-  function storyOpen(lk0, id0) {
-    if (stEl) stClose(false);
-    const seq = storySeq();
-    let ti = seq.findIndex(x => x.o.lk === lk0 && String(x.t.id) === String(id0)); if (ti < 0) return;
+
+  /* the viewer. One stage over the page; the story grows out of the bubble you tapped and shrinks back into it.
+     Tap right/left to step, hold to pause, drag down to put it away (it follows the finger), swipe across to turn
+     to the next one on a cube. One <video> plays everything, started by the opening tap so sound is on. */
+  let stEl = null, stPop = null;
+  const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const EASE = 'cubic-bezier(.2,.9,.25,1)';
+  function storyOpen(key) {
+    if (stEl) return;
+    const subs = storySubjects(); let si = subs.findIndex(x => x.key === key); if (si < 0) return;
+    const W = innerWidth, H = innerHeight, HYP = Math.ceil(Math.hypot(W, H) / 2) + 4;
     const el = document.createElement('div'); el.className = 'story';
-    el.innerHTML = '<div class="stbg"></div><div class="stv"><div class="stvdw" hidden><video playsinline preload="auto"></video></div><div class="stsc" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stcap"></div></div><button class="stz l" aria-label="Back"></button><button class="stz r" aria-label="Next"></button>';
+    el.innerHTML = `<div class="stdim"></div><div class="stpane"><div class="stbg"></div><div class="stblur"></div><div class="stmedia"><div class="stvdw" hidden><video playsinline preload="auto"></video></div><div class="stcard" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stcap"></div></div></div>`;
     document.body.appendChild(el); stEl = el; document.documentElement.classList.add('stlock');
+    const pane = el.querySelector('.stpane'), dim = el.querySelector('.stdim'), vd = el.querySelector('video');
     try { history.pushState({ story: 1 }, '', location.href); } catch (e) {}
-    stPop = () => stClose(false); addEventListener('popstate', stPop);
-    let ii = 0, wait = 0;
-    const team = () => seq[ti];
-    const vd = el.querySelector('video');
-    // the game's clips come from its own feed the moment the story opens; the score card holds until they land
-    const addClips = x => {
-      if (x.loaded) return; x.loaded = 1;
-      const g = x.its[0] && x.its[0].g; if (!g) { x.fail = 1; return; }
-      jSoft(`${API(x.o.L)}/summary?event=${g.id}`).then(d => {
-        const vids = (((d || {}).videos) || []).map(v => {
-          const s = ((v || {}).links || {}).source || {};
-          const url = (s.mp4 && s.mp4.href) || s.href || (s.HD && s.HD.href) || (s.full && s.full.href) || '';
-          return url && v.headline && !v.premium ? { t: 'vid', id: 'v' + (v.id || url.slice(-20)), url, title: String(v.headline), dur: Math.min(Math.max(+v.duration || 30, 5), 300), thumb: String(v.thumbnail || '') } : null;
-        }).filter(Boolean).slice(0, 8);
-        x.its = [...x.its, ...vids]; if (!vids.length) x.fail = 1;
-        if (stEl && team() === x) paintMeta();
-      }).catch(() => { x.fail = 1; if (stEl && team() === x) paintMeta(); });
-    };
-    const segs = (its, i, dur, man) => `<div class="stsegs">${its.map((x, j) => `<i class="${j < i ? 'done' : j === i ? 'on' : ''}">${j === i ? `<b${man ? ' data-man' : ` style="transition-duration:${dur}ms"`}></b>` : ''}</i>`).join('')}</div>`;
-    // texts and the segment count catch up when the clips arrive mid-card
-    const paintMeta = () => {
-      const x = team(); const it = x && x.its[ii]; if (!it) return;
-      const n = x.its.filter(y => y.t === 'vid').length;
-      const th = el.querySelector('.stsc .then'); if (th) th.textContent = n ? `Then the highlights \u00b7 ${n} clip${n === 1 ? '' : 's'}` : x.fail ? 'That was the night' : 'Pulling up the highlights';
-      const sm = el.querySelector('.sthd .who small'); if (sm) sm.textContent = `${ii + 1} of ${x.its.length}${it.t === 'score' ? ' \u00b7 last night' : ''}`;
-      const cur = el.querySelector('.stsegs');
-      if (cur && cur.children.length !== x.its.length) {
-        cur.outerHTML = segs(x.its, ii, 5500, it.t === 'vid');
-        if (it.t === 'score') requestAnimationFrame(() => requestAnimationFrame(() => { const b = el.querySelector('.stsegs i.on b'); if (b) b.style.width = '100%'; }));
-      }
-    };
-    const show = i => {
-      clearTimeout(stAdv); wait = 0;
-      const x = team(); if (!x) return stClose(true);
-      if (i < 0) { if (ti > 0) { ti--; ii = 0; return show(0); } return stClose(true); }
-      if (i >= x.its.length) { if (ti < seq.length - 1) { ti++; ii = 0; return show(0); } return stClose(true); }
-      ii = i; const it = x.its[i]; stMark(x.key, it.id);
-      const { o, t } = x; const L = o.L;
-      const cap = el.querySelector('.stcap'), bg = el.querySelector('.stbg'), sc = el.querySelector('.stsc'), vw = el.querySelector('.stvdw');
-      if (it.t === 'score') {
-        const g = it.g; const home = String(g.home.id) === String(t.id); const us = home ? g.home : g.away, them = home ? g.away : g.home;
-        const cu = teamColor(us, L), ct = teamColor(them, L); const won = +us.score > +them.score;
-        bg.style.background = `linear-gradient(160deg, ${ct} -30%, #0a0a0c 44%, ${cu} 160%)`;
-        sc.innerHTML = `<span class="fin">Final \u00b7 ${won ? `${esc(us.short)} win` : `${esc(them.short)} win`}</span>
-          <div class="srw">${us.logo ? imgSized(us.logo, 96, 96) : ''}<b class="${won ? '' : 'lo'}">${esc(String(us.score))}</b><b class="${won ? 'lo' : ''}">${esc(String(them.score))}</b>${them.logo ? imgSized(them.logo, 96, 96) : ''}</div>
-          <div class="tms"><span>${esc(us.short)}</span><span>${esc(them.short)}</span></div>
-          <span class="then"></span>`;
-        sc.hidden = false; vw.hidden = true; cap.textContent = ''; cap.hidden = true;
-        try { vd.pause(); } catch (e) {}
-        el.querySelector('.stsegs').outerHTML = segs(x.its, i, 5500, false);
-        requestAnimationFrame(() => requestAnimationFrame(() => { const b = el.querySelector('.stsegs i.on b'); if (b) b.style.width = '100%'; }));
-        stAdv = setTimeout(nxt, 5500);
-        addClips(x);
+    let ii = 0, t0 = 0, paused = false, pausedAt = 0, raf = 0, busy = false, closed = false;
+    const sub = () => subs[si]; const item = () => sub() && sub().its[ii];
+    const bubbleOf = k => { const b = [...document.querySelectorAll('.sbub')].find(x => x.dataset.key === k); if (!b) return null; const r = b.querySelector('.ring').getBoundingClientRect(); return r.bottom > 0 && r.top < H ? r : null; };
+    const shrunk = r => ({ transform: `translate(${r.left + r.width / 2 - W / 2}px,${r.top + r.height / 2 - H / 2}px) scale(${r.width / W})`, clipPath: `circle(${W / 2}px at 50% 50%)`, opacity: .6 });
+    const open = { transform: 'translate(0,0) scale(1)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 1 };
+    // ---- playback clock: cards run 6s, videos run on their own frames
+    const CARD = 6000;
+    const segs = () => { const x = sub(); pane.querySelector('.stsegs').innerHTML = x.its.map((_, j) => `<i class="${j < ii ? 'done' : ''}"><b></b></i>`).join(''); };
+    const bar = f => { const b = pane.querySelectorAll('.stsegs i')[ii]; if (b) b.firstChild.style.transform = `scaleX(${Math.max(0, Math.min(1, f))})`; };
+    const tick = () => { raf = requestAnimationFrame(tick); const it = item(); if (!it || paused || busy) return;
+      if (it.kind === 'vid') { const d = vd.duration || it.dur; if (d) bar(vd.currentTime / d); }
+      else { const f = (performance.now() - t0) / CARD; bar(f); if (f >= 1) step(1); } };
+    const pause = () => { if (paused) return; paused = true; pausedAt = performance.now(); try { vd.pause(); } catch (e) {} el.classList.add('held'); };
+    const resume = () => { if (!paused) return; paused = false; t0 += performance.now() - pausedAt; el.classList.remove('held'); const it = item(); if (it && it.kind === 'vid') { const p = vd.play(); if (p && p.catch) p.catch(() => {}); } };
+    const head = () => { const x = sub(), it = item(); pane.querySelector('.sthd').innerHTML = `<span class="ring"><span>${stAvatar(x, x.kind === 'player' ? 34 : 22)}</span></span><span class="who"><b>${esc(x.full || x.name)}</b><small>${esc(ago(new Date(it.ts).toISOString()).replace(/ ago$/, ''))}</small></span><button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`; };
+    const render = () => {
+      const x = sub(), it = item(); stMark(x.key, it.id); head(); segs(); t0 = performance.now();
+      const card = pane.querySelector('.stcard'), vw = pane.querySelector('.stvdw'), cap = pane.querySelector('.stcap'), bg = pane.querySelector('.stbg'), bl = pane.querySelector('.stblur');
+      if (it.kind === 'vid') {
+        bg.style.background = `linear-gradient(170deg,#050506 30%,${x.color} 190%)`; bl.style.backgroundImage = it.thumb ? `url("${it.thumb}")` : 'none';
+        card.hidden = true; vw.hidden = false;
+        try { vd.poster = it.thumb || ''; if (vd.dataset.u !== it.url) { vd.dataset.u = it.url; vd.src = it.url; } else vd.currentTime = 0; if (!paused) { const p = vd.play(); if (p && p.catch) p.catch(() => {}); } } catch (e) {}
+        cap.innerHTML = `<b>${esc(it.title)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ''}`; cap.hidden = false;
       } else {
-        bg.style.background = `linear-gradient(160deg, #0a0a0c 30%, ${t.color} 170%)`;
-        sc.hidden = true; vw.hidden = false;
-        try { vd.poster = it.thumb || ''; if (!vd.src || !vd.src.endsWith(it.url.slice(-40))) vd.src = it.url; else vd.currentTime = 0; const p = vd.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
-        cap.innerHTML = `<b>${esc(it.title)}</b><small>${esc(t.short)} \u00b7 ${esc(dayLabel(HW.ymdOf(x.its[0].g.date), { weekday: 'long' }))}\u2019s game</small>`; cap.hidden = false;
-        el.querySelector('.stsegs').outerHTML = segs(x.its, i, 0, true);
-        stAdv = setTimeout(nxt, (it.dur + 12) * 1000);   // a net under the video's own ended event
+        try { vd.pause(); } catch (e) {} vw.hidden = true; bl.style.backgroundImage = 'none'; cap.hidden = true; card.hidden = false;
+        const g = it.g, L = it.L;
+        if (it.kind === 'final') { const home = String(g.home.id) === it.tid; const us = home ? g.home : g.away, them = home ? g.away : g.home; const won = +us.score > +them.score;
+          bg.style.background = `linear-gradient(160deg,${teamColor(them, L)} -30%,#0a0a0c 44%,${teamColor(us, L)} 160%)`;
+          card.innerHTML = `<span class="fin">Final · ${esc(won ? us.short : them.short)} win</span><div class="srw">${us.logo ? imgSized(us.logo, 128, 128) : ''}<b class="${won ? '' : 'lo'}">${esc(String(us.score))}</b><b class="${won ? 'lo' : ''}">${esc(String(them.score))}</b>${them.logo ? imgSized(them.logo, 128, 128) : ''}</div><div class="tms"><span>${esc(us.short)}</span><span>${esc(them.short)}</span></div>`;
+        } else { const ln = it.ln; const us = String(g.home.id) === ln.teamId ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = +us.score > +them.score;
+          bg.style.background = `linear-gradient(165deg,#0a0a0c 35%,${x.color} 150%)`;
+          const chips = [[ln.pts, 'PTS'], [ln.reb, 'REB'], [ln.ast, 'AST'], [+ln.tpm > 0 ? ln.tpm : '', '3PM']].filter(c => c[0] !== '' && c[0] != null).map(c => `<s>${esc(String(c[0]))}<em>${c[1]}</em></s>`).join('');
+          card.innerHTML = `<span class="lnhs">${headshot(x.hs, x.color, 132, x.full || x.name)}</span><b class="lnnm">${esc(x.full || x.name)}</b><span class="lnres"><i class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</i>${esc(String(us.score))}-${esc(String(them.score))} ${us === g.home ? 'vs' : 'at'} ${esc(them.short)}</span><span class="lnch">${chips}</span>`; }
       }
-      el.querySelector('.sthd').innerHTML = `<span class="ring" style="--c1:${t.color}"><span>${t.logo ? imgSized(t.logo, 44, 44) : `<b>${esc(t.abbr || '')}</b>`}</span></span><span class="who"><b>${esc(t.short)}</b><small></small></span><button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
-      paintMeta();
+      const m = pane.querySelector('.stmedia'); if (!RM()) m.animate([{ opacity: .35, transform: 'scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: 180, easing: 'ease-out' });
     };
-    const nxt = () => {
-      if (!stEl) return; const x = team();
-      // the score card waits a touch longer when the clips are still in flight
-      if (x && ii === x.its.length - 1 && x.loaded && !x.fail && !x.its.some(y => y.t === 'vid') && wait < 8) { wait++; stAdv = setTimeout(nxt, 700); return; }
-      show(ii + 1);
-    };
-    vd.addEventListener('timeupdate', () => {
-      const x = team(); const it = x && x.its[ii]; if (!it || it.t !== 'vid') return;
-      const d = vd.duration || it.dur; const b = el.querySelector('.stsegs i.on b[data-man]');
-      if (b && d) b.style.width = Math.min(100, vd.currentTime / d * 100) + '%';
-    });
-    vd.addEventListener('ended', () => nxt());
-    vd.addEventListener('error', () => { const x = team(); if (x && x.its[ii] && x.its[ii].t === 'vid') nxt(); });
-    el.addEventListener('click', e => {
-      if (e.target.closest('[data-stx]')) { stClose(true); return; }
-      const z = e.target.closest('.stz'); if (!z) return;
-      if (z.classList.contains('r')) show(ii + 1); else (ii > 0 ? show(ii - 1) : (ti > 0 ? (ti--, ii = 0, show(0)) : stClose(true)));
-    });
-    let tx = 0, ty = 0;
-    el.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
-    el.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
-      if (dy > 80 && Math.abs(dx) < 60) { stClose(true); return; }
-      if (Math.abs(dx) > 70 && Math.abs(dy) < 60) { if (dx < 0) { if (ti < seq.length - 1) { ti++; ii = 0; show(0); } else stClose(true); } else if (ti > 0) { ti--; ii = 0; show(0); } } }, { passive: true });
-    show(0);
+    const step = d => { const x = sub(); if (!x || busy) return; const n = ii + d;
+      if (n >= x.its.length) { if (si < subs.length - 1) return turn(1); return close(); }
+      if (n < 0) { if (si > 0) return turn(-1); ii = 0; return render(); }
+      ii = n; render(); };
+    // ---- the cube: the page you're leaving keeps its last frame and turns away as the next one turns in
+    const turn = dir => { if (busy) return; const nsi = si + dir; if (nsi < 0 || nsi >= subs.length) return close();
+      busy = true; const ghost = pane.cloneNode(true); ghost.classList.add('ghost');
+      const gv = ghost.querySelector('video'); if (gv) { const c = document.createElement('canvas'); c.width = vd.videoWidth || 1; c.height = vd.videoHeight || 1; try { c.getContext('2d').drawImage(vd, 0, 0); } catch (e) {} c.className = 'stframe'; gv.replaceWith(c); }
+      el.insertBefore(ghost, pane); si = nsi; const sn = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sn.has(y.id))); render();
+      if (RM()) { ghost.remove(); busy = false; return; }
+      const z = `${-W / 2}px`; ghost.style.transformOrigin = pane.style.transformOrigin = `50% 50% ${z}`;
+      const o = { duration: 440, easing: 'cubic-bezier(.3,.75,.3,1)' };
+      ghost.animate([{ transform: 'rotateY(0deg)', filter: 'brightness(1)' }, { transform: `rotateY(${-90 * dir}deg)`, filter: 'brightness(.45)' }], o);
+      pane.animate([{ transform: `rotateY(${90 * dir}deg)`, filter: 'brightness(.45)' }, { transform: 'rotateY(0deg)', filter: 'brightness(1)' }], o).finished.then(() => { ghost.remove(); pane.style.transformOrigin = ''; busy = false; t0 = performance.now(); }); };
+    // ---- close: back into the bubble it came from (or a soft drop when the bubble is off screen)
+    function close(fromPop, from) {
+      if (closed) return; closed = true; busy = true; cancelAnimationFrame(raf); try { vd.pause(); } catch (e) {}
+      if (stPop) { removeEventListener('popstate', stPop); stPop = null; }
+      if (!fromPop) { try { history.back(); } catch (e) {} }
+      const r = bubbleOf(sub().key); const start = from || open;
+      const end = r ? shrunk(r) : { transform: 'translate(0,60px) scale(.9)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 0 };
+      const fin = () => { try { vd.removeAttribute('src'); vd.load(); } catch (e) {} el.remove(); stEl = null; document.documentElement.classList.remove('stlock'); if (homeRepaint) homeRepaint(); };
+      if (RM()) return fin();
+      dim.animate([{ opacity: getComputedStyle(dim).opacity }, { opacity: 0 }], { duration: 300, easing: EASE, fill: 'forwards' });
+      pane.animate([start, end], { duration: r ? 340 : 240, easing: EASE, fill: 'forwards' }).finished.then(fin, fin);
+    }
+    stPop = () => close(true); addEventListener('popstate', stPop);
+    // ---- gestures
+    let px = 0, py = 0, pt = 0, mode = '', hold = 0, held = false, lastY = 0, lastT = 0, vy = 0;
+    el.addEventListener('pointerdown', e => { if (busy || e.target.closest('[data-stx]')) return; px = e.clientX; py = e.clientY; pt = lastT = performance.now(); lastY = py; mode = ''; held = false; vy = 0;
+      try { el.setPointerCapture(e.pointerId); } catch (er) {} clearTimeout(hold); hold = setTimeout(() => { held = true; pause(); }, 190); });
+    el.addEventListener('pointermove', e => { if (!pt || busy) return; const dx = e.clientX - px, dy = e.clientY - py;
+      if (!mode) { if (dy > 12 && dy > Math.abs(dx)) { mode = 'y'; clearTimeout(hold); pause(); } else if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) { mode = 'x'; clearTimeout(hold); pause(); } }
+      const now = performance.now(); vy = (e.clientY - lastY) / Math.max(1, now - lastT); lastY = e.clientY; lastT = now;
+      if (mode === 'y') { const d = Math.max(0, dy); pane.style.transform = `translate(${dx * .4}px,${d}px) scale(${1 - Math.min(d, 700) / 1700})`; pane.style.borderRadius = `${Math.min(d / 4, 28)}px`; dim.style.opacity = String(Math.max(0, 1 - d / 650)); }
+      if (mode === 'x') { pane.style.transformOrigin = `50% 50% ${-W / 2}px`; pane.style.transform = `rotateY(${Math.max(-35, Math.min(35, dx / W * 70))}deg)`; } });
+    const up = e => { if (!pt) return; clearTimeout(hold); const dx = e.clientX - px, dy = e.clientY - py; const m = mode; pt = 0; mode = '';
+      if (m === 'y') { const d = Math.max(0, dy); const cur = { transform: pane.style.transform, clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 1 };
+        if (d > 110 || vy > .55) { pane.style.borderRadius = ''; return close(false, cur); }
+        pane.animate([{ transform: pane.style.transform }, { transform: 'none' }], { duration: 260, easing: EASE }); dim.animate([{ opacity: dim.style.opacity }, { opacity: 1 }], { duration: 260, easing: EASE });
+        pane.style.transform = ''; pane.style.borderRadius = ''; dim.style.opacity = ''; resume(); return; }
+      if (m === 'x') { const cur = pane.style.transform; pane.style.transform = '';
+        if (Math.abs(dx) > 70) { resume(); return turn(dx < 0 ? 1 : -1); }
+        pane.animate([{ transform: cur }, { transform: 'rotateY(0deg)' }], { duration: 240, easing: EASE }).finished.then(() => { pane.style.transformOrigin = ''; }); resume(); return; }
+      if (held) { held = false; resume(); return; }
+      if (e.target.closest('[data-stx]')) return;
+      resume(); step(e.clientX < W * .3 ? -1 : 1); };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', e => { pt = 0; mode = ''; pane.style.transform = ''; dim.style.opacity = ''; resume(); });
+    el.addEventListener('click', e => { if (e.target.closest('[data-stx]')) { e.preventDefault(); close(); } });
+    vd.addEventListener('ended', () => { if (!busy && !paused) step(1); });
+    vd.addEventListener('error', () => { const it = item(); if (it && it.kind === 'vid' && !busy) step(1); });
+    // ---- in: grow out of the bubble
+    const sn = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sn.has(y.id)));
+    const r0 = bubbleOf(key); render(); raf = requestAnimationFrame(tick);
+    el.__st = { get busy() { return busy; }, get ii() { return ii; }, get paused() { return paused; }, get si() { return si; }, get names() { return subs.map(x => x.name); } };   // read by the test harness
+    if (!RM()) { busy = true; dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: EASE });
+      pane.animate([r0 ? shrunk(r0) : { transform: 'translate(0,40px) scale(.94)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 0 }, open], { duration: 360, easing: EASE }).finished.then(() => { busy = false; t0 = performance.now(); }); }
   }
   const homeShown = {};   // v425: how far down each Home tab has scrolled into the river, so a return lands where it was
   async function home(tab) {

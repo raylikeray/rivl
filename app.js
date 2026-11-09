@@ -585,7 +585,7 @@
     if (a === 'yt') { e.preventDefault(); const id = String(act.dataset.yt || '').replace(/[^\w-]/g, ''); if (!id) return;   // v437: the video plays in place, YouTube's own player
       const f = document.createElement('iframe'); f.className = 'fytp'; f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&rel=0&modestbranding=1`; f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen'; f.allowFullscreen = true; f.title = act.getAttribute('aria-label') || 'Video';
       act.replaceWith(f); return; }
-    if (a === 'story') { e.preventDefault(); if (V.storyOpen) V.storyOpen(act.dataset.lk, act.dataset.id); return; }   // v440: a team's night, full screen
+    if (a === 'story') { e.preventDefault(); if (V.storyOpen) V.storyOpen(act.dataset.key); return; }   // v442: a team's or player's story, full screen
     if (a === 'pcarm') { e.preventDefault(); const m = act.dataset.m === 'tot' ? 'tot' : 'avg'; store.set('v5:pcarm', m); const w = act.closest('.pcarsec') && act.closest('.pcarsec').nextElementSibling; if (w && w.classList.contains('pcarw')) w.dataset.m = m; act.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === act)); return; }
     if (a === 'stab') { e.preventDefault(); store.set('v5:stab:' + (current ? current.lk : 'nba'), act.dataset.tab); render(); }
     if (a === 'play') { e.preventDefault(); openSheet(act.dataset.vid); }
