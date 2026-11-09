@@ -418,6 +418,21 @@
     // roster, by scoring when we have it
     const ath = (roster && roster.athletes || []).flatMap(a => a.items ? a.items : [a]);
     const ppg = {}; if (lp) lp.rows.forEach(p => { if (p.teamId === String(id)) ppg[p.id] = p; });
+    /* v439: the league-wide list only reaches a country's top few hundred scorers, so most college players were missing
+       their number. Anyone on the roster it misses gets an average from the team's own box scores this season: every
+       finished game lists each player's points, and a game they sat out doesn't count against them. */
+    const boxFirst = /^ncaa/.test(L.key);   // for college the box scores are also fresher: the national list runs a game behind
+    if (ath.length && (boxFirst || ath.some(a => !ppg[a.id]))) {
+      const done = evs.filter(g => isDone(g) && !g.off && (!g.seasonType || g.seasonType !== 1)).slice(-40);
+      const tot = {};
+      for (let k = 0; k < done.length; k += 6) await Promise.all(done.slice(k, k + 6).map(async g => {
+        const d = await jSoft(`${API(L)}/summary?event=${encodeURIComponent(g.id)}`, 86400000); const box = d && d.boxscore && d.boxscore.players; if (!box) return;
+        const mine = box.find(b => b.team && String(b.team.id) === String(id)); if (!mine) return;
+        (mine.statistics || []).forEach(sg => { const lab = sg.labels || sg.names || []; const pi = lab.indexOf('PTS'); if (pi < 0) return; const mi = lab.indexOf('MIN');
+          (sg.athletes || []).forEach(x => { if (!x.athlete || x.didNotPlay || !x.stats || !x.stats.length || (mi >= 0 && !parseFloat(x.stats[mi]))) return; const v = parseFloat(x.stats[pi]); if (!Number.isFinite(v)) return; const t = tot[x.athlete.id] || (tot[x.athlete.id] = { p: 0, n: 0 }); t.p += v; t.n++; }); });
+      }));
+      ath.forEach(a => { const t = tot[a.id]; if ((boxFirst || !ppg[a.id]) && t && t.n) ppg[a.id] = { ...(ppg[a.id] || {}), id: a.id, pts: t.p / t.n, gp: t.n, box: true }; });
+    }
     const sorted = ath.slice().sort((a, b) => ((ppg[b.id] || {}).pts || 0) - ((ppg[a.id] || {}).pts || 0) || (a.displayName || '').localeCompare(b.displayName || ''));
     const posWord = p => ({ G: 'Guard', F: 'Forward', C: 'Center', 'G-F': 'Guard/forward', 'F-G': 'Forward/guard', 'F-C': 'Forward/center', 'C-F': 'Center/forward', PG: 'Point guard', SG: 'Shooting guard', SF: 'Small forward', PF: 'Power forward' }[p] || p || '');
     const rRow = (a, extra) => { const p = ppg[a.id]; const injd = a.injuries && a.injuries[0]; return `<a class="row${extra ? ' more' : ''}" href="${href.player(lk, a.id)}"${extra ? ' hidden data-more="roster"' : ''}>${headshot(hsUrl(a), color, 46, a.displayName)}<span class="t"><b>${esc(a.displayName)}</b><span>${esc([posWord(a.position && a.position.abbreviation), a.jersey ? `No. ${a.jersey}` : ''].filter(Boolean).join(', '))}${injd ? `<span class="tag ${/out/i.test(injd.status) ? 'out' : 'q'}">${esc(V._.tagWord(injd.status))}</span>` : ''}</span></span>${p ? `<span class="r"><b>${p.pts.toFixed(1)}</b><span>ppg</span></span>` : chev}</a>`; };
