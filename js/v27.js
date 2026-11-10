@@ -115,9 +115,9 @@
     return `<div class="sl27 pn27" data-k="${esc(s.k)}">${shade}<div class="slb27"><span class="kk27">${esc(s.kk)}</span><h2>${esc(s.title)}</h2><div class="ac27"><a class="wb27" href="${s.to}">${esc(s.cta)}</a></div></div></div>`;
   }
   function stageHtml(slides, hasStories) {
-    const likes = X.stLikes(), saved = X.stSaved(); const name = String(store.get('v5:name', '') || '').trim();
+    const likes = X.stLikes(), saved = X.stSaved();
     return `<div class="trk27">${slides.map(s => slideHtml(s, likes, saved)).join('')}</div>
-<div class="top27"><div class="hi27"><div><small>${esc(dateLine())}</small><b>${esc(greet())}</b></div><a class="me27" href="#settings" aria-label="Your page">${name ? `<b>${esc(name[0].toUpperCase())}</b>` : I.me}</a></div>
+<div class="top27"><div class="hi27"><div><small>${esc(dateLine())}</small><b>${esc(greet())}</b></div></div>
 <div class="sr27">${I.mark}<a class="sf27" href="#search" role="search" aria-label="Search">${I.search}<span>Search teams, players, anything</span></a></div>
 ${slides.length > 1 ? `<div class="pg27" aria-hidden="true">${slides.map(() => '<span><i></i></span>').join('')}</div>` : ''}</div>`;
   }
@@ -282,6 +282,8 @@ ${slides.length > 1 ? `<div class="pg27" aria-hidden="true">${slides.map(() => '
         if (el) el.replaceWith(neu); else { const after = ORD.slice(n + 1).map(x => h.querySelector(`:scope > [data-s="${x}"]`)).find(Boolean); h.insertBefore(neu, after || null); }
         if (k === 'stage') stageInit(neu, keep); });
       liveSync();
+      /* the clips that can be opened straight from Home have their levels read ahead, so a tap starts sharp */
+      X.warm([...slides.filter(s => s.t === 'play').map(s => s.it), ...subs.filter(x => x.key === 'all:feed' || x.kind === 'league').flatMap(x => x.its.slice(0, 8))]);
     };
     let raf = 0; const sched = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; paint(); }); };
     cur = { alive, paint: sched, outs: () => outs, subs: () => subs };

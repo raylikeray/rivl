@@ -100,9 +100,6 @@ html.rv27[data-page="home"] #hdr,html.rv27[data-page="home"] #lbhome,html.rv27[d
 .h27 .hi27>div{min-width:0}
 .h27 .hi27 small{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.84)}
 .h27 .hi27>div>b{display:block;margin-top:3px;font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.h27 .me27{flex:none;width:40px;height:40px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 2px rgba(255,255,255,.9);background:linear-gradient(160deg,#7b828c,#34383e);display:grid;place-items:center;color:#fff}
-.h27 .me27 svg{width:100%;height:100%;fill:rgba(255,255,255,.92);display:block}
-.h27 .me27 b{font-size:17px;font-weight:700}
 .h27 .sr27{display:flex;align-items:center;gap:10px}
 .h27 .mk27{width:34px;height:34px;flex:none;display:block}
 .h27 .sf27{flex:1;min-width:0;height:44px;border-radius:999px;background:rgba(255,255,255,.16);-webkit-backdrop-filter:blur(20px) saturate(1.5);backdrop-filter:blur(20px) saturate(1.5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);display:flex;align-items:center;gap:8px;padding:0 14px;box-sizing:border-box;font-size:15px;color:rgba(255,255,255,.84)}

@@ -1078,10 +1078,10 @@
     const play = () => { const p = vd.play(); if (p && p.catch) p.catch(e => { if (e && e.name === 'NotAllowedError' && !vd.muted) { quiet = true; vd.muted = true; const q = vd.play(); if (q && q.catch) q.catch(() => {}); } }); };
     // what plays after this one: the next clip in this story, else the first unseen thing in the next ring
     const upNext = () => { const x = sub(); if (!x) return null; const n = x.its.slice(ii + 1).find(y => y.kind === 'vid'); if (n) return n; const nx = subs[si + 1]; if (!nx) return null; const sn = new Set(stSeen()[nx.key] || []); const f = nx.its.find(y => !sn.has(y.id)) || nx.its[0]; return f && f.kind === 'vid' ? f : null; };
-    const load = it => { const src = srcOf(it); if (closed || sb.dataset.u === src || vd.dataset.u === src) return; sbIt = it; sb.muted = true; sb.dataset.u = src; sb.src = src; try { sb.load(); } catch (e) {}
+    const load = it => { const src = srcOf(it); if (closed || sb.dataset.u === src || vd.dataset.u === src) return; sbIt = it; sb.muted = true; sb.dataset.u = src; sb.poster = it.thumb || ''; sb.src = src; try { sb.load(); } catch (e) {}
       // a short silent start makes phones actually fetch it; started inside the opening touch it also clears this player for sound later
       const me = sb; const p = me.play(); if (p && p.then) p.then(() => { if (me !== vd) { me.pause(); if (me.currentTime > .05) me.currentTime = 0; } }, () => {}); };
-    const prep = gesture => { const it = upNext(); if (!it) return; if (!upright(it) || typeof V9.get(it.v9) === 'string' || gesture) { load(it); if (upright(it)) v9Pick(it.v9); return; }
+    const prep = gesture => { const it = upNext(); if (!it) return; if (!upright(it) || typeof V9.get(it.v9) === 'string' || gesture) { load(it); if (upright(it) && typeof V9.get(it.v9) !== 'string') v9Pick(it.v9).then(u => { if (!closed && sbIt === it && sb !== vd && sb.dataset.u !== u && !sb.classList.contains('on')) load(it); }); return; }   // v464: loaded in a hurry from the list of levels, it is loaded again on the sharpest one as soon as that is known
       v9Pick(it.v9).then(() => { if (!closed && upNext() === it) load(it); }); };
     const bubbleOf = k => { const b = [...document.querySelectorAll('.sbub,.sc27')].find(x => x.dataset.key === k); if (!b) return null; const r = (b.querySelector('.ring') || b).getBoundingClientRect(); return r.bottom > 0 && r.top < H ? r : null; };
     const shrunk = r => ({ transform: `translate(${r.left + r.width / 2 - W / 2}px,${r.top + r.height / 2 - H / 2}px) scale(${r.width / W})`, clipPath: `circle(${W / 2}px at 50% 50%)`, opacity: .6 });
@@ -1106,9 +1106,14 @@
         const up = upright(it), src = srcOf(it); vw.classList.toggle('vert', up);
         try {
           if (sb.dataset.u === src && vd.dataset.u !== src) { const old = vd; vd = sb; sb = old; vd.classList.add('on'); sb.classList.remove('on'); try { sb.pause(); } catch (e) {} sbIt = null; if (vd.currentTime > .05) vd.currentTime = 0; shape(); }   // the next clip was waiting: bring it forward
-          else if (vd.dataset.u !== src) { vd.poster = up ? '' : it.thumb || ''; vd.dataset.u = src; vd.src = src; }
+          else if (vd.dataset.u !== src) { vd.poster = it.thumb || ''; vd.dataset.u = src; vd.src = src; }   // v464: the clip's own picture holds the screen until the first frame (it was black)
           else vd.currentTime = 0;
           vd.muted = quiet; if (!paused) play();
+          /* v464: a clip opened before its list of levels was read starts on the list (the browser then begins on the lowest
+             level). The moment the sharpest level is known the clip moves to it, as long as it has barely begun; the
+             player was started by the touch, so the sound stays on. The clips after it have their lists read now. */
+          if (up && typeof V9.get(it.v9) !== 'string') { const v0 = vd; v9Pick(it.v9).then(u => { if (closed || item() !== it || vd !== v0 || vd.dataset.u !== src || !u || u === src || (vd.currentTime || 0) > 1.2) return; vd.dataset.u = u; vd.src = u; vd.muted = quiet; if (!paused) play(); }); }
+          x.its.slice(ii + 1, ii + 5).forEach(y => { if (y.kind === 'vid' && y.v9 && upright(y)) v9Pick(y.v9); });
         } catch (e) {}
         const ln = it.ln, line = ln ? [[ln.pts, 'PTS'], [ln.reb, 'REB'], [ln.ast, 'AST']].filter(c => c[0] !== '' && c[0] != null).map(c => `${esc(String(c[0]))} ${c[1]}`).join(' \u00b7 ') : '';
         const meta = `${it.rank ? `<span class="gw">No. ${it.rank}</span>` : ''}${it.gw ? '<span class="gw">Game winner</span>' : ''}${it.wc ? `<span>${esc(it.wc)}</span>` : ''}${it.tag ? `<span>${esc(it.tag)}</span>` : ''}${line ? `<span>${line}</span>` : ''}`;
@@ -1949,7 +1954,7 @@
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom <= fx.offsetHeight + 1; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };   // v412: the bar takes over the moment the header no longer covers its space
     window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(run); }, { passive: true }); document.addEventListener('rivl:rendered', run); }
   /* v462: what the 2027 preview (js/v27.js) reads from here */
-  const x27 = { feedSource, storySubjects, stSeen, stLike, stSave, stLikes, stSaved, onData(f) { homeRepaint = f; } };
+  const x27 = { feedSource, storySubjects, stSeen, stLike, stSave, stLikes, stSaved, onData(f) { homeRepaint = f; }, warm(its) { if (hlsOk()) (its || []).forEach(it => { if (it && it.kind === 'vid' && it.v9) v9Pick(it.v9); }); } };
   HW.v5 = Object.assign(HW.v5 || {}, { x27, feedSrc, initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard, storyOpen,
     _: { pager, duelPair, panelLogo, nearPanel, duelCard, duelBlock, deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
 })();

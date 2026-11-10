@@ -5464,6 +5464,7 @@ html body .story .stact svg{width:30px;height:30px;fill:rgba(255,255,255,.001);s
 html body .story .stact button.on svg{fill:#fff}
 html body .story .stact button[data-stb="like"].on svg{fill:#ff375f;stroke:#ff375f}
 html body .story .stcap{right:64px}
+html body .story .stcap:before{right:-64px}   /* v464: the shade behind the words runs to the right edge again; it stopped short of the like and save buttons and read as a box */
 html body .story .stburst{position:absolute;left:50%;top:46%;width:132px;height:132px;pointer-events:none;z-index:5;opacity:0}
 html body .story .stburst svg{width:100%;height:100%;fill:#ff375f;filter:drop-shadow(0 10px 30px rgba(0,0,0,.45))}
 html body .story .stcd .stok{width:72px;height:72px;fill:none;stroke:#5ee28a;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;margin-bottom:18px}
