@@ -22,8 +22,8 @@
   /* ---------- colour: a team's colour as a surface white text can sit on ---------- */
   const tone = c => { let b = U.V_deep(c && !/^#?2A2D33$/i.test(c) ? c : '#3a3f4b'); if (U.lumOf(b) < .045) b = '#3a3f4b'; return b; };
   const grad = (c, deg = 160) => { const b = tone(c); return `linear-gradient(${deg}deg,${b},${U.mixTo(b, 0, .55)})`; };
-  const disc = (t, px) => `<span class="cr27${t.logo ? '' : ' noimg'}" style="width:${px}px;height:${px}px;font-size:${Math.max(8, Math.round(px * .26))}px">${t.logo ? U.imgSized(t.logo, 96, 96, '', "this.parentNode.classList.add('noimg');this.remove()") : ''}<b>${esc(String(t.abbr || '').slice(0, 4))}</b></span>`;
-  const face = (src, name, px) => `<span class="fc27" style="width:${px}px;height:${px}px;font-size:${Math.round(px * .36)}px"><b>${esc(U.initials(name))}</b>${src ? U.imgSized(src, 254, 185, '', 'this.remove()') : ''}</span>`;
+  /* a team's logo, on nothing: a thin light edge keeps it readable on its own colour and on a dark page (no white disc) */
+  const disc = (t, px) => `<span class="lg27s${t.logo ? '' : ' noimg'}" style="width:${px}px;height:${px}px;font-size:${Math.max(9, Math.round(px * .3))}px">${t.logo ? U.imgSized(t.logo, 128, 128, '', "this.parentNode.classList.add('noimg');this.remove()") : ''}<b>${esc(String(t.abbr || '').slice(0, 4))}</b></span>`;
   const I = {
     play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>',
     like: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3 4.6 13a4.9 4.9 0 0 1 0-7 5 5 0 0 1 7 0l.4.4.4-.4a5 5 0 0 1 7 0 4.9 4.9 0 0 1 0 7z"/></svg>',
@@ -65,7 +65,7 @@
   });
   const vqRow = () => { const cur = store.get('v5:vq', 'auto');
     return `<div class="gl setlook"><div class="gr ni"><span class="sico" data-k="watch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9.500 4.500 2.500-4.500 2.500z" fill="currentColor"/></svg></span><span class="gm"><b>Clip quality</b></span><div class="segc fit" role="radiogroup" aria-label="Clip quality">${[['auto', 'Auto'], ['always', 'Sharpest'], ['never', 'Saver']].map(([k, l]) => `<button class="${cur === k ? 'on' : ''}" data-act="vq" data-vq="${k}" role="radio" aria-checked="${cur === k}">${l}</button>`).join('')}</div></div></div><p class="vq27">Auto plays clips at full size on Wi-Fi and lighter on cellular. A full-size clip is about 20 MB.</p>`; };
-  V.rv27 = { on, vq: vqRow, miss(el) { const p = el.parentNode; if (p) { p.className = 'ph27 no27'; p.innerHTML = I.me; } },
+  V.rv27 = { on, vq: vqRow, miss(el, cls) { const p = el.parentNode; if (p) { p.className = (cls || 'ph27') + ' no27'; p.innerHTML = I.me; } },
     row: () => `<div class="gl"><button class="gr ni sw" data-act="rv27" role="switch" aria-checked="${on()}"><span class="sico" data-k="look"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.500 13.900 9l5.600 1.900-5.600 1.900L12 18.300l-1.900-5.500L4.500 10.900 10.100 9z"/></svg></span><span class="gm wrap"><b>Try the new design</b><span>A preview of the 2027 look. Home and the bottom bar so far. Switch it off any time.</span></span><span class="switch"></span></button></div>` };
 
   /* Watch opens the clips the app has today: For you when there is one, otherwise the league's biggest plays */
@@ -88,10 +88,43 @@
 
   /* ---------- pieces ---------- */
   const head = (t, link, to, attr = '') => `<div class="sh27"><h2>${esc(t)}</h2>${link ? `<a href="${to}"${attr}>${link}</a>` : ''}</div>`;
-  function storiesHtml(subs) {
-    if (!subs.length) return '';
-    return `<div class="rl27 st27">${subs.map(x => { const inner = x.kind === 'player' ? face(x.hs, x.full || x.name, 44) : x.kind === 'team' ? disc({ logo: x.logo, abbr: x.abbr }, 44) : `<em>${x.kind === 'feed' ? I.play : x.kind === 'saved' ? I.save : esc(x.abbr || '')}</em>`;
-      return `<button class="sc27${x.un ? '' : ' seen'}" data-act="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span style="background:${grad(x.kind === 'league' || x.kind === 'feed' || x.kind === 'saved' ? '#3a3f4b' : x.color, 170)}">${inner}<small>${esc(x.kind === 'player' ? String(x.full || x.name).split(' ')[0] : x.name)}</small></span></button>`; }).join('')}</div>`;
+  /* Story cards. Each is the small version of the player and team card: the photo or the logo fills it, on the team's
+     colour, with the name at the foot.
+     The row never shuffles. The order is the order you follow things in, league by league (teams, players, the league's
+     biggest plays), then For you and Saved; a card you have watched keeps its place and takes a gray edge. Cards stay
+     put while the feed reloads, and the row opens from the last one it showed, so it is the same row every time. */
+  const storyCard = x => { const plain = x.kind === 'league' || x.kind === 'feed' || x.kind === 'saved';
+    const art = x.kind === 'player' ? (x.hs ? `<span class="sp27">${U.imgSized(x.hs, 350, 254, 'loading="eager"', "HW.v5.rv27.miss(this,'sp27')")}</span>` : `<span class="sp27 no27">${I.me}</span>`)
+      : x.kind === 'team' ? `<span class="sg27">${x.logo ? U.imgSized(x.logo, 160, 160, 'loading="eager"', "this.outerHTML='<b>" + esc(String(x.abbr || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 4)) + "</b>'") : `<b>${esc(String(x.abbr || '').slice(0, 4))}</b>`}</span>`
+      : `<em>${x.kind === 'feed' ? I.play : x.kind === 'saved' ? I.save : esc(x.abbr || '')}</em>`;
+    return `<button class="sc27" data-s27="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span style="${plain ? '--c:#3a3f4b;--c1:#4b515d;--c2:#15171a' : cardVars(x.color)}">${art}<small>${esc(x.kind === 'player' ? String(x.full || x.name).split(' ')[0] : x.name)}</small></span></button>`; };
+  const SC = 'v5:st27'; const stMem = new Map(); let stSig = '', stAt = 0, stT = 0;
+  const stRank = () => { const F = favs.all(), P = V.fplayers.all(), r = new Map(); let n = 0;
+    ORDER.forEach(lk => { (F[lk] || []).forEach(id => r.set(`${lk}:t${id}`, n++)); P.filter(p => p.lk === lk).forEach(p => r.set(`${lk}:p${p.id}`, n++)); r.set(`${lk}:top`, n++); });
+    r.set('all:feed', n++); r.set('all:saved', n++); return r; };
+  function storyList(fresh, loaded) {
+    if (!stMem.size && !stAt) (store.get(SC, []) || []).forEach(c => { if (c && c.key) stMem.set(c.key, c); });   // the row as it was last time
+    fresh.forEach(x => stMem.set(x.key, x));
+    const rank = stRank(), now = Date.now(), sig = fresh.map(x => x.key).sort().join(',');
+    if (sig !== stSig || !stAt) { stSig = sig; stAt = now; clearTimeout(stT); stT = setTimeout(() => decorate(true), 6500); }
+    [...stMem.keys()].forEach(k => { if (!rank.has(k)) stMem.delete(k); });   // unfollowed: gone at once
+    /* a story that has ended leaves only once every league has loaded and the list has held still for six seconds */
+    if (loaded && now - stAt >= 6000) { const live = new Set(fresh.map(x => x.key)); [...stMem.keys()].forEach(k => { if (!live.has(k)) stMem.delete(k); });
+      store.set(SC, fresh.map(x => ({ key: x.key, kind: x.kind, name: x.name, full: x.full || '', color: x.color || '', logo: x.logo || '', abbr: x.abbr || '', hs: x.hs || '', un: !!x.un }))); }
+    return [...stMem.values()].sort((a, b) => rank.get(a.key) - rank.get(b.key));
+  }
+  function railSync(rail, list) {
+    const have = new Map([...rail.children].map(el => [el.dataset.key, el])); let prev = null;
+    list.forEach(x => { const html = storyCard(x), h = hash(html); let el = have.get(x.key);
+      if (!el || el.dataset.h !== h) { const t = document.createElement('template'); t.innerHTML = html; const neu = t.content.firstElementChild; neu.dataset.h = h; if (el) el.replaceWith(neu); el = neu; }
+      el.classList.toggle('seen', !x.un); have.delete(x.key);
+      const want = prev ? prev.nextSibling : rail.firstChild; if (el !== want) rail.insertBefore(el, want); prev = el; });
+    have.forEach(el => el.remove()); rail.hidden = !list.length;
+  }
+  /* a card can be on screen a moment before its story has loaded (the row opens from last time): the tap waits for it */
+  async function openStory(key) {
+    for (let i = 0; i < 18; i++) { if (X.storySubjects().some(x => x.key === key)) { V.busy(false); V.storyOpen(key); return; } if (i === 1) V.busy(true); await new Promise(r => setTimeout(r, 300)); }
+    V.busy(false); V.toast('That story is still loading. Try again in a moment.');
   }
   function todays() {
     const t = todayCT(); const rank = g => (isLive(g) ? 0 : g.state === 'pre' ? 2 : 4) + (isFav(g) ? 0 : 1);
@@ -178,7 +211,7 @@
     its = its.filter(i => i.kind === 'vid'); if (!sub || its.length < 3) return '';
     return `<div class="irule ir27"><span>${esc(label)}</span><button data-s27="clip" data-key="${esc(sub.key)}" data-id="${esc(its[0].id)}">Watch</button></div><div class="rl27 cv27">${its.map(it => `<button class="cl27" data-s27="clip" data-key="${esc(sub.key)}" data-id="${esc(it.id)}" aria-label="${esc(it.title)}">${it.thumb ? `<img src="${esc(up916(it.thumb))}" data-o="${esc(it.thumb)}" alt="" loading="lazy" onerror="if(this.dataset.o){this.src=this.dataset.o;this.removeAttribute('data-o')}else this.remove()">` : ''}${it.rank ? `<i class="n">No. ${it.rank}</i>` : ''}<b>${esc(it.title)}</b></button>`).join('')}</div>`;
   }
-  const topHtml = subs => `<div class="hi27"><small>${esc(dateLine())}</small><b>${esc(greet())}</b></div><div class="sr27">${I.mark}<a class="sf27" href="#search" role="search" aria-label="Search">${I.search}<span>Search teams, players, anything</span></a></div>${storiesHtml(subs)}`;
+  const topHtml = () => `<div class="hi27"><small>${esc(dateLine())}</small><b>${esc(greet())}</b></div><div class="sr27">${I.mark}<a class="sf27" href="#search" role="search" aria-label="Search">${I.search}<span>Search teams, players, anything</span></a></div>`;
 
   /* ---------- Home ----------
      The feed is painted by the app's own Home (views.js). This lays the new top over it and sets the mixed-in blocks
@@ -194,7 +227,8 @@
       const now = performance.now();
       if (force || !made || now - madeAt > 300) { madeAt = now; const outs = outsNow(); subsNow = outs.length ? X.storySubjects() : []; const P = settle(outs);
         const tops = subsNow.find(x => x.kind === 'league' && x.its.length >= 3), mine = subsNow.find(x => x.key === 'all:feed');
-        made = { top: topHtml(subsNow), list: [
+        const loaded = ORDER.every(lk => { const f = (favs.all()[lk] || []).length || V.fplayers.all().some(p => p.lk === lk); return !f || (V.feedSrc[lk] && V.feedSrc[lk].out); });
+        made = { top: topHtml(), stories: storyList(subsNow, loaded), list: [
           ['plays', 0, tops ? clipsHtml(`Biggest plays · ${(LEAGUES[tops.lk] || {}).short || ''}`, tops, tops.its.slice(0, 10)) : ''],
           ['picks', 3, picksHtml(outs, P)],
           ['clips', 9, mine ? clipsHtml('For you', mine, mine.its.slice(0, 10)) : ''],
@@ -203,7 +237,10 @@
       /* the top: date and greeting, search, stories */
       let top = $main.querySelector(':scope > .t27'); if (!top) { top = document.createElement('div'); top.className = 't27 h27'; }
       if ($main.firstElementChild !== top) $main.insertBefore(top, $main.firstChild);
-      const th = hash(made.top); if (top.dataset.h !== th) { const r0 = top.querySelector('.rl27'); const x = r0 ? r0.scrollLeft : 0; top.dataset.h = th; top.innerHTML = made.top; const r1 = top.querySelector('.rl27'); if (r1 && x) r1.scrollLeft = x; }
+      let hd = top.querySelector(':scope > .hd27'), rail = top.querySelector(':scope > .st27');
+      if (!hd) { top.innerHTML = '<div class="hd27"></div><div class="rl27 st27" hidden></div>'; hd = top.firstChild; rail = top.lastChild; }
+      const th = hash(made.top); if (hd.dataset.h !== th) { hd.dataset.h = th; hd.innerHTML = made.top; }
+      railSync(rail, made.stories);
       /* the blocks mixed into the feed: before the latest posts, then after the third, ninth and fourteenth */
       const hf = $main.querySelector(':scope > .hfeed');
       if (hf) { hf.setAttribute('data-noswipe', '');
@@ -224,7 +261,7 @@
     if (p && on()) { e.preventDefault(); const k = p.dataset.pick27; const i = k.lastIndexOf(':'); if (pick(k.slice(0, i), k.slice(i + 1), outsNow())) decorate(true); return; }
     const b = e.target.closest('[data-s27]'); if (!b || !b.closest('.h27')) return; const a = b.dataset.s27;
     if (a === 'watch') { e.preventDefault(); watch(); return; }
-    if (a === 'story') { e.preventDefault(); V.storyOpen(b.dataset.key); return; }
+    if (a === 'story') { e.preventDefault(); openStory(b.dataset.key); return; }
     if (a === 'clip') { e.preventDefault(); watch(b.dataset.id, b.dataset.key); return; }
   });
 

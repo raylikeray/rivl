@@ -37,14 +37,11 @@ html.rv27[data-page="home"] .hfeed>section[data-sec="bub"],html.rv27[data-page="
 .h27 img{-webkit-user-drag:none;user-select:none}
 
 
-/* a team's logo on a white disc, so it reads on any team colour; a player's photo in a circle */
-.h27 .cr27{position:relative;flex:none;border-radius:50%;background:rgba(255,255,255,.95);display:grid;place-items:center;overflow:hidden;color:#16181c}
-.h27 .cr27 img{width:74%;height:74%;object-fit:contain;display:block}
-.h27 .cr27>b{display:none;font:800 1em/1 var(--f27)!important;letter-spacing:-.02em;opacity:1!important;color:#16181c}
-.h27 .cr27.noimg>b{display:block}
-.h27 .fc27{position:relative;flex:none;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.18);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);display:grid;place-items:center}
-.h27 .fc27>b{font:700 1em/1 var(--f27)}
-.h27 .fc27 img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 12%}
+/* a team's logo, on nothing: a thin light edge keeps it readable on its own colour and on a dark page */
+.h27 .lg27s{position:relative;flex:none;display:grid;place-items:center}
+.h27 .lg27s img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 0 .7px rgba(255,255,255,.95)) drop-shadow(0 0 .7px rgba(255,255,255,.95)) drop-shadow(0 2px 4px rgba(0,0,0,.22))}
+.h27 .lg27s>b{display:none;font:800 1em/1 var(--f27)!important;letter-spacing:-.02em;opacity:1!important}
+.h27 .lg27s.noimg>b{display:block}
 
 /* the top of Home: the date and your name, the search field, the story cards */
 .h27.t27{padding:12px 0 6px}
@@ -64,15 +61,24 @@ html.rv27[data-page="home"] .hfeed>section[data-sec="bub"],html.rv27[data-page="
 .h27 .rl27{display:flex;gap:10px;padding:12px 20px 0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .h27 .rl27::-webkit-scrollbar{display:none}
 
-/* story cards: a bright edge when there is something new, a gray edge once it is watched */
+/* story cards: the small version of the player and team card. A bright edge when there is something new, gray once watched */
 .h27 .rl27.st27{padding:18px 20px 16px}
-.h27 .sc27{flex:none;width:84px;height:112px;border-radius:18px;padding:2px;box-sizing:border-box;background:conic-gradient(from 210deg,#4a9ae6,#8a5cf6 30%,#ff5e7a 55%,#ffb03a 75%,#4a9ae6);color:#fff;box-shadow:0 12px 16px -10px rgba(0,0,0,.5);transition:transform .12s ease}
+.h27 .rl27.st27[hidden]{display:none}
+.h27 .sc27{flex:none;width:96px;height:128px;border-radius:18px;padding:2.5px;box-sizing:border-box;background:conic-gradient(from 210deg,#4a9ae6,#8a5cf6 30%,#ff5e7a 55%,#ffb03a 75%,#4a9ae6);color:#fff;box-shadow:0 12px 16px -10px rgba(0,0,0,.5);transition:transform .12s ease}
 .h27 .sc27:active{transform:scale(.96)}
 .h27 .sc27.seen{background:rgba(142,148,158,.6)}
-.h27 .sc27>span{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;width:100%;height:100%;border-radius:16px;padding:0 4px 9px;box-sizing:border-box;overflow:hidden}
-.h27 .sc27 small{font-size:11px;font-weight:700;line-height:1.2;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.h27 .sc27 em{font-style:normal;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}
-.h27 .sc27 em svg{width:22px;height:22px;fill:#fff}
+.h27 .sc27>span{position:relative;display:block;width:100%;height:100%;border-radius:15.5px;overflow:hidden;background:linear-gradient(180deg,var(--c1),var(--c) 54%,var(--c2))}
+.h27 .sc27>span:after{content:"";position:absolute;left:0;right:0;bottom:0;height:44%;background:linear-gradient(rgba(0,0,0,0),var(--c2) 90%);pointer-events:none}
+.h27 .sc27 small{position:absolute;z-index:1;left:6px;right:6px;bottom:8px;text-align:center;font-size:11.5px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.h27 .sp27{position:absolute;left:50%;top:8px;width:168px;height:122px;margin-left:-84px;-webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,0) 0,#000 14%);mask-image:linear-gradient(180deg,rgba(0,0,0,0) 0,#000 14%)}
+.h27 .sp27 img{width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block}
+.h27 .sp27.no27{top:16px;width:80px;height:80px;margin-left:-40px;opacity:.45;-webkit-mask-image:none;mask-image:none}
+.h27 .sp27 svg{width:100%;height:100%;fill:#fff;display:block}
+.h27 .sg27{position:absolute;left:50%;top:14px;width:64px;height:64px;margin-left:-32px;display:grid;place-items:center}
+.h27 .sg27 img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 0 .8px rgba(255,255,255,.95)) drop-shadow(0 0 .8px rgba(255,255,255,.95)) drop-shadow(0 0 9px rgba(255,255,255,.3)) drop-shadow(0 5px 7px rgba(0,0,0,.28))}
+.h27 .sg27 b{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.h27 .sc27 em{position:absolute;left:0;right:0;top:26px;font-style:normal;text-align:center;font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:44px;height:44px}
+.h27 .sc27 em svg{width:40px;height:40px;fill:#fff;vertical-align:middle}
 
 /* the blocks mixed into the feed take the feed's own small label, with one thing to tap at the right */
 .h27.x27{padding-bottom:18px}
@@ -91,10 +97,9 @@ html.rv27[data-page="home"] .hfeed>section[data-sec="bub"],html.rv27[data-page="
 .h27 .rw27{margin-top:6px}
 .h27 .rr27{display:flex;align-items:center;gap:12px;min-height:58px;margin:0 20px;box-shadow:inset 0 -1px 0 var(--l27);font-size:15px;line-height:1.3}
 .h27 .rr27:last-child{box-shadow:none}
-.h27 .rr27>span:not(.cr27){flex:1;min-width:0}
+.h27 .rr27>span:not(.lg27s){flex:1;min-width:0}
 .h27 .rr27>span b{font-weight:700}
 .h27 .rr27 small{font-size:13px;color:var(--i27c);white-space:nowrap}
-.h27 .rr27 .cr27{box-shadow:inset 0 0 0 1px rgba(10,12,14,.1)}
 
 
 /* your players, your teams: the photo or the logo is the card */
@@ -129,7 +134,7 @@ html.rv27[data-page="home"] .hfeed>section[data-sec="bub"],html.rv27[data-page="
 .h27 .pk27 .ph27 span{color:var(--i27c);white-space:nowrap}
 .h27 .pk27 .op27{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
 .h27 .pk27 .op27 button{height:64px;border-radius:14px;display:flex;align-items:center;gap:10px;padding:0 12px;color:#fff;font-size:15px;font-weight:700;min-width:0;transition:opacity .2s ease,transform .12s ease}
-.h27 .pk27 .op27 button>span:not(.cr27){flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h27 .pk27 .op27 button>span:not(.lg27s){flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .h27 .pk27 .op27 button.dim{opacity:.38}
 .h27 .pk27 .op27 button.on{box-shadow:0 0 0 2px var(--s27),0 0 0 4px var(--i27)}
 .h27 .pk27 .op27 button:active:not(:disabled){transform:scale(.97)}
