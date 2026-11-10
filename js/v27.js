@@ -240,7 +240,13 @@
     if (have && have.dataset.h === h && have === panel.firstElementChild) return;
     const el = have || document.createElement('div'); el.className = 'gc27 h27'; el.dataset.h = h; el.innerHTML = html; if (el !== panel.firstElementChild) panel.insertBefore(el, panel.firstChild); panel.classList.add('gcon27');
   }
-  document.addEventListener('rivl:rendered', () => setTimeout(gameDecorate, 0)); document.addEventListener('rivl:polled', () => setTimeout(gameDecorate, 0));
+  /* v480: once the tab row pins under the game's top bar, the bar's colour runs on behind it, so the score and the tabs read
+     as one header. Before, the pinned row sat on a plain black band with the cards sliding under a hard edge. */
+  let pinRaf = 0;
+  const gamePin = () => { pinRaf = 0; if (root.dataset.page !== 'game') return; const pg = $main.querySelector('#gpage.g2'); if (!pg) return; const tb = pg.querySelector('#gtabs'), bar = pg.querySelector('.g2fx'); if (!tb || !bar) return;
+    const pin = on() && window.scrollY > 4 && tb.getBoundingClientRect().top <= bar.offsetHeight + 1; if (pin) pg.style.setProperty('--tb27h', tb.offsetHeight + 'px'); if (pg.classList.contains('pin27') !== pin) pg.classList.toggle('pin27', pin); };
+  window.addEventListener('scroll', () => { if (!pinRaf && root.dataset.page === 'game') pinRaf = requestAnimationFrame(gamePin); }, { passive: true });
+  document.addEventListener('rivl:rendered', () => setTimeout(() => { gameDecorate(); gamePin(); }, 0)); document.addEventListener('rivl:polled', () => setTimeout(() => { gameDecorate(); gamePin(); }, 0));
   new MutationObserver(() => { if (root.dataset.page === 'game' && on()) gameDecorate(); }).observe($main, { childList: true, subtree: true });
   $main.addEventListener('click', e => { const b = e.target.closest('[data-gclip]'); if (!b) return; e.preventDefault(); const its = X.gameClips(b.dataset.gid); if (!its.length || document.querySelector('.story')) return;
     const subs = [{ key: 'w:game', lk: 'all', kind: 'watch', id: 'w:game', name: 'This game', full: 'This game', color: '#15171a', its, un: true, last: Date.now() }];
