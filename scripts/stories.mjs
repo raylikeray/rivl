@@ -34,7 +34,7 @@ const list = [...posts.values()]; const out = []; let asked = 0;
 for (let i = 0; i < list.length; i += 6) {
   await Promise.all(list.slice(i, i + 6).map(async p => {
     const k = p.lk + ':' + p.id; const prev = known.get(k);
-    if (prev && prev.url) { out.push({ ...prev, ...p, url: prev.url, dur: prev.dur, thumb: p.thumb || prev.thumb }); return; }
+    if (prev && prev.url && prev.k != null) { out.push({ ...prev, ...p, url: prev.url, dur: prev.dur, thumb: p.thumb || prev.thumb }); return; }   // one saved before clip types were kept is asked for again, once
     asked++; const d = await get(`https://content.core.api.espn.com/v1/video/clips/${p.id}`); const v = ((d || {}).videos || [])[0]; if (!v) return;
     const s = ((v.links || {}).source) || {};
     const url = (s.mp4 && s.mp4.href) || (s.HD && s.HD.href) || s.href || (s.full && s.full.href) || '';
