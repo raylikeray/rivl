@@ -1121,7 +1121,10 @@
       else { const f = (performance.now() - t0) / (it.kind === 'line' || (it.kind === 'final' && !it.fl) ? CARD : 8500); bar(f); if (f >= 1) step(1); } };
     const pause = () => { if (paused) return; paused = true; pausedAt = performance.now(); try { vd.pause(); } catch (e) {} el.classList.add('held'); };
     const resume = () => { if (!paused) return; paused = false; t0 += performance.now() - pausedAt; el.classList.remove('held', 'wpz'); const it = item(); if (it && it.kind === 'vid') play(); };
-    const head = () => { const x = sub(), it = item(); pane.querySelector('.sthd').innerHTML = `<span class="ring${x.kind === 'team' && x.logo ? ' tm' : ''}"><span>${stAvatar(x, x.kind === 'player' ? 34 : x.kind === 'team' ? 48 : 22)}</span></span><span class="who"><b>${esc(x.full || x.name)}</b><small>${esc(ago(new Date(it.ts).toISOString()).replace(/ ago$/, ''))}</small></span><button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`; };
+    const head = () => { const x = sub(), it = item();
+      /* v473: the picture and the name at the top of a story open that player's or team's page */
+      const to = x.kind === 'player' && x.id ? href.player(x.lk, x.id) : x.kind === 'team' && x.id ? href.team(x.lk, x.id) : '', o = to ? `<a class="stgo" data-stgo href="${esc(to)}" aria-label="${esc(x.full || x.name)}">` : '<span class="stgo">', c = to ? '</a>' : '</span>';
+      pane.querySelector('.sthd').innerHTML = `${o}<span class="ring${x.kind === 'team' && x.logo ? ' tm' : ''}"><span>${stAvatar(x, x.kind === 'player' ? 34 : x.kind === 'team' ? 48 : 22)}</span></span><span class="who"><b>${esc(x.full || x.name)}</b><small>${esc(ago(new Date(it.ts).toISOString()).replace(/ ago$/, ''))}</small></span>${c}<button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`; };
     const render = () => {
       leave(); const x = sub(), it = item(); stMark(x.key, it.id); if (it.sk) stMark(it.sk, it.id); head(); segs(); t0 = performance.now(); if (watch && opt.onItem) opt.onItem(el, it, x, si);
       const act = pane.querySelector('.stact'); act.hidden = it.kind !== 'vid'; if (it.kind === 'vid') { const lk = stLikes().includes(it.id), sv = stSaved().some(y => y.id === it.id); const [bl2, bs2] = act.children; bl2.classList.toggle('on', lk); bl2.setAttribute('aria-pressed', lk); bs2.classList.toggle('on', sv); bs2.setAttribute('aria-pressed', sv); }
@@ -1211,7 +1214,7 @@
     stPop = () => close(true); addEventListener('popstate', stPop);
     // ---- gestures
     let px = 0, py = 0, pt = 0, mode = '', hold = 0, held = false, lastY = 0, lastT = 0, vy = 0;
-    el.addEventListener('pointerdown', e => { if (busy || e.target.closest('[data-stx],[data-stb],[data-w27]')) return; px = e.clientX; py = e.clientY; pt = lastT = pd0 = performance.now(); lastY = py; mode = ''; held = false; vy = 0;
+    el.addEventListener('pointerdown', e => { if (busy || e.target.closest('[data-stx],[data-stb],[data-w27],[data-stgo]')) return; px = e.clientX; py = e.clientY; pt = lastT = pd0 = performance.now(); lastY = py; mode = ''; held = false; vy = 0;
       if (quiet) { quiet = false; vd.muted = false; }
       try { el.setPointerCapture(e.pointerId); } catch (er) {} clearTimeout(hold); hold = setTimeout(() => { held = true; pause(); }, 190); });
     /* v470 Watch: the clip follows the finger up or down with the next one's picture coming in behind it */
@@ -1273,6 +1276,7 @@
       resume(); step(e.clientX < W * .3 ? -1 : 1); };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', e => { pt = 0; mode = ''; pane.style.transform = ''; dim.style.opacity = ''; if (peek) peek.style.display = 'none'; if (!el.classList.contains('wpz')) resume(); });
     el.addEventListener('click', e => { if (e.target.closest('[data-stx]')) { e.preventDefault(); return close(); }
+      { const go = !watch && e.target.closest('a[data-stgo]'); if (go) { e.preventDefault(); if (closed) return; const to = go.getAttribute('href'); addEventListener('popstate', () => setTimeout(() => { location.hash = to; }, 0), { once: true }); return close(); } }
       const b = e.target.closest('[data-stb]'), it = item(); if (!b || !it || it.kind !== 'vid') return; e.preventDefault();
       const on = b.dataset.stb === 'like' ? stLike(it) : stSave(it); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
       if (RM()) return; b.firstChild.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.42)' }, { transform: 'scale(.92)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'cubic-bezier(.3,1.5,.5,1)' });

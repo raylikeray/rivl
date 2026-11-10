@@ -198,7 +198,8 @@ html body .story.w27v .stcap{left:16px;right:78px;bottom:22px;display:flex;flex-
 html body .story.w27v .stcap:before{left:-16px;right:-78px;bottom:-22px;height:240px;background:linear-gradient(transparent,rgba(0,0,0,.62))}
 html body .story.w27v .stcap .wn27{order:1;display:flex;align-items:baseline;gap:8px;margin-bottom:6px;pointer-events:auto;max-width:100%}
 html body .story.w27v .stcap .wn27 a{font-size:16px;font-weight:800;letter-spacing:-.01em;color:#fff;text-decoration:none;text-shadow:0 1px 8px rgba(0,0,0,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-html body .story.w27v .stcap .wn27 span{flex:none;font-size:13px;font-weight:600;color:rgba(255,255,255,.74)}
+html body .story.w27v .stcap .wn27 span,html body .story.w27v .stcap .wn27 a.tm{flex:none;font-size:13px;font-weight:600;color:rgba(255,255,255,.78)}
+html body .story.w27v .stcap .wn27 a{padding:6px 0;margin:-6px 0}
 html body .story.w27v .stcap>b{order:2;font-size:15px;font-weight:500;line-height:1.36;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 html body .story.w27v .stcap>small{order:3;margin-top:5px}
 html body .story.w27v .stcap .stmeta{order:4;margin:10px 0 0}

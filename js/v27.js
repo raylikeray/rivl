@@ -195,7 +195,7 @@
     who.hidden = false; who.innerHTML = `<a href="#player/${esc(lk)}/${esc(a)}" aria-label="Player page"><span><img src="${esc(src)}" alt="" onerror="this.closest('.wa27').hidden=true"></span></a>${fol ? '' : `<button data-wact="follow" data-lk="${esc(lk)}" data-id="${esc(a)}" aria-label="Follow this player">${WI.plus}</button>`}`;
     /* the player's name goes over the words once the feed has said who it is; the words are written after this runs */
     const show = w => Promise.resolve().then(() => { if (!el.__w || el.__w.item !== it || !w || !w.name) return; const cap = el.querySelector('.stcap'); if (!cap || cap.querySelector('.wn27')) return;
-      const nm = document.createElement('div'); nm.className = 'wn27'; nm.dataset.w27 = ''; nm.innerHTML = `<a href="#player/${esc(lk)}/${esc(a)}">${esc(w.name)}</a>${w.team ? `<span>${esc(w.team)}</span>` : ''}`; cap.prepend(nm); });
+      const nm = document.createElement('div'); nm.className = 'wn27'; nm.dataset.w27 = ''; nm.innerHTML = `<a href="#player/${esc(lk)}/${esc(a)}">${esc(w.name)}</a>${w.team ? (w.teamId ? `<a class="tm" href="#team/${esc(lk)}/${esc(w.teamId)}">${esc(w.team)}</a>` : `<span>${esc(w.team)}</span>`) : ''}`; cap.prepend(nm); });
     if (known) return show(known);
     X.athlete(L, a).then(bio => { const p = bio && (bio.athlete || bio); if (!p || !p.displayName) return; const tm = p.team || {};
       const w = { name: p.displayName, short: p.shortName || p.displayName, team: tm.shortDisplayName || tm.name || tm.abbreviation || '', abbr: tm.abbreviation || '', teamId: tm.id ? String(tm.id) : '', img: (p.headshot && p.headshot.href) || src, color: wColor(lk, tm) };
