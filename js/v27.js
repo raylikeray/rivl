@@ -227,6 +227,25 @@
   }
   { const st0 = V.stats; V.stats = (lk, ...a) => on() ? stats27(lk) : st0(lk, ...a); }
 
+  /* ---------- the game page below its top (v478). The top stays as it is (Ray's ruling). Below it the page already had the
+     board's parts (line score, leaders, win chance, team stats), so this only puts the game's clips first as a row of
+     upright cards that open the full-screen player, and turns the tab row into the same pill switch as Scores. ---------- */
+  let gcAt = 0, gcT = 0;
+  function gameDecorate() {
+    if (!on() || root.dataset.page !== 'game') return; const now = Date.now(); if (now - gcAt < 300) { clearTimeout(gcT); gcT = setTimeout(gameDecorate, 320); return; } gcAt = now;
+    const m = /^#game\/([a-z]+)\/([^/?]+)/.exec(location.hash || ''); const panel = $main.querySelector('#gbody .gpanel'); if (!m || !panel) return;
+    const its = X.gameClips(m[2]); const have = panel.querySelector('.gc27');
+    if (its.length < 2) { if (have) have.remove(); panel.classList.remove('gcon27'); return; }
+    const html = `<div class="sec"><h2>Clips from this game</h2><span class="cnt27">${its.length}</span></div><div class="rl27 cv27">${its.map(it => `<button class="cl27" data-gclip="${esc(it.id)}" data-gid="${esc(m[2])}" aria-label="${esc(it.title)}">${it.thumb ? `<img src="${esc(up916(it.thumb))}" data-o="${esc(it.thumb)}" alt="" loading="lazy" onerror="if(this.dataset.o){this.src=this.dataset.o;this.removeAttribute('data-o')}else this.remove()">` : ''}<i class="pl">${I.play}</i><b>${esc(it.title)}</b></button>`).join('')}</div>`, h = hash(html);
+    if (have && have.dataset.h === h && have === panel.firstElementChild) return;
+    const el = have || document.createElement('div'); el.className = 'gc27 h27'; el.dataset.h = h; el.innerHTML = html; if (el !== panel.firstElementChild) panel.insertBefore(el, panel.firstChild); panel.classList.add('gcon27');
+  }
+  document.addEventListener('rivl:rendered', () => setTimeout(gameDecorate, 0)); document.addEventListener('rivl:polled', () => setTimeout(gameDecorate, 0));
+  new MutationObserver(() => { if (root.dataset.page === 'game' && on()) gameDecorate(); }).observe($main, { childList: true, subtree: true });
+  $main.addEventListener('click', e => { const b = e.target.closest('[data-gclip]'); if (!b) return; e.preventDefault(); const its = X.gameClips(b.dataset.gid); if (!its.length || document.querySelector('.story')) return;
+    const subs = [{ key: 'w:game', lk: 'all', kind: 'watch', id: 'w:game', name: 'This game', full: 'This game', color: '#15171a', its, un: true, last: Date.now() }];
+    V.storyOpen('w:game', b.dataset.gclip, { watch: true, subs, chrome(el) { el.__subs = subs; wChrome(el); el.classList.add('one27'); }, onItem: (el, it, x, si) => { wItem(el, it, x, si); store.set('v5:wtab', store.get('v5:wtab0', 'w:fy')); }, onSlide: wInd, onClose() { paintBar(); } }); });
+
   /* ---------- Watch: one clip to a screen, Following / For you / Top plays ---------- */
   const WI = {
     share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.500 4.500 21 11.500l-7.500 7v-4.300C8.300 14.200 5 15.800 3 19.500c.300-5.600 3.600-10.300 10.500-10.800z"/></svg>',
@@ -261,7 +280,7 @@
   const wColor = (lk, tm) => { const c = tm && tm.color ? '#' + String(tm.color).replace('#', '') : ((tm && tm.id && X.teamOf(lk, tm.id)) || {}).color || ''; return /^#[0-9a-f]{6}$/i.test(c) ? c : ''; };
   const wWho = new Map();   // player id -> { name, team } once the feed has answered
   function wItem(el, it, x, si) {
-    store.set('v5:wtab', x.key);
+    store.set('v5:wtab', x.key); if (x.key !== 'w:game') store.set('v5:wtab0', x.key);
     wInd(el, si, false);
     const who = el.querySelector('.wa27'), L = it.L, a = (it.aths || [])[0];
     if (!L || !a) { who.hidden = true; who.innerHTML = ''; return; }

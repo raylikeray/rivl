@@ -428,3 +428,20 @@ html.rv27 .seg27 a[hidden]{display:none}
 .lp27 .mb27{display:block;margin:14px auto 0;height:38px;padding:0 18px;border:0;border-radius:999px;background:var(--s27);color:var(--i27);font:600 13.5px/1 var(--f27)}
 @keyframes sweep27{0%{transform:translateX(0) skewX(-18deg)}55%,100%{transform:translateX(640px) skewX(-18deg)}}
 @media (prefers-reduced-motion:reduce){ .lp27 .rsw27{animation:none} }
+
+/* ---------- the game page below its top (v478): the tab row as a pill switch, the game's clips first ---------- */
+html.rv27 body .g2 #gtabs{border:0!important;padding:10px 16px 8px!important;font-family:var(--f27)}
+html.rv27 body .g2 #gtabs .chips{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:0;height:40px;padding:3px;box-sizing:border-box;border-radius:999px;background:var(--c27);overflow:hidden}
+html.rv27 body .g2 #gtabs .chip,html.rv27 body .g2 #gtabs .chip.on{height:34px;border-radius:999px;font:500 14px/1 var(--f27);color:var(--i27b)!important;opacity:1!important;transition:none}
+html.rv27 body .g2 #gtabs .chip.on,html.rv27 body .g2 #gtabs .chip[aria-pressed="true"]{background:var(--i27)!important;color:var(--b27)!important;font-weight:700}
+html.rv27 body .g2 #gtabs .chip.on::after,html.rv27 body .g2 #gtabs .pgi{display:none!important}
+html.rv27 body .g2 #gbody{font-family:var(--f27)}
+.gc27{margin:0 0 6px}
+.gc27 .sec{display:flex;align-items:baseline;justify-content:space-between}
+.gc27 .cnt27{font-size:13px;font-weight:500;color:var(--i27c);font-variant-numeric:tabular-nums}
+.gc27 .cl27{width:124px;height:196px;border-radius:16px}
+.gc27 .cl27 .pl{position:absolute;left:10px;top:10px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.42);display:grid;place-items:center;color:#fff}
+.gc27 .cl27 .pl svg{width:13px;height:13px}
+/* the wide Highlights strip lower on the page would show the same clips again */
+.gpanel.gcon27>.sec:has(+.media),.gpanel.gcon27>.media{display:none}
+.story.one27 .wt27 .wi27{display:none}
