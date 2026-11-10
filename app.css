@@ -5370,3 +5370,12 @@ html body .hdr.tabhd .lgsc{padding-right:14px}
 .idate .xgear{position:absolute;right:0;bottom:4px}
 .xthead{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .xthead .xtitle{margin-right:auto}
+/* v454: Settings only on Search. The league row sits higher and, with the gear gone, uses the whole width */
+html body .idate .xgear{display:none}
+html body .hdr.tabhd .lgtabs{height:44px;padding-right:0}
+html body .hdr.tabhd .lgt,html body .hdr.tabhd .lgtabs[data-n="5"] .lgt{padding-bottom:9px;align-self:flex-end}
+html body .hdr.tabhd .lgt.on,html body .hdr.tabhd .lgtabs[data-n="5"] .lgt.on{padding-bottom:8px}
+html body .hdr.tabhd .lgsc{padding:0 16px;align-items:flex-end}
+html body .hdr.tabhd .lgtabs[data-n="5"] .lgsc{justify-content:space-between;gap:0}
+@media (max-width:389px){ html body .hdr.tabhd .lgsc{padding:0 10px} html body .hdr.tabhd .lgtabs[data-n="5"] .lgsc{gap:0} }
+@media (min-width:600px){ html body .hdr.tabhd .lgtabs[data-n="5"] .lgsc{justify-content:flex-start;gap:28px} }
