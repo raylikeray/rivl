@@ -5379,3 +5379,7 @@ html body .hdr.tabhd .lgsc{padding:0 16px;align-items:flex-end}
 html body .hdr.tabhd .lgtabs[data-n="5"] .lgsc{justify-content:space-between;gap:0}
 @media (max-width:389px){ html body .hdr.tabhd .lgsc{padding:0 10px} html body .hdr.tabhd .lgtabs[data-n="5"] .lgsc{gap:0} }
 @media (min-width:600px){ html body .hdr.tabhd .lgtabs[data-n="5"] .lgsc{justify-content:flex-start;gap:28px} }
+/* v455: four-league rows (Scores, Standings, Stats) spread across the full width too, now that the gear is gone */
+@media (max-width:599px){ html body .hdr.tabhd .lgtabs .lgsc{justify-content:space-between;gap:0;padding:0 20px} }
+@media (max-width:389px){ html body .hdr.tabhd .lgtabs .lgsc{padding:0 14px} html body .hdr.tabhd .lgtabs[data-n="5"] .lgsc{padding:0 10px} }
+@media (min-width:390px) and (max-width:599px){ html body .hdr.tabhd .lgtabs[data-n="5"] .lgsc{padding:0 16px} }
