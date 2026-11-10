@@ -164,14 +164,14 @@ const sd = Math.sqrt(known.reduce((a, b) => a + (b - mean) ** 2, 0) / (known.len
 all.forEach(p => { p.rating = Math.max(60, Math.min(97, Math.round(80 + 7 * ((p.rate != null ? p.rate : floor) - mean) / sd))); });
 const W6 = [.26, .22, .18, .14, .11, .09];
 const clubs = Object.values(S.clubs).map(c => { const ps = all.filter(p => p.club === c.name).sort((a, b) => b.rating - a.rating);
-  return { ...c, color: COLOR[c.name] || '#555', base: +(80 + 2.4 * (ps.slice(0, 6).reduce((a, p, i) => a + p.rating * W6[i], 0) - 82)).toFixed(2), players: ps.map(({ club, u26, rate, ...p }) => p) }; });
+  return { ...c, color: COLOR[c.name] || '#555', base: +(80 + 2.4 * (ps.slice(0, 6).reduce((a, p, i) => a + p.rating * W6[i], 0) - 82)).toFixed(2), players: ps.map(({ club, rate, ...p }) => p) }; });
 const winP = (a, b) => 1 / (1 + Math.pow(10, (b - a) / 25));
 const pw = {}; clubs.forEach(c => { pw[c.name] = c.base; });
 [...S.games].filter(g => g.final && g.score && g.teams.length === 2).sort((a, b) => (a.at || a.ymd).localeCompare(b.at || b.ymd)).forEach(g => {
   const [a, b] = g.teams; const p = winP(pw[a], pw[b]); const r = g.score[0] > g.score[1] ? 1 : 0; pw[a] += 3 * (r - p); pw[b] -= 3 * (r - p); });
 clubs.forEach(c => { c.power = +pw[c.name].toFixed(1); }); [...clubs].sort((a, b) => b.power - a.power).forEach((c, i) => { c.rank = i + 1; });
 S.games.forEach(g => { if (g.teams.length === 2 && pw[g.teams[0]] != null && pw[g.teams[1]] != null && !g.final) g.p0 = +winP(pw[g.teams[0]], pw[g.teams[1]]).toFixed(3); });
-const pool = all.filter(p => !S.clubs[p.club]).map(({ club, u26, rate, ...p }) => p);
+const pool = all.filter(p => !S.clubs[p.club]).map(({ club, rate, ...p }) => p);
 const out = { updated: new Date().toISOString(), source: 'Unrivaled', url: B + '/schedule', season: (/night-(\d{4})/.exec(JSON.stringify(S.games[0] || {})) || [])[1] || '', scale: +scale.toFixed(3), clubs, pool, games: S.games, boxes };
 const ok = out.games.filter(g => g.ymd).length;
 if (!ok) { console.log('no dated games found; keeping the last file'); process.exit(0); }
