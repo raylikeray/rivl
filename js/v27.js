@@ -108,9 +108,9 @@
   const stRank = () => { const F = favs.all(), P = V.fplayers.all(), r = new Map(); let n = 0;
     ORDER.forEach(lk => { (F[lk] || []).forEach(id => r.set(`${lk}:t${id}`, n++)); P.filter(p => p.lk === lk).forEach(p => r.set(`${lk}:p${p.id}`, n++)); r.set(`${lk}:top`, n++); });
     r.set('all:feed', n++); r.set('all:saved', n++); return r; };
-  const stGroup = x => x.kind === 'saved' ? 3 : x.kind === 'feed' ? 2 : x.un ? 0 : 1;
+  const stGroup = x => x.kind === 'feed' ? 0 : x.kind === 'saved' ? 3 : x.un ? 1 : 2;   // v469: For you leads the row, then what is new, then what has been watched, then Saved
   function storyList(fresh, loaded) {
-    if (!stMem.size && !stAt) { (store.get(SC, []) || []).forEach(c => { if (c && c.key) { stMem.set(c.key, c); stOrder.push(c.key); } }); }   // the row as it was last time
+    if (!stMem.size && !stAt) { (store.get(SC, []) || []).forEach(c => { if (c && c.key) { stMem.set(c.key, c); stOrder.push(c.key); } }); stOrder.sort((x, y) => (y === 'all:feed') - (x === 'all:feed')); }   // the row as it was last time
     fresh.forEach(x => stMem.set(x.key, x));
     const rank = stRank(), now = Date.now(), sig = fresh.map(x => x.key).sort().join(',');
     if (sig !== stSig || !stAt) { stSig = sig; stAt = now; clearTimeout(stT); stT = setTimeout(() => decorate(true), 6500); }
