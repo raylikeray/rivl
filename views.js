@@ -840,7 +840,7 @@
   let storiesD = null, storiesAt = 0;
   const storiesLoad = () => { if (Date.now() - storiesAt < 20 * 60000 || !HW.hub) return; storiesAt = Date.now(); HW.hub.file('stories.json').then(d => { if (d && d.items) { storiesD = d; if (homeRepaint && !stEl) homeRepaint(); } }).catch(() => {}); };
   const stSeen = () => store.get('v5:storyseen', {}) || {};
-  const stMark = (key, id) => { const s = stSeen(); if ((s[key] || []).includes(id)) return; s[key] = [...(s[key] || []), id].slice(-80); store.set('v5:storyseen', s); };
+  const stMark = (key, id) => { const s = stSeen(); if ((s[key] || []).includes(id)) return; s[key] = [...(s[key] || []), id].slice(key === 'all:feed' ? -500 : -80); store.set('v5:storyseen', s); };
   const gEnd = g => Math.min(new Date(g.date).getTime() + 2.4 * 36e5, Date.now() - 6e4);
   const SUMS = {};
   const sumGet = (L, g) => { const k = L.key + ':' + g.id; if (SUMS[k]) return SUMS[k]; SUMS[k] = { st: 'load' };
@@ -873,7 +873,7 @@
      from the title or the timing; no link, no tag. */
   const perLbl = p => { const d = String((p.period || {}).displayValue || ''), n = +(p.period || {}).number || 0; return /quarter/i.test(d) ? `Q${n}` : /half/i.test(d) ? (n === 1 ? '1st half' : '2nd half') : d.replace(/overtime/i, 'OT'); };
   const clockSec = p => { const c = String((p.clock || {}).displayValue || '').split(':'); return c.length === 2 ? +c[0] * 60 + parseFloat(c[1]) : parseFloat(c[0]); };
-  const playOf = (S, id) => { const m = cmOf(id); if (!m || !m.p || m.t !== 'OnePlay') return null; if (!S.pix) { S.pix = new Map(); (S.d.plays || []).forEach((q, i) => S.pix.set(String(q.id), i)); } const i = S.pix.get(m.p); return i == null ? null : { q: S.d.plays[i], i }; };
+  const playOf = (S, id) => { const m = cmOf(id); if (!m || !m.p || m.t !== 'OnePlay' || (m.p.length > 15 && m.v !== 2)) return null;   /* an 18-digit id saved before v459 was rounded on the way in: not trusted */ if (!S.pix) { S.pix = new Map(); (S.d.plays || []).forEach((q, i) => S.pix.set(String(q.id), i)); } const i = S.pix.get(m.p); return i == null ? null : { q: S.d.plays[i], i }; };
   const playTag = (pl, g, tid) => { const q = pl.q; if (q.homeScore == null || q.awayScore == null) return ''; const home = String(g.home.id) === String(tid); const us = home ? g.home : g.away, them = home ? g.away : g.home;
     const per = perLbl(q), ck = String((q.clock || {}).displayValue || ''); return `${per}${ck ? ' ' + ck : ''} · ${us.abbr || us.short} ${home ? q.homeScore : q.awayScore}, ${them.abbr || them.short} ${home ? q.awayScore : q.homeScore}`; };
   // a game winner, by the record: a score in the last 30 seconds of the last period that put that team ahead for good
@@ -909,6 +909,26 @@
         if (!(' ' + nrm(title) + ' ').includes(' ' + nm + ' ')) return; const cm = cmOf(c.id); if (cm && cm.a.length && !cm.a.includes(String(p.id))) return;
         its.push({ kind: 'vid', id: 'v' + c.id, ts, url: `https://espnmedia-cdn.akamaized.net/espn/media/16x9/${m[1]}/${m[2]}.mp4`, v9: vertOf(null, img), title, dur: Math.round((+c.duration || 0) / 1000) || 20, thumb: img, ck: 'play', aths: [String(p.id)], sub: '', L }); });
       const was = SRCH[k].its.length; SRCH[k].its = its; if (its.length !== was && homeRepaint && !stEl) homeRepaint(); }).catch(() => {}); return SRCH[k].its; };
+  /* v460 For you. The Stories job ships every single-play clip from the last two days (data/feed.json); the phone
+     ranks them: your players and teams first, then what you tend to finish (players and kinds of play), the plays that
+     swung games, the newest. What you finish counts for a clip's players and its kind; what you leave in the first
+     couple of seconds counts against. All of it stays on this phone ('v5:taste'). */
+  let feedD = null, feedAt = 0;
+  const feedLoad = () => { if (Date.now() - feedAt < 20 * 60000 || !HW.hub) return; feedAt = Date.now(); HW.hub.file('feed.json').then(d => { if (d && d.items) { feedD = d; if (homeRepaint && !stEl) homeRepaint(); } }).catch(() => {}); };
+  const PLAYKINDS = [['clutch', /buzzer|game[- ]winner|go-ahead|dagger|ties it/i], ['dunk', /dunk|slam|\bjam\b|flush|hammer|alley-oop|\blob\b/i], ['block', /block|swat|denies|stuff|reject/i], ['three', /3-point|three|triple|trey|from deep|downtown|behind the arc|\b3s?\b|the range/i], ['and1', /and-1|plus the (foul|contact)/i], ['steal', /steal/i], ['pass', /assist|pass|dime|finds|sets up/i]];
+  const playKind = t => (PLAYKINDS.find(x => x[1].test(t || '')) || [''])[0];
+  const taste = () => { const t = store.get('v5:taste', null); return t && t.a && t.k ? t : { a: {}, k: {} }; };
+  const stLearn = (it, by) => { if (!it || it.kind !== 'vid' || it.ck !== 'play') return; const T = taste(); const bump = (o, k, d) => { if (k) o[k] = Math.round(Math.max(-6, Math.min(12, (o[k] || 0) + d)) * 10) / 10; };
+    (it.aths || []).slice(0, 3).forEach(a => bump(T.a, a, by)); bump(T.k, playKind(it.title), by * .5);
+    const ks = Object.keys(T.a); if (ks.length > 300) ks.sort((x, y) => Math.abs(T.a[x]) - Math.abs(T.a[y])).slice(0, ks.length - 300).forEach(k => delete T.a[k]); store.set('v5:taste', T); };
+  const feedSubject = (subs, now, seen) => { feedLoad(); const fd = (feedD && feedD.items) || []; if (!fd.length) return null;
+    const lks = new Set(ORDER.filter(lk => feedSrc[lk] && feedSrc[lk].out && feedSrc[lk].out.follows)); if (!lks.size) return null;
+    const T = taste(), fp = new Set(fplayers.all().map(p => String(p.id))), ft = {}; ORDER.forEach(lk => { const o = feedSrc[lk] && feedSrc[lk].out; ft[lk] = new Set(((o && o.myTeams) || []).map(t => String(t.id))); });
+    const gone = new Set(); Object.values(seen).forEach(l => (l || []).forEach(id => gone.add(id))); subs.forEach(x => x.its.forEach(y => gone.add(y.id)));   // watched anywhere, or already in one of your rings
+    const score = c => { let v = 10 * Math.abs(c.w || 0) - (now - c.ts) / 864e5 * 2 + .6 * (T.k[playKind(c.t)] || 0); (c.a || []).forEach(a => { if (fp.has(a)) v += 6; v += Math.max(-3, Math.min(5, T.a[a] || 0)); }); if ((c.tm || []).some(t => ft[c.lk] && ft[c.lk].has(t))) v += 3; return v; };
+    const its = fd.filter(c => lks.has(c.lk) && c.u && now - c.ts < 48 * 36e5 && !gone.has('v' + c.id)).map(c => [score(c), c]).sort((a, b) => b[0] - a[0]).slice(0, 40).map(([, c]) => { const id = c.u.split('/').pop();
+      return { kind: 'vid', id: 'v' + c.id, ts: c.ts, url: `https://espnmedia-cdn.akamaized.net/espn/media/16x9/${c.u}/${id}.mp4`, v9: `https://cmp-espn.media.dssott.com/opp/hls/espn/9x16/${c.u}/${id}/playlist.m3u8`, title: c.t, dur: c.d || 20, thumb: `https://espnmedia-cdn.akamaized.net/espn/media/common/${c.u}/${id}.jpg`, ck: 'play', aths: c.a || [], L: LEAGUES[c.lk], sub: (LEAGUES[c.lk] || {}).short || '' }; });
+    return its.length >= 3 ? { key: 'all:feed', lk: 'all', kind: 'feed', id: 'feed', name: 'For you', full: 'For you', color: '#5b3df5', its, un: true, last: now } : null; };
   /* v458 the game told from its own record, for the cards between the clips: quarter scores, each side's longest
      unanswered run, biggest lead, lead changes, the three top scorers, and the one play that moved the win chance
      most. All of it counted from the play-by-play and box score in hand; a card with nothing to count is not made. */
@@ -982,7 +1002,8 @@
               tag: `${c.per}${c.ck ? ' ' + c.ck : ''} \u00b7 ${us.ab} ${home ? c.hs : c.as}, ${them.ab} ${home ? c.as : c.hs}`, sub: `Final \u00b7 ${us.nm} ${us.sc}, ${them.nm} ${them.sc}` }; });
           const sn = new Set(seen[`${lk}:top`] || []); subs.push({ key: `${lk}:top`, lk, kind: 'league', id: 'top', name: `Top ${its.length}`, abbr: L.short, full: `${L.short} biggest plays`, color: '#5b3df5', its, un: its.some(x => !sn.has(x.id)), last: Math.max(...its.map(x => x.ts)) }); } }
     });
-    return subs.sort((a, b) => (b.un - a.un) || (b.last - a.last));
+    const fs = feedSubject(subs, now, seen); subs.sort((a, b) => (b.un - a.un) || (b.last - a.last)); if (fs) subs.push(fs);   // For you always sits last: it is where the rings lead
+    return subs;
   }
   /* v458 sharp from the first frame. The upright stream is a ladder of renditions and a browser left to choose starts on
      the lowest (soft picture), then stalls as it climbs. So the app reads the ladder itself and plays one rendition
@@ -1008,7 +1029,7 @@
       x.its.slice(i, i + 2).forEach((it, k) => { if (it.kind !== 'vid' || !it.v9) return; const p = v9Pick(it.v9);
         // the opening seconds of the first clip in the first two unwatched rings are fetched ahead, so the tap has something to show at once
         if (n < 2 && k === 0 && x.un && !light && !stHead.has(it.v9)) { stHead.add(it.v9); p.then(u => u === it.v9 ? null : fetch(u).then(r => r.ok ? r.text() : '').then(tx => { const seg = String(tx).split(/\r?\n/).find(l => l && !l.startsWith('#')); if (seg) return fetch(new URL(seg.trim(), u).href).then(r => r.arrayBuffer()); })).catch(() => {}); } }); }); };
-  const stAvatar = (x, size) => x.kind === 'league' ? size > 24 ? `<b>${esc(x.abbr || '')}</b>` : `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.5 13.4h5.9L9.3 22l9.2-12.1h-6.1L13.2 2z"/></svg>` : x.kind === 'player' ? headshot(x.hs, x.color, size, x.full || x.name) : x.logo ? imgSized(x.logo, size * 2, size * 2) : `<b>${esc(x.abbr || '')}</b>`;
+  const stAvatar = (x, size) => x.kind === 'feed' ? `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a.9.9 0 0 0 1.4.8l10.4-6.8a.9.9 0 0 0 0-1.6L9.4 4.4A.9.9 0 0 0 8 5.2z"/></svg>` : x.kind === 'league' ? size > 24 ? `<b>${esc(x.abbr || '')}</b>` : `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.5 13.4h5.9L9.3 22l9.2-12.1h-6.1L13.2 2z"/></svg>` : x.kind === 'player' ? headshot(x.hs, x.color, size, x.full || x.name) : x.logo ? imgSized(x.logo, size * 2, size * 2) : `<b>${esc(x.abbr || '')}</b>`;
   function bubbles() {
     const subs = storySubjects(); if (!subs.length) return ''; stWarm(subs);
     return `<div class="sbubs">${subs.map(x => `<button class="sbub${x.un ? '' : ' seen'}${x.kind === 'player' ? ' pl' : ''}" data-act="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span class="ring"><span>${stAvatar(x, x.kind === 'player' ? 52 : 30)}</span></span><small>${esc(x.name)}</small></button>`).join('')}</div>`;
@@ -1037,6 +1058,11 @@
     let ii = 0, t0 = 0, paused = false, pausedAt = 0, raf = 0, busy = false, closed = false;
     const sub = () => subs[si]; const item = () => sub() && sub().its[ii];
     const upright = it => !!(it.v9 && HLS && !it.v9bad); const srcOf = it => upright(it) ? v9Now(it.v9) : it.url;
+    /* what the watching says: a clip seen through (or nearly) counts for its players and its kind of play; one left
+       inside its first couple of seconds counts against. Putting the story away is not a verdict on the clip. */
+    let cur = null, slide = false;
+    const leave = closing => { const c = cur; cur = null; if (!c || c.it.kind !== 'vid') return; const t = c.v.currentTime || 0, d = c.v.duration || c.it.dur || 0;
+      if (d && t / d >= .85) stLearn(c.it, 1); else if (!closing && t < 2.5 && performance.now() - c.at < 4000) stLearn(c.it, -.6); };
     let sbIt = null, quiet = false;   // quiet: sound was refused without a touch; the next touch turns it back on
     const play = () => { const p = vd.play(); if (p && p.catch) p.catch(e => { if (e && e.name === 'NotAllowedError' && !vd.muted) { quiet = true; vd.muted = true; const q = vd.play(); if (q && q.catch) q.catch(() => {}); } }); };
     // what plays after this one: the next clip in this story, else the first unseen thing in the next ring
@@ -1060,7 +1086,7 @@
     const resume = () => { if (!paused) return; paused = false; t0 += performance.now() - pausedAt; el.classList.remove('held'); const it = item(); if (it && it.kind === 'vid') play(); };
     const head = () => { const x = sub(), it = item(); pane.querySelector('.sthd').innerHTML = `<span class="ring"><span>${stAvatar(x, x.kind === 'player' ? 34 : 22)}</span></span><span class="who"><b>${esc(x.full || x.name)}</b><small>${esc(ago(new Date(it.ts).toISOString()).replace(/ ago$/, ''))}</small></span><button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`; };
     const render = () => {
-      const x = sub(), it = item(); stMark(x.key, it.id); head(); segs(); t0 = performance.now();
+      leave(); const x = sub(), it = item(); stMark(x.key, it.id); head(); segs(); t0 = performance.now();
       const card = pane.querySelector('.stcd'), vw = pane.querySelector('.stvdw'), cap = pane.querySelector('.stcap'), bg = pane.querySelector('.stbg'), bl = pane.querySelector('.stblur');
       if (it.kind === 'vid') {
         bg.style.background = `linear-gradient(170deg,#050506 30%,${x.color} 190%)`; bl.style.backgroundImage = it.thumb ? `url("${it.thumb}")` : 'none';
@@ -1103,7 +1129,8 @@
           card.innerHTML = `<span class="lnhs">${headshot(x.hs, x.color, 132, x.full || x.name)}</span><b class="lnnm">${esc(x.full || x.name)}</b><span class="lnres"><i class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</i>${esc(String(us.score))}-${esc(String(them.score))} ${us === g.home ? 'vs' : 'at'} ${esc(them.short)}</span><span class="lnch">${chips}</span>`; }
       }
       prep();
-      const m = pane.querySelector('.stmedia'); if (!RM()) m.animate([{ opacity: .35, transform: 'scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: 180, easing: 'ease-out' });
+      cur = { it, v: vd, at: performance.now() };
+      const m = pane.querySelector('.stmedia'); if (!RM()) m.animate(slide ? [{ opacity: .3, transform: 'translateY(56px)' }, { opacity: 1, transform: 'none' }] : [{ opacity: .35, transform: 'scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: slide ? 260 : 180, easing: slide ? EASE : 'ease-out' }); slide = false;
     };
     const step = d => { const x = sub(); if (!x || busy) return; const n = ii + d;
       if (n >= x.its.length) { if (si < subs.length - 1) return turn(1); return close(); }
@@ -1121,7 +1148,7 @@
       pane.animate([{ transform: `rotateY(${90 * dir}deg)`, filter: 'brightness(.45)' }, { transform: 'rotateY(0deg)', filter: 'brightness(1)' }], o).finished.then(() => { ghost.remove(); pane.style.transformOrigin = ''; busy = false; t0 = performance.now(); }); };
     // ---- close: back into the bubble it came from (or a soft drop when the bubble is off screen)
     function close(fromPop, from) {
-      if (closed) return; closed = true; busy = true; cancelAnimationFrame(raf); try { vd.pause(); sb.pause(); } catch (e) {}
+      if (closed) return; closed = true; busy = true; cancelAnimationFrame(raf); leave(true); try { vd.pause(); sb.pause(); } catch (e) {}
       if (stPop) { removeEventListener('popstate', stPop); stPop = null; }
       if (!fromPop) { try { history.back(); } catch (e) {} }
       const r = bubbleOf(sub().key); const start = from || open;
@@ -1138,11 +1165,12 @@
       if (quiet) { quiet = false; vd.muted = false; }
       try { el.setPointerCapture(e.pointerId); } catch (er) {} clearTimeout(hold); hold = setTimeout(() => { held = true; pause(); }, 190); });
     el.addEventListener('pointermove', e => { if (!pt || busy) return; const dx = e.clientX - px, dy = e.clientY - py;
-      if (!mode) { if (dy > 12 && dy > Math.abs(dx)) { mode = 'y'; clearTimeout(hold); pause(); } else if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) { mode = 'x'; clearTimeout(hold); pause(); } }
+      if (!mode) { if (dy > 12 && dy > Math.abs(dx)) { mode = 'y'; clearTimeout(hold); pause(); } else if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) { mode = 'x'; clearTimeout(hold); pause(); } else if (dy < -14 && -dy > Math.abs(dx)) { mode = 'u'; clearTimeout(hold); } }
       const now = performance.now(); vy = (e.clientY - lastY) / Math.max(1, now - lastT); lastY = e.clientY; lastT = now;
       if (mode === 'y') { const d = Math.max(0, dy); pane.style.transform = `translate(${dx * .4}px,${d}px) scale(${1 - Math.min(d, 700) / 1700})`; pane.style.borderRadius = `${Math.min(d / 4, 28)}px`; dim.style.opacity = String(Math.max(0, 1 - d / 650)); }
       if (mode === 'x') { pane.style.transformOrigin = `50% 50% ${-W / 2}px`; pane.style.transform = `rotateY(${Math.max(-35, Math.min(35, dx / W * 70))}deg)`; } });
     const up = e => { if (!pt) return; clearTimeout(hold); const dx = e.clientX - px, dy = e.clientY - py; const m = mode; pt = 0; mode = '';
+      if (m === 'u') { held = false; resume(); if (dy < -56) { slide = true; step(1); } return; }   // a flick up is the next clip
       if (m === 'y') { const d = Math.max(0, dy); const cur = { transform: pane.style.transform, clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 1 };
         if (d > 110 || vy > .55) { pane.style.borderRadius = ''; return close(false, cur); }
         pane.animate([{ transform: pane.style.transform }, { transform: 'none' }], { duration: 260, easing: EASE }); dim.animate([{ opacity: dim.style.opacity }, { opacity: 1 }], { duration: 260, easing: EASE });
@@ -1166,7 +1194,7 @@
     // ---- in: grow out of the bubble
     const sn = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sn.has(y.id)));
     const r0 = bubbleOf(key); render(); prep(true); raf = requestAnimationFrame(tick);
-    el.__st = { get busy() { return busy; }, get ii() { return ii; }, get paused() { return paused; }, get si() { return si; }, get names() { return subs.map(x => x.name); }, get items() { return sub().its.map(x => x.kind === 'vid' ? `${x.ck || 'post'} | ${x.title} | ${x.tag || ''}${x.gw ? ' GW' : ''}${x.ln ? ' +line' : ''} | ${x.v9 ? 'v9' : 'wide'}` : x.kind); }, go(n) { ii = n; render(); } };   // read by the test harness
+    el.__st = { get busy() { return busy; }, get ii() { return ii; }, get paused() { return paused; }, get si() { return si; }, get names() { return subs.map(x => x.name); }, get items() { return sub().its.map(x => x.kind === 'vid' ? `${x.ck || 'post'} | ${x.title} | ${x.tag || ''}${x.gw ? ' GW' : ''}${x.ln ? ' +line' : ''} | ${x.v9 ? 'v9' : 'wide'}` : x.kind); }, go(n) { ii = n; render(); }, get kind() { return sub().kind; } };   // read by the test harness
     if (!RM()) { busy = true; dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: EASE });
       pane.animate([r0 ? shrunk(r0) : { transform: 'translate(0,40px) scale(.94)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 0 }, open], { duration: 360, easing: EASE }).finished.then(() => { busy = false; t0 = performance.now(); }); }
   }

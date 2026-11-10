@@ -10,6 +10,8 @@ const LG = { nba: 'nba', wnba: 'wnba', ncaam: 'mens-college-basketball', ncaaw: 
 const KEEP = 72 * 36e5, now = Date.now();
 const CM_KEEP = 5 * 864e5;   // how long a clip's play link is kept
 const get = async u => { for (let i = 0; i < 3; i++) { try { const r = await fetch(u, { headers: { 'user-agent': UA, accept: 'application/json' } }); if (r.ok) return r.json(); if (r.status === 404) return null; } catch (e) {} await new Promise(r => setTimeout(r, 900 * (i + 1))); } return null; };
+// the same, as text: college play ids run to 18 digits, more than a number can hold exactly, so they are read off the page as written
+const getRaw = async u => { for (let i = 0; i < 3; i++) { try { const r = await fetch(u, { headers: { 'user-agent': UA, accept: 'application/json' } }); if (r.ok) return r.text(); if (r.status === 404) return ''; } catch (e) {} await new Promise(r => setTimeout(r, 900 * (i + 1))); } return ''; };
 const old = existsSync('data/stories.json') ? JSON.parse(readFileSync('data/stories.json', 'utf8')) : { items: [] };
 const known = new Map((old.items || []).map(x => [x.lk + ':' + x.id, x]));
 const posts = new Map();
@@ -51,11 +53,18 @@ if (!out.length && (old.items || []).length) { console.log('nothing resolved; ke
    and the exact play it shows. One entry per clip: { e: game, p: play id, a: [player ids], t: type, ts }. The app uses
    it to keep a team's story to that team's plays and to print the quarter, clock and score under each one.
    Games are swept for three days; a game that ended more than 10 hours ago and was already swept is left alone. */
-const cm = { ...(old.cm || {}) }, swept = { ...(old.swept || {}) };
+const VER = 2, fresh = old.ver !== VER;   // a file from before play ids were read exactly: sweep its games again and re-read the long ids
+const cm = { ...(old.cm || {}) }, swept = fresh ? {} : { ...(old.swept || {}) };
 /* The biggest plays. For a finished game, each single-play clip is weighed by how far its play moved the win chance
    (the feed's own line, read at that play and the one before). The few biggest per game are kept with everything a
    phone needs to play them: file, title, and the clock and score at the play. 'wp' remembers which games were weighed. */
-const wpDone = { ...(old.wp || {}) }; let cand = (old.top || []).filter(c => now - c.gt < 40 * 36e5);
+/* The feed. Every single-play clip from the last two days, in a form small enough to ship them all: the folder its
+   files live in (both the wide file and the upright stream follow from it), its title, players, game and the two teams.
+   The app ranks these on the phone for the For you ring. Kept in its own file. */
+const FEED_KEEP = 48 * 36e5; const oldFeed = existsSync('data/feed.json') ? JSON.parse(readFileSync('data/feed.json', 'utf8')) : { items: [] };
+const feed = new Map((oldFeed.items || []).filter(x => now - x.ts < FEED_KEEP).map(x => [x.id, x]));
+const WSC = /\/espn\/media\/16x9\/(wsc\/\d{4}\/\d{4}\/[0-9a-f-]{36})\//;
+const wpDone = fresh ? {} : { ...(old.wp || {}) }; let cand = (old.top || []).filter(c => now - c.gt < 40 * 36e5);
 const perLbl = p => { const d = String((p.period || {}).displayValue || ''), n = +(p.period || {}).number || 0; return /quarter/i.test(d) ? `Q${n}` : /half/i.test(d) ? (n === 1 ? '1st half' : '2nd half') : d.replace(/overtime/i, 'OT'); };
 const weigh = async (lk, path, e, vids) => {
   const ones = vids.filter(v => { const c = cm[String(v.id)]; return c && c.t === 'OnePlay' && c.p && (+v.duration || 0) < 45; });
@@ -76,17 +85,20 @@ let cmAsked = 0, gamesAsked = 0;
 for (const [lk, path] of Object.entries(LG)) {
   const evs = new Map();
   for (const n of [0, 1, 2]) { const d = await get(`${SITE}/${path}/scoreboard?dates=${ymd(n)}${lk.startsWith('ncaa') ? '&groups=50&limit=400' : ''}`);
-    ((d || {}).events || []).forEach(e => { const st = ((e.status || {}).type || {}); if (st.state === 'pre') return; evs.set(String(e.id), { id: String(e.id), done: !!st.completed, t: Date.parse(e.date) || now }); }); }
+    ((d || {}).events || []).forEach(e => { const st = ((e.status || {}).type || {}); if (st.state === 'pre') return; evs.set(String(e.id), { id: String(e.id), done: !!st.completed, t: Date.parse(e.date) || now, tm: ((((e.competitions || [])[0] || {}).competitors) || []).map(c => String((c.team || {}).id || '')).filter(Boolean) }); }); }
   const todo = [...evs.values()].filter(e => !(swept[e.id] && e.done && swept[e.id] - e.t > 12.5 * 36e5) || (e.done && !wpDone[e.id] && now - e.t < 36 * 36e5));
   for (let i = 0; i < todo.length; i += 8) {
     await Promise.all(todo.slice(i, i + 8).map(async e => {
       gamesAsked++; const d = await get(`${SITE}/${path}/videos?event=${e.id}`); if (!d) return; swept[e.id] = now;
-      for (const v of d.videos || []) { const id = String(v.id || ''); if (!id || cm[id]) continue;
-        cmAsked++; const f = await get(`https://content.core.api.espn.com/v1/video/clips/${id}`); const c = ((f || {}).videos || [])[0]; if (!c) continue;
+      for (const v of d.videos || []) { const id = String(v.id || ''); if (!id || (cm[id] && !(cm[id].p.length > 15 && cm[id].v !== VER))) continue;
+        cmAsked++; const raw = await getRaw(`https://content.core.api.espn.com/v1/video/clips/${id}`); let f = null; try { f = JSON.parse(raw); } catch (er) {} const c = ((f || {}).videos || [])[0]; if (!c) continue;
         const a = (c.categories || []).filter(x => x.type === 'athlete').map(x => String(x.athleteId || '')).filter(Boolean);
-        const pl = ((c.plays || [])[0] || {}).id;
-        cm[id] = { e: e.id, p: pl != null ? String(pl) : '', a, t: String((c.tracking || {}).coverageType || ''), ts: Date.parse(c.originalPublishDate || '') || now }; }
+        const pl = (/"plays"\s*:\s*\[\s*\{\s*"id"\s*:\s*"?(\d+)/.exec(raw) || [])[1];
+        cm[id] = { v: VER, e: e.id, p: pl || '', a, t: String((c.tracking || {}).coverageType || ''), ts: Date.parse(c.originalPublishDate || '') || now }; }
       if (e.done) { try { await weigh(lk, path, e, d.videos || []); } catch (er) { console.log('weigh failed', e.id, String(er).slice(0, 80)); } }
+      for (const v of d.videos || []) { const id = String(v.id || ''), c = cm[id]; if (!c || c.t !== 'OnePlay' || !((+v.duration || 0) < 45) || !(now - c.ts < FEED_KEEP)) continue;
+        const m = WSC.exec((((v.links || {}).source) || {}).href || ''); const title = String(v.headline || '').trim(); if (!m || !title) continue;
+        const it = { id, lk, e: e.id, ts: c.ts, t: title, u: m[1], d: Math.round(+v.duration || 0), a: c.a, tm: e.tm }; if (c.w != null) it.w = c.w; feed.set(id, it); }
     }));
   }
   console.log(lk, 'games', evs.size, 'asked', todo.length);
@@ -96,7 +108,9 @@ for (const [id, t] of Object.entries(swept)) if (!(now - t < 4 * 864e5)) delete 
 for (const [id, x] of Object.entries(wpDone)) if (!(now - x.t < 4 * 864e5)) delete wpDone[id];
 // the list the app shows: per league, the 14 biggest from games that tipped in the last 40 hours
 const top = []; for (const lk of Object.keys(LG)) top.push(...cand.filter(c => c.lk === lk).sort((x, y) => Math.abs(y.w) - Math.abs(x.w)).slice(0, 14));
-writeFileSync('data/stories.json', JSON.stringify({ updated: new Date().toISOString(), items: out, cm, swept, wp: wpDone, top }));
+writeFileSync('data/stories.json', JSON.stringify({ ver: VER, updated: new Date().toISOString(), items: out, cm, swept, wp: wpDone, top }));
+writeFileSync('data/feed.json', JSON.stringify({ updated: new Date().toISOString(), items: [...feed.values()].sort((a, b) => b.ts - a.ts) }));
+console.log('feed', feed.size);
 console.log('top plays', top.length, top.slice(0, 3).map(c => `${c.lk} ${c.w} ${c.title}`));
 console.log('clip map', Object.keys(cm).length, 'games asked', gamesAsked, 'clips asked', cmAsked);
 console.log('stories', out.length, 'resolved now', asked, out.slice(0, 4).map(x => `${x.lk} ${x.title} [${x.aths.length}a ${x.teams.length}t]`));

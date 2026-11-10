@@ -18,7 +18,7 @@ jobs:
         run: |
           git config user.name "rivl-bot"
           git config user.email "bot@rivl"
-          git add data/stories.json
+          git add data/stories.json data/feed.json
           git diff --cached --quiet && echo "no change" && exit 0
           git commit -m "Stories: update"
           for i in 1 2 3; do git pull --rebase -X theirs origin main && git push origin main && break || sleep $((i*5)); done

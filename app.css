@@ -5451,3 +5451,6 @@ html body .story .stvdw video.on{opacity:1;z-index:1}
 /* v459 the league's biggest plays ring: the league's name in the ring, a bolt beside the title inside the story */
 html body .story .sthd .ring .stbolt{color:#fff;width:18px;height:18px;flex:none}
 html body .sbub .ring b{letter-spacing:.02em;white-space:nowrap}
+
+/* v460 For you ring: a play mark in the ring */
+html body .sbub .ring .stbolt{width:26px;height:26px;color:var(--ink);flex:none}
