@@ -308,8 +308,8 @@
     const counts = `<div class="yc27"><div><b>${list.length}</b><span>Teams</span></div><div><b>${nPl}</b><span>Players</span></div><div><b>${nLikes}</b><span>Likes</span></div></div><div class="ya27"><a href="#settings/following">Add a team</a><a href="#settings/following">Add a player</a></div>`;
     const tabs = `<nav class="ytb27" aria-label="Your things">${YT.map(([k, l]) => `<button data-you="tab" data-tab="${k}" class="${k === tab ? 'on' : ''}" aria-pressed="${k === tab}">${l}</button>`).join('')}</nav>`;
     /* each part is repainted only when it changed (v487): tapping a tab or closing a league must not redraw the top, or your
-       name and photo play their entrance again. The entrance runs once per visit; .st27 switches it off after that. */
-    let pg = $main.querySelector('#you27'); if (!pg) { $main.innerHTML = `<div id="you27" class="h27 yp27"></div>`; pg = $main.querySelector('#you27'); setTimeout(() => pg.classList.add('st27'), 1300); }
+       name and photo play their entrance again. The entrance runs once per visit; .once27 switches it off after that. */
+    let pg = $main.querySelector('#you27'); if (!pg) { $main.innerHTML = `<div id="you27" class="h27 yp27"></div>`; pg = $main.querySelector('#you27'); setTimeout(() => pg.classList.add('once27'), 1300); }
     const mode = youEdit ? 'edit' : 'view';
     if (youEdit) { const html = yEditHtml(name, list, top, vars, own), h = hash(html); if (pg.dataset.m !== mode || pg.dataset.h !== h) { pg.innerHTML = html; pg.dataset.h = h; } pg.dataset.m = mode; }
     else {
