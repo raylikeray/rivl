@@ -5312,3 +5312,10 @@ html.stlock,html.stlock body{overflow:hidden}
 .ufl:not(.big) .ucrt{top:40px}
 a.ung{color:inherit;text-decoration:none}
 .unrv .ugr{padding:9px 0}
+/* v444: matchup rows keep names and numbers apart; floor names never run into center court */
+.mur{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px}
+.mur .s .nm{min-width:0;overflow:hidden}.mur .s .nm,.mur .s .nm small{white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.mur .p{display:flex;align-items:center;gap:8px}.mur .p i{font-style:normal;width:46px;text-align:center}
+.mur .p b{font-size:17px;font-weight:860;color:var(--ink);letter-spacing:0;width:24px;text-align:center}.mur .p b.dim{color:var(--ink-3)}
+.utok b{max-width:84px;overflow:hidden;text-overflow:ellipsis}
+.ufl.big .udial{width:84px;height:84px}.ufl.big .udial b{font-size:20px}

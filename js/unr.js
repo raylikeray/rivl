@@ -62,7 +62,7 @@
   function floor(d, g, opts = {}) {
     const a = club(d, g.teams[0]), b = club(d, g.teams[1]); if (!a || !b) return '';
     const ta = three(a), tb = three(b); const s = opts.big ? 44 : 36;
-    const spots = opts.big ? [[14, 34], [30, 58], [14, 82]] : [[11, 36], [25, 62], [11, 86]];
+    const spots = opts.big ? [[14, 34], [24, 58], [14, 82]] : [[11, 36], [25, 62], [11, 86]];
     const fin = g.final && g.score;
     const mid = fin ? `<span class="ufin"><b>${g.score[0]}<i>-</i>${g.score[1]}</b><small>Final</small></span>` : g.p0 != null ? (opts.big ? dial(pct(g.p0 >= .5 ? g.p0 : 1 - g.p0), g.p0 >= .5 ? a : b, g.p0 >= .5 ? b : a) : `<span class="uchip"><b>${esc((g.p0 >= .5 ? a : b).name)} ${pct(g.p0 >= .5 ? g.p0 : 1 - g.p0)}%</b><small>to win</small></span>`) : '';
     return `<div class="ufl${opts.big ? ' big' : ''}" style="--ca:${a.color};--cb:${b.color}">${COURT}${opts.head || ''}`
@@ -152,7 +152,7 @@
     } else {
       const ta = three(a), tb = three(b); const pos = ['Guard', 'Wing', 'Big'];
       body = sec('Matchups', 'RIVL ratings') + `<div class="ucard umu">${[0, 1, 2].map(i => { const x = ta[i], y = tb[i]; if (!x || !y) return '';
-        return `<div class="mur"><a class="s" href="${hrefP(x)}">${face(x, a, 32)}<span>${esc(last(x))}<small>${esc(x.ht || x.pos || '')}</small></span><b class="${x.rating >= y.rating ? '' : 'dim'}">${x.rating}</b></a><span class="p">${pos[i]}</span><a class="s r" href="${hrefP(y)}">${face(y, b, 32)}<span>${esc(last(y))}<small>${esc(y.ht || y.pos || '')}</small></span><b class="${y.rating >= x.rating ? '' : 'dim'}">${y.rating}</b></a></div>`; }).join('')}</div>`;
+        return `<div class="mur"><a class="s" href="${hrefP(x)}">${face(x, a, 32)}<span class="nm">${esc(last(x))}<small>${esc(x.ht || x.pos || '')}</small></span></a><span class="p"><b class="${x.rating >= y.rating ? '' : 'dim'}">${x.rating}</b><i>${pos[i]}</i><b class="${y.rating >= x.rating ? '' : 'dim'}">${y.rating}</b></span><a class="s r" href="${hrefP(y)}">${face(y, b, 32)}<span class="nm">${esc(last(y))}<small>${esc(y.ht || y.pos || '')}</small></span></a></div>`; }).join('')}</div>`;
     }
     const info = `<div class="ucard uinf"><div>${ICON.pin}<span>${esc(g.arena || 'Arena TBA')}<small>${esc([g.kicker ? g.name : '', g.city].filter(Boolean).join(' · '))}</small></span></div>${(g.tv || []).length ? `<div>${ICON.tv}<span>${esc(g.tv.join(', '))}</span></div>` : ''}</div>`;
     return top(`${a.name} vs ${b.name}`) + `<div class="upage">${floor(d, g, { big: true, head })}${body}${info}${fin ? '' : note}</div>`;
