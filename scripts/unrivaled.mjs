@@ -125,16 +125,18 @@ for (const p of all) {
 }
 // WNBA 2026 line and ESPN id, once
 for (const p of all) {
-  const was = prevP[p.id]; if (was && was.espn !== undefined) { p.espn = was.espn; p.w26 = was.w26; continue; }
+  const was = prevP[p.id]; if (was && was.espn !== undefined && (!was.w26 || was.w26.lg)) { p.espn = was.espn; p.w26 = was.w26; continue; }
   p.espn = ''; p.w26 = null; if (process.env.UNR_DIR) continue;
   const sr = await jget(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(plain(p.name))}&limit=5&type=player`);
   const hit = ((((sr || {}).results || []).find(r => r.type === 'player') || {}).contents || []).find(c => /l:59~a:\d+/.test(c.uid || ''));
   if (!hit) continue; p.espn = /a:(\d+)/.exec(hit.uid)[1];
   const st = await jget(`https://site.web.api.espn.com/apis/common/v3/sports/basketball/wnba/athletes/${p.espn}/stats`);
-  const cat = ((st || {}).categories || []).find(c => c.name === 'averages'); const row = cat && (cat.statistics || []).filter(x => x.season && x.season.year <= 2026).slice(-1)[0];
+  // a rookie's stats page answers with her college numbers; the league filter says which it is
+  const lg = ((((st || {}).filters || []).find(f => f.name === 'league') || {}).value) || 'wnba';
+  const cat = ((st || {}).categories || []).find(c => c.name === 'averages'); const row = cat && (cat.statistics || []).filter(x => x.season && x.season.year <= 2026 && x.season.year >= 2025).slice(-1)[0];
   if (row) { const L = cat.labels; const g = k => row.stats[L.indexOf(k)]; const [fgm, fga] = String(g('FG')).split('-').map(Number), [ftm, fta] = String(g('FT')).split('-').map(Number), [tpm] = String(g('3PT')).split('-').map(Number);
     const l = { min: num(g('MIN')), pts: num(g('PTS')), fgm, fga, ftm, fta, tpm, oreb: num(g('OR')), dreb: num(g('DR')), reb: num(g('REB')), ast: num(g('AST')), stl: num(g('STL')), blk: num(g('BLK')), tov: num(g('TO')), pf: num(g('PF')) };
-    p.w26 = { year: row.season.year, gp: num(g('GP')), min: l.min, pts: l.pts, reb: l.reb, ast: l.ast, pm: l.min ? +(gmsc(l) / l.min).toFixed(4) : 0 }; }
+    p.w26 = { lg: lg === 'wnba' ? 'wnba' : 'ncaaw', year: row.season.year, gp: num(g('GP')), min: l.min, pts: l.pts, reb: l.reb, ast: l.ast, pm: l.min ? +(gmsc(l) / l.min).toFixed(4) : 0 }; }
   await new Promise(r => setTimeout(r, 200));
 }
 // box scores of finished games (kept; a final never changes)
@@ -147,14 +149,14 @@ for (const g of S.games) {
   await new Promise(r => setTimeout(r, 250));
 }
 // ratings: game score per minute, 2027 minutes weigh double; a newcomer's WNBA rate is scaled by how returners' rates compare
-const both = all.filter(p => p.u26 && p.u26.min >= 40 && p.w26 && p.w26.pm > 0).map(p => (p.u26.gs / p.u26.min) / p.w26.pm).sort((a, b) => a - b);
+const both = all.filter(p => p.u26 && p.u26.min >= 40 && p.w26 && p.w26.lg === 'wnba' && p.w26.pm > 0).map(p => (p.u26.gs / p.u26.min) / p.w26.pm).sort((a, b) => a - b);
 const scale = both.length >= 5 ? both[Math.floor(both.length / 2)] : 1.25;
 const lines27 = {}; Object.values(boxes).forEach(b => b.forEach(l => { (lines27[l.id] = lines27[l.id] || []).push(l); }));
 all.forEach(p => {
   const t27 = lines27[p.id] ? sumL(lines27[p.id]) : null; const g27 = lines27[p.id] ? lines27[p.id].reduce((a, l) => a + gmsc(l), 0) : 0;
   let min = 0, gs = 0; if (p.u26 && p.u26.min) { min += p.u26.min; gs += p.u26.gs; } if (t27 && t27.min) { min += 2 * t27.min; gs += 2 * g27; }
-  p.src = min >= 30 ? 'unr' : p.w26 && p.w26.pm ? 'wnba' : 'none';
-  p.rate = min >= 30 ? gs / min : p.w26 && p.w26.pm ? p.w26.pm * scale : null;
+  p.src = min >= 30 ? 'unr' : p.w26 && p.w26.pm ? p.w26.lg : 'none';
+  p.rate = min >= 30 ? gs / min : p.w26 && p.w26.pm ? p.w26.pm * scale * (p.w26.lg === 'wnba' ? 1 : .72) : null;   // college rates run hot against pros
   p.a26 = avg(p.u26); p.a27 = avg(t27);
 });
 const known = all.filter(p => p.rate != null).map(p => p.rate); const mean = known.reduce((a, b) => a + b, 0) / (known.length || 1);
@@ -162,7 +164,7 @@ const sd = Math.sqrt(known.reduce((a, b) => a + (b - mean) ** 2, 0) / (known.len
 all.forEach(p => { p.rating = Math.max(60, Math.min(97, Math.round(80 + 7 * ((p.rate != null ? p.rate : floor) - mean) / sd))); });
 const W6 = [.26, .22, .18, .14, .11, .09];
 const clubs = Object.values(S.clubs).map(c => { const ps = all.filter(p => p.club === c.name).sort((a, b) => b.rating - a.rating);
-  return { ...c, color: COLOR[c.name] || '#555', base: +ps.slice(0, 6).reduce((a, p, i) => a + p.rating * W6[i], 0).toFixed(2), players: ps.map(({ club, u26, rate, ...p }) => p) }; });
+  return { ...c, color: COLOR[c.name] || '#555', base: +(80 + 2.4 * (ps.slice(0, 6).reduce((a, p, i) => a + p.rating * W6[i], 0) - 82)).toFixed(2), players: ps.map(({ club, u26, rate, ...p }) => p) }; });
 const winP = (a, b) => 1 / (1 + Math.pow(10, (b - a) / 25));
 const pw = {}; clubs.forEach(c => { pw[c.name] = c.base; });
 [...S.games].filter(g => g.final && g.score && g.teams.length === 2).sort((a, b) => (a.at || a.ymd).localeCompare(b.at || b.ymd)).forEach(g => {
