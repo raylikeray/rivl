@@ -262,12 +262,13 @@
     else { const m = /^(\d{1,2}:\d{2})\s*([AP]M)$/i.exec(tipT); if (m) { c1 = m[1]; c2 = m[2].toUpperCase(); } else c1 = tipT || 'TBD'; }
     const star = `<i class="sstar" aria-label="Following"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg></i>`;
     const loA = fin && has && a < h, loH = fin && has && h < a;
-    const line = (t, side, lo) => `<span class="rr${lo ? ' lo' : ''}"><span class="scr${lowC(teamColor(t, L)) ? ' lowc' : ''}">${t.logo ? imgSized(t.logo, 72, 72, 'alt=""', monoSwap(t.abbr)) : monoOf(t.abbr)}</span><b class="rn">${esc(t.short || t.abbr || '')}</b>${HW.favs.has(L.key, t.id) ? star : ''}${fav === side ? `<em class="rfv" title="RIVL's chance to win">${esc(fp)}</em>` : ''}</span>`;
+    // v445 (Ray's pick, Score first): the points lead each team line, right beside the clock
+    const line = (t, side, lo, won) => `<span class="rr${lo ? ' lo' : ''}">${has ? `<b class="rsc">${esc(String(t.score))}</b>` : ''}<span class="scr${lowC(teamColor(t, L)) ? ' lowc' : ''}">${t.logo ? imgSized(t.logo, 72, 72, 'alt=""', monoSwap(t.abbr)) : monoOf(t.abbr)}</span><b class="rn">${esc(t.short || t.abbr || '')}</b>${HW.favs.has(L.key, t.id) ? star : ''}${fav === side ? `<em class="rfv" title="RIVL's chance to win">${esc(fp)}</em>` : ''}${won ? '<svg class="rw" viewBox="0 0 8 12" aria-label="Won"><path d="M8 0v12L1.5 6z"/></svg>' : ''}</span>`;
     const arrow = '<svg class="rw" viewBox="0 0 8 12" aria-label="Won"><path d="M8 0v12L1.5 6z"/></svg>';
     const num = (t, lo, won) => `<b class="rsc${lo ? ' lo' : ''}">${esc(String(t.score))}${won ? arrow : ''}</b>`;
-    const right = has ? `<span class="rs">${num(g.away, loA, fin && a > h)}${num(g.home, loH, fin && h > a)}</span>` : canBell ? `<span class="rs rb">${bell}</span>` : '<span class="rs"></span>';
+    const right = has ? '<span class="rs"></span>' : canBell ? `<span class="rs rb">${bell}</span>` : '<span class="rs"></span>';
     const key = [g.state, g.away.score, g.home.score, g.detail, g.off || '', bset == null ? '' : bset].join('|');
-    return `<a class="srow rl${live ? ' on' : ''}" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}" data-k="${esc(key)}"><span class="rt${lvC ? ' lv' : ''}${stale ? ' st' : ''}"><b>${esc(c1)}</b>${c2 ? `<small>${esc(c2)}</small>` : ''}</span><span class="rtm">${line(g.away, 'away', loA)}${line(g.home, 'home', loH)}</span>${right}</a>`;
+    return `<a class="srow rl${live ? ' on' : ''}" href="${href.game(L.key, g.id)}" data-gid="${esc(g.id)}" data-k="${esc(key)}"><span class="rt${lvC ? ' lv' : ''}${stale ? ' st' : ''}"><b>${esc(c1)}</b>${c2 ? `<small>${esc(c2)}</small>` : ''}</span><span class="rtm${has ? ' rtsc' : ''}">${line(g.away, 'away', loA, fin && has && a > h)}${line(g.home, 'home', loH, fin && has && h > a)}</span>${right}</a>`;
   }
   /* v389: the duel card, one renderer for Home's deck and the team and player pages. Two deep planes of the teams'
      colours split on a seam that follows the score (RIVL's pick before tip), the clock or tip and TV on top, the score
