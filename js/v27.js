@@ -56,7 +56,7 @@
     const next = b.getAttribute('aria-checked') !== 'true'; store.set('v5:rv27', next); b.setAttribute('aria-checked', String(next)); paintBar();
     V.toast(next ? 'New design is on. Tap Home to see it.' : 'Back to the current design.');
   });
-  V.rv27 = { on,
+  V.rv27 = { on, miss(el) { const p = el.parentNode; if (p) { p.className = 'ph27 no27'; p.innerHTML = I.me; } },
     row: () => `<div class="gl"><button class="gr ni sw" data-act="rv27" role="switch" aria-checked="${on()}"><span class="sico" data-k="look"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.500 13.900 9l5.600 1.900-5.600 1.900L12 18.300l-1.900-5.500L4.500 10.900 10.100 9z"/></svg></span><span class="gm wrap"><b>Try the new design</b><span>A preview of the 2027 look. Home and the bottom bar so far. Switch it off any time.</span></span><span class="switch"></span></button></div>` };
 
   /* Watch opens the clips the app has today: For you when there is one, otherwise the league's biggest plays */
@@ -154,26 +154,32 @@ ${slides.length > 1 ? `<div class="pg27" aria-hidden="true">${slides.map(() => '
     const move = gs.length > 2 && MOTION();
     return head(new Date().getHours() < 16 ? 'Today' : 'Tonight', 'All scores', '#scores') + `<div class="tkw27${move ? ' mv27' : ''}"><div class="tkt27 n" style="--d:${gs.length * 7}s">${gs.map(g => chip(g, false)).join('')}${move ? gs.map(g => chip(g, true)).join('') : ''}</div></div>`;
   }
+  /* Your players and Your teams are one kind of card: the photo or the logo is the card, the team's colour is the
+     ground, the team's mark sits faint behind it, and the name and one line sit at the foot. */
+  const cardVars = c => { const b = tone(c); return `--c:${b};--c1:${U.mixTo(b, 255, .2)};--c2:${U.mixTo(b, 0, .5)}`; };
+  const mark27 = src => src ? `<span class="wm27">${U.imgSized(src, 300, 300, '', 'this.parentNode.remove()')}</span>` : '';
   function playersHtml(outs) {
     const all = V.fplayers.all(); if (!all.length) return '';
     const lines = new Map(); outs.forEach(o => (o.lines || []).forEach(x => lines.set(`${o.lk}:${x.p.id}`, x)));
-    const cards = all.slice(0, 12).map(p => { const L = LEAGUES[p.lk]; if (!L) return null; const x = lines.get(`${p.lk}:${p.id}`); const color = x && x.us ? U.teamColor(x.us, L) : U.playerColor(p, L);
-      const nm0 = p.short || p.name || ''; const nm = esc(nm0.length > 19 ? V.lastName(p.name || nm0) : nm0);
-      const body = x && !x.dnp ? `<u>${x.won ? 'W' : 'L'} ${esc(String(x.us.score))}-${esc(String(x.them.score))}</u><div><strong class="n">${esc(String(x.pts))}<small>PTS</small></strong><b>${nm}</b><span class="n">${esc(String(x.reb))} REB · ${esc(String(x.ast))} AST</span></div>`
-        : x ? `<u class="n">${esc(dayWord(x.g))}</u><div><b>${nm}</b><span>${esc(x.dnp)}</span></div>`
-        : `<div><b>${nm}</b><span>${esc(p.team || L.short)}</span></div>`;
-      return { has: x && !x.dnp ? 0 : 1, html: `<a class="pc27" href="${x ? `${U.href.game(p.lk, x.g.id)}/p/${esc(String(p.id))}` : U.href.player(p.lk, p.id)}" style="background:${grad(color, 165)}">${p.img ? `<span class="ph27">${U.imgSized(p.img, 254, 185, '', "this.parentNode.className='ph27 no27';this.outerHTML=''")}</span>` : `<span class="ph27 no27">${I.me}</span>`}${body}</a>` }; }).filter(Boolean).sort((a, b) => a.has - b.has);
+    const cards = all.slice(0, 16).map(p => { const L = LEAGUES[p.lk]; if (!L) return null; const o = outs.find(z => z.lk === p.lk); const x = lines.get(`${p.lk}:${p.id}`);
+      const tm = (x && x.us) || (o && o.tIdx && p.teamId && o.tIdx[String(p.teamId)]) || null; const color = tm ? U.teamColor(tm, L) : U.playerColor(p, L);
+      const nm0 = p.short || p.name || ''; const nm = nm0.length > 17 ? V.lastName(p.name || nm0) : nm0;
+      const line = x && !x.dnp ? `${x.pts} pts · ${x.reb} reb · ${x.ast} ast` : x ? x.dnp : (tm && (tm.short || tm.name)) || p.team || L.short;
+      return { has: x && !x.dnp ? 0 : 1, html: `<a class="pc27" href="${x ? `${U.href.game(p.lk, x.g.id)}/p/${esc(String(p.id))}` : U.href.player(p.lk, p.id)}" style="${cardVars(color)}" aria-label="${esc(p.name || nm)}, ${esc(String(line))}">${mark27(tm && tm.logo)}${p.img ? `<span class="ph27">${U.imgSized(p.img, 600, 436, '', 'HW.v5.rv27.miss(this)')}</span>` : `<span class="ph27 no27">${I.me}</span>`}<span class="pt27"><b${nm.length > 14 ? ' class="lg27n"' : ''}>${esc(nm)}</b><small class="n">${esc(String(line))}</small></span></a>` }; }).filter(Boolean).sort((a, b) => a.has - b.has);
     return head('Your players', 'Edit', '#settings/following') + `<div class="rl27">${cards.map(c => c.html).join('')}</div>`;
   }
   function teamsHtml(outs) {
-    const tiles = outs.flatMap(o => (o.myTeams || []).map(t => { const live = (S.today[o.lk] || []).find(g => isLive(g) && (String(g.home.id) === t.id || String(g.away.id) === t.id));
+    const cards = outs.flatMap(o => (o.myTeams || []).map(t => { const live = (S.today[o.lk] || []).find(g => isLive(g) && (String(g.home.id) === t.id || String(g.away.id) === t.id));
       const vs = g => { const home = String(g.home.id) === t.id; return `${home ? 'vs' : 'at'} ${(home ? g.away : g.home).abbr}`; };
-      const nxt = live ? (() => { const home = String(live.home.id) === t.id; const us = home ? live.home : live.away, th = home ? live.away : live.home; return `<b class="lv27"><i></i>Live · ${esc(String(us.score ?? ''))}-${esc(String(th.score ?? ''))}</b>`; })()
-        : t.nx ? `<b>${esc(noTz(tipOf(t.nx)))} ${esc(vs(t.nx))}</b>` : t.next && t.next.state !== 'post' ? `<b>${esc(relDay(ymd(t.next)))} ${esc(vs(t.next))}</b>` : '';
+      let nxt = '', rank = 2;
+      if (live) { const home = String(live.home.id) === t.id; const us = home ? live.home : live.away, th = home ? live.away : live.home; nxt = `<em><i></i>Live · ${esc(String(us.score ?? ''))}-${esc(String(th.score ?? ''))}</em>`; rank = 0; }
+      else if (t.nx) { nxt = `<em>${esc(noTz(tipOf(t.nx)))} ${esc(vs(t.nx))}</em>`; rank = 1; }
+      else if (t.next && t.next.state !== 'post') nxt = `<em>${esc(relDay(ymd(t.next)))} ${esc(vs(t.next))}</em>`;
       const line = [t.rec, t.rank ? `No. ${t.rank}` : shortStanding(t.standing)].filter(Boolean).join(' · ');
-      return `<a class="tt27" href="${U.href.team(o.lk, t.id)}" style="background:${grad(t.color)}"><span class="tn27">${disc(t, 30)}<b>${esc(t.short || t.name)}</b></span><span>${esc(line)}${nxt ? `<br>${nxt}` : ''}</span></a>`; }));
-    if (!tiles.length) return '';
-    return head('Your teams', 'Edit', '#settings/following') + `<div class="tg27">${tiles.join('')}</div>`;
+      return { rank, at: t.nx ? new Date(t.nx.date).getTime() : 0, html: `<a class="tc27" href="${U.href.team(o.lk, t.id)}" style="${cardVars(t.color)}">${mark27(t.logo)}<span class="lg27">${t.logo ? U.imgSized(t.logo, 200, 200, '', "this.outerHTML='<b>" + esc(String(t.abbr || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 4)) + "</b>'") : `<b>${esc(String(t.abbr || '').slice(0, 4))}</b>`}</span><span class="pt27"><b>${esc(t.short || t.name)}</b>${line ? `<small>${esc(line)}</small>` : ''}${nxt}</span></a>` }; }));
+    if (!cards.length) return '';
+    cards.forEach((c, i) => { c.i = i; }); cards.sort((a, b) => (a.rank - b.rank) || (a.at - b.at) || (a.i - b.i));   // playing now, then tonight by tip, then the order you keep them in
+    return head('Your teams', 'Edit', '#settings/following') + `<div class="rl27">${cards.map(c => c.html).join('')}</div>`;
   }
   function catchHtml(outs, subs) {
     const fin = outs.flatMap(o => (o.lastF || []).filter(isDone).map(g => ({ g, o }))).sort((a, b) => new Date(b.g.date) - new Date(a.g.date)); if (!fin.length) return '';

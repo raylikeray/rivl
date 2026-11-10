@@ -735,7 +735,7 @@
       const finY = games.concat(last).filter((g, i, arr) => arr.findIndex(x => x.id === g.id) === i).filter(g => isDone(g) && !g.off && (isToday(g) || (HW.ymdOf(g.date) === yday && !slateStarted)));
       const lastF = finY.filter(isFav).sort((a, b) => new Date(b.date) - new Date(a.date));
       const lastL = finY.filter(g => !isFav(g)).sort((a, b) => Math.abs(+a.home.score - +a.away.score) - Math.abs(+b.home.score - +b.away.score)).slice(0, 4);
-      s.out = { L, lk, ctx, follows: mine.length > 0 || fp.length > 0, offS, unr, liveAll, preAll, digest, doneAll, myTeams, lastF, lastL, lines, st: S0.st, todayAll: games.filter(g => isToday(g) && !g.off),
+      s.out = { L, lk, ctx, follows: mine.length > 0 || fp.length > 0, offS, unr, liveAll, preAll, digest, doneAll, myTeams, lastF, lastL, lines, st: S0.st, tIdx: S0.tIdx, todayAll: games.filter(g => isToday(g) && !g.off),
         wire: posts.filter(p => p.tier === 0), river: posts.filter(p => p.tier >= 4), deep: s.depth < 7 };
       s.at = Date.now();
       s.subs.forEach(f => f());
