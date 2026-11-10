@@ -1,0 +1,1662 @@
+{
+ "at": "2026-11-10T19:21:37.372Z",
+ "ff": "ffprobe version 8.0.1-3ubuntu2 Copyright (c) 2007-2025 the FFmpeg developers",
+ "clips": [
+  {
+   "id": 50437026,
+   "lk": "nba",
+   "h": "John Collins gets up for alley-oop slam vs. Washin",
+   "dur": 18,
+   "ratio": "16:9,9:16",
+   "wideFile": {
+    "codec": "h264",
+    "w": 1920,
+    "h": 1080,
+    "fps": "99900000/1666667",
+    "vbr": 10388149,
+    "br": 10654576,
+    "dur": 18.529524
+   },
+   "wideHead": {
+    "s": 200,
+    "mb": 24.7,
+    "acao": "*",
+    "ranges": "bytes"
+   },
+   "wideStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     },
+     {
+      "bw": 3696000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f5-v1-a1.m3u8"
+     },
+     {
+      "bw": 4596000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f6-v1-a1.m3u8"
+     },
+     {
+      "bw": 6471000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f7-v1-a1.m3u8"
+     },
+     {
+      "bw": 8346000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f8-v1-a1.m3u8"
+     }
+    ]
+   },
+   "upStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "406x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "406x720",
+      "fps": "59.920",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     }
+    ]
+   },
+   "tries": {
+    "up_mp4": 200,
+    "up_mp4_size": {
+     "codec": "h264",
+     "w": 1080,
+     "h": 1920,
+     "fps": "6654000/111011",
+     "vbr": 10460622,
+     "br": 10717749,
+     "dur": 18.529524
+    },
+    "up_1080": 403,
+    "wide_1080p": 403,
+    "wide_720p": 403,
+    "common_mp4": 403,
+    "sq_mp4": 403,
+    "v4x5": 403,
+    "hls_1x1": 502,
+    "hls_4x5": 502,
+    "hls_16x9": 502
+   },
+   "rec": {
+    "thumbnail": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc.jpg",
+    "images.0.url": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc.jpg",
+    "posterImages.default.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc_default.jpg",
+    "posterImages.firstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc/thumb-1-w720-h406-f4.jp",
+    "posterImages.full.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc.jpg",
+    "posterImages.square.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc_1x1.jpg",
+    "posterImages.vertical.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc_9x16.jpg",
+    "posterImages.verticalFirstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/9x16/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc/thumb-1-w406-h720-",
+    "posterImages.wide.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc_5x2.jpg",
+    "links.api.artwork.href": "artwork.api.espn.com/artwork/collections/media/13ce556c-2f6b-4456-979c-7b1881b615cb",
+    "links.mobile.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc.mp4",
+    "links.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc.mp4",
+    "links.source.HD.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc.mp4",
+    "links.source.HLS.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc/playlist.m3u8",
+    "links.source.HLS.9x16.href": "cmp-espn.media.dssott.com/opp/hls/espn/9x16/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc/playlist.m3u8",
+    "links.source.HLS.HD.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc/playlist.m3u8",
+    "links.source.HLS.cmaf.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc/playlist.m3u8",
+    "links.source.HLS.cmaf.9x16.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/9x16/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc/playlist.m3u8",
+    "links.source.HLS.cmaf.cmb.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/cmb/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc/playlist.m3u8",
+    "links.source.HLS.cmb.href": "cmp-espn.media.dssott.com/opp/hls/espn/cmb/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc/playlist.m3u8",
+    "links.source.HLS.shield.href": "watch.auth.api.espn.com/video/auth/media/13ce556c-2f6b-4456-979c-7b1881b615cb/asset",
+    "links.source.flash.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc.mp4",
+    "links.source.full.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc.mp4",
+    "links.source.mezzanine.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/9f330f99-2225-4693-8fc9-a6687b42debc/9f330f99-2225-4693-8fc9-a6687b42debc.mp4"
+   },
+   "rec2": 404,
+   "wideTop": {
+    "codec": "h264",
+    "w": 1280,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 129,
+    "dur": 18.534997
+   },
+   "upTop": {
+    "codec": "h264",
+    "w": 406,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 130,
+    "dur": 18.518997
+   }
+  },
+  {
+   "id": 50437071,
+   "lk": "nba",
+   "h": "John Collins takes flight for alley-oop dunk",
+   "dur": 16,
+   "ratio": "16:9,9:16",
+   "wideFile": {
+    "codec": "h264",
+    "w": 1920,
+    "h": 1080,
+    "fps": "29790000/496997",
+    "vbr": 10820056,
+    "br": 11084279,
+    "dur": 16.579048
+   },
+   "wideHead": {
+    "s": 200,
+    "mb": 23,
+    "acao": "*",
+    "ranges": "bytes"
+   },
+   "wideStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     },
+     {
+      "bw": 3696000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f5-v1-a1.m3u8"
+     },
+     {
+      "bw": 4596000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f6-v1-a1.m3u8"
+     },
+     {
+      "bw": 6471000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f7-v1-a1.m3u8"
+     },
+     {
+      "bw": 8346000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f8-v1-a1.m3u8"
+     }
+    ]
+   },
+   "upStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "406x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "406x720",
+      "fps": "59.920",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     }
+    ]
+   },
+   "tries": {
+    "up_mp4": 200,
+    "up_mp4_size": {
+     "codec": "h264",
+     "w": 1080,
+     "h": 1920,
+     "fps": "89280000/1489489",
+     "vbr": 10723989,
+     "br": 10992342,
+     "dur": 16.555828
+    },
+    "up_1080": 403,
+    "wide_1080p": 403,
+    "wide_720p": 403,
+    "common_mp4": 403,
+    "sq_mp4": 403,
+    "v4x5": 403,
+    "hls_1x1": 502,
+    "hls_4x5": 502,
+    "hls_16x9": 502
+   },
+   "rec": {
+    "thumbnail": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a.jpg",
+    "images.0.url": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a.jpg",
+    "posterImages.default.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a_default.jpg",
+    "posterImages.firstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a/thumb-1-w720-h406-f4.jp",
+    "posterImages.full.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a.jpg",
+    "posterImages.square.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a_1x1.jpg",
+    "posterImages.vertical.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a_9x16.jpg",
+    "posterImages.verticalFirstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/9x16/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a/thumb-1-w406-h720-",
+    "posterImages.wide.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a_5x2.jpg",
+    "links.api.artwork.href": "artwork.api.espn.com/artwork/collections/media/1b20e140-95a9-4258-b533-717ef269e0a8",
+    "links.mobile.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a.mp4",
+    "links.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a.mp4",
+    "links.source.HD.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a.mp4",
+    "links.source.HLS.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a/playlist.m3u8",
+    "links.source.HLS.9x16.href": "cmp-espn.media.dssott.com/opp/hls/espn/9x16/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a/playlist.m3u8",
+    "links.source.HLS.HD.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a/playlist.m3u8",
+    "links.source.HLS.cmaf.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a/playlist.m3u8",
+    "links.source.HLS.cmaf.9x16.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/9x16/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a/playlist.m3u8",
+    "links.source.HLS.cmaf.cmb.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/cmb/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a/playlist.m3u8",
+    "links.source.HLS.cmb.href": "cmp-espn.media.dssott.com/opp/hls/espn/cmb/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a/playlist.m3u8",
+    "links.source.HLS.shield.href": "watch.auth.api.espn.com/video/auth/media/1b20e140-95a9-4258-b533-717ef269e0a8/asset",
+    "links.source.flash.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a.mp4",
+    "links.source.full.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a.mp4",
+    "links.source.mezzanine.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/f697af96-31d7-4e7d-a5a3-8717fa42450a/f697af96-31d7-4e7d-a5a3-8717fa42450a.mp4"
+   },
+   "rec2": 404,
+   "wideTop": {
+    "codec": "h264",
+    "w": 1280,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 145,
+    "dur": 16.582997
+   },
+   "upTop": {
+    "codec": "h264",
+    "w": 406,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 145,
+    "dur": 16.566997
+   }
+  },
+  {
+   "id": 50437170,
+   "lk": "nba",
+   "h": "AJ Dybantsa gets the and-1 to fall",
+   "dur": 27,
+   "ratio": "16:9,9:16",
+   "wideFile": {
+    "codec": "h264",
+    "w": 1920,
+    "h": 1080,
+    "fps": "49080000/818819",
+    "vbr": 10430135,
+    "br": 10697973,
+    "dur": 27.306667
+   },
+   "wideHead": {
+    "s": 200,
+    "mb": 36.5,
+    "acao": "*",
+    "ranges": "bytes"
+   },
+   "wideStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     },
+     {
+      "bw": 3696000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f5-v1-a1.m3u8"
+     },
+     {
+      "bw": 4596000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f6-v1-a1.m3u8"
+     },
+     {
+      "bw": 6471000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f7-v1-a1.m3u8"
+     },
+     {
+      "bw": 8346000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f8-v1-a1.m3u8"
+     }
+    ]
+   },
+   "upStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "406x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "406x720",
+      "fps": "59.920",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     }
+    ]
+   },
+   "tries": {
+    "up_mp4": 200,
+    "up_mp4_size": {
+     "codec": "h264",
+     "w": 1080,
+     "h": 1920,
+     "fps": "49080000/818819",
+     "vbr": 10368460,
+     "br": 10636686,
+     "dur": 27.306667
+    },
+    "up_1080": 403,
+    "wide_1080p": 403,
+    "wide_720p": 403,
+    "common_mp4": 403,
+    "sq_mp4": 403,
+    "v4x5": 403,
+    "hls_1x1": 502,
+    "hls_4x5": 502,
+    "hls_16x9": 502
+   },
+   "rec": {
+    "thumbnail": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061.jpg",
+    "images.0.url": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061.jpg",
+    "posterImages.default.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061_default.jpg",
+    "posterImages.firstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061/thumb-1-w720-h406-f4.jp",
+    "posterImages.full.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061.jpg",
+    "posterImages.square.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061_1x1.jpg",
+    "posterImages.vertical.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061_9x16.jpg",
+    "posterImages.verticalFirstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/9x16/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061/thumb-1-w406-h720-",
+    "posterImages.wide.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061_5x2.jpg",
+    "links.api.artwork.href": "artwork.api.espn.com/artwork/collections/media/a470dc0f-c993-4d9e-ad43-a3b4126bffe4",
+    "links.mobile.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061.mp4",
+    "links.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061.mp4",
+    "links.source.HD.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061.mp4",
+    "links.source.HLS.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061/playlist.m3u8",
+    "links.source.HLS.9x16.href": "cmp-espn.media.dssott.com/opp/hls/espn/9x16/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061/playlist.m3u8",
+    "links.source.HLS.HD.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061/playlist.m3u8",
+    "links.source.HLS.cmaf.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061/playlist.m3u8",
+    "links.source.HLS.cmaf.9x16.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/9x16/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061/playlist.m3u8",
+    "links.source.HLS.cmaf.cmb.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/cmb/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061/playlist.m3u8",
+    "links.source.HLS.cmb.href": "cmp-espn.media.dssott.com/opp/hls/espn/cmb/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061/playlist.m3u8",
+    "links.source.HLS.shield.href": "watch.auth.api.espn.com/video/auth/media/a470dc0f-c993-4d9e-ad43-a3b4126bffe4/asset",
+    "links.source.flash.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061.mp4",
+    "links.source.full.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061.mp4",
+    "links.source.mezzanine.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/b89524f2-fef5-4026-9645-173f14448061/b89524f2-fef5-4026-9645-173f14448061.mp4"
+   },
+   "rec2": 404,
+   "wideTop": {
+    "codec": "h264",
+    "w": 1280,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 51,
+    "dur": 27.310997
+   },
+   "upTop": {
+    "codec": "h264",
+    "w": 406,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 107,
+    "dur": 27.310997
+   }
+  },
+  {
+   "id": 50437263,
+   "lk": "nba",
+   "h": "Deandre Ayton elevates for the big-time swat",
+   "dur": 19,
+   "ratio": "16:9,9:16",
+   "wideFile": {
+    "codec": "h264",
+    "w": 1920,
+    "h": 1080,
+    "fps": "5735000/95679",
+    "vbr": 10485583,
+    "br": 10758816,
+    "dur": 19.135789
+   },
+   "wideHead": {
+    "s": 200,
+    "mb": 25.7,
+    "acao": "*",
+    "ranges": "bytes"
+   },
+   "wideStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     },
+     {
+      "bw": 3696000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f5-v1-a1.m3u8"
+     },
+     {
+      "bw": 4596000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f6-v1-a1.m3u8"
+     },
+     {
+      "bw": 6471000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f7-v1-a1.m3u8"
+     },
+     {
+      "bw": 8346000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f8-v1-a1.m3u8"
+     }
+    ]
+   },
+   "upStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "406x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "406x720",
+      "fps": "59.920",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     }
+    ]
+   },
+   "tries": {
+    "up_mp4": 200,
+    "up_mp4_size": {
+     "codec": "h264",
+     "w": 1080,
+     "h": 1920,
+     "fps": "103140000/1720721",
+     "vbr": 10586880,
+     "br": 10852506,
+     "dur": 19.133243
+    },
+    "up_1080": 403,
+    "wide_1080p": 403,
+    "wide_720p": 403,
+    "common_mp4": 403,
+    "sq_mp4": 403,
+    "v4x5": 403,
+    "hls_1x1": 502,
+    "hls_4x5": 502,
+    "hls_16x9": 502
+   },
+   "rec": {
+    "thumbnail": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6.jpg",
+    "images.0.url": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6.jpg",
+    "posterImages.default.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6_default.jpg",
+    "posterImages.firstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/thumb-1-w720-h406-f4.jp",
+    "posterImages.full.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6.jpg",
+    "posterImages.square.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6_1x1.jpg",
+    "posterImages.vertical.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6_9x16.jpg",
+    "posterImages.verticalFirstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/9x16/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/thumb-1-w406-h720-",
+    "posterImages.wide.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6_5x2.jpg",
+    "links.api.artwork.href": "artwork.api.espn.com/artwork/collections/media/7c152069-7755-42cc-b3e5-7df525c08a81",
+    "links.mobile.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6.mp4",
+    "links.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6.mp4",
+    "links.source.HD.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6.mp4",
+    "links.source.HLS.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/playlist.m3u8",
+    "links.source.HLS.9x16.href": "cmp-espn.media.dssott.com/opp/hls/espn/9x16/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/playlist.m3u8",
+    "links.source.HLS.HD.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/playlist.m3u8",
+    "links.source.HLS.cmaf.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/playlist.m3u8",
+    "links.source.HLS.cmaf.9x16.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/9x16/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/playlist.m3u8",
+    "links.source.HLS.cmaf.cmb.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/cmb/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/playlist.m3u8",
+    "links.source.HLS.cmb.href": "cmp-espn.media.dssott.com/opp/hls/espn/cmb/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/playlist.m3u8",
+    "links.source.HLS.shield.href": "watch.auth.api.espn.com/video/auth/media/7c152069-7755-42cc-b3e5-7df525c08a81/asset",
+    "links.source.flash.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6.mp4",
+    "links.source.full.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6.mp4",
+    "links.source.mezzanine.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6/552c8dd1-1e3b-428d-8f49-18a57ccf1ac6.mp4"
+   },
+   "rec2": 404,
+   "wideTop": {
+    "codec": "h264",
+    "w": 1280,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 125,
+    "dur": 19.151997
+   },
+   "upTop": {
+    "codec": "h264",
+    "w": 406,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 125,
+    "dur": 19.135997
+   }
+  },
+  {
+   "id": 50438191,
+   "lk": "ncaam",
+   "h": "Grambling Tigers vs. Texas Longhorns: Game Highlig",
+   "dur": 84,
+   "ratio": "16:9,9:16",
+   "wideFile": {
+    "codec": "h264",
+    "w": 1920,
+    "h": 1080,
+    "fps": "91044000/1518919",
+    "vbr": 10595766,
+    "br": 10868092,
+    "dur": 84.384378
+   },
+   "wideHead": {
+    "s": 200,
+    "mb": 114.6,
+    "acao": "*",
+    "ranges": "bytes"
+   },
+   "wideStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     },
+     {
+      "bw": 3696000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f5-v1-a1.m3u8"
+     },
+     {
+      "bw": 4596000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f6-v1-a1.m3u8"
+     },
+     {
+      "bw": 6471000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f7-v1-a1.m3u8"
+     },
+     {
+      "bw": 8346000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f8-v1-a1.m3u8"
+     }
+    ]
+   },
+   "upStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "406x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "406x720",
+      "fps": "59.920",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     }
+    ]
+   },
+   "tries": {
+    "up_mp4": 200,
+    "up_mp4_size": {
+     "codec": "h264",
+     "w": 1080,
+     "h": 1920,
+     "fps": "227655000/3798049",
+     "vbr": 10659755,
+     "br": 10931909,
+     "dur": 84.404535
+    },
+    "up_1080": 403,
+    "wide_1080p": 403,
+    "wide_720p": 403,
+    "common_mp4": 403,
+    "sq_mp4": 403,
+    "v4x5": 403,
+    "hls_1x1": 502,
+    "hls_4x5": 502,
+    "hls_16x9": 502
+   },
+   "rec": {
+    "thumbnail": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86.jpg",
+    "images.0.url": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86.jpg",
+    "posterImages.default.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86_default.jpg",
+    "posterImages.firstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86/thumb-1-w720-h406-f4.jp",
+    "posterImages.full.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86.jpg",
+    "posterImages.square.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86_1x1.jpg",
+    "posterImages.vertical.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86_9x16.jpg",
+    "posterImages.verticalFirstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/9x16/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86/thumb-1-w406-h720-",
+    "posterImages.wide.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86_5x2.jpg",
+    "links.api.artwork.href": "artwork.api.espn.com/artwork/collections/media/61b682ee-52c9-4d34-af9f-475c3dfbc4d7",
+    "links.mobile.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86.mp4",
+    "links.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86.mp4",
+    "links.source.HD.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86.mp4",
+    "links.source.HLS.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86/playlist.m3u8",
+    "links.source.HLS.9x16.href": "cmp-espn.media.dssott.com/opp/hls/espn/9x16/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86/playlist.m3u8",
+    "links.source.HLS.HD.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86/playlist.m3u8",
+    "links.source.HLS.cmaf.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86/playlist.m3u8",
+    "links.source.HLS.cmaf.9x16.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/9x16/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86/playlist.m3u8",
+    "links.source.HLS.cmaf.cmb.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/cmb/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86/playlist.m3u8",
+    "links.source.HLS.cmb.href": "cmp-espn.media.dssott.com/opp/hls/espn/cmb/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86/playlist.m3u8",
+    "links.source.HLS.shield.href": "watch.auth.api.espn.com/video/auth/media/61b682ee-52c9-4d34-af9f-475c3dfbc4d7/asset",
+    "links.source.flash.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86.mp4",
+    "links.source.full.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86.mp4",
+    "links.source.mezzanine.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/d490c120-5693-4ccb-982f-5f95bbc47f86/d490c120-5693-4ccb-982f-5f95bbc47f86.mp4"
+   },
+   "rec2": 404,
+   "wideTop": {
+    "codec": "h264",
+    "w": 1280,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 63,
+    "dur": 84.400997
+   },
+   "upTop": {
+    "codec": "h264",
+    "w": 406,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 63,
+    "dur": 84.417997
+   }
+  },
+  {
+   "id": 50437099,
+   "lk": "ncaam",
+   "h": "David Punch rocks the rim with dunk",
+   "dur": 28,
+   "ratio": "16:9,9:16",
+   "wideFile": {
+    "codec": "h264",
+    "w": 1920,
+    "h": 1080,
+    "fps": "25830000/430931",
+    "vbr": 10378419,
+    "br": 10644710,
+    "dur": 28.746304
+   },
+   "wideHead": {
+    "s": 200,
+    "mb": 38.2,
+    "acao": "*",
+    "ranges": "bytes"
+   },
+   "wideStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     },
+     {
+      "bw": 3696000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f5-v1-a1.m3u8"
+     },
+     {
+      "bw": 4596000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f6-v1-a1.m3u8"
+     },
+     {
+      "bw": 6471000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f7-v1-a1.m3u8"
+     },
+     {
+      "bw": 8346000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f8-v1-a1.m3u8"
+     }
+    ]
+   },
+   "upStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "406x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "406x720",
+      "fps": "59.920",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     }
+    ]
+   },
+   "tries": {
+    "up_mp4": 200,
+    "up_mp4_size": {
+     "codec": "h264",
+     "w": 1080,
+     "h": 1920,
+     "fps": "155070000/2587087",
+     "vbr": 10359253,
+     "br": 10631959,
+     "dur": 28.7454
+    },
+    "up_1080": 403,
+    "wide_1080p": 403,
+    "wide_720p": 403,
+    "common_mp4": 403,
+    "sq_mp4": 403,
+    "v4x5": 403,
+    "hls_1x1": 502,
+    "hls_4x5": 502,
+    "hls_16x9": 502
+   },
+   "rec": {
+    "thumbnail": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269.jpg",
+    "images.0.url": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269.jpg",
+    "posterImages.default.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269_default.jpg",
+    "posterImages.firstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269/thumb-1-w720-h406-f4.jp",
+    "posterImages.full.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269.jpg",
+    "posterImages.square.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269_1x1.jpg",
+    "posterImages.vertical.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269_9x16.jpg",
+    "posterImages.verticalFirstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/9x16/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269/thumb-1-w406-h720-",
+    "posterImages.wide.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269_5x2.jpg",
+    "links.api.artwork.href": "artwork.api.espn.com/artwork/collections/media/2fd3d842-e9c4-40a6-bf33-5576189863bd",
+    "links.mobile.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269.mp4",
+    "links.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269.mp4",
+    "links.source.HD.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269.mp4",
+    "links.source.HLS.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269/playlist.m3u8",
+    "links.source.HLS.9x16.href": "cmp-espn.media.dssott.com/opp/hls/espn/9x16/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269/playlist.m3u8",
+    "links.source.HLS.HD.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269/playlist.m3u8",
+    "links.source.HLS.cmaf.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269/playlist.m3u8",
+    "links.source.HLS.cmaf.9x16.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/9x16/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269/playlist.m3u8",
+    "links.source.HLS.cmaf.cmb.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/cmb/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269/playlist.m3u8",
+    "links.source.HLS.cmb.href": "cmp-espn.media.dssott.com/opp/hls/espn/cmb/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269/playlist.m3u8",
+    "links.source.HLS.shield.href": "watch.auth.api.espn.com/video/auth/media/2fd3d842-e9c4-40a6-bf33-5576189863bd/asset",
+    "links.source.flash.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269.mp4",
+    "links.source.full.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269.mp4",
+    "links.source.mezzanine.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/031a76b7-182c-4e0a-9b08-0c9819e39269/031a76b7-182c-4e0a-9b08-0c9819e39269.mp4"
+   },
+   "rec2": 404,
+   "wideTop": {
+    "codec": "h264",
+    "w": 1280,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 102,
+    "dur": 28.744997
+   },
+   "upTop": {
+    "codec": "h264",
+    "w": 406,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 102,
+    "dur": 28.761997
+   }
+  },
+  {
+   "id": 50426572,
+   "lk": "ncaaw",
+   "h": "Gabby White makes a decisive move to the basket an",
+   "dur": 16,
+   "ratio": "16:9,9:16",
+   "wideFile": {
+    "codec": "h264",
+    "w": 1920,
+    "h": 1080,
+    "fps": "2018000/33667",
+    "vbr": 10827385,
+    "br": 11083620,
+    "dur": 16.857687
+   },
+   "wideHead": {
+    "s": 200,
+    "mb": 23.4,
+    "acao": "*",
+    "ranges": "bytes"
+   },
+   "wideStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     },
+     {
+      "bw": 3696000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f5-v1-a1.m3u8"
+     },
+     {
+      "bw": 4596000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f6-v1-a1.m3u8"
+     },
+     {
+      "bw": 6471000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f7-v1-a1.m3u8"
+     },
+     {
+      "bw": 8346000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f8-v1-a1.m3u8"
+     }
+    ]
+   },
+   "upStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "406x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "406x720",
+      "fps": "59.920",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     }
+    ]
+   },
+   "tries": {
+    "up_mp4": 200,
+    "up_mp4_size": {
+     "codec": "h264",
+     "w": 1080,
+     "h": 1920,
+     "fps": "15165000/253003",
+     "vbr": 10723795,
+     "br": 10995610,
+     "dur": 16.866856
+    },
+    "up_1080": 403,
+    "wide_1080p": 403,
+    "wide_720p": 403,
+    "common_mp4": 403,
+    "sq_mp4": 403,
+    "v4x5": 403,
+    "hls_1x1": 502,
+    "hls_4x5": 502,
+    "hls_16x9": 502
+   },
+   "rec": {
+    "thumbnail": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c.jpg",
+    "images.0.url": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c.jpg",
+    "posterImages.default.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c_default.jpg",
+    "posterImages.firstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c/thumb-1-w720-h406-f4.jp",
+    "posterImages.full.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c.jpg",
+    "posterImages.square.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c_1x1.jpg",
+    "posterImages.vertical.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c_9x16.jpg",
+    "posterImages.verticalFirstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/9x16/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c/thumb-1-w406-h720-",
+    "posterImages.wide.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c_5x2.jpg",
+    "links.api.artwork.href": "artwork.api.espn.com/artwork/collections/media/d1154082-f529-40f8-93d6-0f99bbfb28b9",
+    "links.mobile.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c.mp4",
+    "links.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c.mp4",
+    "links.source.HD.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c.mp4",
+    "links.source.HLS.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c/playlist.m3u8",
+    "links.source.HLS.9x16.href": "cmp-espn.media.dssott.com/opp/hls/espn/9x16/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c/playlist.m3u8",
+    "links.source.HLS.HD.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c/playlist.m3u8",
+    "links.source.HLS.cmaf.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c/playlist.m3u8",
+    "links.source.HLS.cmaf.9x16.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/9x16/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c/playlist.m3u8",
+    "links.source.HLS.cmaf.cmb.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/cmb/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c/playlist.m3u8",
+    "links.source.HLS.cmb.href": "cmp-espn.media.dssott.com/opp/hls/espn/cmb/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c/playlist.m3u8",
+    "links.source.HLS.shield.href": "watch.auth.api.espn.com/video/auth/media/d1154082-f529-40f8-93d6-0f99bbfb28b9/asset",
+    "links.source.flash.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c.mp4",
+    "links.source.full.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c.mp4",
+    "links.source.mezzanine.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1108/6edbc700-5985-45da-8ea1-cbae1c82df0c/6edbc700-5985-45da-8ea1-cbae1c82df0c.mp4"
+   },
+   "rec2": 404,
+   "wideTop": {
+    "codec": "h264",
+    "w": 1280,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 142,
+    "dur": 16.849997
+   },
+   "upTop": {
+    "codec": "h264",
+    "w": 406,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 142,
+    "dur": 16.883997
+   }
+  },
+  {
+   "id": 50427007,
+   "lk": "ncaaw",
+   "h": "Joyce Edwards draws three defenders yet manages to",
+   "dur": 18,
+   "ratio": "16:9,9:16",
+   "wideFile": {
+    "codec": "h264",
+    "w": 1920,
+    "h": 1080,
+    "fps": "2837500/47339",
+    "vbr": 10536547,
+    "br": 10775712,
+    "dur": 18.970703
+   },
+   "wideHead": {
+    "s": 200,
+    "mb": 25.6,
+    "acao": "*",
+    "ranges": "bytes"
+   },
+   "wideStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     },
+     {
+      "bw": 3696000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f5-v1-a1.m3u8"
+     },
+     {
+      "bw": 4596000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f6-v1-a1.m3u8"
+     },
+     {
+      "bw": 6471000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f7-v1-a1.m3u8"
+     },
+     {
+      "bw": 8346000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f8-v1-a1.m3u8"
+     }
+    ]
+   },
+   "upStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "406x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "406x720",
+      "fps": "59.920",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     }
+    ]
+   },
+   "tries": {
+    "up_mp4": 200,
+    "up_mp4_size": {
+     "codec": "h264",
+     "w": 1080,
+     "h": 1920,
+     "fps": "20448000/341141",
+     "vbr": 10429709,
+     "br": 10678482,
+     "dur": 18.970703
+    },
+    "up_1080": 403,
+    "wide_1080p": 403,
+    "wide_720p": 403,
+    "common_mp4": 403,
+    "sq_mp4": 403,
+    "v4x5": 403,
+    "hls_1x1": 502,
+    "hls_4x5": 502,
+    "hls_16x9": 502
+   },
+   "rec": {
+    "thumbnail": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e.jpg",
+    "images.0.url": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e.jpg",
+    "posterImages.default.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e_default.jpg",
+    "posterImages.firstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e/thumb-1-w720-h406-f4.jp",
+    "posterImages.full.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e.jpg",
+    "posterImages.square.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e_1x1.jpg",
+    "posterImages.vertical.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e_9x16.jpg",
+    "posterImages.verticalFirstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/9x16/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e/thumb-1-w406-h720-",
+    "posterImages.wide.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e_5x2.jpg",
+    "links.api.artwork.href": "artwork.api.espn.com/artwork/collections/media/c3109ada-37a7-41ac-b07d-272b4bdfc50e",
+    "links.mobile.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e.mp4",
+    "links.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e.mp4",
+    "links.source.HD.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e.mp4",
+    "links.source.HLS.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e/playlist.m3u8",
+    "links.source.HLS.9x16.href": "cmp-espn.media.dssott.com/opp/hls/espn/9x16/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e/playlist.m3u8",
+    "links.source.HLS.HD.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e/playlist.m3u8",
+    "links.source.HLS.cmaf.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e/playlist.m3u8",
+    "links.source.HLS.cmaf.9x16.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/9x16/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e/playlist.m3u8",
+    "links.source.HLS.cmaf.cmb.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/cmb/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e/playlist.m3u8",
+    "links.source.HLS.cmb.href": "cmp-espn.media.dssott.com/opp/hls/espn/cmb/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e/playlist.m3u8",
+    "links.source.HLS.shield.href": "watch.auth.api.espn.com/video/auth/media/c3109ada-37a7-41ac-b07d-272b4bdfc50e/asset",
+    "links.source.flash.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e.mp4",
+    "links.source.full.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e.mp4",
+    "links.source.mezzanine.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1108/6a55a16c-814a-456c-bdd2-50011d9b614e/6a55a16c-814a-456c-bdd2-50011d9b614e.mp4"
+   },
+   "rec2": 404,
+   "wideTop": {
+    "codec": "h264",
+    "w": 1280,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 127,
+    "dur": 18.951997
+   },
+   "upTop": {
+    "codec": "h264",
+    "w": 406,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 72,
+    "dur": 18.968997
+   }
+  },
+  {
+   "id": 50438450,
+   "lk": "nba",
+   "h": "Washington Wizards vs. Detroit Pistons: Game Highl",
+   "dur": 72,
+   "ratio": "16:9,9:16",
+   "wideFile": {
+    "codec": "h264",
+    "w": 1920,
+    "h": 1080,
+    "fps": "97222500/1621997",
+    "vbr": 10664530,
+    "br": 10935687,
+    "dur": 72.097959
+   },
+   "wideHead": {
+    "s": 200,
+    "mb": 98.6,
+    "acao": "*",
+    "ranges": "bytes"
+   },
+   "wideStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "640x360",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "848x480",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     },
+     {
+      "bw": 3696000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f5-v1-a1.m3u8"
+     },
+     {
+      "bw": 4596000,
+      "res": "1280x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f6-v1-a1.m3u8"
+     },
+     {
+      "bw": 6471000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f7-v1-a1.m3u8"
+     },
+     {
+      "bw": 8346000,
+      "res": "1280x720",
+      "fps": "59.920",
+      "codecs": "avc1.640020,mp4a.40.2",
+      "uri": "index-f8-v1-a1.m3u8"
+     }
+    ]
+   },
+   "upStream": {
+    "s": 200,
+    "acao": "*",
+    "vs": [
+     {
+      "bw": 696000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f1-v1-a1.m3u8"
+     },
+     {
+      "bw": 1296000,
+      "res": "360x640",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f2-v1-a1.m3u8"
+     },
+     {
+      "bw": 1896000,
+      "res": "406x720",
+      "fps": "29.970",
+      "codecs": "avc1.64001e,mp4a.40.2",
+      "uri": "index-f3-v1-a1.m3u8"
+     },
+     {
+      "bw": 2796000,
+      "res": "406x720",
+      "fps": "59.920",
+      "codecs": "avc1.64001f,mp4a.40.2",
+      "uri": "index-f4-v1-a1.m3u8"
+     }
+    ]
+   },
+   "tries": {
+    "up_mp4": 200,
+    "up_mp4_size": {
+     "codec": "h264",
+     "w": 1080,
+     "h": 1920,
+     "fps": "48600000/810811",
+     "vbr": 10690606,
+     "br": 10959153,
+     "dur": 72.097959
+    },
+    "up_1080": 403,
+    "wide_1080p": 403,
+    "wide_720p": 403,
+    "common_mp4": 403,
+    "sq_mp4": 403,
+    "v4x5": 403,
+    "hls_1x1": 502,
+    "hls_4x5": 502,
+    "hls_16x9": 502
+   },
+   "rec": {
+    "thumbnail": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447.jpg",
+    "images.0.url": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447.jpg",
+    "posterImages.default.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447_default.jpg",
+    "posterImages.firstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447/thumb-1-w720-h406-f4.jp",
+    "posterImages.full.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447.jpg",
+    "posterImages.square.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447_1x1.jpg",
+    "posterImages.vertical.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447_9x16.jpg",
+    "posterImages.verticalFirstFrame.href": "cmp-espn.media.dssott.com/opp/img/espn/9x16/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447/thumb-1-w406-h720-",
+    "posterImages.wide.href": "espnmedia-cdn.akamaized.net/espn/media/common/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447_5x2.jpg",
+    "links.api.artwork.href": "artwork.api.espn.com/artwork/collections/media/90f73b49-943c-458f-b628-bea76fa4ad23",
+    "links.mobile.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447.mp4",
+    "links.source.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447.mp4",
+    "links.source.HD.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447.mp4",
+    "links.source.HLS.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447/playlist.m3u8",
+    "links.source.HLS.9x16.href": "cmp-espn.media.dssott.com/opp/hls/espn/9x16/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447/playlist.m3u8",
+    "links.source.HLS.HD.href": "cmp-espn.media.dssott.com/opp/hls/espn/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447/playlist.m3u8",
+    "links.source.HLS.cmaf.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447/playlist.m3u8",
+    "links.source.HLS.cmaf.9x16.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/9x16/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447/playlist.m3u8",
+    "links.source.HLS.cmaf.cmb.href": "cmp-espn.media.dssott.com/opp/cmaf/espn/cmb/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447/playlist.m3u8",
+    "links.source.HLS.cmb.href": "cmp-espn.media.dssott.com/opp/hls/espn/cmb/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447/playlist.m3u8",
+    "links.source.HLS.shield.href": "watch.auth.api.espn.com/video/auth/media/90f73b49-943c-458f-b628-bea76fa4ad23/asset",
+    "links.source.flash.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447.mp4",
+    "links.source.full.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447.mp4",
+    "links.source.mezzanine.href": "espnmedia-cdn.akamaized.net/espn/media/16x9/wsc/2026/1110/71721c9d-dbfc-4279-850a-20eb49ec4447/71721c9d-dbfc-4279-850a-20eb49ec4447.mp4"
+   },
+   "rec2": 404,
+   "wideTop": {
+    "codec": "h264",
+    "w": 1280,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 66,
+    "dur": 72.104997
+   },
+   "upTop": {
+    "codec": "h264",
+    "w": 406,
+    "h": 720,
+    "fps": "60000/1001",
+    "vbr": null,
+    "br": 66,
+    "dur": 72.088997
+   }
+  }
+ ]
+}
