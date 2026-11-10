@@ -913,6 +913,13 @@
      ranks them: your players and teams first, then what you tend to finish (players and kinds of play), the plays that
      swung games, the newest. What you finish counts for a clip's players and its kind; what you leave in the first
      couple of seconds counts against. All of it stays on this phone ('v5:taste'). */
+  /* v461 like and save. A like is the strongest thing the For you ranking hears (it counts double a clip watched through).
+     A saved clip is kept whole on the phone, so it still plays after it has left the feeds; the Saved ring holds them. */
+  const stLikes = () => store.get('v5:likes', []) || [];
+  const stSaved = () => (store.get('v5:saved', []) || []).filter(x => x && x.id && x.url);
+  const stLike = it => { const l = stLikes(), on = !l.includes(it.id); store.set('v5:likes', on ? [...l, it.id].slice(-500) : l.filter(x => x !== it.id)); stLearn(it, on ? 2 : -2); return on; };
+  const stSave = it => { const l = stSaved(), on = !l.some(x => x.id === it.id);
+    store.set('v5:saved', on ? [{ id: it.id, ts: it.ts, url: it.url, v9: it.v9 || '', title: it.title, dur: it.dur, thumb: it.thumb || '', ck: it.ck || 'play', aths: it.aths || [], sub: it.sub || '', tag: it.tag || '', lk: (it.L && it.L.key) || '', at: Date.now() }, ...l].slice(0, 150) : l.filter(x => x.id !== it.id)); return on; };
   let feedD = null, feedAt = 0;
   const feedLoad = () => { if (Date.now() - feedAt < 20 * 60000 || !HW.hub) return; feedAt = Date.now(); HW.hub.file('feed.json').then(d => { if (d && d.items) { feedD = d; if (homeRepaint && !stEl) homeRepaint(); } }).catch(() => {}); };
   const PLAYKINDS = [['clutch', /buzzer|game[- ]winner|go-ahead|dagger|ties it/i], ['dunk', /dunk|slam|\bjam\b|flush|hammer|alley-oop|\blob\b/i], ['block', /block|swat|denies|stuff|reject/i], ['three', /3-point|three|triple|trey|from deep|downtown|behind the arc|\b3s?\b|the range/i], ['and1', /and-1|plus the (foul|contact)/i], ['steal', /steal/i], ['pass', /assist|pass|dime|finds|sets up/i]];
@@ -1003,6 +1010,7 @@
           const sn = new Set(seen[`${lk}:top`] || []); subs.push({ key: `${lk}:top`, lk, kind: 'league', id: 'top', name: `Top ${its.length}`, abbr: L.short, full: `${L.short} biggest plays`, color: '#5b3df5', its, un: its.some(x => !sn.has(x.id)), last: Math.max(...its.map(x => x.ts)) }); } }
     });
     const fs = feedSubject(subs, now, seen); subs.sort((a, b) => (b.un - a.un) || (b.last - a.last)); if (fs) subs.push(fs);   // For you always sits last: it is where the rings lead
+    const sv = stSaved(); if (sv.length) subs.push({ key: 'all:saved', lk: 'all', kind: 'saved', id: 'saved', name: 'Saved', full: 'Saved', color: '#3a3f4b', its: sv.map(x => Object.assign({ kind: 'vid', L: LEAGUES[x.lk] || null }, x)), un: false, last: 0 });
     return subs;
   }
   /* v458 sharp from the first frame. The upright stream is a ladder of renditions and a browser left to choose starts on
@@ -1029,7 +1037,7 @@
       x.its.slice(i, i + 2).forEach((it, k) => { if (it.kind !== 'vid' || !it.v9) return; const p = v9Pick(it.v9);
         // the opening seconds of the first clip in the first two unwatched rings are fetched ahead, so the tap has something to show at once
         if (n < 2 && k === 0 && x.un && !light && !stHead.has(it.v9)) { stHead.add(it.v9); p.then(u => u === it.v9 ? null : fetch(u).then(r => r.ok ? r.text() : '').then(tx => { const seg = String(tx).split(/\r?\n/).find(l => l && !l.startsWith('#')); if (seg) return fetch(new URL(seg.trim(), u).href).then(r => r.arrayBuffer()); })).catch(() => {}); } }); }); };
-  const stAvatar = (x, size) => x.kind === 'feed' ? `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a.9.9 0 0 0 1.4.8l10.4-6.8a.9.9 0 0 0 0-1.6L9.4 4.4A.9.9 0 0 0 8 5.2z"/></svg>` : x.kind === 'league' ? size > 24 ? `<b>${esc(x.abbr || '')}</b>` : `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.5 13.4h5.9L9.3 22l9.2-12.1h-6.1L13.2 2z"/></svg>` : x.kind === 'player' ? headshot(x.hs, x.color, size, x.full || x.name) : x.logo ? imgSized(x.logo, size * 2, size * 2) : `<b>${esc(x.abbr || '')}</b>`;
+  const stAvatar = (x, size) => x.kind === 'saved' ? `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.2a.6.6 0 0 1-1 .5L12 16.4l-5.5 4.3a.6.6 0 0 1-1-.5V5A1.5 1.5 0 0 1 7 3.5z"/></svg>` : x.kind === 'feed' ? `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a.9.9 0 0 0 1.4.8l10.4-6.8a.9.9 0 0 0 0-1.6L9.4 4.4A.9.9 0 0 0 8 5.2z"/></svg>` : x.kind === 'league' ? size > 24 ? `<b>${esc(x.abbr || '')}</b>` : `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.5 13.4h5.9L9.3 22l9.2-12.1h-6.1L13.2 2z"/></svg>` : x.kind === 'player' ? headshot(x.hs, x.color, size, x.full || x.name) : x.logo ? imgSized(x.logo, size * 2, size * 2) : `<b>${esc(x.abbr || '')}</b>`;
   function bubbles() {
     const subs = storySubjects(); if (!subs.length) return ''; stWarm(subs);
     return `<div class="sbubs">${subs.map(x => `<button class="sbub${x.un ? '' : ' seen'}${x.kind === 'player' ? ' pl' : ''}" data-act="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span class="ring"><span>${stAvatar(x, x.kind === 'player' ? 52 : 30)}</span></span><small>${esc(x.name)}</small></button>`).join('')}</div>`;
@@ -1044,9 +1052,12 @@
   function storyOpen(key) {
     if (stEl) return;
     const subs = storySubjects(); let si = subs.findIndex(x => x.key === key); if (si < 0) return;
+    { const lastSub = [...subs].reverse().find(x => x.kind !== 'saved'); const nx = [];
+      ORDER.forEach(lk => { const o = feedSrc[lk] && feedSrc[lk].out; ((o && o.myTeams) || []).forEach(t => { const g = t.nx; if (!g || nx.some(n => n.id === g.id) || !(new Date(g.date).getTime() > Date.now() - 20 * 60000)) return; const home = String(g.home.id) === String(t.id); nx.push({ id: g.id, t: new Date(g.date).getTime(), home, us: home ? g.home : g.away, them: home ? g.away : g.home, when: `${relDay(HW.ymdOf(g.date))}, ${tipOf(g)}` }); }); });
+      if (lastSub && subs[si].kind !== 'saved') lastSub.its = [...lastSub.its, { kind: 'caught', id: 'c' + todayCT(), ts: Date.now(), nx: nx.sort((a, b) => a.t - b.t).slice(0, 3) }]; }
     const W = innerWidth, H = innerHeight, HYP = Math.ceil(Math.hypot(W, H) / 2) + 4;
     const el = document.createElement('div'); el.className = 'story';
-    el.innerHTML = `<div class="stdim"></div><div class="stpane"><div class="stbg"></div><div class="stblur"></div><div class="stmedia"><div class="stvdw" hidden><video class="on" playsinline preload="auto"></video><video playsinline preload="auto" muted></video></div><div class="stcd" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stcap"></div></div></div>`;
+    el.innerHTML = `<div class="stdim"></div><div class="stpane"><div class="stbg"></div><div class="stblur"></div><div class="stmedia"><div class="stvdw" hidden><video class="on" playsinline preload="auto"></video><video playsinline preload="auto" muted></video></div><div class="stcd" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stact" hidden><button data-stb="like" aria-label="Like" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3 4.6 13a4.9 4.9 0 0 1 0-7 5 5 0 0 1 7 0l.4.4.4-.4a5 5 0 0 1 7 0 4.9 4.9 0 0 1 0 7L12 20.3z"/></svg></button><button data-stb="save" aria-label="Save" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.2a.6.6 0 0 1-1 .5L12 16.4l-5.5 4.3a.6.6 0 0 1-1-.5V5A1.5 1.5 0 0 1 7 3.5z"/></svg></button></div><div class="stcap"></div></div></div>`;
     document.body.appendChild(el); stEl = el; document.documentElement.classList.add('stlock');
     const pane = el.querySelector('.stpane'), dim = el.querySelector('.stdim'); let [vd, sb] = [...el.querySelectorAll('video')];   // vd plays; sb holds the next clip, loaded and waiting
     /* the upright stream plays where the browser reads that kind itself (iPhone, iPad, Android, newer desktop); anywhere
@@ -1087,6 +1098,7 @@
     const head = () => { const x = sub(), it = item(); pane.querySelector('.sthd').innerHTML = `<span class="ring"><span>${stAvatar(x, x.kind === 'player' ? 34 : 22)}</span></span><span class="who"><b>${esc(x.full || x.name)}</b><small>${esc(ago(new Date(it.ts).toISOString()).replace(/ ago$/, ''))}</small></span><button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`; };
     const render = () => {
       leave(); const x = sub(), it = item(); stMark(x.key, it.id); head(); segs(); t0 = performance.now();
+      const act = pane.querySelector('.stact'); act.hidden = it.kind !== 'vid'; if (it.kind === 'vid') { const lk = stLikes().includes(it.id), sv = stSaved().some(y => y.id === it.id); const [bl2, bs2] = act.children; bl2.classList.toggle('on', lk); bl2.setAttribute('aria-pressed', lk); bs2.classList.toggle('on', sv); bs2.setAttribute('aria-pressed', sv); }
       const card = pane.querySelector('.stcd'), vw = pane.querySelector('.stvdw'), cap = pane.querySelector('.stcap'), bg = pane.querySelector('.stbg'), bl = pane.querySelector('.stblur');
       if (it.kind === 'vid') {
         bg.style.background = `linear-gradient(170deg,#050506 30%,${x.color} 190%)`; bl.style.backgroundImage = it.thumb ? `url("${it.thumb}")` : 'none';
@@ -1120,6 +1132,9 @@
           const a = Math.round(mine(sw.from) * 100), b = Math.round(mine(sw.to) * 100); const q = sw.q; const ck = String((q.clock || {}).displayValue || '');
           const sc = q.homeScore != null ? ` \u00b7 ${us.abbr || us.short} ${home ? q.homeScore : q.awayScore}, ${them.abbr || them.short} ${home ? q.awayScore : q.homeScore}` : '';
           card.innerHTML = `<span class="fin">Biggest swing</span><div class="stsw"><svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none" aria-hidden="true">${sw.brk.map(i => `<line class="pb" x1="${X(i).toFixed(1)}" x2="${X(i).toFixed(1)}" y1="0" y2="${Hh}"/>`).join('')}<line class="mid" x1="0" x2="${W}" y1="${Hh / 2}" y2="${Hh / 2}"/><polygon class="ar" points="0,${Hh / 2} ${pts} ${W},${Hh / 2}"/><polyline class="ln" points="${pts}"/></svg><i class="dot" style="left:${(X(sw.i) / W * 100).toFixed(2)}%;top:${(Y(sw.to) / Hh * 100).toFixed(2)}%"></i><span class="ax t">${esc(us.abbr || us.short)}</span><span class="ax b">${esc(them.abbr || them.short)}</span></div><div class="stpc"><b>${a}%</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg><b class="${b >= a ? 'up' : 'dn'}">${b}%</b></div><span class="stpl">${esc(us.short)} win chance</span><p class="sttx">${esc(String(q.text))}</p><span class="stwh">${esc(perLbl(q))}${ck ? ' ' + esc(ck) : ''}${esc(sc)}</span>`;
+        } else if (it.kind === 'caught') {
+          bg.style.background = 'linear-gradient(165deg,#0a0a0c 30%,#2b1f7a 140%)';
+          card.innerHTML = `<svg class="stok" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="27"/><path d="M20 33.5l8.5 8.5L45 24.5"/></svg><b class="lnnm">You're caught up</b><span class="stpl">That is everything new from your teams and players.</span>${it.nx.length ? `<span class="fin stnxh">Next up</span><div class="stnx">${it.nx.map(n => `<div>${n.us.logo ? imgSized(n.us.logo, 56, 56) : ''}<span><b>${esc(n.us.short)} ${n.home ? 'vs' : 'at'} ${esc(n.them.short)}</b><small>${esc(n.when)}</small></span></div>`).join('')}</div>` : ''}`;
         } else if (it.kind === 'tops') { const home = String(g.home.id) === it.tid; const us = home ? g.home : g.away, them = home ? g.away : g.home; const won = +us.score > +them.score;
           bg.style.background = `linear-gradient(165deg,#0a0a0c 35%,${x.color} 150%)`;
           card.innerHTML = `<span class="fin">Top scorers</span><div class="sttp">${it.tp.map(a => `<div class="tpr">${headshot(a.hs, x.color, 60, a.name)}<span><b>${esc(a.name)}</b><small>${[[a.pts, 'PTS'], [a.reb, 'REB'], [a.ast, 'AST']].filter(c => c[0] != null).map(c => `${c[0]} ${c[1]}`).join(' \u00b7 ')}</small></span></div>`).join('')}</div><span class="stwh">${esc(us.short)} ${esc(String(us.score))}, ${esc(them.short)} ${esc(String(them.score))} \u00b7 ${won ? 'Win' : 'Loss'}</span>`;
@@ -1161,7 +1176,7 @@
     stPop = () => close(true); addEventListener('popstate', stPop);
     // ---- gestures
     let px = 0, py = 0, pt = 0, mode = '', hold = 0, held = false, lastY = 0, lastT = 0, vy = 0;
-    el.addEventListener('pointerdown', e => { if (busy || e.target.closest('[data-stx]')) return; px = e.clientX; py = e.clientY; pt = lastT = performance.now(); lastY = py; mode = ''; held = false; vy = 0;
+    el.addEventListener('pointerdown', e => { if (busy || e.target.closest('[data-stx],[data-stb]')) return; px = e.clientX; py = e.clientY; pt = lastT = performance.now(); lastY = py; mode = ''; held = false; vy = 0;
       if (quiet) { quiet = false; vd.muted = false; }
       try { el.setPointerCapture(e.pointerId); } catch (er) {} clearTimeout(hold); hold = setTimeout(() => { held = true; pause(); }, 190); });
     el.addEventListener('pointermove', e => { if (!pt || busy) return; const dx = e.clientX - px, dy = e.clientY - py;
@@ -1179,10 +1194,15 @@
         if (Math.abs(dx) > 70) { resume(); return turn(dx < 0 ? 1 : -1); }
         pane.animate([{ transform: cur }, { transform: 'rotateY(0deg)' }], { duration: 240, easing: EASE }).finished.then(() => { pane.style.transformOrigin = ''; }); resume(); return; }
       if (held) { held = false; resume(); return; }
-      if (e.target.closest('[data-stx]')) return;
+      if (e.target.closest('[data-stx],[data-stb]')) return;
       resume(); step(e.clientX < W * .3 ? -1 : 1); };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', e => { pt = 0; mode = ''; pane.style.transform = ''; dim.style.opacity = ''; resume(); });
-    el.addEventListener('click', e => { if (e.target.closest('[data-stx]')) { e.preventDefault(); close(); } });
+    el.addEventListener('click', e => { if (e.target.closest('[data-stx]')) { e.preventDefault(); return close(); }
+      const b = e.target.closest('[data-stb]'), it = item(); if (!b || !it || it.kind !== 'vid') return; e.preventDefault();
+      const on = b.dataset.stb === 'like' ? stLike(it) : stSave(it); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+      if (RM()) return; b.firstChild.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.42)' }, { transform: 'scale(.92)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'cubic-bezier(.3,1.5,.5,1)' });
+      // a like throws a heart up the middle of the clip
+      if (on && b.dataset.stb === 'like') { const h = document.createElement('div'); h.className = 'stburst'; h.innerHTML = b.innerHTML; pane.appendChild(h); h.animate([{ opacity: 0, transform: 'translate(-50%,-50%) scale(.3) rotate(-12deg)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.15) rotate(4deg)', offset: .3 }, { opacity: 1, transform: 'translate(-50%,-58%) scale(1) rotate(0deg)', offset: .6 }, { opacity: 0, transform: 'translate(-50%,-95%) scale(.9)' }], { duration: 820, easing: 'ease-out' }).finished.then(() => h.remove(), () => h.remove()); } });
     [vd, sb].forEach(v => { v.addEventListener('ended', e => { if (e.currentTarget === vd && !busy && !paused) step(1); });
       v.addEventListener('error', e => { const me = e.currentTarget;
         // the waiting clip failed to load: forget it, and its upright stream, so its turn starts clean on the wide file
@@ -1194,7 +1214,7 @@
     // ---- in: grow out of the bubble
     const sn = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sn.has(y.id)));
     const r0 = bubbleOf(key); render(); prep(true); raf = requestAnimationFrame(tick);
-    el.__st = { get busy() { return busy; }, get ii() { return ii; }, get paused() { return paused; }, get si() { return si; }, get names() { return subs.map(x => x.name); }, get items() { return sub().its.map(x => x.kind === 'vid' ? `${x.ck || 'post'} | ${x.title} | ${x.tag || ''}${x.gw ? ' GW' : ''}${x.ln ? ' +line' : ''} | ${x.v9 ? 'v9' : 'wide'}` : x.kind); }, go(n) { ii = n; render(); }, get kind() { return sub().kind; } };   // read by the test harness
+    el.__st = { get busy() { return busy; }, get ii() { return ii; }, get paused() { return paused; }, get si() { return si; }, get names() { return subs.map(x => x.name); }, get items() { return sub().its.map(x => x.kind === 'vid' ? `${x.ck || 'post'} | ${x.title} | ${x.tag || ''}${x.gw ? ' GW' : ''}${x.ln ? ' +line' : ''} | ${x.v9 ? 'v9' : 'wide'}` : x.kind); }, go(n) { ii = n; render(); }, last() { ii = sub().its.length - 1; render(); }, get kind() { return sub().kind; } };   // read by the test harness
     if (!RM()) { busy = true; dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: EASE });
       pane.animate([r0 ? shrunk(r0) : { transform: 'translate(0,40px) scale(.94)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 0 }, open], { duration: 360, easing: EASE }).finished.then(() => { busy = false; t0 = performance.now(); }); }
   }

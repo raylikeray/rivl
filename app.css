@@ -5454,3 +5454,28 @@ html body .sbub .ring b{letter-spacing:.02em;white-space:nowrap}
 
 /* v460 For you ring: a play mark in the ring */
 html body .sbub .ring .stbolt{width:26px;height:26px;color:var(--ink);flex:none}
+
+/* v461 like and save on a clip (a rail at the right, above the caption), the heart a like throws, the Saved ring,
+   and the card that closes the last ring: you're caught up, and what is next for your teams */
+html body .story .stact{position:absolute;right:8px;bottom:calc(env(safe-area-inset-bottom, 10px) + 132px);display:flex;flex-direction:column;gap:6px;pointer-events:auto}
+html body .story .stact[hidden]{display:none}
+html body .story .stact button{width:48px;height:48px;border:0;padding:0;display:grid;place-items:center;background:none;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
+html body .story .stact svg{width:30px;height:30px;fill:rgba(255,255,255,.001);stroke:#fff;stroke-width:1.9;stroke-linejoin:round;filter:drop-shadow(0 1px 6px rgba(0,0,0,.55));transition:fill .18s,stroke .18s}
+html body .story .stact button.on svg{fill:#fff}
+html body .story .stact button[data-stb="like"].on svg{fill:#ff375f;stroke:#ff375f}
+html body .story .stcap{right:64px}
+html body .story .stburst{position:absolute;left:50%;top:46%;width:132px;height:132px;pointer-events:none;z-index:5;opacity:0}
+html body .story .stburst svg{width:100%;height:100%;fill:#ff375f;filter:drop-shadow(0 10px 30px rgba(0,0,0,.45))}
+html body .story .stcd .stok{width:72px;height:72px;fill:none;stroke:#5ee28a;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;margin-bottom:18px}
+html body .story .stcd .stok circle{stroke:rgba(94,226,138,.32)}
+html body .story .stcd .stok path{stroke-dasharray:40;stroke-dashoffset:40;animation:stok .5s .18s cubic-bezier(.3,.8,.3,1) forwards}
+@keyframes stok{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){html body .story .stcd .stok path{animation:none;stroke-dashoffset:0}}
+html body .story .stcd .lnnm+.stpl{margin-top:8px;max-width:300px;line-height:1.35}
+html body .story .stcd .stnxh{margin-top:34px}
+html body .story .stcd .stnx{display:flex;flex-direction:column;gap:14px;margin-top:16px;width:100%;max-width:330px;text-align:left}
+html body .story .stcd .stnx>div{display:flex;align-items:center;gap:12px;min-width:0}
+html body .story .stcd .stnx img{width:34px;height:34px;object-fit:contain;flex:none}
+html body .story .stcd .stnx span{min-width:0}
+html body .story .stcd .stnx b{display:block;font-size:16px;font-weight:800;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body .story .stcd .stnx small{display:block;margin-top:2px;font-size:13px;font-weight:650;color:rgba(255,255,255,.7)}

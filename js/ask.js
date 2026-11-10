@@ -150,13 +150,13 @@
     }
     if (has(/ tonight| today| playing| next game| when .* play/)) {
       const tm = e.team; if (tm) { const sc = await HW.jSoft(`${HW.API(L)}/teams/${tm.id}/schedule`, 300000).catch(() => null); const evs = (sc && sc.events || []).map(ev => HW.parseEvent ? HW.parseEvent(ev, L) : null).filter(Boolean); const nx = evs.find(g => g.state !== 'post');
-        if (nx) { const home = nx.home.id === tm.id, op = home ? nx.away : nx.home; return { html: card(who(e), `The ${esc(tm.short || tm.name)} play ${home ? 'the' : 'at'} ${esc(op.short)} ${esc(HW.relDay ? HW.relDay(HW.ymdOf(nx.date)) : '')} at ${esc(HW.tipOf ? HW.tipOf(nx) : '')}.`, [], '', 'ESPN schedule') + `<a class="xgo" href="${_.href.game(e.lk, nx.id)}">Open the game ${_.chev}</a>`, kind: 'intent' }; } }
+        if (nx) { const home = nx.home.id === tm.id, op = home ? nx.away : nx.home; return { html: card(who(e), `The ${esc(tm.short || tm.name)} play ${home ? 'the' : 'at'} ${esc(op.short)} ${esc(HW.relDay ? HW.relDay(HW.ymdOf(nx.date)) : '')} at ${esc(HW.tipOf ? HW.tipOf(nx) : '')}.`, [], '', '') + `<a class="xgo" href="${_.href.game(e.lk, nx.id)}">Open the game ${_.chev}</a>`, kind: 'intent' }; } }
     }
     const q = [/ draft| pick /, / high school| highschool| hs /, / college| university| graduat| attend| went to/, / born| from | hometown| where .* from/, / how old| age | birthday/, / how tall| height| weigh/];
     const which = q.findIndex(re => has(re));
     if (which >= 0) {
       const a = await bio(e); if (!a) return { html: card(who(e), NOPE, [], 'The player feed did not answer. Try again in a moment.'), kind: 'intent' };
-      const src = 'ESPN player profile';
+      const src = '';
       if (which === 0) { const d = a.draft; const txt = d && d.year ? `${esc(e.name)} was drafted ${d.selection ? ord(d.selection) + ' overall' : ''}${d.round ? ` in round ${d.round}` : ''} in ${d.year}${d.team && (d.team.displayName || d.team.name) ? ` by the ${esc(d.team.displayName || d.team.name)}` : ''}.` : a.displayDraft ? esc(a.displayDraft) : e.lk.startsWith('ncaa') ? `${esc(e.name)} hasn't been drafted yet.` : `${esc(e.name)} went undrafted.`;
         return { html: card(who(e), txt, [['Year', d && d.year], ['Round', d && d.round], ['Pick', d && d.selection], ['College', a.college && a.college.name]], '', src), kind: 'intent' }; }
       if (which === 1) { const hs = a.highSchool && (a.highSchool.name || a.highSchool); return { html: hs ? card(who(e), `${esc(e.name)} went to ${esc(hs)}.`, [['High school', hs], ['Hometown', a.birthPlace && [a.birthPlace.city, a.birthPlace.state].filter(Boolean).join(', ')]], '', src) : null, kind: hs ? 'intent' : 'web' }; }
@@ -198,14 +198,14 @@
     if (has(/ schedule| next| upcoming| when do| when does| play next/)) {
       const sc = await HW.jSoft(`${HW.API(L)}/teams/${e.id}/schedule`, 300000).catch(() => null);
       const evs = (sc && sc.events || []).map(ev => HW.parseEvent ? HW.parseEvent(ev, L) : null).filter(Boolean).filter(g => g.state !== 'post').slice(0, 4);
-      return { html: `<div class="xans">${twho(e, 'Schedule')}${evs.length ? `<div class="xsched">${evs.map(g => { const home = g.home.id === e.id, op = home ? g.away : g.home; return `<a href="${_.href.game(e.lk, g.id)}"><span>${esc(HW.relDay ? HW.relDay(HW.ymdOf(g.date)) : '')}</span><span>${home ? 'vs' : 'at'} ${crest(op, 20)} ${esc(op.short)}</span><b>${esc(HW.tipOf ? HW.tipOf(g) : '')}</b></a>`; }).join('')}</div>` : '<p class="xline">No games scheduled yet.</p>'}<p class="xsrc">ESPN schedule</p></div>`, kind: 'intent' };
+      return { html: `<div class="xans">${twho(e, 'Schedule')}${evs.length ? `<div class="xsched">${evs.map(g => { const home = g.home.id === e.id, op = home ? g.away : g.home; return `<a href="${_.href.game(e.lk, g.id)}"><span>${esc(HW.relDay ? HW.relDay(HW.ymdOf(g.date)) : '')}</span><span>${home ? 'vs' : 'at'} ${crest(op, 20)} ${esc(op.short)}</span><b>${esc(HW.tipOf ? HW.tipOf(g) : '')}</b></a>`; }).join('')}</div>` : '<p class="xline">No games scheduled yet.</p>'}</div>`, kind: 'intent' };
     }
     if (has(/ roster| how many| players| coach/)) {
       const r = await HW.jSoft(`${HW.API(L)}/teams/${e.id}/roster`, 900000).catch(() => null);
       const n = r && r.athletes ? (Array.isArray(r.athletes[0] && r.athletes[0].items) ? r.athletes.reduce((s, g) => s + g.items.length, 0) : r.athletes.length) : 0;
       const co = r && r.coach && r.coach[0]; const coach = co ? `${co.firstName || ''} ${co.lastName || ''}`.trim() : '';
       const line = has(/ coach/) ? (coach ? `${esc(coach)} coaches ${esc(t.name)}.` : NOPE) : `${esc(t.name)} ${n ? `have ${n} players on the roster` : 'roster is not posted yet'}${e.lk === 'nba' && n ? ' (NBA teams carry up to 15, plus 3 two-way players)' : ''}.`;
-      return { html: card(twho(e), line, [['Players', n || ''], ['Head coach', coach]], '', 'ESPN roster') + `<a class="xgo" href="${tHref(e)}">See the roster ${_.chev}</a>`, kind: 'intent' };
+      return { html: card(twho(e), line, [['Players', n || ''], ['Head coach', coach]], '', '') + `<a class="xgo" href="${tHref(e)}">See the roster ${_.chev}</a>`, kind: 'intent' };
     }
     /* The team answer: everything about the team on one card, and when a school has a men's and a women's team, one card
        for the school with both, so a search for "UConn" never shows the same crest three times. Each team: where it stands
@@ -269,7 +269,7 @@
     return `<div class="xans xcmp"><div class="xch" ${cols}>${es.map(e => `<a href="${pHref(e)}" style="${_.tcv(pColor(e))}">${face(e, n > 3 ? 46 : n > 2 ? 54 : 64)}<b>${esc(e.name.replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/i, '').split(' ').slice(-1)[0])}</b><em>${esc((e.team && (e.team.abbr || e.team.short)) || e.p.team)}${e.lk !== 'nba' ? ' · ' + esc(LNAME(e.lk)) : ''}</em></a>`).join('')}</div><p class="xnote xc">${lbl}</p>`
       + rows.map(([label, k]) => { const vals = es.map(e => typeof k === 'function' ? k(e) : v(e, k)); const nums = vals.filter(x => x != null); const best = k === 'min' || k === 'gp' ? null : nums.length ? Math.max(...nums) : null;
           return `<div class="xcr"><span>${label}</span><div ${cols}>${vals.map(x => `<b class="${x != null && best != null && Math.abs(x - best) < 1e-9 && nums.length > 1 ? 'w' : ''}">${x == null ? '-' : k === 'gp' ? Math.round(x) : one(x)}</b>`).join('')}</div></div>`; }).join('')
-      + `<p class="xsrc">ESPN stats, through RIVL's data file</p></div>`;
+      + `</div>`;
   }
   async function cmpTeams(a, b) {
     const same = a.lk === b.lk;
@@ -285,7 +285,7 @@
     return `<div class="xans xcmp2" style="--ca:${esc(ca)};--cb:${esc(cb)}"><div class="xch2">${[a, b].map(e => `<a href="${tHref(e)}">${crest(e.t, 56)}<b>${esc(e.t.short || e.t.name)}</b><em>${esc(LNAME(e.lk))}</em></a>`).join('<span class="vs">vs</span>')}</div>${pr}`
       + rows.map(r => { const aw = r[3] && r[4] != null && r[5] != null && r[4] * r[3] > r[5] * r[3], bw = r[3] && r[4] != null && r[5] != null && r[5] * r[3] > r[4] * r[3];
           return `<div class="xcr2"><b class="${aw ? 'w' : ''}">${esc(String(r[1]))}</b><span>${r[0]}</span><b class="${bw ? 'w' : ''}">${esc(String(r[2]))}</b></div>`; }).join('')
-      + (same ? '' : '<p class="xnote">Teams at different levels never play each other, so there is no prediction. Here are the numbers side by side.</p>') + '<p class="xsrc">ESPN standings</p></div>';
+      + (same ? '' : '<p class="xnote">Teams at different levels never play each other, so there is no prediction. Here are the numbers side by side.</p>') + '</div>';
   }
 
   /* ---------- past the app's own data: Wikidata, Wikipedia, ESPN headlines ---------- */
@@ -424,7 +424,7 @@
     const d = await HW.jSoft(`${HW.API(L)}/news?limit=50`, 600000).catch(() => null); const keys = e.type === 'p' ? [norm(e.name).split(' ').slice(-1)[0]] : [norm(e.t.short), norm(e.t.name)];
     const items = (d && d.articles || []).filter(a => { const t = norm((a.headline || '') + ' ' + (a.description || '')); return keys.some(k => k && t.includes(k)); }).slice(0, 3);
     if (!items.length) return '';
-    return `<div class="xans xweb"><span class="xk">Latest from ESPN</span>${items.map(a => `<div class="xnews">${a.images && a.images[0] ? `<img src="${esc(a.images[0].url)}" alt="" loading="lazy">` : ''}<span><b>${esc(a.headline)}</b><em>${esc(HW.ago ? HW.ago(a.published) : '')}${a.description ? ' · ' + esc(a.description) : ''}</em></span></div>`).join('')}<p class="xsrc">ESPN headlines</p></div>`;
+    return `<div class="xans xweb"><span class="xk">Latest news</span>${items.map(a => `<div class="xnews">${a.images && a.images[0] ? `<img src="${esc(a.images[0].url)}" alt="" loading="lazy">` : ''}<span><b>${esc(a.headline)}</b><em>${esc(HW.ago ? HW.ago(a.published) : '')}${a.description ? ' · ' + esc(a.description) : ''}</em></span></div>`).join('')}</div>`;
   }
 
   /* ---------- the screen ---------- */
