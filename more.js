@@ -27,10 +27,12 @@
   /* ---------- pull to refresh ---------- */
   /* v469: not while a story or clip is open. Pulling one down closes it, and the refresh circle was showing behind it. */
   const ptr = document.createElement('div'); ptr.className = 'ptr'; ptr.innerHTML = '<i></i>'; document.body.appendChild(ptr);
-  let y0 = 0, pulling = false, armed = false;
+  let y0 = 0, x0 = 0, dir = 0, pulling = false, armed = false;
   const reset = () => { ptr.classList.remove('arm', 'go'); ptr.style.removeProperty('--p'); armed = false; };
-  window.addEventListener('touchstart', e => { pulling = window.scrollY <= 0 && !document.body.classList.contains('noscroll') && !document.querySelector('.story') && e.touches.length === 1; y0 = pulling ? e.touches[0].clientY : 0; }, { passive: true });
-  window.addEventListener('touchmove', e => { if (!pulling) return; if (document.querySelector('.story')) { pulling = false; reset(); return; } const dy = e.touches[0].clientY - y0; if (dy <= 0 || window.scrollY > 0) { reset(); return; } const d = Math.min(dy, 130); ptr.style.setProperty('--p', (d / 90).toFixed(2)); armed = d > 84; ptr.classList.toggle('arm', armed); }, { passive: true });
+  window.addEventListener('touchstart', e => { pulling = window.scrollY <= 0 && !document.body.classList.contains('noscroll') && !document.querySelector('.story') && e.touches.length === 1; y0 = pulling ? e.touches[0].clientY : 0; x0 = pulling ? e.touches[0].clientX : 0; dir = 0; }, { passive: true });
+  window.addEventListener('touchmove', e => { if (!pulling) return; if (document.querySelector('.story')) { pulling = false; reset(); return; } const dy = e.touches[0].clientY - y0;
+    /* a swipe that starts sideways (a row of cards) is not a pull, even if the finger then drifts down (v490) */
+    if (!dir) { const dx = Math.abs(e.touches[0].clientX - x0); if (dx > 6 || Math.abs(dy) > 6) dir = dx >= Math.abs(dy) ? 1 : 2; } if (dir === 1) { pulling = false; reset(); return; } if (!dir) return; if (dy <= 0 || window.scrollY > 0) { reset(); return; } const d = Math.min(dy, 130); ptr.style.setProperty('--p', (d / 90).toFixed(2)); armed = d > 84; ptr.classList.toggle('arm', armed); }, { passive: true });
   window.addEventListener('touchend', async () => { if (!pulling) return; pulling = false; if (!armed) { reset(); return; } ptr.classList.add('go'); buzz(10); try { await V.refreshAll(); } finally { setTimeout(reset, 250); } }, { passive: true });
 
   /* ---------- haptics: a tick when something is followed or switched ---------- */

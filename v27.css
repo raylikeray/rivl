@@ -1,10 +1,10 @@
 /* RIVL 2027 preview (v462). Every rule sits under html.rv27, which is set only while the preview is switched on in
    Settings, so the app everyone has is untouched. Section 1: the four-tab bar, the search field, Home. */
 .tb27,.seg27{display:none}
-html.rv27{--b27:#000;--s27:#141618;--c27:#202326;--i27:#fff;--i27b:rgba(255,255,255,.72);--i27c:rgba(255,255,255,.54);--l27:rgba(255,255,255,.1);--a27:#5B93FF;--ok27:#5ee28a;
+html.rv27{--b27:#000;--tbb27:#000;--s27:#141618;--c27:#202326;--i27:#fff;--i27b:rgba(255,255,255,.72);--i27c:rgba(255,255,255,.54);--l27:rgba(255,255,255,.1);--a27:#5B93FF;--ok27:#5ee28a;
   --f27:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Inter,system-ui,sans-serif}
-@media (prefers-color-scheme:light){ html.rv27:not([data-theme="dark"]){--b27:#EEF1F5;--s27:#fff;--c27:#E4E8ED;--i27:#0A0C0E;--i27b:rgba(10,12,14,.7);--i27c:rgba(10,12,14,.6);--l27:rgba(0,0,0,.1);--a27:#1D5FE0;--ok27:#0f8a43} }
-html.rv27[data-theme="light"]{--b27:#EEF1F5;--s27:#fff;--c27:#E4E8ED;--i27:#0A0C0E;--i27b:rgba(10,12,14,.7);--i27c:rgba(10,12,14,.6);--l27:rgba(0,0,0,.1);--a27:#1D5FE0;--ok27:#0f8a43}
+@media (prefers-color-scheme:light){ html.rv27:not([data-theme="dark"]){--b27:#EEF1F5;--tbb27:#fff;--s27:#fff;--c27:#E4E8ED;--i27:#0A0C0E;--i27b:rgba(10,12,14,.7);--i27c:rgba(10,12,14,.6);--l27:rgba(0,0,0,.1);--a27:#1D5FE0;--ok27:#0f8a43} }
+html.rv27[data-theme="light"]{--b27:#EEF1F5;--tbb27:#fff;--s27:#fff;--c27:#E4E8ED;--i27:#0A0C0E;--i27b:rgba(10,12,14,.7);--i27c:rgba(10,12,14,.6);--l27:rgba(0,0,0,.1);--a27:#1D5FE0;--ok27:#0f8a43}
 
 .vq27{margin:-6px 20px 14px;font-size:12.5px;line-height:1.4;color:var(--ink-3)}
 
@@ -13,7 +13,8 @@ html.rv27[data-theme="light"]{--b27:#EEF1F5;--s27:#fff;--c27:#E4E8ED;--i27:#0A0C
 @media (max-width:1039px){ html.rv27 #tabs{display:none} }
 @media (min-width:1040px){ html.rv27 .tb27:not([hidden]){display:none!important} }
 html.rv27 .tb27:not([hidden]){display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;justify-content:space-around;align-items:flex-start;
-  padding:0 max(8px,calc((100vw - 640px)/2)) max(6px,env(safe-area-inset-bottom,0px));background:var(--s27);box-shadow:inset 0 1px 0 var(--l27);font-family:var(--f27)}
+  padding:0 max(8px,calc((100vw - 640px)/2)) max(6px,env(safe-area-inset-bottom,0px));background:var(--tbb27,var(--s27));box-shadow:inset 0 1px 0 var(--l27);font-family:var(--f27)}
+/* the bar is the same black as the strip the phone draws under it (v490), so the two read as one bar that reaches the bottom of the screen. The page cannot paint that strip itself. */
 .tb27 a{display:flex;flex-direction:column;align-items:center;gap:4px;width:76px;padding-top:10px;font-size:11px;font-weight:500;line-height:1.2;color:var(--i27c);position:relative;text-decoration:none;-webkit-touch-callout:none}
 .tb27 svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .tb27 a.on{color:var(--a27);font-weight:700}
@@ -702,3 +703,19 @@ html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .v small{display:inline!i
 .crop27 .cz27{flex:none;display:grid;justify-items:center;gap:6px;padding:16px 28px 14px}
 .crop27 .cz27 input{width:100%;height:32px;margin:0;accent-color:#fff}
 .crop27 .cz27 button{height:44px;padding:0 14px;font:600 14px/1 var(--f27);color:rgba(255,255,255,.86);text-align:center}
+
+/* Story cards with depth (v490). A player stands in front of the card: the head rises past the top edge and over the ring,
+   a shadow falls on the card behind, and a soft light sits behind the shoulders. A logo floats: larger, with a contact
+   shadow and a second shadow on the card below it. */
+.h27 .sc27.pl27>span{overflow:visible}
+.h27 .sc27.pl27>span:after{border-radius:0 0 15.5px 15.5px}
+.h27 .sc27.pl27>span:before,.h27 .sc27.tm27>span:before{content:"";position:absolute;inset:0;border-radius:15.5px;background:radial-gradient(78% 56% at 50% 36%,rgba(255,255,255,.34),rgba(255,255,255,0) 72%),linear-gradient(158deg,rgba(255,255,255,.2),rgba(255,255,255,0) 34%);pointer-events:none}
+.h27 .sc27.pl27 .sp27{top:-30px;width:200px;height:145px;margin-left:-100px;clip-path:inset(-40px 54.5px 0 54.5px);-webkit-mask-image:linear-gradient(180deg,#000 0,#000 72%,rgba(0,0,0,0) 94%);mask-image:linear-gradient(180deg,#000 0,#000 72%,rgba(0,0,0,0) 94%)}
+.h27 .sc27.pl27 .sp27 img{filter:drop-shadow(0 9px 9px rgba(0,0,0,.5)) drop-shadow(0 2px 2px rgba(0,0,0,.28))}
+.h27 .sc27.tm27 .sg27{top:12px;width:72px;height:72px;margin-left:-36px}
+.h27 .sc27.tm27 .sg27 img{filter:drop-shadow(0 0 .8px rgba(255,255,255,.95)) drop-shadow(0 0 .8px rgba(255,255,255,.95)) drop-shadow(0 3px 2px rgba(0,0,0,.34)) drop-shadow(0 12px 10px rgba(0,0,0,.42));transform:translateY(-2px)}
+.h27 .sc27.tm27 .sg27:after{content:"";position:absolute;left:50%;bottom:-13px;width:50px;height:9px;margin-left:-25px;border-radius:50%;background:rgba(0,0,0,.42);filter:blur(5px)}
+.h27 .sc27.pl27 small,.h27 .sc27.tm27 small{text-shadow:0 1px 8px rgba(0,0,0,.6)}
+/* the same lift on the bigger player and team cards */
+.h27 .pc27 .ph27 img{filter:drop-shadow(0 12px 12px rgba(0,0,0,.42))}
+.h27 .tc27 .lg27 img{filter:drop-shadow(0 0 .8px rgba(255,255,255,.95)) drop-shadow(0 0 .8px rgba(255,255,255,.95)) drop-shadow(0 4px 3px rgba(0,0,0,.3)) drop-shadow(0 16px 14px rgba(0,0,0,.4))}

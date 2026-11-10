@@ -496,8 +496,14 @@
   }
   const wColor = (lk, tm) => { const c = tm && tm.color ? '#' + String(tm.color).replace('#', '') : ((tm && tm.id && X.teamOf(lk, tm.id)) || {}).color || ''; return /^#[0-9a-f]{6}$/i.test(c) ? c : ''; };
   const wWho = new Map();   // player id -> { name, team } once the feed has answered
+  /* Watch keeps your place (v490): leave for Scores or Home, or put the app in the background, and the clip you were on is
+     the one that is there when you come back. It lasts until the app is closed (memory first, then the session store in
+     case the page was reloaded underneath). */
+  let wLast = null;
+  const wLastGet = () => { if (wLast) return wLast; try { const j = JSON.parse(sessionStorage.getItem('rivl:wlast') || 'null'); return j && j.id ? { key: j.key, it: { id: j.id } } : null; } catch (e) { return null; } };
   function wItem(el, it, x, si) {
     store.set('v5:wtab', x.key); if (x.key !== 'w:game') store.set('v5:wtab0', x.key);
+    if (/^w:(fy|fol|top)$/.test(x.key)) { wLast = { key: x.key, it }; try { sessionStorage.setItem('rivl:wlast', JSON.stringify({ key: x.key, id: it.id })); } catch (e) {} }
     wInd(el, si, false);
     const who = el.querySelector('.wa27'), L = it.L, a = (it.aths || [])[0];
     if (!L || !a) { who.hidden = true; who.innerHTML = ''; return; }
@@ -535,8 +541,10 @@
     V.busy(false);
     if (!subs.length) { V.toast('No clips right now. They show up after games tip off.'); return; }
     if (document.querySelector('.story')) return;
+    let back = null; if (!startId) { const l = wLastGet(), sub = l && subs.find(x => x.key === l.key); if (sub) { if (!sub.its.some(i => i.id === l.it.id) && l.it.url) sub.its.unshift(l.it); if (sub.its.some(i => i.id === l.it.id)) back = { key: sub.key, id: l.it.id }; } }
     let key = store.get('v5:wtab', 'w:fy'); if (startId) { const has = subs.find(x => x.key === 'w:fy' && x.its.some(i => i.id === startId)) || subs.find(x => x.its.some(i => i.id === startId)); if (has) key = has.key; else startId = ''; }
     if (!subs.some(x => x.key === key)) key = (subs.find(x => x.key === 'w:fy') || subs[0]).key;
+    if (back) { key = back.key; startId = back.id; }
     stDirty = true;
     V.storyOpen(key, startId, { watch: true, subs, chrome(el) { el.__subs = subs; wChrome(el); paintBar(); }, onItem: wItem, onSlide: wInd, onClose() { paintBar(); } });
   }
@@ -570,7 +578,7 @@
       : x.kind === 'team' ? `<span class="sg27">${x.logo ? U.imgSized(x.logo, 160, 160, 'loading="eager"', "this.outerHTML='<b>" + esc(String(x.abbr || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 4)) + "</b>'") : `<b>${esc(String(x.abbr || '').slice(0, 4))}</b>`}</span>`
       : (art ? `<img class="sa27" src="${esc(up916(art))}" data-o="${esc(art)}" alt="" onerror="if(this.dataset.o){this.src=this.dataset.o;this.removeAttribute('data-o')}else{this.parentNode.parentNode.classList.remove('art');this.remove()}">` : '')
         + (x.kind === 'league' ? `<i class="sb27">${esc(x.abbr || '')}</i>` : `<span class="si27">${x.kind === 'feed' ? SPARK : I.save}</span>`);
-    return `<button class="sc27${plain ? ` k-${x.kind}${art ? ' art' : ''}` : ''}" data-s27="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span style="${plain ? '--c:#3a3f4b;--c1:#4b515d;--c2:#15171a' : cardVars(x.color)}">${pic}<small>${x.kind === 'feed' ? SPARK : ''}${esc(name)}</small></span></button>`; };
+    return `<button class="sc27${plain ? ` k-${x.kind}${art ? ' art' : ''}` : x.kind === 'player' && x.hs ? ' pl27' : ' tm27'}" data-s27="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span style="${plain ? '--c:#3a3f4b;--c1:#4b515d;--c2:#15171a' : cardVars(x.color)}">${pic}<small>${x.kind === 'feed' ? SPARK : ''}${esc(name)}</small></span></button>`; };
   const SC = 'v5:st27'; const stMem = new Map(); let stSig = '', stAt = 0, stT = 0, stOrder = [], stDirty = false, railAt = 0, railHeld = false;
   const stRank = () => { const F = favs.all(), P = V.fplayers.all(), r = new Map(); let n = 0;
     ORDER.forEach(lk => { (F[lk] || []).forEach(id => r.set(`${lk}:t${id}`, n++)); P.filter(p => p.lk === lk).forEach(p => r.set(`${lk}:p${p.id}`, n++)); r.set(`${lk}:top`, n++); });
