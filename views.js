@@ -735,7 +735,7 @@
       const finY = games.concat(last).filter((g, i, arr) => arr.findIndex(x => x.id === g.id) === i).filter(g => isDone(g) && !g.off && (isToday(g) || (HW.ymdOf(g.date) === yday && !slateStarted)));
       const lastF = finY.filter(isFav).sort((a, b) => new Date(b.date) - new Date(a.date));
       const lastL = finY.filter(g => !isFav(g)).sort((a, b) => Math.abs(+a.home.score - +a.away.score) - Math.abs(+b.home.score - +b.away.score)).slice(0, 4);
-      s.out = { L, lk, ctx, follows: mine.length > 0 || fp.length > 0, offS, unr, liveAll, preAll, digest, doneAll, myTeams, lastF, lastL, todayAll: games.filter(g => isToday(g) && !g.off),
+      s.out = { L, lk, ctx, follows: mine.length > 0 || fp.length > 0, offS, unr, liveAll, preAll, digest, doneAll, myTeams, lastF, lastL, lines, st: S0.st, todayAll: games.filter(g => isToday(g) && !g.off),
         wire: posts.filter(p => p.tier === 0), river: posts.filter(p => p.tier >= 4), deep: s.depth < 7 };
       s.at = Date.now();
       s.subs.forEach(f => f());
@@ -1049,7 +1049,7 @@
   let stEl = null, stPop = null;
   const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   const EASE = 'cubic-bezier(.2,.9,.25,1)';
-  function storyOpen(key) {
+  function storyOpen(key, startId) {
     if (stEl) return;
     const subs = storySubjects(); let si = subs.findIndex(x => x.key === key); if (si < 0) return;
     { const lastSub = [...subs].reverse().find(x => x.kind !== 'saved'); const nx = [];
@@ -1083,7 +1083,7 @@
       const me = sb; const p = me.play(); if (p && p.then) p.then(() => { if (me !== vd) { me.pause(); if (me.currentTime > .05) me.currentTime = 0; } }, () => {}); };
     const prep = gesture => { const it = upNext(); if (!it) return; if (!upright(it) || typeof V9.get(it.v9) === 'string' || gesture) { load(it); if (upright(it)) v9Pick(it.v9); return; }
       v9Pick(it.v9).then(() => { if (!closed && upNext() === it) load(it); }); };
-    const bubbleOf = k => { const b = [...document.querySelectorAll('.sbub')].find(x => x.dataset.key === k); if (!b) return null; const r = b.querySelector('.ring').getBoundingClientRect(); return r.bottom > 0 && r.top < H ? r : null; };
+    const bubbleOf = k => { const b = [...document.querySelectorAll('.sbub,.sc27')].find(x => x.dataset.key === k); if (!b) return null; const r = (b.querySelector('.ring') || b).getBoundingClientRect(); return r.bottom > 0 && r.top < H ? r : null; };
     const shrunk = r => ({ transform: `translate(${r.left + r.width / 2 - W / 2}px,${r.top + r.height / 2 - H / 2}px) scale(${r.width / W})`, clipPath: `circle(${W / 2}px at 50% 50%)`, opacity: .6 });
     const open = { transform: 'translate(0,0) scale(1)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 1 };
     // ---- playback clock: cards run 6s, videos run on their own frames
@@ -1213,6 +1213,7 @@
         if (!busy) step(1); }); });
     // ---- in: grow out of the bubble
     const sn = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sn.has(y.id)));
+    if (startId) { const k0 = sub().its.findIndex(y => y.id === startId); if (k0 >= 0) ii = k0; }   // v462: the new Home opens a story on the clip that was tapped
     const r0 = bubbleOf(key); render(); prep(true); raf = requestAnimationFrame(tick);
     el.__st = { get busy() { return busy; }, get ii() { return ii; }, get paused() { return paused; }, get si() { return si; }, get names() { return subs.map(x => x.name); }, get items() { return sub().its.map(x => x.kind === 'vid' ? `${x.ck || 'post'} | ${x.title} | ${x.tag || ''}${x.gw ? ' GW' : ''}${x.ln ? ' +line' : ''} | ${x.v9 ? 'v9' : 'wide'}` : x.kind); }, go(n) { ii = n; render(); }, last() { ii = sub().its.length - 1; render(); }, get kind() { return sub().kind; } };   // read by the test harness
     if (!RM()) { busy = true; dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: EASE });
@@ -1947,6 +1948,8 @@
   // the slim bar shows once the head has scrolled away
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom <= fx.offsetHeight + 1; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };   // v412: the bar takes over the moment the header no longer covers its space
     window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(run); }, { passive: true }); document.addEventListener('rivl:rendered', run); }
-  HW.v5 = Object.assign(HW.v5 || {}, { feedSrc, initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard, storyOpen,
+  /* v462: what the 2027 preview (js/v27.js) reads from here */
+  const x27 = { feedSource, storySubjects, stSeen, stLike, stSave, stLikes, stSaved, onData(f) { homeRepaint = f; } };
+  HW.v5 = Object.assign(HW.v5 || {}, { x27, feedSrc, initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard, storyOpen,
     _: { pager, duelPair, panelLogo, nearPanel, duelCard, duelBlock, deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
 })();

@@ -7,7 +7,7 @@
 <meta name="description" content="RIVL: basketball, one screen. NBA, WNBA and college basketball with live scores, standings, players and your teams first.">
 <meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark light">
-<script>try{var t=JSON.parse(localStorage.getItem('hw:v5:theme'));if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<script>try{var t=JSON.parse(localStorage.getItem('hw:v5:theme'));if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}try{if(JSON.parse(localStorage.getItem('hw:v5:rv27')))document.documentElement.classList.add('rv27')}catch(e){}</script>
 <link rel="icon" href="img/mark.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -21,7 +21,8 @@
 <link rel="preconnect" href="https://site.api.espn.com" crossorigin>
 <link rel="preconnect" href="https://a.espncdn.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=461">
+<link rel="stylesheet" href="app.css?v=462">
+<link rel="stylesheet" href="v27.css?v=462">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -42,6 +43,7 @@
   <nav class="pills" id="pills" aria-label="Leagues" hidden></nav>
   </div>
   <div id="lbhome"><div class="livebar" id="livebar" hidden aria-label="Live now"><div class="lb-in"></div></div></div>
+  <nav class="seg27" id="seg27" aria-label="Scores views" hidden><a href="#scores" data-s27="scores">Games</a><a href="#standings" data-s27="standings">Standings</a><a href="#stats" data-s27="stats">Leaders</a></nav>
   <main id="main" tabindex="-1"></main>
 </div>
 <nav class="tabs" id="tabs" aria-label="Main">
@@ -52,6 +54,12 @@
   <a class="tab" data-tab="stats" href="#stats" aria-label="Stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9.2 11.3l4 4L21 7.5"/><path d="M15 7.5h6v6"/></svg><span>Stats</span></a>
   </div>
   <a class="tab srch" data-tab="search" href="#search" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.8"/><path d="m15.6 15.6 5.2 5.2"/></svg><span>Search</span></a>
+</nav>
+<nav class="tb27" id="tb27" aria-label="Main" hidden>
+  <a href="#home" data-t27="home"><svg class="f" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 4l8 7.500V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>Home</a>
+  <a href="#home" data-t27="watch"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.500v13l11-6.500z"/></svg>Watch</a>
+  <a href="#scores" data-t27="scores"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M12 5v14M7.500 10v4M16.500 10v4"/></svg>Scores</a>
+  <a href="#settings" data-t27="you"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.500" r="3.500"/><path d="M5 20c.800-3.600 3.600-5.500 7-5.500s6.200 1.900 7 5.500"/></svg>You</a>
 </nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="panel" id="panel" hidden role="dialog"><div class="panel-in"></div></div>
@@ -65,20 +73,21 @@
   </div>
 </div>
 
-<script src="config.js?v=461"></script>
-<script src="js/core.js?v=461"></script>
-<script src="js/sim.js?v=461"></script>
-<script src="js/hub.js?v=461"></script>
-<script src="js/rating.js?v=461"></script>
-<script src="views.js?v=461"></script>
-<script src="screens.js?v=461"></script>
-<script src="js/unr.js?v=461"></script>
-<script src="js/ask.js?v=461"></script>
-<script src="js/ask2.js?v=461"></script>
-<script src="js/stats.js?v=461"></script>
-<script src="js/recruit.js?v=461"></script>
-<script src="js/bracket.js?v=461"></script>
-<script src="app.js?v=461"></script>
-<script src="more.js?v=461"></script>
+<script src="config.js?v=462"></script>
+<script src="js/core.js?v=462"></script>
+<script src="js/sim.js?v=462"></script>
+<script src="js/hub.js?v=462"></script>
+<script src="js/rating.js?v=462"></script>
+<script src="views.js?v=462"></script>
+<script src="screens.js?v=462"></script>
+<script src="js/unr.js?v=462"></script>
+<script src="js/ask.js?v=462"></script>
+<script src="js/ask2.js?v=462"></script>
+<script src="js/stats.js?v=462"></script>
+<script src="js/recruit.js?v=462"></script>
+<script src="js/bracket.js?v=462"></script>
+<script src="js/v27.js?v=462"></script>
+<script src="app.js?v=462"></script>
+<script src="more.js?v=462"></script>
 </body>
 </html>
