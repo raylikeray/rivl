@@ -64,6 +64,15 @@ const cm = { ...(old.cm || {}) }, swept = fresh ? {} : { ...(old.swept || {}) };
 const FEED_KEEP = 48 * 36e5; const oldFeed = existsSync('data/feed.json') ? JSON.parse(readFileSync('data/feed.json', 'utf8')) : { items: [] };
 const feed = new Map((oldFeed.items || []).filter(x => now - x.ts < FEED_KEEP).map(x => [x.id, x]));
 const WSC = /\/espn\/media\/16x9\/(wsc\/\d{4}\/\d{4}\/[0-9a-f-]{36})\//;
+/* A clip the video service left without a player (it happens most with rookies): if the title opens with the full name of
+   a player in data/leaders.json for that league, and that player's team is one of the two in the game, the clip is his.
+   One match only; two players who fit, or none, and the clip stays untagged. Marked an: 1 so it can be told apart. */
+const LEAD = existsSync('data/leaders.json') ? JSON.parse(readFileSync('data/leaders.json', 'utf8')) : { leagues: {} };
+const EVT = new Map();   // game id -> the two teams' short codes, for the games seen this run
+const named = (lk, title, e) => { const ps = ((LEAD.leagues || {})[lk] || {}).players || []; const ta = (EVT.get(String(e)) || []).map(x => x.toUpperCase());
+  if (!ta.length) return [];
+  const hit = ps.filter(p => p.n && p.n.length > 5 && title.startsWith(p.n) && !/[\p{L}\p{N}]/u.test(title.charAt(p.n.length)) && ta.includes(String(p.team || '').toUpperCase()));
+  return hit.length === 1 ? [String(hit[0].id)] : []; };
 const wpDone = fresh ? {} : { ...(old.wp || {}) }; let cand = (old.top || []).filter(c => now - c.gt < 40 * 36e5);
 const perLbl = p => { const d = String((p.period || {}).displayValue || ''), n = +(p.period || {}).number || 0; return /quarter/i.test(d) ? `Q${n}` : /half/i.test(d) ? (n === 1 ? '1st half' : '2nd half') : d.replace(/overtime/i, 'OT'); };
 const weigh = async (lk, path, e, vids) => {
@@ -85,7 +94,7 @@ let cmAsked = 0, gamesAsked = 0;
 for (const [lk, path] of Object.entries(LG)) {
   const evs = new Map();
   for (const n of [0, 1, 2]) { const d = await get(`${SITE}/${path}/scoreboard?dates=${ymd(n)}${lk.startsWith('ncaa') ? '&groups=50&limit=400' : ''}`);
-    ((d || {}).events || []).forEach(e => { const st = ((e.status || {}).type || {}); if (st.state === 'pre') return; evs.set(String(e.id), { id: String(e.id), done: !!st.completed, t: Date.parse(e.date) || now, tm: ((((e.competitions || [])[0] || {}).competitors) || []).map(c => String((c.team || {}).id || '')).filter(Boolean) }); }); }
+    ((d || {}).events || []).forEach(e => { const st = ((e.status || {}).type || {}); if (st.state === 'pre') return; const cs = (((e.competitions || [])[0] || {}).competitors) || []; EVT.set(String(e.id), cs.map(c => String((c.team || {}).abbreviation || '')).filter(Boolean)); evs.set(String(e.id), { id: String(e.id), done: !!st.completed, t: Date.parse(e.date) || now, tm: cs.map(c => String((c.team || {}).id || '')).filter(Boolean) }); }); }
   const todo = [...evs.values()].filter(e => !(swept[e.id] && e.done && swept[e.id] - e.t > 12.5 * 36e5) || (e.done && !wpDone[e.id] && now - e.t < 36 * 36e5));
   for (let i = 0; i < todo.length; i += 8) {
     await Promise.all(todo.slice(i, i + 8).map(async e => {
@@ -109,6 +118,8 @@ for (const [id, x] of Object.entries(wpDone)) if (!(now - x.t < 4 * 864e5)) dele
 // the list the app shows: per league, the 14 biggest from games that tipped in the last 40 hours
 const top = []; for (const lk of Object.keys(LG)) top.push(...cand.filter(c => c.lk === lk).sort((x, y) => Math.abs(y.w) - Math.abs(x.w)).slice(0, 14));
 writeFileSync('data/stories.json', JSON.stringify({ ver: VER, updated: new Date().toISOString(), items: out, cm, swept, wp: wpDone, top }));
+let namedNow = 0; for (const it of feed.values()) { if ((it.a || []).length) continue; const a = named(it.lk, it.t || '', it.e); if (a.length) { it.a = a; it.an = 1; namedNow++; } }
+console.log('players read from titles', namedNow);
 writeFileSync('data/feed.json', JSON.stringify({ updated: new Date().toISOString(), items: [...feed.values()].sort((a, b) => b.ts - a.ts) }));
 console.log('feed', feed.size);
 console.log('top plays', top.length, top.slice(0, 3).map(c => `${c.lk} ${c.w} ${c.title}`));

@@ -1087,6 +1087,7 @@
     /* the upright stream plays where the browser reads that kind itself (iPhone, iPad, Android, newer desktop); anywhere
        else, or if one fails to load, the wide file plays instead. The frame takes its shape from the video that arrived. */
     const HLS = hlsOk();
+    if (watch) { vd.loop = true; sb.loop = true; }   // v471: a clip in Watch plays again until it is paused or moved past; it does not go on by itself
     const shape = () => { if (vd.videoWidth) pane.querySelector('.stvdw').classList.toggle('vert', vd.videoHeight > vd.videoWidth); };
     [vd, sb].forEach(v => { v.addEventListener('loadedmetadata', e => { if (e.currentTarget === vd) shape(); }); v.addEventListener('resize', e => { if (e.currentTarget === vd) shape(); }); });
     try { history.pushState({ story: 1 }, '', location.href); } catch (e) {}
@@ -1185,7 +1186,7 @@
       if (n < 0) { if (si > 0) return turn(-1); ii = 0; return render(); }
       ii = n; render(); };
     // ---- the cube: the page you're leaving keeps its last frame and turns away as the next one turns in
-    const turn = dir => { if (busy) return; const nsi = si + dir; if (watch) { if (nsi < 0 || nsi >= subs.length) return; el.classList.remove('wpz'); paused = false; si = nsi; const sw = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sw.has(y.id))); render(); if (!RM()) pane.querySelector('.stmedia').animate([{ opacity: .2 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' }); return; }
+    const turn = dir => { if (busy) return; const nsi = si + dir; if (watch) return hGo(nsi);
       if (nsi < 0 || nsi >= subs.length) return close();
       busy = true; const ghost = pane.cloneNode(true); ghost.classList.add('ghost');
       ghost.querySelectorAll('video').forEach(gv => { if (!gv.classList.contains('on')) return gv.remove(); const c = document.createElement('canvas'); c.width = vd.videoWidth || 1; c.height = vd.videoHeight || 1; try { c.getContext('2d').drawImage(vd, 0, 0); } catch (e) {} c.className = 'stframe'; gv.replaceWith(c); });
@@ -1210,15 +1211,14 @@
     stPop = () => close(true); addEventListener('popstate', stPop);
     // ---- gestures
     let px = 0, py = 0, pt = 0, mode = '', hold = 0, held = false, lastY = 0, lastT = 0, vy = 0;
-    el.addEventListener('pointerdown', e => { if (busy || e.target.closest('[data-stx],[data-stb],[data-w27]')) return; px = e.clientX; py = e.clientY; pt = lastT = performance.now(); lastY = py; mode = ''; held = false; vy = 0;
+    el.addEventListener('pointerdown', e => { if (busy || e.target.closest('[data-stx],[data-stb],[data-w27]')) return; px = e.clientX; py = e.clientY; pt = lastT = pd0 = performance.now(); lastY = py; mode = ''; held = false; vy = 0;
       if (quiet) { quiet = false; vd.muted = false; }
       try { el.setPointerCapture(e.pointerId); } catch (er) {} clearTimeout(hold); hold = setTimeout(() => { held = true; pause(); }, 190); });
     /* v470 Watch: the clip follows the finger up or down with the next one's picture coming in behind it */
     let peek = null; const PH = () => pane.clientHeight || H;
     const nbr = d => { const x = sub(), n = ii + d; return n < 0 ? null : x.its[n >= x.its.length ? 0 : n]; };
     const wDrag = dy => { const d = dy < 0 ? 1 : -1, nx = nbr(d), y = nx ? dy : dy * .28; pane.style.transform = `translateY(${y}px)`;
-      if (!peek) { peek = document.createElement('div'); peek.className = 'wpeek27'; el.insertBefore(peek, pane); }
-      peek.style.display = nx ? '' : 'none'; if (nx) { const u = nx.thumb || ''; if (peek.dataset.u !== u) { peek.dataset.u = u; peek.style.backgroundImage = u ? `url("${u}")` : 'none'; } peek.style.transform = `translateY(${y + d * PH()}px)`; } };
+      peekShow(nx, `translateY(${y + d * PH()}px)`); };
     const wEnd = (dy, vy0) => { const d = dy < 0 ? 1 : -1, nx = nbr(d), h = PH(), go = nx && (Math.abs(dy) > h * .16 || (Math.abs(vy0) > .45 && Math.sign(vy0) === -d));
       const from = pane.style.transform || 'none', pf = peek ? peek.style.transform : ''; pane.style.transform = '';
       if (RM()) { if (peek) peek.style.display = 'none'; if (go) step(d); return; }
@@ -1226,16 +1226,36 @@
       busy = true; if (peek) { peek.style.transform = 'none'; peek.animate([{ transform: pf }, { transform: 'none' }], { duration: 250, easing: EASE }); }
       const done = () => { busy = false; el.classList.remove('wpz'); paused = false; step(d); if (peek) setTimeout(() => { if (peek) peek.style.display = 'none'; }, 120); };
       pane.animate([{ transform: from }, { transform: `translateY(${-d * h}px)` }], { duration: 250, easing: EASE }).finished.then(done, done); };
+    /* v471 the same sideways, between the lists: the clip follows the finger and the next list's first clip comes in beside
+       it. A tab tapped slides the same way. opt.onSlide gets the position between tabs so the underline can travel with it. */
+    const tabItem = n => { const x = subs[n]; if (!x) return null; const sw = new Set(stSeen()[x.key] || []); return x.its[Math.max(0, x.its.findIndex(y => !sw.has(y.id)))] || null; };
+    const peekShow = (it, tf) => { if (!peek) { peek = document.createElement('div'); peek.className = 'wpeek27'; el.insertBefore(peek, pane); } peek.style.display = it ? '' : 'none'; if (!it) return; const u = it.thumb || ''; if (peek.dataset.u !== u) { peek.dataset.u = u; peek.style.backgroundImage = u ? `url("${u}")` : 'none'; } peek.style.transform = tf; };
+    const slideTo = (f, live) => { if (opt.onSlide) opt.onSlide(el, f, live); };
+    const hDrag = dx => { const d = dx < 0 ? 1 : -1, nx = tabItem(si + d), x = nx ? dx : dx * .25; pane.style.transform = `translateX(${x}px)`; peekShow(nx, `translateX(${x + d * W}px)`); slideTo(si - x / W, true); };
+    function hGo(nsi, from) { if (busy || nsi === si || !subs[nsi]) return; const d = nsi > si ? 1 : -1, nx = tabItem(nsi);
+      const sw = () => { el.classList.remove('wpz'); paused = false; si = nsi; const s2 = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !s2.has(y.id))); render(); };
+      pane.style.transform = ''; slideTo(nsi, false);
+      if (RM()) { if (peek) peek.style.display = 'none'; return sw(); }
+      const pf = from ? peek.style.transform : `translateX(${d * W}px)`; peekShow(nx, 'none'); busy = true; try { vd.pause(); } catch (e) {}
+      const o = { duration: 300, easing: 'cubic-bezier(.22,.8,.26,1)' };
+      if (nx) peek.animate([{ transform: pf }, { transform: 'none' }], o);
+      const done = () => { busy = false; sw(); setTimeout(() => { if (peek) peek.style.display = 'none'; }, 120); };
+      pane.animate([{ transform: from || 'none' }, { transform: `translateX(${-d * W}px)` }], o).finished.then(done, done); }
+    const hEnd = (dx, vx0) => { const d = dx < 0 ? 1 : -1, nsi = si + d, from = pane.style.transform || 'none';
+      if (subs[nsi] && (Math.abs(dx) > W * .22 || (Math.abs(vx0) > .4 && Math.abs(dx) > 28))) return hGo(nsi, from);
+      const pf = peek ? peek.style.transform : ''; pane.style.transform = ''; slideTo(si, false); if (RM()) { if (peek) peek.style.display = 'none'; return; }
+      pane.animate([{ transform: from }, { transform: 'none' }], { duration: 240, easing: EASE }); if (peek && subs[nsi]) peek.animate([{ transform: pf }, { transform: `translateX(${d * W}px)` }], { duration: 240, easing: EASE }).finished.then(() => { peek.style.display = 'none'; }, () => {}); else if (peek) peek.style.display = 'none'; };
+    let pd0 = 0;
     el.addEventListener('pointermove', e => { if (!pt || busy) return; const dx = e.clientX - px, dy = e.clientY - py;
       if (watch) { if (!mode) { if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { mode = 'w'; clearTimeout(hold); } else if (Math.abs(dx) > 14 && Math.abs(dx) > Math.abs(dy)) { mode = 'wx'; clearTimeout(hold); } }
-        const now = performance.now(); vy = (e.clientY - lastY) / Math.max(1, now - lastT); lastY = e.clientY; lastT = now; if (mode === 'w') wDrag(dy); return; }
+        const now = performance.now(); vy = (e.clientY - lastY) / Math.max(1, now - lastT); lastY = e.clientY; lastT = now; if (mode === 'w') wDrag(dy); else if (mode === 'wx') hDrag(dx); return; }
       if (!mode) { if (dy > 12 && dy > Math.abs(dx)) { mode = 'y'; clearTimeout(hold); pause(); } else if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) { mode = 'x'; clearTimeout(hold); pause(); } else if (dy < -14 && -dy > Math.abs(dx)) { mode = 'u'; clearTimeout(hold); } }
       const now = performance.now(); vy = (e.clientY - lastY) / Math.max(1, now - lastT); lastY = e.clientY; lastT = now;
       if (mode === 'y') { const d = Math.max(0, dy); pane.style.transform = `translate(${dx * .4}px,${d}px) scale(${1 - Math.min(d, 700) / 1700})`; pane.style.borderRadius = `${Math.min(d / 4, 28)}px`; dim.style.opacity = String(Math.max(0, 1 - d / 650)); }
       if (mode === 'x') { pane.style.transformOrigin = `50% 50% ${-W / 2}px`; pane.style.transform = `rotateY(${Math.max(-35, Math.min(35, dx / W * 70))}deg)`; } });
     const up = e => { if (!pt) return; clearTimeout(hold); const dx = e.clientX - px, dy = e.clientY - py; const m = mode; pt = 0; mode = '';
       if (watch) { if (m === 'w') { if (held) { held = false; resume(); } return wEnd(dy, vy); }
-        if (m === 'wx') { if (held) { held = false; resume(); } if (Math.abs(dx) > 64) turn(dx < 0 ? 1 : -1); return; }
+        if (m === 'wx') { if (held) { held = false; resume(); } return hEnd(dx, dx / Math.max(1, performance.now() - pd0)); }
         if (held) { held = false; resume(); return; }
         if (e.target.closest('[data-stx],[data-stb],[data-w27]')) return;
         if (paused) resume(); else { pause(); el.classList.remove('held'); el.classList.add('wpz'); }   // a tap pauses, a tap plays
@@ -1277,7 +1297,7 @@
     const sn = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sn.has(y.id)));
     if (startId) { const k0 = sub().its.findIndex(y => y.id === startId); if (k0 >= 0) ii = k0; }   // v462: the new Home opens a story on the clip that was tapped
     const r0 = bubbleOf(key); render(); prep(true); raf = requestAnimationFrame(tick);
-    el.__w = { tab(i) { if (i !== si) turn(i - si); }, close(pop) { close(pop); }, get item() { return item(); }, get sub() { return sub(); }, get si() { return si; }, get paused() { return paused; }, pause() { pause(); el.classList.remove('held'); }, resume() { resume(); } };
+    el.__w = { tab(i) { if (i !== si) hGo(i); }, close(pop) { close(pop); }, get item() { return item(); }, get sub() { return sub(); }, get si() { return si; }, get paused() { return paused; }, pause() { pause(); el.classList.remove('held'); }, resume() { resume(); } };
     el.__st = { get busy() { return busy; }, get ii() { return ii; }, get paused() { return paused; }, get si() { return si; }, get names() { return subs.map(x => x.name); }, get items() { return sub().its.map(x => x.kind === 'vid' ? `${x.ck || 'post'} | ${x.title} | ${x.tag || ''}${x.gw ? ' GW' : ''}${x.ln ? ' +line' : ''} | ${x.v9 ? 'v9' : 'wide'}` : x.kind); }, go(n) { ii = n; render(); }, last() { ii = sub().its.length - 1; render(); }, get kind() { return sub().kind; } };   // read by the test harness
     if (!RM()) { busy = true; dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: EASE });
       pane.animate([r0 ? shrunk(r0) : { transform: 'translate(0,40px) scale(.94)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 0 }, open], { duration: 360, easing: EASE }).finished.then(() => { busy = false; t0 = performance.now(); }); }

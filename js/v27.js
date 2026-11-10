@@ -89,7 +89,7 @@
   function wChrome(el) {
     el.style.bottom = `${$bar ? $bar.offsetHeight : 0}px`;
     const subs = el.__subs || [], act = el.querySelector('.stact');   // the tabs and search sit over the clips and stay put while a clip slides
-    el.insertAdjacentHTML('beforeend', `<div class="wt27" data-w27 role="tablist" aria-label="Watch">${subs.map((x, i) => `<button data-wtab="${i}" role="tab">${esc(x.name)}</button>`).join('')}</div><a class="ws27" data-w27 href="#search" aria-label="Search">${I.search}</a>`);
+    el.insertAdjacentHTML('beforeend', `<div class="wt27" data-w27 role="tablist" aria-label="Watch">${subs.map((x, i) => `<button data-wtab="${i}" role="tab">${esc(x.name)}</button>`).join('')}<i class="wi27"></i></div><a class="ws27" data-w27 href="#search" aria-label="Search">${I.search}</a>`);
     act.insertAdjacentHTML('afterbegin', `<span class="wa27" data-w27 hidden></span>`);
     act.insertAdjacentHTML('beforeend', `<button data-w27 data-wact="share" aria-label="Share">${WI.share}</button>`);
     el.querySelector('.stpane').insertAdjacentHTML('beforeend', `<div class="wpl27" aria-hidden="true">${I.play}</div>`);
@@ -102,26 +102,38 @@
     /* a link out of Watch (the player, search) puts Watch away first, then goes */
     el.addEventListener('click', e => { const a = e.target.closest('a[href^="#"]'); if (!a) return; e.preventDefault(); const to = a.getAttribute('href'); if (el.dataset.leaving) return; el.dataset.leaving = '1'; addEventListener('popstate', () => setTimeout(() => { location.hash = to; }, 0), { once: true }); history.back(); });
   }
+  /* the underline under the tabs: f is the place between tabs (1.4 is partway from the second to the third). It travels
+     with the finger while a list is being dragged (live) and glides when a tab is tapped or the drag is let go. */
+  function wInd(el, f, live) {
+    const bs = [...el.querySelectorAll('[data-wtab]')], ind = el.querySelector('.wi27'); if (!bs.length || !ind) return;
+    f = Math.max(0, Math.min(bs.length - 1, f)); const i0 = Math.floor(f), i1 = Math.min(bs.length - 1, i0 + 1), t = f - i0, mid = b => b.offsetLeft + b.offsetWidth / 2;
+    const x = mid(bs[i0]) + (mid(bs[i1]) - mid(bs[i0])) * t;
+    ind.style.transition = live || !ind.dataset.set ? 'none' : ''; ind.style.transform = `translateX(${(x - 11).toFixed(1)}px)`; ind.dataset.set = '1';
+    const on = Math.round(f); bs.forEach((b, i) => { b.classList.toggle('on', i === on); b.setAttribute('aria-selected', String(i === on)); });
+  }
+  const wColor = (lk, tm) => { const c = tm && tm.color ? '#' + String(tm.color).replace('#', '') : ((tm && tm.id && X.teamOf(lk, tm.id)) || {}).color || ''; return /^#[0-9a-f]{6}$/i.test(c) ? c : ''; };
   const wWho = new Map();   // player id -> { name, team } once the feed has answered
   function wItem(el, it, x, si) {
     store.set('v5:wtab', x.key);
-    el.querySelectorAll('[data-wtab]').forEach((b, i) => { b.classList.toggle('on', i === si); b.setAttribute('aria-selected', String(i === si)); });
+    wInd(el, si, false);
     const who = el.querySelector('.wa27'), L = it.L, a = (it.aths || [])[0];
     if (!L || !a) { who.hidden = true; who.innerHTML = ''; return; }
     const lk = L.key, fol = X.follows(lk, a), src = X.headshotOf(L, a);
-    who.hidden = false; who.innerHTML = `<a href="#player/${esc(lk)}/${esc(a)}" aria-label="Player page"><img src="${esc(src)}" alt="" onerror="this.closest('.wa27').hidden=true"></a>${fol ? '' : `<button data-wact="follow" data-lk="${esc(lk)}" data-id="${esc(a)}" aria-label="Follow this player">${WI.plus}</button>`}`;
+    const k = `${lk}:${a}`, known = wWho.get(k), fp = (store.get('v5:players', []) || []).find(p => p.lk === lk && String(p.id) === String(a)), col = (known && known.color) || (fp && fp.color) || '';
+    if (col) who.style.setProperty('--c', col); else who.style.removeProperty('--c');
+    who.hidden = false; who.innerHTML = `<a href="#player/${esc(lk)}/${esc(a)}" aria-label="Player page"><span><img src="${esc(src)}" alt="" onerror="this.closest('.wa27').hidden=true"></span></a>${fol ? '' : `<button data-wact="follow" data-lk="${esc(lk)}" data-id="${esc(a)}" aria-label="Follow this player">${WI.plus}</button>`}`;
     /* the player's name goes over the words once the feed has said who it is; the words are written after this runs */
     const show = w => Promise.resolve().then(() => { if (!el.__w || el.__w.item !== it || !w || !w.name) return; const cap = el.querySelector('.stcap'); if (!cap || cap.querySelector('.wn27')) return;
       const nm = document.createElement('div'); nm.className = 'wn27'; nm.dataset.w27 = ''; nm.innerHTML = `<a href="#player/${esc(lk)}/${esc(a)}">${esc(w.name)}</a>${w.team ? `<span>${esc(w.team)}</span>` : ''}`; cap.prepend(nm); });
-    const k = `${lk}:${a}`; if (wWho.has(k)) return show(wWho.get(k));
+    if (known) return show(known);
     X.athlete(L, a).then(bio => { const p = bio && (bio.athlete || bio); if (!p || !p.displayName) return; const tm = p.team || {};
-      const w = { name: p.displayName, short: p.shortName || p.displayName, team: tm.shortDisplayName || tm.name || tm.abbreviation || '', abbr: tm.abbreviation || '', teamId: tm.id ? String(tm.id) : '', img: (p.headshot && p.headshot.href) || src, color: tm.color ? '#' + String(tm.color).replace('#', '') : '' };
-      wWho.set(k, w); show(w); }, () => {});
+      const w = { name: p.displayName, short: p.shortName || p.displayName, team: tm.shortDisplayName || tm.name || tm.abbreviation || '', abbr: tm.abbreviation || '', teamId: tm.id ? String(tm.id) : '', img: (p.headshot && p.headshot.href) || src, color: wColor(lk, tm) };
+      wWho.set(k, w); if (w.color && el.__w && el.__w.item === it) who.style.setProperty('--c', w.color); show(w); }, () => {});
   }
   async function wFollow(el, b) {
     const lk = b.dataset.lk, id = b.dataset.id, L = (HW.LEAGUES || {})[lk]; if (!L || b.dataset.busy) return; b.dataset.busy = '1';
     let w = wWho.get(`${lk}:${id}`);
-    if (!w) { const bio = await X.athlete(L, id).catch(() => null); const p = bio && (bio.athlete || bio); if (p && p.displayName) { const tm = p.team || {}; w = { name: p.displayName, short: p.shortName || p.displayName, abbr: tm.abbreviation || '', teamId: tm.id ? String(tm.id) : '', img: (p.headshot && p.headshot.href) || X.headshotOf(L, id), color: tm.color ? '#' + String(tm.color).replace('#', '') : '' }; } }
+    if (!w) { const bio = await X.athlete(L, id).catch(() => null); const p = bio && (bio.athlete || bio); if (p && p.displayName) { const tm = p.team || {}; w = { name: p.displayName, short: p.shortName || p.displayName, abbr: tm.abbreviation || '', teamId: tm.id ? String(tm.id) : '', img: (p.headshot && p.headshot.href) || X.headshotOf(L, id), color: wColor(lk, tm) }; } }
     if (!w) { delete b.dataset.busy; V.toast('Could not reach that player. Try again.'); return; }
     if (!X.follows(lk, id)) X.follow({ lk, id: String(id), name: w.name, short: w.short || w.name, img: w.img || '', team: w.abbr || '', teamId: w.teamId || '', color: w.color || '' });
     b.innerHTML = WI.tick; b.classList.add('ok'); V.toast(`Following ${w.name}`); stDirty = true; setTimeout(() => b.remove(), 900);
@@ -143,7 +155,7 @@
     let key = store.get('v5:wtab', 'w:fy'); if (startId) { const has = subs.find(x => x.key === 'w:fy' && x.its.some(i => i.id === startId)) || subs.find(x => x.its.some(i => i.id === startId)); if (has) key = has.key; else startId = ''; }
     if (!subs.some(x => x.key === key)) key = (subs.find(x => x.key === 'w:fy') || subs[0]).key;
     stDirty = true;
-    V.storyOpen(key, startId, { watch: true, subs, chrome(el) { el.__subs = subs; wChrome(el); paintBar(); }, onItem: wItem, onClose() { paintBar(); } });
+    V.storyOpen(key, startId, { watch: true, subs, chrome(el) { el.__subs = subs; wChrome(el); paintBar(); }, onItem: wItem, onSlide: wInd, onClose() { paintBar(); } });
   }
   /* a shared clip link (#watch/<id>) opens Watch on that clip once the first page is up */
   { const m = /^#watch(?:\/(.+))?$/.exec(location.hash || ''); if (m) { const id = m[1] ? decodeURIComponent(m[1]) : ''; try { history.replaceState(null, '', '#home'); } catch (e) { location.hash = '#home'; }
