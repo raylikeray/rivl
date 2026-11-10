@@ -123,20 +123,21 @@ for (const p of all) {
   }
   p.href = hrefs[p.id] || '';
 }
-// WNBA 2026 line and ESPN id, once
+// WNBA 2026 line and ESPN id, once. A rookie's page answers with her college season, also labeled 2026; the team on the row tells them apart
+const wt = await jget('https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/teams?limit=40');
+const WNBA_T = new Set(((((((wt || {}).sports || [])[0] || {}).leagues || [])[0] || {}).teams || []).map(x => String(x.team.id)));
 for (const p of all) {
-  const was = prevP[p.id]; if (was && was.espn !== undefined && (!was.w26 || was.w26.lg)) { p.espn = was.espn; p.w26 = was.w26; continue; }
+  const was = prevP[p.id]; if (was && was.espn !== undefined && (!was.w26 || was.w26.tid)) { p.espn = was.espn; p.w26 = was.w26; continue; }
   p.espn = ''; p.w26 = null; if (process.env.UNR_DIR) continue;
   const sr = await jget(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(plain(p.name))}&limit=5&type=player`);
   const hit = ((((sr || {}).results || []).find(r => r.type === 'player') || {}).contents || []).find(c => /l:59~a:\d+/.test(c.uid || ''));
   if (!hit) continue; p.espn = /a:(\d+)/.exec(hit.uid)[1];
   const st = await jget(`https://site.web.api.espn.com/apis/common/v3/sports/basketball/wnba/athletes/${p.espn}/stats`);
   // a rookie's stats page answers with her college numbers; the league filter says which it is
-  const lg = ((((st || {}).filters || []).find(f => f.name === 'league') || {}).value) || 'wnba';
   const cat = ((st || {}).categories || []).find(c => c.name === 'averages'); const row = cat && (cat.statistics || []).filter(x => x.season && x.season.year <= 2026 && x.season.year >= 2025).slice(-1)[0];
   if (row) { const L = cat.labels; const g = k => row.stats[L.indexOf(k)]; const [fgm, fga] = String(g('FG')).split('-').map(Number), [ftm, fta] = String(g('FT')).split('-').map(Number), [tpm] = String(g('3PT')).split('-').map(Number);
     const l = { min: num(g('MIN')), pts: num(g('PTS')), fgm, fga, ftm, fta, tpm, oreb: num(g('OR')), dreb: num(g('DR')), reb: num(g('REB')), ast: num(g('AST')), stl: num(g('STL')), blk: num(g('BLK')), tov: num(g('TO')), pf: num(g('PF')) };
-    p.w26 = { lg: lg === 'wnba' ? 'wnba' : 'ncaaw', year: row.season.year, gp: num(g('GP')), min: l.min, pts: l.pts, reb: l.reb, ast: l.ast, pm: l.min ? +(gmsc(l) / l.min).toFixed(4) : 0 }; }
+    p.w26 = { tid: String(row.teamId || ''), lg: !WNBA_T.size || WNBA_T.has(String(row.teamId)) ? 'wnba' : 'ncaaw', year: row.season.year, gp: num(g('GP')), min: l.min, pts: l.pts, reb: l.reb, ast: l.ast, pm: l.min ? +(gmsc(l) / l.min).toFixed(4) : 0 }; }
   await new Promise(r => setTimeout(r, 200));
 }
 // box scores of finished games (kept; a final never changes)
