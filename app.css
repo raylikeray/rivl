@@ -5340,3 +5340,6 @@ html body .srow.rl .rs:empty{display:none}
   #tabs .tab.on svg{transform:none}
 }
 @media (max-width:359px){ html body #tabs .tab span{font-size:9.5px} }
+/* v448: the WNBA / Unrivaled pills get room under the league tabs */
+html body .chips.scmode{margin-top:16px;padding-top:0}
+html body #unrpage .chips.scmode{margin-bottom:4px}
