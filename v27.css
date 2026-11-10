@@ -48,10 +48,7 @@ html.rv27[data-page="home"] .hfeed>section[data-sec="bub"],html.rv27[data-page="
 .h27 .hi27{padding:0 20px}
 .h27 .hi27 small{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--i27c)}
 .h27 .hi27 b{display:block;margin-top:3px;font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.12;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.h27 .sr27{display:flex;align-items:center;gap:10px;padding:14px 20px 0}
-.h27 .mk27{width:36px;height:36px;flex:none;display:block}
-.h27 .mk27 rect{fill:var(--i27)}
-.h27 .mk27 g{fill:var(--b27)}
+.h27 .sr27{display:flex;padding:14px 20px 0}
 .h27 .sf27{flex:1;min-width:0;height:44px;border-radius:999px;background:var(--s27);display:flex;align-items:center;gap:8px;padding:0 14px;box-sizing:border-box;font-size:15px;color:var(--i27c);transition:transform .12s ease}
 .h27 .sf27:active{transform:scale(.985)}
 .h27 .sf27 svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
@@ -77,8 +74,17 @@ html.rv27[data-page="home"] .hfeed>section[data-sec="bub"],html.rv27[data-page="
 .h27 .sg27{position:absolute;left:50%;top:14px;width:64px;height:64px;margin-left:-32px;display:grid;place-items:center}
 .h27 .sg27 img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 0 .8px rgba(255,255,255,.95)) drop-shadow(0 0 .8px rgba(255,255,255,.95)) drop-shadow(0 0 9px rgba(255,255,255,.3)) drop-shadow(0 5px 7px rgba(0,0,0,.28))}
 .h27 .sg27 b{font-size:20px;font-weight:800;letter-spacing:-.02em}
-.h27 .sc27 em{position:absolute;left:0;right:0;top:26px;font-style:normal;text-align:center;font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:44px;height:44px}
-.h27 .sc27 em svg{width:40px;height:40px;fill:#fff;vertical-align:middle}
+/* For you, Saved and a league's biggest plays: the first clip's picture fills the card */
+.h27 .sc27 .sa27{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.h27 .sc27.art>span:after{height:62%;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.8))}
+.h27 .sc27 .sb27{position:absolute;z-index:1;left:7px;top:7px;font-style:normal;font-size:10.5px;font-weight:800;line-height:1;padding:4px 7px;border-radius:999px;background:rgba(0,0,0,.52)}
+.h27 .sc27 .si27{position:absolute;left:0;right:0;top:24px;display:none;place-items:center}
+.h27 .sc27 .si27 svg{width:42px;height:42px;fill:#fff}
+.h27 .sc27:not(.art) .si27{display:grid}
+.h27 .sc27.k-feed:not(.art)>span{background:linear-gradient(160deg,#5B93FF,#8a5cf6 58%,#ff5e7a)}
+.h27 .sc27.k-league:not(.art) .sb27{left:0;right:0;top:34px;text-align:center;background:none;font-size:24px;letter-spacing:-.03em;padding:0}
+.h27 .sc27.k-feed small{display:flex;align-items:center;justify-content:center;gap:4px}
+.h27 .sc27 small svg{position:static;flex:none;width:11px;height:11px;fill:#fff;margin:0}
 
 /* the blocks mixed into the feed take the feed's own small label, with one thing to tap at the right */
 .h27.x27{padding-bottom:18px}
