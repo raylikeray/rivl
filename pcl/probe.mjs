@@ -1,37 +1,18 @@
-// Probe 7: how does a news "Media" post resolve to its video file? Dump raw Media items and chase their ids.
-import { writeFileSync } from 'node:fs';
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36';
-const get = async u => { try { const r = await fetch(u, { headers: { 'user-agent': UA, accept: 'application/json,*/*' } }); const t = await r.text(); try { return { status: r.status, json: JSON.parse(t) }; } catch (e) { return { status: r.status, text: t.slice(0, 400) }; } } catch (e) { return { err: String(e).slice(0, 120) }; } };
+// Probe 8: how deep do Unrivaled's own pages go? Player page, a played game's box score, a club's stats tab.
+import { writeFileSync, mkdirSync } from 'node:fs';
+mkdirSync('pcl/unr', { recursive: true });
+const B = 'https://www.unrivaled.basketball';
+const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
+const get = async p => { for (let i = 0; i < 3; i++) { try { const r = await fetch(B + p, { headers: { 'user-agent': UA } }); if (r.ok) return r.text(); if (r.status === 404) return ''; } catch (e) {} await new Promise(r => setTimeout(r, 1200)); } return ''; };
+const flight = html => { const parts = []; const re = /self\.__next_f\.push\(\[1,"((?:[^"\\]|\\.)*)"\]\)/g; let m; while ((m = re.exec(html))) { try { parts.push(JSON.parse('"' + m[1] + '"')); } catch (e) {} } return parts.join(''); };
 const out = {};
-const nw = await get('https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news?limit=50');
-const arts = ((nw.json || {}).articles) || [];
-const media = arts.filter(a => a.type === 'Media');
-out.mediaCount = media.length; out.allTypes = arts.map(a => a.type);
-out.mediaRaw = media.slice(0, 2).map(a => JSON.stringify(a).slice(0, 3000));
-out.mediaHeads = media.map(a => ({ head: (a.headline || '').slice(0, 80), pub: (a.published || '').slice(0, 16), cats: (a.categories || []).map(c => `${c.type}:${c.description || ''}`).slice(0, 6), web: ((a.links || {}).web || {}).href || '', api: JSON.stringify((a.links || {}).api || {}).slice(0, 200), dataSourceIdentifier: a.dataSourceIdentifier, id: a.id }));
-console.log('media posts', media.length, 'of', arts.length);
-media.slice(0, 6).forEach(m => console.log('  ', (m.headline || '').slice(0, 70), '|', ((m.links || {}).web || {}).href));
-// chase: the web link id, the core video clips API, the site news detail
-const first = media[0];
-if (first) {
-  const web = ((first.links || {}).web || {}).href || '';
-  const vid = (/\/id\/(\d+)/.exec(web) || [])[1] || String(first.id || '');
-  out.chase = {};
-  for (const u of [
-    `https://content.core.api.espn.com/v1/video/clips/${vid}`,
-    `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news/${first.id}`,
-    `https://site.web.api.espn.com/apis/v2/video/clips/${vid}`,
-    `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news?limit=50&enable=video`,
-    ...(((first.links || {}).api || {}).self && ((first.links || {}).api || {}).self.href ? [((first.links || {}).api || {}).self.href] : [])
-  ]) { const r = await get(u); const j = r.json || {}; const s = JSON.stringify(j); const mp4 = (s.match(/https?:[^"]+?\.mp4[^"]*/) || [])[0] || ''; out.chase[u] = { status: r.status, keys: Object.keys(j).slice(0, 10), mp4: mp4.slice(0, 120), snippet: s.slice(0, 500) }; console.log('chase', u.slice(8, 90), r.status, Object.keys(j).slice(0, 5), mp4 ? 'MP4 FOUND' : ''); }
+for (const [k, p] of Object.entries({ player: '/player/alyssa-thomas-0ehynljdh7k1', player2: '/player/brittney-sykes-5r0ujro9gsjp', box: '/game/9r3c2rtv1a4b/box-score', game: '/game/9r3c2rtv1a4b', gameNext: '/game/adp89x8e4pe4', clubStats: '/laces/stats', clubSched: '/laces/schedule', clubRoster: '/laces/roster', bracket: '/bracket', oneonone: '/1v1', playoffs: '/playoffs' })) {
+  const h = await get(p); const t = flight(h);
+  const strs = []; const re = /"children":"([^"$]{1,80})"/g; let m; while ((m = re.exec(t))) strs.push(m[1]);
+  const title = (/<title>(.*?)<\/title>/.exec(h) || [])[1] || '';
+  const blobs = []; const jr = /\{"(?:player|game|boxScore|stats|team|players|seasons)":/g; let j; while ((j = jr.exec(t)) && blobs.length < 3) blobs.push(t.slice(j.index, j.index + 1500));
+  out[k] = { path: p, len: h.length, title, n: strs.length, strs: strs.slice(0, 400), blobs };
+  console.log(k, h.length, title, strs.length);
+  await new Promise(r => setTimeout(r, 500));
 }
-// athlete feed: how much is Media, and what kinds
-const an = await get('https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news?athlete=1966&limit=50');
-const aa = ((an.json || {}).articles) || [];
-out.athleteFeed = { n: aa.length, media: aa.filter(a => a.type === 'Media').length, heads: aa.filter(a => a.type === 'Media').slice(0, 10).map(a => `${(a.published || '').slice(0, 10)} ${(a.headline || '').slice(0, 70)}`) };
-console.log('athlete 1966 feed', out.athleteFeed.n, 'media', out.athleteFeed.media); out.athleteFeed.heads.forEach(h => console.log('   ', h));
-const tn = await get('https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news?team=13&limit=50');
-const ta = ((tn.json || {}).articles) || [];
-out.teamFeed = { n: ta.length, media: ta.filter(a => a.type === 'Media').length, heads: ta.filter(a => a.type === 'Media').slice(0, 10).map(a => `${(a.published || '').slice(0, 10)} ${(a.headline || '').slice(0, 70)}`) };
-console.log('team 13 feed', out.teamFeed.n, 'media', out.teamFeed.media); out.teamFeed.heads.forEach(h => console.log('   ', h));
-writeFileSync('pcl/media.json', JSON.stringify(out, null, 1)); console.log('done');
+writeFileSync('pcl/unr/depth.json', JSON.stringify(out, null, 1)); console.log('done');
