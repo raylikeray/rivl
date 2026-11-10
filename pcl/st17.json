@@ -1,0 +1,28 @@
+{
+ "at": "2026-11-10T22:00:23.633Z",
+ "id": "401909952",
+ "keys": [
+  "boxscore",
+  "format",
+  "gameInfo",
+  "leaders",
+  "seasonseries",
+  "injuries",
+  "broadcasts",
+  "pickcenter",
+  "odds",
+  "againstTheSpread",
+  "news",
+  "article",
+  "videos",
+  "plays",
+  "header",
+  "wallclockAvailable",
+  "meta",
+  "winprobability",
+  "standings"
+ ],
+ "plays": 467,
+ "wp": 467,
+ "vids": 6
+}
