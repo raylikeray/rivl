@@ -5361,3 +5361,12 @@ html body .hdr.tabhd .lgsc{justify-content:flex-start;gap:clamp(12px,4.6vw,24px)
 html body .hdr.tabhd .lgtabs .lgsc{gap:22px}
 html body .hdr.tabhd .lgtabs[data-n="5"] .lgsc{gap:clamp(4px,1.6vw,10px)}
 @media (max-width:389px){ html body .hdr.tabhd .lgtabs .lgsc{gap:16px} html body .hdr.tabhd .lgtabs[data-n="5"] .lgsc{gap:2px} }
+/* v453: Settings moves out of the league row (it crowded the tabs) to the Home date and the Search page */
+html body .hdr.tabhd .lggear{display:none}
+html body .hdr.tabhd .lgsc{padding-right:14px}
+.idate{position:relative}
+.xgear{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--ink);background:color-mix(in srgb,var(--ink) 8%,transparent);text-decoration:none}
+.xgear svg{width:21px;height:21px}.xgear:active{opacity:.6}
+.idate .xgear{position:absolute;right:0;bottom:4px}
+.xthead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.xthead .xtitle{margin-right:auto}
