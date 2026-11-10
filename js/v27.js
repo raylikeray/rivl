@@ -177,7 +177,11 @@
     const C = LCATS.find(c => c[0] === cat);
     const rows = ps.filter(p => (who !== 'rookies' || p.rookie) && qual(p) && (p.s || {})[cat] != null).map(p => ({ p, v: +(p.s || {})[cat] })).filter(x => isFinite(x.v)).sort((a, b) => b.v - a.v).slice(0, 30);
     const sub = p => `${esc(p.teamName || p.team || '')}${p.rookie && p.pick ? ` \u00b7 Pick ${p.pick}` : who === 'rookies' ? '' : p.pos ? ` \u00b7 ${esc(p.pos)}` : ''}`;
-    const cut = (p, w, h) => p.img ? U.imgSized(p.img, w, h, 'class="cu27"', "this.remove()") : '';
+/* v477: a player the feed has no photo for (or whose photo fails) shows his initials in a ring instead of an empty card */
+    const ini = n => String(n || '').split(/\s+/).filter(w => /^[A-Za-z]/.test(w) && !/^(jr|sr|ii|iii|iv|v)\.?$/i.test(w)).map(w => w[0]).filter((_, i, a) => i === 0 || i === a.length - 1).join('').toUpperCase();
+    const noPic = "this.replaceWith(Object.assign(document.createElement('span'),{className:'in27',textContent:this.dataset.i}))";
+    const cut = (p, w, h) => p.img ? U.imgSized(p.img, w, h, `class="cu27" data-i="${esc(ini(p.n))}"`, noPic) : `<span class="in27">${esc(ini(p.n))}</span>`;
+    const face = p => p.img ? U.imgSized(p.img, 160, 116, `data-i="${esc(ini(p.n))}"`, "this.parentNode.textContent=this.dataset.i") : esc(ini(p.n));
     const grad3 = (c, a) => `linear-gradient(${a}deg,${U.mixTo(c, 255, .16)},${c} 55%,${U.mixTo(c, 0, .6)})`;
     const label = `${who === 'rookies' ? 'Rookies, ' : ''}${who === 'rookies' ? C[2] : C[2].charAt(0).toUpperCase() + C[2].slice(1)}`;
     let h = '';
@@ -185,17 +189,18 @@
     else {
       const a = rows[0];
       /* the card: team colour, the logo large and white behind the player, two angled bands in the second colour */
-      const vars = p => { const c = colorOf(p), t = byAbbr[p.team] || {}; let al = U.teamAlt({ id: t.id, abbr: p.team, alt: t.alt }, L) || ''; let bs = '38%'; if (!al || Math.abs(U.lumOf(al) - U.lumOf(c)) < .08) { al = '#ffffff'; bs = '16%'; }   // no second colour to speak of: quiet white bands
-        return `--bs:${bs};--c:${c};--c1:${U.mixTo(c, 255, .22)};--c2:${U.mixTo(c, 0, .6)};--a:${al};--at:${U.lumOf(al) > .45 ? '#0b0c0e' : '#ffffff'}`; };
-      const back = p => { const t = byAbbr[p.team] || {}; return `<span class="lbd27"></span>${t.logo ? `<span class="lwm27">${U.imgSized(t.logo, 500, 500, '', "this.parentNode.remove()")}</span>` : ''}<span class="lgl27"></span>`; };
-      h += `<a class="l1x27" href="${U.href.player(lk, a.p.id)}" style="${vars(a.p)}">${back(a.p)}${cut(a.p, 500, 364)}<span class="lsh27"></span><span class="lt27"><i>1</i>${esc(label)}</span><span class="lf27"><strong>${one(a.v)}</strong><b>${esc(a.p.n)}</b><small>${sub(a.p)}</small></span></a>`;
-      if (rows.length > 1) h += `<div class="l2x27">${rows.slice(1, 3).map((x, i) => `<a href="${U.href.player(lk, x.p.id)}" style="${vars(x.p)}">${back(x.p)}${cut(x.p, 500, 364)}<span class="lsh27"></span><u>${i + 2}</u><span class="l2f27"><strong>${one(x.v)}</strong><b>${esc(x.p.sn || x.p.n)}</b><small>${sub(x.p)}</small></span></a>`).join('')}</div>`;
-      h += `<div class="lr27">${rows.slice(3).map((x, i) => { const c = colorOf(x.p); return `<a href="${U.href.player(lk, x.p.id)}"><span>${i + 4}</span><span class="fc27" style="background:linear-gradient(160deg,${U.mixTo(c, 255, .12)},${U.mixTo(c, 0, .45)})">${p_img(x.p)}</span><span class="tx27"><b>${esc(x.p.n)}<small>${sub(x.p)}</small></b><i><s style="width:${Math.max(4, Math.round(x.v / (a.v || 1) * 100))}%;background:${U.lumOf(c) < .06 ? U.mixTo(c, 255, .45) : c}"></s></i></span><strong>${one(x.v)}</strong></a>`; }).join('')}</div>`;
+      const vars = p => { const c = colorOf(p), t = byAbbr[p.team] || {}; let al = U.teamAlt({ id: t.id, abbr: p.team, alt: t.alt }, L) || ''; let bo = '.92'; if (!al || Math.abs(U.lumOf(al) - U.lumOf(c)) < .08) { al = '#ffffff'; bo = '.16'; }   // no second colour to speak of: quiet white stripes
+        return `--bo:${bo};--c:${c};--c1:${U.mixTo(c, 255, .22)};--c2:${U.mixTo(c, 0, .6)};--a:${al};--at:${U.lumOf(al) > .45 ? '#0b0c0e' : '#ffffff'}`; };
+      const back = p => `<span class="lbd27"></span><span class="lgl27"></span>`;
+      /* v477: the team's logo sits beside the place, at the top left, in its own colours (behind the player it read as a random shape) */
+      const tlogo = p => { const t = byAbbr[p.team] || {}; return t.logo ? `<span class="llg27">${U.imgSized(t.logo, 128, 128, '', "this.parentNode.remove()")}</span>` : ''; };
+      h += `<a class="l1x27" href="${U.href.player(lk, a.p.id)}" style="${vars(a.p)}">${back(a.p)}${cut(a.p, 500, 364)}<span class="lsh27"></span><span class="lt27"><i>1</i>${tlogo(a.p)}${esc(label)}</span><span class="lf27"><strong>${one(a.v)}</strong><b>${esc(a.p.n)}</b><small>${sub(a.p)}</small></span></a>`;
+      if (rows.length > 1) h += `<div class="l2x27">${rows.slice(1, 3).map((x, i) => `<a href="${U.href.player(lk, x.p.id)}" style="${vars(x.p)}">${back(x.p)}${cut(x.p, 500, 364)}<span class="lsh27"></span><span class="lt27 sm"><i>${i + 2}</i>${tlogo(x.p)}</span><span class="l2f27"><strong>${one(x.v)}</strong><b>${esc(x.p.sn || x.p.n)}</b><small>${sub(x.p)}</small></span></a>`).join('')}</div>`;
+      h += `<div class="lr27">${rows.slice(3).map((x, i) => { const c = colorOf(x.p); return `<a href="${U.href.player(lk, x.p.id)}"><span>${i + 4}</span><span class="fc27" style="background:linear-gradient(160deg,${U.mixTo(c, 255, .12)},${U.mixTo(c, 0, .45)})">${face(x.p)}</span><span class="tx27"><b>${esc(x.p.n)}<small>${sub(x.p)}</small></b><i><s style="width:${Math.max(4, Math.round(x.v / (a.v || 1) * 100))}%;background:${U.lumOf(c) < .06 ? U.mixTo(c, 255, .45) : c}"></s></i></span><strong>${one(x.v)}</strong></a>`; }).join('')}</div>`;
     }
     const note = lg.lastSeason ? `<p class="ln27n">${esc(lg.label)} season. The new season's numbers take over once it has games.</p>` : `<p class="ln27n">Per game, ${esc(lg.label || '')}. A player needs half of the games played to be ranked.</p>`;
     const html = pills + cats + h + note, hh = hash(html); if (pg.dataset.h !== hh) { const sx = pg.querySelector('.sx27'), x0 = sx ? sx.scrollLeft : 0; pg.innerHTML = html; pg.dataset.h = hh; const s2 = pg.querySelector('.sx27'); if (s2) { s2.scrollLeft = x0; const onb = s2.querySelector('.on'); if (onb && (onb.offsetLeft + onb.offsetWidth > s2.scrollLeft + s2.clientWidth || onb.offsetLeft < s2.scrollLeft)) s2.scrollLeft = Math.max(0, onb.offsetLeft - 18); } }
   }
-  const p_img = p => p.img ? U.imgSized(p.img, 160, 116, '', "this.remove()") : '';
   $main.addEventListener('click', e => { const b = e.target.closest('[data-ld]'); if (!b) return; e.preventDefault(); const lk = (b.closest('#ld27') || {}).dataset ? b.closest('#ld27').dataset.lk : '';
     if (b.dataset.ld === 'cls') { store.set('v5:strcls', b.dataset.v); if (lk) stats27(lk); return; }
     const st = store.get('v5:ld27', {}) || {}; st[b.dataset.ld] = b.dataset.v; store.set('v5:ld27', st); if (lk) stats27(lk); });

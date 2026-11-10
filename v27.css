@@ -353,24 +353,28 @@ html.rv27[data-page="standings"] body #main .legend{margin:14px 16px 0;font-size
 .lp27 .l1x27,.lp27 .l2x27 a{position:relative;overflow:hidden;display:block;color:#fff;text-decoration:none;background:linear-gradient(155deg,var(--c1) 0%,var(--c) 46%,var(--c2) 100%);isolation:isolate}
 .lp27 .l1x27{margin:10px 16px 0;height:226px;border-radius:24px;box-shadow:0 18px 30px -18px var(--c2),0 2px 0 rgba(255,255,255,.08) inset}
 .lp27 .l1x27:before,.lp27 .l2x27 a:before{content:"";position:absolute;inset:0;z-index:0;background-image:radial-gradient(rgba(255,255,255,.5) 1px,transparent 1.4px);background-size:13px 13px;opacity:.12;-webkit-mask-image:linear-gradient(100deg,transparent 30%,#000 90%);mask-image:linear-gradient(100deg,transparent 30%,#000 90%)}
-.lp27 .lbd27{position:absolute;inset:0;z-index:0;background:linear-gradient(112deg,transparent 0 50%,color-mix(in srgb,var(--a) var(--bs,38%),transparent) 50% 60%,transparent 60% 64.5%,color-mix(in srgb,var(--a) calc(var(--bs,38%) / 2),transparent) 64.5% 69%,transparent 69%)}
-.lp27 .lwm27{position:absolute;z-index:0;right:-34px;top:50%;width:250px;height:250px;margin-top:-125px;display:grid;place-items:center;opacity:.13}
-.lp27 .lwm27 img{width:100%;height:100%;object-fit:contain;filter:brightness(0) invert(1)}
+/* v477: two thin stripes in the team's second colour, solid (a see-through blue over gold came out gray) */
+.lp27 .lbd27{position:absolute;inset:0;z-index:0;opacity:var(--bo,.92);background:linear-gradient(112deg,transparent 0 55%,var(--a) 55% 59%,transparent 59% 61.5%,var(--a) 61.5% 63.2%,transparent 63.2%)}
+.lp27 .llg27{flex:none;width:30px;height:30px;display:grid;place-items:center}
+.lp27 .llg27 img{width:30px;height:30px;object-fit:contain;display:block;filter:drop-shadow(0 0 .7px rgba(255,255,255,.95)) drop-shadow(0 0 .7px rgba(255,255,255,.95)) drop-shadow(0 2px 5px rgba(0,0,0,.3))}
+.lp27 .lt27.sm{left:12px;top:12px;gap:7px}
+.lp27 .lt27.sm .llg27,.lp27 .lt27.sm .llg27 img{width:26px;height:26px}
+.lp27 .in27{position:absolute;z-index:1;right:26px;top:50%;width:148px;height:148px;margin-top:-74px;box-sizing:border-box;border-radius:50%;display:grid;place-items:center;font-size:58px;font-weight:800;letter-spacing:-.02em;color:#fff;background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 2.5px rgba(255,255,255,.55),0 10px 24px rgba(0,0,0,.25)}
+.lp27 .l2x27 .in27{right:12px;width:78px;height:78px;margin-top:-46px;font-size:30px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.55)}
+.lp27 .fc27{display:grid;place-items:center;color:#fff;font-size:12.5px;font-weight:800}
 .lp27 .lgl27{position:absolute;inset:0;z-index:0;background:radial-gradient(60% 70% at 74% 34%,rgba(255,255,255,.26),transparent 70%)}
 .lp27 .l1x27 .cu27{position:absolute;z-index:1;right:-30px;bottom:0;height:222px;width:auto;max-width:none;object-fit:contain;filter:drop-shadow(-8px 10px 18px rgba(0,0,0,.4))}
 .lp27 .lsh27{position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(0,0,0,.4),rgba(0,0,0,0) 58%),linear-gradient(0deg,rgba(0,0,0,.28),rgba(0,0,0,0) 40%)}
 .lp27 .lt27{position:absolute;z-index:2;left:14px;top:13px;display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
-.lp27 .lt27 i,.lp27 .l2x27 u{flex:none;min-width:24px;height:24px;box-sizing:border-box;padding:0 6px;border-radius:999px;display:grid;place-items:center;background:var(--a);color:var(--at);font-style:normal;text-decoration:none;font-size:13px;font-weight:800;letter-spacing:0;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.lp27 .lt27 i{flex:none;min-width:24px;height:24px;box-sizing:border-box;padding:0 6px;border-radius:999px;display:grid;place-items:center;background:var(--a);color:var(--at);font-style:normal;text-decoration:none;font-size:13px;font-weight:800;letter-spacing:0;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .lp27 .lf27{position:absolute;z-index:2;left:16px;bottom:15px;display:flex;flex-direction:column;gap:2px;max-width:60%}
 .lp27 .lf27 strong{font-size:62px;font-weight:800;letter-spacing:-.045em;line-height:.95;text-shadow:0 2px 14px rgba(0,0,0,.3)}
 .lp27 .lf27 b{font-size:19px;font-weight:700;line-height:1.15;margin-top:4px}
 .lp27 .lf27 small{font-size:13px;opacity:.88}
 .lp27 .l2x27{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:10px 16px 0}
 .lp27 .l2x27 a{height:150px;border-radius:20px;box-shadow:0 14px 22px -16px var(--c2)}
-.lp27 .l2x27 .lwm27{right:-40px;width:150px;height:150px;margin-top:-75px}
 .lp27 .l2x27 .cu27{position:absolute;z-index:1;right:-58px;bottom:0;height:140px;width:auto;max-width:none;object-fit:contain;filter:drop-shadow(-6px 8px 12px rgba(0,0,0,.4))}
 .lp27 .l2x27 .lsh27{background:linear-gradient(90deg,rgba(0,0,0,.42),rgba(0,0,0,0) 62%),linear-gradient(0deg,rgba(0,0,0,.3),rgba(0,0,0,0) 46%)}
-.lp27 .l2x27 u{position:absolute;z-index:2;left:12px;top:12px}
 .lp27 .l2x27 .l2f27{position:absolute;z-index:2;left:13px;right:10px;bottom:12px;display:flex;flex-direction:column;gap:1px}
 .lp27 .l2x27 strong{font-size:32px;font-weight:800;letter-spacing:-.035em;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,.35)}
 .lp27 .l2x27 b{font-size:14.5px;font-weight:700;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 6px rgba(0,0,0,.45)}
