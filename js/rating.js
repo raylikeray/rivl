@@ -177,7 +177,7 @@
       case 'playmaking': return `${one(r.ast)} assists a game, ${one(t.ast / t.m * 36)} per 36, ${(t.tov ? t.ast / t.tov : t.ast).toFixed(1)} assists for every turnover. ${tail}`;
       case 'rebounding': return `${one(r.reb)} rebounds a game${R.estReb ? '' : `, ${one(t.oreb / t.g)} on the offensive glass`}, ${one(t.reb / t.m * 36)} per 36. ${tail}`;
       case 'defense': return `${one(r.stl)} steals and ${one(r.blk)} blocks a game, ${one((t.stl + t.blk) / t.m * 36)} combined per 36. Box scores show defense least well of all six. ${tail}`;
-      case 'impact': return `A game score of ${one(gmscPer(t))} a night, built from every line in the box score, with his team's results while he plays. ${tail}`;
+      case 'impact': return `A game score of ${one(gmscPer(t))} a night, built from every line in the box score, with the team's results in those minutes. ${tail}`;
     }
     return tail;
   }
@@ -188,7 +188,7 @@
     const s = R.traits.slice().sort((a, b) => b.pct - a.pct); const top = s.filter(t => t.pct >= 80).slice(0, 2), low = s[s.length - 1];
     const word = p => p >= 95 ? 'elite' : p >= 85 ? 'standout' : 'strong';
     const parts = top.map(t => `${word(t.pct)} ${t.label.toLowerCase()}`);
-    const lead = parts.length ? parts.join(' and ') : `${s[0].label.toLowerCase()} is his best trait`;
+    const lead = parts.length ? parts.join(' and ') : `${s[0].label.toLowerCase()} is the best trait`;
     return `${lead.charAt(0).toUpperCase() + lead.slice(1)}${low.pct <= 35 ? `; ${low.label.toLowerCase()} is the gap` : ''}.`;
   }
 
@@ -256,7 +256,7 @@
       card.querySelectorAll('.hxw,.hxl').forEach(x => x.classList.toggle('on', x.dataset.hex === k));
       const d = card.querySelector('.hxdet'); d.innerHTML = `${detHead(t)}<span>${esc(detail(R, k))}</span>`; return; }
     const how = e.target.closest && e.target.closest('[data-act="rthow"]'); if (how) { e.preventDefault(); const card = how.closest('.hxcard'); let p = card.querySelector('.hxexp'); if (p) { p.remove(); how.classList.remove('on'); return; }
-      card.insertAdjacentHTML('beforeend', `<div class="hxexp"><p><b>Built only from his stats.</b> Every stat is turned into a rate per 36 minutes and compared with players at his position. Six traits come from those rates, and the percentage is the share of ${R.posWord} he beats.</p><p><b>Small samples are held back.</b> A few hot games barely move a player until the minutes back them up. Last season counts too, fading out as this season fills in.</p><p><b>The overall</b> weights impact most, then scoring, playmaking, shooting, defense and rebounding, plus the minutes his coach gives him, and is placed on the 2K scale: a 74 is a typical rotation player, 82 is the top 15%, 90 the top 3%, and the league's best is a 99.</p><p><b>Defense is the hardest to measure</b> from a box score: steals, blocks, defensive rebounds, fouls and his team's defense while he plays.</p><p>Tap any trait on the chart for the numbers behind it.</p></div>`); how.classList.add('on'); }
+      card.insertAdjacentHTML('beforeend', `<div class="hxexp"><p><b>Built only from the player's stats.</b> Every stat is turned into a rate per 36 minutes and compared with players at his position. Six traits come from those rates, and the percentage is the share of ${R.posWord} this player beats.</p><p><b>Small samples are held back.</b> A few hot games barely move a player until the minutes back them up. Last season counts too, fading out as this season fills in.</p><p><b>The overall</b> weights impact most, then scoring, playmaking, shooting, defense and rebounding, plus the minutes the coach gives, and is placed on the 2K scale: a 74 is a typical rotation player, 82 is the top 15%, 90 the top 3%, and the league's best is a 99.</p><p><b>Defense is the hardest to measure</b> from a box score: steals, blocks, defensive rebounds, fouls and the team's defense in those minutes.</p><p>Tap any trait on the chart for the numbers behind it.</p></div>`); how.classList.add('on'); }
   });
 
   const done = {}; const leagueNow = L => L && done[L.key] || null;   // a league already worked out, with no wait

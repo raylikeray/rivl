@@ -315,7 +315,7 @@
     const moreList = !isMore && more.length ? `<div class="gcap" style="margin-top:22px">More</div><div class="gl">${more.map(([k, l]) => `<button class="gr ni" data-act="stab" data-tab="${esc(k)}"><span class="gm"><b>${esc(l)}</b><span>${esc(MORE[k])}</span></span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1.5 1.5 5 5-5 5"/></svg></button>`).join('')}</div>` : '';
     if (body && typeof body === 'object') {   // v400: the main tabs as swipeable panels
       $main.innerHTML = `<div id="stpage" class="st380" data-lk="${esc(lk)}">${head}<div id="stbody" class="stpanels">${main.filter(([k]) => body[k] != null).map(([k]) => `<div data-pg="${esc(k)}">${body[k]}${moreList}</div>`).join('')}</div></div>`;
-      const tb = $main.querySelector('.segc'), sp = $main.querySelector('#stbody'); const bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--apb')) || 56;
+      const tb = $main.querySelector('.segc'), sp = $main.querySelector('#stbody'); const bar = (() => { const fx = $main.querySelector('.apfx'); return fx && fx.offsetHeight ? fx.offsetHeight : 56; })();   /* v484: the small top bar's real height; a fixed 56 left the tab row 4px short of pinned after a tab was tapped */
       V._spg = V._.pager(tb, { tabs: tb, strip: sp, start: tab, stickTop: bar, thumb: true, onShow: k => { store.set('v5:stab:' + lk, k); store.set('v5:stab0:' + lk, k); } });
       if (!V._spg) sp.querySelectorAll('[data-pg]').forEach(el => { el.hidden = el.dataset.pg !== tab; });
       if (V.soft) V.soft(sp);
@@ -553,7 +553,7 @@
       const tb = $main.querySelector('#ttabs'); if (tb) { const y = tb.getBoundingClientRect().top; if (y < 60 || !b.closest('#ttabs')) window.scrollTo(0, Math.max(0, window.scrollY + y - 56)); }
  };
     $main.addEventListener('click', V._tptabL);
-    { const tb = $main.querySelector('#ttabs'), sp = $main.querySelector('.tpanels'); const bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--apb')) || 56; V._tpg = V._.pager(tb, { tabs: tb, strip: sp, start: ttab, stickTop: bar, onShow: k => store.set(tkey, k) }); }   // v400: swipe between the team's tabs
+    { const tb = $main.querySelector('#ttabs'), sp = $main.querySelector('.tpanels'); const bar = (() => { const fx = $main.querySelector('.apfx'); return fx && fx.offsetHeight ? fx.offsetHeight : 56; })();   /* v484: the small top bar's real height; a fixed 56 left the tab row 4px short of pinned after a tab was tapped */ V._tpg = V._.pager(tb, { tabs: tb, strip: sp, start: ttab, stickTop: bar, onShow: k => store.set(tkey, k) }); }   // v400: swipe between the team's tabs
     if (simOk) outlookFill(L, String(id), r, { feed: HW.sim.ready(L) });   // fills in from the nightly file when there is one; otherwise the row above offers it
     V.refresh = next && next.state === 'in' ? async () => { const g2 = await liveOf(next, 15000); const host = $main.querySelector(`.tpanel[data-tp="overview"] .sgcard[data-gid="${CSS.escape(String(next.id))}"]`); if (!host || !g2) return; const h = gcard(g2); if (host.dataset.h !== hashOf(h)) { host.outerHTML = h.replace('<div class="sgcard dkhost"', `<div class="sgcard dkhost" data-h="${hashOf(h)}"`); } if (g2.state === 'post') V.refresh = null; } : null;
   }
@@ -1015,7 +1015,7 @@ function court3d({ c = '#860038', logo = '', away = '', word = '', nba = true, u
           lines.push([g.state === 'pre' ? 'Projected margin' : 'Pregame margin', byLine(f.margin)]);
           if (f.proj) lines.push([g.state === 'pre' ? 'Projected score' : 'Pregame projection', `${esc(g.away.abbr)} ${f.proj.away} · ${esc(g.home.abbr)} ${f.proj.home}`]);
           lines.push([g.state === 'pre' ? 'Win chance' : 'Pregame chance', `${esc(fav.short)} ${pct(p)}`]);
-          const ratingNote = (f.source === 'elo' ? 'RIVL\'s rating is an Elo built from scoring margin, rebuilt every night.' : 'RIVL\'s rating is this season\'s scoring margin blended with last season\'s, weighted by games played.') + (f.soH || f.soA ? ' A missing player costs what he produces above his team\'s own bench, scaled by his minutes; a ? marks a status short of out, counted in part.' : '');
+          const ratingNote = (f.source === 'elo' ? 'RIVL\'s rating is an Elo built from scoring margin, rebuilt every night.' : 'RIVL\'s rating is this season\'s scoring margin blended with last season\'s, weighted by games played.') + (f.soH || f.soA ? ' A missing player costs what that player produces above the team\'s own bench, scaled by minutes; a ? marks a status short of out, counted in part.' : '');
           const note = (f.mkt != null ? `The forecast starts from the market line and lets RIVL's rating, rest and injuries pull it (${Math.round((1 - f.w) * 100)}% RIVL). ` : '') + ratingNote + ` <a href="#record">How the calls have done</a>`;
           body += sec(g.state === 'post' ? `Had ${esc(fav.short)} ${pct(p)}` : `Why ${esc(fav.short)} ${pct(p)}`) + grid + `<table class="tbl kv why-kv"><tbody>${lines.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</tbody></table><p class="why-n">${note}</p>`;
         }

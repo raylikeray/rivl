@@ -532,7 +532,9 @@ html.rv27 body .approf .aptabs .chip.on::after,html.rv27 body .approf .aptabs .p
 html.rv27[data-page="player"],html.rv27[data-page="team"]{--bg:var(--b27)!important}
 @media (prefers-reduced-motion:reduce){ .bn27 u,.bn27 i,html.rv27 body .approf header.aph .rg27.new::before,.ldc27 .rg circle.f{animation:none} }
 html.rv27 body .approf .aptabs{transition:background-color .2s ease}
-html.rv27 body .approf.pin27 .aptabs{background:linear-gradient(180deg,color-mix(in srgb,var(--a27,#222) 80%,var(--ad27,#111)),color-mix(in srgb,var(--a27,#222) 58%,var(--ad27,#111)))!important;box-shadow:0 14px 22px -16px rgba(0,0,0,.75)}
+/* v484: one flat colour, the same one the small top bar ends on, so the two read as one piece */
+html.rv27 body .approf.pin27 .aptabs{background:color-mix(in srgb,var(--a27,#222) 80%,var(--ad27,#111))!important;box-shadow:0 14px 22px -16px rgba(0,0,0,.75)}
+html.rv27 body .approf .apfx{background:linear-gradient(180deg,var(--a),color-mix(in srgb,var(--a) 80%,var(--ad)))!important}
 html.rv27 body .approf.pin27 .aptabs .chips{background:rgba(0,0,0,.3)}
 html.rv27 body .approf.pin27 .aptabs .chip{color:rgba(255,255,255,.86)!important}
 html.rv27 body .approf.pin27 .aptabs .chip.on,html.rv27 body .approf.pin27 .aptabs .chip[aria-pressed="true"]{background:#fff!important;color:#0a0c0e!important}

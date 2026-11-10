@@ -262,7 +262,7 @@
     if (!on()) return; const pg = root.dataset.page; if (pg !== 'player' && pg !== 'team') return;
     const now = Date.now(); if (now - pfAt < 250) { clearTimeout(pfT); pfT = setTimeout(profDecorate, 270); return; } pfAt = now;
     const r = pfRoute(), hd = $main.querySelector('.approf header.aph'); if (!r || !hd) return; const L = LEAGUES[r.lk]; if (!L) return;
-    { const ap = hd.closest('.approf'); ['--a', '--ad'].forEach(k => { const v = hd.style.getPropertyValue(k); if (v && ap.style.getPropertyValue(k + '27') !== v) ap.style.setProperty(k + '27', v); }); }   // the team's colour, for the pinned tab row
+    { const ap = hd.closest('.approf'), fx = ap.querySelector('.apfx') || hd; ['--a', '--ad'].forEach(k => { const v = fx.style.getPropertyValue(k) || hd.style.getPropertyValue(k); if (v && ap.style.getPropertyValue(k + '27') !== v) ap.style.setProperty(k + '27', v); }); }   // the small top bar's own colours, so the pinned tab row matches it exactly
     /* the band */
     let bn = hd.querySelector('.bn27'); if (!bn) { bn = document.createElement('div'); bn.className = 'bn27'; bn.setAttribute('aria-hidden', 'true'); bn.innerHTML = '<u></u><i></i>'; hd.insertBefore(bn, hd.firstChild); }
     const setBand = t => { const u = bn.firstChild; t = String(t || '').trim(); const txt = t ? `${t} ${t}` : ''; if (u.textContent !== txt) u.textContent = txt; };
@@ -291,7 +291,7 @@
   /* once the tab row pins under the small top bar it takes the bar's colour, as on the game page */
   let ppRaf = 0;
   const profPin = () => { ppRaf = 0; const pg = root.dataset.page; if (pg !== 'player' && pg !== 'team') return; const ap = $main.querySelector('.approf'), tb = ap && ap.querySelector('.aptabs'), fx = ap && ap.querySelector('.apfx'); if (!tb || !fx) return;
-    const pin = on() && fx.classList.contains('on') && tb.getBoundingClientRect().top <= fx.offsetHeight + 1; if (ap.classList.contains('pin27') !== pin) ap.classList.toggle('pin27', pin); };
+    const pin = on() && window.scrollY > 4 && tb.getBoundingClientRect().top <= fx.offsetHeight + 1; if (pin && !fx.classList.contains('on')) fx.classList.add('on'); if (ap.classList.contains('pin27') !== pin) ap.classList.toggle('pin27', pin); };
   window.addEventListener('scroll', () => { const pg = root.dataset.page; if (!ppRaf && (pg === 'player' || pg === 'team')) ppRaf = requestAnimationFrame(profPin); }, { passive: true });
   document.addEventListener('rivl:rendered', () => setTimeout(() => { profDecorate(); profPin(); }, 0)); document.addEventListener('rivl:polled', () => setTimeout(profDecorate, 0));
   new MutationObserver(() => { const pg = root.dataset.page; if ((pg === 'player' || pg === 'team') && on()) profDecorate(); }).observe($main, { childList: true, subtree: true });
