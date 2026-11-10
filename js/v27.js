@@ -71,7 +71,7 @@
   const vqRow = () => { const cur = store.get('v5:vq', 'auto');
     return `<div class="gl setlook"><div class="gr ni"><span class="sico" data-k="watch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9.500 4.500 2.500-4.500 2.500z" fill="currentColor"/></svg></span><span class="gm"><b>Clip quality</b></span><div class="segc fit" role="radiogroup" aria-label="Clip quality">${[['auto', 'Auto'], ['always', 'Sharpest'], ['never', 'Saver']].map(([k, l]) => `<button class="${cur === k ? 'on' : ''}" data-act="vq" data-vq="${k}" role="radio" aria-checked="${cur === k}">${l}</button>`).join('')}</div></div></div><p class="vq27">Auto plays clips at full size on Wi-Fi and lighter on cellular. A full-size clip is about 20 MB.</p>`; };
   V.rv27 = { on, vq: vqRow, miss(el, cls) { const p = el.parentNode; if (p) { p.className = (cls || 'ph27') + ' no27'; p.innerHTML = I.me; } },
-    row: () => `<div class="gl"><button class="gr ni sw" data-act="rv27" role="switch" aria-checked="${on()}"><span class="sico" data-k="look"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.500 13.900 9l5.600 1.900-5.600 1.900L12 18.300l-1.900-5.500L4.500 10.900 10.100 9z"/></svg></span><span class="gm wrap"><b>Try the new design</b><span>A preview of the 2027 look. Home, Watch and Scores so far. Switch it off any time.</span></span><span class="switch"></span></button></div>` };
+    row: () => `<div class="gl"><button class="gr ni sw" data-act="rv27" role="switch" aria-checked="${on()}"><span class="sico" data-k="look"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.500 13.900 9l5.600 1.900-5.600 1.900L12 18.300l-1.900-5.500L4.500 10.900 10.100 9z"/></svg></span><span class="gm wrap"><b>Try the new design</b><span>A preview of the 2027 look. Switch it off any time.</span></span><span class="switch"></span></button></div>` };
 
   /* Watch opens the clips the app has today: For you when there is one, otherwise the league's biggest plays */
   async function watch(startId, key) {
@@ -226,6 +226,125 @@
     const hh = hash(html); if (pg.dataset.h !== hh) { pg.innerHTML = html; pg.dataset.h = hh; }
   }
   { const st0 = V.stats; V.stats = (lk, ...a) => on() ? stats27(lk) : st0(lk, ...a); }
+
+  /* ---------- You (v486): who you are at the top, then one thing per tab: Teams, Players, Saved, Liked, Picks. The top is
+     the same poster as a player's or team's page, in your top team's colours, with your photo in the ring. Settings sits
+     behind the menu button. Your name and photos stay on this phone. ---------- */
+  const me = { photo: '', header: '', ready: false };
+  const idb = { db: null,
+    open() { return this.db || (this.db = new Promise((res, rej) => { try { const r = indexedDB.open('rivl-me', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } })); },
+    async get(k) { try { const d = await this.open(); return await new Promise(res => { const q = d.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result || ''); q.onerror = () => res(''); }); } catch (e) { return ''; } },
+    async set(k, v) { try { const d = await this.open(); await new Promise((res, rej) => { const t = d.transaction('kv', 'readwrite'); if (v) t.objectStore('kv').put(v, k); else t.objectStore('kv').delete(k); t.oncomplete = res; t.onerror = () => rej(t.error); }); return true; } catch (e) { return false; } } };
+  const meLoad = idb.get('photo').then(async p => { me.photo = p || ''; me.header = (await idb.get('header')) || ''; me.ready = true; if (root.dataset.page === 'settings' && $main.querySelector('#you27')) you27(); });
+  /* a photo from the phone, cut to size in the browser: nothing is uploaded anywhere */
+  const shrink = (file, w, h) => new Promise((res, rej) => { const url = URL.createObjectURL(file), im = new Image(); im.onload = () => { try { const sc = Math.max(w / im.naturalWidth, h / im.naturalHeight), cw = Math.min(w, Math.round(im.naturalWidth * sc)), ch = Math.min(h, Math.round(im.naturalHeight * sc));
+        const c = document.createElement('canvas'); c.width = w; c.height = h; const sw = w / sc, sh = h / sc; c.getContext('2d').drawImage(im, (im.naturalWidth - sw) / 2, (im.naturalHeight - sh) / 2, sw, sh, 0, 0, w, h); res(c.toDataURL('image/jpeg', .86)); } catch (e) { rej(e); } finally { URL.revokeObjectURL(url); } }; im.onerror = () => { URL.revokeObjectURL(url); rej(new Error('image')); }; im.src = url; });
+  const YT = [['teams', 'Teams'], ['players', 'Players'], ['saved', 'Saved'], ['liked', 'Liked'], ['picks', 'Picks']];
+  const followedTeams = outs => ORDER.flatMap(lk => { const o = outs.find(x => x.lk === lk); const ids = (favs.all()[lk] || []).map(String); return ids.map(id => { const t = (o && (o.myTeams || []).find(x => String(x.id) === id)) || (o && o.tIdx && o.tIdx[id]) || null; return t ? { lk, o, t: Object.assign({ id }, t) } : { lk, o, t: { id, short: 'Team', name: 'Team', abbr: '', color: '', logo: '' } }; }); });
+  const topTeam = list => { const k = store.get('v5:topteam', ''); return list.find(x => `${x.lk}:${x.t.id}` === k) || list[0] || null; };
+  const chev = '<svg class="cv" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+  const yTeamCard = (x, top) => { const { o, t, lk } = x; const live = (S.today[lk] || []).find(g => isLive(g) && (String(g.home.id) === String(t.id) || String(g.away.id) === String(t.id)));
+    const vs = g => { const home = String(g.home.id) === String(t.id); return `${home ? 'vs' : 'at'} ${(home ? g.away : g.home).abbr}`; }; let nxt = '';
+    if (live) { const home = String(live.home.id) === String(t.id); const us = home ? live.home : live.away, th = home ? live.away : live.home; nxt = `<em><i></i>Live · ${esc(String(us.score ?? ''))}-${esc(String(th.score ?? ''))}</em>`; }
+    else if (t.nx) nxt = `<em>${esc(noTz(tipOf(t.nx)))} ${esc(vs(t.nx))}</em>`; else if (t.next && t.next.state !== 'post') nxt = `<em>${esc(relDay(ymd(t.next)))} ${esc(vs(t.next))}</em>`;
+    const line = [t.rec, t.rank ? `No. ${t.rank}` : shortStanding(t.standing)].filter(Boolean).join(' · ');
+    return `<a class="tc27" href="${U.href.team(lk, t.id)}" style="${cardVars(t.color)}">${mark27(t.logo)}${top ? '<i class="tp27" title="Your top team">★</i>' : ''}<span class="lg27">${t.logo ? U.imgSized(t.logo, 200, 200, '', "this.remove()") : `<b>${esc(String(t.abbr || '').slice(0, 4))}</b>`}</span><span class="pt27"><b>${esc(t.short || t.name)}</b>${line ? `<small>${esc(line)}</small>` : ''}${nxt}</span></a>`; };
+  const yPlayerCard = (p, outs, lines) => { const L = LEAGUES[p.lk]; const o = outs.find(z => z.lk === p.lk), x = lines.get(`${p.lk}:${p.id}`);
+    const tm = (x && x.us) || (o && o.tIdx && p.teamId && o.tIdx[String(p.teamId)]) || null, color = tm ? U.teamColor(tm, L) : U.playerColor(p, L);
+    const nm0 = p.short || p.name || '', nm = nm0.length > 17 ? V.lastName(p.name || nm0) : nm0;
+    const line = x && !x.dnp ? `${x.pts} pts · ${x.reb} reb · ${x.ast} ast` : x ? x.dnp : (tm && (tm.short || tm.name)) || p.team || L.short;
+    return `<a class="pc27" href="${U.href.player(p.lk, p.id)}" style="${cardVars(color)}" aria-label="${esc(p.name || nm)}">${mark27(tm && tm.logo)}${p.img ? `<span class="ph27">${U.imgSized(p.img, 600, 436, '', 'HW.v5.rv27.miss(this)')}</span>` : `<span class="ph27 no27">${I.me}</span>`}<span class="pt27"><b${nm.length > 14 ? ' class="lg27n"' : ''}>${esc(nm)}</b><small class="n">${esc(String(line))}</small></span></a>`; };
+  /* a list that mixes leagues is split by league, and each league can be closed */
+  const yGroups = (tab, groups) => { const fold = (store.get('v5:youfold', {}) || {})[tab] || [], multi = groups.length > 1;
+    return groups.map(g => { const shut = multi && fold.includes(g.lk);
+      return (multi ? `<button class="gh27" data-you="fold" data-tab="${tab}" data-lk="${g.lk}" aria-expanded="${!shut}"><b>${esc(LEAGUES[g.lk].short || LEAGUES[g.lk].label)}</b><span>${g.cards.length}</span>${shut ? `<span class="stk27">${g.thumbs.slice(0, 4).join('')}</span>` : ''}${chev}</button>` : '') + (shut ? '' : `<div class="yg27">${g.cards.join('')}</div>`); }).join(''); };
+  const yClipGrid = (its, kind) => its.length ? `<p class="yn27">${its.length} clip${its.length === 1 ? '' : 's'}</p><div class="cg27">${its.map(it => `<button data-you="clip" data-kind="${kind}" data-id="${esc(it.id)}" aria-label="${esc(it.title)}">${it.thumb ? `<img src="${esc(up916(it.thumb))}" data-o="${esc(it.thumb)}" alt="" loading="lazy" onerror="if(this.dataset.o){this.src=this.dataset.o;this.removeAttribute('data-o')}else this.remove()">` : ''}<b>${esc(it.title)}</b></button>`).join('')}</div>` : '';
+  const yEmpty = (t, b, link, label) => `<div class="em27"><b>${t}</b><p>${b}</p>${link ? `<a href="${link}">${label}</a>` : ''}</div>`;
+  function yPicks(outs) {
+    const P = settle(outs), all = Object.entries(P).map(([k, p]) => Object.assign({ k }, p)).sort((a, b) => new Date(b.date) - new Date(a.date));
+    let w = 0, l = 0, rw = 0, rl = 0; all.forEach(p => { if (p.res === 'w') w++; else if (p.res === 'l') l++; if (p.res === 'w' || p.res === 'l') { if (p.rv === 'w') rw++; else if (p.rv === 'l') rl++; } });
+    let streak = ''; { const done = all.filter(p => p.res === 'w' || p.res === 'l'); if (done.length) { let n = 0; for (const p of done) { if (p.res === done[0].res) n++; else break; } streak = `${done[0].res === 'w' ? 'W' : 'L'}${n}`; } }
+    const today = picksHtml(outs, P);
+    if (!all.length) return (today || '') + (today ? '' : yEmpty('No picks yet', 'Pick a side before a game tips off, on Home or right here when games are on. RIVL shows its own projection once you have picked.'));
+    const diff = (w - l) - (rw - rl), sent = rw + rl ? (diff === 0 ? `Level with RIVL on the same ${rw + rl} game${rw + rl === 1 ? '' : 's'}.` : `${Math.abs(diff) / 2 === 1 ? 'One game' : (Math.abs(diff) / 2) + ' games'} ${diff > 0 ? 'up on' : 'behind'} RIVL on the same ${rw + rl} game${rw + rl === 1 ? '' : 's'}.`) : '';
+    const rec = w + l ? `<section class="ldc27 yr27"><div class="big"><b>${w}-${l}</b><span>Your picks</span></div><div class="rs"><div class="tri"><span><b>${rw + rl ? `${rw}-${rl}` : '–'}</b><small>RIVL</small></span><span><b>${Math.round(w / (w + l) * 100)}%</b><small>Right</small></span><span><b>${streak || '–'}</b><small>Streak</small></span></div>${sent ? `<p>${sent}</p>` : ''}</div></section>` : '';
+    const days = new Map(); all.forEach(p => { const d = HW.ymdOf(p.date); if (!days.has(d)) days.set(d, []); days.get(d).push(p); });
+    const row = p => { const L = LEAGUES[p.lk], t = X.teamOf(p.lk, p.tid) || { abbr: (p.tn || '').slice(0, 3).toUpperCase(), logo: '' }, g = gameOf(p.k);
+      const homeN = p.side === 'home' ? p.tn : p.on, awayN = p.side === 'home' ? p.on : p.tn, rivlN = p.ph == null ? '' : (p.ph >= .5 ? homeN : awayN);
+      let line, mk = '<i class="mk27"></i>';
+      if (p.res === 'w' || p.res === 'l') { const mine = p.fs ? (p.side === 'home' ? p.fs[1] : p.fs[0]) : '', th = p.fs ? (p.side === 'home' ? p.fs[0] : p.fs[1]) : '';
+        line = `${p.res === 'w' ? 'Won' : 'Lost'}${p.fs ? ` ${mine}-${th}` : ''} ${p.ha} ${esc(p.on)}${rivlN ? ` · ${rivlN === p.tn ? 'RIVL too' : `RIVL had ${esc(rivlN)}`}` : ''}`; mk = p.res === 'w' ? `<i class="mk27 w" aria-label="Right">${I.check}</i>` : `<i class="mk27 l" aria-label="Wrong"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></i>`; }
+      else if (p.res === 'x') line = `Not played · ${p.ha} ${esc(p.on)}`;
+      else if (g && isLive(g)) { const us = p.side === 'home' ? g.home : g.away, th = p.side === 'home' ? g.away : g.home; line = `<u></u>${esc(g.detail || 'Live')}, ${+us.score > +th.score ? 'up' : +us.score < +th.score ? 'down' : 'tied'} ${us.score}-${th.score}${rivlN ? ` · RIVL has ${esc(rivlN)} ${pctOf(p.ph)}%` : ''}`; }
+      else line = `${esc(noTz(tipOf({ date: p.date })))} ${p.ha} ${esc(p.on)}${rivlN ? ` · RIVL has ${esc(rivlN)} ${pctOf(p.ph)}%` : ''}`;
+      return `<a class="pr27" href="${U.href.game(p.lk, p.id)}">${disc(t, 32)}<span><b>${esc(p.tn)}</b><small>${line}</small></span>${mk}</a>`; };
+    const hist = [...days.entries()].map(([d, ps]) => { const done = ps.filter(p => p.res === 'w' || p.res === 'l'), right = done.filter(p => p.res === 'w').length;
+      return `<div class="pd27"><b>${esc(relDay(d))}</b>${done.length ? `<span>${right} of ${done.length}</span>` : ''}</div>${ps.map(row).join('')}`; }).join('');
+    return rec + (today || '') + hist;
+  }
+  function yBody(tab, outs) {
+    const lines = new Map(); outs.forEach(o => (o.lines || []).forEach(x => lines.set(`${o.lk}:${x.p.id}`, x)));
+    if (tab === 'teams') { const list = followedTeams(outs), top = topTeam(list); if (!list.length) return yEmpty('No teams yet', 'Follow a team and its games, news and stories show up on Home.', '#settings/following', 'Add a team');
+      return yGroups('teams', ORDER.map(lk => ({ lk, items: list.filter(x => x.lk === lk) })).filter(g => g.items.length).map(g => ({ lk: g.lk, cards: g.items.map(x => yTeamCard(x, x === top)), thumbs: g.items.map(x => disc(x.t, 24)) }))); }
+    if (tab === 'players') { const all = V.fplayers.all().filter(p => LEAGUES[p.lk]); if (!all.length) return yEmpty('No players yet', 'Follow a player and their lines, clips and stories show up on Home.', '#settings/following', 'Add a player');
+      return yGroups('players', ORDER.map(lk => ({ lk, items: all.filter(p => p.lk === lk) })).filter(g => g.items.length).map(g => ({ lk: g.lk, cards: g.items.map(p => yPlayerCard(p, outs, lines)), thumbs: g.items.map(p => `<span class="tf27">${p.img ? U.imgSized(p.img, 160, 116, '', 'this.remove()') : ''}</span>`) }))); }
+    if (tab === 'saved') return yClipGrid(X.savedItems(), 'saved') || yEmpty('Nothing saved yet', 'Tap Save on a clip and it is kept here.');
+    if (tab === 'liked') return yClipGrid(X.stLikedItems(), 'liked') || yEmpty('No liked clips yet', 'Tap the heart on a clip and it shows up here. Clips liked before this update are counted but not listed.');
+    return yPicks(outs);
+  }
+  let youEdit = false;
+  async function you27() {
+    if (!me.ready) await Promise.race([meLoad, sleep(600)]);
+    const srcs = ORDER.map(X.feedSource); if (!srcs.some(s => s.out)) await Promise.race([Promise.all(srcs.map(s => s.ready)), sleep(2500)]);
+    if (root.dataset.page !== 'settings') return;
+    const outs = outsNow(), list = followedTeams(outs), top = topTeam(list), name = String(store.get('v5:name', '') || '').trim();
+    const c = top ? tone(U.teamColor(top.t, LEAGUES[top.lk])) : '#2a3350'; let al = top ? (U.teamAlt({ id: top.t.id, abbr: top.t.abbr, alt: top.t.alt }, LEAGUES[top.lk]) || '') : ''; if (!al || Math.abs(U.lumOf(al) - U.lumOf(c)) < .08) al = '#ffffff';
+    const own = store.get('v5:header', 'team') === 'photo' && me.header;
+    const vars = `--a:${c};--ad:${U.mixTo(c, 0, .58)};--a2:${al};--a3:${U.mixTo(c, 255, .28)}`;
+    const letters = top && top.t.abbr ? `${top.t.abbr} ${top.t.abbr}` : '';
+    const nLikes = X.stLikes().length, nPl = V.fplayers.all().length;
+    let tab = store.get('v5:youtab', 'teams'); if (!YT.some(t => t[0] === tab)) tab = 'teams';
+    const face = me.photo ? `<img src="${me.photo}" alt="">` : `<b>${esc((name || 'You').charAt(0).toUpperCase())}</b>`;
+    const head = `<header class="yh27" style="${vars}"><div class="bn27${own ? ' ph' : ''}"${own ? ` style="background-image:url(${me.header})"` : ''}><u>${own ? '' : esc(letters)}</u><span class="hs27"></span><span class="hg27"></span><span class="hr27"></span><i></i></div><a class="ym27" href="#settings/menu" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a><span class="yp27f">${face}</span><div class="ynm27"><h1 class="${(name || 'You').length > 11 ? 'n3' : (name || 'You').length > 8 ? 'n2' : ''}">${esc(name || 'You')}</h1><p>${top ? `Top team · <b>${esc(top.t.short || top.t.name)}</b>` : 'No top team yet'}</p></div><button class="ye27" data-you="edit">Edit profile</button></header>`;
+    const counts = `<div class="yc27"><div><b>${list.length}</b><span>Teams</span></div><div><b>${nPl}</b><span>Players</span></div><div><b>${nLikes}</b><span>Likes</span></div></div><div class="ya27"><a href="#settings/following">Add a team</a><a href="#settings/following">Add a player</a></div>`;
+    const tabs = `<nav class="ytb27" aria-label="Your things">${YT.map(([k, l]) => `<button data-you="tab" data-tab="${k}" class="${k === tab ? 'on' : ''}" aria-pressed="${k === tab}">${l}</button>`).join('')}</nav>`;
+    const html = (youEdit ? yEditHtml(name, list, top, vars, own) : head + counts + tabs + `<div id="yb27" data-tab="${tab}">${yBody(tab, outs)}</div>`), h = hash(html);
+    let pg = $main.querySelector('#you27'); if (!pg) { $main.innerHTML = `<div id="you27" class="h27 yp27"></div>`; pg = $main.querySelector('#you27'); }
+    if (pg.dataset.h !== h) { pg.innerHTML = html; pg.dataset.h = h; }
+    V.refresh = () => { if (!youEdit) you27(); }; V.refresh.every = 60000;
+  }
+  function yEditHtml(name, list, top, vars, own) {
+    const hdr = store.get('v5:header', 'team') === 'photo' && me.header ? 'photo' : 'team';
+    return `<div class="yed27"><div class="yeb27"><button data-you="cancel">Cancel</button><b>Edit profile</b><button data-you="save" class="sv">Save</button></div>
+      <div class="yh27 sm" style="${vars}"><div class="bn27${own ? ' ph' : ''}"${own ? ` style="background-image:url(${me.header})"` : ''}><u></u><span class="hs27"></span><i></i></div><button class="cam27 c1" data-you="pickh" aria-label="Change header">${CAM}</button><span class="yp27f">${me.photo ? `<img src="${me.photo}" alt="">` : `<b>${esc((name || 'You').charAt(0).toUpperCase())}</b>`}<button class="cam27" data-you="pickp" aria-label="Change profile photo">${CAM}</button></span></div>
+      <label class="yf27"><span>Name</span><input id="yname27" type="text" maxlength="24" autocomplete="given-name" value="${esc(name)}" placeholder="Your name"></label>
+      <label class="yf27"><span>Top team</span><select id="ytop27">${list.length ? list.map(x => `<option value="${esc(x.lk + ':' + x.t.id)}"${x === top ? ' selected' : ''}>${esc(x.t.name || x.t.short)} (${esc(LEAGUES[x.lk].short || x.lk)})</option>`).join('') : '<option value="">Follow a team first</option>'}</select></label>
+      <div class="yf27"><span>Header</span><div class="yhc27"><button data-you="hdr" data-v="team" class="${hdr === 'team' ? 'on' : ''}" aria-pressed="${hdr === 'team'}">Top team colors</button><button data-you="hdr" data-v="photo" class="${hdr === 'photo' ? 'on' : ''}" aria-pressed="${hdr === 'photo'}">Your own photo</button></div></div>
+      ${me.photo ? '<button class="yrm27" data-you="rmphoto">Remove profile photo</button>' : ''}
+      <p class="yno27">Your header follows your top team until you add a photo. Your name and photos stay on this phone.</p>
+      <input type="file" accept="image/*" id="yfile27" hidden></div>`;
+  }
+  const CAM = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.500A2 2 0 0 1 6 6.500h1.600l1.300-2h6.200l1.300 2H18a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.500" r="3.400"/></svg>';
+  let yPickFor = '';
+  $main.addEventListener('change', async e => { if (e.target.id !== 'yfile27') return; const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+    try { if (yPickFor === 'header') { const d = await shrink(f, 1200, 720); if (await idb.set('header', d)) { me.header = d; store.set('v5:header', 'photo'); } else V.toast('Could not keep that photo on this phone.'); }
+      else { const d = await shrink(f, 320, 320); if (await idb.set('photo', d)) me.photo = d; else V.toast('Could not keep that photo on this phone.'); } }
+    catch (er) { V.toast('That file could not be read as a photo.'); }
+    const nm = $main.querySelector('#yname27'); if (nm) store.set('v5:name27draft', nm.value); const pg = $main.querySelector('#you27'); if (pg) pg.dataset.h = ''; await you27(); const n2 = $main.querySelector('#yname27'), dr = store.get('v5:name27draft', null); if (n2 && dr != null) n2.value = dr; });
+  $main.addEventListener('click', async e => { const b = e.target.closest('[data-you]'); if (!b || !b.closest('#you27')) return; const a = b.dataset.you; e.preventDefault();
+    if (a === 'tab') { store.set('v5:youtab', b.dataset.tab); return you27(); }
+    if (a === 'fold') { const f = store.get('v5:youfold', {}) || {}, t = b.dataset.tab, l = new Set(f[t] || []); if (l.has(b.dataset.lk)) l.delete(b.dataset.lk); else l.add(b.dataset.lk); f[t] = [...l]; store.set('v5:youfold', f); return you27(); }
+    if (a === 'clip') { const its = b.dataset.kind === 'liked' ? X.stLikedItems() : X.savedItems(); if (!its.length || document.querySelector('.story')) return; const nm = b.dataset.kind === 'liked' ? 'Liked' : 'Saved';
+      const subs = [{ key: 'w:you', lk: 'all', kind: 'watch', id: 'w:you', name: nm, full: nm, color: '#15171a', its, un: true, last: Date.now() }];
+      return V.storyOpen('w:you', b.dataset.id, { watch: true, subs, chrome(el) { el.__subs = subs; wChrome(el); el.classList.add('one27'); }, onItem: (el, it, x, si) => { wItem(el, it, x, si); store.set('v5:wtab', store.get('v5:wtab0', 'w:fy')); }, onSlide: wInd, onClose() { paintBar(); you27(); } }); }
+    if (a === 'edit') { youEdit = true; store.remove ? store.remove('v5:name27draft') : store.set('v5:name27draft', null); window.scrollTo(0, 0); return you27(); }
+    if (a === 'cancel') { youEdit = false; return you27(); }
+    if (a === 'save') { const nm = $main.querySelector('#yname27'), tp = $main.querySelector('#ytop27'); if (nm) store.set('v5:name', nm.value.trim().slice(0, 24)); if (tp && tp.value) store.set('v5:topteam', tp.value); youEdit = false; V.toast('Saved'); return you27(); }
+    if (a === 'pickp' || a === 'pickh') { yPickFor = a === 'pickh' ? 'header' : 'photo'; const f = $main.querySelector('#yfile27'); if (f) f.click(); return; }
+    if (a === 'hdr') { if (b.dataset.v === 'photo' && !me.header) { yPickFor = 'header'; const f = $main.querySelector('#yfile27'); if (f) f.click(); return; } store.set('v5:header', b.dataset.v); const nm = $main.querySelector('#yname27'), keep = nm ? nm.value : null; await you27(); const n2 = $main.querySelector('#yname27'); if (n2 && keep != null) n2.value = keep; return; }
+    if (a === 'rmphoto') { await idb.set('photo', ''); me.photo = ''; const nm = $main.querySelector('#yname27'), keep = nm ? nm.value : null; await you27(); const n2 = $main.querySelector('#yname27'); if (n2 && keep != null) n2.value = keep; return; }
+  });
+  { const st0 = V.settings; V.settings = (cat = '', ...a) => { if (on() && !cat) { return you27(); } youEdit = false; return st0(cat === 'menu' ? '' : cat, ...a); }; }
 
   /* ---------- the game page below its top (v478). The top stays as it is (Ray's ruling). Below it the page already had the
      board's parts (line score, leaders, win chance, team stats), so this only puts the game's clips first as a row of
