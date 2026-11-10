@@ -909,6 +909,30 @@
         if (!(' ' + nrm(title) + ' ').includes(' ' + nm + ' ')) return; const cm = cmOf(c.id); if (cm && cm.a.length && !cm.a.includes(String(p.id))) return;
         its.push({ kind: 'vid', id: 'v' + c.id, ts, url: `https://espnmedia-cdn.akamaized.net/espn/media/16x9/${m[1]}/${m[2]}.mp4`, v9: vertOf(null, img), title, dur: Math.round((+c.duration || 0) / 1000) || 20, thumb: img, ck: 'play', aths: [String(p.id)], sub: '', L }); });
       const was = SRCH[k].its.length; SRCH[k].its = its; if (its.length !== was && homeRepaint && !stEl) homeRepaint(); }).catch(() => {}); return SRCH[k].its; };
+  /* v458 the game told from its own record, for the cards between the clips: quarter scores, each side's longest
+     unanswered run, biggest lead, lead changes, the three top scorers, and the one play that moved the win chance
+     most. All of it counted from the play-by-play and box score in hand; a card with nothing to count is not made. */
+  const gameFlow = (S, g, L) => { if (S.flow !== undefined) return S.flow; const d = S.d; let f = null;
+    const hc = ((d.header || {}).competitions || [])[0] || {}; const ls = side => { const c = (hc.competitors || []).find(x => x.team && String(x.team.id) === String(side.id)); return ((c && c.linescores) || []).map(l => l.displayValue ?? l.value ?? ''); };
+    const plays = (d.plays || []).filter(q => q.homeScore != null && q.awayScore != null);
+    if (plays.length > 20) { let ph = 0, pa = 0, leader = 0, lc = 0, bigH = 0, bigA = 0, run = { t: '', n: 0, from: null }; const best = { h: { n: 0 }, a: { n: 0 } };
+      plays.forEach(q => { const h = +q.homeScore, a = +q.awayScore; if (h === ph && a === pa) return; const dh = h - ph, da = a - pa; ph = h; pa = a; if (dh < 0 || da < 0) return;
+        const t = dh > 0 && da > 0 ? '' : dh > 0 ? 'h' : 'a'; if (!t) run = { t: '', n: 0, from: null }; else { if (run.t !== t) run = { t, n: 0, from: q }; run.n += dh + da; if (run.n > best[t].n) best[t] = { n: run.n, from: run.from, to: q }; }
+        const sg = Math.sign(h - a); if (sg && leader && sg !== leader) lc++; if (sg) leader = sg; bigH = Math.max(bigH, h - a); bigA = Math.max(bigA, a - h); });
+      f = { lc, big: { h: bigH, a: bigA }, run: best }; }
+    const lh = ls(g.home), la = ls(g.away); if (lh.length && lh.length === la.length) f = Object.assign(f || {}, { ls: { h: lh, a: la } });
+    // the biggest single swing in the win chance, kept only when it was a real one (8 points or more)
+    const wp = (d.winprobability || []).filter(x => x.homeWinPercentage != null);
+    if (wp.length > 20) { if (!S.pix) { S.pix = new Map(); (d.plays || []).forEach((q, i) => S.pix.set(String(q.id), i)); }
+      let bi = 0, bd = 0; for (let i = 1; i < wp.length; i++) { const dl = Math.abs(wp[i].homeWinPercentage - wp[i - 1].homeWinPercentage); if (dl > bd) { bd = dl; bi = i; } }
+      const pi = S.pix.get(String(wp[bi].playId)); const q = pi != null ? d.plays[pi] : null;
+      if (bd >= .08 && q && q.text) { const brk = []; let per = 0; wp.forEach((x, i) => { const k = S.pix.get(String(x.playId)); const n = k != null ? +((d.plays[k].period || {}).number) || 0 : 0; if (n && per && n !== per) brk.push(i); if (n) per = n; });
+        f = Object.assign(f || {}, { sw: { i: bi, from: wp[bi - 1].homeWinPercentage, to: wp[bi].homeWinPercentage, q, wp: wp.map(x => x.homeWinPercentage), brk } }); } }
+    return (S.flow = f); };
+  const topsOf = (d, tid) => { const side = ((d.boxscore && d.boxscore.players) || []).find(x => String((x.team || {}).id) === String(tid)); const st = side && side.statistics && side.statistics[0]; if (!st) return [];
+    const lb = st.labels || st.names || []; const ix = l => lb.indexOf(l); const num = (a, l) => { const i = ix(l); const v = i >= 0 ? parseInt(a.stats[i], 10) : NaN; return Number.isFinite(v) ? v : null; };
+    return (st.athletes || []).filter(a => a.athlete && a.stats && a.stats.length && !a.didNotPlay).map(a => ({ id: String(a.athlete.id), name: a.athlete.displayName || a.athlete.shortName || '', hs: hsUrl(a.athlete), pts: num(a, 'PTS'), reb: num(a, 'REB'), ast: num(a, 'AST') }))
+      .filter(a => a.name && a.pts != null).sort((a, b) => b.pts - a.pts || (b.reb + b.ast) - (a.reb + a.ast)).slice(0, 3); };
   function storySubjects() {
     storiesLoad(); const now = Date.now(); const subs = []; const posts = (storiesD && storiesD.items) || []; const seen = stSeen();
     ORDER.forEach(lk => {
@@ -926,8 +950,12 @@
             const own = vs.filter(v => v.ck === 'play' ? v.tm === tid : v.ck === 'talk' && (!v.tm || v.tm === tid)).sort((a, b) => (a.seq != null && b.seq != null ? a.seq - b.seq : 0) || a.ts - b.ts);
             // game order is the order shown: step each one just past the one before it
             own.forEach(v => { end = Math.max(end, v.ts) + 1; its.push(Object.assign({}, v, { ts: v.ck === 'play' ? end : v.ts, sub: score(g, tid), tag: v.pl ? playTag(v.pl, g, tid) : '' })); });
+            const fl = gameFlow(S, g, L), tp = topsOf(S.d, tid);
+            its.push({ kind: 'final', id: 'g' + g.id, ts: ++end, g, L, tid, fl });
+            if (fl && fl.sw) its.push({ kind: 'swing', id: 'w' + g.id, ts: ++end, g, L, tid, fl });
+            if (tp.length) its.push({ kind: 'tops', id: 't' + g.id, ts: ++end, g, L, tid, tp });
             vs.filter(v => v.ck === 'reel').slice(0, 1).forEach(v => { end = Math.max(end, v.ts) + 1; its.push(Object.assign({}, v, { ts: end, sub: 'Full game highlights' })); }); }
-          its.push({ kind: 'final', id: 'g' + g.id, ts: end + 1, g, L, tid }); });
+          else its.push({ kind: 'final', id: 'g' + g.id, ts: end + 1, g, L, tid }); });
         lp.filter(p => (p.teams || []).includes(tid)).forEach(p => { const a = p.aths || [], k = clipKind(p.title, p.k || (cmOf(p.id) || {}).t || '', p.dur), nm = whoIn(p.title, ros);
           const ours = a.some(x => mine.has(x)) || (nm.length && nm[0].tid === tid), theirs = a.some(x => others.has(x)) || (nm.length && nm[0].tid !== tid);
           if (k === 'play' ? ours && !(nm.length && nm[0].tid !== tid) : k === 'reel' ? true : ours || !theirs) its.push(Object.assign(postItem(p, L), { ck: k, v9: k === 'talk' ? '' : vertOf(null, p.url), sub: k === 'reel' ? 'Full game highlights' : '' })); });
@@ -947,9 +975,33 @@
     });
     return subs.sort((a, b) => (b.un - a.un) || (b.last - a.last));
   }
+  /* v458 sharp from the first frame. The upright stream is a ladder of renditions and a browser left to choose starts on
+     the lowest (soft picture), then stalls as it climbs. So the app reads the ladder itself and plays one rendition
+     straight through: the sharpest, or a middle one on a slow or data-saving connection. Ladders are read ahead of
+     time (the first clip of each ring as Home paints, the next clip while one plays), so the choice is ready at the tap. */
+  const V9 = new Map(); let HLSOK = null;
+  const hlsOk = () => { if (HLSOK == null) { try { const v = document.createElement('video'); HLSOK = !!(v.canPlayType('application/vnd.apple.mpegurl') || v.canPlayType('application/x-mpegURL')); } catch (e) { HLSOK = false; } } return HLSOK; };
+  const v9Parse = (tx, base) => { const L = String(tx || '').split(/\r?\n/), vs = [];
+    L.forEach((l, i) => { if (!l.startsWith('#EXT-X-STREAM-INF')) return; const uri = (L.slice(i + 1).find(x => x && !x.startsWith('#')) || '').trim(); if (!uri) return; const r = /RESOLUTION=(\d+)x(\d+)/.exec(l) || [];
+      vs.push({ bw: +((/[:,]BANDWIDTH=(\d+)/.exec(l) || [])[1]) || 0, h: +r[2] || 0, uri }); });
+    if (!vs.length) return base; const c = navigator.connection || {}; const slow = c.saveData || /(^|-)2g|3g/.test(String(c.effectiveType || ''));
+    vs.sort((a, b) => a.h - b.h || a.bw - b.bw); const top = vs[vs.length - 1]; const ok = vs.filter(v => v.bw <= 5200000);
+    const best = slow ? vs[Math.min(vs.length - 1, Math.floor((vs.length - 1) / 2))] : (ok.length ? ok[ok.length - 1] : top);
+    try { return new URL(best.uri, base).href; } catch (e) { return base; } };
+  const v9Pick = m => { if (!m || !hlsOk()) return Promise.resolve(m); const c = V9.get(m); if (typeof c === 'string') return Promise.resolve(c); if (c) return c;
+    const p = fetch(m).then(r => r.ok ? r.text() : '').then(tx => { const u = v9Parse(tx, m); V9.set(m, u); return u; }).catch(() => { V9.set(m, m); return m; }); V9.set(m, p); return p; };
+  const v9Now = m => { const c = V9.get(m); return typeof c === 'string' ? c : m; };
+  let stWarmed = false; const stHead = new Set();
+  const stWarm = subs => { if (!hlsOk()) return;
+    if (!stWarmed) { stWarmed = true; ['https://cmp-espn.media.dssott.com', 'https://espnmedia-cdn.akamaized.net'].forEach(h => { const l = document.createElement('link'); l.rel = 'preconnect'; l.href = h; l.crossOrigin = ''; document.head.appendChild(l); }); }
+    const seen = stSeen(); const c = navigator.connection || {}; const light = c.saveData || /(^|-)2g|3g/.test(String(c.effectiveType || ''));
+    subs.slice(0, 8).forEach((x, n) => { const sn = new Set(seen[x.key] || []); const i = Math.max(0, x.its.findIndex(y => !sn.has(y.id)));
+      x.its.slice(i, i + 2).forEach((it, k) => { if (it.kind !== 'vid' || !it.v9) return; const p = v9Pick(it.v9);
+        // the opening seconds of the first clip in the first two unwatched rings are fetched ahead, so the tap has something to show at once
+        if (n < 2 && k === 0 && x.un && !light && !stHead.has(it.v9)) { stHead.add(it.v9); p.then(u => u === it.v9 ? null : fetch(u).then(r => r.ok ? r.text() : '').then(tx => { const seg = String(tx).split(/\r?\n/).find(l => l && !l.startsWith('#')); if (seg) return fetch(new URL(seg.trim(), u).href).then(r => r.arrayBuffer()); })).catch(() => {}); } }); }); };
   const stAvatar = (x, size) => x.kind === 'player' ? headshot(x.hs, x.color, size, x.full || x.name) : x.logo ? imgSized(x.logo, size * 2, size * 2) : `<b>${esc(x.abbr || '')}</b>`;
   function bubbles() {
-    const subs = storySubjects(); if (!subs.length) return '';
+    const subs = storySubjects(); if (!subs.length) return ''; stWarm(subs);
     return `<div class="sbubs">${subs.map(x => `<button class="sbub${x.un ? '' : ' seen'}${x.kind === 'player' ? ' pl' : ''}" data-act="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span class="ring"><span>${stAvatar(x, x.kind === 'player' ? 52 : 30)}</span></span><small>${esc(x.name)}</small></button>`).join('')}</div>`;
   }
 
@@ -964,17 +1016,27 @@
     const subs = storySubjects(); let si = subs.findIndex(x => x.key === key); if (si < 0) return;
     const W = innerWidth, H = innerHeight, HYP = Math.ceil(Math.hypot(W, H) / 2) + 4;
     const el = document.createElement('div'); el.className = 'story';
-    el.innerHTML = `<div class="stdim"></div><div class="stpane"><div class="stbg"></div><div class="stblur"></div><div class="stmedia"><div class="stvdw" hidden><video playsinline preload="auto"></video></div><div class="stcd" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stcap"></div></div></div>`;
+    el.innerHTML = `<div class="stdim"></div><div class="stpane"><div class="stbg"></div><div class="stblur"></div><div class="stmedia"><div class="stvdw" hidden><video class="on" playsinline preload="auto"></video><video playsinline preload="auto" muted></video></div><div class="stcd" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stcap"></div></div></div>`;
     document.body.appendChild(el); stEl = el; document.documentElement.classList.add('stlock');
-    const pane = el.querySelector('.stpane'), dim = el.querySelector('.stdim'), vd = el.querySelector('video');
+    const pane = el.querySelector('.stpane'), dim = el.querySelector('.stdim'); let [vd, sb] = [...el.querySelectorAll('video')];   // vd plays; sb holds the next clip, loaded and waiting
     /* the upright stream plays where the browser reads that kind itself (iPhone, iPad, Android, newer desktop); anywhere
        else, or if one fails to load, the wide file plays instead. The frame takes its shape from the video that arrived. */
-    const HLS = !!vd.canPlayType('application/vnd.apple.mpegurl') || !!vd.canPlayType('application/x-mpegURL');
+    const HLS = hlsOk();
     const shape = () => { if (vd.videoWidth) pane.querySelector('.stvdw').classList.toggle('vert', vd.videoHeight > vd.videoWidth); };
-    vd.addEventListener('loadedmetadata', shape); vd.addEventListener('resize', shape);
+    [vd, sb].forEach(v => { v.addEventListener('loadedmetadata', e => { if (e.currentTarget === vd) shape(); }); v.addEventListener('resize', e => { if (e.currentTarget === vd) shape(); }); });
     try { history.pushState({ story: 1 }, '', location.href); } catch (e) {}
     let ii = 0, t0 = 0, paused = false, pausedAt = 0, raf = 0, busy = false, closed = false;
     const sub = () => subs[si]; const item = () => sub() && sub().its[ii];
+    const upright = it => !!(it.v9 && HLS && !it.v9bad); const srcOf = it => upright(it) ? v9Now(it.v9) : it.url;
+    let sbIt = null, quiet = false;   // quiet: sound was refused without a touch; the next touch turns it back on
+    const play = () => { const p = vd.play(); if (p && p.catch) p.catch(e => { if (e && e.name === 'NotAllowedError' && !vd.muted) { quiet = true; vd.muted = true; const q = vd.play(); if (q && q.catch) q.catch(() => {}); } }); };
+    // what plays after this one: the next clip in this story, else the first unseen thing in the next ring
+    const upNext = () => { const x = sub(); if (!x) return null; const n = x.its.slice(ii + 1).find(y => y.kind === 'vid'); if (n) return n; const nx = subs[si + 1]; if (!nx) return null; const sn = new Set(stSeen()[nx.key] || []); const f = nx.its.find(y => !sn.has(y.id)) || nx.its[0]; return f && f.kind === 'vid' ? f : null; };
+    const load = it => { const src = srcOf(it); if (closed || sb.dataset.u === src || vd.dataset.u === src) return; sbIt = it; sb.muted = true; sb.dataset.u = src; sb.src = src; try { sb.load(); } catch (e) {}
+      // a short silent start makes phones actually fetch it; started inside the opening touch it also clears this player for sound later
+      const me = sb; const p = me.play(); if (p && p.then) p.then(() => { if (me !== vd) { me.pause(); if (me.currentTime > .05) me.currentTime = 0; } }, () => {}); };
+    const prep = gesture => { const it = upNext(); if (!it) return; if (!upright(it) || typeof V9.get(it.v9) === 'string' || gesture) { load(it); if (upright(it)) v9Pick(it.v9); return; }
+      v9Pick(it.v9).then(() => { if (!closed && upNext() === it) load(it); }); };
     const bubbleOf = k => { const b = [...document.querySelectorAll('.sbub')].find(x => x.dataset.key === k); if (!b) return null; const r = b.querySelector('.ring').getBoundingClientRect(); return r.bottom > 0 && r.top < H ? r : null; };
     const shrunk = r => ({ transform: `translate(${r.left + r.width / 2 - W / 2}px,${r.top + r.height / 2 - H / 2}px) scale(${r.width / W})`, clipPath: `circle(${W / 2}px at 50% 50%)`, opacity: .6 });
     const open = { transform: 'translate(0,0) scale(1)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 1 };
@@ -984,9 +1046,9 @@
     const bar = f => { const b = pane.querySelectorAll('.stsegs i')[ii]; if (b) b.firstChild.style.transform = `scaleX(${Math.max(0, Math.min(1, f))})`; };
     const tick = () => { raf = requestAnimationFrame(tick); const it = item(); if (!it || paused || busy) return;
       if (it.kind === 'vid') { const d = vd.duration || it.dur; if (d) bar(vd.currentTime / d); }
-      else { const f = (performance.now() - t0) / CARD; bar(f); if (f >= 1) step(1); } };
+      else { const f = (performance.now() - t0) / (it.kind === 'line' || (it.kind === 'final' && !it.fl) ? CARD : 8500); bar(f); if (f >= 1) step(1); } };
     const pause = () => { if (paused) return; paused = true; pausedAt = performance.now(); try { vd.pause(); } catch (e) {} el.classList.add('held'); };
-    const resume = () => { if (!paused) return; paused = false; t0 += performance.now() - pausedAt; el.classList.remove('held'); const it = item(); if (it && it.kind === 'vid') { const p = vd.play(); if (p && p.catch) p.catch(() => {}); } };
+    const resume = () => { if (!paused) return; paused = false; t0 += performance.now() - pausedAt; el.classList.remove('held'); const it = item(); if (it && it.kind === 'vid') play(); };
     const head = () => { const x = sub(), it = item(); pane.querySelector('.sthd').innerHTML = `<span class="ring"><span>${stAvatar(x, x.kind === 'player' ? 34 : 22)}</span></span><span class="who"><b>${esc(x.full || x.name)}</b><small>${esc(ago(new Date(it.ts).toISOString()).replace(/ ago$/, ''))}</small></span><button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`; };
     const render = () => {
       const x = sub(), it = item(); stMark(x.key, it.id); head(); segs(); t0 = performance.now();
@@ -994,8 +1056,13 @@
       if (it.kind === 'vid') {
         bg.style.background = `linear-gradient(170deg,#050506 30%,${x.color} 190%)`; bl.style.backgroundImage = it.thumb ? `url("${it.thumb}")` : 'none';
         card.hidden = true; vw.hidden = false;
-        const src = it.v9 && HLS && !it.v9bad ? it.v9 : it.url; vw.classList.toggle('vert', src === it.v9);
-        try { vd.poster = src === it.v9 ? '' : it.thumb || ''; if (vd.dataset.u !== src) { vd.dataset.u = src; vd.src = src; } else vd.currentTime = 0; if (!paused) { const p = vd.play(); if (p && p.catch) p.catch(() => {}); } } catch (e) {}
+        const up = upright(it), src = srcOf(it); vw.classList.toggle('vert', up);
+        try {
+          if (sb.dataset.u === src && vd.dataset.u !== src) { const old = vd; vd = sb; sb = old; vd.classList.add('on'); sb.classList.remove('on'); try { sb.pause(); } catch (e) {} sbIt = null; if (vd.currentTime > .05) vd.currentTime = 0; shape(); }   // the next clip was waiting: bring it forward
+          else if (vd.dataset.u !== src) { vd.poster = up ? '' : it.thumb || ''; vd.dataset.u = src; vd.src = src; }
+          else vd.currentTime = 0;
+          vd.muted = quiet; if (!paused) play();
+        } catch (e) {}
         const ln = it.ln, line = ln ? [[ln.pts, 'PTS'], [ln.reb, 'REB'], [ln.ast, 'AST']].filter(c => c[0] !== '' && c[0] != null).map(c => `${esc(String(c[0]))} ${c[1]}`).join(' \u00b7 ') : '';
         const meta = `${it.gw ? '<span class="gw">Game winner</span>' : ''}${it.tag ? `<span>${esc(it.tag)}</span>` : ''}${line ? `<span>${line}</span>` : ''}`;
         cap.innerHTML = `${meta ? `<div class="stmeta">${meta}</div>` : ''}<b>${esc(it.title)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ''}`; cap.hidden = false;
@@ -1004,12 +1071,29 @@
         const g = it.g, L = it.L;
         if (it.kind === 'final') { const home = String(g.home.id) === it.tid; const us = home ? g.home : g.away, them = home ? g.away : g.home; const won = +us.score > +them.score;
           bg.style.background = `linear-gradient(160deg,${teamColor(them, L)} -30%,#0a0a0c 44%,${teamColor(us, L)} 160%)`;
-          card.innerHTML = `<span class="fin">Final · ${esc(won ? us.short : them.short)} win</span><div class="srw"><span class="tm">${us.logo ? imgSized(us.logo, 128, 128) : ''}<span>${esc(us.short)}</span></span><b class="${won ? '' : 'lo'}">${esc(String(us.score))}</b><b class="${won ? 'lo' : ''}">${esc(String(them.score))}</b><span class="tm">${them.logo ? imgSized(them.logo, 128, 128) : ''}<span>${esc(them.short)}</span></span></div>`;
+          const fl = it.fl; let more = '';
+          if (fl && fl.ls) { const lu = home ? fl.ls.h : fl.ls.a, lt = home ? fl.ls.a : fl.ls.h, np = L.periods || 4; const hd = lu.map((_, i) => i < np ? (np === 2 ? `${i + 1}H` : `Q${i + 1}`) : `OT${i - np > 0 ? i - np + 1 : ''}`);
+            more += `<table class="stls"><thead><tr><th></th>${hd.map(h => `<th>${h}</th>`).join('')}<th>T</th></tr></thead><tbody>${[[us, lu], [them, lt]].map(([t, l], k) => `<tr class="${(k === 0) === won ? 'w' : ''}"><td>${esc(t.abbr || t.short)}</td>${l.map(v => `<td>${esc(String(v))}</td>`).join('')}<td>${esc(String(t.score))}</td></tr>`).join('')}</tbody></table>`; }
+          if (fl && fl.run) { const r = home ? fl.run.h : fl.run.a, big = home ? fl.big.h : fl.big.a; const when = r.n && r.from ? (() => { const a = perLbl(r.from), b = perLbl(r.to); return a === b ? a : `${a} into ${b}`; })() : '';
+            const tiles = [r.n >= 6 ? [`${r.n}-0`, `Best run${when ? ' \u00b7 ' + when : ''}`] : null, [big > 0 ? String(big) : 'None', 'Biggest lead'], [String(fl.lc), fl.lc === 1 ? 'Lead change' : 'Lead changes']].filter(Boolean);
+            more += `<div class="stfl">${tiles.map(t => `<s>${esc(t[0])}<em>${esc(t[1])}</em></s>`).join('')}</div>`; }
+          card.innerHTML = `<span class="fin">Final · ${esc(won ? us.short : them.short)} win</span><div class="srw"><span class="tm">${us.logo ? imgSized(us.logo, 128, 128) : ''}<span>${esc(us.short)}</span></span><b class="${won ? '' : 'lo'}">${esc(String(us.score))}</b><b class="${won ? 'lo' : ''}">${esc(String(them.score))}</b><span class="tm">${them.logo ? imgSized(them.logo, 128, 128) : ''}<span>${esc(them.short)}</span></span></div>${more}`;
+        } else if (it.kind === 'swing') { const home = String(g.home.id) === it.tid; const us = home ? g.home : g.away, them = home ? g.away : g.home; const sw = it.fl.sw; const mine = v => home ? v : 1 - v;
+          bg.style.background = `linear-gradient(165deg,#0a0a0c 35%,${x.color} 150%)`;
+          const W = 320, Hh = 150, n = sw.wp.length; const X = i => i / (n - 1) * W, Y = v => 6 + (1 - mine(v)) * (Hh - 12);
+          const pts = sw.wp.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+          const a = Math.round(mine(sw.from) * 100), b = Math.round(mine(sw.to) * 100); const q = sw.q; const ck = String((q.clock || {}).displayValue || '');
+          const sc = q.homeScore != null ? ` \u00b7 ${us.abbr || us.short} ${home ? q.homeScore : q.awayScore}, ${them.abbr || them.short} ${home ? q.awayScore : q.homeScore}` : '';
+          card.innerHTML = `<span class="fin">Biggest swing</span><div class="stsw"><svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none" aria-hidden="true">${sw.brk.map(i => `<line class="pb" x1="${X(i).toFixed(1)}" x2="${X(i).toFixed(1)}" y1="0" y2="${Hh}"/>`).join('')}<line class="mid" x1="0" x2="${W}" y1="${Hh / 2}" y2="${Hh / 2}"/><polygon class="ar" points="0,${Hh / 2} ${pts} ${W},${Hh / 2}"/><polyline class="ln" points="${pts}"/></svg><i class="dot" style="left:${(X(sw.i) / W * 100).toFixed(2)}%;top:${(Y(sw.to) / Hh * 100).toFixed(2)}%"></i><span class="ax t">${esc(us.abbr || us.short)}</span><span class="ax b">${esc(them.abbr || them.short)}</span></div><div class="stpc"><b>${a}%</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg><b class="${b >= a ? 'up' : 'dn'}">${b}%</b></div><span class="stpl">${esc(us.short)} win chance</span><p class="sttx">${esc(String(q.text))}</p><span class="stwh">${esc(perLbl(q))}${ck ? ' ' + esc(ck) : ''}${esc(sc)}</span>`;
+        } else if (it.kind === 'tops') { const home = String(g.home.id) === it.tid; const us = home ? g.home : g.away, them = home ? g.away : g.home; const won = +us.score > +them.score;
+          bg.style.background = `linear-gradient(165deg,#0a0a0c 35%,${x.color} 150%)`;
+          card.innerHTML = `<span class="fin">Top scorers</span><div class="sttp">${it.tp.map(a => `<div class="tpr">${headshot(a.hs, x.color, 60, a.name)}<span><b>${esc(a.name)}</b><small>${[[a.pts, 'PTS'], [a.reb, 'REB'], [a.ast, 'AST']].filter(c => c[0] != null).map(c => `${c[0]} ${c[1]}`).join(' \u00b7 ')}</small></span></div>`).join('')}</div><span class="stwh">${esc(us.short)} ${esc(String(us.score))}, ${esc(them.short)} ${esc(String(them.score))} \u00b7 ${won ? 'Win' : 'Loss'}</span>`;
         } else { const ln = it.ln; const us = String(g.home.id) === ln.teamId ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = +us.score > +them.score;
           bg.style.background = `linear-gradient(165deg,#0a0a0c 35%,${x.color} 150%)`;
           const chips = [[ln.pts, 'PTS'], [ln.reb, 'REB'], [ln.ast, 'AST'], [+ln.tpm > 0 ? ln.tpm : '', '3PM']].filter(c => c[0] !== '' && c[0] != null).map(c => `<s>${esc(String(c[0]))}<em>${c[1]}</em></s>`).join('');
           card.innerHTML = `<span class="lnhs">${headshot(x.hs, x.color, 132, x.full || x.name)}</span><b class="lnnm">${esc(x.full || x.name)}</b><span class="lnres"><i class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</i>${esc(String(us.score))}-${esc(String(them.score))} ${us === g.home ? 'vs' : 'at'} ${esc(them.short)}</span><span class="lnch">${chips}</span>`; }
       }
+      prep();
       const m = pane.querySelector('.stmedia'); if (!RM()) m.animate([{ opacity: .35, transform: 'scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: 180, easing: 'ease-out' });
     };
     const step = d => { const x = sub(); if (!x || busy) return; const n = ii + d;
@@ -1019,7 +1103,7 @@
     // ---- the cube: the page you're leaving keeps its last frame and turns away as the next one turns in
     const turn = dir => { if (busy) return; const nsi = si + dir; if (nsi < 0 || nsi >= subs.length) return close();
       busy = true; const ghost = pane.cloneNode(true); ghost.classList.add('ghost');
-      const gv = ghost.querySelector('video'); if (gv) { const c = document.createElement('canvas'); c.width = vd.videoWidth || 1; c.height = vd.videoHeight || 1; try { c.getContext('2d').drawImage(vd, 0, 0); } catch (e) {} c.className = 'stframe'; gv.replaceWith(c); }
+      ghost.querySelectorAll('video').forEach(gv => { if (!gv.classList.contains('on')) return gv.remove(); const c = document.createElement('canvas'); c.width = vd.videoWidth || 1; c.height = vd.videoHeight || 1; try { c.getContext('2d').drawImage(vd, 0, 0); } catch (e) {} c.className = 'stframe'; gv.replaceWith(c); });
       el.insertBefore(ghost, pane); si = nsi; const sn = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sn.has(y.id))); render();
       if (RM()) { ghost.remove(); busy = false; return; }
       const z = `${-W / 2}px`; ghost.style.transformOrigin = pane.style.transformOrigin = `50% 50% ${z}`;
@@ -1028,12 +1112,12 @@
       pane.animate([{ transform: `rotateY(${90 * dir}deg)`, filter: 'brightness(.45)' }, { transform: 'rotateY(0deg)', filter: 'brightness(1)' }], o).finished.then(() => { ghost.remove(); pane.style.transformOrigin = ''; busy = false; t0 = performance.now(); }); };
     // ---- close: back into the bubble it came from (or a soft drop when the bubble is off screen)
     function close(fromPop, from) {
-      if (closed) return; closed = true; busy = true; cancelAnimationFrame(raf); try { vd.pause(); } catch (e) {}
+      if (closed) return; closed = true; busy = true; cancelAnimationFrame(raf); try { vd.pause(); sb.pause(); } catch (e) {}
       if (stPop) { removeEventListener('popstate', stPop); stPop = null; }
       if (!fromPop) { try { history.back(); } catch (e) {} }
       const r = bubbleOf(sub().key); const start = from || open;
       const end = r ? shrunk(r) : { transform: 'translate(0,60px) scale(.9)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 0 };
-      const fin = () => { try { vd.removeAttribute('src'); vd.load(); } catch (e) {} el.remove(); stEl = null; document.documentElement.classList.remove('stlock'); if (homeRepaint) homeRepaint(); };
+      const fin = () => { [vd, sb].forEach(v => { try { v.removeAttribute('src'); v.load(); } catch (e) {} }); el.remove(); stEl = null; document.documentElement.classList.remove('stlock'); if (homeRepaint) homeRepaint(); };
       if (RM()) return fin();
       dim.animate([{ opacity: getComputedStyle(dim).opacity }, { opacity: 0 }], { duration: 300, easing: EASE, fill: 'forwards' });
       pane.animate([start, end], { duration: r ? 340 : 240, easing: EASE, fill: 'forwards' }).finished.then(fin, fin);
@@ -1042,6 +1126,7 @@
     // ---- gestures
     let px = 0, py = 0, pt = 0, mode = '', hold = 0, held = false, lastY = 0, lastT = 0, vy = 0;
     el.addEventListener('pointerdown', e => { if (busy || e.target.closest('[data-stx]')) return; px = e.clientX; py = e.clientY; pt = lastT = performance.now(); lastY = py; mode = ''; held = false; vy = 0;
+      if (quiet) { quiet = false; vd.muted = false; }
       try { el.setPointerCapture(e.pointerId); } catch (er) {} clearTimeout(hold); hold = setTimeout(() => { held = true; pause(); }, 190); });
     el.addEventListener('pointermove', e => { if (!pt || busy) return; const dx = e.clientX - px, dy = e.clientY - py;
       if (!mode) { if (dy > 12 && dy > Math.abs(dx)) { mode = 'y'; clearTimeout(hold); pause(); } else if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) { mode = 'x'; clearTimeout(hold); pause(); } }
@@ -1061,14 +1146,17 @@
       resume(); step(e.clientX < W * .3 ? -1 : 1); };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', e => { pt = 0; mode = ''; pane.style.transform = ''; dim.style.opacity = ''; resume(); });
     el.addEventListener('click', e => { if (e.target.closest('[data-stx]')) { e.preventDefault(); close(); } });
-    vd.addEventListener('ended', () => { if (!busy && !paused) step(1); });
-    vd.addEventListener('error', () => { const it = item(); if (!it || it.kind !== 'vid') return;
-      // the upright stream failed: play the wide file of the same clip instead of skipping it
-      if (it.v9 && !it.v9bad && vd.dataset.u === it.v9 && it.url) { it.v9bad = true; pane.querySelector('.stvdw').classList.remove('vert'); vd.dataset.u = it.url; vd.poster = it.thumb || ''; vd.src = it.url; if (!paused) { const p = vd.play(); if (p && p.catch) p.catch(() => {}); } return; }
-      if (!busy) step(1); });
+    [vd, sb].forEach(v => { v.addEventListener('ended', e => { if (e.currentTarget === vd && !busy && !paused) step(1); });
+      v.addEventListener('error', e => { const me = e.currentTarget;
+        // the waiting clip failed to load: forget it, and its upright stream, so its turn starts clean on the wide file
+        if (me !== vd) { if (sbIt && upright(sbIt) && me.dataset.u !== sbIt.url) sbIt.v9bad = true; me.dataset.u = ''; sbIt = null; return; }
+        const it = item(); if (!it || it.kind !== 'vid') return;
+        // the upright stream failed: play the wide file of the same clip instead of skipping it
+        if (upright(it) && vd.dataset.u !== it.url && it.url) { it.v9bad = true; pane.querySelector('.stvdw').classList.remove('vert'); vd.dataset.u = it.url; vd.poster = it.thumb || ''; vd.src = it.url; if (!paused) play(); return; }
+        if (!busy) step(1); }); });
     // ---- in: grow out of the bubble
     const sn = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sn.has(y.id)));
-    const r0 = bubbleOf(key); render(); raf = requestAnimationFrame(tick);
+    const r0 = bubbleOf(key); render(); prep(true); raf = requestAnimationFrame(tick);
     el.__st = { get busy() { return busy; }, get ii() { return ii; }, get paused() { return paused; }, get si() { return si; }, get names() { return subs.map(x => x.name); }, get items() { return sub().its.map(x => x.kind === 'vid' ? `${x.ck || 'post'} | ${x.title} | ${x.tag || ''}${x.gw ? ' GW' : ''}${x.ln ? ' +line' : ''} | ${x.v9 ? 'v9' : 'wide'}` : x.kind); }, go(n) { ii = n; render(); } };   // read by the test harness
     if (!RM()) { busy = true; dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: EASE });
       pane.animate([r0 ? shrunk(r0) : { transform: 'translate(0,40px) scale(.94)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 0 }, open], { duration: 360, easing: EASE }).finished.then(() => { busy = false; t0 = performance.now(); }); }
