@@ -5345,3 +5345,7 @@ html body .chips.scmode{margin-top:16px;padding-top:0}
 html body #unrpage .chips.scmode{margin-bottom:4px}
 /* v449: the dial's club name fits inside the circle: smaller, tighter, and two lines for a two-word club */
 html body .udial small{max-width:58px;margin:3px auto 0;white-space:normal;overflow:visible;text-overflow:clip;font-size:8.5px;letter-spacing:.04em;line-height:1.05}
+/* v450: the hub's spotlight wears the same win chance dial as the game page, a size down */
+html body .ufl:not(.big) .udial{width:76px;height:76px;top:61%}
+html body .ufl:not(.big) .udial b{font-size:18px}
+html body .ufl:not(.big) .udial small{font-size:7.5px;max-width:50px}

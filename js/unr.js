@@ -64,7 +64,7 @@
     const ta = three(a), tb = three(b); const s = opts.big ? 44 : 36;
     const spots = opts.big ? [[14, 34], [24, 58], [14, 82]] : [[11, 36], [25, 62], [11, 86]];
     const fin = g.final && g.score;
-    const mid = fin ? `<span class="ufin"><b>${g.score[0]}<i>-</i>${g.score[1]}</b><small>Final</small></span>` : g.p0 != null ? (opts.big ? dial(pct(g.p0 >= .5 ? g.p0 : 1 - g.p0), g.p0 >= .5 ? a : b, g.p0 >= .5 ? b : a) : `<span class="uchip"><b>${esc((g.p0 >= .5 ? a : b).name)} ${pct(g.p0 >= .5 ? g.p0 : 1 - g.p0)}%</b><small>to win</small></span>`) : '';
+    const mid = fin ? `<span class="ufin"><b>${g.score[0]}<i>-</i>${g.score[1]}</b><small>Final</small></span>` : g.p0 != null ? dial(pct(g.p0 >= .5 ? g.p0 : 1 - g.p0), g.p0 >= .5 ? a : b, g.p0 >= .5 ? b : a)   /* v450: the same dial on the hub and the game page */ : '';
     return `<div class="ufl${opts.big ? ' big' : ''}" style="--ca:${a.color};--cb:${b.color}">${COURT}${opts.head || ''}`
       + ta.map((p, i) => tok(p, a, spots[i][0], spots[i][1], s)).join('') + tb.map((p, i) => tok(p, b, 100 - spots[i][0], spots[i][1], s)).join('') + mid + '</div>';
   }
