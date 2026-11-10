@@ -5395,3 +5395,15 @@ html body .story .stcd .lnnm{max-width:100%;overflow-wrap:anywhere;text-wrap:bal
 html body .story .stcd .lnres{flex-wrap:wrap;justify-content:center}
 html body .story .stcd .lnch{flex-wrap:wrap;justify-content:center;max-width:100%}
 html body .story .stcd .lnch s{min-width:clamp(58px,17vw,66px);font-size:clamp(24px,7vw,28px);color:#fff}
+
+/* v457 stories: the upright cut fills a phone edge to edge (the stream already follows the play, so the trim at the
+   sides is small); on anything wider than 9:16 it stands at full height with the backdrop either side. The caption
+   carries the moment: game winner, quarter and score, the player's line. */
+html body .story .stvdw.vert video,html body .story .stvdw.vert .stframe{width:100%;height:100%;max-height:none;object-fit:cover;box-shadow:none;background:#000}
+@media (min-aspect-ratio:9/16){
+  html body .story .stvdw.vert video,html body .story .stvdw.vert .stframe{width:auto;height:100%;aspect-ratio:9/16;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+}
+html body .story .stcap .stmeta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:9px}
+html body .story .stcap .stmeta span{font-size:12px;font-weight:750;line-height:1;padding:6px 10px;border-radius:999px;color:#fff;background:rgba(0,0,0,.46);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 .6px rgba(255,255,255,.22);font-variant-numeric:tabular-nums;white-space:nowrap}
+html body .story .stcap .stmeta .gw{background:#fff;color:#0a0a0c;box-shadow:none;font-weight:850}
+html body .story .stcap b{text-wrap:pretty}

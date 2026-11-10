@@ -836,7 +836,7 @@
      feed cuts), and the video posts the news feeds tag them in (highlights, interviews, show segments; data/stories.json,
      built by the Stories job). All of it is plain video files: no ads, starts on the tap. Oldest to newest, opening on
      the first thing not yet seen; the ring stays lit until everything in it has been. */
-  const ST_WIN = 48 * 36e5;
+  const ST_WIN = 72 * 36e5, ST_CLIPS = 7 * 864e5, ST_MAX_T = 20, ST_MAX_P = 14;
   let storiesD = null, storiesAt = 0;
   const storiesLoad = () => { if (Date.now() - storiesAt < 20 * 60000 || !HW.hub) return; storiesAt = Date.now(); HW.hub.file('stories.json').then(d => { if (d && d.items) { storiesD = d; if (homeRepaint && !stEl) homeRepaint(); } }).catch(() => {}); };
   const stSeen = () => store.get('v5:storyseen', {}) || {};
@@ -846,11 +846,52 @@
   const sumGet = (L, g) => { const k = L.key + ':' + g.id; if (SUMS[k]) return SUMS[k]; SUMS[k] = { st: 'load' };
     jSoft(`${API(L)}/summary?event=${g.id}`).then(d => { SUMS[k] = d ? { st: 'ok', d } : { st: 'fail' }; if (homeRepaint && !stEl) homeRepaint(); }).catch(() => { SUMS[k] = { st: 'fail' }; }); return SUMS[k]; };
   const vidUrl = v => { const s = ((v || {}).links || {}).source || {}; return (s.mp4 && s.mp4.href) || (s.HD && s.HD.href) || s.href || (s.full && s.full.href) || ''; };
-  const gameVids = (d, g, L) => ((d && d.videos) || []).map((v, i) => { const url = vidUrl(v); if (!url || !v.headline || v.premium) return null;
-    const ts = Date.parse(v.originalPublishDate || v.lastModified || '') || (gEnd(g) + 6e4 + i * 1000);
-    const aths = (v.categories || []).filter(c => c.type === 'athlete').map(c => String(c.athleteId || (c.athlete && c.athlete.id) || ''));
-    return { kind: 'vid', id: 'v' + (v.id || url.slice(-24)), ts, url, title: String(v.headline), dur: +v.duration || 30, thumb: String(v.thumbnail || ''), aths, sub: `${g.away.short} at ${g.home.short}`, L }; }).filter(Boolean);
-  const postItem = (p, L) => ({ kind: 'vid', id: 'v' + p.id, ts: Date.parse(p.ts), url: p.url, title: p.title, dur: p.dur || 30, thumb: p.thumb || '', aths: p.aths || [], sub: '', L });
+  /* v457 the phone cut. Every single-play clip also exists as an upright 9:16 stream that follows the play across the
+     floor (measured: the window slides with the ball, it is not the middle of the court). Its address is in the clip's
+     links when the feed lists it, and otherwise follows from the clip's own folder. */
+  const WSC = /\/espn\/media\/(?:16x9|common)\/(wsc\/\d{4}\/\d{4}\/([0-9a-f-]{36}))\//;
+  const vertOf = (v, url) => { const h = (((v || {}).links || {}).source || {}).HLS; const u = h && h['9x16'] && h['9x16'].href; if (u) return String(u); const m = WSC.exec(url || ''); return m ? `https://cmp-espn.media.dssott.com/opp/hls/espn/9x16/${m[1]}/${m[2]}/playlist.m3u8` : ''; };
+  /* whose clip is it. The feed never says which team a clip belongs to (it tags both), but every clip names its player,
+     and the box score says which side that player is on. Names are matched whole first; a lone surname or first name
+     only counts when exactly one player in the game has it. */
+  const nrm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[.'’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  const stRoster = S => { if (S.ros) return S.ros; const ros = [];
+    ((S.d.boxscore && S.d.boxscore.players) || []).forEach(side => { const tid = String((side.team || {}).id || '');
+      ((side.statistics && side.statistics[0] && side.statistics[0].athletes) || []).forEach(a => { const at = a.athlete || {}; const full = nrm(at.displayName || at.fullName || ''); if (!at.id || !full) return;
+        const bare = full.replace(/\s(jr|sr|ii|iii|iv|v)$/, ''); const w = bare.split(' '); ros.push({ id: String(at.id), tid, full, bare, first: w[0], last: w[w.length - 1] }); }); });
+    return (S.ros = ros); };
+  const whoIn = (title, ros) => { const T = ' ' + nrm(title) + ' '; let hits = [];
+    ros.forEach(r => { let i = T.indexOf(' ' + r.full + ' '); if (i < 0 && r.bare !== r.full) i = T.indexOf(' ' + r.bare + ' '); if (i >= 0) hits.push({ r, i }); });
+    if (!hits.length) ros.forEach(r => { if (r.last.length < 4 || ros.filter(x => x.last === r.last).length > 1) return; const i = T.indexOf(' ' + r.last + ' '); if (i >= 0) hits.push({ r, i }); });
+    if (!hits.length) { const f = T.trim().split(' ')[0] || ''; const m = ros.filter(r => r.first === f); if (f.length >= 4 && m.length === 1) hits.push({ r: m[0], i: 0 }); }
+    return hits.sort((x, y) => x.i - y.i).map(h => h.r); };
+  // a clip is the game reel (both teams), talk (interview, analysis) or a play
+  const REEL = /(game|full) highlights\s*$/i, TALK = /interview|analysis|feature|press|sound|custom|show|bestof/i;
+  const clipKind = (title, type, dur) => REEL.test(title) || (type === 'Final Game Highlight' && dur > 45) ? 'reel' : TALK.test(type || '') ? 'talk' : 'play';
+  const cmOf = id => (storiesD && storiesD.cm && storiesD.cm[String(id).replace(/^v/, '')]) || null;
+  /* the play a clip shows, when the clip map has it: quarter, clock and the score right after. Nothing is worked out
+     from the title or the timing; no link, no tag. */
+  const perLbl = p => { const d = String((p.period || {}).displayValue || ''), n = +(p.period || {}).number || 0; return /quarter/i.test(d) ? `Q${n}` : /half/i.test(d) ? (n === 1 ? '1st half' : '2nd half') : d.replace(/overtime/i, 'OT'); };
+  const clockSec = p => { const c = String((p.clock || {}).displayValue || '').split(':'); return c.length === 2 ? +c[0] * 60 + parseFloat(c[1]) : parseFloat(c[0]); };
+  const playOf = (S, id) => { const m = cmOf(id); if (!m || !m.p || m.t !== 'OnePlay') return null; if (!S.pix) { S.pix = new Map(); (S.d.plays || []).forEach((q, i) => S.pix.set(String(q.id), i)); } const i = S.pix.get(m.p); return i == null ? null : { q: S.d.plays[i], i }; };
+  const playTag = (pl, g, tid) => { const q = pl.q; if (q.homeScore == null || q.awayScore == null) return ''; const home = String(g.home.id) === String(tid); const us = home ? g.home : g.away, them = home ? g.away : g.home;
+    const per = perLbl(q), ck = String((q.clock || {}).displayValue || ''); return `${per}${ck ? ' ' + ck : ''} · ${us.abbr || us.short} ${home ? q.homeScore : q.awayScore}, ${them.abbr || them.short} ${home ? q.awayScore : q.homeScore}`; };
+  // a game winner, by the record: a score in the last 30 seconds of the last period that put that team ahead for good
+  const isWinner = (S, pl, g) => { const q = pl.q, plays = S.d.plays || []; if (!q.scoringPlay || !q.team || !q.team.id || !pl.i) return false;
+    const lastPer = plays.reduce((m, x) => Math.max(m, +(x.period || {}).number || 0), 0); if (+(q.period || {}).number !== lastPer || !(clockSec(q) <= 30)) return false;
+    const home = String(q.team.id) === String(g.home.id); const lead = x => (home ? 1 : -1) * ((+x.homeScore || 0) - (+x.awayScore || 0));
+    if (!(lead(q) > 0) || lead(plays[pl.i - 1]) > 0) return false; for (let k = pl.i + 1; k < plays.length; k++) if (!(lead(plays[k]) > 0)) return false; return true; };
+  const gameVids = (S, g, L) => { if (S.gv && S.gvD === storiesD) return S.gv; S.gvD = storiesD; const d = S.d, ros = stRoster(S); const by = new Map(ros.map(r => [r.id, r]));
+    return (S.gv = ((d && d.videos) || []).map((v, i) => { const url = vidUrl(v); if (!url || !v.headline || v.premium) return null;
+      const ts = Date.parse(v.originalPublishDate || v.lastModified || '') || (gEnd(g) + 6e4 + i * 1000); const title = String(v.headline), dur = +v.duration || 30; const m = cmOf(v.id);
+      const ck = clipKind(title, String((v.tracking || {}).coverageType || (m && m.t) || ''), dur);
+      const named = whoIn(title, ros), tagged = ((m && m.a) || []).map(a => by.get(a)).filter(Boolean);
+      // the side it belongs to: the first player the title names, else the tagged players when they share a side
+      const tm = named.length ? named[0].tid : tagged.length && tagged.every(r => r.tid === tagged[0].tid) ? tagged[0].tid : '';
+      const it = { kind: 'vid', id: 'v' + (v.id || url.slice(-24)), ts, url, v9: ck === 'reel' || ck === 'play' ? vertOf(v, url) : '', title, dur, thumb: String(v.thumbnail || ''), ck, tm, aths: [...new Set([...named, ...tagged].map(r => r.id))], g, L, gid: String(g.id) };
+      const pl = ck === 'play' && dur < 45 ? playOf(S, v.id) : null; if (pl) { it.pl = pl; it.seq = pl.i; it.gw = isWinner(S, pl, g); }
+      return it; }).filter(Boolean)); };
+  const postItem = (p, L) => ({ kind: 'vid', id: 'v' + p.id, ts: Date.parse(p.ts), url: p.url, v9: '', title: p.title, dur: p.dur || 30, thumb: p.thumb || '', aths: p.aths || [], sub: '', L });
   function lineOf(d, pid) {
     for (const side of ((d && d.boxscore && d.boxscore.players) || [])) { const st = side.statistics && side.statistics[0]; if (!st) continue; const lb = st.labels || st.names || [];
       const a = (st.athletes || []).find(x => x.athlete && String(x.athlete.id) === pid); if (!a) continue; if (a.didNotPlay || !a.stats || !a.stats.length) return null;
@@ -859,25 +900,50 @@
     return null;
   }
   const nameHit = (title, nm) => { const last = String(nm || '').trim().split(/\s+/).slice(-1)[0] || ''; return last.length >= 4 && new RegExp(`(^|[^\\w])${last.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\w])`, 'i').test(title); };
+  /* a followed player's own clips from the past week, by name: the clip search answers the phone directly. Only clips
+     whose title carries the full name, and only the ones cut as single plays (their file follows from the picture). */
+  const SRCH = {};
+  const srchGet = (p, L) => { const k = p.lk + ':' + p.id, c = SRCH[k]; if (c && Date.now() - c.at < 30 * 60000) return c.its; SRCH[k] = { at: Date.now(), its: (c && c.its) || [] }; const nm = nrm(p.name); if (nm.split(' ').length < 2) return SRCH[k].its;
+    jSoft(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(p.name)}&limit=30&type=clips`, 20 * 60000).then(d => { const res = (((d || {}).results) || []).find(r => r.type === 'clips'); const its = [];
+      (((res || {}).contents) || []).forEach(c => { const img = String((c.image || {}).default || ''), m = WSC.exec(img), ts = Date.parse(c.date || ''), title = String(c.displayName || ''); if (!m || !ts || !c.id || REEL.test(title)) return;
+        if (!(' ' + nrm(title) + ' ').includes(' ' + nm + ' ')) return; const cm = cmOf(c.id); if (cm && cm.a.length && !cm.a.includes(String(p.id))) return;
+        its.push({ kind: 'vid', id: 'v' + c.id, ts, url: `https://espnmedia-cdn.akamaized.net/espn/media/16x9/${m[1]}/${m[2]}.mp4`, v9: vertOf(null, img), title, dur: Math.round((+c.duration || 0) / 1000) || 20, thumb: img, ck: 'play', aths: [String(p.id)], sub: '', L }); });
+      const was = SRCH[k].its.length; SRCH[k].its = its; if (its.length !== was && homeRepaint && !stEl) homeRepaint(); }).catch(() => {}); return SRCH[k].its; };
   function storySubjects() {
     storiesLoad(); const now = Date.now(); const subs = []; const posts = (storiesD && storiesD.items) || []; const seen = stSeen();
     ORDER.forEach(lk => {
       const s = feedSrc[lk]; const o = s && s.out; if (!o) return; const L = o.L;
-      const games = [...(o.lastF || []), ...(o.doneAll || [])].filter((g, i, arr) => arr.findIndex(x => x.id === g.id) === i).filter(g => isDone(g) && !g.off && now - gEnd(g) < ST_WIN);
+      const games = [...(o.lastF || []), ...(o.doneAll || [])].filter((g, i, arr) => arr.findIndex(x => x.id === g.id) === i).filter(g => isDone(g) && !g.off && now - gEnd(g) < ST_WIN).sort((a, b) => new Date(a.date) - new Date(b.date));
       const lp = posts.filter(p => p.lk === lk && p.url && now - Date.parse(p.ts) < ST_WIN);
-      const finish = (sub, its) => { const m = new Map(); its.forEach(x => { if (!m.has(x.id)) m.set(x.id, x); }); sub.its = [...m.values()].sort((a, b) => a.ts - b.ts); if (!sub.its.length) return;
+      const finish = (sub, its, max) => { const m = new Map(); its.forEach(x => { if (!m.has(x.id)) m.set(x.id, x); }); sub.its = [...m.values()].sort((a, b) => a.ts - b.ts).slice(-max); if (!sub.its.length) return;
         const sn = new Set(seen[sub.key] || []); sub.un = sub.its.some(x => !sn.has(x.id)); sub.last = sub.its[sub.its.length - 1].ts; subs.push(sub); };
-      (o.myTeams || []).forEach(t => { const tid = String(t.id); const its = [];
-        games.filter(g => String(g.home.id) === tid || String(g.away.id) === tid).forEach(g => { its.push({ kind: 'final', id: 'g' + g.id, ts: gEnd(g), g, L, tid }); const S = sumGet(L, g); if (S.st === 'ok') its.push(...gameVids(S.d, g, L)); });
-        lp.filter(p => (p.teams || []).includes(tid)).forEach(p => its.push(postItem(p, L)));
-        finish({ key: `${lk}:t${tid}`, lk, kind: 'team', id: tid, name: t.short, color: t.color, logo: t.logo, abbr: t.abbr }, its); });
+      const score = (g, tid) => { const home = String(g.home.id) === String(tid); const us = home ? g.home : g.away, them = home ? g.away : g.home; return `Final \u00b7 ${us.short} ${us.score}, ${them.short} ${them.score}`; };
+      /* a team: each game told in order with its own plays only (never the other side's), then the game reel, then the
+         final. Posts from the feeds join when they are this team's: a play has to name or tag one of its players. */
+      (o.myTeams || []).forEach(t => { const tid = String(t.id); const its = []; const mine = new Set(), others = new Set(), ros = [];
+        games.filter(g => String(g.home.id) === tid || String(g.away.id) === tid).forEach(g => { const S = sumGet(L, g); let end = gEnd(g);
+          if (S.st === 'ok') { stRoster(S).forEach(r => { (r.tid === tid ? mine : others).add(r.id); ros.push(r); }); const vs = gameVids(S, g, L);
+            const own = vs.filter(v => v.ck === 'play' ? v.tm === tid : v.ck === 'talk' && (!v.tm || v.tm === tid)).sort((a, b) => (a.seq != null && b.seq != null ? a.seq - b.seq : 0) || a.ts - b.ts);
+            // game order is the order shown: step each one just past the one before it
+            own.forEach(v => { end = Math.max(end, v.ts) + 1; its.push(Object.assign({}, v, { ts: v.ck === 'play' ? end : v.ts, sub: score(g, tid), tag: v.pl ? playTag(v.pl, g, tid) : '' })); });
+            vs.filter(v => v.ck === 'reel').slice(0, 1).forEach(v => { end = Math.max(end, v.ts) + 1; its.push(Object.assign({}, v, { ts: end, sub: 'Full game highlights' })); }); }
+          its.push({ kind: 'final', id: 'g' + g.id, ts: end + 1, g, L, tid }); });
+        lp.filter(p => (p.teams || []).includes(tid)).forEach(p => { const a = p.aths || [], k = clipKind(p.title, p.k || (cmOf(p.id) || {}).t || '', p.dur), nm = whoIn(p.title, ros);
+          const ours = a.some(x => mine.has(x)) || (nm.length && nm[0].tid === tid), theirs = a.some(x => others.has(x)) || (nm.length && nm[0].tid !== tid);
+          if (k === 'play' ? ours && !(nm.length && nm[0].tid !== tid) : k === 'reel' ? true : ours || !theirs) its.push(Object.assign(postItem(p, L), { ck: k, v9: k === 'talk' ? '' : vertOf(null, p.url), sub: k === 'reel' ? 'Full game highlights' : '' })); });
+        finish({ key: `${lk}:t${tid}`, lk, kind: 'team', id: tid, name: t.short, color: t.color, logo: t.logo, abbr: t.abbr }, its, ST_MAX_T); });
+      /* a player: every clip with them in it from the games in hand (the line rides along under each), the line card
+         to close the game, the posts that tag them, and their clips from the past week by name. */
       fplayers.all().filter(p => p.lk === lk).forEach(p => { const pid = String(p.id); const its = []; let color = playerColor(p, L), hs = p.img || '';
         const k = String(p.team || '').toLowerCase(); const is = t => (p.teamId && String(t.id) === String(p.teamId)) || (k && [t.abbr, t.short, t.name].some(x => String(x || '').toLowerCase() === k));
-        games.filter(g => is(g.home) || is(g.away)).forEach(g => { const S = sumGet(L, g); if (S.st !== 'ok') return; const ln = lineOf(S.d, pid);
-          if (ln) { const us = String(g.home.id) === ln.teamId ? g.home : g.away; color = teamColor(us, L); hs = hs || ln.hs; its.push({ kind: 'line', id: 'l' + g.id, ts: gEnd(g) + 1, g, L, ln }); }
-          gameVids(S.d, g, L).filter(v => v.aths.includes(pid) || nameHit(v.title, p.name)).forEach(v => its.push(v)); });
-        lp.filter(x => (x.aths || []).includes(pid)).forEach(x => its.push(postItem(x, L)));
-        finish({ key: `${lk}:p${pid}`, lk, kind: 'player', id: pid, name: p.short || lastName(p.name || ''), full: p.name || '', color, hs }, its); });
+        games.filter(g => is(g.home) || is(g.away)).forEach(g => { const S = sumGet(L, g); if (S.st !== 'ok') return; const ln = lineOf(S.d, pid); let end = gEnd(g);
+          const us = ln ? (String(g.home.id) === ln.teamId ? g.home : g.away) : null; if (us) { color = teamColor(us, L); hs = hs || ln.hs; }
+          gameVids(S, g, L).filter(v => v.ck !== 'reel' && (v.aths.includes(pid) || (!v.aths.length && nameHit(v.title, p.name)))).sort((a, b) => (a.seq != null && b.seq != null ? a.seq - b.seq : 0) || a.ts - b.ts)
+            .forEach(v => { end = Math.max(end, v.ts) + 1; its.push(Object.assign({}, v, { ts: v.ck === 'play' ? end : v.ts, sub: score(g, us ? us.id : g.home.id), ln, tag: v.pl && us ? playTag(v.pl, g, us.id) : '' })); });
+          if (ln) its.push({ kind: 'line', id: 'l' + g.id, ts: end + 1, g, L, ln }); });
+        lp.filter(x => (x.aths || []).includes(pid)).forEach(x => its.push(Object.assign(postItem(x, L), { v9: clipKind(x.title, x.k || '', x.dur) === 'talk' ? '' : vertOf(null, x.url) })));
+        srchGet(p, L).filter(x => now - x.ts < ST_CLIPS).forEach(x => its.push(x));
+        finish({ key: `${lk}:p${pid}`, lk, kind: 'player', id: pid, name: p.short || lastName(p.name || ''), full: p.name || '', color, hs }, its, ST_MAX_P); });
     });
     return subs.sort((a, b) => (b.un - a.un) || (b.last - a.last));
   }
@@ -901,6 +967,11 @@
     el.innerHTML = `<div class="stdim"></div><div class="stpane"><div class="stbg"></div><div class="stblur"></div><div class="stmedia"><div class="stvdw" hidden><video playsinline preload="auto"></video></div><div class="stcd" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stcap"></div></div></div>`;
     document.body.appendChild(el); stEl = el; document.documentElement.classList.add('stlock');
     const pane = el.querySelector('.stpane'), dim = el.querySelector('.stdim'), vd = el.querySelector('video');
+    /* the upright stream plays where the browser reads that kind itself (iPhone, iPad, Android, newer desktop); anywhere
+       else, or if one fails to load, the wide file plays instead. The frame takes its shape from the video that arrived. */
+    const HLS = !!vd.canPlayType('application/vnd.apple.mpegurl') || !!vd.canPlayType('application/x-mpegURL');
+    const shape = () => { if (vd.videoWidth) pane.querySelector('.stvdw').classList.toggle('vert', vd.videoHeight > vd.videoWidth); };
+    vd.addEventListener('loadedmetadata', shape); vd.addEventListener('resize', shape);
     try { history.pushState({ story: 1 }, '', location.href); } catch (e) {}
     let ii = 0, t0 = 0, paused = false, pausedAt = 0, raf = 0, busy = false, closed = false;
     const sub = () => subs[si]; const item = () => sub() && sub().its[ii];
@@ -923,8 +994,11 @@
       if (it.kind === 'vid') {
         bg.style.background = `linear-gradient(170deg,#050506 30%,${x.color} 190%)`; bl.style.backgroundImage = it.thumb ? `url("${it.thumb}")` : 'none';
         card.hidden = true; vw.hidden = false;
-        try { vd.poster = it.thumb || ''; if (vd.dataset.u !== it.url) { vd.dataset.u = it.url; vd.src = it.url; } else vd.currentTime = 0; if (!paused) { const p = vd.play(); if (p && p.catch) p.catch(() => {}); } } catch (e) {}
-        cap.innerHTML = `<b>${esc(it.title)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ''}`; cap.hidden = false;
+        const src = it.v9 && HLS && !it.v9bad ? it.v9 : it.url; vw.classList.toggle('vert', src === it.v9);
+        try { vd.poster = src === it.v9 ? '' : it.thumb || ''; if (vd.dataset.u !== src) { vd.dataset.u = src; vd.src = src; } else vd.currentTime = 0; if (!paused) { const p = vd.play(); if (p && p.catch) p.catch(() => {}); } } catch (e) {}
+        const ln = it.ln, line = ln ? [[ln.pts, 'PTS'], [ln.reb, 'REB'], [ln.ast, 'AST']].filter(c => c[0] !== '' && c[0] != null).map(c => `${esc(String(c[0]))} ${c[1]}`).join(' \u00b7 ') : '';
+        const meta = `${it.gw ? '<span class="gw">Game winner</span>' : ''}${it.tag ? `<span>${esc(it.tag)}</span>` : ''}${line ? `<span>${line}</span>` : ''}`;
+        cap.innerHTML = `${meta ? `<div class="stmeta">${meta}</div>` : ''}<b>${esc(it.title)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ''}`; cap.hidden = false;
       } else {
         try { vd.pause(); } catch (e) {} vw.hidden = true; bl.style.backgroundImage = 'none'; cap.hidden = true; card.hidden = false;
         const g = it.g, L = it.L;
@@ -988,11 +1062,14 @@
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', e => { pt = 0; mode = ''; pane.style.transform = ''; dim.style.opacity = ''; resume(); });
     el.addEventListener('click', e => { if (e.target.closest('[data-stx]')) { e.preventDefault(); close(); } });
     vd.addEventListener('ended', () => { if (!busy && !paused) step(1); });
-    vd.addEventListener('error', () => { const it = item(); if (it && it.kind === 'vid' && !busy) step(1); });
+    vd.addEventListener('error', () => { const it = item(); if (!it || it.kind !== 'vid') return;
+      // the upright stream failed: play the wide file of the same clip instead of skipping it
+      if (it.v9 && !it.v9bad && vd.dataset.u === it.v9 && it.url) { it.v9bad = true; pane.querySelector('.stvdw').classList.remove('vert'); vd.dataset.u = it.url; vd.poster = it.thumb || ''; vd.src = it.url; if (!paused) { const p = vd.play(); if (p && p.catch) p.catch(() => {}); } return; }
+      if (!busy) step(1); });
     // ---- in: grow out of the bubble
     const sn = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sn.has(y.id)));
     const r0 = bubbleOf(key); render(); raf = requestAnimationFrame(tick);
-    el.__st = { get busy() { return busy; }, get ii() { return ii; }, get paused() { return paused; }, get si() { return si; }, get names() { return subs.map(x => x.name); } };   // read by the test harness
+    el.__st = { get busy() { return busy; }, get ii() { return ii; }, get paused() { return paused; }, get si() { return si; }, get names() { return subs.map(x => x.name); }, get items() { return sub().its.map(x => x.kind === 'vid' ? `${x.ck || 'post'} | ${x.title} | ${x.tag || ''}${x.gw ? ' GW' : ''}${x.ln ? ' +line' : ''} | ${x.v9 ? 'v9' : 'wide'}` : x.kind); }, go(n) { ii = n; render(); } };   // read by the test harness
     if (!RM()) { busy = true; dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: EASE });
       pane.animate([r0 ? shrunk(r0) : { transform: 'translate(0,40px) scale(.94)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 0 }, open], { duration: 360, easing: EASE }).finished.then(() => { busy = false; t0 = performance.now(); }); }
   }
