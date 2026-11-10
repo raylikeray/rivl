@@ -56,7 +56,14 @@
     const next = b.getAttribute('aria-checked') !== 'true'; store.set('v5:rv27', next); b.setAttribute('aria-checked', String(next)); paintBar();
     V.toast(next ? 'New design is on. Tap Home to see it.' : 'Back to the current design.');
   });
-  V.rv27 = { on, miss(el) { const p = el.parentNode; if (p) { p.className = 'ph27 no27'; p.innerHTML = I.me; } },
+  /* how sharp clips play: Auto (the full-size file on Wi-Fi), Sharpest (always), Data saver (never) */
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-act="vq"]'); if (!b) return; e.preventDefault(); store.set('v5:vq', b.dataset.vq);
+    b.parentNode.querySelectorAll('[data-act="vq"]').forEach(x => { const is = x === b; x.classList.toggle('on', is); x.setAttribute('aria-checked', String(is)); });
+  });
+  const vqRow = () => { const cur = store.get('v5:vq', 'auto');
+    return `<div class="gl setlook"><div class="gr ni"><span class="sico" data-k="watch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9.500 4.500 2.500-4.500 2.500z" fill="currentColor"/></svg></span><span class="gm"><b>Clip quality</b></span><div class="segc fit" role="radiogroup" aria-label="Clip quality">${[['auto', 'Auto'], ['always', 'Sharpest'], ['never', 'Saver']].map(([k, l]) => `<button class="${cur === k ? 'on' : ''}" data-act="vq" data-vq="${k}" role="radio" aria-checked="${cur === k}">${l}</button>`).join('')}</div></div></div><p class="vq27">Auto plays clips at full size on Wi-Fi and lighter on cellular. A full-size clip is about 20 MB.</p>`; };
+  V.rv27 = { on, vq: vqRow, miss(el) { const p = el.parentNode; if (p) { p.className = 'ph27 no27'; p.innerHTML = I.me; } },
     row: () => `<div class="gl"><button class="gr ni sw" data-act="rv27" role="switch" aria-checked="${on()}"><span class="sico" data-k="look"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.500 13.900 9l5.600 1.900-5.600 1.900L12 18.300l-1.900-5.500L4.500 10.900 10.100 9z"/></svg></span><span class="gm wrap"><b>Try the new design</b><span>A preview of the 2027 look. Home and the bottom bar so far. Switch it off any time.</span></span><span class="switch"></span></button></div>` };
 
   /* Watch opens the clips the app has today: For you when there is one, otherwise the league's biggest plays */

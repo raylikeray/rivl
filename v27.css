@@ -6,6 +6,8 @@ html.rv27{--b27:#000;--s27:#141618;--c27:#202326;--i27:#fff;--i27b:rgba(255,255,
 @media (prefers-color-scheme:light){ html.rv27:not([data-theme="dark"]){--b27:#EEF1F5;--s27:#fff;--c27:#E4E8ED;--i27:#0A0C0E;--i27b:rgba(10,12,14,.7);--i27c:rgba(10,12,14,.6);--l27:rgba(0,0,0,.1);--a27:#1D5FE0;--ok27:#0f8a43} }
 html.rv27[data-theme="light"]{--b27:#EEF1F5;--s27:#fff;--c27:#E4E8ED;--i27:#0A0C0E;--i27b:rgba(10,12,14,.7);--i27c:rgba(10,12,14,.6);--l27:rgba(0,0,0,.1);--a27:#1D5FE0;--ok27:#0f8a43}
 
+.vq27{margin:-6px 20px 14px;font-size:12.5px;line-height:1.4;color:var(--ink-3)}
+
 /* ---------- the bar: Home, Watch, Scores, You ---------- */
 /* on a wide screen the side rail the app has today stays; the four-tab bar is the phone's */
 @media (max-width:1039px){ html.rv27 #tabs{display:none} }

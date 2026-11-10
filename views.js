@@ -1029,6 +1029,16 @@
   const v9Pick = m => { if (!m || !hlsOk()) return Promise.resolve(m); const c = V9.get(m); if (typeof c === 'string') return Promise.resolve(c); if (c) return c;
     const p = fetch(m).then(r => r.ok ? r.text() : '').then(tx => { const u = v9Parse(tx, m); V9.set(m, u); return u; }).catch(() => { V9.set(m, m); return m; }); V9.set(m, p); return p; };
   const v9Now = m => { const c = V9.get(m); return typeof c === 'string' ? c : m; };
+  /* v465 the sharp upright file. The upright stream tops out at 406x720; the file it is cut from sits beside it at
+     1080x1920. That file is about ten megabits a second (a 15 second clip is about 20 MB), so on Auto it plays on Wi-Fi
+     and wherever the phone cannot say what it is on, never under data saver, never on a cellular or slow connection.
+     Settings can force it on or off. A clip slow to start on it goes to the stream, and two slow starts in one sitting
+     send the rest of the sitting there too. */
+  const HI = /\/hls\/espn\/9x16\/(.+)\/([^/]+)\/playlist\.m3u8/;
+  const hiOf = it => { const m = HI.exec((it && it.v9) || ''); return m ? `https://espnmedia-cdn.akamaized.net/espn/media/9x16/${m[1]}/${m[2]}.mp4` : ''; };
+  let hiSlow = 0;
+  const hiWant = () => { const mode = store.get('v5:vq', 'auto'); if (mode === 'never') return false; if (mode === 'always') return true; if (hiSlow >= 2) return false;
+    const c = navigator.connection || {}; if (c.saveData || /(^|-)2g|3g/.test(String(c.effectiveType || ''))) return false; return !(c.type && /cellular|bluetooth/.test(c.type)); };
   let stWarmed = false; const stHead = new Set();
   const stWarm = subs => { if (!hlsOk()) return;
     if (!stWarmed) { stWarmed = true; ['https://cmp-espn.media.dssott.com', 'https://espnmedia-cdn.akamaized.net'].forEach(h => { const l = document.createElement('link'); l.rel = 'preconnect'; l.href = h; l.crossOrigin = ''; document.head.appendChild(l); }); }
@@ -1066,9 +1076,10 @@
     const shape = () => { if (vd.videoWidth) pane.querySelector('.stvdw').classList.toggle('vert', vd.videoHeight > vd.videoWidth); };
     [vd, sb].forEach(v => { v.addEventListener('loadedmetadata', e => { if (e.currentTarget === vd) shape(); }); v.addEventListener('resize', e => { if (e.currentTarget === vd) shape(); }); });
     try { history.pushState({ story: 1 }, '', location.href); } catch (e) {}
-    let ii = 0, t0 = 0, paused = false, pausedAt = 0, raf = 0, busy = false, closed = false;
+    let ii = 0, t0 = 0, paused = false, pausedAt = 0, raf = 0, busy = false, closed = false, hiT = 0, waitT = 0;
     const sub = () => subs[si]; const item = () => sub() && sub().its[ii];
-    const upright = it => !!(it.v9 && HLS && !it.v9bad); const srcOf = it => upright(it) ? v9Now(it.v9) : it.url;
+    const hi = it => (!it.hibad && hiWant() && hiOf(it)) || '';
+    const upright = it => !!(it.v9 && !it.v9bad && (HLS || hi(it))); const srcOf = it => upright(it) ? (hi(it) || v9Now(it.v9)) : it.url;
     /* what the watching says: a clip seen through (or nearly) counts for its players and its kind of play; one left
        inside its first couple of seconds counts against. Putting the story away is not a verdict on the clip. */
     let cur = null, slide = false;
@@ -1081,7 +1092,7 @@
     const load = it => { const src = srcOf(it); if (closed || sb.dataset.u === src || vd.dataset.u === src) return; sbIt = it; sb.muted = true; sb.dataset.u = src; sb.poster = it.thumb || ''; sb.src = src; try { sb.load(); } catch (e) {}
       // a short silent start makes phones actually fetch it; started inside the opening touch it also clears this player for sound later
       const me = sb; const p = me.play(); if (p && p.then) p.then(() => { if (me !== vd) { me.pause(); if (me.currentTime > .05) me.currentTime = 0; } }, () => {}); };
-    const prep = gesture => { const it = upNext(); if (!it) return; if (!upright(it) || typeof V9.get(it.v9) === 'string' || gesture) { load(it); if (upright(it) && typeof V9.get(it.v9) !== 'string') v9Pick(it.v9).then(u => { if (!closed && sbIt === it && sb !== vd && sb.dataset.u !== u && !sb.classList.contains('on')) load(it); }); return; }   // v464: loaded in a hurry from the list of levels, it is loaded again on the sharpest one as soon as that is known
+    const prep = gesture => { const it = upNext(); if (!it) return; if (!upright(it) || hi(it) || typeof V9.get(it.v9) === 'string' || gesture) { load(it); if (upright(it) && !hi(it) && typeof V9.get(it.v9) !== 'string') v9Pick(it.v9).then(u => { if (!closed && sbIt === it && sb !== vd && sb.dataset.u !== u && !sb.classList.contains('on')) load(it); }); return; }   // v464: loaded in a hurry from the list of levels, it is loaded again on the sharpest one as soon as that is known
       v9Pick(it.v9).then(() => { if (!closed && upNext() === it) load(it); }); };
     const bubbleOf = k => { const b = [...document.querySelectorAll('.sbub,.sc27')].find(x => x.dataset.key === k); if (!b) return null; const r = (b.querySelector('.ring') || b).getBoundingClientRect(); return r.bottom > 0 && r.top < H ? r : null; };
     const shrunk = r => ({ transform: `translate(${r.left + r.width / 2 - W / 2}px,${r.top + r.height / 2 - H / 2}px) scale(${r.width / W})`, clipPath: `circle(${W / 2}px at 50% 50%)`, opacity: .6 });
@@ -1112,7 +1123,9 @@
           /* v464: a clip opened before its list of levels was read starts on the list (the browser then begins on the lowest
              level). The moment the sharpest level is known the clip moves to it, as long as it has barely begun; the
              player was started by the touch, so the sound stays on. The clips after it have their lists read now. */
-          if (up && typeof V9.get(it.v9) !== 'string') { const v0 = vd; v9Pick(it.v9).then(u => { if (closed || item() !== it || vd !== v0 || vd.dataset.u !== src || !u || u === src || (vd.currentTime || 0) > 1.2) return; vd.dataset.u = u; vd.src = u; vd.muted = quiet; if (!paused) play(); }); }
+          clearTimeout(hiT); clearTimeout(waitT);
+          if (up && src === hi(it)) { const v0 = vd; hiT = setTimeout(() => { if (closed || paused || item() !== it || vd !== v0 || vd.dataset.u !== src) return; if (v0.readyState >= 3 && (v0.currentTime || 0) > .15) return; hiDrop(it, true); }, 3200); }   // v465: the sharp file gets three seconds to start
+          if (up && /\.m3u8/.test(src) && typeof V9.get(it.v9) !== 'string') { const v0 = vd; v9Pick(it.v9).then(u => { if (closed || item() !== it || vd !== v0 || vd.dataset.u !== src || !u || u === src || (vd.currentTime || 0) > 1.2) return; vd.dataset.u = u; vd.src = u; vd.muted = quiet; if (!paused) play(); }); }
           x.its.slice(ii + 1, ii + 5).forEach(y => { if (y.kind === 'vid' && y.v9 && upright(y)) v9Pick(y.v9); });
         } catch (e) {}
         const ln = it.ln, line = ln ? [[ln.pts, 'PTS'], [ln.reb, 'REB'], [ln.ast, 'AST']].filter(c => c[0] !== '' && c[0] != null).map(c => `${esc(String(c[0]))} ${c[1]}`).join(' \u00b7 ') : '';
@@ -1208,11 +1221,18 @@
       if (RM()) return; b.firstChild.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.42)' }, { transform: 'scale(.92)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'cubic-bezier(.3,1.5,.5,1)' });
       // a like throws a heart up the middle of the clip
       if (on && b.dataset.stb === 'like') { const h = document.createElement('div'); h.className = 'stburst'; h.innerHTML = b.innerHTML; pane.appendChild(h); h.animate([{ opacity: 0, transform: 'translate(-50%,-50%) scale(.3) rotate(-12deg)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.15) rotate(4deg)', offset: .3 }, { opacity: 1, transform: 'translate(-50%,-58%) scale(1) rotate(0deg)', offset: .6 }, { opacity: 0, transform: 'translate(-50%,-95%) scale(.9)' }], { duration: 820, easing: 'ease-out' }).finished.then(() => h.remove(), () => h.remove()); } });
+    /* v465 off the sharp file and onto the stream, at the moment the clip had reached */
+    const hiDrop = (it, slow) => { if (closed || !it || it.hibad) return; it.hibad = true; if (slow) hiSlow++; const t = vd.currentTime || 0, s2 = srcOf(it);
+      pane.querySelector('.stvdw').classList.toggle('vert', upright(it)); vd.dataset.u = s2; vd.poster = it.thumb || ''; vd.src = s2; if (t > 1) vd.addEventListener('loadedmetadata', e => { try { e.currentTarget.currentTime = t; } catch (x) {} }, { once: true });
+      vd.muted = quiet; if (!paused) play(); if (upright(it) && typeof V9.get(it.v9) !== 'string') v9Pick(it.v9); };
+    [vd, sb].forEach(v => { v.addEventListener('waiting', e => { const me = e.currentTarget; if (me !== vd) return; const it = item(); if (!it || it.kind !== 'vid' || !vd.dataset.u || vd.dataset.u !== hiOf(it)) return; clearTimeout(waitT); waitT = setTimeout(() => { if (!closed && !paused && item() === it && vd === me && me.readyState < 3) hiDrop(it, true); }, 2600); });
+      v.addEventListener('playing', e => { if (e.currentTarget === vd) clearTimeout(waitT); }); });
     [vd, sb].forEach(v => { v.addEventListener('ended', e => { if (e.currentTarget === vd && !busy && !paused) step(1); });
       v.addEventListener('error', e => { const me = e.currentTarget;
         // the waiting clip failed to load: forget it, and its upright stream, so its turn starts clean on the wide file
-        if (me !== vd) { if (sbIt && upright(sbIt) && me.dataset.u !== sbIt.url) sbIt.v9bad = true; me.dataset.u = ''; sbIt = null; return; }
+        if (me !== vd) { if (sbIt && me.dataset.u && me.dataset.u === hiOf(sbIt)) sbIt.hibad = true; else if (sbIt && upright(sbIt) && me.dataset.u !== sbIt.url) sbIt.v9bad = true; me.dataset.u = ''; sbIt = null; return; }
         const it = item(); if (!it || it.kind !== 'vid') return;
+        if (vd.dataset.u && vd.dataset.u === hiOf(it) && !it.hibad) { hiDrop(it, false); return; }   // v465: no sharp file for this clip: the stream
         // the upright stream failed: play the wide file of the same clip instead of skipping it
         if (upright(it) && vd.dataset.u !== it.url && it.url) { it.v9bad = true; pane.querySelector('.stvdw').classList.remove('vert'); vd.dataset.u = it.url; vd.poster = it.thumb || ''; vd.src = it.url; if (!paused) play(); return; }
         if (!busy) step(1); }); });
