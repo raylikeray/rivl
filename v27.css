@@ -22,9 +22,10 @@ html.rv27 .tb27:not([hidden]){display:flex;position:fixed;left:0;right:0;bottom:
 .tb27 a:focus-visible,.seg27 a:focus-visible,.h27 a:focus-visible,.h27 button:focus-visible{outline:2px solid var(--a27);outline-offset:2px}
 
 /* Games, Standings and Leaders share the Scores tab */
-html.rv27 .seg27:not([hidden]){display:flex;gap:8px;padding:10px var(--gut) 2px;font-family:var(--f27)}
-.seg27 a{height:36px;padding:0 15px;border-radius:999px;display:flex;align-items:center;font-size:14px;font-weight:600;color:var(--ink-2);background:var(--surf);text-decoration:none}
-.seg27 a.on{background:var(--ink);color:var(--bg)}
+html.rv27 .seg27:not([hidden]){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:18px 16px 0;height:40px;padding:3px;box-sizing:border-box;border-radius:999px;background:var(--s27);font-family:var(--f27)}
+.seg27 a{border-radius:999px;display:grid;place-items:center;font-size:14px;font-weight:500;color:var(--i27b);text-decoration:none;-webkit-tap-highlight-color:transparent}
+.seg27 a.on{background:var(--i27);color:var(--b27);font-weight:700}
+.sh27{display:none}
 
 /* ---------- Home: the feed the app has today, under a new top, with a few blocks mixed in ---------- */
 html.rv27[data-page="home"]{--bg:var(--b27)!important}
@@ -205,3 +206,82 @@ html body .story.w27v .stcap .stmeta{order:4;margin:10px 0 0}
 .story .wpl27 svg{width:84px;height:84px}
 .story.wpz .wpl27{opacity:.78;transform:none}
 @media (prefers-reduced-motion:reduce){ .story .wpl27{transition:none} }
+
+/* ---------- Scores (v472): the shell shared by Games, Standings and Leaders, then the Games view ---------- */
+html.rv27[data-page="scores"],html.rv27[data-page="standings"],html.rv27[data-page="stats"]{--bg:var(--b27)!important}
+html.rv27[data-page="scores"] #top,html.rv27[data-page="standings"] #top,html.rv27[data-page="stats"] #top,html.rv27[data-page="scores"] #lbhome,html.rv27[data-page="standings"] #lbhome,html.rv27[data-page="stats"] #lbhome{display:none!important}
+html.rv27[data-page="scores"] #hdr,html.rv27[data-page="standings"] #hdr,html.rv27[data-page="stats"] #hdr{background:var(--b27);box-shadow:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+html.rv27 .sh27:not([hidden]){display:flex;align-items:center;justify-content:space-between;padding:10px 8px 0 16px;font-family:var(--f27);background:var(--b27)}
+@media (min-width:1040px){ html.rv27 .sh27:not([hidden]){display:none} }
+.sh27 h1{margin:0;font-size:30px;font-weight:700;letter-spacing:-.02em;color:var(--i27)}
+.sh27 a{width:44px;height:44px;display:grid;place-items:center;color:var(--i27)}
+.sh27 svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgtabs{height:44px;padding:0 10px;border-bottom:0}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr{border-bottom:0}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgt{height:44px;padding:0 3px 12px;place-items:end center;font:500 16px/1 var(--f27);letter-spacing:0;color:var(--i27c)}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgt.on{color:var(--i27);font-weight:700}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgink{background:var(--a27);bottom:0}
+.sp27{padding:0 0 28px;font-family:var(--f27);color:var(--i27)}
+.sp27 .um27{display:flex;gap:8px;padding:14px 16px 0}
+.sp27 .um27 button{height:32px;padding:0 14px;border:0;border-radius:999px;background:var(--s27);color:var(--i27b);font:600 13px/1 var(--f27)}
+.sp27 .um27 button.on{background:var(--i27);color:var(--b27)}
+.sp27 .wk27{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:16px 0 0;overscroll-behavior-x:contain}
+.sp27 .wk27::-webkit-scrollbar{display:none}
+.sp27 .wp27{flex:none;width:100%;box-sizing:border-box;display:flex;justify-content:space-between;padding:0 16px;scroll-snap-align:start}
+.sp27 .wp27 a{display:flex;flex-direction:column;align-items:center;gap:6px;width:40px;font-size:11px;color:var(--i27c);text-decoration:none;font-variant-numeric:tabular-nums;-webkit-tap-highlight-color:transparent}
+.sp27 .wp27 b{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:15px;font-weight:700;color:var(--i27)}
+.sp27 .wp27 a.td b{color:var(--a27)}
+.sp27 .wp27 a.on b{background:var(--i27);color:var(--b27)}
+.sp27 .wp27 i{width:5px;height:5px;border-radius:50%;background:transparent}
+.sp27 .wp27 a.gd i{background:var(--a27)}
+.sp27 .mn27{padding:14px 16px 0;font-size:13px;font-weight:600;color:var(--i27c);min-height:16px}
+.sp27 .hero27{display:block;position:relative;overflow:hidden;margin:14px 16px 0;height:136px;border-radius:20px;color:#fff;text-decoration:none;box-shadow:0 14px 26px -16px rgba(0,0,0,.55)}
+.sp27 .hbl27{position:absolute;border-radius:50%;filter:blur(34px);opacity:.55}
+.sp27 .hbl27.a{left:-30px;top:-44px;width:160px;height:160px;animation:drift27a 17s ease-in-out infinite}
+.sp27 .hbl27.b{right:-40px;top:-54px;width:180px;height:180px;animation:drift27b 15s ease-in-out infinite}
+.sp27 .hsh27{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.22),rgba(0,0,0,0) 40%,rgba(0,0,0,.36))}
+.sp27 .ht27{position:absolute;left:0;right:0;top:12px;display:flex;justify-content:center;align-items:center;gap:7px;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.sp27 .ht27 i,.sp27 .sl27 i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse27 1.4s ease-in-out infinite}
+.sp27 .hm27{position:absolute;left:18px;right:18px;top:34px;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px}
+.sp27 .hs27{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0}
+.sp27 .hs27.r{align-items:flex-end}
+.sp27 .hs27 b{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.sp27 .hn27{display:flex;align-items:baseline;justify-content:center;gap:12px;font-size:40px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.sp27 .hn27 .lo{opacity:.62}
+.sp27 .hn27 em{font-style:normal;font-size:15px;font-weight:600;opacity:.8;letter-spacing:0}
+.sp27 .hft27{position:absolute;left:18px;right:18px;bottom:12px;display:flex;flex-direction:column;gap:6px}
+.sp27 .hb27{height:4px;border-radius:4px;background:rgba(255,255,255,.26);overflow:hidden;display:flex}
+.sp27 .hb27 span{background:#fff;border-radius:4px;transform-origin:left;animation:grow27 1.1s cubic-bezier(.2,.8,.2,1) both}
+.sp27 .hb27 span.r{margin-left:auto;transform-origin:right}
+.sp27 .hf27{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.88);font-variant-numeric:tabular-nums}
+.sp27 .hf27 b{color:#fff;font-weight:700}
+.sp27 .hf27.one{justify-content:center;font-size:12px}
+.sp27 .sl27{display:flex;align-items:center;gap:7px;padding:24px 16px 0;font-size:13px;font-weight:700;color:var(--i27c)}
+.sp27 .sl27 i{color:var(--i27)}
+.sp27 .sl27 span{margin-left:auto;font-weight:600;font-variant-numeric:tabular-nums}
+.sp27 .g27{display:grid;grid-template-columns:minmax(0,1fr) 96px;margin:10px 16px 0;border-radius:16px;background:var(--s27);overflow:hidden;color:var(--i27);text-decoration:none;font-variant-numeric:tabular-nums;-webkit-tap-highlight-color:transparent}
+.sp27 .g27:active{opacity:.75}
+.sp27 .tm27{padding:11px 0 11px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.sp27 .ln27{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:10px;font-size:15px}
+.sp27 .ln27>span:nth-child(2){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp27 .ln27 b{font-weight:700}
+.sp27 .ln27 i{font-style:normal;font-size:11px;font-weight:700;color:var(--i27c);margin-right:5px}
+.sp27 .ln27 small{font-size:12px;color:var(--i27c);margin-left:6px}
+.sp27 .ln27 strong{font-size:20px;font-weight:700;letter-spacing:-.02em;padding-right:14px}
+.sp27 .ln27 .lo{color:var(--i27c)}
+.sp27 .st27{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0 6px;box-shadow:inset 1px 0 0 var(--l27);font-size:13px;font-weight:700;text-align:center}
+.sp27 .st27 em{font-style:normal}
+.sp27 .st27.lv em{color:var(--a27)}
+.sp27 .st27 small{font-size:11px;font-weight:400;color:var(--i27c);line-height:1.25}
+.sp27 .mb27{display:block;margin:12px auto 0;height:38px;padding:0 18px;border:0;border-radius:999px;background:var(--s27);color:var(--i27);font:600 13.5px/1 var(--f27)}
+.sp27 .em27{margin:26px 16px 0;padding:28px 20px;border-radius:16px;background:var(--s27);text-align:center}
+.sp27 .em27 b{display:block;font-size:17px;font-weight:700}
+.sp27 .em27 p{margin:8px 0 0;font-size:14px;color:var(--i27b)}
+.sp27 .em27 button{margin-top:16px;height:40px;padding:0 18px;border:0;border-radius:999px;background:var(--i27);color:var(--b27);font:700 14px/1 var(--f27)}
+.sp27 .sk27{height:84px;margin:14px 16px 0;border-radius:16px;background:var(--s27);opacity:.6}
+@keyframes drift27a{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(46px,14px) scale(1.25)}}
+@keyframes drift27b{0%,100%{transform:translate(0,0) scale(1.1)}50%{transform:translate(-52px,-10px) scale(.9)}}
+@keyframes grow27{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){ .sp27 .hbl27,.sp27 .hb27 span,.sp27 .ht27 i,.sp27 .sl27 i{animation:none} }
+/* the old Standings and Leaders pages sit under the new Scores header for now: their own page title would say it twice */
+html.rv27:is([data-page="standings"],[data-page="stats"]) #main .ptl{display:none}

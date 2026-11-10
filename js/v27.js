@@ -11,7 +11,7 @@
   const V = HW.v5, X = V.x27, U = V._;
   if (!X || !U) return;
   const root = document.documentElement, $main = document.getElementById('main');
-  const $bar = document.getElementById('tb27'), $seg = document.getElementById('seg27');
+  const $bar = document.getElementById('tb27'), $seg = document.getElementById('seg27'), $sh = document.getElementById('sh27');
   const on = () => !!store.get('v5:rv27', false);
   const MOTION = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
   const hash = s => { let h = 5381; s = String(s); for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return String(h); };
@@ -36,11 +36,11 @@
   /* ---------- the shell: the four-tab bar, and Games / Standings / Leaders across the top of Scores ---------- */
   const SCORES = ['scores', 'standings', 'stats'];
   function paintBar() {
-    const live = on(); root.classList.toggle('rv27', live); if ($bar) $bar.hidden = !live; if (!live) { if ($seg) $seg.hidden = true; return; }
+    const live = on(); root.classList.toggle('rv27', live); if ($bar) $bar.hidden = !live; if (!live) { if ($seg) $seg.hidden = true; if ($sh) $sh.hidden = true; return; }
     const pg = root.dataset.page || 'home'; const old = document.querySelector('#tabs .tab.on'); const owner = old ? old.dataset.tab : 'home';
     const cur = root.classList.contains('w27on') ? 'watch' : pg === 'settings' ? 'you' : SCORES.includes(owner) ? 'scores' : 'home';
     $bar.querySelectorAll('[data-t27]').forEach(a => { const is = a.dataset.t27 === cur; a.classList.toggle('on', is); if (is) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    const inScores = SCORES.includes(pg); $seg.hidden = !inScores;
+    const inScores = SCORES.includes(pg); $seg.hidden = !inScores; if ($sh) $sh.hidden = !inScores;
     if (inScores) $seg.querySelectorAll('a').forEach(a => { const is = a.dataset.s27 === pg; a.classList.toggle('on', is); if (is) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   }
   if ($bar) $bar.addEventListener('click', e => {
@@ -68,7 +68,7 @@
   const vqRow = () => { const cur = store.get('v5:vq', 'auto');
     return `<div class="gl setlook"><div class="gr ni"><span class="sico" data-k="watch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9.500 4.500 2.500-4.500 2.500z" fill="currentColor"/></svg></span><span class="gm"><b>Clip quality</b></span><div class="segc fit" role="radiogroup" aria-label="Clip quality">${[['auto', 'Auto'], ['always', 'Sharpest'], ['never', 'Saver']].map(([k, l]) => `<button class="${cur === k ? 'on' : ''}" data-act="vq" data-vq="${k}" role="radio" aria-checked="${cur === k}">${l}</button>`).join('')}</div></div></div><p class="vq27">Auto plays clips at full size on Wi-Fi and lighter on cellular. A full-size clip is about 20 MB.</p>`; };
   V.rv27 = { on, vq: vqRow, miss(el, cls) { const p = el.parentNode; if (p) { p.className = (cls || 'ph27') + ' no27'; p.innerHTML = I.me; } },
-    row: () => `<div class="gl"><button class="gr ni sw" data-act="rv27" role="switch" aria-checked="${on()}"><span class="sico" data-k="look"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.500 13.900 9l5.600 1.900-5.600 1.900L12 18.300l-1.900-5.500L4.500 10.900 10.100 9z"/></svg></span><span class="gm wrap"><b>Try the new design</b><span>A preview of the 2027 look. Home and the bottom bar so far. Switch it off any time.</span></span><span class="switch"></span></button></div>` };
+    row: () => `<div class="gl"><button class="gr ni sw" data-act="rv27" role="switch" aria-checked="${on()}"><span class="sico" data-k="look"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.500 13.900 9l5.600 1.900-5.600 1.900L12 18.300l-1.900-5.500L4.500 10.900 10.100 9z"/></svg></span><span class="gm wrap"><b>Try the new design</b><span>A preview of the 2027 look. Home, Watch and Scores so far. Switch it off any time.</span></span><span class="switch"></span></button></div>` };
 
   /* Watch opens the clips the app has today: For you when there is one, otherwise the league's biggest plays */
   async function watch(startId, key) {
@@ -79,6 +79,77 @@
     if (!s) { V.toast('No clips yet. Follow a team and its plays show up here.'); return; }
     V.storyOpen(s.key, startId);
   }
+
+  /* ---------- Scores, Games (v472): a week of days, your team's game on top, then Live, Tonight and Final ---------- */
+  const addD = (d, n) => { const t = new Date(d + 'T12:00:00'); t.setDate(t.getDate() + n); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };
+  const monOf = d => { const t = new Date(d + 'T12:00:00'); return addD(d, -((t.getDay() + 6) % 7)); };
+  const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const longDay = d => { const t = new Date(d + 'T12:00:00'); return `${WD[t.getDay()]}, ${MO[t.getMonth()]} ${t.getDate()}`; };
+  const periodWord = (L, g) => { const d = String(g.detail || ''); if (/half\s*time|halftime/i.test(d)) return 'Halftime'; if (/^end/i.test(d) || !g.period) return d; const n = L.periods || 4, p = g.period;
+    const nm = p > n ? (p - n > 1 ? `${p - n}OT` : 'Overtime') : n === 2 ? (p === 1 ? '1st half' : '2nd half') : `${['1st', '2nd', '3rd', '4th'][p - 1] || p + 'th'} quarter`; return g.clock ? `${nm} \u00b7 ${g.clock}` : nm; };
+  const leadWord = g => { const h = +g.home.score || 0, a = +g.away.score || 0; return h === a ? 'Tied' : `${esc(h > a ? g.home.short : g.away.short)} by ${Math.abs(h - a)}`; };
+  const projWord = (L, g, ctx) => { const ph = g.state === 'pre' && !g.off ? projOf(L, g, ctx) : null; if (ph == null) return null; const t = ph >= .5 ? g.home : g.away; return { t, pct: pctOf(ph), home: ph >= .5 }; };
+  const clipWord = g => { const n = X.clipsOf(g.id); return n ? `Recap, ${n} clip${n === 1 ? '' : 's'}` : ''; };
+  const sLine = (t, lead, lose, score) => `<span class="ln27">${disc(t, 28)}<span class="${lose ? 'lo' : ''}">${t.rank ? `<i>${t.rank}</i>` : ''}${lead ? `<b>${esc(t.short)}</b>` : esc(t.short)}${t.rec ? `<small>${esc(t.rec)}</small>` : ''}</span><strong class="${lose ? 'lo' : ''}">${score ? esc(String(t.score == null ? '' : t.score)) : ''}</strong></span>`;
+  function sRow(L, g, ctx) {
+    const live = isLive(g) && !g.off, fin = g.state === 'post' && !g.off, h = +g.home.score || 0, a = +g.away.score || 0, sc = live || fin;
+    let st; if (g.off) st = `${esc(g.off)}`; else if (live) st = `<em>${esc(g.detail || 'Live')}</em><small>${leadWord(g)}</small>`;
+    else if (fin) { const c = clipWord(g); st = `${esc(finalWord(g))}${c ? `<small>${c}</small>` : ''}`; }
+    else { const p = projWord(L, g, ctx); st = `${esc(noTz(tipOf(g)))}${p ? `<small>RIVL: ${esc(p.t.abbr)} ${p.pct}%</small>` : g.tv ? `<small>${esc(String(g.tv).split(',')[0])}</small>` : ''}`; }
+    return `<a class="g27${isFav(g) ? ' my' : ''}" href="${U.href.game(L.key, g.id)}"><span class="tm27">${sLine(g.away, sc && a > h, sc && fin && a < h || (live && a < h), sc)}${sLine(g.home, sc && h > a, sc && fin && h < a || (live && h < a), sc)}</span><span class="st27${live ? ' lv' : ''}">${st}</span></a>`;
+  }
+  function sHero(L, g, ctx) {
+    const live = isLive(g) && !g.off, fin = g.state === 'post' && !g.off, h = +g.home.score || 0, a = +g.away.score || 0, ca = tone(g.away.color), ch = tone(g.home.color);
+    const top = g.off ? esc(g.off) : live ? `<i></i>${esc(periodWord(L, g))}` : fin ? esc(finalWord(g)) : `${esc(relDay(ymd(g)))} \u00b7 ${esc(noTz(tipOf(g)))}`;
+    const mid = live || fin ? `<span class="${a < h ? 'lo' : ''}">${a}</span><span class="${h < a ? 'lo' : ''}">${h}</span>` : `<em>at</em>`;
+    const p = projWord(L, g, ctx), c = fin ? clipWord(g) : '';
+    const foot = p ? `<span class="hb27"><span class="${p.home ? 'r' : ''}" style="width:${p.pct}%"></span></span><span class="hf27"><span>RIVL projection</span><b>${esc(p.t.short)} ${p.pct}%</b></span>` : `<span class="hf27 one"><b>${live ? leadWord(g) : c || (g.tv ? esc(String(g.tv).split(',')[0]) : '')}</b></span>`;
+    const side = (t, r) => `<span class="hs27${r ? ' r' : ''}">${disc(t, 40)}<b>${esc(t.short)}</b></span>`;
+    return `<a class="hero27${live ? ' lv' : ''}" href="${U.href.game(L.key, g.id)}" style="background:linear-gradient(100deg,${U.mixTo(ca, 0, .45)} 0%,${ca} 40%,${ch} 60%,${U.mixTo(ch, 255, .12)} 100%)"><span class="hbl27 a" style="background:${U.mixTo(ca, 255, .25)}"></span><span class="hbl27 b" style="background:${U.mixTo(ch, 255, .3)}"></span><span class="hsh27"></span><span class="ht27">${top}</span><span class="hm27">${side(g.away)}<span class="hn27">${mid}</span>${side(g.home, 1)}</span><span class="hft27">${foot}</span></a>`;
+  }
+  const sSec = (label, list, L, ctx, pulse) => { if (!list.length) return ''; const N = 14, rows = list.map(g => sRow(L, g, ctx));
+    return `<div class="sl27">${pulse ? '<i></i>' : ''}${label}${list.length > 3 ? `<span>${list.length}</span>` : ''}</div>${rows.slice(0, N).join('')}${rows.length > N ? `<div class="mo27" hidden>${rows.slice(N).join('')}</div><button class="mb27" data-a27="more">Show all ${rows.length}</button>` : ''}`; };
+  function sBody(L, day, games, ctx, cal) {
+    const today = todayCT();
+    if (!games) return `<div class="em27"><b>Couldn't load the scoreboard</b><p>The feed didn't answer. It usually comes back within a minute.</p></div>`;
+    if (!games.length) { const next = (cal || []).find(d => d > day);
+      return `<div class="em27"><b>No ${esc(L.label)} games ${day === today ? 'today' : 'on ' + esc(longDay(day))}</b>${next ? `<p>The next games are ${next === addD(today, 1) ? 'tomorrow' : 'on ' + esc(longDay(next))}.</p><button data-act="date" data-ymd="${esc(next)}">Go to ${esc(longDay(next))}</button>` : ''}</div>`; }
+    const ok = games.filter(g => !g.tbd), mine = (x, y) => isFav(y) - isFav(x), byTip = (x, y) => new Date(x.date) - new Date(y.date);
+    const hero = ok.find(g => isFav(g) && isLive(g) && !g.off) || ok.find(g => isFav(g) && g.state === 'pre' && !g.off) || ok.find(g => isFav(g) && !g.off) || null;
+    const rest = games.filter(g => g !== hero), off = rest.filter(g => g.off), live = rest.filter(g => isLive(g) && !g.off).sort(mine), done = rest.filter(g => !isLive(g) && g.state === 'post' && !g.off).sort((x, y) => mine(x, y) || byTip(y, x)), ahead = rest.filter(g => !live.includes(g) && !done.includes(g) && !g.off).sort((x, y) => byTip(x, y) || mine(x, y));
+    return (hero ? sHero(L, hero, ctx) : '') + sSec('Live', live, L, ctx, true) + sSec(day === today ? esc(relDay(day)) : 'Scheduled', ahead, L, ctx) + sSec('Final', done, L, ctx) + sSec('Not played', off, L, ctx);
+  }
+  function sWeeks(day, cal) {
+    const today = todayCT(), m0 = monOf(day), gd = new Set(cal || []); let h = '';
+    for (let w = -3; w <= 4; w++) { const m = addD(m0, w * 7); h += `<div class="wp27" data-w="${m}">`;
+      for (let i = 0; i < 7; i++) { const d = addD(m, i), t = new Date(d + 'T12:00:00'); h += `<a href="#scores" data-act="date" data-ymd="${d}" class="${d === day ? 'on ' : ''}${d === today ? 'td ' : ''}${gd.has(d) ? 'gd' : ''}" aria-label="${longDay(d)}"${d === day ? ' aria-current="date"' : ''}><span>${WD[t.getDay()]}</span><b>${t.getDate()}</b><i></i></a>`; }
+      h += '</div>'; }
+    return h;
+  }
+  let scRun = 0;
+  async function scores27(lk, quiet) {
+    const L = LEAGUES[lk]; if (!L) return; const today = todayCT(), run = ++scRun;
+    let day = store.get('v5:date', today); if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || Math.abs(new Date(day) - new Date(today)) > 200 * 864e5) day = today;
+    let pg = $main.querySelector('#sc27'); const same = pg && pg.dataset.lk === lk;
+    const unr = lk === 'wnba' ? `<div class="um27"><button class="on">WNBA</button><button data-act="scmode" data-mode="unrivaled">Unrivaled</button></div>` : '';
+    if (!same) { $main.innerHTML = `<div id="sc27" class="h27 sp27" data-lk="${esc(lk)}">${unr}<div class="wk27" id="wk27"></div><div class="mn27" id="mn27"></div><div id="scb27"><div class="sk27"></div><div class="sk27"></div><div class="sk27"></div></div></div>`; pg = $main.querySelector('#sc27'); }
+    const wk = pg.querySelector('#wk27'), body = pg.querySelector('#scb27'), mn = pg.querySelector('#mn27');
+    const strip = cal => { const has = wk.querySelector(`[data-ymd="${day}"]`);
+      if (!has || wk.dataset.cal !== String((cal || []).length)) { wk.innerHTML = sWeeks(day, cal); wk.dataset.cal = String((cal || []).length); const cur = wk.querySelector(`.wp27[data-w="${monOf(day)}"]`); if (cur) wk.scrollLeft = cur.offsetLeft - wk.offsetLeft; }
+      else wk.querySelectorAll('a').forEach(a => { const is = a.dataset.ymd === day; a.classList.toggle('on', is); if (is) a.setAttribute('aria-current', 'date'); else a.removeAttribute('aria-current'); });
+      const t = new Date(day + 'T12:00:00'); mn.textContent = day === today ? `Today, ${MO[t.getMonth()]} ${t.getDate()}` : longDay(day) + (t.getFullYear() !== new Date().getFullYear() ? `, ${t.getFullYear()}` : ''); };
+    if (!wk.children.length || body.dataset.d !== day) strip(wk.dataset.calv ? JSON.parse(wk.dataset.calv) : null);
+    if (same && body.dataset.d !== day && !quiet) V.busy(true);
+    const [games, ctx, meta] = await Promise.all([day === today && S.today[lk] && S.today[lk].length && !quiet ? S.today[lk] : HW.scoreboard(L, day).catch(() => null), HW.forecastCtx(L, day).catch(() => null), X.sbMeta(L, day).catch(() => null)]);
+    if (run !== scRun || !document.body.contains(pg)) return; V.busy(false);
+    if (day === today && games) S.today[lk] = games;
+    const cal = (meta && meta.cal) || []; wk.dataset.calv = JSON.stringify(cal.filter(d => Math.abs(new Date(d) - new Date(day)) < 50 * 864e5)); strip(JSON.parse(wk.dataset.calv));
+    const html = sBody(L, day, games, ctx, cal), hh = hash(html); if (body.dataset.h !== hh) { const open = !!body.querySelector('.mo27:not([hidden])'); body.innerHTML = html; body.dataset.h = hh; if (open) body.querySelectorAll('.mo27').forEach(m => { m.hidden = false; if (m.nextElementSibling) m.nextElementSibling.remove(); }); }
+    body.dataset.d = day;
+    V.refresh = () => scores27(lk, true); V.refresh.every = 25000;
+  }
+  $main.addEventListener('click', e => { const b = e.target.closest('[data-a27="more"]'); if (!b) return; e.preventDefault(); const m = b.previousElementSibling; if (m) m.hidden = false; b.remove(); });
+  { const sc0 = V.scores; V.scores = (lk, ...a) => on() && !(lk === 'wnba' && (V.unrOn ? V.unrOn() : store.get('v5:scunr', false))) ? scores27(lk) : sc0(lk, ...a); }
 
   /* ---------- Watch: one clip to a screen, Following / For you / Top plays ---------- */
   const WI = {
