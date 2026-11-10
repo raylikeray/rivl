@@ -455,9 +455,18 @@
       if (!seen.has(i)) { seen.add(i); if (HW.v5.soft) HW.v5.soft(panels[i]); } if (onShow) onShow(keys[i]);
       // a tab row wider than the screen keeps the current tab in view (v408)
       const bt = btns[i], row = bt && bt.parentElement; if (row && row.scrollWidth > row.clientWidth + 2) { const x = bt.offsetLeft - (row.clientWidth - bt.offsetWidth) / 2; row.scrollTo({ left: Math.max(0, x), behavior: reduce ? 'auto' : 'smooth' }); } };
-    let t = 0, moving = false, down = false;
+    let t = 0, moving = false, down = false, prog = 0;
+    /* v446: a tap on a tab. iPad Safari re-snaps a smooth programmatic scroll to where it began when the strip has
+       mandatory snapping with snap-stop, so the page jumped back to the first tab. Snapping is switched off for the
+       trip, the trip is watched to its end, then the page is landed exactly and snapping comes back. */
+    const goTo = i => { i = Math.max(0, Math.min(panels.length - 1, i)); const to = i * W(); const t0 = performance.now(); prog = performance.now();
+      strip.style.scrollSnapType = 'none'; place(); fit(true);
+      if (reduce) strip.scrollLeft = to; else try { strip.scrollTo({ left: to, behavior: 'smooth' }); } catch (e) { strip.scrollLeft = to; }
+      const done = () => { strip.scrollLeft = to; inkTo(i); prog = 0; moving = false; land(i); requestAnimationFrame(() => { strip.style.scrollSnapType = ''; }); };
+      const watch = () => { if (Math.abs(strip.scrollLeft - to) < 1.5 || performance.now() - t0 > 650) return done(); requestAnimationFrame(watch); };
+      requestAnimationFrame(watch); };
     // v400: never settle while a finger is still on the glass (a pause mid-swipe is not the end of it)
-    const settle = () => { clearTimeout(t); t = setTimeout(() => { if (down) return; const i = Math.round(strip.scrollLeft / W()); if (Math.abs(strip.scrollLeft - i * W()) > 1) { strip.scrollTo({ left: i * W(), behavior: reduce ? 'auto' : 'smooth' }); return; } moving = false; land(i); }, 120); };
+    const settle = () => { clearTimeout(t); t = setTimeout(() => { if (down || prog) return; const i = Math.round(strip.scrollLeft / W()); if (Math.abs(strip.scrollLeft - i * W()) > 1) { strip.scrollTo({ left: i * W(), behavior: reduce ? 'auto' : 'smooth' }); return; } moving = false; land(i); }, 120); };
     strip.addEventListener('touchstart', () => { down = true; }, { passive: true });
     const up = () => { down = false; if (moving) settle(); };
     strip.addEventListener('touchend', up, { passive: true }); strip.addEventListener('touchcancel', up, { passive: true });
@@ -492,10 +501,11 @@
     uniq.forEach(b => b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation();
       const idxs = btns.map((x2, j) => x2 === b ? j : -1).filter(j => j >= 0);
       if (idxs.includes(cur) && Math.abs(strip.scrollLeft - cur * W()) < 2) { if (window.scrollY > stick()) window.scrollTo({ top: stick(), behavior: reduce ? 'auto' : 'smooth' }); return; }
-      place(); fit(true); strip.scrollTo({ left: idxs[0] * W(), behavior: reduce ? 'auto' : 'smooth' }); }, true));
-    const ro = new ResizeObserver(() => { if (!moving) fit(false); inkTo(strip.scrollLeft / W()); }); panels.forEach(p => ro.observe(p)); ro.observe(strip);
+      goTo(idxs[0]); }, true));
+    let lastW = W();   // v446: a turned or resized screen keeps the page it was on
+    const ro = new ResizeObserver(() => { if (W() !== lastW) { lastW = W(); if (!prog && !down) { strip.style.scrollSnapType = 'none'; strip.scrollLeft = cur * W(); requestAnimationFrame(() => { strip.style.scrollSnapType = ''; }); } } if (!moving) fit(false); inkTo(strip.scrollLeft / W()); }); panels.forEach(p => ro.observe(p)); ro.observe(strip);
     requestAnimationFrame(() => { strip.scrollLeft = cur * W(); inkTo(cur); fit(false); place(); });
-    return { go: k => { const i = keys.indexOf(k); if (i >= 0) strip.scrollTo({ left: i * W(), behavior: reduce ? 'auto' : 'smooth' }); }, get key() { return keys[cur]; } };
+    return { go: k => { const i = keys.indexOf(k); if (i >= 0) goTo(i); }, get key() { return keys[cur]; } };
   }
   const deckPos = { key: '', i: 0 };
   const deckStep = d => { const c = d.querySelector('.dk'); return c ? c.offsetWidth + 10 : d.clientWidth; };
