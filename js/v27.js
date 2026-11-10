@@ -271,6 +271,15 @@
     /* the story ring */
     const av = hd.querySelector('.apface,.apcrest'), key = `${r.lk}:${r.kind === 'team' ? 't' : 'p'}${r.id}`, sub = X.storySubjects().find(x => x.key === key);
     if (av) { const st = sub ? (sub.un ? 'new' : 'seen') : ''; if (av.dataset.ring !== st) { av.dataset.ring = st; av.classList.toggle('rg27', !!st); av.classList.toggle('new', st === 'new'); if (st) { av.setAttribute('role', 'button'); av.setAttribute('aria-label', 'Play the story'); av.dataset.pstory = key; } else { av.removeAttribute('role'); av.removeAttribute('aria-label'); delete av.dataset.pstory; } } }
+    /* v483 the Roster tab: each player is a card you can see the person on (two to a row, grouped by position as before).
+       The page's own rows are kept and reshaped: number at the top left, first name small, last name bold, the photo
+       swapped for the full-size one. */
+    if (r.kind === 'team') $main.querySelectorAll('.tpanel[data-pg="roster"] .agl .aglp:not([data-r27])').forEach(a => { a.dataset.r27 = '1';
+      const t = a.querySelector('.t'), nm = t && t.querySelector('b'), sub = t && t.querySelector('span'), img = a.querySelector('.hs img'); if (!nm) return;
+      const full = nm.textContent.trim(), parts = full.split(/\s+/), first = parts.length > 1 ? parts[0] : '', last = parts.slice(first ? 1 : 0).join(' ');
+      nm.innerHTML = `${first ? `<small>${esc(first)}</small>` : ''}${esc(last)}`;
+      if (sub) { const m = /#\s*(\w+)/.exec(sub.textContent); sub.textContent = sub.textContent.split('\u00b7')[0].trim(); if (m) a.insertAdjacentHTML('afterbegin', `<u class="jn27" aria-hidden="true">${esc(m[1])}</u>`); }
+      if (img && img.dataset.o) { img.src = img.dataset.o; img.removeAttribute('data-o'); } });
     /* the lead card (players): the rating in a ring that fills, three numbers, the one-line summary */
     if (r.kind === 'player') { const prc = $main.querySelector('.prate2 .prc'); if (prc && !prc.previousElementSibling) {
         const rt = prc.querySelector('.rtb'), sum = prc.querySelector('.prs'), val = lab => { const c = [...$main.querySelectorAll('.pgp:first-child .card div, .pgp:first-child .card td')].find(d => d.children.length === 2 && d.lastElementChild.textContent.trim() === lab && /^[\d.]+$/.test(d.firstElementChild.textContent.trim())); return c ? c.firstElementChild.textContent.trim() : ''; };

@@ -537,3 +537,23 @@ html.rv27 body .approf.pin27 .aptabs .chips{background:rgba(0,0,0,.3)}
 html.rv27 body .approf.pin27 .aptabs .chip{color:rgba(255,255,255,.86)!important}
 html.rv27 body .approf.pin27 .aptabs .chip.on,html.rv27 body .approf.pin27 .aptabs .chip[aria-pressed="true"]{background:#fff!important;color:#0a0c0e!important}
 html.rv27 body .approf .apfx{box-shadow:none}
+
+/* ---------- the Roster tab (v483): bigger cards, two to a row, by position ---------- */
+html.rv27 body .approf .tpanel[data-pg="roster"] .aph3{margin:22px 16px 10px!important;padding:0!important;display:flex;align-items:baseline;gap:8px;font:700 18px/1.2 var(--f27)!important;letter-spacing:-.01em!important;text-transform:none!important;color:var(--i27)!important}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aph3 small{font:500 13px/1 var(--f27)!important;color:var(--i27c)!important;letter-spacing:0!important}
+html.rv27 body .approf .tpanel[data-pg="roster"] .agl{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 16px!important;padding:0!important;background:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;overflow:visible!important}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp{position:relative;display:flex!important;flex-direction:column;align-items:stretch!important;gap:0!important;padding:0!important;margin:0!important;min-height:0!important;border-radius:18px!important;overflow:hidden;background:var(--s27)!important;box-shadow:none!important;border:0!important;color:var(--i27)!important;text-decoration:none}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp::before,html.rv27 body .approf .tpanel[data-pg="roster"] .aglp::after{display:none!important}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp:active{opacity:.8}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .hs{position:relative;display:block!important;width:100%!important;height:150px!important;border-radius:0!important;overflow:hidden;box-shadow:none!important;background:linear-gradient(165deg,color-mix(in srgb,var(--tc) 80%,#fff),var(--tc) 48%,color-mix(in srgb,var(--tc) 52%,#000))!important}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .hs::before,html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .hs::after{display:none!important}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .hs img{position:absolute!important;left:50%!important;bottom:0!important;top:auto!important;width:auto!important;height:142px!important;max-width:none!important;object-fit:contain!important;transform:translateX(-50%)!important;border-radius:0!important;filter:drop-shadow(0 6px 12px rgba(0,0,0,.3))}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .hs i{display:none!important}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .hs.noimg i{display:grid!important;position:absolute;inset:0;place-items:center;background:none!important;font:800 44px/1 var(--f27)!important;color:rgba(255,255,255,.85)!important;text-shadow:none}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .jn27{position:absolute;z-index:2;left:11px;top:9px;text-decoration:none;font:800 22px/1 var(--f27);letter-spacing:-.02em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.35);font-variant-numeric:tabular-nums}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .t{display:block!important;padding:10px 12px 0!important;min-width:0}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .t b{display:block;font:700 16px/1.15 var(--f27)!important;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--i27)!important}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .t b small{display:block;margin-bottom:2px;font:500 12px/1.2 var(--f27);color:var(--i27c);letter-spacing:0}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .t>span{display:block;margin-top:3px;font:500 12px/1.2 var(--f27)!important;color:var(--i27c)!important}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .v{display:block!important;padding:8px 12px 12px!important;margin:0!important;text-align:left!important;font:700 17px/1 var(--f27)!important;color:var(--i27)!important;font-variant-numeric:tabular-nums}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .v small{display:inline!important;margin-left:5px;font:500 11px/1 var(--f27)!important;letter-spacing:.04em;color:var(--i27c)!important}
