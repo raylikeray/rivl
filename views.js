@@ -840,7 +840,7 @@
   let storiesD = null, storiesAt = 0;
   const storiesLoad = () => { if (Date.now() - storiesAt < 20 * 60000 || !HW.hub) return; storiesAt = Date.now(); HW.hub.file('stories.json').then(d => { if (d && d.items) { storiesD = d; if (homeRepaint && !stEl) homeRepaint(); } }).catch(() => {}); };
   const stSeen = () => store.get('v5:storyseen', {}) || {};
-  const stMark = (key, id) => { const s = stSeen(); if ((s[key] || []).includes(id)) return; s[key] = [...(s[key] || []), id].slice(key === 'all:feed' ? -500 : -80); store.set('v5:storyseen', s); };
+  const stMark = (key, id) => { const s = stSeen(); if ((s[key] || []).includes(id)) return; s[key] = [...(s[key] || []), id].slice(key === 'all:feed' || key.startsWith('w:') ? -500 : -80); store.set('v5:storyseen', s); };
   const gEnd = g => Math.min(new Date(g.date).getTime() + 2.4 * 36e5, Date.now() - 6e4);
   const SUMS = {};
   const sumGet = (L, g) => { const k = L.key + ':' + g.id; if (SUMS[k]) return SUMS[k]; SUMS[k] = { st: 'load' };
@@ -928,13 +928,14 @@
   const stLearn = (it, by) => { if (!it || it.kind !== 'vid' || it.ck !== 'play') return; const T = taste(); const bump = (o, k, d) => { if (k) o[k] = Math.round(Math.max(-6, Math.min(12, (o[k] || 0) + d)) * 10) / 10; };
     (it.aths || []).slice(0, 3).forEach(a => bump(T.a, a, by)); bump(T.k, playKind(it.title), by * .5);
     const ks = Object.keys(T.a); if (ks.length > 300) ks.sort((x, y) => Math.abs(T.a[x]) - Math.abs(T.a[y])).slice(0, ks.length - 300).forEach(k => delete T.a[k]); store.set('v5:taste', T); };
-  const feedSubject = (subs, now, seen) => { feedLoad(); const fd = (feedD && feedD.items) || []; if (!fd.length) return null;
-    const lks = new Set(ORDER.filter(lk => feedSrc[lk] && feedSrc[lk].out && feedSrc[lk].out.follows)); if (!lks.size) return null;
+  const feedSubject = (subs, now, seen, deep) => { feedLoad(); const fd = (feedD && feedD.items) || []; if (!fd.length) return null;
+    let lks = new Set(ORDER.filter(lk => feedSrc[lk] && feedSrc[lk].out && feedSrc[lk].out.follows)); if (!lks.size) { if (!deep) return null; lks = new Set(ORDER); }   // v470: Watch plays every league when nothing is followed
     const T = taste(), fp = new Set(fplayers.all().map(p => String(p.id))), ft = {}; ORDER.forEach(lk => { const o = feedSrc[lk] && feedSrc[lk].out; ft[lk] = new Set(((o && o.myTeams) || []).map(t => String(t.id))); });
     const gone = new Set(); Object.values(seen).forEach(l => (l || []).forEach(id => gone.add(id))); subs.forEach(x => x.its.forEach(y => gone.add(y.id)));   // watched anywhere, or already in one of your rings
     const score = c => { let v = 10 * Math.abs(c.w || 0) - (now - c.ts) / 864e5 * 2 + .6 * (T.k[playKind(c.t)] || 0); (c.a || []).forEach(a => { if (fp.has(a)) v += 6; v += Math.max(-3, Math.min(5, T.a[a] || 0)); }); if ((c.tm || []).some(t => ft[c.lk] && ft[c.lk].has(t))) v += 3; return v; };
-    const its = fd.filter(c => lks.has(c.lk) && c.u && now - c.ts < 48 * 36e5 && !gone.has('v' + c.id)).map(c => [score(c), c]).sort((a, b) => b[0] - a[0]).slice(0, 40).map(([, c]) => { const id = c.u.split('/').pop();
-      return { kind: 'vid', id: 'v' + c.id, ts: c.ts, url: `https://espnmedia-cdn.akamaized.net/espn/media/16x9/${c.u}/${id}.mp4`, v9: `https://cmp-espn.media.dssott.com/opp/hls/espn/9x16/${c.u}/${id}/playlist.m3u8`, title: c.t, dur: c.d || 20, thumb: `https://espnmedia-cdn.akamaized.net/espn/media/common/${c.u}/${id}.jpg`, ck: 'play', aths: c.a || [], L: LEAGUES[c.lk], sub: (LEAGUES[c.lk] || {}).short || '' }; });
+    /* v470: Watch (deep) keeps what has been watched, behind what has not, and is not cut at 40 or at two days */
+    const its = fd.filter(c => lks.has(c.lk) && c.u && (deep || (now - c.ts < 48 * 36e5 && !gone.has('v' + c.id)))).map(c => [score(c) - (deep && gone.has('v' + c.id) ? 1000 : 0), c]).sort((a, b) => b[0] - a[0]).slice(0, deep ? 300 : 40).map(([, c]) => { const id = c.u.split('/').pop();
+      return { kind: 'vid', id: 'v' + c.id, ts: c.ts, url: `https://espnmedia-cdn.akamaized.net/espn/media/16x9/${c.u}/${id}.mp4`, v9: `https://cmp-espn.media.dssott.com/opp/hls/espn/9x16/${c.u}/${id}/playlist.m3u8`, title: c.t, dur: c.d || 20, thumb: `https://espnmedia-cdn.akamaized.net/espn/media/common/${c.u}/${id}.jpg`, ck: 'play', aths: c.a || [], L: LEAGUES[c.lk], sub: (LEAGUES[c.lk] || {}).short || '', w: c.w || 0, tms: c.tm || [], gid: c.e ? String(c.e) : '' }; });
     return its.length >= 3 ? { key: 'all:feed', lk: 'all', kind: 'feed', id: 'feed', name: 'For you', full: 'For you', color: '#5b3df5', its, un: true, last: now } : null; };
   /* v458 the game told from its own record, for the cards between the clips: quarter scores, each side's longest
      unanswered run, biggest lead, lead changes, the three top scorers, and the one play that moved the win chance
@@ -1048,6 +1049,16 @@
         // the opening seconds of the first clip in the first two unwatched rings are fetched ahead, so the tap has something to show at once
         if (n < 2 && k === 0 && x.un && !light && !stHead.has(it.v9)) { stHead.add(it.v9); p.then(u => u === it.v9 ? null : fetch(u).then(r => r.ok ? r.text() : '').then(tx => { const seg = String(tx).split(/\r?\n/).find(l => l && !l.startsWith('#')); if (seg) return fetch(new URL(seg.trim(), u).href).then(r => r.arrayBuffer()); })).catch(() => {}); } }); }); };
   const stAvatar = (x, size) => x.kind === 'saved' ? `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.2a.6.6 0 0 1-1 .5L12 16.4l-5.5 4.3a.6.6 0 0 1-1-.5V5A1.5 1.5 0 0 1 7 3.5z"/></svg>` : x.kind === 'feed' ? `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a.9.9 0 0 0 1.4.8l10.4-6.8a.9.9 0 0 0 0-1.6L9.4 4.4A.9.9 0 0 0 8 5.2z"/></svg>` : x.kind === 'league' ? size > 24 ? `<b>${esc(x.abbr || '')}</b>` : `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.5 13.4h5.9L9.3 22l9.2-12.1h-6.1L13.2 2z"/></svg>` : x.kind === 'player' ? headshot(x.hs, x.color, size, x.full || x.name) : x.logo ? imgSized(x.logo, size * 2, size * 2) : `<b>${esc(x.abbr || '')}</b>`;
+  /* v470 the three Watch lists. Following: clips from the teams and players you follow, newest first, then everything else.
+     For you: the whole clip file, what you have not watched first, best fit first. Top plays: each league's ranked plays,
+     then the rest by how far each one moved the win chance. None of them ends: a list starts over. */
+  const watchSubs = () => { const now = Date.now(), seen = stSeen(), subs = storySubjects();
+    const fy = feedSubject([], now, seen, true), all = fy ? fy.its : [];
+    const uniq = l => { const s = new Set(); return l.filter(it => it.kind === 'vid' && !s.has(it.id) && s.add(it.id)); };
+    const from = kinds => uniq(subs.filter(x => kinds.includes(x.kind)).flatMap(x => x.its.map(it => Object.assign({}, it, { sk: x.key }))));
+    const fill = (head, rest) => { const s = new Set(head.map(i => i.id)); return [...head, ...rest.filter(i => !s.has(i.id))]; };
+    const mk = (key, name, its) => ({ key, lk: 'all', kind: 'watch', id: key, name, full: name, color: '#15171a', its, un: true, last: now });
+    return [mk('w:fol', 'Following', fill(from(['team', 'player']).sort((a, b) => b.ts - a.ts), all)), mk('w:fy', 'For you', fill(all, from(['league', 'team', 'player']))), mk('w:top', 'Top plays', fill(from(['league']), [...all].sort((a, b) => Math.abs(b.w || 0) - Math.abs(a.w || 0))))].filter(x => x.its.length); };
   function bubbles() {
     const subs = storySubjects(); if (!subs.length) return ''; stWarm(subs);
     return `<div class="sbubs">${subs.map(x => `<button class="sbub${x.un ? '' : ' seen'}${x.kind === 'player' ? ' pl' : ''}" data-act="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span class="ring"><span>${stAvatar(x, x.kind === 'player' ? 52 : 30)}</span></span><small>${esc(x.name)}</small></button>`).join('')}</div>`;
@@ -1059,16 +1070,19 @@
   let stEl = null, stPop = null;
   const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   const EASE = 'cubic-bezier(.2,.9,.25,1)';
-  function storyOpen(key, startId) {
+  function storyOpen(key, startId, opt) {
     if (stEl) return;
-    const subs = storySubjects(); let si = subs.findIndex(x => x.key === key); if (si < 0) return;
-    { const lastSub = [...subs].reverse().find(x => x.kind !== 'saved'); const nx = [];
+    /* v470 Watch: the same player, laid out as a tab. opt.subs are its lists (Following, For you, Top plays), one clip to a
+       screen, pulled up for the next and down for the last, tapped to pause; the bottom bar stays in view under it. */
+    const watch = !!(opt && opt.watch);
+    const subs = (opt && opt.subs) || storySubjects(); let si = subs.findIndex(x => x.key === key); if (si < 0) return;
+    if (!watch) { const lastSub = [...subs].reverse().find(x => x.kind !== 'saved'); const nx = [];
       ORDER.forEach(lk => { const o = feedSrc[lk] && feedSrc[lk].out; ((o && o.myTeams) || []).forEach(t => { const g = t.nx; if (!g || nx.some(n => n.id === g.id) || !(new Date(g.date).getTime() > Date.now() - 20 * 60000)) return; const home = String(g.home.id) === String(t.id); nx.push({ id: g.id, t: new Date(g.date).getTime(), home, us: home ? g.home : g.away, them: home ? g.away : g.home, when: `${relDay(HW.ymdOf(g.date))}, ${tipOf(g)}` }); }); });
       if (lastSub && subs[si].kind !== 'saved') lastSub.its = [...lastSub.its, { kind: 'caught', id: 'c' + todayCT(), ts: Date.now(), nx: nx.sort((a, b) => a.t - b.t).slice(0, 3) }]; }
     const W = innerWidth, H = innerHeight, HYP = Math.ceil(Math.hypot(W, H) / 2) + 4;
-    const el = document.createElement('div'); el.className = 'story';
+    const el = document.createElement('div'); el.className = 'story' + (watch ? ' w27v' : '');
     el.innerHTML = `<div class="stdim"></div><div class="stpane"><div class="stbg"></div><div class="stblur"></div><div class="stmedia"><div class="stvdw" hidden><video class="on" playsinline preload="auto"></video><video playsinline preload="auto" muted></video></div><div class="stcd" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stact" hidden><button data-stb="like" aria-label="Like" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3 4.6 13a4.9 4.9 0 0 1 0-7 5 5 0 0 1 7 0l.4.4.4-.4a5 5 0 0 1 7 0 4.9 4.9 0 0 1 0 7L12 20.3z"/></svg></button><button data-stb="save" aria-label="Save" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.2a.6.6 0 0 1-1 .5L12 16.4l-5.5 4.3a.6.6 0 0 1-1-.5V5A1.5 1.5 0 0 1 7 3.5z"/></svg></button></div><div class="stcap"></div></div></div>`;
-    document.body.appendChild(el); stEl = el; document.documentElement.classList.add('stlock');
+    document.body.appendChild(el); stEl = el; document.documentElement.classList.add('stlock'); if (watch) { document.documentElement.classList.add('w27on'); if (opt.chrome) opt.chrome(el); }
     const pane = el.querySelector('.stpane'), dim = el.querySelector('.stdim'); let [vd, sb] = [...el.querySelectorAll('video')];   // vd plays; sb holds the next clip, loaded and waiting
     /* the upright stream plays where the browser reads that kind itself (iPhone, iPad, Android, newer desktop); anywhere
        else, or if one fails to load, the wide file plays instead. The frame takes its shape from the video that arrived. */
@@ -1099,16 +1113,16 @@
     const open = { transform: 'translate(0,0) scale(1)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 1 };
     // ---- playback clock: cards run 6s, videos run on their own frames
     const CARD = 6000;
-    const segs = () => { const x = sub(); pane.querySelector('.stsegs').innerHTML = x.its.map((_, j) => `<i class="${j < ii ? 'done' : ''}"><b></b></i>`).join(''); };
-    const bar = f => { const b = pane.querySelectorAll('.stsegs i')[ii]; if (b) b.firstChild.style.transform = `scaleX(${Math.max(0, Math.min(1, f))})`; };
+    const segs = () => { const x = sub(); pane.querySelector('.stsegs').innerHTML = watch ? '<i><b></b></i>' : x.its.map((_, j) => `<i class="${j < ii ? 'done' : ''}"><b></b></i>`).join(''); };
+    const bar = f => { const b = pane.querySelectorAll('.stsegs i')[watch ? 0 : ii]; if (b) b.firstChild.style.transform = `scaleX(${Math.max(0, Math.min(1, f))})`; };
     const tick = () => { raf = requestAnimationFrame(tick); const it = item(); if (!it || paused || busy) return;
       if (it.kind === 'vid') { const d = vd.duration || it.dur; if (d) bar(vd.currentTime / d); }
       else { const f = (performance.now() - t0) / (it.kind === 'line' || (it.kind === 'final' && !it.fl) ? CARD : 8500); bar(f); if (f >= 1) step(1); } };
     const pause = () => { if (paused) return; paused = true; pausedAt = performance.now(); try { vd.pause(); } catch (e) {} el.classList.add('held'); };
-    const resume = () => { if (!paused) return; paused = false; t0 += performance.now() - pausedAt; el.classList.remove('held'); const it = item(); if (it && it.kind === 'vid') play(); };
+    const resume = () => { if (!paused) return; paused = false; t0 += performance.now() - pausedAt; el.classList.remove('held', 'wpz'); const it = item(); if (it && it.kind === 'vid') play(); };
     const head = () => { const x = sub(), it = item(); pane.querySelector('.sthd').innerHTML = `<span class="ring${x.kind === 'team' && x.logo ? ' tm' : ''}"><span>${stAvatar(x, x.kind === 'player' ? 34 : x.kind === 'team' ? 48 : 22)}</span></span><span class="who"><b>${esc(x.full || x.name)}</b><small>${esc(ago(new Date(it.ts).toISOString()).replace(/ ago$/, ''))}</small></span><button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`; };
     const render = () => {
-      leave(); const x = sub(), it = item(); stMark(x.key, it.id); head(); segs(); t0 = performance.now();
+      leave(); const x = sub(), it = item(); stMark(x.key, it.id); if (it.sk) stMark(it.sk, it.id); head(); segs(); t0 = performance.now(); if (watch && opt.onItem) opt.onItem(el, it, x, si);
       const act = pane.querySelector('.stact'); act.hidden = it.kind !== 'vid'; if (it.kind === 'vid') { const lk = stLikes().includes(it.id), sv = stSaved().some(y => y.id === it.id); const [bl2, bs2] = act.children; bl2.classList.toggle('on', lk); bl2.setAttribute('aria-pressed', lk); bs2.classList.toggle('on', sv); bs2.setAttribute('aria-pressed', sv); }
       const card = pane.querySelector('.stcd'), vw = pane.querySelector('.stvdw'), cap = pane.querySelector('.stcap'), bg = pane.querySelector('.stbg'), bl = pane.querySelector('.stblur');
       if (it.kind === 'vid') {
@@ -1163,14 +1177,16 @@
       }
       prep();
       cur = { it, v: vd, at: performance.now() };
-      const m = pane.querySelector('.stmedia'); if (!RM()) m.animate(slide ? [{ opacity: .3, transform: 'translateY(56px)' }, { opacity: 1, transform: 'none' }] : [{ opacity: .35, transform: 'scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: slide ? 260 : 180, easing: slide ? EASE : 'ease-out' }); slide = false;
+      const m = pane.querySelector('.stmedia'); if (!RM() && !watch) m.animate(slide ? [{ opacity: .3, transform: 'translateY(56px)' }, { opacity: 1, transform: 'none' }] : [{ opacity: .35, transform: 'scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: slide ? 260 : 180, easing: slide ? EASE : 'ease-out' }); slide = false;
     };
     const step = d => { const x = sub(); if (!x || busy) return; const n = ii + d;
+      if (watch) { ii = n >= x.its.length ? 0 : Math.max(0, n); return render(); }   // a Watch list starts over at its end
       if (n >= x.its.length) { if (si < subs.length - 1) return turn(1); return close(); }
       if (n < 0) { if (si > 0) return turn(-1); ii = 0; return render(); }
       ii = n; render(); };
     // ---- the cube: the page you're leaving keeps its last frame and turns away as the next one turns in
-    const turn = dir => { if (busy) return; const nsi = si + dir; if (nsi < 0 || nsi >= subs.length) return close();
+    const turn = dir => { if (busy) return; const nsi = si + dir; if (watch) { if (nsi < 0 || nsi >= subs.length) return; el.classList.remove('wpz'); paused = false; si = nsi; const sw = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sw.has(y.id))); render(); if (!RM()) pane.querySelector('.stmedia').animate([{ opacity: .2 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' }); return; }
+      if (nsi < 0 || nsi >= subs.length) return close();
       busy = true; const ghost = pane.cloneNode(true); ghost.classList.add('ghost');
       ghost.querySelectorAll('video').forEach(gv => { if (!gv.classList.contains('on')) return gv.remove(); const c = document.createElement('canvas'); c.width = vd.videoWidth || 1; c.height = vd.videoHeight || 1; try { c.getContext('2d').drawImage(vd, 0, 0); } catch (e) {} c.className = 'stframe'; gv.replaceWith(c); });
       el.insertBefore(ghost, pane); si = nsi; const sn = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sn.has(y.id))); render();
@@ -1186,7 +1202,7 @@
       if (!fromPop) { try { history.back(); } catch (e) {} }
       const r = bubbleOf(sub().key); const start = from || open;
       const end = r ? shrunk(r) : { transform: 'translate(0,60px) scale(.9)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 0 };
-      const fin = () => { [vd, sb].forEach(v => { try { v.removeAttribute('src'); v.load(); } catch (e) {} }); el.remove(); stEl = null; document.documentElement.classList.remove('stlock'); if (homeRepaint) homeRepaint(); };
+      const fin = () => { [vd, sb].forEach(v => { try { v.removeAttribute('src'); v.load(); } catch (e) {} }); el.remove(); stEl = null; document.documentElement.classList.remove('stlock', 'w27on'); if (watch && opt.onClose) opt.onClose(); if (homeRepaint) homeRepaint(); };
       if (RM()) return fin();
       dim.animate([{ opacity: getComputedStyle(dim).opacity }, { opacity: 0 }], { duration: 300, easing: EASE, fill: 'forwards' });
       pane.animate([start, end], { duration: r ? 340 : 240, easing: EASE, fill: 'forwards' }).finished.then(fin, fin);
@@ -1194,15 +1210,36 @@
     stPop = () => close(true); addEventListener('popstate', stPop);
     // ---- gestures
     let px = 0, py = 0, pt = 0, mode = '', hold = 0, held = false, lastY = 0, lastT = 0, vy = 0;
-    el.addEventListener('pointerdown', e => { if (busy || e.target.closest('[data-stx],[data-stb]')) return; px = e.clientX; py = e.clientY; pt = lastT = performance.now(); lastY = py; mode = ''; held = false; vy = 0;
+    el.addEventListener('pointerdown', e => { if (busy || e.target.closest('[data-stx],[data-stb],[data-w27]')) return; px = e.clientX; py = e.clientY; pt = lastT = performance.now(); lastY = py; mode = ''; held = false; vy = 0;
       if (quiet) { quiet = false; vd.muted = false; }
       try { el.setPointerCapture(e.pointerId); } catch (er) {} clearTimeout(hold); hold = setTimeout(() => { held = true; pause(); }, 190); });
+    /* v470 Watch: the clip follows the finger up or down with the next one's picture coming in behind it */
+    let peek = null; const PH = () => pane.clientHeight || H;
+    const nbr = d => { const x = sub(), n = ii + d; return n < 0 ? null : x.its[n >= x.its.length ? 0 : n]; };
+    const wDrag = dy => { const d = dy < 0 ? 1 : -1, nx = nbr(d), y = nx ? dy : dy * .28; pane.style.transform = `translateY(${y}px)`;
+      if (!peek) { peek = document.createElement('div'); peek.className = 'wpeek27'; el.insertBefore(peek, pane); }
+      peek.style.display = nx ? '' : 'none'; if (nx) { const u = nx.thumb || ''; if (peek.dataset.u !== u) { peek.dataset.u = u; peek.style.backgroundImage = u ? `url("${u}")` : 'none'; } peek.style.transform = `translateY(${y + d * PH()}px)`; } };
+    const wEnd = (dy, vy0) => { const d = dy < 0 ? 1 : -1, nx = nbr(d), h = PH(), go = nx && (Math.abs(dy) > h * .16 || (Math.abs(vy0) > .45 && Math.sign(vy0) === -d));
+      const from = pane.style.transform || 'none', pf = peek ? peek.style.transform : ''; pane.style.transform = '';
+      if (RM()) { if (peek) peek.style.display = 'none'; if (go) step(d); return; }
+      if (!go) { pane.animate([{ transform: from }, { transform: 'none' }], { duration: 240, easing: EASE }); if (peek && nx) peek.animate([{ transform: pf }, { transform: `translateY(${d * h}px)` }], { duration: 240, easing: EASE }).finished.then(() => { peek.style.display = 'none'; }, () => {}); else if (peek) peek.style.display = 'none'; return; }
+      busy = true; if (peek) { peek.style.transform = 'none'; peek.animate([{ transform: pf }, { transform: 'none' }], { duration: 250, easing: EASE }); }
+      const done = () => { busy = false; el.classList.remove('wpz'); paused = false; step(d); if (peek) setTimeout(() => { if (peek) peek.style.display = 'none'; }, 120); };
+      pane.animate([{ transform: from }, { transform: `translateY(${-d * h}px)` }], { duration: 250, easing: EASE }).finished.then(done, done); };
     el.addEventListener('pointermove', e => { if (!pt || busy) return; const dx = e.clientX - px, dy = e.clientY - py;
+      if (watch) { if (!mode) { if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { mode = 'w'; clearTimeout(hold); } else if (Math.abs(dx) > 14 && Math.abs(dx) > Math.abs(dy)) { mode = 'wx'; clearTimeout(hold); } }
+        const now = performance.now(); vy = (e.clientY - lastY) / Math.max(1, now - lastT); lastY = e.clientY; lastT = now; if (mode === 'w') wDrag(dy); return; }
       if (!mode) { if (dy > 12 && dy > Math.abs(dx)) { mode = 'y'; clearTimeout(hold); pause(); } else if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) { mode = 'x'; clearTimeout(hold); pause(); } else if (dy < -14 && -dy > Math.abs(dx)) { mode = 'u'; clearTimeout(hold); } }
       const now = performance.now(); vy = (e.clientY - lastY) / Math.max(1, now - lastT); lastY = e.clientY; lastT = now;
       if (mode === 'y') { const d = Math.max(0, dy); pane.style.transform = `translate(${dx * .4}px,${d}px) scale(${1 - Math.min(d, 700) / 1700})`; pane.style.borderRadius = `${Math.min(d / 4, 28)}px`; dim.style.opacity = String(Math.max(0, 1 - d / 650)); }
       if (mode === 'x') { pane.style.transformOrigin = `50% 50% ${-W / 2}px`; pane.style.transform = `rotateY(${Math.max(-35, Math.min(35, dx / W * 70))}deg)`; } });
     const up = e => { if (!pt) return; clearTimeout(hold); const dx = e.clientX - px, dy = e.clientY - py; const m = mode; pt = 0; mode = '';
+      if (watch) { if (m === 'w') { if (held) { held = false; resume(); } return wEnd(dy, vy); }
+        if (m === 'wx') { if (held) { held = false; resume(); } if (Math.abs(dx) > 64) turn(dx < 0 ? 1 : -1); return; }
+        if (held) { held = false; resume(); return; }
+        if (e.target.closest('[data-stx],[data-stb],[data-w27]')) return;
+        if (paused) resume(); else { pause(); el.classList.remove('held'); el.classList.add('wpz'); }   // a tap pauses, a tap plays
+        return; }
       if (m === 'u') { held = false; resume(); if (dy < -56) { slide = true; step(1); } return; }   // a flick up is the next clip
       if (m === 'y') { const d = Math.max(0, dy); const cur = { transform: pane.style.transform, clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 1 };
         if (d > 110 || vy > .55) { pane.style.borderRadius = ''; return close(false, cur); }
@@ -1214,7 +1251,7 @@
       if (held) { held = false; resume(); return; }
       if (e.target.closest('[data-stx],[data-stb]')) return;
       resume(); step(e.clientX < W * .3 ? -1 : 1); };
-    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', e => { pt = 0; mode = ''; pane.style.transform = ''; dim.style.opacity = ''; resume(); });
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', e => { pt = 0; mode = ''; pane.style.transform = ''; dim.style.opacity = ''; if (peek) peek.style.display = 'none'; if (!el.classList.contains('wpz')) resume(); });
     el.addEventListener('click', e => { if (e.target.closest('[data-stx]')) { e.preventDefault(); return close(); }
       const b = e.target.closest('[data-stb]'), it = item(); if (!b || !it || it.kind !== 'vid') return; e.preventDefault();
       const on = b.dataset.stb === 'like' ? stLike(it) : stSave(it); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
@@ -1240,6 +1277,7 @@
     const sn = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sn.has(y.id)));
     if (startId) { const k0 = sub().its.findIndex(y => y.id === startId); if (k0 >= 0) ii = k0; }   // v462: the new Home opens a story on the clip that was tapped
     const r0 = bubbleOf(key); render(); prep(true); raf = requestAnimationFrame(tick);
+    el.__w = { tab(i) { if (i !== si) turn(i - si); }, close(pop) { close(pop); }, get item() { return item(); }, get sub() { return sub(); }, get si() { return si; }, get paused() { return paused; }, pause() { pause(); el.classList.remove('held'); }, resume() { resume(); } };
     el.__st = { get busy() { return busy; }, get ii() { return ii; }, get paused() { return paused; }, get si() { return si; }, get names() { return subs.map(x => x.name); }, get items() { return sub().its.map(x => x.kind === 'vid' ? `${x.ck || 'post'} | ${x.title} | ${x.tag || ''}${x.gw ? ' GW' : ''}${x.ln ? ' +line' : ''} | ${x.v9 ? 'v9' : 'wide'}` : x.kind); }, go(n) { ii = n; render(); }, last() { ii = sub().its.length - 1; render(); }, get kind() { return sub().kind; } };   // read by the test harness
     if (!RM()) { busy = true; dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: EASE });
       pane.animate([r0 ? shrunk(r0) : { transform: 'translate(0,40px) scale(.94)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 0 }, open], { duration: 360, easing: EASE }).finished.then(() => { busy = false; t0 = performance.now(); }); }
@@ -1974,7 +2012,7 @@
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom <= fx.offsetHeight + 1; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };   // v412: the bar takes over the moment the header no longer covers its space
     window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(run); }, { passive: true }); document.addEventListener('rivl:rendered', run); }
   /* v462: what the 2027 preview (js/v27.js) reads from here */
-  const x27 = { feedSource, storySubjects, stSeen, stLike, stSave, stLikes, stSaved, onData(f) { homeRepaint = f; }, warm(its) { if (hlsOk()) (its || []).forEach(it => { if (it && it.kind === 'vid' && it.v9) v9Pick(it.v9); }); } };
+  const x27 = { feedSource, storySubjects, watchSubs, follow: p => fplayers.toggle(p), follows: (lk, id) => fplayers.has(lk, id), athlete: (L, id) => jSoft(`${WEB(L)}/athletes/${id}`, 3600000), headshotOf: (L, id) => idHs(L, id), teamOf: (lk, id) => { const o = feedSrc[lk] && feedSrc[lk].out; return (o && o.tIdx && o.tIdx[String(id)]) || null; }, stSeen, stLike, stSave, stLikes, stSaved, onData(f) { homeRepaint = f; }, warm(its) { if (hlsOk()) (its || []).forEach(it => { if (it && it.kind === 'vid' && it.v9) v9Pick(it.v9); }); } };
   HW.v5 = Object.assign(HW.v5 || {}, { x27, feedSrc, initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard, storyOpen,
     _: { pager, duelPair, panelLogo, nearPanel, duelCard, duelBlock, deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
 })();

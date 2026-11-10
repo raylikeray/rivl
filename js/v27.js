@@ -38,14 +38,17 @@
   function paintBar() {
     const live = on(); root.classList.toggle('rv27', live); if ($bar) $bar.hidden = !live; if (!live) { if ($seg) $seg.hidden = true; return; }
     const pg = root.dataset.page || 'home'; const old = document.querySelector('#tabs .tab.on'); const owner = old ? old.dataset.tab : 'home';
-    const cur = pg === 'settings' ? 'you' : SCORES.includes(owner) ? 'scores' : 'home';
+    const cur = root.classList.contains('w27on') ? 'watch' : pg === 'settings' ? 'you' : SCORES.includes(owner) ? 'scores' : 'home';
     $bar.querySelectorAll('[data-t27]').forEach(a => { const is = a.dataset.t27 === cur; a.classList.toggle('on', is); if (is) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     const inScores = SCORES.includes(pg); $seg.hidden = !inScores;
     if (inScores) $seg.querySelectorAll('a').forEach(a => { const is = a.dataset.s27 === pg; a.classList.toggle('on', is); if (is) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   }
   if ($bar) $bar.addEventListener('click', e => {
     const a = e.target.closest('[data-t27]'); if (!a) return; e.preventDefault(); const k = a.dataset.t27;
-    if (k === 'watch') { watch(); return; }
+    if (k === 'watch') { watchTab(); return; }
+    /* Watch sits over the page it was opened from. Another tab puts it away first (one step back, which is how it closes),
+       then goes where it was asked. */
+    const st = document.querySelector('.story.w27v'); if (st && !st.dataset.leaving) { st.dataset.leaving = '1'; addEventListener('popstate', () => setTimeout(() => a.click(), 0), { once: true }); history.back(); return; }
     if (k === 'you') { if (root.dataset.page === 'settings' && location.hash === '#settings') window.scrollTo({ top: 0, behavior: MOTION() ? 'smooth' : 'auto' }); else location.hash = '#settings'; return; }
     const pg = root.dataset.page;
     if (k === 'scores' && (pg === 'standings' || pg === 'stats')) { location.hash = '#scores'; return; }
@@ -76,6 +79,75 @@
     if (!s) { V.toast('No clips yet. Follow a team and its plays show up here.'); return; }
     V.storyOpen(s.key, startId);
   }
+
+  /* ---------- Watch: one clip to a screen, Following / For you / Top plays ---------- */
+  const WI = {
+    share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.500 4.500 21 11.500l-7.500 7v-4.300C8.300 14.200 5 15.800 3 19.500c.300-5.600 3.600-10.300 10.500-10.800z"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>',
+    tick: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12.500 4 4 8-9"/></svg>' };
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  function wChrome(el) {
+    el.style.bottom = `${$bar ? $bar.offsetHeight : 0}px`;
+    const subs = el.__subs || [], act = el.querySelector('.stact');   // the tabs and search sit over the clips and stay put while a clip slides
+    el.insertAdjacentHTML('beforeend', `<div class="wt27" data-w27 role="tablist" aria-label="Watch">${subs.map((x, i) => `<button data-wtab="${i}" role="tab">${esc(x.name)}</button>`).join('')}</div><a class="ws27" data-w27 href="#search" aria-label="Search">${I.search}</a>`);
+    act.insertAdjacentHTML('afterbegin', `<span class="wa27" data-w27 hidden></span>`);
+    act.insertAdjacentHTML('beforeend', `<button data-w27 data-wact="share" aria-label="Share">${WI.share}</button>`);
+    el.querySelector('.stpane').insertAdjacentHTML('beforeend', `<div class="wpl27" aria-hidden="true">${I.play}</div>`);
+    el.addEventListener('click', e => {
+      const t = e.target.closest('[data-wtab]'); if (t) { e.preventDefault(); el.__w.tab(+t.dataset.wtab); return; }
+      const b = e.target.closest('[data-wact]'); if (!b) return; e.preventDefault(); const it = el.__w.item; if (!it) return;
+      if (b.dataset.wact === 'share') return wShare(it);
+      if (b.dataset.wact === 'follow') return wFollow(el, b);
+    });
+    /* a link out of Watch (the player, search) puts Watch away first, then goes */
+    el.addEventListener('click', e => { const a = e.target.closest('a[href^="#"]'); if (!a) return; e.preventDefault(); const to = a.getAttribute('href'); if (el.dataset.leaving) return; el.dataset.leaving = '1'; addEventListener('popstate', () => setTimeout(() => { location.hash = to; }, 0), { once: true }); history.back(); });
+  }
+  const wWho = new Map();   // player id -> { name, team } once the feed has answered
+  function wItem(el, it, x, si) {
+    store.set('v5:wtab', x.key);
+    el.querySelectorAll('[data-wtab]').forEach((b, i) => { b.classList.toggle('on', i === si); b.setAttribute('aria-selected', String(i === si)); });
+    const who = el.querySelector('.wa27'), L = it.L, a = (it.aths || [])[0];
+    if (!L || !a) { who.hidden = true; who.innerHTML = ''; return; }
+    const lk = L.key, fol = X.follows(lk, a), src = X.headshotOf(L, a);
+    who.hidden = false; who.innerHTML = `<a href="#player/${esc(lk)}/${esc(a)}" aria-label="Player page"><img src="${esc(src)}" alt="" onerror="this.closest('.wa27').hidden=true"></a>${fol ? '' : `<button data-wact="follow" data-lk="${esc(lk)}" data-id="${esc(a)}" aria-label="Follow this player">${WI.plus}</button>`}`;
+    /* the player's name goes over the words once the feed has said who it is; the words are written after this runs */
+    const show = w => Promise.resolve().then(() => { if (!el.__w || el.__w.item !== it || !w || !w.name) return; const cap = el.querySelector('.stcap'); if (!cap || cap.querySelector('.wn27')) return;
+      const nm = document.createElement('div'); nm.className = 'wn27'; nm.dataset.w27 = ''; nm.innerHTML = `<a href="#player/${esc(lk)}/${esc(a)}">${esc(w.name)}</a>${w.team ? `<span>${esc(w.team)}</span>` : ''}`; cap.prepend(nm); });
+    const k = `${lk}:${a}`; if (wWho.has(k)) return show(wWho.get(k));
+    X.athlete(L, a).then(bio => { const p = bio && (bio.athlete || bio); if (!p || !p.displayName) return; const tm = p.team || {};
+      const w = { name: p.displayName, short: p.shortName || p.displayName, team: tm.shortDisplayName || tm.name || tm.abbreviation || '', abbr: tm.abbreviation || '', teamId: tm.id ? String(tm.id) : '', img: (p.headshot && p.headshot.href) || src, color: tm.color ? '#' + String(tm.color).replace('#', '') : '' };
+      wWho.set(k, w); show(w); }, () => {});
+  }
+  async function wFollow(el, b) {
+    const lk = b.dataset.lk, id = b.dataset.id, L = (HW.LEAGUES || {})[lk]; if (!L || b.dataset.busy) return; b.dataset.busy = '1';
+    let w = wWho.get(`${lk}:${id}`);
+    if (!w) { const bio = await X.athlete(L, id).catch(() => null); const p = bio && (bio.athlete || bio); if (p && p.displayName) { const tm = p.team || {}; w = { name: p.displayName, short: p.shortName || p.displayName, abbr: tm.abbreviation || '', teamId: tm.id ? String(tm.id) : '', img: (p.headshot && p.headshot.href) || X.headshotOf(L, id), color: tm.color ? '#' + String(tm.color).replace('#', '') : '' }; } }
+    if (!w) { delete b.dataset.busy; V.toast('Could not reach that player. Try again.'); return; }
+    if (!X.follows(lk, id)) X.follow({ lk, id: String(id), name: w.name, short: w.short || w.name, img: w.img || '', team: w.abbr || '', teamId: w.teamId || '', color: w.color || '' });
+    b.innerHTML = WI.tick; b.classList.add('ok'); V.toast(`Following ${w.name}`); stDirty = true; setTimeout(() => b.remove(), 900);
+  }
+  function wShare(it) {
+    const url = `${location.origin}${location.pathname}#watch/${encodeURIComponent(it.id)}`;
+    if (navigator.share) { navigator.share({ title: 'RIVL', text: it.title || '', url }).catch(() => {}); return; }
+    const done = () => V.toast('Link copied'); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, () => V.toast('Could not copy the link')); else V.toast('Sharing is not available here');
+  }
+  async function watchTab(startId) {
+    if (document.querySelector('.story')) return;
+    const srcs = ORDER.map(X.feedSource);
+    if (!srcs.some(s => s.out)) await Promise.race([Promise.all(srcs.map(s => s.ready)), sleep(4000)]);
+    let subs = X.watchSubs();
+    for (let i = 0; i < 12 && !subs.some(x => x.key === 'w:fy'); i++) { if (i === 1) V.busy(true); await sleep(300); subs = X.watchSubs(); }   // the clip file may still be on its way
+    V.busy(false);
+    if (!subs.length) { V.toast('No clips right now. They show up after games tip off.'); return; }
+    if (document.querySelector('.story')) return;
+    let key = store.get('v5:wtab', 'w:fy'); if (startId) { const has = subs.find(x => x.key === 'w:fy' && x.its.some(i => i.id === startId)) || subs.find(x => x.its.some(i => i.id === startId)); if (has) key = has.key; else startId = ''; }
+    if (!subs.some(x => x.key === key)) key = (subs.find(x => x.key === 'w:fy') || subs[0]).key;
+    stDirty = true;
+    V.storyOpen(key, startId, { watch: true, subs, chrome(el) { el.__subs = subs; wChrome(el); paintBar(); }, onItem: wItem, onClose() { paintBar(); } });
+  }
+  /* a shared clip link (#watch/<id>) opens Watch on that clip once the first page is up */
+  { const m = /^#watch(?:\/(.+))?$/.exec(location.hash || ''); if (m) { const id = m[1] ? decodeURIComponent(m[1]) : ''; try { history.replaceState(null, '', '#home'); } catch (e) { location.hash = '#home'; }
+      if (on()) document.addEventListener('rivl:rendered', () => setTimeout(() => watchTab(id), 300), { once: true }); } }
 
   /* ---------- words ---------- */
   const greet = () => { const h = new Date().getHours(); const w = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'; const n = String(store.get('v5:name', '') || '').trim().slice(0, 24); return n ? `${w}, ${n}` : w; };
