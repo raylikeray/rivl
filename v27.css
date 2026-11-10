@@ -466,3 +466,74 @@ html.rv27 body .g2.pin27 #gtabs .chip{color:rgba(255,255,255,.86)!important}
 html.rv27 body .g2.pin27 #gtabs .chip.on,html.rv27 body .g2.pin27 #gtabs .chip[aria-pressed="true"]{background:#fff!important;color:#0a0c0e!important}
 html.rv27 body .g2 #gtabs .chips{transition:background-color .2s ease}
 @media (prefers-reduced-motion:reduce){ html.rv27 body .g2 #gtabs,html.rv27 body .g2 #gtabs .chips{transition:none} }
+
+/* ---------- player and team pages (v482): band, photo on its edge with the story ring, name and Follow, pill tabs ---------- */
+html.rv27 body .approf{font-family:var(--f27);--bh27:calc(env(safe-area-inset-top,0px) + 132px)}
+html.rv27 body .approf header.aph{position:relative;margin:calc(-1 * env(safe-area-inset-top,0px)) 0 0!important;padding:0 0 6px!important;min-height:0!important;height:auto!important;background:var(--b27)!important;color:var(--i27)!important;overflow:visible!important;box-shadow:none!important;border:0!important;border-radius:0!important}
+html.rv27 body .approf header.aph .apau,html.rv27 body .approf header.aph .apgr,html.rv27 body .approf header.aph::after{display:none!important}
+html.rv27 body .approf header.aph::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--bh27);background:linear-gradient(120deg,var(--a3,var(--a)) 0%,var(--a) 42%,var(--ad) 100%)}
+.bn27{position:absolute;left:0;right:0;top:0;height:var(--bh27);overflow:hidden;background:linear-gradient(120deg,var(--a3,var(--a)) 0%,var(--a) 42%,var(--ad) 100%)}
+.bn27 u{position:absolute;left:0;bottom:-34px;white-space:nowrap;text-decoration:none;font:800 150px/1 var(--f27);letter-spacing:-.05em;color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.2);animation:slide27 26s linear infinite alternate}
+.bn27 i{position:absolute;top:-30%;bottom:-30%;left:-40%;width:34%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.14),rgba(255,255,255,0));transform:skewX(-18deg);animation:sheen27 9s ease-in-out infinite}
+.bn27:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,0) 46%,rgba(0,0,0,.22))}
+@keyframes slide27{from{transform:translateX(4%)}to{transform:translateX(-38%)}}
+@keyframes sheen27{0%,35%{transform:translateX(0) skewX(-18deg)}80%,100%{transform:translateX(520%) skewX(-18deg)}}
+html.rv27 body .approf header.aph .aptop{position:absolute!important;z-index:3;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);height:40px!important;margin:0!important;padding:0!important;display:flex!important;gap:8px}
+html.rv27 body .approf header.aph .aptop .apb{background:rgba(0,0,0,.32)!important;color:#fff!important}
+/* one Follow button, on the name's line (it is the star the page already had, moved and worded) */
+html.rv27 body .approf header.aph .aptop .apb.star{position:absolute;right:4px;top:calc(var(--bh27) - env(safe-area-inset-top,0px) + 6px);width:auto!important;height:36px!important;padding:0 18px!important;border-radius:999px!important;background:var(--i27)!important;color:var(--b27)!important;font:700 14px/1 var(--f27);-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:none!important}
+html.rv27 body .approf header.aph .aptop .apb.star svg{display:none}
+html.rv27 body .approf header.aph .aptop .apb.star::after{content:"Follow"}
+html.rv27 body .approf header.aph .aptop .apb.star.on{background:var(--s27)!important;color:var(--i27)!important;box-shadow:inset 0 0 0 1.5px var(--l27)!important}
+html.rv27 body .approf header.aph .aptop .apb.star.on::after{content:"Following"}
+html.rv27 body .approf header.aph .apid{position:relative;z-index:2;display:block!important;margin:0!important;padding:calc(var(--bh27) - 52px) 16px 0!important;text-align:left!important}
+html.rv27 body .approf header.aph .apface,html.rv27 body .approf header.aph .apcrest{position:relative;display:grid!important;place-items:center;width:104px!important;height:104px!important;margin:0!important;border-radius:50%!important;overflow:visible!important;background:var(--b27)!important;box-shadow:none!important;border:0!important;padding:0!important}
+html.rv27 body .approf header.aph .apface img{width:92px!important;height:92px!important;border-radius:50%;object-fit:cover;object-position:50% 8%;background:linear-gradient(160deg,var(--a3,var(--a)),var(--ad))}
+html.rv27 body .approf header.aph .apcrest img{width:92px!important;height:92px!important;border-radius:50%;box-sizing:border-box;padding:16px;object-fit:contain;background:linear-gradient(160deg,var(--a3,var(--a)),var(--ad));filter:none}
+/* the ring: bright and slowly turning when the story has something new, gray when it has been watched, none without a story */
+html.rv27 body .approf header.aph .rg27{cursor:pointer}
+html.rv27 body .approf header.aph .rg27::before{content:"";position:absolute;inset:0;border-radius:50%;padding:3px;background:rgba(142,148,158,.7);-webkit-mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+html.rv27 body .approf header.aph .rg27.new::before{background:conic-gradient(from 0deg,var(--a2,#ffb03a),var(--a3,var(--a)),#fff,var(--a2,#ffb03a));animation:spin27 6s linear infinite}
+html.rv27 body .approf header.aph .rg27 img{width:88px!important;height:88px!important}
+@keyframes spin27{to{transform:rotate(360deg)}}
+html.rv27 body .approf header.aph .apnm{margin:10px 0 0!important;padding-right:128px;text-align:left!important}
+html.rv27 body .approf header.aph .apnm h1{margin:0!important;font:700 26px/1.1 var(--f27)!important;letter-spacing:-.02em!important;color:var(--i27)!important;text-shadow:none!important;text-align:left!important}
+html.rv27 body .approf header.aph .apnm h1.long{font-size:22px!important}
+html.rv27 body .approf header.aph .apnm p{margin:5px 0 0!important;font:500 14px/1.3 var(--f27)!important;color:var(--i27b)!important;opacity:1!important;text-align:left!important}
+html.rv27 body .approf header.aph .apnm p a{color:var(--i27)!important;font-weight:600}
+html.rv27 body .approf header.aph .apnm em{color:var(--i27c)!important;opacity:1}
+html.rv27 body .approf header.aph .aprt{display:none!important}
+/* the team's lead card: the three tiles as one card */
+html.rv27 body .approf header.aph .aptl{position:relative;z-index:2;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:0!important;margin:16px 16px 0!important;padding:14px 4px!important;border-radius:18px;background:var(--s27)!important;box-shadow:none!important}
+html.rv27 body .approf header.aph .aptl>div{background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:0 6px!important;text-align:center;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html.rv27 body .approf header.aph .aptl>div+div{box-shadow:inset 1px 0 0 var(--l27)!important}
+html.rv27 body .approf header.aph .aptl b{display:block;font:700 24px/1.1 var(--f27)!important;letter-spacing:-.02em;color:var(--i27)!important;font-variant-numeric:tabular-nums}
+html.rv27 body .approf header.aph .aptl span{display:block;margin-top:4px;font:500 12px/1.2 var(--f27)!important;letter-spacing:0!important;text-transform:none!important;color:var(--i27c)!important;opacity:1!important}
+/* the player's lead card */
+.ldc27{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center;margin:4px 16px 12px;padding:16px;border-radius:18px;background:var(--s27);color:var(--i27);font-family:var(--f27);font-variant-numeric:tabular-nums}
+.ldc27 .rg{position:relative;width:84px;display:grid;justify-items:center;gap:6px}
+.ldc27 .rg svg{width:84px;height:84px;transform:rotate(-90deg)}
+.ldc27 .rg circle{fill:none;stroke:var(--c27);stroke-width:6}
+.ldc27 .rg circle.f{stroke:var(--hd,var(--tc,var(--a27)));stroke-linecap:round;animation:ring27 1.2s cubic-bezier(.2,.8,.2,1) both}
+.ldc27 .rg b{position:absolute;left:0;right:0;top:0;height:84px;display:grid;place-items:center;font-size:28px;font-weight:700;letter-spacing:-.02em}
+.ldc27 .rg span{font-size:12px;font-weight:500;color:var(--i27c)}
+.ldc27 .tri{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.ldc27 .tri b{display:block;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.ldc27 .tri small{display:block;margin-top:2px;font-size:12px;color:var(--i27c)}
+.ldc27 p{margin:12px 0 0;font-size:14px;line-height:1.35;color:var(--i27b)}
+@keyframes ring27{from{stroke-dasharray:0 100}}
+.prate2 .prc.hid27{display:none!important}
+/* the tabs: the same pill switch as Scores and the game page */
+html.rv27 body .approf .aptabs{border:0!important;padding:10px 16px 8px!important;margin:0!important;background:var(--b27)!important;font-family:var(--f27)}
+html.rv27 body .approf .aptabs .chips{display:grid!important;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:0!important;height:40px;padding:3px!important;box-sizing:border-box;border-radius:999px;background:var(--s27);overflow:hidden}
+html.rv27 body .approf .aptabs .chip,html.rv27 body .approf .aptabs .chip.on{height:34px!important;padding:0!important;border-radius:999px!important;font:500 14px/1 var(--f27)!important;color:var(--i27b)!important;opacity:1!important;transition:none}
+html.rv27 body .approf .aptabs .chip.on,html.rv27 body .approf .aptabs .chip[aria-pressed="true"]{background:var(--i27)!important;color:var(--b27)!important;font-weight:700!important}
+html.rv27 body .approf .aptabs .chip.on::after,html.rv27 body .approf .aptabs .pgi{display:none!important}
+html.rv27[data-page="player"],html.rv27[data-page="team"]{--bg:var(--b27)!important}
+@media (prefers-reduced-motion:reduce){ .bn27 u,.bn27 i,html.rv27 body .approf header.aph .rg27.new::before,.ldc27 .rg circle.f{animation:none} }
+html.rv27 body .approf .aptabs{transition:background-color .2s ease}
+html.rv27 body .approf.pin27 .aptabs{background:linear-gradient(180deg,color-mix(in srgb,var(--a27,#222) 80%,var(--ad27,#111)),color-mix(in srgb,var(--a27,#222) 58%,var(--ad27,#111)))!important;box-shadow:0 14px 22px -16px rgba(0,0,0,.75)}
+html.rv27 body .approf.pin27 .aptabs .chips{background:rgba(0,0,0,.3)}
+html.rv27 body .approf.pin27 .aptabs .chip{color:rgba(255,255,255,.86)!important}
+html.rv27 body .approf.pin27 .aptabs .chip.on,html.rv27 body .approf.pin27 .aptabs .chip[aria-pressed="true"]{background:#fff!important;color:#0a0c0e!important}
+html.rv27 body .approf .apfx{box-shadow:none}

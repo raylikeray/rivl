@@ -252,6 +252,42 @@
     const subs = [{ key: 'w:game', lk: 'all', kind: 'watch', id: 'w:game', name: 'This game', full: 'This game', color: '#15171a', its, un: true, last: Date.now() }];
     V.storyOpen('w:game', b.dataset.gclip, { watch: true, subs, chrome(el) { el.__subs = subs; wChrome(el); el.classList.add('one27'); }, onItem: (el, it, x, si) => { wItem(el, it, x, si); store.set('v5:wtab', store.get('v5:wtab0', 'w:fy')); }, onSlide: wInd, onClose() { paintBar(); } }); });
 
+  /* ---------- player and team pages (v482): the profile pattern Ray chose. A band of the team's colour with the number or
+     the team's letters running through it, the photo on its edge with the story ring (bright when there is something new,
+     gray when watched, none when there is no story; a tap plays it), the name with one Follow button, then the page's own
+     cards. The page itself is still built by the app; this dresses its top and adds the ring and the lead card. ---------- */
+  let pfAt = 0, pfT = 0;
+  const pfRoute = () => { const m = /^#(player|team)\/([a-z]+)\/([^/?]+)/.exec(location.hash || ''); return m ? { kind: m[1], lk: m[2], id: m[3] } : null; };
+  function profDecorate() {
+    if (!on()) return; const pg = root.dataset.page; if (pg !== 'player' && pg !== 'team') return;
+    const now = Date.now(); if (now - pfAt < 250) { clearTimeout(pfT); pfT = setTimeout(profDecorate, 270); return; } pfAt = now;
+    const r = pfRoute(), hd = $main.querySelector('.approf header.aph'); if (!r || !hd) return; const L = LEAGUES[r.lk]; if (!L) return;
+    { const ap = hd.closest('.approf'); ['--a', '--ad'].forEach(k => { const v = hd.style.getPropertyValue(k); if (v && ap.style.getPropertyValue(k + '27') !== v) ap.style.setProperty(k + '27', v); }); }   // the team's colour, for the pinned tab row
+    /* the band */
+    let bn = hd.querySelector('.bn27'); if (!bn) { bn = document.createElement('div'); bn.className = 'bn27'; bn.setAttribute('aria-hidden', 'true'); bn.innerHTML = '<u></u><i></i>'; hd.insertBefore(bn, hd.firstChild); }
+    const setBand = t => { const u = bn.firstChild; t = String(t || '').trim(); const txt = t ? `${t} ${t}` : ''; if (u.textContent !== txt) u.textContent = txt; };
+    if (r.kind === 'team') { const t = X.teamOf(r.lk, r.id); const img = hd.querySelector('.apcrest img'); const m = img && /\/([a-z0-9]+)\.png/i.exec(img.dataset.o || img.src || ''); setBand((t && t.abbr) || (m && /[a-z]/i.test(m[1]) ? m[1].toUpperCase() : '')); }
+    else if (bn.dataset.id !== r.id) { bn.dataset.id = r.id; setBand(''); X.athlete(L, r.id).then(b => { const p = b && (b.athlete || b); if (p && p.jersey != null && p.jersey !== '' && bn.dataset.id === r.id) setBand(p.jersey); }, () => {}); }
+    /* the story ring */
+    const av = hd.querySelector('.apface,.apcrest'), key = `${r.lk}:${r.kind === 'team' ? 't' : 'p'}${r.id}`, sub = X.storySubjects().find(x => x.key === key);
+    if (av) { const st = sub ? (sub.un ? 'new' : 'seen') : ''; if (av.dataset.ring !== st) { av.dataset.ring = st; av.classList.toggle('rg27', !!st); av.classList.toggle('new', st === 'new'); if (st) { av.setAttribute('role', 'button'); av.setAttribute('aria-label', 'Play the story'); av.dataset.pstory = key; } else { av.removeAttribute('role'); av.removeAttribute('aria-label'); delete av.dataset.pstory; } } }
+    /* the lead card (players): the rating in a ring that fills, three numbers, the one-line summary */
+    if (r.kind === 'player') { const prc = $main.querySelector('.prate2 .prc'); if (prc && !prc.previousElementSibling) {
+        const rt = prc.querySelector('.rtb'), sum = prc.querySelector('.prs'), val = lab => { const c = [...$main.querySelectorAll('.pgp:first-child .card div, .pgp:first-child .card td')].find(d => d.children.length === 2 && d.lastElementChild.textContent.trim() === lab && /^[\d.]+$/.test(d.firstElementChild.textContent.trim())); return c ? c.firstElementChild.textContent.trim() : ''; };
+        const v = rt ? parseInt(rt.textContent, 10) : NaN, tri = [['Points', val('Points')], ['Rebounds', val('Rebounds')], ['Assists', val('Assists')]].filter(x => x[1]);
+        if (isFinite(v) && tri.length) { const el = document.createElement('section'); el.className = 'ldc27';
+          el.innerHTML = `<div class="rg"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="27"/><circle class="f" cx="32" cy="32" r="27" pathLength="100" stroke-dasharray="${Math.max(0, Math.min(100, v))} 100"/></svg><b>${v}</b><span>RIVL rating</span></div><div class="rs"><div class="tri">${tri.map(x => `<span><b>${esc(x[1])}</b><small>${x[0]}</small></span>`).join('')}</div>${sum ? `<p>${esc(sum.textContent)}</p>` : ''}</div>`;
+          prc.parentNode.insertBefore(el, prc); prc.classList.add('hid27'); } } }
+  }
+  /* once the tab row pins under the small top bar it takes the bar's colour, as on the game page */
+  let ppRaf = 0;
+  const profPin = () => { ppRaf = 0; const pg = root.dataset.page; if (pg !== 'player' && pg !== 'team') return; const ap = $main.querySelector('.approf'), tb = ap && ap.querySelector('.aptabs'), fx = ap && ap.querySelector('.apfx'); if (!tb || !fx) return;
+    const pin = on() && fx.classList.contains('on') && tb.getBoundingClientRect().top <= fx.offsetHeight + 1; if (ap.classList.contains('pin27') !== pin) ap.classList.toggle('pin27', pin); };
+  window.addEventListener('scroll', () => { const pg = root.dataset.page; if (!ppRaf && (pg === 'player' || pg === 'team')) ppRaf = requestAnimationFrame(profPin); }, { passive: true });
+  document.addEventListener('rivl:rendered', () => setTimeout(() => { profDecorate(); profPin(); }, 0)); document.addEventListener('rivl:polled', () => setTimeout(profDecorate, 0));
+  new MutationObserver(() => { const pg = root.dataset.page; if ((pg === 'player' || pg === 'team') && on()) profDecorate(); }).observe($main, { childList: true, subtree: true });
+  $main.addEventListener('click', e => { const a = e.target.closest('[data-pstory]'); if (!a || !on()) return; e.preventDefault(); stDirty = true; V.storyOpen(a.dataset.pstory); });
+
   /* ---------- Watch: one clip to a screen, Following / For you / Top plays ---------- */
   const WI = {
     share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.500 4.500 21 11.500l-7.500 7v-4.300C8.300 14.200 5 15.800 3 19.500c.300-5.600 3.600-10.300 10.500-10.800z"/></svg>',
