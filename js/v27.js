@@ -41,7 +41,8 @@
     const cur = root.classList.contains('w27on') ? 'watch' : pg === 'settings' ? 'you' : SCORES.includes(owner) ? 'scores' : 'home';
     $bar.querySelectorAll('[data-t27]').forEach(a => { const is = a.dataset.t27 === cur; a.classList.toggle('on', is); if (is) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     const inScores = SCORES.includes(pg); $seg.hidden = !inScores; if ($sh) $sh.hidden = !inScores;
-    if (inScores) $seg.querySelectorAll('a').forEach(a => { const is = a.dataset.s27 === pg; a.classList.toggle('on', is); if (is) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    if (inScores) { const lk = (V.route && V.route() || {}).lk || '', col = /^ncaa/.test(lk), rec = col && pg === 'stats' && !!store.get('v5:ldrec', false); $seg.classList.toggle('four', col);
+      $seg.querySelectorAll('a').forEach(a => { const k = a.dataset.s27; if (k === 'recruits') a.hidden = !col; const is = k === 'recruits' ? rec : k === pg && !(k === 'stats' && rec); a.classList.toggle('on', is); if (is) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }); }
   }
   if ($bar) $bar.addEventListener('click', e => {
     const a = e.target.closest('[data-t27]'); if (!a) return; e.preventDefault(); const k = a.dataset.t27;
@@ -54,6 +55,8 @@
     if (k === 'scores' && (pg === 'standings' || pg === 'stats')) { location.hash = '#scores'; return; }
     const t = document.querySelector(`#tabs .tab[data-tab="${k}"]`); if (t) t.click();   // the bar the app has today keeps each tab's trail; this one drives it
   });
+  /* Leaders and Recruits share the stats page: the switch says which one is wanted */
+  if ($seg) $seg.addEventListener('click', e => { const a = e.target.closest('[data-s27]'); if (!a) return; const k = a.dataset.s27; if (k !== 'stats' && k !== 'recruits') return; const want = k === 'recruits', was = !!store.get('v5:ldrec', false); store.set('v5:ldrec', want); if (root.dataset.page === 'stats') { e.preventDefault(); if (want !== was) { V.rerender(); paintBar(); } } });
   document.addEventListener('rivl:rendered', paintBar);
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-act="rv27"]'); if (!b) return; e.preventDefault();
@@ -150,6 +153,70 @@
   }
   $main.addEventListener('click', e => { const b = e.target.closest('[data-a27="more"]'); if (!b) return; e.preventDefault(); const m = b.previousElementSibling; if (m) m.hidden = false; b.remove(); });
   { const sc0 = V.scores; V.scores = (lk, ...a) => on() && !(lk === 'wnba' && (V.unrOn ? V.unrOn() : store.get('v5:scunr', false))) ? scores27(lk) : sc0(lk, ...a); }
+
+  /* ---------- Scores, Leaders (v474): All players or Rookies, one stat at a time. First place is the big card, second and
+     third sit side by side, the rest are rows with a bar. Numbers come from data/leaders.json, the same file Search reads. ---------- */
+  const LCATS = [['pts', 'Points', 'points per game'], ['reb', 'Rebounds', 'rebounds per game'], ['ast', 'Assists', 'assists per game'], ['stl', 'Steals', 'steals per game'], ['blk', 'Blocks', 'blocks per game'], ['tpm', 'Threes', 'threes made per game']];
+  const one = v => (Math.round(v * 10) / 10).toFixed(1);
+  let ldRun = 0;
+  async function stats27(lk) {
+    const L = LEAGUES[lk]; if (!L) return; const run = ++ldRun;
+    let pg = $main.querySelector('#ld27'); if (!pg || pg.dataset.lk !== lk) { $main.innerHTML = `<div id="ld27" class="h27 lp27" data-lk="${esc(lk)}"><div class="sk27"></div><div class="sk27"></div><div class="sk27"></div></div>`; pg = $main.querySelector('#ld27'); }
+    const [lg, idx] = await Promise.all([HW.hub.league(L).catch(() => null), V.teamsIndex(L).catch(() => ({}))]);
+    if (run !== ldRun || !document.body.contains(pg)) return;
+    const ps = (lg && lg.players) || [];
+    if (lk.startsWith('ncaa') && store.get('v5:ldrec', false)) return recruits27(lk, pg, run);
+    const st = store.get('v5:ld27', {}) || {}; let who = st.who === 'rookies' && ps.some(p => p.rookie) ? 'rookies' : 'all', cat = LCATS.some(c => c[0] === st.cat) ? st.cat : 'pts';
+    const byAbbr = {}; Object.values(idx || {}).forEach(t => { if (t && t.abbr) byAbbr[t.abbr] = t; });
+    const colorOf = p => tone(U.teamColor({ abbr: p.team, id: (byAbbr[p.team] || {}).id }, L));
+    const maxG = Math.max(1, ...ps.map(p => (p.s || {}).gp || 0));
+    const qual = p => { const s = p.s || {}; return (s.gp || 0) >= Math.max(1, Math.ceil(maxG * .5)) && (s.min || 0) >= (lk.startsWith('ncaa') ? 10 : 12); };
+    const pills = `<div class="pl27">${[['all', 'All players']].concat(ps.some(p => p.rookie) ? [['rookies', 'Rookies']] : []).map(([k, l]) => `<button data-ld="who" data-v="${k}" class="${who === k ? 'on' : ''}" aria-pressed="${who === k}">${l}</button>`).join('')}</div>`;
+    const cats = `<div class="sx27">${LCATS.map(c => `<button data-ld="cat" data-v="${c[0]}" class="${cat === c[0] ? 'on' : ''}" aria-pressed="${cat === c[0]}">${c[1]}</button>`).join('')}</div>`;
+    if (!ps.length) { pg.innerHTML = pills + `<div class="em27"><b>No numbers yet</b><p>${esc(L.label)} leaders show here once the season has games.</p></div>`; return; }
+    const C = LCATS.find(c => c[0] === cat);
+    const rows = ps.filter(p => (who !== 'rookies' || p.rookie) && qual(p) && (p.s || {})[cat] != null).map(p => ({ p, v: +(p.s || {})[cat] })).filter(x => isFinite(x.v)).sort((a, b) => b.v - a.v).slice(0, 30);
+    const sub = p => `${esc(p.teamName || p.team || '')}${p.rookie && p.pick ? ` \u00b7 Pick ${p.pick}` : who === 'rookies' ? '' : p.pos ? ` \u00b7 ${esc(p.pos)}` : ''}`;
+    const cut = (p, w, h) => p.img ? U.imgSized(p.img, w, h, 'class="cu27"', "this.remove()") : '';
+    const grad3 = (c, a) => `linear-gradient(${a}deg,${U.mixTo(c, 255, .16)},${c} 55%,${U.mixTo(c, 0, .6)})`;
+    const label = `${who === 'rookies' ? 'Rookies, ' : ''}${who === 'rookies' ? C[2] : C[2].charAt(0).toUpperCase() + C[2].slice(1)}`;
+    let h = '';
+    if (!rows.length) h = `<div class="em27"><b>Nobody qualifies yet</b><p>A player needs half of the games played and regular minutes to be ranked.</p></div>`;
+    else {
+      const a = rows[0], c0 = colorOf(a.p);
+      h += `<a class="l1x27" href="${U.href.player(lk, a.p.id)}" style="background:${grad3(c0, 150)}"><span class="lb27" style="background:${U.mixTo(c0, 255, .35)}"></span>${cut(a.p, 500, 364)}<span class="lsh27"></span><span class="lt27">1 \u00b7 ${esc(label)}</span><span class="lf27"><strong>${one(a.v)}</strong><b>${esc(a.p.n)}</b><small>${sub(a.p)}</small></span></a>`;
+      if (rows.length > 1) h += `<div class="l2x27">${rows.slice(1, 3).map((x, i) => `<a href="${U.href.player(lk, x.p.id)}" style="background:${grad3(colorOf(x.p), 160)}"><u>${i + 2}</u>${cut(x.p, 254, 185)}<strong>${one(x.v)}</strong><b>${esc(x.p.n)}</b><small>${sub(x.p)}</small></a>`).join('')}</div>`;
+      h += `<div class="lr27">${rows.slice(3).map((x, i) => { const c = colorOf(x.p); return `<a href="${U.href.player(lk, x.p.id)}"><span>${i + 4}</span><span class="fc27" style="background:linear-gradient(160deg,${U.mixTo(c, 255, .12)},${U.mixTo(c, 0, .45)})">${p_img(x.p)}</span><span class="tx27"><b>${esc(x.p.n)}<small>${sub(x.p)}</small></b><i><s style="width:${Math.max(4, Math.round(x.v / (a.v || 1) * 100))}%;background:${U.lumOf(c) < .06 ? U.mixTo(c, 255, .45) : c}"></s></i></span><strong>${one(x.v)}</strong></a>`; }).join('')}</div>`;
+    }
+    const note = lg.lastSeason ? `<p class="ln27n">${esc(lg.label)} season. The new season's numbers take over once it has games.</p>` : `<p class="ln27n">Per game, ${esc(lg.label || '')}. A player needs half of the games played to be ranked.</p>`;
+    const html = pills + cats + h + note, hh = hash(html); if (pg.dataset.h !== hh) { const sx = pg.querySelector('.sx27'), x0 = sx ? sx.scrollLeft : 0; pg.innerHTML = html; pg.dataset.h = hh; const s2 = pg.querySelector('.sx27'); if (s2) { s2.scrollLeft = x0; const onb = s2.querySelector('.on'); if (onb && (onb.offsetLeft + onb.offsetWidth > s2.scrollLeft + s2.clientWidth || onb.offsetLeft < s2.scrollLeft)) s2.scrollLeft = Math.max(0, onb.offsetLeft - 18); } }
+  }
+  const p_img = p => p.img ? U.imgSized(p.img, 160, 116, '', "this.remove()") : '';
+  $main.addEventListener('click', e => { const b = e.target.closest('[data-ld]'); if (!b) return; e.preventDefault(); const lk = (b.closest('#ld27') || {}).dataset ? b.closest('#ld27').dataset.lk : '';
+    if (b.dataset.ld === 'cls') { store.set('v5:strcls', b.dataset.v); if (lk) stats27(lk); return; }
+    const st = store.get('v5:ld27', {}) || {}; st[b.dataset.ld] = b.dataset.v; store.set('v5:ld27', st); if (lk) stats27(lk); });
+  /* Recruits (college only): the high-school classes, boys under NCAA M and girls under NCAA W, from data/recruits.json */
+  async function recruits27(lk, pg, run) {
+    const L = LEAGUES[lk], g = lk === 'ncaaw' ? 'girls' : 'boys';
+    const [REC, idx] = await Promise.all([HW.hub.recruits().catch(() => null), V.teamsIndex(L).catch(() => ({}))]);
+    if (run !== ldRun || !document.body.contains(pg)) return;
+    const all = (REC && REC[g]) || {}, classes = Object.keys(all).filter(k => (all[k] || []).length).sort();
+    if (!classes.length) { pg.innerHTML = `<div class="em27"><b>No recruit rankings yet</b><p>The classes show here once the rankings are posted.</p></div>`; pg.dataset.h = ''; return; }
+    let cls = store.get('v5:strcls', classes[0]); if (!classes.includes(cls)) cls = classes[0];
+    const list = [...all[cls]].sort((a, b) => (a.rank || 999) - (b.rank || 999));
+    const sch = {}; Object.values(idx || {}).forEach(t => { if (!t) return; [t.loc, t.short, t.name].filter(Boolean).forEach(n => { const k = String(n).toLowerCase(); if (!sch[k]) sch[k] = t; }); });
+    const crest = (name, px) => { const t = sch[String(name || '').toLowerCase()]; return t && t.logo ? `<span class="cr27" title="${esc(name)}">${U.imgSized(t.logo, 96, 96, '', "this.parentNode.classList.add('tx');this.parentNode.textContent=this.parentNode.title.slice(0,3).toUpperCase()")}</span>` : `<span class="cr27 tx" title="${esc(name)}">${esc(String(name || '').replace(/[^A-Za-z ]/g, '').split(' ').map(w => w[0] || '').join('').slice(0, 3).toUpperCase() || '?')}</span>`; };
+    const where = (r, hero) => r.commitTo ? `<span class="cm27">${WI.tick}${hero ? 'Committed to ' : ''}${esc(r.commitTo)}</span>` : (r.top || []).length ? `${hero ? '<span>Uncommitted, looking at</span>' : ''}<span class="sc27r">${r.top.slice(0, 3).map(n => crest(n)).join('')}</span>` : hero ? '<span>Uncommitted</span>' : '';
+    const href = r => V.recruitHref ? V.recruitHref(g, cls, r) : '#search';
+    const pic = (r, w, h, c) => r.img ? `<img class="${c}" src="${esc(r.img)}" alt="" loading="lazy" onerror="this.remove()">` : '';
+    const a = list[0];
+    const hero = `<a class="r1x27" href="${href(a)}"><span class="rn27" aria-hidden="true">${a.rank || 1}</span><span class="rsw27"></span>${pic(a, 0, 0, 'cu27')}<span class="lsh27"></span><span class="lt27">${a.rank || 1} \u00b7 Class of ${esc(cls)}</span><span class="rf27"><b>${esc(a.n)}</b><span class="rh27">${esc([a.hs, a.home].filter(Boolean).join(' \u00b7 '))}</span><span class="rc27">${[a.pos, a.ht, a.wt ? a.wt + ' lb' : ''].filter(Boolean).map(x => `<i>${esc(x)}</i>`).join('')}</span><span class="rw27">${where(a, true)}</span></span></a>`;
+    const row = r => `<a href="${href(r)}"><span>${r.rank || ''}</span><span class="fc27 rp27">${pic(r, 0, 0, '')}</span><span class="tx27"><b>${esc(r.n)}</b><small>${esc([r.pos, r.ht, r.hs].filter(Boolean).join(' \u00b7 '))}</small></span>${where(r, false)}</a>`;
+    const rest = list.slice(1), N = 9;
+    const html = `<div class="pl27">${classes.map(c => `<button data-ld="cls" data-v="${esc(c)}" class="${c === cls ? 'on' : ''}" aria-pressed="${c === cls}">Class of ${esc(c)}</button>`).join('')}</div>${hero}<h2 class="rh2x27">Top of the class</h2><div class="lr27 rr27x">${rest.slice(0, N).map(row).join('')}${rest.length > N ? `<div class="mo27" hidden>${rest.slice(N).map(row).join('')}</div><button class="mb27" data-a27="more">Show all ${list.length}</button>` : ''}</div><p class="ln27n">${g === 'girls' ? 'Girls' : 'Boys'} high-school class of ${esc(cls)}, ranked by PrepRanks.</p>`;
+    const hh = hash(html); if (pg.dataset.h !== hh) { pg.innerHTML = html; pg.dataset.h = hh; }
+  }
+  { const st0 = V.stats; V.stats = (lk, ...a) => on() ? stats27(lk) : st0(lk, ...a); }
 
   /* ---------- Watch: one clip to a screen, Following / For you / Top plays ---------- */
   const WI = {
