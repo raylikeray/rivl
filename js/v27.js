@@ -183,9 +183,13 @@
     let h = '';
     if (!rows.length) h = `<div class="em27"><b>Nobody qualifies yet</b><p>A player needs half of the games played and regular minutes to be ranked.</p></div>`;
     else {
-      const a = rows[0], c0 = colorOf(a.p);
-      h += `<a class="l1x27" href="${U.href.player(lk, a.p.id)}" style="background:${grad3(c0, 150)}"><span class="lb27" style="background:${U.mixTo(c0, 255, .35)}"></span>${cut(a.p, 500, 364)}<span class="lsh27"></span><span class="lt27">1 \u00b7 ${esc(label)}</span><span class="lf27"><strong>${one(a.v)}</strong><b>${esc(a.p.n)}</b><small>${sub(a.p)}</small></span></a>`;
-      if (rows.length > 1) h += `<div class="l2x27">${rows.slice(1, 3).map((x, i) => `<a href="${U.href.player(lk, x.p.id)}" style="background:${grad3(colorOf(x.p), 160)}"><u>${i + 2}</u>${cut(x.p, 254, 185)}<strong>${one(x.v)}</strong><b>${esc(x.p.n)}</b><small>${sub(x.p)}</small></a>`).join('')}</div>`;
+      const a = rows[0];
+      /* the card: team colour, the logo large and white behind the player, two angled bands in the second colour */
+      const vars = p => { const c = colorOf(p), t = byAbbr[p.team] || {}; let al = U.teamAlt({ id: t.id, abbr: p.team, alt: t.alt }, L) || ''; let bs = '38%'; if (!al || Math.abs(U.lumOf(al) - U.lumOf(c)) < .08) { al = '#ffffff'; bs = '16%'; }   // no second colour to speak of: quiet white bands
+        return `--bs:${bs};--c:${c};--c1:${U.mixTo(c, 255, .22)};--c2:${U.mixTo(c, 0, .6)};--a:${al};--at:${U.lumOf(al) > .45 ? '#0b0c0e' : '#ffffff'}`; };
+      const back = p => { const t = byAbbr[p.team] || {}; return `<span class="lbd27"></span>${t.logo ? `<span class="lwm27">${U.imgSized(t.logo, 500, 500, '', "this.parentNode.remove()")}</span>` : ''}<span class="lgl27"></span>`; };
+      h += `<a class="l1x27" href="${U.href.player(lk, a.p.id)}" style="${vars(a.p)}">${back(a.p)}${cut(a.p, 500, 364)}<span class="lsh27"></span><span class="lt27"><i>1</i>${esc(label)}</span><span class="lf27"><strong>${one(a.v)}</strong><b>${esc(a.p.n)}</b><small>${sub(a.p)}</small></span></a>`;
+      if (rows.length > 1) h += `<div class="l2x27">${rows.slice(1, 3).map((x, i) => `<a href="${U.href.player(lk, x.p.id)}" style="${vars(x.p)}">${back(x.p)}${cut(x.p, 500, 364)}<span class="lsh27"></span><u>${i + 2}</u><span class="l2f27"><strong>${one(x.v)}</strong><b>${esc(x.p.sn || x.p.n)}</b><small>${sub(x.p)}</small></span></a>`).join('')}</div>`;
       h += `<div class="lr27">${rows.slice(3).map((x, i) => { const c = colorOf(x.p); return `<a href="${U.href.player(lk, x.p.id)}"><span>${i + 4}</span><span class="fc27" style="background:linear-gradient(160deg,${U.mixTo(c, 255, .12)},${U.mixTo(c, 0, .45)})">${p_img(x.p)}</span><span class="tx27"><b>${esc(x.p.n)}<small>${sub(x.p)}</small></b><i><s style="width:${Math.max(4, Math.round(x.v / (a.v || 1) * 100))}%;background:${U.lumOf(c) < .06 ? U.mixTo(c, 255, .45) : c}"></s></i></span><strong>${one(x.v)}</strong></a>`; }).join('')}</div>`;
     }
     const note = lg.lastSeason ? `<p class="ln27n">${esc(lg.label)} season. The new season's numbers take over once it has games.</p>` : `<p class="ln27n">Per game, ${esc(lg.label || '')}. A player needs half of the games played to be ranked.</p>`;
