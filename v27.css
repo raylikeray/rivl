@@ -392,14 +392,17 @@ html.rv27[data-page="standings"] body #main .legend{margin:14px 16px 0;font-size
 /* ---------- Recruits (v474) ---------- */
 html.rv27 .seg27.four:not([hidden]){grid-template-columns:repeat(4,minmax(0,1fr))}
 html.rv27 .seg27 a[hidden]{display:none}
-.lp27 .r1x27{display:block;position:relative;overflow:hidden;margin:16px 16px 0;height:228px;border-radius:22px;color:#fff;text-decoration:none;background:linear-gradient(150deg,#3a3f48,#1b1e24 60%,#0c0d10);box-shadow:0 16px 28px -18px rgba(0,0,0,.6)}
-.lp27 .rn27{position:absolute;right:150px;top:-34px;font-size:230px;line-height:1;font-weight:800;letter-spacing:-.06em;color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.14)}
+.lp27 .r1x27{display:block;position:relative;overflow:hidden;isolation:isolate;margin:16px 16px 0;height:236px;border-radius:22px;color:#fff;text-decoration:none;background:linear-gradient(150deg,#3a3f48,#1b1e24 60%,#0c0d10);box-shadow:0 16px 28px -18px rgba(0,0,0,.6)}
+.lp27 .rn27{position:absolute;left:96px;top:-34px;font-size:230px;line-height:1;font-weight:800;letter-spacing:-.06em;color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.14)}
 .lp27 .rsw27{position:absolute;top:-20%;bottom:-20%;left:-170px;width:110px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.12),rgba(255,255,255,0));animation:sweep27 7s ease-in-out infinite}
-.lp27 .r1x27 .cu27{position:absolute;z-index:1;right:-6px;bottom:0;height:210px;width:auto;max-width:56%;object-fit:contain;object-position:bottom;filter:drop-shadow(0 10px 22px rgba(0,0,0,.4))}
+/* v476: recruit photos are small square snapshots on a plain wall, not cut-outs, so the top recruit's photo is a round
+   portrait in a bright ring instead of a large square laid on the card */
+.lp27 .rpx27{position:absolute;z-index:2;right:16px;top:16px;width:104px;height:104px;box-sizing:border-box;padding:3px;border-radius:50%;background:conic-gradient(from 210deg,#4a9ae6,#8a5cf6 30%,#ff5e7a 55%,#ffb03a 75%,#4a9ae6);box-shadow:0 10px 22px rgba(0,0,0,.45)}
+.lp27 .rpx27 img{width:100%;height:100%;box-sizing:border-box;border:3px solid #1b1e24;border-radius:50%;object-fit:cover;object-position:50% 18%;display:block;background:#2a2d31}
 .lp27 .r1x27 .lsh27{background:linear-gradient(90deg,rgba(0,0,0,.5),rgba(0,0,0,0) 70%)}
 .lp27 .rf27{position:absolute;z-index:2;left:16px;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px}
-.lp27 .rf27>b{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.05;max-width:66%}
-.lp27 .rh27{font-size:13px;opacity:.9;max-width:66%}
+.lp27 .rf27>b{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.05;max-width:calc(100% - 116px)}
+.lp27 .rh27{font-size:13px;opacity:.9}
 .lp27 .rc27{display:flex;gap:6px}
 .lp27 .rc27 i{font-style:normal;font-size:12px;font-weight:700;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.14);white-space:nowrap}
 .lp27 .rw27{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;margin-top:2px}
