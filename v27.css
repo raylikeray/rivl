@@ -590,7 +590,7 @@ html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .v small{display:inline!i
 /* ---------- You (v486): the poster top in your top team's colours, then one thing per tab ---------- */
 .yp27{padding-bottom:8px}
 .yh27{position:relative;height:calc(env(safe-area-inset-top,0px) + 296px);--bh27:100%;color:#fff;overflow:hidden;margin-top:calc(-1 * env(safe-area-inset-top,0px))}
-.yh27 .bn27.ph{background-size:cover;background-position:50% 30%}
+.yh27 .bn27.ph{background-size:cover;background-position:50% 50%}
 .yh27 .bn27.ph::before,.yh27 .bn27.ph .hs27{display:none}
 .yh27 .ym27{position:absolute;right:14px;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:3;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.3);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .yh27 .ym27 svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round}
@@ -598,10 +598,13 @@ html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .v small{display:inline!i
 .yh27 .yp27f{position:absolute;right:22px;top:calc(env(safe-area-inset-top,0px) + 68px);z-index:2;width:196px;height:196px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:rgba(255,255,255,.14);animation:pop27 .7s cubic-bezier(.2,.9,.2,1) .1s both}
 .yh27 .yp27f img{width:100%;height:100%;object-fit:cover;display:block}
 .yh27 .yp27f>b{font:800 104px/1 var(--f27);letter-spacing:-.04em;color:#fff;text-shadow:0 4px 18px rgba(0,0,0,.3)}
-.yh27 .ynm27{position:absolute;left:20px;bottom:64px;z-index:2;max-width:calc(100% - 40px);animation:rise27 .6s cubic-bezier(.2,.8,.2,1) .15s both}
-.yh27 .ynm27 h1{margin:0;font:800 46px/1 var(--f27);letter-spacing:-.035em;color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.yh27 .ynm27 h1.n2{font-size:38px}
-.yh27 .ynm27 h1.n3{font-size:30px}
+.yh27 .ynm27{position:absolute;left:20px;bottom:64px;z-index:2;max-width:calc(100% - 244px);animation:rise27 .6s cubic-bezier(.2,.8,.2,1) .15s both}
+.yh27 .ynm27 h1{margin:0;font:800 46px/1 var(--f27);letter-spacing:-.035em;color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.5);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-bottom:.08em}
+.yh27 .ynm27 h1.n2{font-size:40px}
+.yh27 .ynm27 h1.n3{font-size:33px}
+.yh27 .ynm27 h1.n4{font-size:27px}
+.yh27 .ynm27 h1.n5{font-size:23px}
+.yh27 .ynm27 p{white-space:nowrap}
 .yh27 .ynm27 p{margin:6px 0 0;font-size:14px;font-weight:500;color:rgba(255,255,255,.86);text-shadow:0 1px 8px rgba(0,0,0,.5)}
 .yh27 .ynm27 p b{font-weight:700;color:#fff}
 .yh27 .ye27{position:absolute;left:20px;bottom:16px;z-index:2;height:36px;padding:0 16px;text-align:center;border-radius:999px;background:#fff;color:#0a0c0e;font:700 14px/1 var(--f27);animation:rise27 .6s cubic-bezier(.2,.8,.2,1) .22s both}
@@ -665,7 +668,7 @@ html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .v small{display:inline!i
 .yp27 .yeb27 b{font-size:16px;font-weight:700}
 .yp27 .yeb27 button{height:44px;padding:0 12px;text-align:center;font:500 15px/1 var(--f27);color:var(--i27)}
 .yp27 .yeb27 .sv{font-weight:700;color:var(--a27)}
-.yp27 .yh27.sm{height:150px;margin:0 0 58px;overflow:visible}
+.yp27 .yh27.sm{height:auto;aspect-ratio:412/296;margin:0 0 58px;overflow:visible}
 .yp27 .yh27.sm .yp27f{left:20px;right:auto;top:auto;bottom:-46px;width:96px;height:96px;overflow:visible;background:var(--c27);box-shadow:0 0 0 4px var(--b27);animation:none}
 .yp27 .yh27.sm .yp27f img{border-radius:50%}
 .yp27 .yh27.sm .yp27f>b{font-size:44px;color:var(--i27);text-shadow:none}
@@ -683,3 +686,17 @@ html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .v small{display:inline!i
 @media (prefers-reduced-motion:reduce){ .yh27 .yp27f,.yh27 .ynm27,.yh27 .ye27{animation:none} }
 /* the entrance plays once per visit (v487) */
 .yp27.st27 .yh27 .yp27f,.yp27.st27 .yh27 .ynm27,.yp27.st27 .yh27 .ye27,.yp27.st27 .yh27 .bn27 .hs27,.yp27.st27 .yh27 .bn27 .hr27{animation:none}
+
+/* Move and zoom (v488) */
+.crop27{position:fixed;inset:0;z-index:400;display:flex;flex-direction:column;background:#000;color:#fff;font-family:var(--f27);padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);overscroll-behavior:contain}
+.crop27 .cb27{flex:none;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 10px}
+.crop27 .cb27 b{font-size:16px;font-weight:700}
+.crop27 .cb27 button{height:44px;padding:0 10px;font:500 15px/1 var(--f27);color:#fff;text-align:center}
+.crop27 .cb27 .sv{height:36px;padding:0 18px;border-radius:999px;background:#fff;color:#0a0c0e;font-weight:700}
+.crop27 .cs27{flex:1;min-height:0;position:relative;overflow:hidden;touch-action:none;cursor:grab}
+.crop27 .cs27 img{position:absolute;left:50%;top:50%;max-width:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none;pointer-events:none;will-change:transform}
+.crop27 .cf27{position:absolute;left:50%;top:50%;box-sizing:border-box;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,.92);box-shadow:0 0 0 9999px rgba(0,0,0,.64);pointer-events:none}
+.crop27.rd .cf27{border-radius:50%}
+.crop27 .cz27{flex:none;display:grid;justify-items:center;gap:6px;padding:16px 28px 14px}
+.crop27 .cz27 input{width:100%;height:32px;margin:0;accent-color:#fff}
+.crop27 .cz27 button{height:44px;padding:0 14px;font:600 14px/1 var(--f27);color:rgba(255,255,255,.86);text-align:center}

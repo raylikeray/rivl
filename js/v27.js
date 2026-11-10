@@ -236,9 +236,6 @@
     async get(k) { try { const d = await this.open(); return await new Promise(res => { const q = d.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result || ''); q.onerror = () => res(''); }); } catch (e) { return ''; } },
     async set(k, v) { try { const d = await this.open(); await new Promise((res, rej) => { const t = d.transaction('kv', 'readwrite'); if (v) t.objectStore('kv').put(v, k); else t.objectStore('kv').delete(k); t.oncomplete = res; t.onerror = () => rej(t.error); }); return true; } catch (e) { return false; } } };
   const meLoad = idb.get('photo').then(async p => { me.photo = p || ''; me.header = (await idb.get('header')) || ''; me.ready = true; if (root.dataset.page === 'settings' && $main.querySelector('#you27')) you27(); });
-  /* a photo from the phone, cut to size in the browser: nothing is uploaded anywhere */
-  const shrink = (file, w, h) => new Promise((res, rej) => { const url = URL.createObjectURL(file), im = new Image(); im.onload = () => { try { const sc = Math.max(w / im.naturalWidth, h / im.naturalHeight), cw = Math.min(w, Math.round(im.naturalWidth * sc)), ch = Math.min(h, Math.round(im.naturalHeight * sc));
-        const c = document.createElement('canvas'); c.width = w; c.height = h; const sw = w / sc, sh = h / sc; c.getContext('2d').drawImage(im, (im.naturalWidth - sw) / 2, (im.naturalHeight - sh) / 2, sw, sh, 0, 0, w, h); res(c.toDataURL('image/jpeg', .86)); } catch (e) { rej(e); } finally { URL.revokeObjectURL(url); } }; im.onerror = () => { URL.revokeObjectURL(url); rej(new Error('image')); }; im.src = url; });
   const YT = [['teams', 'Teams'], ['players', 'Players'], ['saved', 'Saved'], ['liked', 'Liked'], ['picks', 'Picks']];
   const followedTeams = outs => ORDER.flatMap(lk => { const o = outs.find(x => x.lk === lk); const ids = (favs.all()[lk] || []).map(String); return ids.map(id => { const t = (o && (o.myTeams || []).find(x => String(x.id) === id)) || (o && o.tIdx && o.tIdx[id]) || null; return t ? { lk, o, t: Object.assign({ id }, t) } : { lk, o, t: { id, short: 'Team', name: 'Team', abbr: '', color: '', logo: '' } }; }); });
   const topTeam = list => { const k = store.get('v5:topteam', ''); return list.find(x => `${x.lk}:${x.t.id}` === k) || list[0] || null; };
@@ -292,6 +289,8 @@
     if (tab === 'liked') return yClipGrid(X.stLikedItems(), 'liked') || yEmpty('No liked clips yet', 'Tap the heart on a clip and it shows up here. Clips liked before this update are counted but not listed.');
     return yPicks(outs);
   }
+  /* the name sits beside the photo, so it wraps to two lines and is sized by its longest word */
+  const nmCls = n => { const w = Math.max(...String(n).split(/\s+/).map(x => x.length)); return w <= 4 ? '' : w <= 6 ? 'n2' : w <= 8 ? 'n3' : w <= 10 ? 'n4' : 'n5'; };
   let youEdit = false;
   async function you27() {
     if (!me.ready) await Promise.race([meLoad, sleep(600)]);
@@ -305,7 +304,7 @@
     const nLikes = X.stLikes().length, nPl = V.fplayers.all().length;
     let tab = store.get('v5:youtab', 'teams'); if (!YT.some(t => t[0] === tab)) tab = 'teams';
     const face = me.photo ? `<img src="${me.photo}" alt="">` : `<b>${esc((name || 'You').charAt(0).toUpperCase())}</b>`;
-    const head = `<header class="yh27" style="${vars}"><div class="bn27${own ? ' ph' : ''}"${own ? ` style="background-image:url(${me.header})"` : ''}><u>${own ? '' : esc(letters)}</u><span class="hs27"></span><span class="hg27"></span><span class="hr27"></span><i></i></div><a class="ym27" href="#settings/menu" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a><span class="yp27f">${face}</span><div class="ynm27"><h1 class="${(name || 'You').length > 11 ? 'n3' : (name || 'You').length > 8 ? 'n2' : ''}">${esc(name || 'You')}</h1><p>${top ? `Top team · <b>${esc(top.t.short || top.t.name)}</b>` : 'No top team yet'}</p></div><button class="ye27" data-you="edit">Edit profile</button></header>`;
+    const head = `<header class="yh27" style="${vars}"><div class="bn27${own ? ' ph' : ''}"${own ? ` style="background-image:url(${me.header})"` : ''}><u>${own ? '' : esc(letters)}</u><span class="hs27"></span><span class="hg27"></span><span class="hr27"></span><i></i></div><a class="ym27" href="#settings/menu" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a><span class="yp27f">${face}</span><div class="ynm27"><h1 class="${nmCls(name || 'You')}">${esc(name || 'You')}</h1><p>${top ? `Top team · <b>${esc(top.t.short || top.t.name)}</b>` : 'No top team yet'}</p></div><button class="ye27" data-you="edit">Edit profile</button></header>`;
     const counts = `<div class="yc27"><div><b>${list.length}</b><span>Teams</span></div><div><b>${nPl}</b><span>Players</span></div><div><b>${nLikes}</b><span>Likes</span></div></div><div class="ya27"><a href="#settings/following">Add a team</a><a href="#settings/following">Add a player</a></div>`;
     const tabs = `<nav class="ytb27" aria-label="Your things">${YT.map(([k, l]) => `<button data-you="tab" data-tab="${k}" class="${k === tab ? 'on' : ''}" aria-pressed="${k === tab}">${l}</button>`).join('')}</nav>`;
     /* each part is repainted only when it changed (v487): tapping a tab or closing a league must not redraw the top, or your
@@ -332,24 +331,58 @@
       <input type="file" accept="image/*" id="yfile27" hidden></div>`;
   }
   const CAM = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.500A2 2 0 0 1 6 6.500h1.600l1.300-2h6.200l1.300 2H18a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.500" r="3.400"/></svg>';
+  /* Move and zoom (v488): a picked photo opens here first, so you place it yourself. The frame is the round profile photo or
+     the header band; drag to move, pinch or use the slider to zoom. The untouched photo is kept on the phone beside the cut
+     one, so tapping the camera later reopens it exactly where you left it. */
+  const CROP = { photo: { out: [400, 400], round: true }, header: { out: [1236, 888], round: false } };
+  const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('image')); im.src = src; });
+  const fitOrig = async file => { const url = URL.createObjectURL(file); try { const im = await loadImg(url), k = Math.min(1, 1600 / Math.max(im.naturalWidth, im.naturalHeight)); const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k)); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', .9); } finally { URL.revokeObjectURL(url); } };
+  function cropOpen(kind, orig, st) { return new Promise(async done => {
+    let im; try { im = await loadImg(orig); } catch (e) { V.toast('That file could not be read as a photo.'); return done(null); }
+    const cf = CROP[kind], vw = Math.min(window.innerWidth, 640), fw = cf.round ? Math.min(vw - 48, 340) : vw, fh = cf.round ? fw : Math.round(fw * 296 / 412);
+    const iw = im.naturalWidth, ih = im.naturalHeight, s0 = Math.max(fw / iw, fh / ih), cl = v => Math.min(4, Math.max(1, v));
+    let z = cl((st && +st.z) || 1), x = ((st && +st.x) || 0) * fw, y = ((st && +st.y) || 0) * fh;
+    const el = document.createElement('div'); el.className = 'crop27' + (cf.round ? ' rd' : ''); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', cf.round ? 'Place your profile photo' : 'Place your header photo');
+    el.innerHTML = `<div class="cb27"><button data-c="x">Cancel</button><b>Move and zoom</b><button data-c="ok" class="sv">Done</button></div><div class="cs27"><img alt="" draggable="false"><span class="cf27" style="width:${fw}px;height:${fh}px"></span></div><div class="cz27"><input type="range" min="1" max="4" step="0.01" aria-label="Zoom"><button data-c="new">Choose a different photo</button></div>`;
+    const pic = el.querySelector('img'), stage = el.querySelector('.cs27'), rng = el.querySelector('input'); pic.src = orig;
+    const paint = () => { const s = s0 * z, mx = Math.max(0, (iw * s - fw) / 2), my = Math.max(0, (ih * s - fh) / 2); x = Math.min(mx, Math.max(-mx, x)); y = Math.min(my, Math.max(-my, y)); pic.style.width = iw * s + 'px'; pic.style.height = ih * s + 'px'; pic.style.transform = `translate3d(calc(-50% + ${x}px),calc(-50% + ${y}px),0)`; rng.value = z; };
+    const zoom = nz => { nz = cl(nz); x *= nz / z; y *= nz / z; z = nz; };
+    const pts = new Map(); let d0 = 0, z0 = 1; const gap = () => { const [a, b] = [...pts.values()]; return Math.hypot(a[0] - b[0], a[1] - b[1]); };
+    stage.addEventListener('pointerdown', e => { try { stage.setPointerCapture(e.pointerId); } catch (er) {} pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 2) { d0 = gap(); z0 = z; } });
+    stage.addEventListener('pointermove', e => { const p = pts.get(e.pointerId); if (!p) return; const dx = e.clientX - p[0], dy = e.clientY - p[1]; pts.set(e.pointerId, [e.clientX, e.clientY]);
+      if (pts.size === 1) { x += dx; y += dy; } else if (pts.size === 2) { if (d0 > 0) zoom(z0 * gap() / d0); x += dx / 2; y += dy / 2; } paint(); });
+    const up = e => { pts.delete(e.pointerId); d0 = 0; }; stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
+    stage.addEventListener('wheel', e => { e.preventDefault(); zoom(z * (e.deltaY < 0 ? 1.06 : 1 / 1.06)); paint(); }, { passive: false });
+    rng.addEventListener('input', () => { zoom(+rng.value); paint(); });
+    const close = r => { window.removeEventListener('hashchange', gone); el.remove(); done(r); }, gone = () => close(null); window.addEventListener('hashchange', gone);
+    el.addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return; const a = b.dataset.c;
+      if (a === 'x') return close(null);
+      if (a === 'new') { const f = $main.querySelector('#yfile27'); yPickFor = kind; if (f) f.click(); return close(null); }
+      try { const s = s0 * z, sw = fw / s, sh = fh / s, c = document.createElement('canvas'); c.width = cf.out[0]; c.height = cf.out[1]; c.getContext('2d').drawImage(im, iw / 2 - x / s - sw / 2, ih / 2 - y / s - sh / 2, sw, sh, 0, 0, c.width, c.height); close({ data: c.toDataURL('image/jpeg', .88), st: { z, x: x / fw, y: y / fh } }); }
+      catch (er) { V.toast('That photo could not be saved.'); close(null); } });
+    document.body.appendChild(el); paint();
+  }); }
+  const reEdit = async () => { const nm = $main.querySelector('#yname27'), tp = $main.querySelector('#ytop27'), kn = nm ? nm.value : null, kt = tp ? tp.value : ''; await you27(); const n2 = $main.querySelector('#yname27'), t2 = $main.querySelector('#ytop27'); if (n2 && kn != null) n2.value = kn; if (t2 && kt) t2.value = kt; };
+  async function placePhoto(kind, orig, st) { const r = await cropOpen(kind, orig, st); if (!r) return;
+    if (!(await idb.set(kind, r.data))) return V.toast('Could not keep that photo on this phone.');
+    await idb.set(kind + '0', orig); await idb.set(kind + 'c', r.st); me[kind] = r.data; if (kind === 'header') store.set('v5:header', 'photo'); if ($main.querySelector('#you27')) await reEdit(); }
+  const pickPhoto = async kind => { yPickFor = kind; const orig = await idb.get(kind + '0'); if (orig && me[kind]) return placePhoto(kind, orig, await idb.get(kind + 'c')); const f = $main.querySelector('#yfile27'); if (f) f.click(); };
   let yPickFor = '';
-  $main.addEventListener('change', async e => { if (e.target.id !== 'yfile27') return; const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
-    try { if (yPickFor === 'header') { const d = await shrink(f, 1200, 720); if (await idb.set('header', d)) { me.header = d; store.set('v5:header', 'photo'); } else V.toast('Could not keep that photo on this phone.'); }
-      else { const d = await shrink(f, 320, 320); if (await idb.set('photo', d)) me.photo = d; else V.toast('Could not keep that photo on this phone.'); } }
-    catch (er) { V.toast('That file could not be read as a photo.'); }
-    const nm = $main.querySelector('#yname27'); if (nm) store.set('v5:name27draft', nm.value); const pg = $main.querySelector('#you27'); if (pg) pg.dataset.h = ''; await you27(); const n2 = $main.querySelector('#yname27'), dr = store.get('v5:name27draft', null); if (n2 && dr != null) n2.value = dr; });
+  $main.addEventListener('change', async e => { if (e.target.id !== 'yfile27') return; const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; const kind = yPickFor === 'header' ? 'header' : 'photo';
+    let orig = ''; try { orig = await fitOrig(f); } catch (er) { return V.toast('That file could not be read as a photo.'); } placePhoto(kind, orig, null); });
   $main.addEventListener('click', async e => { const b = e.target.closest('[data-you]'); if (!b || !b.closest('#you27')) return; const a = b.dataset.you; e.preventDefault();
     if (a === 'tab') { store.set('v5:youtab', b.dataset.tab); return you27(); }
     if (a === 'fold') { const f = store.get('v5:youfold', {}) || {}, t = b.dataset.tab, l = new Set(f[t] || []); if (l.has(b.dataset.lk)) l.delete(b.dataset.lk); else l.add(b.dataset.lk); f[t] = [...l]; store.set('v5:youfold', f); return you27(); }
     if (a === 'clip') { const its = b.dataset.kind === 'liked' ? X.stLikedItems() : X.savedItems(); if (!its.length || document.querySelector('.story')) return; const nm = b.dataset.kind === 'liked' ? 'Liked' : 'Saved';
       const subs = [{ key: 'w:you', lk: 'all', kind: 'watch', id: 'w:you', name: nm, full: nm, color: '#15171a', its, un: true, last: Date.now() }];
       return V.storyOpen('w:you', b.dataset.id, { watch: true, subs, chrome(el) { el.__subs = subs; wChrome(el); el.classList.add('one27'); }, onItem: (el, it, x, si) => { wItem(el, it, x, si); store.set('v5:wtab', store.get('v5:wtab0', 'w:fy')); }, onSlide: wInd, onClose() { paintBar(); you27(); } }); }
-    if (a === 'edit') { youEdit = true; store.remove ? store.remove('v5:name27draft') : store.set('v5:name27draft', null); window.scrollTo(0, 0); return you27(); }
+    if (a === 'edit') { youEdit = true; window.scrollTo(0, 0); return you27(); }
     if (a === 'cancel') { youEdit = false; return you27(); }
     if (a === 'save') { const nm = $main.querySelector('#yname27'), tp = $main.querySelector('#ytop27'); if (nm) store.set('v5:name', nm.value.trim().slice(0, 24)); if (tp && tp.value) store.set('v5:topteam', tp.value); youEdit = false; V.toast('Saved'); return you27(); }
-    if (a === 'pickp' || a === 'pickh') { yPickFor = a === 'pickh' ? 'header' : 'photo'; const f = $main.querySelector('#yfile27'); if (f) f.click(); return; }
-    if (a === 'hdr') { if (b.dataset.v === 'photo' && !me.header) { yPickFor = 'header'; const f = $main.querySelector('#yfile27'); if (f) f.click(); return; } store.set('v5:header', b.dataset.v); const nm = $main.querySelector('#yname27'), keep = nm ? nm.value : null; await you27(); const n2 = $main.querySelector('#yname27'); if (n2 && keep != null) n2.value = keep; return; }
-    if (a === 'rmphoto') { await idb.set('photo', ''); me.photo = ''; const nm = $main.querySelector('#yname27'), keep = nm ? nm.value : null; await you27(); const n2 = $main.querySelector('#yname27'); if (n2 && keep != null) n2.value = keep; return; }
+    if (a === 'pickp') return pickPhoto('photo');
+    if (a === 'pickh') return pickPhoto('header');
+    if (a === 'hdr') { if (b.dataset.v === 'photo' && !me.header) return pickPhoto('header'); store.set('v5:header', b.dataset.v); return reEdit(); }
+    if (a === 'rmphoto') { await idb.set('photo', ''); await idb.set('photo0', ''); await idb.set('photoc', ''); me.photo = ''; return reEdit(); }
   });
   { const st0 = V.settings; V.settings = (cat = '', ...a) => { if (on() && !cat) { return you27(); } youEdit = false; return st0(cat === 'menu' ? '' : cat, ...a); }; }
 
