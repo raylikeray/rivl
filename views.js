@@ -898,7 +898,7 @@
     const subs = storySubjects(); let si = subs.findIndex(x => x.key === key); if (si < 0) return;
     const W = innerWidth, H = innerHeight, HYP = Math.ceil(Math.hypot(W, H) / 2) + 4;
     const el = document.createElement('div'); el.className = 'story';
-    el.innerHTML = `<div class="stdim"></div><div class="stpane"><div class="stbg"></div><div class="stblur"></div><div class="stmedia"><div class="stvdw" hidden><video playsinline preload="auto"></video></div><div class="stcard" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stcap"></div></div></div>`;
+    el.innerHTML = `<div class="stdim"></div><div class="stpane"><div class="stbg"></div><div class="stblur"></div><div class="stmedia"><div class="stvdw" hidden><video playsinline preload="auto"></video></div><div class="stcd" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stcap"></div></div></div>`;
     document.body.appendChild(el); stEl = el; document.documentElement.classList.add('stlock');
     const pane = el.querySelector('.stpane'), dim = el.querySelector('.stdim'), vd = el.querySelector('video');
     try { history.pushState({ story: 1 }, '', location.href); } catch (e) {}
@@ -919,7 +919,7 @@
     const head = () => { const x = sub(), it = item(); pane.querySelector('.sthd').innerHTML = `<span class="ring"><span>${stAvatar(x, x.kind === 'player' ? 34 : 22)}</span></span><span class="who"><b>${esc(x.full || x.name)}</b><small>${esc(ago(new Date(it.ts).toISOString()).replace(/ ago$/, ''))}</small></span><button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`; };
     const render = () => {
       const x = sub(), it = item(); stMark(x.key, it.id); head(); segs(); t0 = performance.now();
-      const card = pane.querySelector('.stcard'), vw = pane.querySelector('.stvdw'), cap = pane.querySelector('.stcap'), bg = pane.querySelector('.stbg'), bl = pane.querySelector('.stblur');
+      const card = pane.querySelector('.stcd'), vw = pane.querySelector('.stvdw'), cap = pane.querySelector('.stcap'), bg = pane.querySelector('.stbg'), bl = pane.querySelector('.stblur');
       if (it.kind === 'vid') {
         bg.style.background = `linear-gradient(170deg,#050506 30%,${x.color} 190%)`; bl.style.backgroundImage = it.thumb ? `url("${it.thumb}")` : 'none';
         card.hidden = true; vw.hidden = false;
@@ -930,7 +930,7 @@
         const g = it.g, L = it.L;
         if (it.kind === 'final') { const home = String(g.home.id) === it.tid; const us = home ? g.home : g.away, them = home ? g.away : g.home; const won = +us.score > +them.score;
           bg.style.background = `linear-gradient(160deg,${teamColor(them, L)} -30%,#0a0a0c 44%,${teamColor(us, L)} 160%)`;
-          card.innerHTML = `<span class="fin">Final · ${esc(won ? us.short : them.short)} win</span><div class="srw">${us.logo ? imgSized(us.logo, 128, 128) : ''}<b class="${won ? '' : 'lo'}">${esc(String(us.score))}</b><b class="${won ? 'lo' : ''}">${esc(String(them.score))}</b>${them.logo ? imgSized(them.logo, 128, 128) : ''}</div><div class="tms"><span>${esc(us.short)}</span><span>${esc(them.short)}</span></div>`;
+          card.innerHTML = `<span class="fin">Final · ${esc(won ? us.short : them.short)} win</span><div class="srw"><span class="tm">${us.logo ? imgSized(us.logo, 128, 128) : ''}<span>${esc(us.short)}</span></span><b class="${won ? '' : 'lo'}">${esc(String(us.score))}</b><b class="${won ? 'lo' : ''}">${esc(String(them.score))}</b><span class="tm">${them.logo ? imgSized(them.logo, 128, 128) : ''}<span>${esc(them.short)}</span></span></div>`;
         } else { const ln = it.ln; const us = String(g.home.id) === ln.teamId ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = +us.score > +them.score;
           bg.style.background = `linear-gradient(165deg,#0a0a0c 35%,${x.color} 150%)`;
           const chips = [[ln.pts, 'PTS'], [ln.reb, 'REB'], [ln.ast, 'AST'], [+ln.tpm > 0 ? ln.tpm : '', '3PM']].filter(c => c[0] !== '' && c[0] != null).map(c => `<s>${esc(String(c[0]))}<em>${c[1]}</em></s>`).join('');
