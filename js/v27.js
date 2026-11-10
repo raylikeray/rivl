@@ -264,13 +264,20 @@
     const r = pfRoute(), hd = $main.querySelector('.approf header.aph'); if (!r || !hd) return; const L = LEAGUES[r.lk]; if (!L) return;
     { const ap = hd.closest('.approf'), fx = ap.querySelector('.apfx') || hd; ['--a', '--ad'].forEach(k => { const v = fx.style.getPropertyValue(k) || hd.style.getPropertyValue(k); if (v && ap.style.getPropertyValue(k + '27') !== v) ap.style.setProperty(k + '27', v); }); }   // the small top bar's own colours, so the pinned tab row matches it exactly
     /* the band */
-    let bn = hd.querySelector('.bn27'); if (!bn) { bn = document.createElement('div'); bn.className = 'bn27'; bn.setAttribute('aria-hidden', 'true'); bn.innerHTML = '<u></u><i></i>'; hd.insertBefore(bn, hd.firstChild); }
+    let bn = hd.querySelector('.bn27'); if (!bn) { bn = document.createElement('div'); bn.className = 'bn27'; bn.setAttribute('aria-hidden', 'true'); bn.innerHTML = '<u></u><span class="hs27"></span><span class="hg27"></span><span class="hp27"></span><span class="hr27"></span><i></i>'; hd.insertBefore(bn, hd.firstChild); }
     const setBand = t => { const u = bn.firstChild; t = String(t || '').trim(); const txt = t ? `${t} ${t}` : ''; if (u.textContent !== txt) u.textContent = txt; };
-    if (r.kind === 'team') { const t = X.teamOf(r.lk, r.id); const img = hd.querySelector('.apcrest img'); const m = img && /\/([a-z0-9]+)\.png/i.exec(img.dataset.o || img.src || ''); setBand((t && t.abbr) || (m && /[a-z]/i.test(m[1]) ? m[1].toUpperCase() : '')); }
-    else if (bn.dataset.id !== r.id) { bn.dataset.id = r.id; setBand(''); X.athlete(L, r.id).then(b => { const p = b && (b.athlete || b); if (p && p.jersey != null && p.jersey !== '' && bn.dataset.id === r.id) setBand(p.jersey); }, () => {}); }
+    /* v485: the name set like a poster: the first name (or the city) small over the last name (or the team's name) large */
+    const h1 = hd.querySelector('.apnm h1');
+    const setName = (small, big) => { if (!h1 || h1.dataset.n27 === big) return; h1.dataset.n27 = big; h1.innerHTML = `${small ? `<small>${esc(small)}</small>` : ''}${esc(big)}`; const n = big.length; h1.classList.remove('n2', 'n3', 'n4'); if (n > 15) h1.classList.add('n4'); else if (n > 11) h1.classList.add('n3'); else if (n > 8) h1.classList.add('n2'); };
+    { const img = hd.querySelector('.apface img, .apcrest img'); if (img && img.dataset.o) { img.src = img.dataset.o; img.removeAttribute('data-o'); } }   // the full-size photo or logo
+    if (r.kind === 'team') { const t = X.teamOf(r.lk, r.id); if (t && t.abbr) setBand(t.abbr);
+      if (bn.dataset.id !== r.id) { bn.dataset.id = r.id; V.teamsIndex(L).then(idx => { const x = idx && idx[String(r.id)]; if (!x || bn.dataset.id !== r.id || !document.body.contains(bn)) return; if (x.abbr) setBand(x.abbr);
+          const full = (h1 && (h1.dataset.full || (h1.dataset.full = h1.textContent.trim()))) || x.name || '', loc = x.loc || ''; if (loc && full.toLowerCase().startsWith(loc.toLowerCase() + ' ')) setName(loc, full.slice(loc.length + 1)); }, () => {}); } }
+    else { if (h1 && !h1.dataset.n27) { const full = h1.textContent.trim(), ps = full.split(/\s+/); if (ps.length > 1) setName(ps[0], ps.slice(1).join(' ')); else setName('', full); } }
+    if (r.kind === 'player' && bn.dataset.id !== r.id) { bn.dataset.id = r.id; setBand(''); X.athlete(L, r.id).then(b => { const p = b && (b.athlete || b); if (p && p.jersey != null && p.jersey !== '' && bn.dataset.id === r.id) setBand(p.jersey); }, () => {}); }
     /* the story ring */
     const av = hd.querySelector('.apface,.apcrest'), key = `${r.lk}:${r.kind === 'team' ? 't' : 'p'}${r.id}`, sub = X.storySubjects().find(x => x.key === key);
-    if (av) { const st = sub ? (sub.un ? 'new' : 'seen') : ''; if (av.dataset.ring !== st) { av.dataset.ring = st; av.classList.toggle('rg27', !!st); av.classList.toggle('new', st === 'new'); if (st) { av.setAttribute('role', 'button'); av.setAttribute('aria-label', 'Play the story'); av.dataset.pstory = key; } else { av.removeAttribute('role'); av.removeAttribute('aria-label'); delete av.dataset.pstory; } } }
+    if (av) { const st = sub ? (sub.un ? 'new' : 'seen') : ''; if (bn.dataset.ring !== st) bn.dataset.ring = st; if (av.dataset.ring !== st) { av.dataset.ring = st; av.classList.toggle('rg27', !!st); av.classList.toggle('new', st === 'new'); if (st) { av.setAttribute('role', 'button'); av.setAttribute('aria-label', 'Play the story'); av.dataset.pstory = key; } else { av.removeAttribute('role'); av.removeAttribute('aria-label'); delete av.dataset.pstory; } } }
     /* v483 the Roster tab: each player is a card you can see the person on (two to a row, grouped by position as before).
        The page's own rows are kept and reshaped: number at the top left, first name small, last name bold, the photo
        swapped for the full-size one. */

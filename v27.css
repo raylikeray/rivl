@@ -467,42 +467,67 @@ html.rv27 body .g2.pin27 #gtabs .chip.on,html.rv27 body .g2.pin27 #gtabs .chip[a
 html.rv27 body .g2 #gtabs .chips{transition:background-color .2s ease}
 @media (prefers-reduced-motion:reduce){ html.rv27 body .g2 #gtabs,html.rv27 body .g2 #gtabs .chips{transition:none} }
 
-/* ---------- player and team pages (v482): band, photo on its edge with the story ring, name and Follow, pill tabs ---------- */
-html.rv27 body .approf{font-family:var(--f27);--bh27:calc(env(safe-area-inset-top,0px) + 132px)}
-html.rv27 body .approf header.aph{position:relative;margin:calc(-1 * env(safe-area-inset-top,0px)) 0 0!important;padding:0 0 6px!important;min-height:0!important;height:auto!important;background:var(--b27)!important;color:var(--i27)!important;overflow:visible!important;box-shadow:none!important;border:0!important;border-radius:0!important}
+/* ---------- player and team pages: the top (v485, redone after Ray: "way too boring ... people like color, movement,
+   things that flash, but it needs to be tasteful and polished"). A poster in the team's colours: the player cut out large
+   (or the team's logo) in front of a ring of light, the number or the team's letters running behind, two stripes in the
+   second colour, a glint that crosses now and then. The ring is the story ring: bright and turning with a pulse when
+   there is something new, gray when watched, faint when there is no story. ---------- */
+html.rv27 body .approf{font-family:var(--f27);--bh27:calc(env(safe-area-inset-top,0px) + 322px)}
+html.rv27 body .approf header.aph{position:relative;margin:calc(-1 * env(safe-area-inset-top,0px)) 0 0!important;padding:var(--bh27) 0 6px!important;min-height:0!important;height:auto!important;background:var(--b27)!important;color:#fff!important;overflow-x:clip!important;overflow-y:visible!important;box-shadow:none!important;border:0!important;border-radius:0!important;text-align:left!important}
 html.rv27 body .approf header.aph .apau,html.rv27 body .approf header.aph .apgr,html.rv27 body .approf header.aph::after{display:none!important}
-html.rv27 body .approf header.aph::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--bh27);background:linear-gradient(120deg,var(--a3,var(--a)) 0%,var(--a) 42%,var(--ad) 100%)}
-.bn27{position:absolute;left:0;right:0;top:0;height:var(--bh27);overflow:hidden;background:linear-gradient(120deg,var(--a3,var(--a)) 0%,var(--a) 42%,var(--ad) 100%)}
-.bn27 u{position:absolute;left:0;bottom:-34px;white-space:nowrap;text-decoration:none;font:800 150px/1 var(--f27);letter-spacing:-.05em;color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.2);animation:slide27 26s linear infinite alternate}
-.bn27 i{position:absolute;top:-30%;bottom:-30%;left:-40%;width:34%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.14),rgba(255,255,255,0));transform:skewX(-18deg);animation:sheen27 9s ease-in-out infinite}
-.bn27:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,0) 46%,rgba(0,0,0,.22))}
-@keyframes slide27{from{transform:translateX(4%)}to{transform:translateX(-38%)}}
-@keyframes sheen27{0%,35%{transform:translateX(0) skewX(-18deg)}80%,100%{transform:translateX(520%) skewX(-18deg)}}
-html.rv27 body .approf header.aph .aptop{position:absolute!important;z-index:3;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);height:40px!important;margin:0!important;padding:0!important;display:flex!important;gap:8px}
-html.rv27 body .approf header.aph .aptop .apb{background:rgba(0,0,0,.32)!important;color:#fff!important}
-/* one Follow button, on the name's line (it is the star the page already had, moved and worded) */
-html.rv27 body .approf header.aph .aptop .apb.star{position:absolute;right:4px;top:calc(var(--bh27) - env(safe-area-inset-top,0px) + 6px);width:auto!important;height:36px!important;padding:0 18px!important;border-radius:999px!important;background:var(--i27)!important;color:var(--b27)!important;font:700 14px/1 var(--f27);-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:none!important}
+html.rv27 body .approf header.aph::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--bh27);background:var(--ad)}
+.bn27{position:absolute;left:0;right:0;top:0;height:var(--bh27);overflow:hidden;isolation:isolate;background:radial-gradient(120% 95% at 76% 34%,var(--a3,var(--a)) 0%,var(--a) 40%,var(--ad) 100%)}
+.bn27::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.55) 1px,transparent 1.4px);background-size:13px 13px;opacity:.1;-webkit-mask-image:linear-gradient(100deg,transparent 35%,#000 95%);mask-image:linear-gradient(100deg,transparent 35%,#000 95%)}
+.bn27 u{position:absolute;left:0;top:calc(env(safe-area-inset-top,0px) + 36px);white-space:nowrap;text-decoration:none;font:800 230px/1 var(--f27);letter-spacing:-.06em;color:rgba(255,255,255,.05);-webkit-text-stroke:2px rgba(255,255,255,.22);animation:slide27 24s linear infinite alternate}
+.bn27 .hs27{position:absolute;inset:0;background:linear-gradient(112deg,transparent 0 67%,var(--a2,#fff) 67% 71.5%,transparent 71.5% 74.5%,var(--a2,#fff) 74.5% 76.5%,transparent 76.5%);opacity:.92;animation:stripe27 .8s cubic-bezier(.2,.8,.2,1) both}
+.bn27 .hg27{position:absolute;right:-8px;top:calc(env(safe-area-inset-top,0px) + 38px);width:256px;height:256px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.34) 0%,rgba(255,255,255,.12) 42%,rgba(255,255,255,0) 68%)}
+.bn27 .hr27{position:absolute;right:10px;top:calc(env(safe-area-inset-top,0px) + 56px);width:220px;height:220px;box-sizing:border-box;border-radius:50%;padding:6px;background:rgba(255,255,255,.2);-webkit-mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);animation:ringin27 .9s cubic-bezier(.2,.9,.2,1) both}
+.bn27[data-ring="seen"] .hr27{background:rgba(196,202,212,.6)}
+.bn27[data-ring="new"] .hr27{padding:7px;background:conic-gradient(from 0deg,var(--a2,#ffb03a),#fff 22%,var(--a3,var(--a)) 48%,var(--a2,#ffb03a) 72%,#fff 88%,var(--a2,#ffb03a));animation:ringin27 .9s cubic-bezier(.2,.9,.2,1) both,spin27 7s linear .9s infinite}
+.bn27 .hp27{position:absolute;right:10px;top:calc(env(safe-area-inset-top,0px) + 56px);width:220px;height:220px;box-sizing:border-box;border-radius:50%;border:2px solid var(--a2,#fff);opacity:0}
+.bn27[data-ring="new"] .hp27{animation:ping27 3.2s ease-out 1.2s infinite}
+.bn27 i{position:absolute;top:-30%;bottom:-30%;left:-40%;width:22%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.34),rgba(255,255,255,0));transform:skewX(-20deg);animation:glint27 6.5s ease-in-out 1.4s infinite}
+.bn27::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.5),rgba(0,0,0,0) 60%),linear-gradient(0deg,rgba(0,0,0,.5),rgba(0,0,0,0) 44%),linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,0) 26%)}
+@keyframes slide27{from{transform:translateX(3%)}to{transform:translateX(-36%)}}
+@keyframes stripe27{from{transform:translateX(26%);opacity:0}}
+@keyframes ringin27{from{transform:scale(.55);opacity:0}}
+@keyframes spin27{to{transform:rotate(360deg)}}
+@keyframes ping27{0%{transform:scale(1);opacity:.7}70%,100%{transform:scale(1.24);opacity:0}}
+@keyframes glint27{0%,62%{transform:translateX(0) skewX(-20deg)}82%,100%{transform:translateX(760%) skewX(-20deg)}}
+@keyframes rise27{from{transform:translateY(26px);opacity:0}}
+@keyframes float27{from{transform:translateY(0)}to{transform:translateY(-5px)}}
+@keyframes pop27{0%{transform:scale(.7);opacity:0}70%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+html.rv27 body .approf header.aph .aptop{position:absolute!important;z-index:4;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);height:40px!important;margin:0!important;padding:0!important;display:flex!important;gap:8px}
+html.rv27 body .approf header.aph .aptop .apb{background:rgba(0,0,0,.34)!important;color:#fff!important}
+/* one Follow button, under the name (it is the star the page already had, moved and worded) */
+html.rv27 body .approf header.aph .aptop .apb.star{position:absolute;left:4px;right:auto;top:calc(var(--bh27) - env(safe-area-inset-top,0px) - 62px);width:auto!important;height:38px!important;padding:0 20px!important;border-radius:999px!important;background:#fff!important;color:#0a0c0e!important;font:700 14px/1 var(--f27);-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:0 6px 16px rgba(0,0,0,.28)!important}
 html.rv27 body .approf header.aph .aptop .apb.star svg{display:none}
 html.rv27 body .approf header.aph .aptop .apb.star::after{content:"Follow"}
-html.rv27 body .approf header.aph .aptop .apb.star.on{background:var(--s27)!important;color:var(--i27)!important;box-shadow:inset 0 0 0 1.5px var(--l27)!important}
+html.rv27 body .approf header.aph .aptop .apb.star.on{background:rgba(0,0,0,.38)!important;color:#fff!important;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55)!important}
 html.rv27 body .approf header.aph .aptop .apb.star.on::after{content:"Following"}
-html.rv27 body .approf header.aph .apid{position:relative;z-index:2;display:block!important;margin:0!important;padding:calc(var(--bh27) - 52px) 16px 0!important;text-align:left!important}
-html.rv27 body .approf header.aph .apface,html.rv27 body .approf header.aph .apcrest{position:relative;display:grid!important;place-items:center;width:104px!important;height:104px!important;margin:0!important;border-radius:50%!important;overflow:visible!important;background:var(--b27)!important;box-shadow:none!important;border:0!important;padding:0!important}
-html.rv27 body .approf header.aph .apface img{width:92px!important;height:92px!important;border-radius:50%;object-fit:cover;object-position:50% 8%;background:linear-gradient(160deg,var(--a3,var(--a)),var(--ad))}
-html.rv27 body .approf header.aph .apcrest img{width:92px!important;height:92px!important;border-radius:50%;box-sizing:border-box;padding:16px;object-fit:contain;background:linear-gradient(160deg,var(--a3,var(--a)),var(--ad));filter:none}
-/* the ring: bright and slowly turning when the story has something new, gray when it has been watched, none without a story */
+html.rv27 body .approf header.aph .apid{position:absolute!important;z-index:2;left:0;right:0;top:0;height:var(--bh27);display:block!important;margin:0!important;padding:0!important;pointer-events:none}
+html.rv27 body .approf header.aph .apid>*{pointer-events:auto}
+/* the player, cut out and large */
+html.rv27 body .approf header.aph .apface{position:absolute!important;right:-56px;bottom:0;display:block!important;width:auto!important;height:256px!important;margin:0!important;padding:0!important;border-radius:0!important;overflow:visible!important;background:none!important;box-shadow:none!important;border:0!important;animation:rise27 .75s cubic-bezier(.2,.8,.2,1) .1s both}
+html.rv27 body .approf header.aph .apface img{display:block;width:auto!important;height:256px!important;max-width:none!important;border-radius:0!important;object-fit:contain!important;background:none!important;filter:drop-shadow(-10px 12px 20px rgba(0,0,0,.45));animation:float27 6s ease-in-out 1s infinite alternate}
+html.rv27 body .approf header.aph .apface.rg27::before{display:none!important}
+/* the team's logo, large, standing in the ring */
+html.rv27 body .approf header.aph .apcrest{position:absolute!important;right:45px;top:calc(env(safe-area-inset-top,0px) + 91px);display:grid!important;place-items:center;width:150px!important;height:150px!important;margin:0!important;padding:0!important;border-radius:0!important;overflow:visible!important;background:none!important;box-shadow:none!important;border:0!important;animation:pop27 .8s cubic-bezier(.2,.9,.2,1) .15s both}
+html.rv27 body .approf header.aph .apcrest img{width:150px!important;height:150px!important;padding:0!important;border-radius:0!important;object-fit:contain!important;background:none!important;filter:drop-shadow(0 0 1px rgba(255,255,255,.95)) drop-shadow(0 0 1px rgba(255,255,255,.95)) drop-shadow(0 14px 22px rgba(0,0,0,.45));animation:float27 6s ease-in-out 1s infinite alternate}
+html.rv27 body .approf header.aph .apcrest::before,html.rv27 body .approf header.aph .apcrest::after{display:none!important}
+html.rv27 body .approf header.aph .apcrest,html.rv27 body .approf header.aph .apface{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;outline:0!important}
 html.rv27 body .approf header.aph .rg27{cursor:pointer}
-html.rv27 body .approf header.aph .rg27::before{content:"";position:absolute;inset:0;border-radius:50%;padding:3px;background:rgba(142,148,158,.7);-webkit-mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
-html.rv27 body .approf header.aph .rg27.new::before{background:conic-gradient(from 0deg,var(--a2,#ffb03a),var(--a3,var(--a)),#fff,var(--a2,#ffb03a));animation:spin27 6s linear infinite}
-html.rv27 body .approf header.aph .rg27 img{width:88px!important;height:88px!important}
-@keyframes spin27{to{transform:rotate(360deg)}}
-html.rv27 body .approf header.aph .apnm{margin:10px 0 0!important;padding-right:128px;text-align:left!important}
-html.rv27 body .approf header.aph .apnm h1{margin:0!important;font:700 26px/1.1 var(--f27)!important;letter-spacing:-.02em!important;color:var(--i27)!important;text-shadow:none!important;text-align:left!important}
-html.rv27 body .approf header.aph .apnm h1.long{font-size:22px!important}
-html.rv27 body .approf header.aph .apnm p{margin:5px 0 0!important;font:500 14px/1.3 var(--f27)!important;color:var(--i27b)!important;opacity:1!important;text-align:left!important}
-html.rv27 body .approf header.aph .apnm p a{color:var(--i27)!important;font-weight:600}
-html.rv27 body .approf header.aph .apnm em{color:var(--i27c)!important;opacity:1}
+html.rv27 body .approf header.aph .apnm{position:absolute;left:16px;right:auto;bottom:70px;max-width:60%;margin:0!important;padding:0!important;text-align:left!important}
+html.rv27 body .approf header.aph .apnm h1{margin:0!important;font:800 38px/.98 var(--f27)!important;letter-spacing:-.035em!important;color:#fff!important;text-shadow:0 2px 16px rgba(0,0,0,.4)!important;text-align:left!important;overflow-wrap:anywhere}
+html.rv27 body .approf header.aph .apnm h1 small{display:block;margin-bottom:4px;font:600 16px/1.2 var(--f27);letter-spacing:0;opacity:.94}
+html.rv27 body .approf header.aph .apnm h1.n2{font-size:32px!important}
+html.rv27 body .approf header.aph .apnm h1.n3{font-size:26px!important}
+html.rv27 body .approf header.aph .apnm h1.n4{font-size:22px!important;line-height:1.05!important}
+html.rv27 body .approf header.aph .apnm p{margin:8px 0 0!important;font:600 13px/1.3 var(--f27)!important;color:rgba(255,255,255,.9)!important;opacity:1!important;text-align:left!important;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+html.rv27 body .approf header.aph .apnm p a{color:#fff!important;font-weight:700;text-decoration:none}
+html.rv27 body .approf header.aph .apnm em{color:rgba(255,255,255,.85)!important;opacity:1}
 html.rv27 body .approf header.aph .aprt{display:none!important}
+@media (prefers-reduced-motion:reduce){ .bn27 u,.bn27 i,.bn27 .hs27,.bn27 .hr27,.bn27 .hp27,html.rv27 body .approf header.aph .apface,html.rv27 body .approf header.aph .apface img,html.rv27 body .approf header.aph .apcrest,html.rv27 body .approf header.aph .apcrest img{animation:none!important} }
 /* the team's lead card: the three tiles as one card */
 html.rv27 body .approf header.aph .aptl{position:relative;z-index:2;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:0!important;margin:16px 16px 0!important;padding:14px 4px!important;border-radius:18px;background:var(--s27)!important;box-shadow:none!important}
 html.rv27 body .approf header.aph .aptl>div{background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:0 6px!important;text-align:center;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
