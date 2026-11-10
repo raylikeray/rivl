@@ -681,3 +681,5 @@ html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .v small{display:inline!i
 .yp27 .yrm27{display:block;margin:14px 20px 0;height:40px;font:600 14px/1 var(--f27);color:#ff453a}
 .yp27 .yno27{margin:12px 20px 0;font-size:13px;line-height:1.4;color:var(--i27c)}
 @media (prefers-reduced-motion:reduce){ .yh27 .yp27f,.yh27 .ynm27,.yh27 .ye27{animation:none} }
+/* the entrance plays once per visit (v487) */
+.yp27.st27 .yh27 .yp27f,.yp27.st27 .yh27 .ynm27,.yp27.st27 .yh27 .ye27,.yp27.st27 .yh27 .bn27 .hs27,.yp27.st27 .yh27 .bn27 .hr27{animation:none}

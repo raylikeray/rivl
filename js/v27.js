@@ -308,9 +308,16 @@
     const head = `<header class="yh27" style="${vars}"><div class="bn27${own ? ' ph' : ''}"${own ? ` style="background-image:url(${me.header})"` : ''}><u>${own ? '' : esc(letters)}</u><span class="hs27"></span><span class="hg27"></span><span class="hr27"></span><i></i></div><a class="ym27" href="#settings/menu" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a><span class="yp27f">${face}</span><div class="ynm27"><h1 class="${(name || 'You').length > 11 ? 'n3' : (name || 'You').length > 8 ? 'n2' : ''}">${esc(name || 'You')}</h1><p>${top ? `Top team · <b>${esc(top.t.short || top.t.name)}</b>` : 'No top team yet'}</p></div><button class="ye27" data-you="edit">Edit profile</button></header>`;
     const counts = `<div class="yc27"><div><b>${list.length}</b><span>Teams</span></div><div><b>${nPl}</b><span>Players</span></div><div><b>${nLikes}</b><span>Likes</span></div></div><div class="ya27"><a href="#settings/following">Add a team</a><a href="#settings/following">Add a player</a></div>`;
     const tabs = `<nav class="ytb27" aria-label="Your things">${YT.map(([k, l]) => `<button data-you="tab" data-tab="${k}" class="${k === tab ? 'on' : ''}" aria-pressed="${k === tab}">${l}</button>`).join('')}</nav>`;
-    const html = (youEdit ? yEditHtml(name, list, top, vars, own) : head + counts + tabs + `<div id="yb27" data-tab="${tab}">${yBody(tab, outs)}</div>`), h = hash(html);
-    let pg = $main.querySelector('#you27'); if (!pg) { $main.innerHTML = `<div id="you27" class="h27 yp27"></div>`; pg = $main.querySelector('#you27'); }
-    if (pg.dataset.h !== h) { pg.innerHTML = html; pg.dataset.h = h; }
+    /* each part is repainted only when it changed (v487): tapping a tab or closing a league must not redraw the top, or your
+       name and photo play their entrance again. The entrance runs once per visit; .st27 switches it off after that. */
+    let pg = $main.querySelector('#you27'); if (!pg) { $main.innerHTML = `<div id="you27" class="h27 yp27"></div>`; pg = $main.querySelector('#you27'); setTimeout(() => pg.classList.add('st27'), 1300); }
+    const mode = youEdit ? 'edit' : 'view';
+    if (youEdit) { const html = yEditHtml(name, list, top, vars, own), h = hash(html); if (pg.dataset.m !== mode || pg.dataset.h !== h) { pg.innerHTML = html; pg.dataset.h = h; } pg.dataset.m = mode; }
+    else {
+      if (pg.dataset.m !== mode) { pg.innerHTML = '<div id="yhd27"></div><div id="ycn27"></div><div id="ytb27"></div><div id="yb27"></div>'; pg.dataset.m = mode; pg.dataset.h = ''; }
+      const put = (id, html) => { const el = pg.querySelector('#' + id), h = hash(html); if (el && el.dataset.h !== h) { el.innerHTML = html; el.dataset.h = h; } };
+      put('yhd27', head); put('ycn27', counts); put('ytb27', tabs); const bd = pg.querySelector('#yb27'); bd.dataset.tab = tab; put('yb27', yBody(tab, outs));
+    }
     V.refresh = () => { if (!youEdit) you27(); }; V.refresh.every = 60000;
   }
   function yEditHtml(name, list, top, vars, own) {
