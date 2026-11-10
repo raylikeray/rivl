@@ -82,15 +82,98 @@ function players(html) {
 }
 function scanEnd(s, i) { let depth = 0, q = false; for (let j = i; j < s.length; j++) { const c = s[j]; if (q) { if (c === '\\') j++; else if (c === '"') q = false; continue; } if (c === '"') q = true; else if (c === '{' || c === '[') depth++; else if (c === '}' || c === ']') { depth--; if (!depth) return j - i + 1; } } return s.length - i; }
 
+// ---------- v443: depth. Club colors, every player's 2026 Unrivaled line and game log, her WNBA 2026 line for newcomers,
+// box scores of played games, and from those a RIVL rating per player, a power per club and a win chance per game.
+const COLOR = { Breeze: '#4a2f63', Hive: '#e2ad16', Laces: '#4f9f88', 'Lunar Owls': '#32307c', Mist: '#0d4a6b', Phantom: '#1c1c20', Rose: '#184c48', Vinyl: '#7a0030' };
+const tables = html => {   // every <tr> in a page's flight data, as arrays of cell texts; links kept as "#/path"
+  const rows = flightRows(flightText(html)); const { text, find } = tools(rows); const out = []; const seen = new Set();
+  const txt = (n, acc = []) => { const v = tools(rows).deref(n); if (v == null || v === false) return acc; if (typeof v === 'string') { if (!v.startsWith('$')) acc.push(v); return acc; } if (typeof v === 'number') { acc.push(String(v)); return acc; }
+    if (isEl(v)) { if (typeof v[3].href === 'string') acc.push('#' + v[3].href); txt(v[3].children, acc); return acc; } if (Array.isArray(v)) v.forEach(x => txt(x, acc)); return acc; };
+  Object.keys(rows).forEach(k => find(rows[k], n => n[1] === 'tr').forEach(tr => { const cells = find(tr, n => n[1] === 'td' || n[1] === 'th').map(c => txt(c)); const key = JSON.stringify(cells); if (!seen.has(key)) { seen.add(key); out.push(cells); } }));
+  return out;
+};
+const num = x => { const v = parseFloat(String(x).replace(/[^\d.-]/g, '')); return isNaN(v) ? 0 : v; };
+const pair = x => { const m = /(\d+)\s*-\s*(\d+)/.exec(String(x)); return m ? [+m[1], +m[2]] : [0, 0]; };
+// a line from cells after the first: MIN PTS FG 3PT FT REB OREB DREB AST STL BLK TO PF (+/-)
+const lineOf = c => { const [fgm, fga] = pair(c[2]), [tpm, tpa] = pair(c[3]), [ftm, fta] = pair(c[4]);
+  return { min: num(c[0]), pts: num(c[1]), fgm, fga, tpm, tpa, ftm, fta, reb: num(c[5]), oreb: num(c[6]), dreb: num(c[7]), ast: num(c[8]), stl: num(c[9]), blk: num(c[10]), tov: num(c[11]), pf: num(c[12]), pm: c[13] != null && c[13] !== '' ? num(c[13]) : null }; };
+const gmsc = l => l.pts + .4 * l.fgm - .7 * l.fga - .4 * (l.fta - l.ftm) + .7 * l.oreb + .3 * l.dreb + l.stl + .7 * l.ast + .7 * l.blk - .4 * l.pf - l.tov;
+const sumL = ls => { const t = { gp: ls.length, min: 0, pts: 0, fgm: 0, fga: 0, tpm: 0, tpa: 0, ftm: 0, fta: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, tov: 0, pf: 0 }; ls.forEach(l => Object.keys(t).forEach(k => { if (k !== 'gp') t[k] += l[k] || 0; })); return t; };
+const avg = t => t && t.gp ? { gp: t.gp, min: +(t.min / t.gp).toFixed(1), pts: +(t.pts / t.gp).toFixed(1), reb: +(t.reb / t.gp).toFixed(1), ast: +(t.ast / t.gp).toFixed(1), stl: +(t.stl / t.gp).toFixed(1), blk: +(t.blk / t.gp).toFixed(1), fg: t.fga ? +(100 * t.fgm / t.fga).toFixed(1) : null, tp: t.tpa ? +(100 * t.tpm / t.tpa).toFixed(1) : null, tpm: +(t.tpm / t.gp).toFixed(1) } : null;
+const UA2 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36';
+const jget = async u => { for (let i = 0; i < 3; i++) { try { const r = await fetch(u, { headers: { 'user-agent': UA2 } }); if (r.ok) return r.json(); if (r.status === 404) return null; } catch (e) {} await new Promise(r => setTimeout(r, 900 * (i + 1))); } return null; };
+const plain = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
 const sh = await page('/schedule'); const ph = await page('/players');
 if (!sh) { console.log('schedule page did not answer; keeping the last file'); process.exit(0); }
 const S = schedule(sh); const P = ph ? players(ph) : { list: [], logos: {} };
+const prev = existsSync('data/unrivaled.json') ? JSON.parse(readFileSync('data/unrivaled.json', 'utf8')) : {};
+const prevP = {}; [...(prev.clubs || []).flatMap(c => c.players || []), ...(prev.pool || [])].forEach(p => { prevP[p.id] = p; });
+const prevBox = prev.boxes || {};
 Object.entries(P.logos || {}).forEach(([n, l]) => { (S.clubs[n] = S.clubs[n] || { name: n, slug: n.toLowerCase().replace(/\s+/g, '-') }).logo = l; });
-const clubs = Object.values(S.clubs).map(c => ({ ...c, players: P.list.filter(p => p.club === c.name).map(({ club, ...p }) => p) }));
-const pool = P.list.filter(p => !S.clubs[p.club]).map(({ club, ...p }) => p);
-const out = { updated: new Date().toISOString(), source: 'Unrivaled', url: B + '/schedule', season: (/night-(\d{4})/.exec(JSON.stringify(S.games[0] || {})) || [])[1] || '', clubs, pool, games: S.games };
+const hrefs = {}; (ph || '').replace(/\/player\/([a-z0-9-]+)/g, (m, h) => { hrefs[h.split('-').pop()] = h; return m; });
+const all = P.list;
+// 2026 Unrivaled game log off each player's page, once (it stays put after the season)
+for (const p of all) {
+  const was = prevP[p.id]; if (was && was.u26) { p.u26 = was.u26; p.log26 = was.log26 || []; } else if (hrefs[p.id] && !process.env.UNR_DIR) {
+    const h = await page('/player/' + hrefs[p.id]); const rows = h ? tables(h).filter(r => r[0] && r[0].some(x => /^#\/game\//.test(x)) && r.length >= 14) : [];
+    const lines = rows.map(r => { const l = lineOf(r.slice(2).map(c => c.join(' '))); const teams = r[1].filter(x => /^#\/[a-z-]+$/.test(x)).map(x => x.slice(2)); return { ...l, d: r[0].filter(x => !x.startsWith('#')).join(' ').trim(), g: (r[0].find(x => /^#\/game\//.test(x)) || '').slice(7), at: teams[0] || '', ht: teams[1] || '' }; });
+    p.u26 = sumL(lines); p.log26 = lines.map(l => ({ d: l.d, at: l.at, ht: l.ht, min: l.min, pts: l.pts, reb: l.reb, ast: l.ast, fg: `${l.fgm}-${l.fga}`, tp: `${l.tpm}-${l.tpa}` })); p.u26.gs = +lines.reduce((a, l) => a + gmsc(l), 0).toFixed(1);
+    await new Promise(r => setTimeout(r, 250));
+  }
+  p.href = hrefs[p.id] || '';
+}
+// WNBA 2026 line and ESPN id, once
+for (const p of all) {
+  const was = prevP[p.id]; if (was && was.espn !== undefined) { p.espn = was.espn; p.w26 = was.w26; continue; }
+  p.espn = ''; p.w26 = null; if (process.env.UNR_DIR) continue;
+  const sr = await jget(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(plain(p.name))}&limit=5&type=player`);
+  const hit = ((((sr || {}).results || []).find(r => r.type === 'player') || {}).contents || []).find(c => /l:59~a:\d+/.test(c.uid || ''));
+  if (!hit) continue; p.espn = /a:(\d+)/.exec(hit.uid)[1];
+  const st = await jget(`https://site.web.api.espn.com/apis/common/v3/sports/basketball/wnba/athletes/${p.espn}/stats`);
+  const cat = ((st || {}).categories || []).find(c => c.name === 'averages'); const row = cat && (cat.statistics || []).filter(x => x.season && x.season.year <= 2026).slice(-1)[0];
+  if (row) { const L = cat.labels; const g = k => row.stats[L.indexOf(k)]; const [fgm, fga] = String(g('FG')).split('-').map(Number), [ftm, fta] = String(g('FT')).split('-').map(Number), [tpm] = String(g('3PT')).split('-').map(Number);
+    const l = { min: num(g('MIN')), pts: num(g('PTS')), fgm, fga, ftm, fta, tpm, oreb: num(g('OR')), dreb: num(g('DR')), reb: num(g('REB')), ast: num(g('AST')), stl: num(g('STL')), blk: num(g('BLK')), tov: num(g('TO')), pf: num(g('PF')) };
+    p.w26 = { year: row.season.year, gp: num(g('GP')), min: l.min, pts: l.pts, reb: l.reb, ast: l.ast, pm: l.min ? +(gmsc(l) / l.min).toFixed(4) : 0 }; }
+  await new Promise(r => setTimeout(r, 200));
+}
+// box scores of finished games (kept; a final never changes)
+const boxes = {};
+for (const g of S.games) {
+  if (!g.final) continue; if (prevBox[g.id]) { boxes[g.id] = prevBox[g.id]; continue; } if (process.env.UNR_DIR) continue;
+  const h = await page(`/game/${g.id}/box-score`); if (!h) continue;
+  const rows = tables(h).filter(r => r[0] && r[0].some(x => /^#\/player\//.test(x)));
+  boxes[g.id] = rows.map(r => ({ id: (r[0].find(x => /^#\/player\//.test(x)) || '').split('-').pop(), st: r[0].includes('S') ? 1 : 0, ...lineOf(r.slice(1).map(c => c.join(' '))) }));
+  await new Promise(r => setTimeout(r, 250));
+}
+// ratings: game score per minute, 2027 minutes weigh double; a newcomer's WNBA rate is scaled by how returners' rates compare
+const both = all.filter(p => p.u26 && p.u26.min >= 40 && p.w26 && p.w26.pm > 0).map(p => (p.u26.gs / p.u26.min) / p.w26.pm).sort((a, b) => a - b);
+const scale = both.length >= 5 ? both[Math.floor(both.length / 2)] : 1.25;
+const lines27 = {}; Object.values(boxes).forEach(b => b.forEach(l => { (lines27[l.id] = lines27[l.id] || []).push(l); }));
+all.forEach(p => {
+  const t27 = lines27[p.id] ? sumL(lines27[p.id]) : null; const g27 = lines27[p.id] ? lines27[p.id].reduce((a, l) => a + gmsc(l), 0) : 0;
+  let min = 0, gs = 0; if (p.u26 && p.u26.min) { min += p.u26.min; gs += p.u26.gs; } if (t27 && t27.min) { min += 2 * t27.min; gs += 2 * g27; }
+  p.src = min >= 30 ? 'unr' : p.w26 && p.w26.pm ? 'wnba' : 'none';
+  p.rate = min >= 30 ? gs / min : p.w26 && p.w26.pm ? p.w26.pm * scale : null;
+  p.a26 = avg(p.u26); p.a27 = avg(t27);
+});
+const known = all.filter(p => p.rate != null).map(p => p.rate); const mean = known.reduce((a, b) => a + b, 0) / (known.length || 1);
+const sd = Math.sqrt(known.reduce((a, b) => a + (b - mean) ** 2, 0) / (known.length || 1)) || 1; const floor = [...known].sort((a, b) => a - b)[Math.floor(known.length * .1)] || mean;
+all.forEach(p => { p.rating = Math.max(60, Math.min(97, Math.round(80 + 7 * ((p.rate != null ? p.rate : floor) - mean) / sd))); });
+const W6 = [.26, .22, .18, .14, .11, .09];
+const clubs = Object.values(S.clubs).map(c => { const ps = all.filter(p => p.club === c.name).sort((a, b) => b.rating - a.rating);
+  return { ...c, color: COLOR[c.name] || '#555', base: +ps.slice(0, 6).reduce((a, p, i) => a + p.rating * W6[i], 0).toFixed(2), players: ps.map(({ club, u26, rate, ...p }) => p) }; });
+const winP = (a, b) => 1 / (1 + Math.pow(10, (b - a) / 25));
+const pw = {}; clubs.forEach(c => { pw[c.name] = c.base; });
+[...S.games].filter(g => g.final && g.score && g.teams.length === 2).sort((a, b) => (a.at || a.ymd).localeCompare(b.at || b.ymd)).forEach(g => {
+  const [a, b] = g.teams; const p = winP(pw[a], pw[b]); const r = g.score[0] > g.score[1] ? 1 : 0; pw[a] += 3 * (r - p); pw[b] -= 3 * (r - p); });
+clubs.forEach(c => { c.power = +pw[c.name].toFixed(1); }); [...clubs].sort((a, b) => b.power - a.power).forEach((c, i) => { c.rank = i + 1; });
+S.games.forEach(g => { if (g.teams.length === 2 && pw[g.teams[0]] != null && pw[g.teams[1]] != null && !g.final) g.p0 = +winP(pw[g.teams[0]], pw[g.teams[1]]).toFixed(3); });
+const pool = all.filter(p => !S.clubs[p.club]).map(({ club, u26, rate, ...p }) => p);
+const out = { updated: new Date().toISOString(), source: 'Unrivaled', url: B + '/schedule', season: (/night-(\d{4})/.exec(JSON.stringify(S.games[0] || {})) || [])[1] || '', scale: +scale.toFixed(3), clubs, pool, games: S.games, boxes };
 const ok = out.games.filter(g => g.ymd).length;
 if (!ok) { console.log('no dated games found; keeping the last file'); process.exit(0); }
 writeFileSync('data/unrivaled.json', JSON.stringify(out));
-console.log('games', out.games.length, 'dated', ok, 'with teams', out.games.filter(g => g.teams.length === 2).length, 'with time', out.games.filter(g => g.time).length, 'clubs', clubs.length, 'players', P.list.length);
-console.log(JSON.stringify(out.games.slice(0, 2), null, 1)); console.log(JSON.stringify(clubs[0] && { ...clubs[0], players: clubs[0].players.slice(0, 2) }, null, 1));
+console.log('games', out.games.length, 'final', Object.keys(boxes).length, 'clubs', clubs.length, 'players', all.length, 'scale', scale.toFixed(3), 'src', JSON.stringify(all.reduce((o, p) => (o[p.src] = (o[p.src] || 0) + 1, o), {})));
+console.log(clubs.map(c => `${c.rank}. ${c.name} ${c.power}`).join(' | '));
+console.log(all.sort((a, b) => b.rating - a.rating).slice(0, 12).map(p => `${p.name} ${p.rating} (${p.src})`).join(', '));
