@@ -21,7 +21,7 @@
 <link rel="preconnect" href="https://site.api.espn.com" crossorigin>
 <link rel="preconnect" href="https://a.espncdn.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=446">
+<link rel="stylesheet" href="app.css?v=447">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -46,12 +46,12 @@
 </div>
 <nav class="tabs" id="tabs" aria-label="Main">
   <div class="tabpill">
-  <a class="tab" data-tab="home" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.24 2.74a1.2 1.2 0 0 1 1.52 0l8.4 6.92a1 1 0 0 1-.64 1.77H19.3v7.86A1.7 1.7 0 0 1 17.6 21h-3.5v-5.3a1.1 1.1 0 0 0-1.1-1.1h-2a1.1 1.1 0 0 0-1.1 1.1V21H6.4a1.7 1.7 0 0 1-1.7-1.71v-7.86H3.48a1 1 0 0 1-.64-1.77z"/></svg></a>
-  <a class="tab" data-tab="scores" href="#scores" aria-label="Scores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="5" width="18.4" height="14" rx="3.4"/><path d="M12 8.2v7.6M7.2 10v4M16.8 10v4"/></svg></a>
-  <a class="tab" data-tab="standings" href="#standings" aria-label="Standings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.8h10v4.6a5 5 0 0 1-10 0zM7 5.6H4.2v1.8A3.4 3.4 0 0 0 7.4 11M17 5.6h2.8v1.8a3.4 3.4 0 0 1-3.2 3.6M12 13.4v3.6M8.4 20.2h7.2M9.6 17h4.8"/></svg></a>
-  <a class="tab" data-tab="stats" href="#stats" aria-label="Stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9.2 11.3l4 4L21 7.5"/><path d="M15 7.5h6v6"/></svg></a>
+  <a class="tab" data-tab="home" href="#home" aria-label="Home"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.24 2.74a1.2 1.2 0 0 1 1.52 0l8.4 6.92a1 1 0 0 1-.64 1.77H19.3v7.86A1.7 1.7 0 0 1 17.6 21h-3.5v-5.3a1.1 1.1 0 0 0-1.1-1.1h-2a1.1 1.1 0 0 0-1.1 1.1V21H6.4a1.7 1.7 0 0 1-1.7-1.71v-7.86H3.48a1 1 0 0 1-.64-1.77z"/></svg><span>Home</span></a>
+  <a class="tab" data-tab="scores" href="#scores" aria-label="Scores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="5" width="18.4" height="14" rx="3.4"/><path d="M12 8.2v7.6M7.2 10v4M16.8 10v4"/></svg><span>Scores</span></a>
+  <a class="tab" data-tab="standings" href="#standings" aria-label="Standings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.8h10v4.6a5 5 0 0 1-10 0zM7 5.6H4.2v1.8A3.4 3.4 0 0 0 7.4 11M17 5.6h2.8v1.8a3.4 3.4 0 0 1-3.2 3.6M12 13.4v3.6M8.4 20.2h7.2M9.6 17h4.8"/></svg><span>Standings</span></a>
+  <a class="tab" data-tab="stats" href="#stats" aria-label="Stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9.2 11.3l4 4L21 7.5"/><path d="M15 7.5h6v6"/></svg><span>Stats</span></a>
   </div>
-  <a class="tab srch" data-tab="search" href="#search" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.8"/><path d="m15.6 15.6 5.2 5.2"/></svg></a>
+  <a class="tab srch" data-tab="search" href="#search" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.8"/><path d="m15.6 15.6 5.2 5.2"/></svg><span>Search</span></a>
 </nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="panel" id="panel" hidden role="dialog"><div class="panel-in"></div></div>
@@ -65,20 +65,20 @@
   </div>
 </div>
 
-<script src="config.js?v=446"></script>
-<script src="js/core.js?v=446"></script>
-<script src="js/sim.js?v=446"></script>
-<script src="js/hub.js?v=446"></script>
-<script src="js/rating.js?v=446"></script>
-<script src="views.js?v=446"></script>
-<script src="screens.js?v=446"></script>
-<script src="js/unr.js?v=446"></script>
-<script src="js/ask.js?v=446"></script>
-<script src="js/ask2.js?v=446"></script>
-<script src="js/stats.js?v=446"></script>
-<script src="js/recruit.js?v=446"></script>
-<script src="js/bracket.js?v=446"></script>
-<script src="app.js?v=446"></script>
-<script src="more.js?v=446"></script>
+<script src="config.js?v=447"></script>
+<script src="js/core.js?v=447"></script>
+<script src="js/sim.js?v=447"></script>
+<script src="js/hub.js?v=447"></script>
+<script src="js/rating.js?v=447"></script>
+<script src="views.js?v=447"></script>
+<script src="screens.js?v=447"></script>
+<script src="js/unr.js?v=447"></script>
+<script src="js/ask.js?v=447"></script>
+<script src="js/ask2.js?v=447"></script>
+<script src="js/stats.js?v=447"></script>
+<script src="js/recruit.js?v=447"></script>
+<script src="js/bracket.js?v=447"></script>
+<script src="app.js?v=447"></script>
+<script src="more.js?v=447"></script>
 </body>
 </html>
