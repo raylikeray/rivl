@@ -972,6 +972,15 @@
         lp.filter(x => (x.aths || []).includes(pid)).forEach(x => its.push(Object.assign(postItem(x, L), { v9: clipKind(x.title, x.k || '', x.dur) === 'talk' ? '' : vertOf(null, x.url) })));
         srchGet(p, L).filter(x => now - x.ts < ST_CLIPS).forEach(x => its.push(x));
         finish({ key: `${lk}:p${pid}`, lk, kind: 'player', id: pid, name: p.short || lastName(p.name || ''), full: p.name || '', color, hs }, its, ST_MAX_P); });
+      /* v459 the league's biggest plays: single-play clips from the last day of games, ranked by how far each moved the
+         win chance (weighed by the Stories job from the feed's own line). Biggest first. A league you follow nothing in
+         has no ring, and fewer than three plays is not a list. */
+      if (o.follows) { const all = ((storiesD && storiesD.top) || []).filter(c => c.lk === lk && c.url); const by = (a, b) => Math.abs(b.w) - Math.abs(a.w);
+        let tp = all.filter(c => now - c.gt < 30 * 36e5).sort(by).slice(0, 10); if (tp.length < 3) tp = all.filter(c => now - c.gt < 44 * 36e5).sort(by).slice(0, 10);
+        if (tp.length >= 3) { const its = tp.map((c, i) => { const home = c.w > 0; const us = home ? c.h : c.aw, them = home ? c.aw : c.h;
+            return { kind: 'vid', id: 'v' + c.id, ts: c.ts, url: c.url, v9: vertOf(null, c.url), title: c.title, dur: c.dur || 20, thumb: c.thumb || '', ck: 'play', aths: c.a || [], L, rank: i + 1, wc: `${us.ab} win chance +${Math.round(Math.abs(c.w) * 100)}%`,
+              tag: `${c.per}${c.ck ? ' ' + c.ck : ''} \u00b7 ${us.ab} ${home ? c.hs : c.as}, ${them.ab} ${home ? c.as : c.hs}`, sub: `Final \u00b7 ${us.nm} ${us.sc}, ${them.nm} ${them.sc}` }; });
+          const sn = new Set(seen[`${lk}:top`] || []); subs.push({ key: `${lk}:top`, lk, kind: 'league', id: 'top', name: `Top ${its.length}`, abbr: L.short, full: `${L.short} biggest plays`, color: '#5b3df5', its, un: its.some(x => !sn.has(x.id)), last: Math.max(...its.map(x => x.ts)) }); } }
     });
     return subs.sort((a, b) => (b.un - a.un) || (b.last - a.last));
   }
@@ -999,7 +1008,7 @@
       x.its.slice(i, i + 2).forEach((it, k) => { if (it.kind !== 'vid' || !it.v9) return; const p = v9Pick(it.v9);
         // the opening seconds of the first clip in the first two unwatched rings are fetched ahead, so the tap has something to show at once
         if (n < 2 && k === 0 && x.un && !light && !stHead.has(it.v9)) { stHead.add(it.v9); p.then(u => u === it.v9 ? null : fetch(u).then(r => r.ok ? r.text() : '').then(tx => { const seg = String(tx).split(/\r?\n/).find(l => l && !l.startsWith('#')); if (seg) return fetch(new URL(seg.trim(), u).href).then(r => r.arrayBuffer()); })).catch(() => {}); } }); }); };
-  const stAvatar = (x, size) => x.kind === 'player' ? headshot(x.hs, x.color, size, x.full || x.name) : x.logo ? imgSized(x.logo, size * 2, size * 2) : `<b>${esc(x.abbr || '')}</b>`;
+  const stAvatar = (x, size) => x.kind === 'league' ? size > 24 ? `<b>${esc(x.abbr || '')}</b>` : `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.5 13.4h5.9L9.3 22l9.2-12.1h-6.1L13.2 2z"/></svg>` : x.kind === 'player' ? headshot(x.hs, x.color, size, x.full || x.name) : x.logo ? imgSized(x.logo, size * 2, size * 2) : `<b>${esc(x.abbr || '')}</b>`;
   function bubbles() {
     const subs = storySubjects(); if (!subs.length) return ''; stWarm(subs);
     return `<div class="sbubs">${subs.map(x => `<button class="sbub${x.un ? '' : ' seen'}${x.kind === 'player' ? ' pl' : ''}" data-act="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span class="ring"><span>${stAvatar(x, x.kind === 'player' ? 52 : 30)}</span></span><small>${esc(x.name)}</small></button>`).join('')}</div>`;
@@ -1064,7 +1073,7 @@
           vd.muted = quiet; if (!paused) play();
         } catch (e) {}
         const ln = it.ln, line = ln ? [[ln.pts, 'PTS'], [ln.reb, 'REB'], [ln.ast, 'AST']].filter(c => c[0] !== '' && c[0] != null).map(c => `${esc(String(c[0]))} ${c[1]}`).join(' \u00b7 ') : '';
-        const meta = `${it.gw ? '<span class="gw">Game winner</span>' : ''}${it.tag ? `<span>${esc(it.tag)}</span>` : ''}${line ? `<span>${line}</span>` : ''}`;
+        const meta = `${it.rank ? `<span class="gw">No. ${it.rank}</span>` : ''}${it.gw ? '<span class="gw">Game winner</span>' : ''}${it.wc ? `<span>${esc(it.wc)}</span>` : ''}${it.tag ? `<span>${esc(it.tag)}</span>` : ''}${line ? `<span>${line}</span>` : ''}`;
         cap.innerHTML = `${meta ? `<div class="stmeta">${meta}</div>` : ''}<b>${esc(it.title)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ''}`; cap.hidden = false;
       } else {
         try { vd.pause(); } catch (e) {} vw.hidden = true; bl.style.backgroundImage = 'none'; cap.hidden = true; card.hidden = false;

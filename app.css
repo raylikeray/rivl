@@ -5447,3 +5447,7 @@ html body .story .stcd .sttp+.stwh{margin-top:26px}
 html body .story .stvdw video{grid-area:1/1;opacity:0}
 html body .story .stvdw video.on{opacity:1;z-index:1}
 @media (min-width:700px) and (min-height:900px){html body .story .stcd{zoom:1.3}}
+
+/* v459 the league's biggest plays ring: the league's name in the ring, a bolt beside the title inside the story */
+html body .story .sthd .ring .stbolt{color:#fff;width:18px;height:18px;flex:none}
+html body .sbub .ring b{letter-spacing:.02em;white-space:nowrap}

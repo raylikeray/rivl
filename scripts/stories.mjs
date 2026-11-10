@@ -52,13 +52,32 @@ if (!out.length && (old.items || []).length) { console.log('nothing resolved; ke
    it to keep a team's story to that team's plays and to print the quarter, clock and score under each one.
    Games are swept for three days; a game that ended more than 10 hours ago and was already swept is left alone. */
 const cm = { ...(old.cm || {}) }, swept = { ...(old.swept || {}) };
+/* The biggest plays. For a finished game, each single-play clip is weighed by how far its play moved the win chance
+   (the feed's own line, read at that play and the one before). The few biggest per game are kept with everything a
+   phone needs to play them: file, title, and the clock and score at the play. 'wp' remembers which games were weighed. */
+const wpDone = { ...(old.wp || {}) }; let cand = (old.top || []).filter(c => now - c.gt < 40 * 36e5);
+const perLbl = p => { const d = String((p.period || {}).displayValue || ''), n = +(p.period || {}).number || 0; return /quarter/i.test(d) ? `Q${n}` : /half/i.test(d) ? (n === 1 ? '1st half' : '2nd half') : d.replace(/overtime/i, 'OT'); };
+const weigh = async (lk, path, e, vids) => {
+  const ones = vids.filter(v => { const c = cm[String(v.id)]; return c && c.t === 'OnePlay' && c.p && (+v.duration || 0) < 45; });
+  if (wpDone[e.id] && wpDone[e.id].n === ones.length) return; wpDone[e.id] = { n: ones.length, t: e.t }; if (!ones.length) return;
+  const s = await get(`${SITE}/${path}/summary?event=${e.id}`); if (!s) { delete wpDone[e.id]; return; }
+  const wp = (s.winprobability || []).filter(x => x.homeWinPercentage != null); const at = new Map(wp.map((x, i) => [String(x.playId), i])); const plays = new Map((s.plays || []).map(q => [String(q.id), q]));
+  const comp = (((s.header || {}).competitions || [])[0] || {}).competitors || []; const side = ha => { const c = comp.find(x => x.homeAway === ha) || {}; const tm = c.team || {}; return { id: String(tm.id || ''), ab: tm.abbreviation || '', nm: tm.shortDisplayName || tm.name || tm.displayName || '', sc: c.score != null ? String(c.score) : '' }; };
+  const H = side('home'), A = side('away'); if (!H.id || !A.id || wp.length < 20) return;
+  const mine = [];
+  for (const v of ones) { const c = cm[String(v.id)], i = at.get(c.p), q = plays.get(c.p); if (!i || !q || q.homeScore == null) continue;   // i === 0 has no play before it
+    const w = wp[i].homeWinPercentage - wp[i - 1].homeWinPercentage; c.w = Math.round(w * 1000) / 1000; const url = (((v.links || {}).source) || {}).href || '';
+    if (Math.abs(w) < .03 || !/^https:\/\/[^"]+\.mp4/.test(url)) continue;
+    mine.push({ lk, id: String(v.id), e: e.id, gt: e.t, ts: c.ts, w: c.w, title: String(v.headline || '').trim(), url, thumb: v.thumbnail || '', dur: Math.round(+v.duration || 0), a: c.a, per: perLbl(q), ck: String((q.clock || {}).displayValue || ''), hs: q.homeScore, as: q.awayScore, h: H, aw: A }); }
+  mine.sort((x, y) => Math.abs(y.w) - Math.abs(x.w)); cand = cand.filter(c => c.e !== e.id).concat(mine.slice(0, 3));
+};
 const ymd = n => new Date(now - n * 864e5).toISOString().slice(0, 10).replace(/-/g, '');
 let cmAsked = 0, gamesAsked = 0;
 for (const [lk, path] of Object.entries(LG)) {
   const evs = new Map();
   for (const n of [0, 1, 2]) { const d = await get(`${SITE}/${path}/scoreboard?dates=${ymd(n)}${lk.startsWith('ncaa') ? '&groups=50&limit=400' : ''}`);
     ((d || {}).events || []).forEach(e => { const st = ((e.status || {}).type || {}); if (st.state === 'pre') return; evs.set(String(e.id), { id: String(e.id), done: !!st.completed, t: Date.parse(e.date) || now }); }); }
-  const todo = [...evs.values()].filter(e => !(swept[e.id] && e.done && swept[e.id] - e.t > 12.5 * 36e5));
+  const todo = [...evs.values()].filter(e => !(swept[e.id] && e.done && swept[e.id] - e.t > 12.5 * 36e5) || (e.done && !wpDone[e.id] && now - e.t < 36 * 36e5));
   for (let i = 0; i < todo.length; i += 8) {
     await Promise.all(todo.slice(i, i + 8).map(async e => {
       gamesAsked++; const d = await get(`${SITE}/${path}/videos?event=${e.id}`); if (!d) return; swept[e.id] = now;
@@ -67,12 +86,17 @@ for (const [lk, path] of Object.entries(LG)) {
         const a = (c.categories || []).filter(x => x.type === 'athlete').map(x => String(x.athleteId || '')).filter(Boolean);
         const pl = ((c.plays || [])[0] || {}).id;
         cm[id] = { e: e.id, p: pl != null ? String(pl) : '', a, t: String((c.tracking || {}).coverageType || ''), ts: Date.parse(c.originalPublishDate || '') || now }; }
+      if (e.done) { try { await weigh(lk, path, e, d.videos || []); } catch (er) { console.log('weigh failed', e.id, String(er).slice(0, 80)); } }
     }));
   }
   console.log(lk, 'games', evs.size, 'asked', todo.length);
 }
 for (const [id, c] of Object.entries(cm)) if (!(now - c.ts < CM_KEEP)) delete cm[id];
 for (const [id, t] of Object.entries(swept)) if (!(now - t < 4 * 864e5)) delete swept[id];
-writeFileSync('data/stories.json', JSON.stringify({ updated: new Date().toISOString(), items: out, cm, swept }));
+for (const [id, x] of Object.entries(wpDone)) if (!(now - x.t < 4 * 864e5)) delete wpDone[id];
+// the list the app shows: per league, the 14 biggest from games that tipped in the last 40 hours
+const top = []; for (const lk of Object.keys(LG)) top.push(...cand.filter(c => c.lk === lk).sort((x, y) => Math.abs(y.w) - Math.abs(x.w)).slice(0, 14));
+writeFileSync('data/stories.json', JSON.stringify({ updated: new Date().toISOString(), items: out, cm, swept, wp: wpDone, top }));
+console.log('top plays', top.length, top.slice(0, 3).map(c => `${c.lk} ${c.w} ${c.title}`));
 console.log('clip map', Object.keys(cm).length, 'games asked', gamesAsked, 'clips asked', cmAsked);
 console.log('stories', out.length, 'resolved now', asked, out.slice(0, 4).map(x => `${x.lk} ${x.title} [${x.aths.length}a ${x.teams.length}t]`));
