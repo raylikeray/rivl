@@ -441,7 +441,9 @@
     const W = () => strip.clientWidth || 1;
     const top0 = () => strip.getBoundingClientRect().top + window.scrollY;   // where the panels start on the page
     const stick = () => Math.max(0, top0() - stickTop - (tabs.offsetHeight || 0));   // the scroll at which the tabs pin
-    const yFor = i => ys[i] != null ? ys[i] : Math.min(window.scrollY, stick());
+    /* v479: a tab opens at its top, right under the pinned tab row. It used to reopen at the scroll each tab was left at,
+       so tapping Summary from deep in Box slid a panel in low on the screen and then jumped the page to the top. */
+    const yFor = i => Math.min(window.scrollY, stick());
     const place = () => { const y = window.scrollY; panels.forEach((p, i) => { p.style.transform = i === cur ? '' : `translateY(${y - yFor(i)}px)`; }); };
     // v413: the strip's own padding counts too, or a padded strip trims the bottom of its last card (Game info, 12px)
     const padY = () => { const cs = getComputedStyle(strip); return (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0) + (cs.boxSizing === 'border-box' ? (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0) : 0); };

@@ -224,8 +224,16 @@ html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) b
 html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgt{flex:1 1 0;height:34px;padding:0 4px;place-items:center;border-radius:999px;background:var(--s27);font:600 13.5px/1 var(--f27);letter-spacing:0;color:var(--i27b);transition:none}
 html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgt.on{background:var(--a27);color:#fff;font-weight:700}
 html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgink{display:none}
-html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgd{top:-4px;right:-9px;box-shadow:0 0 0 2px var(--s27)}
-html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgt.on .lgd{background:#fff;box-shadow:none}
+/* v479: a league with a game on right now. The red light sits inside the chip, before the name, and pulses; the chip
+   gets a thin red edge. (It was a dot hanging off the chip's corner.) */
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgt>span{display:inline-flex;flex-direction:row-reverse;align-items:center;gap:6px;padding:0}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgd{position:static;flex:none;width:7px;height:7px;border-radius:50%;background:#ff453a;animation:live27 1.6s ease-out infinite}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgd[hidden]{display:none}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgt:has(.lgd:not([hidden])):not(.on){box-shadow:inset 0 0 0 1.5px rgba(255,69,58,.6);color:var(--i27)}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgt.on .lgd{background:#fff;animation-name:live27w}
+@keyframes live27{0%{box-shadow:0 0 0 0 rgba(255,69,58,.6)}70%,100%{box-shadow:0 0 0 6px rgba(255,69,58,0)}}
+@keyframes live27w{0%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}70%,100%{box-shadow:0 0 0 6px rgba(255,255,255,0)}}
+@media (prefers-reduced-motion:reduce){ html.rv27 body .hdr .lgd{animation:none!important} }
 .sp27{padding:0 0 28px;font-family:var(--f27);color:var(--i27)}
 .sp27 .um27{display:flex;gap:8px;padding:14px 16px 0}
 .sp27 .um27 button{height:32px;padding:0 14px;border:0;border-radius:999px;background:var(--s27);color:var(--i27b);font:600 13px/1 var(--f27)}
