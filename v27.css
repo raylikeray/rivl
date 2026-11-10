@@ -458,6 +458,9 @@ html.rv27 body .g2 #gbody{font-family:var(--f27)}
 html.rv27 body .g2 #gtabs{z-index:31;transition:background-color .2s ease}
 html.rv27 body .g2.pin27 #gtabs{background:transparent!important;box-shadow:0 14px 22px -16px rgba(0,0,0,.75)}
 html.rv27 body .g2.pin27 .g2fx{overflow:visible;clip-path:inset(0 0 calc(-1 * var(--tb27h,58px)) 0)}
+/* v481: the bright line where the two colours meet is see-through, so the part of the bar behind the tabs needs its own
+   solid ground or the page shows through the line */
+html.rv27 body .g2.pin27 .g2fx::before{content:"";position:absolute;left:0;right:0;top:100%;height:var(--tb27h,58px);background:var(--bg,#000);z-index:-2}
 html.rv27 body .g2.pin27 #gtabs .chips{background:rgba(0,0,0,.3)}
 html.rv27 body .g2.pin27 #gtabs .chip{color:rgba(255,255,255,.86)!important}
 html.rv27 body .g2.pin27 #gtabs .chip.on,html.rv27 body .g2.pin27 #gtabs .chip[aria-pressed="true"]{background:#fff!important;color:#0a0c0e!important}
