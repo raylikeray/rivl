@@ -41,6 +41,7 @@
     if ((m = h.match(/^(player|team|game|article|venue)\/([a-z]+)\/([A-Za-z0-9]+)(?:\/p\/(\d+))?$/))) return { name: m[1], lk: lkOf(m[2]), args: m[4] ? [lkOf(m[2]), m[3], m[4]] : [lkOf(m[2]), m[3]] };   // a game can open on one player: #game/nba/401/p/1966
     if (LEAGUES[h]) { if (store.get('v5:lk') !== h) { store.set('v5:lk', h); if (V.applyAccent) V.applyAccent(); } const nm = store.get('v5:screen', 'home'); if (nm === 'home') store.set('v5:hometab', h); return { name: nm, lk: h, args: [nm === 'home' ? h : h] }; }
     if (h === 'search') return { name: 'search', lk: lkOf(store.get('v5:lk', 'nba')), args: [] };
+    let um; if ((um = h.match(/^unr\/(club|game|player)\/([a-z0-9-]+)$/))) return { name: 'unr', lk: 'wnba', args: [um[1], um[2]] };   // v443: Unrivaled clubs, games, players
     let km; if ((km = h.match(/^recruit\/(boys|girls)\/(\d{4})\/([a-z0-9-]+)$/))) return { name: 'recruit', lk: km[1] === 'girls' ? 'ncaaw' : 'ncaam', args: [km[1], km[2], km[3]] };
     let rm; if ((rm = h.match(/^record(?:\/([a-z]+))?$/))) { const k = rm[1] && LEAGUES[rm[1]] ? rm[1] : lkOf(store.get('v5:lk', 'nba')); return { name: 'record', lk: k, args: [k] }; }
     let sm; if ((sm = h.match(/^settings(?:\/([a-z]+))?$/))) return { name: 'settings', lk: lkOf(store.get('v5:lk', 'nba')), args: [sm[1] || ''] };
@@ -605,7 +606,8 @@
     /* +N opens the rest of the breaking items in place; the button becomes Less */
     if (a === 'wire-more') { e.preventDefault(); const w = act.closest('.wire2'); const on = !w.classList.contains('open'); w.classList.toggle('open', on); act.setAttribute('aria-expanded', String(on)); act.textContent = on ? 'Less' : '+' + w.querySelectorAll('.w2it').length; return; }
     if (a === 'wire-x') { e.preventDefault(); const ids = (act.dataset.ids || '').split(',').filter(Boolean); const seen = store.get('v5:wire:seen', []) || []; store.set('v5:wire:seen', [...new Set([...ids, ...seen])].slice(0, 80)); const post = act.closest('.fbrk'); if (post) { post.style.transition = 'opacity .2s'; post.style.opacity = '0'; setTimeout(() => post.remove(), 200); } else { const sec = act.closest('section'); if (sec) sec.remove(); } return; }
-    if (a === 'scmode') { e.preventDefault(); store.set('v5:scunr', act.dataset.mode === 'unrivaled'); if (current && current.name === 'scores') render(); else location.hash = '#scores'; return; }
+    if (a === 'unrfav') { e.preventDefault(); if (!V.unrFav) return; const on = V.unrFav(act.dataset.name); act.classList.toggle('on', on); act.setAttribute('aria-pressed', on); act.innerHTML = `<svg viewBox="0 0 24 24" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2.8 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z"/></svg>`; if (typeof toast === 'function') toast(on ? `Following ${act.dataset.name}` : `Unfollowed ${act.dataset.name}`); return; }
+    if (a === 'scmode') { e.preventDefault(); store.set('v5:scunr', act.dataset.mode === 'unrivaled'); if (V.unrSet) V.unrSet(act.dataset.mode === 'unrivaled'); if (current && current.name === 'scores') render(); else location.hash = '#scores'; return; }
     if (a === 'scmine') { e.preventDefault(); store.set('v5:scmine', !store.get('v5:scmine', false)); render(); return; }
     if (a === 'lgsheet') { e.preventDefault(); openLeagues(); return; }
     if (a === 'panel-close') { e.preventDefault(); closePanel(); const to = act.getAttribute('href'); if (to && to.startsWith('#')) location.hash = to; }

@@ -1130,12 +1130,16 @@
     const today = todayCT(); const list = unrDays(d); const ahead = list.filter(x => x.y >= today); const nx = ahead[0]; if (!nx) return '';
     const n = Math.round((new Date(nx.y + 'T12:00:00Z') - new Date(today + 'T12:00:00Z')) / 864e5);
     const tv = [...new Set(nx.games.flatMap(g => g.tv || []))];
-    const games = nx.games.map(g => `<div class="ung">${g.teams && g.teams.length === 2 ? `<span class="unt">${unrLogo(d, g.teams[0])}<b>${esc(g.teams[0])}</b></span><i>vs</i><span class="unt">${unrLogo(d, g.teams[1])}<b>${esc(g.teams[1])}</b></span>` : '<span class="unt tbd"><b>Teams to be set</b></span>'}<em>${esc(unrTime(g, nx.y))}</em></div>`).join('');
-    return `<div class="unrv"><div class="brief-h"><b>Unrivaled</b><span>${n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`}</span></div><p class="unote">The 3-on-3 league where WNBA stars play in the offseason.</p>`
+    const games = nx.games.map(g => `<a class="ung" href="#unr/game/${esc(g.id)}">${g.teams && g.teams.length === 2 ? `<span class="unt">${unrLogo(d, g.teams[0])}<b>${esc(g.teams[0])}</b></span><i>vs</i><span class="unt">${unrLogo(d, g.teams[1])}<b>${esc(g.teams[1])}</b></span>` : '<span class="unt tbd"><b>Teams to be set</b></span>'}<em>${esc(unrTime(g, nx.y))}</em></a>`).join('');
+    // v443: a followed club's next game leads the card
+    const mine = HW.v5.unrNext ? await HW.v5.unrNext().catch(() => null) : null;
+    const mineH = mine && !nx.games.includes(mine.g) ? `<div class="unx"><div class="unh"><b>Your club · ${esc(dayLabel(mine.g.ymd, { weekday: 'short', month: 'short', day: 'numeric' }))}</b></div>${mine.row}</div>` : '';
+    return `<div class="unrv"><div class="brief-h"><b>Unrivaled</b><span>${n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`}</span></div><p class="unote">The 3-on-3 league where WNBA stars play in the offseason.</p>` + mineH
       + `<div class="unx"><div class="unh"><b>${esc(dayLabel(nx.y, { weekday: 'long', month: 'long', day: 'numeric' }))}</b><span>${esc([nx.arena, nx.city].filter(Boolean).join(' · '))}</span></div>${games}${tv.length ? `<div class="untv">${tv.map(x => `<em>${esc(x)}</em>`).join('')}</div>` : ''}</div>`
       + `<button class="btn ghost unbtn" data-act="scmode" data-mode="unrivaled">See the full schedule · ${ahead.reduce((a, x) => a + x.games.length, 0)} games</button></div>`;
   }
   async function unrivaledList() {
+    if (HW.v5.unrHub) return HW.v5.unrHub();   // v443: the Court hub (js/unr.js)
     const d = HW.hub ? await HW.hub.file('unrivaled.json').catch(() => null) : null;
     if (!d || !d.games || !d.games.length) return empty('No Unrivaled schedule yet', '<p style="margin:6px 0 0">It shows here once the league posts it.</p>');
     const today = todayCT(); const list = unrDays(d); const ahead = list.filter(x => x.y >= today), done = list.filter(x => x.y < today).reverse();
@@ -1159,9 +1163,9 @@
     const rel = d => d === today ? 'Today' : d === addDays(today, 1) ? 'Tomorrow' : d === addDays(today, -1) ? 'Yesterday' : dayLabel(d, { weekday: 'long' });
     const chevL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 6-6 6 6 6"/></svg>', chevR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 6 6 6-6 6"/></svg>';
     const strip = `<div class="dpg" id="dates"><button class="dpa" data-act="date" data-ymd="${addDays(ymd, -1)}" aria-label="Previous day">${chevL}</button><button class="dpt" data-act="calendar" data-ymd="${esc(ymd)}" aria-haspopup="dialog" aria-label="Pick a day"><b>${esc(rel(ymd))}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></b><span id="dpsub">${esc(dayLabel(ymd, { weekday: ymd === today || Math.abs(new Date(ymd) - new Date(today)) < 2 * 864e5 ? 'long' : undefined, month: 'long', day: 'numeric', year: ymd.slice(0, 4) !== today.slice(0, 4) ? 'numeric' : undefined }))}</span></button><button class="dpa" data-act="date" data-ymd="${addDays(ymd, 1)}" aria-label="Next day">${chevR}</button></div><div id="phase"></div>`;
-    const unrMode = lk === 'wnba' && !!store.get('v5:scunr', false);
+    const unrMode = lk === 'wnba' && (HW.v5.unrOn ? HW.v5.unrOn() : !!store.get('v5:scunr', false));   // v443: on by itself Jan to Mar
     const modes = lk === 'wnba' ? `<div class="chips scmode" role="tablist">${[['wnba', 'WNBA'], ['unrivaled', 'Unrivaled']].map(([k, l]) => `<button class="chip${(k === 'unrivaled') === unrMode ? ' on' : ''}" role="tab" data-act="scmode" data-mode="${k}" aria-pressed="${(k === 'unrivaled') === unrMode}">${l}</button>`).join('')}</div>` : '';
-    if (unrMode) { HW.v5.refresh = null; const h = await unrivaledList(); if (store.get('v5:scunr', false)) $main.innerHTML = `<div id="unrpage">${modes}<div class="unrbody">${h}</div></div>`; return; }
+    if (unrMode) { HW.v5.refresh = null; const h = await unrivaledList(); if (HW.v5.unrOn ? HW.v5.unrOn() : store.get('v5:scunr', false)) $main.innerHTML = `<div id="unrpage">${modes}<div class="unrbody">${h}</div></div>`; return; }
     const head = modes + strip;
     /* the page is two parts: the date strip, which only moves its highlight from one day to the next (and is rebuilt when
        the window of days shifts), and the list below it, which swaps. A day change never repaints the strip or the screen. */
@@ -1169,7 +1173,7 @@
     const inPlace = page0 && page0.dataset.lk === lk;
     const hashOf = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
     const paint = body => {
-      if (lk === 'wnba' && store.get('v5:scunr', false)) return;   // switched to Unrivaled while this day was loading
+      if (lk === 'wnba' && (HW.v5.unrOn ? HW.v5.unrOn() : store.get('v5:scunr', false))) return;   // switched to Unrivaled while this day was loading
       const page = $main.querySelector('#scpage');
       if (page && page.dataset.lk === lk) {
         const hd = page.querySelector('#schead'); const hh = hashOf(head);
