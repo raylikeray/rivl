@@ -1,10 +1,10 @@
 /* RIVL 2027 preview (v462). Every rule sits under html.rv27, which is set only while the preview is switched on in
    Settings, so the app everyone has is untouched. Section 1: the four-tab bar, the search field, Home. */
 .tb27,.seg27{display:none}
-html.rv27{--b27:#000;--tbb27:#000;--s27:#141618;--c27:#202326;--i27:#fff;--i27b:rgba(255,255,255,.72);--i27c:rgba(255,255,255,.54);--l27:rgba(255,255,255,.1);--a27:#5B93FF;--ok27:#5ee28a;
+html.rv27{--b27:#000;--tbb27:#000;--pl27:#202326;--s27:#141618;--c27:#202326;--i27:#fff;--i27b:rgba(255,255,255,.72);--i27c:rgba(255,255,255,.54);--l27:rgba(255,255,255,.1);--a27:#5B93FF;--ok27:#5ee28a;
   --f27:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Inter,system-ui,sans-serif}
-@media (prefers-color-scheme:light){ html.rv27:not([data-theme="dark"]){--b27:#EEF1F5;--tbb27:#fff;--s27:#fff;--c27:#E4E8ED;--i27:#0A0C0E;--i27b:rgba(10,12,14,.7);--i27c:rgba(10,12,14,.6);--l27:rgba(0,0,0,.1);--a27:#1D5FE0;--ok27:#0f8a43} }
-html.rv27[data-theme="light"]{--b27:#EEF1F5;--tbb27:#fff;--s27:#fff;--c27:#E4E8ED;--i27:#0A0C0E;--i27b:rgba(10,12,14,.7);--i27c:rgba(10,12,14,.6);--l27:rgba(0,0,0,.1);--a27:#1D5FE0;--ok27:#0f8a43}
+@media (prefers-color-scheme:light){ html.rv27:not([data-theme="dark"]){--b27:#EEF1F5;--tbb27:#fff;--pl27:#D3D9E1;--s27:#fff;--c27:#E4E8ED;--i27:#0A0C0E;--i27b:rgba(10,12,14,.7);--i27c:rgba(10,12,14,.6);--l27:rgba(0,0,0,.1);--a27:#1D5FE0;--ok27:#0f8a43} }
+html.rv27[data-theme="light"]{--b27:#EEF1F5;--tbb27:#fff;--pl27:#D3D9E1;--s27:#fff;--c27:#E4E8ED;--i27:#0A0C0E;--i27b:rgba(10,12,14,.7);--i27c:rgba(10,12,14,.6);--l27:rgba(0,0,0,.1);--a27:#1D5FE0;--ok27:#0f8a43}
 
 .vq27{margin:-6px 20px 14px;font-size:12.5px;line-height:1.4;color:var(--ink-3)}
 
@@ -441,7 +441,7 @@ html.rv27 .seg27 a[hidden]{display:none}
 
 /* ---------- the game page below its top (v478): the tab row as a pill switch, the game's clips first ---------- */
 html.rv27 body .g2 #gtabs{border:0!important;padding:10px 16px 8px!important;font-family:var(--f27)}
-html.rv27 body .g2 #gtabs .chips{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:0;height:40px;padding:3px;box-sizing:border-box;border-radius:999px;background:var(--c27);overflow:hidden}
+html.rv27 body .g2 #gtabs .chips{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:0;height:40px;padding:3px;box-sizing:border-box;border-radius:999px;background:var(--pl27,var(--c27));overflow:hidden}
 html.rv27 body .g2 #gtabs .chip,html.rv27 body .g2 #gtabs .chip.on{height:34px;border-radius:999px;font:500 14px/1 var(--f27);color:var(--i27b)!important;opacity:1!important;transition:none}
 html.rv27 body .g2 #gtabs .chip.on,html.rv27 body .g2 #gtabs .chip[aria-pressed="true"]{background:var(--i27)!important;color:var(--b27)!important;font-weight:700}
 html.rv27 body .g2 #gtabs .chip.on::after,html.rv27 body .g2 #gtabs .pgi{display:none!important}
@@ -841,7 +841,7 @@ html.rv27 body .q27 .xnone b{color:var(--i27);font:700 18px/1.25 var(--f27)}
 .sp27 .gs27 .lg27s img{filter:drop-shadow(0 0 .7px rgba(255,255,255,.95)) drop-shadow(0 0 14px var(--a)) drop-shadow(0 8px 8px rgba(0,0,0,.5))}
 .sp27 .gs27:last-child .lg27s img{filter:drop-shadow(0 0 .7px rgba(255,255,255,.95)) drop-shadow(0 0 16px var(--h)) drop-shadow(0 8px 8px rgba(0,0,0,.5))}
 .sp27 .gsc27{display:flex;align-items:center;gap:10px;padding:0 6px;font-size:50px;font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
-.sp27 .gsc27 em{width:10px;height:4px;border-radius:2px;background:rgba(255,255,255,.4)}
+.sp27 .gsc27 em{width:12px;height:4px;border-radius:2px;background:rgba(255,255,255,.5)}
 .sp27 .gsc27 u{font-size:17px;font-weight:600;letter-spacing:0;text-decoration:none;color:rgba(255,255,255,.8)}
 .sp27 .gsc27 .lo{opacity:.6}
 .sp27 .gmt27{position:absolute;left:16px;right:16px;bottom:34px;height:6px;border-radius:3px;background:var(--h)}
@@ -893,13 +893,17 @@ html.rv27 body .g2 .g2dc{position:relative;overflow:hidden;margin-top:6px;paddin
 html.rv27 body .g2 .g2dc::after{content:"";position:absolute;inset:2px;border-radius:20px;background:rgba(6,7,10,.86);z-index:0}
 html.rv27 body .g2 .g2dc>*{position:relative;z-index:1}
 html.rv27 body .g2 .g2dc.now::before{content:"";position:absolute;inset:-90%;background:conic-gradient(var(--gla,#fff),var(--glh,#fff),#fff,var(--gla,#fff),var(--glh,#fff),var(--gla,#fff));animation:spin27 5s linear infinite}
-html.rv27 body .g2 .g2dg:has(.g2dn:not(.pre)) .g2dc{flex-direction:row!important;align-items:center;justify-content:center;gap:6px!important;min-width:194px;box-sizing:border-box;padding:12px 8px 60px!important}
+html.rv27 body .g2 .g2dg:has(.g2dn:not(.pre)) .g2dc{flex-direction:row!important;align-items:center;justify-content:center;gap:6px!important;min-width:204px;box-sizing:border-box;padding:12px 8px 60px!important}
 html.rv27 body .g2 .g2dg:has(.g2dn:not(.pre)) .g2ds .g2dl{width:78px!important;height:78px!important}
 html.rv27 body .g2 .g2dg:has(.g2dn:not(.pre)) .g2dc span{font-size:13px!important}
-html.rv27 body .g2 .g2ds .g2dn:not(.pre){position:absolute;z-index:2;top:66px;right:calc(50% + 6px);font-size:42px!important;letter-spacing:-.05em!important;line-height:1!important}
-html.rv27 body .g2 .g2ds.r .g2dn:not(.pre){right:auto;left:calc(50% + 6px)}
+html.rv27 body .g2 .g2ds .g2dn:not(.pre){position:absolute;z-index:2;top:66px;right:calc(50% + 15px);font-size:42px!important;letter-spacing:-.05em!important;line-height:1!important}
+html.rv27 body .g2 .g2ds.r .g2dn:not(.pre){right:auto;left:calc(50% + 15px)}
+/* a short bar between the two scores (v494): 8 and 8 read as 88 without it */
+html.rv27 body .g2 .g2dg:has(.g2dn:not(.pre)) .g2dc::after{background:linear-gradient(rgba(255,255,255,.5),rgba(255,255,255,.5)) center 59px/12px 4px no-repeat,rgba(6,7,10,.86)}
 /* the win chance: a two-colour bar with a glowing marker, above the numbers */
 html.rv27 body .g2 .g2df{margin-top:26px;padding-top:0!important}
 html.rv27 body .g2 .g2df::before{content:"";position:absolute;left:0;right:0;top:-20px;height:7px;border-radius:4px;background:linear-gradient(90deg,var(--gla,#888) 0,var(--gla,#888) var(--wp,50%),var(--glh,#555) var(--wp,50%),var(--glh,#555) 100%);box-shadow:0 0 0 1.5px rgba(255,255,255,.9)}
 html.rv27 body .g2 .g2df::after{content:"";position:absolute;left:var(--wp,50%);top:-25px;width:17px;height:17px;margin-left:-8px;border-radius:50%;background:#fff;animation:knob27 2s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){ html.rv27 body .g2 .ghbg i,html.rv27 body .g2 .g2top::after,html.rv27 body .g2 .g2dc::before,html.rv27 body .g2 .g2df::after,html.rv27 body .g2 .g2dl{animation:none!important} }
+/* the same in the small game pills along the top of a game (v494) */
+html.rv27 body .g2 .g2gp b+b::before{content:"";display:inline-block;width:6px;height:2px;margin:0 5px 0 0;vertical-align:middle;border-radius:1px;background:currentColor;opacity:.5}
