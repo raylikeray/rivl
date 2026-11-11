@@ -9,7 +9,7 @@ const ET = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year
 const evs = []; for (let n = DAYS; n >= 1; n--) evs.push({ id: String(700 + n), n, date: tip(n) });
 mkdirSync('data', { recursive: true }); writeFileSync('data/leaders.json', JSON.stringify({ leagues: { nba: { players: [{ id: '9', rookie: true }] } } }));
 const L = ['MIN', 'PTS', 'FG', '3PT', 'FT', 'REB', 'AST', 'TO', 'STL', 'BLK', 'OREB', 'DREB', 'PF'];
-const row = (id, name, pts, reb, ast, extra = {}) => ({ athlete: { id, displayName: name, headshot: { href: `https://a.espncdn.com/i/headshots/nba/players/full/${id}.png` } }, stats: ['34', String(pts), `${Math.round(pts / 2.5)}-${Math.round(pts / 1.3)}`, '3-7', '6-7', String(reb), String(ast), '2', '1', '1', '1', String(Math.max(0, reb - 1)), '2'], ...extra });
+const row = (id, name, pts, reb, ast, extra = {}) => ({ athlete: { id, displayName: name, position: { abbreviation: 'G' }, headshot: { href: `https://a.espncdn.com/i/headshots/nba/players/full/${id}.png` } }, stats: ['34', String(pts), `${Math.round(pts / 2.5)}-${Math.round(pts / 1.3)}`, '3-7', '6-7', String(reb), String(ast), '2', '1', '1', '1', String(Math.max(0, reb - 1)), '2'], ...extra });
 const summary = id => { const n = +id - 700, star = [31, 33, 30, 36, 32, 30, 44][DAYS - n], td = n === 5 || n === 2;
   const plays = []; let h = 0, a = 0; for (let i = 0; i < 40; i++) { if (i % 3) h += 2; else a += 3; plays.push({ id: String(i), homeScore: h, awayScore: a }); }
   return { plays, winprobability: plays.map((p, i) => ({ homeWinPercentage: i % 2 ? .6 : .4, playId: p.id })),
@@ -27,4 +27,5 @@ console.log('check nights', N.days.length, 'done', N.days.filter(d => d.done).le
 console.log('check latest', d0.d, 'player', d0.pon.n, d0.pon.gs, 'rookie', d0.ron && d0.ron.n, 'thriller', d0.gon ? d0.gon.e : 'none (no close finish)', 'tally', JSON.stringify(N.tally));
 console.log('check thrillers', N.days.map(d => d.gon ? `${d.d}: game ${d.gon.e}${d.gon.ot ? ' OT' : ''}` : `${d.d}: none`).join(', '));
 d0.notes.forEach(n => console.log('note', n.k, n.v, n.t));
+console.log('check daily', 'line', JSON.stringify({ pos: d0.pon.pos, op: d0.pon.op, w: d0.pon.w, sc: d0.pon.sc, min: d0.pon.min }), 'blind pick games', d0.bp.length, JSON.stringify(d0.bp[0] && { h: d0.bp[0].h.ab, bh: d0.bp[0].bh, ba: d0.bp[0].ba }));
 N.days.filter(d => d !== d0).forEach(d => console.log('earlier', d.d, d.notes.map(n => n.k).join(',')));

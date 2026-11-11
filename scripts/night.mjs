@@ -80,12 +80,14 @@ for (const [lk, path] of Object.entries(LG)) {
       [[h, a], [a, h]].forEach(([us, them]) => { const won = us.sc > them.sc, was = S.t[us.id] || 0, run = won ? (was > 0 ? was + 1 : 1) : (was < 0 ? was - 1 : -1); S.t[us.id] = run;
         const name = pro ? `The ${us.nm} have` : `${us.nm} has`;
         if (run >= 5) note('win', `${name} won ${run} in a row.`, 30 + run * 3, { tid: us.id }); else if (run <= -6) note('loss', `${name} lost ${-run} in a row.`, 20 - run * 2, { tid: us.id }); });
-      // ---- each player's line
+      // ---- each player's line, and each side's totals added up from them (for The Daily's Blind pick: shooting and counting numbers with no names)
+      const tot = { [h.id]: new Array(11).fill(0), [a.id]: new Array(11).fill(0) };
       box.forEach(sd => { const tid = String((sd.team || {}).id || ''), st = (sd.statistics || [])[0]; if (!st) return; const lb = st.labels || st.names || [], ix = l => lb.indexOf(l);
         (st.athletes || []).forEach(at => { const A2 = at.athlete || {}, id = String(A2.id || ''); if (!id || at.didNotPlay || !(at.stats || []).length) return; const g = l => { const k = ix(l); return k >= 0 ? at.stats[k] : ''; };
           const min = num(g('MIN')); if (!(min > 0)) return;
           const pts = num(g('PTS')), reb = num(g('REB')), ast = num(g('AST')), stl = num(g('STL')), blk = num(g('BLK')), to = num(g('TO')), pf = num(g('PF')), oreb = num(g('OREB')), dreb = ix('DREB') >= 0 ? num(g('DREB')) : Math.max(0, reb - oreb);
-          const [fgm, fga] = pair(g('FG')), [tpm] = pair(g('3PT')), [ftm, fta] = pair(g('FT'));
+          const [fgm, fga] = pair(g('FG')), [tpm, tpa] = pair(g('3PT')), [ftm, fta] = pair(g('FT'));
+          if (tot[tid]) [fgm, fga, tpm, tpa, ftm, fta, reb, ast, stl, blk, to].forEach((v, k) => { tot[tid][k] += v; });
           const gs = +(pts + .4 * fgm - .7 * fga - .4 * (fta - ftm) + .7 * oreb + .3 * dreb + stl + .7 * ast + .7 * blk - .4 * pf - to).toFixed(1);
           const name = A2.displayName || A2.shortName || ''; if (!name) return;
           const p = S.p[id] = S.p[id] || P0(), tens = [pts, reb, ast, stl, blk].filter(v => v >= 10).length, who = { p: id, tid };
@@ -100,7 +102,9 @@ for (const [lk, path] of Object.entries(LG)) {
           if (p.sd >= 6 && p.sd % 2 === 0) note('dd', `${name} has a double-double in ${p.sd} straight games.`, 30 + p.sd * 2, who);
           p.hp = Math.max(p.hp, pts); p.hr = Math.max(p.hr, reb); p.ha = Math.max(p.ha, ast);
           if (!D && (!past[e.day] || gs > past[e.day].gs)) past[e.day] = { id, n: name, tm: tid === h.id ? h.ab : a.ab, gs };
-          if (D) D.lines.push({ id, n: name, tid, tm: tid === h.id ? h.ab : a.ab, e: e.id, gs, pts, reb, ast, stl, blk, tpm, hs: (A2.headshot && A2.headshot.href) || '', rk: rookies.has(id) ? 1 : 0 }); }); });
+          const us = tid === h.id ? h : a, them = tid === h.id ? a : h;
+          if (D) D.lines.push({ id, n: name, tid, tm: us.ab, e: e.id, gs, pts, reb, ast, stl, blk, tpm, min: Math.round(min), pos: (A2.position && A2.position.abbreviation) || '', op: them.ab, w: us.sc > them.sc ? 1 : 0, sc: `${us.sc}-${them.sc}`, hs: (A2.headshot && A2.headshot.href) || '', rk: rookies.has(id) ? 1 : 0 }); }); });
+      if (D) { const G = D.games[D.games.length - 1]; if (G && G.e === e.id && tot[h.id][1] > 0 && tot[a.id][1] > 0) { G.bh = tot[h.id]; G.ba = tot[a.id]; } }
     }
   }
   const award = (d, l) => { if (S.award[d]) return; S.award[d] = l.id; const t = S.tally[l.id] = S.tally[l.id] || { n: l.n, tm: l.tm, c: 0 }; t.c++; t.n = l.n; t.tm = l.tm; };
@@ -112,7 +116,8 @@ for (const [lk, path] of Object.entries(LG)) {
     D.notes.sort((x, y) => y.v - x.v); D.notes = D.notes.slice(0, 40);
     const done = !open.has(d) && d < today && D.games.length > 0, pon = D.lines[0] || null, ron = D.lines.find(l => l.rk) || null, gon = [...D.games].filter(g => g.ot || g.mg <= 5).sort((x, y) => y.x - x.x)[0] || null;   // no close finish, no thriller
     if (done && pon) award(d, pon);
-    return { d, done, games: D.games.map(g => g.e), pon: done ? pon : null, ron: done && ron && (!pon || ron.id !== pon.id) ? ron : null, gon: done ? gon : null, top: done ? D.lines.slice(0, 5) : [], notes: D.notes.slice(0, pro ? 14 : 24).map(({ k, t, v, e, at, p, tid }) => ({ k, t, v, e, at, p, tid })) }; });
+    const bp = done ? [...D.games].filter(g => g.bh && g.ba).sort((x, y) => y.x - x.x).slice(0, 8).map(({ e, h, a, bh, ba }) => ({ e, h, a, bh, ba })) : [];   // eight games' team totals: fgm, fga, 3pm, 3pa, ftm, fta, reb, ast, stl, blk, to
+    return { d, done, games: D.games.map(g => g.e), bp, pon: done ? pon : null, ron: done && ron && (!pon || ron.id !== pon.id) ? ron : null, gon: done ? gon : null, top: done ? D.lines.slice(0, 5) : [], notes: D.notes.slice(0, pro ? 14 : 24).map(({ k, t, v, e, at, p, tid }) => ({ k, t, v, e, at, p, tid })) }; });
   Object.keys(S.award).forEach(d => { if (d < dayOf(now - 300 * 864e5)) delete S.award[d]; });
   Object.keys(S.done).forEach(id => { if (now - S.done[id] > 12 * 864e5) delete S.done[id]; });
   S.p = pack(S.p, pro);
