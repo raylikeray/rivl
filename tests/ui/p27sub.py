@@ -23,7 +23,5 @@ with sync_playwright() as p:
     pg.tap('.set380 .segc button[data-theme="system"]'); pg.wait_for_timeout(400)
     pg.goto('http://localhost:8777/rivl/#settings/home'); pg.wait_for_timeout(1500); a = pg.evaluate("document.querySelector('#main .row.sw').getAttribute('aria-checked')"); pg.tap('#main .row.sw >> nth=0'); pg.wait_for_timeout(500); print('home switch', a, '->', pg.evaluate("document.querySelector('#main .row.sw').getAttribute('aria-checked')")); pg.tap('#main .row.sw >> nth=0')
     pg.tap('#main > .topbar .ib'); pg.wait_for_timeout(1000); print(' back from Home settings ->', pg.evaluate(ST))
-    # the old design is untouched
-    pg.evaluate("localStorage.setItem('hw:v5:rv27','false')"); pg.goto('http://localhost:8777/rivl/#teams'); pg.reload(); pg.wait_for_timeout(2500); print('old design: bar hidden', pg.evaluate("document.getElementById('sh27').hidden"), 'class', pg.evaluate("document.documentElement.className"))
     b.close()
 print('errs', E)

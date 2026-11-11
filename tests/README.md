@@ -24,6 +24,7 @@ They need Python 3 with Playwright (`pip install playwright pillow`, then `playw
 | `p27sub.py`, `left5.py` | Teams, Players, Record, Settings and its pages: title bar, back, league pills, stars, switches; screenshots of each |
 | `p27lead.py`, `p27lead_shots.py` | Players' league view at 384 wide: the Leaders heading, More clear of the switches, the stat column measured; screenshots with the Following list |
 | `star.py` | The follow star on Following, Teams, Players and Leaders: centered in its circle, centered in its row, 14px from the card's edge |
+| `p27default.py` | The new design as the default, the Legacy design switch both ways, a brand new visitor, the Watch shortcut |
 | `p27sc.py`, `p27gh.py`, `p27ring.py` | Score cards, the game header, the profile ring |
 | `audit.py`, `audit_b.py` | The audit: every page, light and dark, with counts for small tap targets, small text, faint text, missing names |
 | `audit2.py`, `audit3.py` | Start-up timing on a slowed processor, and what Home asks for |
@@ -40,3 +41,6 @@ Screenshots land in `tests/ui` and `tests/ui/audit` and are not committed.
 
 ## Not done yet
 These do not run by themselves on each push. That is the next step.
+
+## The two designs
+Since v510 the 2027 design is the default. A test that wants the legacy design stores `hw:v5:rv27` as `false` before the page loads (`st460.py`, `st459.py`, and the old-design passes of the audit scripts do).

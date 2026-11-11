@@ -85,7 +85,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(args=['--autoplay-policy=no-user-gesture-required'])
     RES['new-dark'] = crawl(b, 'nd', 'dark', FLAG)
     RES['new-light'] = crawl(b, 'nl', 'light', FLAG)
-    RES['old-dark'] = crawl(b, 'od', 'dark', FLAG.replace("localStorage.setItem('hw:v5:rv27','true');", '')) if 'old' in sys.argv else {}
+    RES['old-dark'] = crawl(b, 'od', 'dark', FLAG.replace("localStorage.setItem('hw:v5:rv27','true');", "localStorage.setItem('hw:v5:rv27','false');")) if 'old' in sys.argv else {}
     b.close()
 json.dump(RES, open('audit/res2.json', 'w'), indent=1)
 for mode, o in RES.items():

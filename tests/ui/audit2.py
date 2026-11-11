@@ -22,5 +22,5 @@ def run(b, flag, label):
     ctx.close()
 with sync_playwright() as p:
     b = p.chromium.launch()
-    run(b, FLAG, 'NEW'); run(b, FLAG.replace("localStorage.setItem('hw:v5:rv27','true');", ''), 'OLD')
+    run(b, FLAG, 'NEW'); run(b, FLAG.replace("localStorage.setItem('hw:v5:rv27','true');", "localStorage.setItem('hw:v5:rv27','false');"), 'OLD')
     b.close()

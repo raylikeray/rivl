@@ -78,7 +78,7 @@ LIST = "(() => { const s = document.querySelector('.story').__st; return null; }
 E = []; shots = []
 def run(b, w, h, scheme, hls, tag):
     ctx = b.new_context(viewport={'width': w, 'height': h}, device_scale_factor=1, service_workers='block', color_scheme=scheme, is_mobile=True, has_touch=True)
-    ctx.add_init_script(eval(init) + PL + ('' if hls else NOHLS))
+    ctx.add_init_script(eval(init) + PL + "localStorage.setItem('hw:v5:rv27','false');" + ('' if hls else NOHLS))
     pg = ctx.new_page(); pg.on('pageerror', lambda e: E.append(str(e)[:300])); pg.route('**/*', rt)
     pg.goto('http://localhost:8777/rivl/#home'); pg.wait_for_timeout(5200)
     out = {}

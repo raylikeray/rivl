@@ -1123,3 +1123,8 @@ html.rv27 body .row .star::before{left:50%;top:50%;right:auto;bottom:auto;margin
 html.rv27:is([data-page="teams"],[data-page="players"]) #main .row.prow{padding-right:7px}
 html.rv27[data-page="players"] #main .row.prow:has(> .r){padding-right:5px}
 html.rv27[data-page="settings"] #main > .rows .row:has(> .star){padding-right:7px}
+/* v510: "Clip quality" is not cut short beside its three-way switch */
+html.rv27.sub27on #main .set380 .gr:has(.segc){gap:10px}
+html.rv27.sub27on #main .set380 .gr:has(.segc) .gm{flex:none}
+html.rv27.sub27on #main .set380 .gr:has(.segc) .segc{margin-left:auto}
+html.rv27.sub27on #main .set380 .segc > button{padding:0 8px}

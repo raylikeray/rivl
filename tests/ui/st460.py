@@ -12,7 +12,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(args=['--autoplay-policy=no-user-gesture-required'])
     for scheme, w, h in [('dark', 412, 900), ('light', 360, 740)]:
         ctx = b.new_context(viewport={'width': w, 'height': h}, service_workers='block', color_scheme=scheme, is_mobile=True, has_touch=True)
-        ctx.add_init_script(eval(init) + PL); pg = ctx.new_page(); pg.on('pageerror', lambda e: E.append(str(e)[:300])); pg.route('**/*', rt)
+        ctx.add_init_script(eval(init) + PL + "localStorage.setItem('hw:v5:rv27','false');"); pg = ctx.new_page(); pg.on('pageerror', lambda e: E.append(str(e)[:300])); pg.route('**/*', rt)
         pg.goto('http://localhost:8777/rivl/#home'); pg.wait_for_timeout(5600)
         print(scheme, 'bubbles', pg.evaluate("[...document.querySelectorAll('.sbub')].map(b => b.dataset.key + ':' + b.querySelector('small').textContent)"))
         pg.evaluate("document.querySelector('.sbubs').scrollLeft = 9999"); pg.wait_for_timeout(200); pg.screenshot(path=f's460-row-{scheme}.png', clip={'x': 0, 'y': 0, 'width': w, 'height': 270})
