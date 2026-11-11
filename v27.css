@@ -1111,6 +1111,15 @@ html.rv27[data-page="settings"] #main > .rows .thead b{font:700 14px/1.2 var(--f
 html.rv27[data-page="settings"] #main > .rows .thead .n{min-width:0;height:auto;padding:0;border-radius:0;background:none;font:500 13px/1 var(--f27);color:var(--i27c)}
 html.rv27[data-page="settings"] #main > .rows .thead + .row{padding-top:8px}
 /* a leader's row carries a number as well, so it closes up a little to leave the name its room */
-html.rv27[data-page="players"] #main .row.prow:has(> .r){gap:10px;padding-right:4px}
+html.rv27[data-page="players"] #main .row.prow:has(> .r){gap:10px;padding-right:5px}
 html.rv27[data-page="players"] #main .row.prow:has(> .r) .star{width:40px;height:44px}
 html.rv27[data-page="players"] #main .row.prow:has(> .r) .go{gap:8px}
+
+/* v509: the star sits in the middle of its circle. The circle was placed for a 40px button; v507 made the button 44px and
+   left the circle 2px up and to the left of the star. It is centered on the button now, whatever the button's size. The
+   circle's edge is also the same distance from the card's edge as the logo or face on the other side (14px). */
+html.rv27 body .row .star{margin:0!important}
+html.rv27 body .row .star::before{left:50%;top:50%;right:auto;bottom:auto;margin:-15px 0 0 -15px}
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .row.prow{padding-right:7px}
+html.rv27[data-page="players"] #main .row.prow:has(> .r){padding-right:5px}
+html.rv27[data-page="settings"] #main > .rows .row:has(> .star){padding-right:7px}
