@@ -403,17 +403,34 @@
     if (document.querySelector('.tt27')) return; let d = []; try { d = ((await (await fetch('data/tt.json?v=' + Date.now())).json()) || {}).clips || []; } catch (e) {}
     d = d.filter(c => /^\d{6,24}$/.test(String(c.id))); if (!d.length) return V.toast('No clips to show yet.');
     const el = document.createElement('div'); el.className = 'tt27'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Clips from TikTok');
-    el.innerHTML = `<button class="ttx27" data-tt="x" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="tts27">${d.map(c => `<section data-id="${esc(String(c.id))}"><div class="ttf27"></div><button class="ttt27" data-tt="tap" aria-label="Pause or play"></button><div class="ttc27"><small>${esc(TTL[c.lg] || '')}</small><b>@${esc(c.user || '')}</b><p>${esc(c.cap || '')}</p></div><button class="ttm27" data-tt="snd">Tap for sound</button></section>`).join('')}</div>`;
+    el.innerHTML = `<button class="ttx27" data-tt="x" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="tts27">${d.map(c => `<section data-id="${esc(String(c.id))}"><div class="ttf27"></div><button class="ttt27" data-tt="tap" aria-label="Pause or play"></button><div class="ttc27"><small>${esc(TTL[c.lg] || '')}</small><b>@${esc(c.user || '')}</b><p>${esc(c.cap || '')}</p></div><i class="ttw27" aria-hidden="true"></i><button class="ttm27" data-tt="snd" hidden>Tap for sound</button></section>`).join('')}</div>`;
     document.body.appendChild(el); root.classList.add('tt27on');
+    /* v499, after Ray's first try on the phone: clips were slow, sometimes did not start, flashed white, and needed a tap for
+       sound. Now the next clip loads ahead of time, the player stays hidden behind black until it reports it is playing, a
+       clip that will not start with sound is started silent, and sound is asked for again on every clip once it has been
+       turned on. The keyboard from the Search field behind is put away. */
+    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
+    const secs = [...el.querySelectorAll('section')]; let cur = null, sound = true;
     const say = (sec, type, value) => { const f = sec && sec.querySelector('iframe'); if (f && f.contentWindow) f.contentWindow.postMessage({ type, value, 'x-tiktok-player': true }, '*'); };
-    const load = sec => { el.querySelectorAll('section').forEach(x => { if (x !== sec) { x.querySelector('.ttf27').innerHTML = ''; x.dataset.on = ''; } }); if (sec.dataset.on) return; sec.dataset.on = '1'; sec.dataset.p = '1';
-      sec.querySelector('.ttf27').innerHTML = `<iframe src="https://www.tiktok.com/player/v1/${sec.dataset.id}?autoplay=1&loop=1&controls=0&description=0&music_info=0&rel=0&native_context_menu=0&closed_caption=0" allow="autoplay; fullscreen; encrypted-media" allowfullscreen title="Clip"></iframe>`; };
+    const frame = (sec, auto) => { if (!sec || sec.querySelector('iframe')) return; sec.dataset.rdy = ''; sec.dataset.ply = ''; sec.querySelector('.ttf27').innerHTML = `<iframe src="https://www.tiktok.com/player/v1/${sec.dataset.id}?autoplay=${auto ? 1 : 0}&loop=1&controls=0&description=0&music_info=0&rel=0&native_context_menu=0&closed_caption=0" allow="autoplay; fullscreen; encrypted-media" allowfullscreen title="Clip"></iframe>`; };
+    const start = sec => { if (sound) say(sec, 'unMute'); say(sec, 'play'); sec.dataset.p = '1'; setTimeout(() => { if (cur === sec && !sec.dataset.ply) { say(sec, 'mute'); say(sec, 'play'); sec.querySelector('.ttm27').hidden = false; } }, 2500); };
+    const load = sec => { if (cur === sec) return; const was = cur; cur = sec; const i = secs.indexOf(sec); if (was) { say(was, 'pause'); was.dataset.p = ''; }
+      secs.forEach((x, k) => { if (Math.abs(k - i) > 1) { x.querySelector('.ttf27').innerHTML = ''; x.dataset.rdy = ''; x.dataset.ply = ''; } });
+      if (sec.querySelector('iframe')) { if (sec.dataset.rdy) start(sec); } else frame(sec, true);
+      frame(secs[i + 1], false); };
+    const onMsg = e => { if (!/tiktok\.com$/.test((() => { try { return new URL(e.origin).hostname; } catch (er) { return ''; } })())) return; let m = e.data; if (typeof m === 'string') { try { m = JSON.parse(m); } catch (er) { return; } } if (!m || !m.type) return;
+      const sec = secs.find(x => { const f = x.querySelector('iframe'); return f && f.contentWindow === e.source; }); if (!sec) return;
+      if (m.type === 'onPlayerReady') { sec.dataset.rdy = '1'; if (sec === cur) start(sec); else say(sec, 'pause'); }
+      else if (m.type === 'onStateChange') { if (m.value === 1) { if (sec !== cur) return say(sec, 'pause'); sec.dataset.ply = '1'; sec.dataset.p = '1'; } }
+      else if (m.type === 'onMute') { if (sec === cur && sound && m.value) sec.querySelector('.ttm27').hidden = false; }
+      else if (m.type === 'onPlayerError') { if (sec === cur && m.value && m.value.errorCode === 3002) { say(sec, 'mute'); say(sec, 'play'); sec.querySelector('.ttm27').hidden = false; } } };
+    window.addEventListener('message', onMsg);
     const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && e.intersectionRatio > .6) load(e.target); }), { root: el.querySelector('.tts27'), threshold: [.6] });
-    el.querySelectorAll('section').forEach(x => io.observe(x));
-    const close = () => { io.disconnect(); el.remove(); root.classList.remove('tt27on'); window.removeEventListener('hashchange', close); }; window.addEventListener('hashchange', close);
+    secs.forEach(x => io.observe(x));
+    const close = () => { io.disconnect(); window.removeEventListener('message', onMsg); el.remove(); root.classList.remove('tt27on'); window.removeEventListener('hashchange', close); }; window.addEventListener('hashchange', close);
     el.addEventListener('click', e => { const b = e.target.closest('[data-tt]'); if (!b) return; const sec = b.closest('section'), k = b.dataset.tt;
       if (k === 'x') return close();
-      if (k === 'snd') { say(sec, 'unMute'); say(sec, 'play'); b.hidden = true; return; }
+      if (k === 'snd') { sound = true; say(sec, 'unMute'); say(sec, 'play'); b.hidden = true; return; }
       if (k === 'tap') { const on = sec.dataset.p === '1'; say(sec, on ? 'pause' : 'play'); sec.dataset.p = on ? '' : '1'; } });
   }
   /* ---------- Search (v492). The app's own search still does the finding; this gives it the new top (the field with
