@@ -394,47 +394,6 @@
   });
   { const st0 = V.settings; V.settings = (cat = '', ...a) => { if (on() && !cat) { return you27(); } youEdit = false; return st0(cat === 'menu' ? '' : cat, ...a); }; }
 
-  /* ---------- TikTok clips, a test (v498). Ray wants more to scroll: high school, college, NBA and WNBA clips from the
-     accounts that post them. They play in TikTok's own player (its official one for other sites), one clip per screen.
-     This is the smallest real version, to judge on the phone: does it feel right, and does an ad ever show. A clear sheet
-     sits over the player so a swipe scrolls the list; a tap on it pauses or plays. ---------- */
-  const TTL = { hs: 'High school', nba: 'NBA', wnba: 'WNBA', ncaam: 'College', ncaaw: 'College' };
-  async function ttOpen() {
-    if (document.querySelector('.tt27')) return; let d = []; try { d = ((await (await fetch('data/tt.json?v=' + Date.now())).json()) || {}).clips || []; } catch (e) {}
-    d = d.filter(c => /^\d{6,24}$/.test(String(c.id))); if (!d.length) return V.toast('No clips to show yet.');
-    const el = document.createElement('div'); el.className = 'tt27'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Clips from TikTok');
-    el.innerHTML = `<button class="ttx27" data-tt="x" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="tts27">${d.map(c => `<section data-id="${esc(String(c.id))}"><div class="ttf27"></div><button class="ttt27" data-tt="tap" aria-label="Pause or play"></button><div class="ttc27"><small>${esc(TTL[c.lg] || '')}</small><b>@${esc(c.user || '')}</b><p>${esc(c.cap || '')}</p></div><i class="ttw27" aria-hidden="true"></i><button class="ttm27" data-tt="snd" hidden>Tap for sound</button></section>`).join('')}</div>`;
-    document.body.appendChild(el); root.classList.add('tt27on');
-    /* v499, after Ray's first try on the phone: clips were slow, sometimes did not start, flashed white, and needed a tap for
-       sound. Now the next clip loads ahead of time, the player stays hidden behind black until it reports it is playing, a
-       clip that will not start with sound is started silent, and sound is asked for again on every clip once it has been
-       turned on. The keyboard from the Search field behind is put away. */
-    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
-    const secs = [...el.querySelectorAll('section')]; let cur = null, sound = true;
-    const say = (sec, type, value) => { const f = sec && sec.querySelector('iframe'); if (f && f.contentWindow) f.contentWindow.postMessage({ type, value, 'x-tiktok-player': true }, '*'); };
-    const frame = (sec, auto) => { if (!sec || sec.querySelector('iframe')) return; sec.dataset.rdy = ''; sec.dataset.ply = ''; sec.querySelector('.ttf27').innerHTML = `<iframe src="https://www.tiktok.com/player/v1/${sec.dataset.id}?autoplay=${auto ? 1 : 0}&loop=1&controls=0&description=0&music_info=0&rel=0&native_context_menu=0&closed_caption=0" allow="autoplay; fullscreen; encrypted-media" allowfullscreen title="Clip"></iframe>`; };
-    const start = sec => { if (sound) say(sec, 'unMute'); say(sec, 'play'); sec.dataset.p = '1'; setTimeout(() => { if (cur === sec && !sec.dataset.ply) { say(sec, 'mute'); say(sec, 'play'); sec.querySelector('.ttm27').hidden = false; } }, 2500); };
-    const load = sec => { if (cur === sec) return; const was = cur; cur = sec; const i = secs.indexOf(sec); if (was) { say(was, 'pause'); was.dataset.p = ''; }
-      secs.forEach((x, k) => { if (k !== i) { x.querySelector('.ttf27').innerHTML = ''; x.dataset.rdy = ''; x.dataset.ply = ''; } });
-      /* v501: back to the first version's way of starting a clip (load it when you land on it, shown at once). The load-ahead and the wait-behind-black from v499 left clips that never started on Ray's phone. */
-      if (sec.querySelector('iframe')) start(sec); else frame(sec, true); sec.dataset.ply = '1';
-      setTimeout(() => { if (cur === sec && !sec.dataset.ply) sec.dataset.ply = '1'; }, 4000);   // if the player never reports in, show it anyway so the screen is never stuck on the spinner
-      };
-    const onMsg = e => { if (!/tiktok\.com$/.test((() => { try { return new URL(e.origin).hostname; } catch (er) { return ''; } })())) return; let m = e.data; if (typeof m === 'string') { try { m = JSON.parse(m); } catch (er) { return; } } if (!m || !m.type) return;
-      const sec = secs.find(x => { const f = x.querySelector('iframe'); return f && f.contentWindow === e.source; }); if (!sec) return;
-      if (m.type === 'onPlayerReady') { sec.dataset.rdy = '1'; if (sec === cur) start(sec); else say(sec, 'pause'); }
-      else if (m.type === 'onStateChange') { if (m.value === 1) { if (sec !== cur) return say(sec, 'pause'); sec.dataset.ply = '1'; sec.dataset.p = '1'; } }
-      else if (m.type === 'onMute') { if (sec === cur && sound && m.value) sec.querySelector('.ttm27').hidden = false; }
-      else if (m.type === 'onPlayerError') { if (sec === cur && m.value && m.value.errorCode === 3002) { say(sec, 'mute'); say(sec, 'play'); sec.querySelector('.ttm27').hidden = false; } } };
-    window.addEventListener('message', onMsg);
-    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && e.intersectionRatio > .6) load(e.target); }), { root: el.querySelector('.tts27'), threshold: [.6] });
-    secs.forEach(x => io.observe(x));
-    const close = () => { io.disconnect(); window.removeEventListener('message', onMsg); el.remove(); root.classList.remove('tt27on'); window.removeEventListener('hashchange', close); }; window.addEventListener('hashchange', close);
-    el.addEventListener('click', e => { const b = e.target.closest('[data-tt]'); if (!b) return; const sec = b.closest('section'), k = b.dataset.tt;
-      if (k === 'x') return close();
-      if (k === 'snd') { sound = true; say(sec, 'unMute'); say(sec, 'play'); b.hidden = true; return; }
-      if (k === 'tap') { const on = sec.dataset.p === '1'; say(sec, on ? 'pause' : 'play'); sec.dataset.p = on ? '' : '1'; } });
-  }
   /* ---------- Search (v492). The app's own search still does the finding; this gives it the new top (the field with
      Cancel beside it), four Browse tiles, and a short list of questions in place of the wall of chips. ---------- */
   const QI = { rec: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.500 14.600 9l6 .700-4.500 4.100 1.300 5.900L12 16.700 6.600 19.700l1.300-5.900L3.400 9.700l6-.700z"/></svg>',
@@ -449,7 +408,7 @@
     const inp0 = box.querySelector('input'), had = document.activeElement === inp0;   // moving the field drops the cursor; put it back
     const top = document.createElement('div'); top.className = 'qtop27'; box.before(top); top.appendChild(box); if (had && inp0) { try { inp0.focus({ preventScroll: true }); } catch (e) {} } top.insertAdjacentHTML('beforeend', '<button class="qcx27" data-q27="cancel">Cancel</button>');
     const pl = V.fplayers.all().filter(p => LEAGUES[p.lk]), a = pl[0], b = pl.find(p => a && p.lk === a.lk && p.id !== a.id), cmp = a && b ? `${a.name} vs ${b.name}` : 'Shai vs Luka';
-    const tiles = `<div class="sec qs27"><h2>Browse</h2></div><div class="qtl27"><button class="qt27 r" data-q27="recruits">${QI.rec}<b>Top recruits</b><small>The high school classes</small></button><button class="qt27 k" data-q27="rookies">${QI.rook}<b>Rookies</b><small>This year's class, ranked</small></button><button class="qt27 i" data-xq="Who is hurt on my teams">${QI.inj}<b>Injuries</b><small>Who is out on your teams</small></button><button class="qt27 c" data-xq="${esc(cmp)}">${QI.cmp}<b>Compare</b><small>Two players, side by side</small></button><button class="qt27 t" data-q27="tt">${QI.rook}<b>Clips from TikTok</b><small>A test: high school, college, NBA</small></button></div>`;
+    const tiles = `<div class="sec qs27"><h2>Browse</h2></div><div class="qtl27"><button class="qt27 r" data-q27="recruits">${QI.rec}<b>Top recruits</b><small>The high school classes</small></button><button class="qt27 k" data-q27="rookies">${QI.rook}<b>Rookies</b><small>This year's class, ranked</small></button><button class="qt27 i" data-xq="Who is hurt on my teams">${QI.inj}<b>Injuries</b><small>Who is out on your teams</small></button><button class="qt27 c" data-xq="${esc(cmp)}">${QI.cmp}<b>Compare</b><small>Two players, side by side</small></button></div>`;
     const tn = br.querySelector('#xtonight'); if (tn) tn.insertAdjacentHTML('beforebegin', tiles); else br.insertAdjacentHTML('afterbegin', tiles);
     const qs = [...br.querySelectorAll('.xtryg')].map(g => g.querySelector('[data-xq]')).filter(Boolean).slice(0, 5).map(c => c.dataset.xq);
     if (qs.length) br.insertAdjacentHTML('beforeend', `<div class="qal27">${qs.map(t => `<button class="qa27" data-xq="${esc(t)}">${QI.ask}<span>${esc(t)}</span></button>`).join('')}</div>`);
@@ -457,7 +416,6 @@
     const mg = box.querySelector('svg'), h1 = pg.querySelector('.xtitle'); if (mg && h1) { mg.addEventListener('pointerdown', () => h1.dispatchEvent(new Event('pointerdown'))); ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => mg.addEventListener(ev, () => h1.dispatchEvent(new Event(ev)))); }
   }
   $main.addEventListener('click', e => { const b = e.target.closest('[data-q27]'); if (!b || !b.closest('.xpage')) return; e.preventDefault(); const k = b.dataset.q27;
-    if (k === 'tt') return ttOpen();
     if (k === 'cancel') { store.set('v5:xq', ''); if (history.length > 1) history.back(); else location.hash = '#home'; return; }
     if (k === 'recruits') { store.set('v5:lk', 'ncaam'); store.set('v5:ldrec', true); if (V.applyAccent) V.applyAccent(); location.hash = '#stats'; return; }
     if (k === 'rookies') { store.set('v5:lk', 'nba'); store.set('v5:ldrec', false); const st = store.get('v5:ld27', {}) || {}; st.who = 'rookies'; store.set('v5:ld27', st); if (V.applyAccent) V.applyAccent(); location.hash = '#stats'; return; } });
