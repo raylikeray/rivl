@@ -1,0 +1,423 @@
+{
+ "at": "2026-11-11T01:25:32.278Z",
+ "players": [
+  {
+   "n": "Lewis Uvwo",
+   "g": "boys",
+   "cls": "2027",
+   "rank": 1,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "CJ Rosser",
+   "g": "boys",
+   "cls": "2027",
+   "rank": 2,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Marcus Spears Jr.",
+   "g": "boys",
+   "cls": "2027",
+   "rank": 3,
+   "videos": 8,
+   "named": 6,
+   "top": [
+    {
+     "t": "Marcus Spears Jr. slams down lob after nice baseline cut",
+     "d": "2026-11-10T02:15:28.000+00:00",
+     "id": "50438093"
+    },
+    {
+     "t": "Marcus Spears Jr. throws down big dunk vs. Grambling Tigers",
+     "d": "2026-11-10T00:52:36.000+00:00",
+     "id": "50437298"
+    },
+    {
+     "t": "Marcus Spears Jr. rocks the rim with slam dunk",
+     "d": "2026-11-06T02:25:12.000+00:00",
+     "id": "50395316"
+    },
+    {
+     "t": "Texas' Marcus Spears Jr. describes first collegiate win vs. Chicago State",
+     "d": "2026-11-03T04:54:47.000+00:00",
+     "id": "50365595"
+    }
+   ]
+  },
+  {
+   "n": "DeMarcus Henry",
+   "g": "boys",
+   "cls": "2027",
+   "rank": 4,
+   "videos": 1,
+   "named": 1,
+   "top": [
+    {
+     "t": "No. 2 recruit Demarcus Henry commits to UNC live on 'NBA Today'",
+     "d": "2026-10-30T20:03:02.000+00:00",
+     "id": "50330101"
+    }
+   ]
+  },
+  {
+   "n": "Darius Wabbington",
+   "g": "boys",
+   "cls": "2027",
+   "rank": 6,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Paul Osaruyi",
+   "g": "boys",
+   "cls": "2027",
+   "rank": 7,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Asa Montgomery",
+   "g": "boys",
+   "cls": "2027",
+   "rank": 8,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Beckham Black",
+   "g": "boys",
+   "cls": "2027",
+   "rank": 9,
+   "videos": 1,
+   "named": 1,
+   "top": [
+    {
+     "t": "Williams: OBJ is setting a bad example for young black men",
+     "d": "2020-01-17T14:57:50.000+00:00",
+     "id": "28501880"
+    }
+   ]
+  },
+  {
+   "n": "Yann Kamagate",
+   "g": "boys",
+   "cls": "2028",
+   "rank": 1,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Xavier Young",
+   "g": "boys",
+   "cls": "2028",
+   "rank": 2,
+   "videos": 4,
+   "named": 1,
+   "top": [
+    {
+     "t": "Audia Young knocks down basket",
+     "d": "2026-03-01T19:29:59.000+00:00",
+     "id": "48074415"
+    }
+   ]
+  },
+  {
+   "n": "Bamba Touray",
+   "g": "boys",
+   "cls": "2028",
+   "rank": 3,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Evan Willis",
+   "g": "boys",
+   "cls": "2028",
+   "rank": 4,
+   "videos": 4,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Benjamin Berrouet",
+   "g": "boys",
+   "cls": "2028",
+   "rank": 5,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Erick Dampier Jr.",
+   "g": "boys",
+   "cls": "2028",
+   "rank": 6,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Jordyn Palmer",
+   "g": "girls",
+   "cls": "2027",
+   "rank": 1,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "GG Banks",
+   "g": "girls",
+   "cls": "2027",
+   "rank": 2,
+   "videos": 1,
+   "named": 1,
+   "top": [
+    {
+     "t": "GG Banks hits 2 4-pointers to power Team Washington to WNBA Shooting Stars victory",
+     "d": "2026-07-25T00:38:30.000+00:00",
+     "id": "49443046"
+    }
+   ]
+  },
+  {
+   "n": "Nation Williams",
+   "g": "girls",
+   "cls": "2027",
+   "rank": 3,
+   "videos": 19,
+   "named": 19,
+   "top": [
+    {
+     "t": "Ziaire Williams joins the Pistons' huddle during a timeout",
+     "d": "2026-11-09T01:36:30.000+00:00",
+     "id": "50428100"
+    },
+    {
+     "t": "Zion Williamson connects on alley-oop dunk",
+     "d": "2026-11-09T02:31:23.000+00:00",
+     "id": "50428707"
+    },
+    {
+     "t": "Kenrich Williams gets the basket plus the foul",
+     "d": "2026-11-08T01:19:29.000+00:00",
+     "id": "50414932"
+    },
+    {
+     "t": "Robert Williams III gets up for the beautiful flush",
+     "d": "2026-11-05T02:56:56.000+00:00",
+     "id": "50384510"
+    }
+   ]
+  },
+  {
+   "n": "Kaleena Smith",
+   "g": "girls",
+   "cls": "2027",
+   "rank": 4,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Ivanna Wilson-Manyacka",
+   "g": "girls",
+   "cls": "2027",
+   "rank": 5,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Haylen Ayers",
+   "g": "girls",
+   "cls": "2027",
+   "rank": 6,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Sydney Douglas",
+   "g": "girls",
+   "cls": "2028",
+   "rank": 1,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Ella Peper",
+   "g": "girls",
+   "cls": "2028",
+   "rank": 2,
+   "videos": 2,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Nyajuacni Riak",
+   "g": "girls",
+   "cls": "2028",
+   "rank": 2,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  },
+  {
+   "n": "Tatianna Griffin",
+   "g": "girls",
+   "cls": "2028",
+   "rank": 3,
+   "videos": 0,
+   "named": 0,
+   "top": []
+  }
+ ],
+ "terms": [
+  {
+   "q": "high school basketball",
+   "videos": 20,
+   "top": [
+    {
+     "t": "From Vinsanity to LeBron to Zion: The best of McDonald's dunk contest",
+     "d": "2025-03-31T12:39:27.000+00:00",
+     "id": "44476349"
+    },
+    {
+     "t": "Zion on first NBA dunk: 'This isn't high school or college anymore'",
+     "d": "2019-10-08T03:18:37.000+00:00",
+     "id": "27796000"
+    },
+    {
+     "t": "LeBron James Jr. impresses with first high school dunk",
+     "d": "2019-10-21T19:44:22.000+00:00",
+     "id": "27896913"
+    },
+    {
+     "t": "McDonald scores Arizona school record 44 points",
+     "d": "2019-11-17T23:55:22.000+00:00",
+     "id": "28104134"
+    },
+    {
+     "t": "Zaire Wade throws down first dunk of the season",
+     "d": "2019-11-22T04:15:40.000+00:00",
+     "id": "28134267"
+    }
+   ]
+  },
+  {
+   "q": "Chipotle Nationals",
+   "videos": 0,
+   "top": []
+  },
+  {
+   "q": "SCNext",
+   "videos": 1,
+   "top": [
+    {
+     "t": "Kam Mercer announces commitment to Cincinnati",
+     "d": "2026-05-21T18:31:53.000+00:00",
+     "id": "48837203"
+    }
+   ]
+  },
+  {
+   "q": "Peach Jam",
+   "videos": 0,
+   "top": []
+  },
+  {
+   "q": "McDonald's All American",
+   "videos": 14,
+   "top": [
+    {
+     "t": "A.J. Dybantsa slams it home to get the 2025 McDonald's All American game started",
+     "d": "2025-04-02T01:25:10.000+00:00",
+     "id": "44497610"
+    },
+    {
+     "t": "Cameron Boozer and A.J. Dybantsa trade buckets in McDonald's All American game",
+     "d": "2025-04-02T01:44:02.000+00:00",
+     "id": "44497851"
+    },
+    {
+     "t": "Tounde Yessoufou wins McDonald's All American dunk contest",
+     "d": "2025-04-01T01:41:30.000+00:00",
+     "id": "44484495"
+    },
+    {
+     "t": "Jaxon Richardson dunks over 5, including Ronald McDonald, to win contest",
+     "d": "2026-03-31T12:43:08.000+00:00",
+     "id": "48355607"
+    },
+    {
+     "t": "Aliyahna Morris breaks the press with some razzle dazzle",
+     "d": "2025-04-01T23:19:38.000+00:00",
+     "id": "44496202"
+    }
+   ]
+  }
+ ],
+ "sample": {
+  "id": "50438093",
+  "t": "Marcus Spears Jr. slams down lob after nice baseline cut",
+  "d": "2026-11-10T02:15:28.000+00:00",
+  "link": "https://www.espn.com/video/clip/_/id/50438093",
+  "keys": [
+   "id",
+   "guid",
+   "type",
+   "displayName",
+   "subtitle",
+   "link",
+   "image",
+   "duration",
+   "displayDuration",
+   "date",
+   "timeRestrictions",
+   "deviceRestrictions"
+  ]
+ },
+ "types": {
+  "article": 24,
+  "player": 3,
+  "clips": 8,
+  "upcoming": 1
+ },
+ "clip": {
+  "id": "50438093",
+  "headline": "Marcus Spears Jr. slams down lob after nice baseline cut",
+  "dur": 16,
+  "links": [
+   "href",
+   "HD",
+   "HLS",
+   "flash",
+   "full",
+   "mezzanine"
+  ],
+  "mp4": true,
+  "ad": {
+   "bundle": "sportscenter",
+   "sport": "ncb"
+  },
+  "geo": null,
+  "premium": false
+ },
+ "sum": {
+  "players": 24,
+  "withNamed": 6,
+  "namedTotal": 29
+ }
+}
