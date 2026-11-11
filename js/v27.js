@@ -415,10 +415,11 @@
     const frame = (sec, auto) => { if (!sec || sec.querySelector('iframe')) return; sec.dataset.rdy = ''; sec.dataset.ply = ''; sec.querySelector('.ttf27').innerHTML = `<iframe src="https://www.tiktok.com/player/v1/${sec.dataset.id}?autoplay=${auto ? 1 : 0}&loop=1&controls=0&description=0&music_info=0&rel=0&native_context_menu=0&closed_caption=0" allow="autoplay; fullscreen; encrypted-media" allowfullscreen title="Clip"></iframe>`; };
     const start = sec => { if (sound) say(sec, 'unMute'); say(sec, 'play'); sec.dataset.p = '1'; setTimeout(() => { if (cur === sec && !sec.dataset.ply) { say(sec, 'mute'); say(sec, 'play'); sec.querySelector('.ttm27').hidden = false; } }, 2500); };
     const load = sec => { if (cur === sec) return; const was = cur; cur = sec; const i = secs.indexOf(sec); if (was) { say(was, 'pause'); was.dataset.p = ''; }
-      secs.forEach((x, k) => { if (Math.abs(k - i) > 1) { x.querySelector('.ttf27').innerHTML = ''; x.dataset.rdy = ''; x.dataset.ply = ''; } });
-      if (sec.querySelector('iframe')) { if (sec.dataset.rdy) start(sec); } else frame(sec, true);
+      secs.forEach((x, k) => { if (k !== i) { x.querySelector('.ttf27').innerHTML = ''; x.dataset.rdy = ''; x.dataset.ply = ''; } });
+      /* v501: back to the first version's way of starting a clip (load it when you land on it, shown at once). The load-ahead and the wait-behind-black from v499 left clips that never started on Ray's phone. */
+      if (sec.querySelector('iframe')) start(sec); else frame(sec, true); sec.dataset.ply = '1';
       setTimeout(() => { if (cur === sec && !sec.dataset.ply) sec.dataset.ply = '1'; }, 4000);   // if the player never reports in, show it anyway so the screen is never stuck on the spinner
-      frame(secs[i + 1], false); };
+      };
     const onMsg = e => { if (!/tiktok\.com$/.test((() => { try { return new URL(e.origin).hostname; } catch (er) { return ''; } })())) return; let m = e.data; if (typeof m === 'string') { try { m = JSON.parse(m); } catch (er) { return; } } if (!m || !m.type) return;
       const sec = secs.find(x => { const f = x.querySelector('iframe'); return f && f.contentWindow === e.source; }); if (!sec) return;
       if (m.type === 'onPlayerReady') { sec.dataset.rdy = '1'; if (sec === cur) start(sec); else say(sec, 'pause'); }
