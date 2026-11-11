@@ -375,7 +375,7 @@
     if (a === 'fold') { const f = store.get('v5:youfold', {}) || {}, t = b.dataset.tab, l = new Set(f[t] || []); if (l.has(b.dataset.lk)) l.delete(b.dataset.lk); else l.add(b.dataset.lk); f[t] = [...l]; store.set('v5:youfold', f); return you27(); }
     if (a === 'clip') { const its = b.dataset.kind === 'liked' ? X.stLikedItems() : X.savedItems(); if (!its.length || document.querySelector('.story')) return; const nm = b.dataset.kind === 'liked' ? 'Liked' : 'Saved';
       const subs = [{ key: 'w:you', lk: 'all', kind: 'watch', id: 'w:you', name: nm, full: nm, color: '#15171a', its, un: true, last: Date.now() }];
-      return V.storyOpen('w:you', b.dataset.id, { watch: true, subs, chrome(el) { el.__subs = subs; wChrome(el); el.classList.add('one27'); }, onItem: (el, it, x, si) => { wItem(el, it, x, si); store.set('v5:wtab', store.get('v5:wtab0', 'w:fy')); }, onSlide: wInd, onClose() { paintBar(); you27(); } }); }
+      return V.storyOpen('w:you', b.dataset.id, { watch: true, auto: wAuto(), onHold: wSheet, subs, chrome(el) { el.__subs = subs; wChrome(el); el.classList.add('one27'); }, onItem: (el, it, x, si) => { wItem(el, it, x, si); store.set('v5:wtab', store.get('v5:wtab0', 'w:fy')); }, onSlide: wInd, onClose() { paintBar(); you27(); } }); }
     if (a === 'edit') { youEdit = true; window.scrollTo(0, 0); return you27(); }
     if (a === 'cancel') { youEdit = false; return you27(); }
     if (a === 'save') { const nm = $main.querySelector('#yname27'), tp = $main.querySelector('#ytop27'); if (nm) store.set('v5:name', nm.value.trim().slice(0, 24)); if (tp && tp.value) store.set('v5:topteam', tp.value); youEdit = false; V.toast('Saved'); return you27(); }
@@ -409,7 +409,7 @@
   new MutationObserver(() => { if (root.dataset.page === 'game' && on()) gameDecorate(); }).observe($main, { childList: true, subtree: true });
   $main.addEventListener('click', e => { const b = e.target.closest('[data-gclip]'); if (!b) return; e.preventDefault(); const its = X.gameClips(b.dataset.gid); if (!its.length || document.querySelector('.story')) return;
     const subs = [{ key: 'w:game', lk: 'all', kind: 'watch', id: 'w:game', name: 'This game', full: 'This game', color: '#15171a', its, un: true, last: Date.now() }];
-    V.storyOpen('w:game', b.dataset.gclip, { watch: true, subs, chrome(el) { el.__subs = subs; wChrome(el); el.classList.add('one27'); }, onItem: (el, it, x, si) => { wItem(el, it, x, si); store.set('v5:wtab', store.get('v5:wtab0', 'w:fy')); }, onSlide: wInd, onClose() { paintBar(); } }); });
+    V.storyOpen('w:game', b.dataset.gclip, { watch: true, auto: wAuto(), onHold: wSheet, subs, chrome(el) { el.__subs = subs; wChrome(el); el.classList.add('one27'); }, onItem: (el, it, x, si) => { wItem(el, it, x, si); store.set('v5:wtab', store.get('v5:wtab0', 'w:fy')); }, onSlide: wInd, onClose() { paintBar(); } }); });
 
   /* ---------- player and team pages (v482): the profile pattern Ray chose. A band of the team's colour with the number or
      the team's letters running through it, the photo on its edge with the story ring (bright when there is something new,
@@ -469,6 +469,48 @@
     plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>',
     tick: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12.500 4 4 8-9"/></svg>' };
   const sleep = ms => new Promise(r => setTimeout(r, ms));
+  /* ---------- Watch: the options sheet and the first-time guide (v491). Holding the middle of a clip brings the sheet up
+     from the bottom: speed, auto scroll, clear display, not interested. The guide shows once, the first time Watch opens,
+     and is always one tap away in the sheet. ---------- */
+  const wAuto = () => !!store.get('v5:wauto', false);
+  const SI = { speed: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.500 17a8.500 8.500 0 1 1 15 0M12 13.500l4-5"/><circle cx="12" cy="13.500" r="1.300" fill="currentColor"/></svg>',
+    auto: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6M6.500 11 12 5.500 17.500 11M5 20h14"/></svg>',
+    clear: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></svg>',
+    no: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.500"/><path d="m6.200 6.200 11.600 11.600"/></svg>',
+    tips: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.500"/><path d="M9.700 9.600a2.400 2.400 0 1 1 3.500 2.100c-.800.500-1.200 1-1.200 1.900M12 16.700v.1"/></svg>',
+    up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+    side: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4"/></svg>',
+    tap: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.200"/><circle cx="12" cy="12" r="8.500" opacity=".5"/></svg>',
+    fast: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6v12l8.500-6zM12.500 6v12L21 12z" fill="currentColor" stroke="none"/></svg>',
+    line: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18"/><circle cx="14" cy="12" r="3" fill="currentColor"/></svg>',
+    hold: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14M5 15h14M5 12h14" opacity=".55"/><rect x="3" y="5" width="18" height="14" rx="3"/></svg>' };
+  const wShut = el => { const sh = el.querySelector('.wsh27'); if (!sh) return; sh.classList.remove('in'); setTimeout(() => sh.remove(), 220); };
+  function wSheet(el, it) {
+    if (!el || !it || el.querySelector('.wsh27,.wtp27')) return; const r = el.__w.rate, vid = it.kind === 'vid';
+    const sp = [.5, 1, 1.5, 2].map(v => `<button data-wsh="rate" data-v="${v}" class="${v === r ? 'on' : ''}" aria-pressed="${v === r}">${v}x</button>`).join('');
+    el.insertAdjacentHTML('beforeend', `<div class="wsh27" data-w27 role="dialog" aria-label="Clip options"><div class="wshb27" data-wsh="x"></div><div class="wshp27"><i class="wshg27"></i>
+      ${vid ? `<div class="wshr27">${SI.speed}<span><b>Speed</b></span><div class="wsp27">${sp}</div></div>` : ''}
+      <button class="wshr27" data-wsh="auto" role="switch" aria-checked="${el.__w.auto}">${SI.auto}<span><b>Auto scroll</b><small>Go to the next clip when one ends</small></span><i class="wsw27"></i></button>
+      <button class="wshr27" data-wsh="clear">${SI.clear}<span><b>Clear display</b><small>Hide the buttons and text</small></span></button>
+      ${vid ? `<button class="wshr27" data-wsh="no">${SI.no}<span><b>Not interested</b><small>Show fewer clips like this</small></span></button>` : ''}
+      <button class="wshr27" data-wsh="tips">${SI.tips}<span><b>How Watch works</b></span></button></div></div>`);
+    const sh = el.querySelector('.wsh27'); requestAnimationFrame(() => sh.classList.add('in'));
+    let fresh = false; sh.addEventListener('pointerdown', () => { fresh = true; }, true);   // the finger that opened the sheet is still down; its release must not count as a tap on the backdrop
+    sh.addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('[data-wsh]'); if (!b || !fresh) return; e.preventDefault(); const a = b.dataset.wsh;
+      if (a === 'x') return wShut(el);
+      if (a === 'rate') { el.__w.setRate(+b.dataset.v); if (el.__w.paused) el.__w.resume(); return wShut(el); }
+      if (a === 'auto') { const on = !el.__w.auto; el.__w.setAuto(on); store.set('v5:wauto', on); b.setAttribute('aria-checked', on); return; }
+      if (a === 'clear') { el.classList.add('wcl27'); return wShut(el); }
+      if (a === 'no') { if (X.stLearn) X.stLearn(it, -3); V.toast('Got it. Fewer clips like that.'); wShut(el); return el.__w.next(); }
+      if (a === 'tips') { wShut(el); return wTips(el, true); } });
+  }
+  const TIPS = [['up', 'Swipe up for the next clip'], ['side', 'Swipe sideways to change lists'], ['tap', 'Tap to pause or play'], ['fast', 'Hold either side to play at 2x speed'], ['hold', 'Hold the middle for speed, auto scroll and more'], ['line', 'Drag the white line to move through the clip']];
+  function wTips(el, asked) {
+    if (!el || el.querySelector('.wtp27') || (!asked && store.get('v5:wtips27', false))) return;
+    el.insertAdjacentHTML('beforeend', `<div class="wtp27" data-w27 role="dialog" aria-label="How Watch works"><div><h2>How Watch works</h2><ul>${TIPS.filter(t => t[0] !== 'side' || !el.classList.contains('one27')).map(t => `<li>${SI[t[0]]}<span>${t[1]}</span></li>`).join('')}</ul><button data-wtp>Got it</button></div></div>`);
+    const tp = el.querySelector('.wtp27'); requestAnimationFrame(() => tp.classList.add('in'));
+    tp.addEventListener('click', e => { e.stopPropagation(); if (!e.target.closest('[data-wtp]')) return; e.preventDefault(); store.set('v5:wtips27', true); tp.classList.remove('in'); setTimeout(() => tp.remove(), 200); });
+  }
   function wChrome(el) {
     el.style.bottom = `${$bar ? $bar.offsetHeight : 0}px`;
     const subs = el.__subs || [], act = el.querySelector('.stact');   // the tabs and search sit over the clips and stay put while a clip slides
@@ -476,6 +518,9 @@
     act.insertAdjacentHTML('afterbegin', `<span class="wa27" data-w27 hidden></span>`);
     act.insertAdjacentHTML('beforeend', `<button data-w27 data-wact="share" aria-label="Share">${WI.share}</button>`);
     el.querySelector('.stpane').insertAdjacentHTML('beforeend', `<div class="wpl27" aria-hidden="true">${I.play}</div>`);
+    el.insertAdjacentHTML('beforeend', `<button class="wcx27" data-w27 data-wcx aria-label="Show the buttons and text">${SI.clear}<span>Show</span></button>`);
+    el.querySelector('[data-wcx]').addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); el.classList.remove('wcl27'); });
+    setTimeout(() => { if (document.body.contains(el)) wTips(el); }, 900);
     el.addEventListener('click', e => {
       const t = e.target.closest('[data-wtab]'); if (t) { e.preventDefault(); el.__w.tab(+t.dataset.wtab); return; }
       const b = e.target.closest('[data-wact]'); if (!b) return; e.preventDefault(); const it = el.__w.item; if (!it) return;
@@ -546,7 +591,7 @@
     if (!subs.some(x => x.key === key)) key = (subs.find(x => x.key === 'w:fy') || subs[0]).key;
     if (back) { key = back.key; startId = back.id; }
     stDirty = true;
-    V.storyOpen(key, startId, { watch: true, subs, chrome(el) { el.__subs = subs; wChrome(el); paintBar(); }, onItem: wItem, onSlide: wInd, onClose() { paintBar(); } });
+    V.storyOpen(key, startId, { watch: true, auto: wAuto(), onHold: wSheet, subs, chrome(el) { el.__subs = subs; wChrome(el); paintBar(); }, onItem: wItem, onSlide: wInd, onClose() { paintBar(); } });
   }
   /* a shared clip link (#watch/<id>) opens Watch on that clip once the first page is up */
   { const m = /^#watch(?:\/(.+))?$/.exec(location.hash || ''); if (m) { const id = m[1] ? decodeURIComponent(m[1]) : ''; try { history.replaceState(null, '', '#home'); } catch (e) { location.hash = '#home'; }

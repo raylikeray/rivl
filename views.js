@@ -1133,7 +1133,7 @@
       const to = x.kind === 'player' && x.id ? href.player(x.lk, x.id) : x.kind === 'team' && x.id ? href.team(x.lk, x.id) : '', o = to ? `<a class="stgo" data-stgo href="${esc(to)}" aria-label="${esc(x.full || x.name)}">` : '<span class="stgo">', c = to ? '</a>' : '</span>';
       pane.querySelector('.sthd').innerHTML = `${o}<span class="ring${x.kind === 'team' && x.logo ? ' tm' : ''}"><span>${stAvatar(x, x.kind === 'player' ? 34 : x.kind === 'team' ? 48 : 22)}</span></span><span class="who"><b>${esc(x.full || x.name)}</b><small>${esc(ago(new Date(it.ts).toISOString()).replace(/ ago$/, ''))}</small></span>${c}<button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`; };
     const render = () => {
-      leave(); const x = sub(), it = item(); stMark(x.key, it.id); if (it.sk) stMark(it.sk, it.id); head(); segs(); t0 = performance.now(); if (watch && opt.onItem) opt.onItem(el, it, x, si);
+      leave(); const x = sub(), it = item(); stMark(x.key, it.id); if (it.sk) stMark(it.sk, it.id); head(); segs(); t0 = performance.now(); rate = 1; if (watch && opt.onItem) opt.onItem(el, it, x, si);
       const act = pane.querySelector('.stact'); act.hidden = it.kind !== 'vid'; if (it.kind === 'vid') { const lk = stLikes().includes(it.id), sv = stSaved().some(y => y.id === it.id); const [bl2, bs2] = act.children; bl2.classList.toggle('on', lk); bl2.setAttribute('aria-pressed', lk); bs2.classList.toggle('on', sv); bs2.setAttribute('aria-pressed', sv); }
       const card = pane.querySelector('.stcd'), vw = pane.querySelector('.stvdw'), cap = pane.querySelector('.stcap'), bg = pane.querySelector('.stbg'), bl = pane.querySelector('.stblur');
       if (it.kind === 'vid') {
@@ -1223,7 +1223,14 @@
     let px = 0, py = 0, pt = 0, mode = '', hold = 0, held = false, lastY = 0, lastT = 0, vy = 0;
     el.addEventListener('pointerdown', e => { if (busy || e.target.closest('[data-stx],[data-stb],[data-w27],[data-stgo]')) return; px = e.clientX; py = e.clientY; pt = lastT = pd0 = performance.now(); lastY = py; mode = ''; held = false; vy = 0;
       if (quiet) { quiet = false; vd.muted = false; }
-      try { el.setPointerCapture(e.pointerId); } catch (er) {} clearTimeout(hold); hold = setTimeout(() => { held = true; pause(); }, 190); });
+      /* v491 Watch: holding either side of the clip plays it at double speed for as long as the finger is down; the middle still holds it still */
+      const side = watch && !paused && (px < W * .28 || px > W * .72) && (item() || {}).kind === 'vid';
+      try { el.setPointerCapture(e.pointerId); } catch (er) {} clearTimeout(hold); hold = setTimeout(() => { held = true; if (side) { fast = true; try { vd.playbackRate = 2; } catch (er) {} el.classList.add('w2x27'); } else if (watch && opt.onHold) { menu = true; opt.onHold(el, item()); } else pause(); }, side ? 260 : watch && opt.onHold ? 420 : 190); });
+    /* rate: the speed picked for this clip (it goes back to 1 on the next clip). auto: move on when a clip ends instead of playing it again; off unless switched on. menu: the hold opened the options sheet, so the release does nothing. */
+    let fast = false, menu = false, rate = 1, auto = !!(opt && opt.auto); if (watch) { vd.loop = sb.loop = !auto; }
+    const setRate = () => { try { vd.playbackRate = fast ? 2 : rate; sb.playbackRate = 1; } catch (er) {} };
+    const slow = () => { if (menu) { menu = false; held = false; return true; } if (!fast) return false; fast = false; held = false; setRate(); el.classList.remove('w2x27'); return true; };
+    if (watch) [vd, sb].forEach(v => v.addEventListener('playing', e => { if (e.currentTarget === vd) setRate(); }));
     /* v470 Watch: the clip follows the finger up or down with the next one's picture coming in behind it */
     let peek = null; const PH = () => pane.clientHeight || H;
     const nbr = d => { const x = sub(), n = ii + d; return n < 0 ? null : x.its[n >= x.its.length ? 0 : n]; };
@@ -1257,6 +1264,7 @@
       pane.animate([{ transform: from }, { transform: 'none' }], { duration: 240, easing: EASE }); if (peek && subs[nsi]) peek.animate([{ transform: pf }, { transform: `translateX(${d * W}px)` }], { duration: 240, easing: EASE }).finished.then(() => { peek.style.display = 'none'; }, () => {}); else if (peek) peek.style.display = 'none'; };
     let pd0 = 0;
     el.addEventListener('pointermove', e => { if (!pt || busy) return; const dx = e.clientX - px, dy = e.clientY - py;
+      if (fast || menu) return;
       if (watch) { if (!mode) { if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { mode = 'w'; clearTimeout(hold); } else if (Math.abs(dx) > 14 && Math.abs(dx) > Math.abs(dy)) { mode = 'wx'; clearTimeout(hold); } }
         const now = performance.now(); vy = (e.clientY - lastY) / Math.max(1, now - lastT); lastY = e.clientY; lastT = now; if (mode === 'w') wDrag(dy); else if (mode === 'wx') hDrag(dx); return; }
       if (!mode) { if (dy > 12 && dy > Math.abs(dx)) { mode = 'y'; clearTimeout(hold); pause(); } else if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) { mode = 'x'; clearTimeout(hold); pause(); } else if (dy < -14 && -dy > Math.abs(dx)) { mode = 'u'; clearTimeout(hold); } }
@@ -1264,6 +1272,7 @@
       if (mode === 'y') { const d = Math.max(0, dy); pane.style.transform = `translate(${dx * .4}px,${d}px) scale(${1 - Math.min(d, 700) / 1700})`; pane.style.borderRadius = `${Math.min(d / 4, 28)}px`; dim.style.opacity = String(Math.max(0, 1 - d / 650)); }
       if (mode === 'x') { pane.style.transformOrigin = `50% 50% ${-W / 2}px`; pane.style.transform = `rotateY(${Math.max(-35, Math.min(35, dx / W * 70))}deg)`; } });
     const up = e => { if (!pt) return; clearTimeout(hold); const dx = e.clientX - px, dy = e.clientY - py; const m = mode; pt = 0; mode = '';
+      if (slow()) return;
       if (watch) { if (m === 'w') { if (held) { held = false; resume(); } return wEnd(dy, vy); }
         if (m === 'wx') { if (held) { held = false; resume(); } return hEnd(dx, dx / Math.max(1, performance.now() - pd0)); }
         if (held) { held = false; resume(); return; }
@@ -1308,7 +1317,17 @@
     const sn = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !sn.has(y.id)));
     if (startId) { const k0 = sub().its.findIndex(y => y.id === startId); if (k0 >= 0) ii = k0; }   // v462: the new Home opens a story on the clip that was tapped
     const r0 = bubbleOf(key); render(); prep(true); raf = requestAnimationFrame(tick);
-    el.__w = { tab(i) { if (i !== si) hGo(i); }, close(pop) { close(pop); }, get item() { return item(); }, get sub() { return sub(); }, get si() { return si; }, get paused() { return paused; }, pause() { pause(); el.classList.remove('held'); }, resume() { resume(); } };
+    /* v491 Watch: the white line can be dragged to any point in the clip. The line is 2px, so the touch area is a taller strip over it. */
+    if (watch) { pane.insertAdjacentHTML('beforeend', '<div class="st2x" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 5.500v13l8.500-6.500zM12.500 5.500v13L21 12z"/></svg>2x speed</div><div class="stseek" data-w27="seek" role="slider" aria-label="Move through the clip" aria-valuemin="0" aria-valuemax="100"></div>');
+      const sk = pane.querySelector('.stseek'); let sOn = false, sWas = false; const mmss = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+      const sAt = e => { const r = sk.getBoundingClientRect(), f = Math.max(0, Math.min(1, (e.clientX - r.left) / Math.max(1, r.width))), it = item(), d = (isFinite(vd.duration) && vd.duration) || (it && it.dur) || 0; if (!d) return;
+        try { vd.currentTime = Math.min(Math.max(0, d - .08), f * d); } catch (er) {} bar(f); sk.dataset.t = `${mmss(f * d)} / ${mmss(d)}`; sk.style.setProperty('--x', `${Math.max(44, Math.min(r.width - 44, e.clientX - r.left))}px`); sk.setAttribute('aria-valuenow', Math.round(f * 100)); };
+      sk.addEventListener('pointerdown', e => { const it = item(); if (busy || closed || !it || it.kind !== 'vid') return; e.stopPropagation(); sOn = true; sWas = !paused; pause(); el.classList.remove('held'); el.classList.add('wsk27'); try { sk.setPointerCapture(e.pointerId); } catch (er) {} sAt(e); });
+      sk.addEventListener('pointermove', e => { if (sOn) sAt(e); });
+      const sUp = () => { if (!sOn) return; sOn = false; el.classList.remove('wsk27'); if (sWas) resume(); }; sk.addEventListener('pointerup', sUp); sk.addEventListener('pointercancel', sUp);
+      sk.addEventListener('click', e => e.stopPropagation()); }
+    el.__w = { tab(i) { if (i !== si) hGo(i); }, close(pop) { close(pop); }, get item() { return item(); }, get sub() { return sub(); }, get si() { return si; }, get paused() { return paused; }, pause() { pause(); el.classList.remove('held'); }, resume() { resume(); },
+      get rate() { return rate; }, setRate(v) { rate = +v || 1; setRate(); }, get auto() { return auto; }, setAuto(v) { auto = !!v; vd.loop = sb.loop = !auto; }, next() { step(1); } };
     el.__st = { get busy() { return busy; }, get ii() { return ii; }, get paused() { return paused; }, get si() { return si; }, get names() { return subs.map(x => x.name); }, get items() { return sub().its.map(x => x.kind === 'vid' ? `${x.ck || 'post'} | ${x.title} | ${x.tag || ''}${x.gw ? ' GW' : ''}${x.ln ? ' +line' : ''} | ${x.v9 ? 'v9' : 'wide'}` : x.kind); }, go(n) { ii = n; render(); }, last() { ii = sub().its.length - 1; render(); }, get kind() { return sub().kind; } };   // read by the test harness
     if (!RM()) { busy = true; dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: EASE });
       pane.animate([r0 ? shrunk(r0) : { transform: 'translate(0,40px) scale(.94)', clipPath: `circle(${HYP}px at 50% 50%)`, opacity: 0 }, open], { duration: 360, easing: EASE }).finished.then(() => { busy = false; t0 = performance.now(); }); }
@@ -2043,7 +2062,7 @@
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom <= fx.offsetHeight + 1; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };   // v412: the bar takes over the moment the header no longer covers its space
     window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(run); }, { passive: true }); document.addEventListener('rivl:rendered', run); }
   /* v462: what the 2027 preview (js/v27.js) reads from here */
-  const x27 = { feedSource, storySubjects, watchSubs, stLikedItems, savedItems: () => stSaved().map(x => Object.assign({ kind: 'vid', L: LEAGUES[x.lk] || null }, x)), gameClips: gid => { feedLoad(); return ((feedD && feedD.items) || []).filter(c => c.u && String(c.e) === String(gid)).sort((a, b) => a.ts - b.ts).map(feedIt); }, sbMeta, clipsOf: gid => { feedLoad(); return ((feedD && feedD.items) || []).filter(c => String(c.e) === String(gid)).length; }, follow: p => fplayers.toggle(p), follows: (lk, id) => fplayers.has(lk, id), athlete: (L, id) => jSoft(`${WEB(L)}/athletes/${id}`, 3600000), headshotOf: (L, id) => idHs(L, id), teamOf: (lk, id) => { const o = feedSrc[lk] && feedSrc[lk].out; return (o && o.tIdx && o.tIdx[String(id)]) || null; }, stSeen, stLike, stSave, stLikes, stSaved, onData(f) { homeRepaint = f; }, warm(its) { if (hlsOk()) (its || []).forEach(it => { if (it && it.kind === 'vid' && it.v9) v9Pick(it.v9); }); } };
+  const x27 = { feedSource, storySubjects, watchSubs, stLearn, stLikedItems, savedItems: () => stSaved().map(x => Object.assign({ kind: 'vid', L: LEAGUES[x.lk] || null }, x)), gameClips: gid => { feedLoad(); return ((feedD && feedD.items) || []).filter(c => c.u && String(c.e) === String(gid)).sort((a, b) => a.ts - b.ts).map(feedIt); }, sbMeta, clipsOf: gid => { feedLoad(); return ((feedD && feedD.items) || []).filter(c => String(c.e) === String(gid)).length; }, follow: p => fplayers.toggle(p), follows: (lk, id) => fplayers.has(lk, id), athlete: (L, id) => jSoft(`${WEB(L)}/athletes/${id}`, 3600000), headshotOf: (L, id) => idHs(L, id), teamOf: (lk, id) => { const o = feedSrc[lk] && feedSrc[lk].out; return (o && o.tIdx && o.tIdx[String(id)]) || null; }, stSeen, stLike, stSave, stLikes, stSaved, onData(f) { homeRepaint = f; }, warm(its) { if (hlsOk()) (its || []).forEach(it => { if (it && it.kind === 'vid' && it.v9) v9Pick(it.v9); }); } };
   HW.v5 = Object.assign(HW.v5 || {}, { x27, feedSrc, initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard, storyOpen,
     _: { pager, duelPair, panelLogo, nearPanel, duelCard, duelBlock, deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
 })();
