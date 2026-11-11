@@ -70,16 +70,36 @@ const WSC = /\/espn\/media\/16x9\/(wsc\/\d{4}\/\d{4}\/[0-9a-f-]{36})\//;
    show is left out: Watch labels every clip, and a label is never guessed. */
 const MORE_KEEP = 96 * 36e5, MED = /\/espn\/media\/16x9\/((?:wsc\/)?\d{4}\/\d{4}\/([^\/]+))\/\2\.mp4/;
 const firstMore = !oldFeed.more;   // the first run with this list sweeps the last three days of games again, once, for their reels
-const more = new Map((oldFeed.more || []).filter(x => now - x.ts < MORE_KEEP).map(x => [x.id, x]));
+const moreNow = new Map((oldFeed.more || []).filter(x => now - x.ts < MORE_KEEP).map(x => [x.id, x])), more = moreNow;
+/* v505 the library. A clip that ages out of the clip file (a play after two days, a longer video after four) moves to
+   data/feed-old.json and stays there four weeks, in the same form, so Watch has weeks to scroll and a followed team's or
+   player's clips are still there after a quiet night. The app reads it only when the new design is on. 'best' in the
+   same file is the season so far: each league's 80 plays that moved the win chance most, and every game winner. */
+const OLD_KEEP = 28 * 864e5, BEST_KEEP = 300 * 864e5;
+/* Filling the library by hand: run with BACKFILL=28 and the games of the last 28 days are swept, their clips going
+   straight to the library. A normal run looks at today and the two days before. */
+const BACK = Math.max(2, Math.min(28, Math.round(+process.env.BACKFILL || 2))), filling = BACK > 2;
+const oldArch = existsSync('data/feed-old.json') ? JSON.parse(readFileSync('data/feed-old.json', 'utf8')) : {};
+const archP = new Map((oldArch.items || []).filter(x => now - x.ts < OLD_KEEP).map(x => [x.id, x]));
+(oldFeed.items || []).filter(x => now - x.ts >= FEED_KEEP && now - x.ts < OLD_KEEP).forEach(x => archP.set(x.id, x));
+const archM = new Map((oldArch.more || []).filter(x => now - x.ts < OLD_KEEP).map(x => [x.id, x]));
+(oldFeed.more || []).filter(x => now - x.ts >= MORE_KEEP && now - x.ts < OLD_KEEP).forEach(x => archM.set(x.id, x));
+const best = new Map((oldArch.best || []).filter(x => now - x.ts < BEST_KEEP).map(x => [x.id, x]));
+/* the game winner, from the play record of a finished game: the basket after which the winner led for good, when it
+   came in the last 30 seconds of the last period or overtime. Returns that play's id, or nothing. */
+const gwOf = (lk, s) => { const ps = (s.plays || []).filter(q => q.homeScore != null && q.awayScore != null); if (ps.length < 20) return '';
+  const fin = Math.sign(ps[ps.length - 1].homeScore - ps[ps.length - 1].awayScore); if (!fin) return '';
+  let at = -1; for (let i = ps.length - 1; i >= 0; i--) if (Math.sign(ps[i].homeScore - ps[i].awayScore) !== fin) { at = i + 1; break; }
+  const q = at > 0 ? ps[at] : null; return q && q.scoringPlay && +(q.period || {}).number >= (REG[lk] || 4) && secs((q.clock || {}).displayValue) <= 30 ? String(q.id) : ''; };
 const vkOf = (type, title, url, dur) => /(game|full) highlights\s*$/i.test(title) || type === 'Final Game Highlight' ? 'reel' : /interview|press|sound/i.test(type) || /_interview_/i.test(url) ? 'talk'
   : /analysis/i.test(type) ? 'show' : /feature/i.test(type) ? 'feat' : /highlight|oneplay/i.test(type) && dur >= 45 ? 'recap' : '';
-const addMore = (lk, id, ts, title, url, dur, a, tm, type, e, thumb) => { if (feed.has(id) || !title || !(now - ts < MORE_KEEP) || !(dur >= 30)) return; const m = MED.exec(url || ''), k = vkOf(String(type || ''), title, url || '', dur); if (!m || !k) return;
+const addMore = (lk, id, ts, title, url, dur, a, tm, type, e, thumb) => { if (feed.has(id) || archP.has(id) || !title || !(dur >= 30)) return; const aged = !(now - ts < MORE_KEEP); if (aged && !(filling && now - ts < OLD_KEEP)) return; const more = aged ? archM : moreNow; const m = MED.exec(url || ''), k = vkOf(String(type || ''), title, url || '', dur); if (!m || !k) return;
   const it = { id, lk, ts, t: title, u: m[1], d: dur, a: (a || []).slice(0, 6), tm: tm || [], k }; if (e) it.e = e;
   if (thumb && /^https:\/\//.test(thumb) && thumb !== `https://espnmedia-cdn.akamaized.net/espn/media/common/${m[1]}/${m[2]}.jpg`) it.th = thumb;   /* the picture is not always where the file's name says */
   const was = more.get(id); if (was && was.e && !it.e) it.e = was.e; if (was && was.th && !it.th) it.th = was.th; more.set(id, it); };
 /* v503 what kind of play a clip shows, read from the play record (not from the words in its title): the kind, whether it
    was assisted, and whether it came in the last five minutes of the last period or overtime with the score within five. */
-const REG = { nba: 4, wnba: 4, ncaaw: 4, ncaam: 2 }, KV = 2;   // KV: raise it and every game still in the clip file has its kinds read again
+const REG = { nba: 4, wnba: 4, ncaaw: 4, ncaam: 2 }, KV = 3;   // KV: raise it and every game still in the clip file has its kinds read again
 const secs = s => { const m = /^(?:(\d+):)?(\d+(?:\.\d+)?)$/.exec(String(s || '').trim()); return m ? (+m[1] || 0) * 60 + +m[2] : 1e9; };
 const pkOf = q => { const ty = String((q.type || {}).text || ''), tx = String(q.text || ''), both = ty + ' ' + tx;
   if (/\bblocks?\b/i.test(tx)) return 'block'; if (/\bsteals?\b/i.test(tx)) return 'steal'; if (!q.scoringPlay) return '';
@@ -102,7 +122,8 @@ const weigh = async (lk, path, e, vids) => {
   if (wpDone[e.id] && wpDone[e.id].n === ones.length && wpDone[e.id].k === KV) return; wpDone[e.id] = { n: ones.length, t: e.t, k: KV }; if (!ones.length) return;
   const s = await get(`${SITE}/${path}/summary?event=${e.id}`); if (!s) { delete wpDone[e.id]; return; }
   const wp = (s.winprobability || []).filter(x => x.homeWinPercentage != null); const at = new Map(wp.map((x, i) => [String(x.playId), i])); const plays = new Map((s.plays || []).map(q => [String(q.id), q]));
-  for (const v of ones) { const c = cm[String(v.id)]; delete c.cl; readKind(lk, c, plays.get(c.p)); }
+  const gw = gwOf(lk, s);
+  for (const v of ones) { const c = cm[String(v.id)]; delete c.cl; delete c.gw; readKind(lk, c, plays.get(c.p)); if (gw && c.p === gw) c.gw = 1; }
   const comp = (((s.header || {}).competitions || [])[0] || {}).competitors || []; const side = ha => { const c = comp.find(x => x.homeAway === ha) || {}; const tm = c.team || {}; return { id: String(tm.id || ''), ab: tm.abbreviation || '', nm: tm.shortDisplayName || tm.name || tm.displayName || '', sc: c.score != null ? String(c.score) : '' }; };
   const H = side('home'), A = side('away'); if (!H.id || !A.id || wp.length < 20) return;
   const mine = [];
@@ -110,13 +131,13 @@ const weigh = async (lk, path, e, vids) => {
     const w = wp[i].homeWinPercentage - wp[i - 1].homeWinPercentage; c.w = Math.round(w * 1000) / 1000; const url = (((v.links || {}).source) || {}).href || '';
     if (Math.abs(w) < .03 || !/^https:\/\/[^"]+\.mp4/.test(url)) continue;
     mine.push({ lk, id: String(v.id), e: e.id, gt: e.t, ts: c.ts, w: c.w, title: String(v.headline || '').trim(), url, thumb: v.thumbnail || '', dur: Math.round(+v.duration || 0), a: c.a, per: perLbl(q), ck: String((q.clock || {}).displayValue || ''), hs: q.homeScore, as: q.awayScore, h: H, aw: A }); }
-  mine.sort((x, y) => Math.abs(y.w) - Math.abs(x.w)); cand = cand.filter(c => c.e !== e.id).concat(mine.slice(0, 3));
+  mine.sort((x, y) => Math.abs(y.w) - Math.abs(x.w)); if (now - e.t < 40 * 36e5) cand = cand.filter(c => c.e !== e.id).concat(mine.slice(0, 3));   // an older game (a library fill) has no place in tonight's biggest plays
 };
 const ymd = n => new Date(now - n * 864e5).toISOString().slice(0, 10).replace(/-/g, '');
 let cmAsked = 0, gamesAsked = 0;
 for (const [lk, path] of Object.entries(LG)) {
   const evs = new Map();
-  for (const n of [0, 1, 2]) { const d = await get(`${SITE}/${path}/scoreboard?dates=${ymd(n)}${lk.startsWith('ncaa') ? '&groups=50&limit=400' : ''}`);
+  for (let n = 0; n <= BACK; n++) { const d = await get(`${SITE}/${path}/scoreboard?dates=${ymd(n)}${lk.startsWith('ncaa') ? '&groups=50&limit=400' : ''}`);
     ((d || {}).events || []).forEach(e => { const st = ((e.status || {}).type || {}); if (st.state === 'pre') return; const cs = (((e.competitions || [])[0] || {}).competitors) || []; EVT.set(String(e.id), cs.map(c => String((c.team || {}).abbreviation || '')).filter(Boolean)); evs.set(String(e.id), { id: String(e.id), done: !!st.completed, t: Date.parse(e.date) || now, tm: cs.map(c => String((c.team || {}).id || '')).filter(Boolean) }); }); }
   const todo = [...evs.values()].filter(e => !(swept[e.id] && e.done && swept[e.id] - e.t > 12.5 * 36e5) || (e.done && !wpDone[e.id] && now - e.t < 36 * 36e5) || (e.done && wpDone[e.id] && wpDone[e.id].k !== KV && now - e.t < 50 * 36e5) || firstMore);
   for (let i = 0; i < todo.length; i += 8) {
@@ -128,9 +149,9 @@ for (const [lk, path] of Object.entries(LG)) {
         const pl = (/"plays"\s*:\s*\[\s*\{\s*"id"\s*:\s*"?(\d+)/.exec(raw) || [])[1];
         cm[id] = { v: VER, e: e.id, p: pl || '', a, t: String((c.tracking || {}).coverageType || ''), ts: Date.parse(c.originalPublishDate || '') || now }; }
       if (e.done) { try { await weigh(lk, path, e, d.videos || []); } catch (er) { console.log('weigh failed', e.id, String(er).slice(0, 80)); } }
-      for (const v of d.videos || []) { const id = String(v.id || ''), c = cm[id]; if (!c || c.t !== 'OnePlay' || !((+v.duration || 0) < 45) || !(now - c.ts < FEED_KEEP)) continue;
+      for (const v of d.videos || []) { const id = String(v.id || ''), c = cm[id]; if (!c || c.t !== 'OnePlay' || !((+v.duration || 0) < 45)) continue; const aged = !(now - c.ts < FEED_KEEP); if (aged && !(filling && now - c.ts < OLD_KEEP)) continue;
         const m = WSC.exec((((v.links || {}).source) || {}).href || ''); const title = String(v.headline || '').trim(); if (!m || !title) continue;
-        const it = { id, lk, e: e.id, ts: c.ts, t: title, u: m[1], d: Math.round(+v.duration || 0), a: c.a, tm: e.tm }; if (c.w != null) it.w = c.w; if (c.pk) it.pk = c.pk; if (c.as) it.as = 1; if (c.cl) it.cl = 1; feed.set(id, it); }
+        const it = { id, lk, e: e.id, ts: c.ts, t: title, u: m[1], d: Math.round(+v.duration || 0), a: c.a, tm: e.tm }; if (c.w != null) it.w = c.w; if (c.pk) it.pk = c.pk; if (c.as) it.as = 1; if (c.cl) it.cl = 1; if (c.gw) it.gw = 1; (aged ? archP : feed).set(id, it); }
       for (const v of d.videos || []) { const id = String(v.id || ''), c = cm[id], dur = Math.round(+v.duration || 0); if (!c || (c.t === 'OnePlay' && dur < 45)) continue;
         addMore(lk, id, c.ts, String(v.headline || '').trim(), (((v.links || {}).source) || {}).href || '', dur, c.a, e.tm, c.t, e.id, String(v.thumbnail || '')); }
     }));
@@ -148,6 +169,11 @@ console.log('players read from titles', namedNow);
 for (const p of out) addMore(p.lk, String(p.id), Date.parse(p.ts) || now, p.title, p.url, p.dur, p.aths, p.teams, p.k || '', '', p.thumb || '');
 for (const id of more.keys()) if (feed.has(id)) more.delete(id);
 writeFileSync('data/feed.json', JSON.stringify({ updated: new Date().toISOString(), items: [...feed.values()].sort((a, b) => b.ts - a.ts), more: [...more.values()].sort((a, b) => b.ts - a.ts) }));
+for (const id of feed.keys()) archP.delete(id); for (const id of more.keys()) archM.delete(id); for (const id of archP.keys()) archM.delete(id);
+for (const it of [...feed.values(), ...archP.values()]) if (it.gw || Math.abs(it.w || 0) >= .05) best.set(it.id, it);
+const bestOut = []; for (const lk of Object.keys(LG)) { const l = [...best.values()].filter(x => x.lk === lk); bestOut.push(...l.filter(x => x.gw), ...l.filter(x => !x.gw).sort((a, b) => Math.abs(b.w || 0) - Math.abs(a.w || 0)).slice(0, 80)); }
+writeFileSync('data/feed-old.json', JSON.stringify({ updated: new Date().toISOString(), items: [...archP.values()].sort((a, b) => b.ts - a.ts), more: [...archM.values()].sort((a, b) => b.ts - a.ts), best: bestOut }));
+console.log('library', archP.size, 'plays', archM.size, 'longer', 'best', bestOut.length, 'game winners', bestOut.filter(x => x.gw).length);
 const tally = l => { const o = {}; l.forEach(x => { o[x] = (o[x] || 0) + 1; }); return JSON.stringify(o); };
 console.log('feed', feed.size, 'kinds', tally([...feed.values()].map(x => x.pk || '?')), 'clutch', [...feed.values()].filter(x => x.cl).length);
 console.log('more', more.size, tally([...more.values()].map(x => x.lk + ':' + x.k)));

@@ -202,12 +202,6 @@ html body .story.w27v .stcap .wn27{order:1;display:flex;align-items:baseline;gap
 html body .story.w27v .stcap .wn27 a{font-size:16px;font-weight:800;letter-spacing:-.01em;color:#fff;text-decoration:none;text-shadow:0 1px 8px rgba(0,0,0,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 html body .story.w27v .stcap .wn27 span,html body .story.w27v .stcap .wn27 a.tm{flex:none;font-size:13px;font-weight:600;color:rgba(255,255,255,.78)}
 html body .story.w27v .stcap .wn27 a{padding:6px 0;margin:-6px 0}
-/* v503: what the clip is, above the name */
-html body .story.w27v .stcap .wkd27{order:0;display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 11px 0 9px;margin-bottom:9px;border-radius:999px;background:color-mix(in srgb,var(--k,#fff) 22%,rgba(12,14,18,.5));-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--k,#fff) 38%,transparent);font:700 12.5px/1 var(--f27);letter-spacing:.01em;color:#fff;text-shadow:none;animation:wkd27 .28s cubic-bezier(.2,.8,.2,1) both}
-html body .story.w27v .stcap .wkd27 i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--k,#fff);box-shadow:0 0 9px var(--k,#fff)}
-html body .story.w27v .stcap .wkd27 em{font-style:normal;font-weight:600;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.74);padding-left:7px;border-left:1px solid rgba(255,255,255,.26)}
-@keyframes wkd27{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){ html body .story.w27v .stcap .wkd27{animation:none} }
 html body .story.w27v .stcap>b{order:2;font-size:15px;font-weight:500;line-height:1.36;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 html body .story.w27v .stcap>small{order:3;margin-top:5px}
 html body .story.w27v .stcap .stmeta{order:4;margin:10px 0 0}

@@ -421,6 +421,8 @@
     if (k === 'rookies') { store.set('v5:lk', 'nba'); store.set('v5:ldrec', false); const st = store.get('v5:ld27', {}) || {}; st.who = 'rookies'; store.set('v5:ld27', st); if (V.applyAccent) V.applyAccent(); location.hash = '#stats'; return; } });
   new MutationObserver(() => searchDecorate()).observe($main, { childList: true });
   document.addEventListener('rivl:rendered', searchDecorate);
+  /* v505: the clip library is fetched a few seconds into a visit, so it is already there when Watch is opened */
+  document.addEventListener('rivl:rendered', () => setTimeout(() => { if (on() && X.watchWarm) X.watchWarm(); }, 3500), { once: true });
 
   /* ---------- the game page below its top (v478). The top stays as it is (Ray's ruling). Below it the page already had the
      board's parts (line score, leaders, win chance, team stats), so this only puts the game's clips first as a row of
@@ -593,17 +595,7 @@
      case the page was reloaded underneath). */
   let wLast = null;
   const wLastGet = () => { if (wLast) return wLast; try { const j = JSON.parse(sessionStorage.getItem('rivl:wlast') || 'null'); return j && j.id ? { key: j.key, it: { id: j.id } } : null; } catch (e) { return null; } };
-  /* v503 every clip says what it is. A play's kind comes from the play record (the title only when the record has not
-     arrived); the longer videos say Game highlights, Interview, Analysis and so on, with how long they run. A clip whose
-     kind is not known gets no label. */
-  const WK = { dunk: ['Dunk', '#ff7a1a'], three: ['Three', '#4c9bff'], block: ['Block', '#ff4d6d'], steal: ['Steal', '#1fd1a5'], pass: ['Assist', '#b08cff'], layup: ['Layup', '#ffc53d'], jumper: ['Jumper', '#ffc53d'], and1: ['And-one', '#ffc53d'], clutch: ['Clutch', '#ffe14d'],
-    reel: ['Game highlights', '#ffffff'], talk: ['Interview', '#3ddc97'], show: ['Analysis', '#ff7ac6'], recap: ['Player highlights', '#ffffff'], feat: ['Feature', '#ffffff'] };
-  const wLen = d => { d = Math.round(+d || 0); return d >= 45 ? `${Math.floor(d / 60)}:${String(d % 60).padStart(2, '0')}` : ''; };
-  const wKind = it => { const vk = it.vk || (it.ck === 'reel' ? 'reel' : it.ck === 'play' ? 'play' : ''), k = WK[vk === 'play' ? it.pk || '' : vk]; if (!k) return '';
-    const t = vk === 'play' && it.cl && it.pk !== 'clutch' ? 'Clutch ' + k[0].toLowerCase() : k[0], len = vk === 'play' ? '' : wLen(it.dur);
-    return `<div class="wkd27" data-w27 style="--k:${k[1]}"><i></i>${esc(t)}${len ? `<em>${len}</em>` : ''}</div>`; };
   function wItem(el, it, x, si) {
-    { const h = wKind(it); if (h) Promise.resolve().then(() => { if (!el.__w || el.__w.item !== it) return; const cap = el.querySelector('.stcap'); if (cap && !cap.querySelector('.wkd27')) cap.insertAdjacentHTML('afterbegin', h); }); }
     store.set('v5:wtab', x.key); if (x.key !== 'w:game') store.set('v5:wtab0', x.key);
     if (/^w:(fy|fol|top)$/.test(x.key)) { wLast = { key: x.key, it }; try { sessionStorage.setItem('rivl:wlast', JSON.stringify({ key: x.key, id: it.id })); } catch (e) {} }
     wInd(el, si, false);
@@ -638,6 +630,7 @@
     if (document.querySelector('.story')) return;
     const srcs = ORDER.map(X.feedSource);
     if (!srcs.some(s => s.out)) await Promise.race([Promise.all(srcs.map(s => s.ready)), sleep(4000)]);
+    X.watchWarm(); for (let i = 0; i < 4 && !X.watchReady(); i++) await sleep(200);   // v505: give the library a moment; Watch opens without it if it is slow
     let subs = X.watchSubs();
     for (let i = 0; i < 12 && !subs.some(x => x.key === 'w:fy'); i++) { if (i === 1) V.busy(true); await sleep(300); subs = X.watchSubs(); }   // the clip file may still be on its way
     V.busy(false);

@@ -2,7 +2,12 @@ name: Stories
 on:
   schedule:
     - cron: '23 */2 * * *'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: 'Days of games to sweep into the clip library (2 to 28)'
+        required: false
+        default: '2'
   push:
     branches: [main]
     paths: [scripts/stories.mjs, .github/workflows/stories.yml]
@@ -14,11 +19,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: node scripts/stories.mjs
+        env:
+          BACKFILL: ${{ inputs.backfill || '2' }}
       - name: Save
         run: |
           git config user.name "rivl-bot"
           git config user.email "bot@rivl"
-          git add data/stories.json data/feed.json
+          git add data/stories.json data/feed.json data/feed-old.json
           git diff --cached --quiet && echo "no change" && exit 0
           git commit -m "Stories: update"
           for i in 1 2 3; do git pull --rebase -X theirs origin main && git push origin main && break || sleep $((i*5)); done

@@ -844,7 +844,7 @@
   let storiesD = null, storiesAt = 0;
   const storiesLoad = () => { if (Date.now() - storiesAt < 20 * 60000 || !HW.hub) return; storiesAt = Date.now(); HW.hub.file('stories.json').then(d => { if (d && d.items) { storiesD = d; if (homeRepaint && !stEl) homeRepaint(); } }).catch(() => {}); };
   const stSeen = () => store.get('v5:storyseen', {}) || {};
-  const stMark = (key, id) => { const s = stSeen(); if ((s[key] || []).includes(id)) return; s[key] = [...(s[key] || []), id].slice(key === 'all:feed' || key.startsWith('w:') ? -500 : -80); store.set('v5:storyseen', s); };
+  const stMark = (key, id) => { const s = stSeen(); if ((s[key] || []).includes(id)) return; s[key] = [...(s[key] || []), id].slice(key.startsWith('w:') ? -3000 : key === 'all:feed' ? -500 : -80); store.set('v5:storyseen', s); };
   const gEnd = g => Math.min(new Date(g.date).getTime() + 2.4 * 36e5, Date.now() - 6e4);
   const SUMS = {};
   const sumGet = (L, g) => { const k = L.key + ':' + g.id; if (SUMS[k]) return SUMS[k]; SUMS[k] = { st: 'load' };
@@ -907,12 +907,12 @@
   /* a followed player's own clips from the past week, by name: the clip search answers the phone directly. Only clips
      whose title carries the full name, and only the ones cut as single plays (their file follows from the picture). */
   const SRCH = {};
-  const srchGet = (p, L) => { const k = p.lk + ':' + p.id, c = SRCH[k]; if (c && Date.now() - c.at < 30 * 60000) return c.its; SRCH[k] = { at: Date.now(), its: (c && c.its) || [] }; const nm = nrm(p.name); if (nm.split(' ').length < 2) return SRCH[k].its;
+  const srchGet = (p, L, quiet) => { const k = p.lk + ':' + p.id, c = SRCH[k]; if (c && Date.now() - c.at < 30 * 60000) return c.its; SRCH[k] = { at: Date.now(), its: (c && c.its) || [] }; const nm = nrm(p.name); if (nm.split(' ').length < 2) return SRCH[k].its;
     jSoft(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(p.name)}&limit=30&type=clips`, 20 * 60000).then(d => { const res = (((d || {}).results) || []).find(r => r.type === 'clips'); const its = [];
       (((res || {}).contents) || []).forEach(c => { const img = String((c.image || {}).default || ''), m = WSC.exec(img), ts = Date.parse(c.date || ''), title = String(c.displayName || ''); if (!m || !ts || !c.id || REEL.test(title)) return;
         if (!(' ' + nrm(title) + ' ').includes(' ' + nm + ' ')) return; const cm = cmOf(c.id); if (cm && cm.a.length && !cm.a.includes(String(p.id))) return;
         its.push({ kind: 'vid', id: 'v' + c.id, ts, url: `https://espnmedia-cdn.akamaized.net/espn/media/16x9/${m[1]}/${m[2]}.mp4`, v9: vertOf(null, img), title, dur: Math.round((+c.duration || 0) / 1000) || 20, thumb: img, ck: 'play', aths: [String(p.id)], sub: '', L }); });
-      const was = SRCH[k].its.length; SRCH[k].its = its; if (its.length !== was && homeRepaint && !stEl) homeRepaint(); }).catch(() => {}); return SRCH[k].its; };
+      const was = SRCH[k].its.length; SRCH[k].its = its; if (its.length !== was && !quiet && homeRepaint && !stEl) homeRepaint(); }).catch(() => {}); return SRCH[k].its; };
   /* v460 For you. The Stories job ships every single-play clip from the last two days (data/feed.json); the phone
      ranks them: your players and teams first, then what you tend to finish (players and kinds of play), the plays that
      swung games, the newest. What you finish counts for a clip's players and its kind; what you leave in the first
@@ -942,7 +942,7 @@
      a play the title calls a pass counts as one only when the record shows an assist. */
   const pkOfC = c => { const t = playKind(c.t); return t === 'clutch' ? 'clutch' : t === 'pass' && c.as ? 'pass' : t === 'dunk' && c.pk === 'layup' ? 'dunk' : c.pk === 'ft' ? (t || '') : c.pk || (t === 'pass' ? '' : t); };   // college scorers often log a dunk as a layup; the title was written from the video
   const feedIt = c => { const id = c.u.split('/').pop(), vk = c.k || 'play', ck = vk === 'play' ? 'play' : vk === 'reel' ? 'reel' : 'talk';
-      return { kind: 'vid', id: 'v' + c.id, ts: c.ts, url: `https://espnmedia-cdn.akamaized.net/espn/media/16x9/${c.u}/${id}.mp4`, v9: ck !== 'talk' && /^wsc\//.test(c.u) ? `https://cmp-espn.media.dssott.com/opp/hls/espn/9x16/${c.u}/${id}/playlist.m3u8` : '', title: c.t, dur: c.d || 20, thumb: c.th || `https://espnmedia-cdn.akamaized.net/espn/media/common/${c.u}/${id}.jpg`, ck, vk, pk: vk === 'play' ? pkOfC(c) : '', cl: vk === 'play' && c.cl ? 1 : 0, aths: c.a || [], L: LEAGUES[c.lk], sub: (LEAGUES[c.lk] || {}).short || '', w: c.w || 0, tms: c.tm || [], gid: c.e ? String(c.e) : '' }; };
+      return { kind: 'vid', id: 'v' + c.id, ts: c.ts, url: `https://espnmedia-cdn.akamaized.net/espn/media/16x9/${c.u}/${id}.mp4`, v9: ck !== 'talk' && /^wsc\//.test(c.u) ? `https://cmp-espn.media.dssott.com/opp/hls/espn/9x16/${c.u}/${id}/playlist.m3u8` : '', title: c.t, dur: c.d || 20, thumb: c.th || `https://espnmedia-cdn.akamaized.net/espn/media/common/${c.u}/${id}.jpg`, ck, vk, pk: vk === 'play' ? pkOfC(c) : '', cl: vk === 'play' && c.cl ? 1 : 0, gw: c.gw ? 1 : 0, aths: c.a || [], L: LEAGUES[c.lk], sub: (LEAGUES[c.lk] || {}).short || '', w: c.w || 0, tms: c.tm || [], gid: c.e ? String(c.e) : '' }; };
   const feedSubject = (subs, now, seen, deep) => { feedLoad(); const fd = (feedD && feedD.items) || []; if (!fd.length) return null;
     let lks = new Set(ORDER.filter(lk => feedSrc[lk] && feedSrc[lk].out && feedSrc[lk].out.follows)); if (!lks.size) { if (!deep) return null; lks = new Set(ORDER); }   // v470: Watch plays every league when nothing is followed
     const T = taste(), fp = new Set(fplayers.all().map(p => String(p.id))), ft = {}; ORDER.forEach(lk => { const o = feedSrc[lk] && feedSrc[lk].out; ft[lk] = new Set(((o && o.myTeams) || []).map(t => String(t.id))); });
@@ -1091,23 +1091,50 @@
       let at = -1; for (let keep = bad.length; keep >= 0 && at < 0; keep--) at = pool.findIndex(it => (it.vk !== 'play') === (want === 'long') && !bad.slice(0, keep).some(f => f(it)));
       out.push(pool.splice(at < 0 ? 0 : at, 1)[0]); }
     return out; };
-  const watchAll = (now, seen) => { feedLoad(); if (!feedD) return []; let lks = new Set(ORDER.filter(lk => feedSrc[lk] && feedSrc[lk].out && feedSrc[lk].out.follows)); if (!lks.size) lks = new Set(ORDER);
+  /* v505 the library. data/feed-old.json holds four weeks of clips behind the two days in the clip file, and the season's
+     biggest plays. It is read once Watch is in play (the new design), not on every visit. Players you follow also bring
+     their older clips by name search (months back), and when the WNBA is in your mix but out of season, so do its eight
+     top scorers, so the league is not missing from the scroll. */
+  let oldD = null, oldAt = 0, oldDone = false, wnbaTop = null;
+  const oldLoad = () => { if (Date.now() - oldAt < 30 * 60000 || !HW.hub) return; oldAt = Date.now(); HW.hub.file('feed-old.json').then(d => { oldDone = true; if (d && d.items) oldD = d; }, () => { oldDone = true; }); };
+  const watchLks = () => { const l = new Set(ORDER.filter(lk => feedSrc[lk] && feedSrc[lk].out && feedSrc[lk].out.follows)); return l.size ? l : new Set(ORDER); };
+  const watchNamed = lks => { const out = [], ps = fplayers.all().filter(p => LEAGUES[p.lk] && lks.has(p.lk)).slice(0, 14);
+    ps.forEach(p => srchGet(p, LEAGUES[p.lk]).forEach(it => out.push(it)));
+    const files = [feedD, oldD].flatMap(d => d ? [...(d.items || []), ...(d.more || [])] : []);
+    if (lks.has('wnba') && LEAGUES.wnba && feedD && !files.some(c => c.lk === 'wnba')) {
+      if (!wnbaTop) { wnbaTop = []; if (HW.hub && HW.hub.league) HW.hub.league('wnba').then(d => { wnbaTop = ((d && d.players) || []).filter(p => p.n && p.s && p.s.gp >= 10).sort((x, y) => (y.s.pts || 0) - (x.s.pts || 0)).slice(0, 8).map(p => ({ lk: 'wnba', id: String(p.id), name: p.n })); wnbaTop.forEach(p => srchGet(p, LEAGUES.wnba, true)); }).catch(() => {}); }
+      wnbaTop.forEach(p => srchGet(p, LEAGUES.wnba, true).forEach(it => out.push(it))); }
+    return out.map(it => Object.assign({}, it, { vk: 'play', pk: playKind(it.title) === 'pass' ? '' : playKind(it.title), cl: 0, gw: 0, w: 0, tms: [], gid: '', sub: (it.L && it.L.short) || '', old: 1 })); };
+  const watchWarm = () => { feedLoad(); oldLoad(); if (feedD) watchNamed(watchLks()); };
+  const watchReady = () => !!feedD && (oldDone || !HW.hub);
+  const watchAll = (now, seen) => { feedLoad(); oldLoad(); if (!feedD) return { all: [], mine: [], plays: [] }; const lks = watchLks();
     const T = taste(), fp = new Set(fplayers.all().map(p => String(p.id))), ft = {}; ORDER.forEach(lk => { const o = feedSrc[lk] && feedSrc[lk].out; ft[lk] = new Set(((o && o.myTeams) || []).map(t => String(t.id))); });
     const gone = new Set(); Object.values(seen).forEach(l => (l || []).forEach(id => gone.add(id)));
-    const score = (c, it) => { let v = -(now - c.ts) / 864e5 * 2; const mine = (c.tm || []).some(t => ft[c.lk] && ft[c.lk].has(t));
-      if (it.vk === 'play') { v += 25 * Math.abs(c.w || 0) + .6 * (T.k[it.pk] || 0) + (it.cl || it.pk === 'clutch' ? 3 : 0) + (it.pk === 'block' || it.pk === 'steal' || it.pk === 'pass' ? 1.2 : 0);
-        (c.a || []).forEach(a => { if (fp.has(a)) v += 6; v += Math.max(-3, Math.min(5, T.a[a] || 0)); }); if (mine) v += 3; }
-      else { v += .6 * (T.k['v:' + it.vk] || 0) + ((c.a || []).some(a => fp.has(a)) ? 5 : 0) + (mine ? 4 : 0); }
+    const isMine = it => { const lk = (it.L || {}).key; return (it.aths || []).some(a => fp.has(a)) || (it.tms || []).some(t => ft[lk] && ft[lk].has(t)); };
+    /* a week old or four weeks old is the same to the order: past seven days it is the play that decides, not its date */
+    const score = it => { let v = -Math.min(7, (now - it.ts) / 864e5) * 2; const mine = (it.tms || []).some(t => ft[(it.L || {}).key] && ft[(it.L || {}).key].has(t));
+      if (it.vk === 'play') { v += 25 * Math.abs(it.w || 0) + .6 * (T.k[it.pk] || 0) + (it.gw ? 5 : it.cl || it.pk === 'clutch' ? 3 : 0) + (it.pk === 'block' || it.pk === 'steal' || it.pk === 'pass' ? 1.2 : 0);
+        (it.aths || []).forEach(a => { if (fp.has(a)) v += 6; v += Math.max(-3, Math.min(5, T.a[a] || 0)); }); if (mine) v += 3; }
+      else { v += .6 * (T.k['v:' + it.vk] || 0) + ((it.aths || []).some(a => fp.has(a)) ? 5 : 0) + (mine ? 4 : 0); }
       return v; };
-    const rows = [...(feedD.items || []), ...(feedD.more || [])].filter(c => c && c.u && lks.has(c.lk)).map(c => { const it = feedIt(c); return [score(c, it), it]; }).sort((a, b) => b[0] - a[0]).map(x => x[1]);
-    return [...mixOrder(rows.filter(it => !gone.has(it.id))), ...mixOrder(rows.filter(it => gone.has(it.id)))]; };
+    const ids = new Set(), its = [];
+    [feedD, oldD].forEach(d => { if (d) [...(d.items || []), ...(d.more || [])].forEach(c => { if (c && c.u && lks.has(c.lk) && !ids.has(c.id)) { ids.add(c.id); its.push(feedIt(c)); } }); });
+    watchNamed(lks).forEach(it => { const id = it.id.slice(1); if (!ids.has(id)) { ids.add(id); its.push(it); } });
+    const rows = its.map(it => [score(it), it]).sort((a, b) => b[0] - a[0]).map(x => x[1]);
+    /* laid out 400 at a time: the rules look back nine clips at most, and the whole library in one pass would hold up the open */
+    const lay = l => { const out = []; for (let i = 0; i < l.length; i += 400) out.push(...mixOrder(l.slice(i, i + 400))); return out; };
+    const best = ((oldD && oldD.best) || []).filter(c => c && c.u && lks.has(c.lk) && !ids.has(c.id)).map(feedIt);
+    return { all: [...lay(rows.filter(it => !gone.has(it.id))), ...lay(rows.filter(it => gone.has(it.id)))], mine: its.filter(isMine).sort((a, b) => b.ts - a.ts),
+      plays: [...its.filter(it => it.vk === 'play' && !it.old), ...best].sort((a, b) => Math.abs(b.w || 0) - Math.abs(a.w || 0)) }; };
+  /* v505: Following goes deep. After the newest clips from your teams' and players' stories come all of their clips in
+     the library, newest first, then everything else. Top plays runs on into the season's biggest plays. */
   const watchSubs = () => { const now = Date.now(), seen = stSeen(), subs = storySubjects();
-    const all = watchAll(now, seen);
+    const W = watchAll(now, seen), all = W.all;
     const uniq = l => { const s = new Set(); return l.filter(it => it.kind === 'vid' && !s.has(it.id) && s.add(it.id)); };
     const from = kinds => uniq(subs.filter(x => kinds.includes(x.kind)).flatMap(x => x.its.map(it => Object.assign({}, it, { sk: x.key }))));
     const fill = (head, rest) => { const s = new Set(head.map(i => i.id)); return [...head, ...rest.filter(i => !s.has(i.id))]; };
     const mk = (key, name, its) => ({ key, lk: 'all', kind: 'watch', id: key, name, full: name, color: '#15171a', its, un: true, last: now });
-    return [mk('w:fol', 'Following', fill(from(['team', 'player']).sort((a, b) => b.ts - a.ts), all)), mk('w:fy', 'For you', fill(all, from(['league', 'team', 'player']))), mk('w:top', 'Top plays', fill(from(['league']), all.filter(it => it.vk === 'play').sort((a, b) => Math.abs(b.w || 0) - Math.abs(a.w || 0))))].filter(x => x.its.length); };
+    return [mk('w:fol', 'Following', fill(fill(from(['team', 'player']).sort((a, b) => b.ts - a.ts), W.mine), all)), mk('w:fy', 'For you', fill(all, from(['league', 'team', 'player']))), mk('w:top', 'Top plays', fill(from(['league']), W.plays))].filter(x => x.its.length); };
   function bubbles() {
     const subs = storySubjects(); if (!subs.length) return ''; stWarm(subs);
     return `<div class="sbubs">${subs.map(x => `<button class="sbub${x.un ? '' : ' seen'}${x.kind === 'player' ? ' pl' : ''}" data-act="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span class="ring"><span>${stAvatar(x, x.kind === 'player' ? 52 : 30)}</span></span><small>${esc(x.name)}</small></button>`).join('')}</div>`;
@@ -2104,7 +2131,7 @@
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom <= fx.offsetHeight + 1; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };   // v412: the bar takes over the moment the header no longer covers its space
     window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(run); }, { passive: true }); document.addEventListener('rivl:rendered', run); }
   /* v462: what the 2027 preview (js/v27.js) reads from here */
-  const x27 = { feedSource, storySubjects, watchSubs, stLearn, stLikedItems, savedItems: () => stSaved().map(x => Object.assign({ kind: 'vid', L: LEAGUES[x.lk] || null }, x)), gameClips: gid => { feedLoad(); return ((feedD && feedD.items) || []).filter(c => c.u && String(c.e) === String(gid)).sort((a, b) => a.ts - b.ts).map(feedIt); }, sbMeta, clipsOf: gid => { feedLoad(); return ((feedD && feedD.items) || []).filter(c => String(c.e) === String(gid)).length; }, follow: p => fplayers.toggle(p), follows: (lk, id) => fplayers.has(lk, id), athlete: (L, id) => jSoft(`${WEB(L)}/athletes/${id}`, 3600000), headshotOf: (L, id) => idHs(L, id), teamOf: (lk, id) => { const o = feedSrc[lk] && feedSrc[lk].out; return (o && o.tIdx && o.tIdx[String(id)]) || null; }, stSeen, stLike, stSave, stLikes, stSaved, onData(f) { homeRepaint = f; }, warm(its) { if (hlsOk()) (its || []).forEach(it => { if (it && it.kind === 'vid' && it.v9) v9Pick(it.v9); }); } };
+  const x27 = { feedSource, storySubjects, watchSubs, watchWarm, watchReady, stLearn, stLikedItems, savedItems: () => stSaved().map(x => Object.assign({ kind: 'vid', L: LEAGUES[x.lk] || null }, x)), gameClips: gid => { feedLoad(); return ((feedD && feedD.items) || []).filter(c => c.u && String(c.e) === String(gid)).sort((a, b) => a.ts - b.ts).map(feedIt); }, sbMeta, clipsOf: gid => { feedLoad(); return ((feedD && feedD.items) || []).filter(c => String(c.e) === String(gid)).length; }, follow: p => fplayers.toggle(p), follows: (lk, id) => fplayers.has(lk, id), athlete: (L, id) => jSoft(`${WEB(L)}/athletes/${id}`, 3600000), headshotOf: (L, id) => idHs(L, id), teamOf: (lk, id) => { const o = feedSrc[lk] && feedSrc[lk].out; return (o && o.tIdx && o.tIdx[String(id)]) || null; }, stSeen, stLike, stSave, stLikes, stSaved, onData(f) { homeRepaint = f; }, warm(its) { if (hlsOk()) (its || []).forEach(it => { if (it && it.kind === 'vid' && it.v9) v9Pick(it.v9); }); } };
   HW.v5 = Object.assign(HW.v5 || {}, { x27, feedSrc, initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard, storyOpen,
     _: { pager, duelPair, panelLogo, nearPanel, duelCard, duelBlock, deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
 })();
