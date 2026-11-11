@@ -28,6 +28,8 @@
     if (/\b(next game|upcoming)\b/.test(nq)) return { next: true, word: 'in their next game' };
     return null;
   }
+  /* "No Duke game in their next game" read wrong (v492) */
+  const noGame = (nm, when) => !when ? `No ${nm} game found.` : when.next ? `No next game is listed for ${nm} yet.` : when.last ? `No finished ${nm} game yet this season.` : `No ${nm} game ${esc(when.word)}.`;
 
   /* ---------- injuries ---------- */
   const GLOSS = [
@@ -148,11 +150,11 @@
     return `<div class="xshot" style="${_.tcv(col)}">${SC.courtSvg(L, shots, { colorOf: () => col })}<div class="clegend"><span><i style="background:${esc(col)}"></i>Made</span><span><em class="missx" style="color:${esc(col)}">✕</em>Missed</span></div>${SC.zoneRows(shots, [{ head: `${made}-${shots.length}` }])}</div>`;
   }
   async function teamGameAnswer(e, nq, when) {
-    const L = LEAGUES[e.lk], lk = e.lk; const g = await gameFor(L, e.id, when); if (!g) return { html: K().card(K().twho(e), `No ${esc(e.t.short || e.t.name)} game ${esc(when ? when.word : 'found')}.`, [], '', 'ESPN schedule'), kind: 'intent' };
+    const L = LEAGUES[e.lk], lk = e.lk; const g = await gameFor(L, e.id, when); if (!g) return { html: K().card(K().twho(e), `${noGame(esc(e.t.short || e.t.name), when)}`, [], '', 'ESPN schedule'), kind: 'intent' };
     const side = g.home.id === String(e.id) ? 'home' : 'away', us = g[side], them = g[side === 'home' ? 'away' : 'home'];
     if (g.state === 'pre') {
       const ctx = await HW.forecastCtx(L, HW.todayCT()).catch(() => null); const f = _.safeF(L, g, ctx); const p = f ? (side === 'home' ? f.pHome : 1 - f.pHome) : null;
-      return { html: `<div class="xans">${K().twho(e, `${esc(dayWord(HW.ymdOf(g.date)))} ${side === 'home' ? 'vs' : 'at'} ${esc(them.short)}`)}${gameHead(L, g, lk)}<p class="xline">${esc(us.short)} ${side === 'home' ? 'host' : 'visit'} the ${esc(them.short)} ${esc(dayWord(HW.ymdOf(g.date)))} at ${esc(HW.tipOf(g))}${p != null ? `. RIVL gives ${esc(us.short)} a <b>${Math.round(p * 100)}%</b> chance` : ''}.</p><p class="xsrc">ESPN schedule${p != null ? ' · RIVL forecast' : ''}</p></div>`, kind: 'intent' };
+      return { html: `<div class="xans">${K().twho(e, `${esc(dayWord(HW.ymdOf(g.date)))} ${side === 'home' ? 'vs' : 'at'} ${esc(them.short)}`)}${gameHead(L, g, lk)}<p class="xline">${esc(us.short)} ${side === 'home' ? 'host' : 'visit'} the ${esc(them.short)} ${esc(dayWord(HW.ymdOf(g.date)))} at ${esc(HW.tipOf(g))}${p != null ? `. RIVL gives ${esc(us.short)} a <b>${Math.round(p * 100)}%</b> chance` : ''}.</p>${p != null ? '<p class="xsrc">RIVL forecast</p>' : ''}</div>`, kind: 'intent' };
     }
     const d = await summary(L, g.id); const T = teamTotals(d, g, side), O = teamTotals(d, g, side === 'home' ? 'away' : 'home');
     const won = +us.score > +them.score; const wantsShots = /\b(shot chart|shots|shooting|missed|misses|made|makes|field goal|fg|three|3)/.test(nq);
@@ -164,16 +166,16 @@
     const facts = T ? [['Field goals', T.fg ? `${T.fg[0]}-${T.fg[1]}` : ''], ['Missed', miss != null ? String(miss) : ''], ['Threes', T.tp ? `${T.tp[0]}-${T.tp[1]}` : ''], ['Free throws', T.ft ? `${T.ft[0]}-${T.ft[1]}` : ''], ['Rebounds', T.reb], ['Assists', T.ast], ['Turnovers', T.to], ['Points in paint', T.pip], ['Fast break', T.fb], ['Bench', T.bench]].filter(x => x[1]) : [];
     const cmp = O && T ? `<div class="xcmp2"><div><span></span><b>${esc(us.abbr)}</b><b>${esc(them.abbr)}</b></div>${[['FG', T.fg && `${T.fg[0]}-${T.fg[1]}`, O.fg && `${O.fg[0]}-${O.fg[1]}`], ['3PT', T.tp && `${T.tp[0]}-${T.tp[1]}`, O.tp && `${O.tp[0]}-${O.tp[1]}`], ['FT', T.ft && `${T.ft[0]}-${T.ft[1]}`, O.ft && `${O.ft[0]}-${O.ft[1]}`], ['REB', T.reb, O.reb], ['AST', T.ast, O.ast], ['TO', T.to, O.to]].filter(r => r[1] && r[2]).map(r => `<div><span>${r[0]}</span><b>${esc(String(r[1]))}</b><b>${esc(String(r[2]))}</b></div>`).join('')}</div>` : '';
     const shots = wantsShots ? await shotCard(L, lk, d, g, { side }) : '';
-    return { html: `<div class="xans xgm">${K().twho(e, `${esc(dayWord(HW.ymdOf(g.date)))} ${side === 'home' ? 'vs' : 'at'} ${esc(them.short)}`)}${gameHead(L, g, lk)}<p class="xline">${line}</p>${shots}${facts.length ? `<div class="xfacts">${facts.map(fct => `<div><span>${esc(fct[0])}</span><b>${esc(String(fct[1]))}</b></div>`).join('')}</div>` : ''}${cmp}<a class="xgo2" href="${_.href.game(lk, g.id)}">Box score, plays and shots ${_.chev}</a><p class="xsrc">ESPN box score</p></div>`, kind: 'intent' };
+    return { html: `<div class="xans xgm">${K().twho(e, `${esc(dayWord(HW.ymdOf(g.date)))} ${side === 'home' ? 'vs' : 'at'} ${esc(them.short)}`)}${gameHead(L, g, lk)}<p class="xline">${line}</p>${shots}${facts.length ? `<div class="xfacts">${facts.map(fct => `<div><span>${esc(fct[0])}</span><b>${esc(String(fct[1]))}</b></div>`).join('')}</div>` : ''}${cmp}<a class="xgo2" href="${_.href.game(lk, g.id)}">Box score, plays and shots ${_.chev}</a></div>`, kind: 'intent' };
   }
   async function playerGameAnswer(e, nq, when) {
     const L = LEAGUES[e.lk], lk = e.lk, tm = e.team; if (!tm) return null;
-    const g = await gameFor(L, tm.id, when); if (!g) return { html: K().card(K().who(e), `No ${esc(tm.short || tm.name)} game ${esc(when ? when.word : 'found')}.`, [], '', 'ESPN schedule'), kind: 'intent' };
+    const g = await gameFor(L, tm.id, when); if (!g) return { html: K().card(K().who(e), `${noGame(esc(tm.short || tm.name), when)}`, [], '', 'ESPN schedule'), kind: 'intent' };
     if (g.state === 'pre') return teamGameAnswer({ type: 't', lk, id: String(tm.id), t: tm, name: tm.name }, nq, when);
     const d = await summary(L, g.id); const pl = playerLine(d, e.id);
     const side = g.home.id === String(tm.id) ? 'home' : 'away', them = g[side === 'home' ? 'away' : 'home'], us = g[side];
     if (!pl) return { html: `<div class="xans">${K().who(e)}${gameHead(L, g, lk)}<p class="xline dim">No line for ${esc(e.name)} in that box score.</p></div>`, kind: 'intent' };
-    if (pl.dnp) return { html: `<div class="xans">${K().who(e)}${gameHead(L, g, lk)}<p class="xline">${esc(e.name)} did not play ${esc(dayWord(HW.ymdOf(g.date)))} (${esc(pl.dnp)}).</p><p class="xsrc">ESPN box score</p></div>`, kind: 'intent' };
+    if (pl.dnp) return { html: `<div class="xans">${K().who(e)}${gameHead(L, g, lk)}<p class="xline">${esc(e.name)} did not play ${esc(dayWord(HW.ymdOf(g.date)))} (${esc(pl.dnp)}).</p></div>`, kind: 'intent' };
     const miss = pl.fg ? pl.fg[1] - pl.fg[0] : null; const wantsShots = /\b(shot chart|chart|where|shots|shooting)\b/.test(nq);
     const asksMiss = /\b(miss|missed|misses)\b/.test(nq), asksTake = /\b(take|took|attempt|attempts|shots)\b/.test(nq);
     let line = `${esc(e.name)} had <b>${pl.pts} points</b>, ${pl.reb} rebounds and ${pl.ast} assists in ${esc(pl.min)} minutes ${esc(dayWord(HW.ymdOf(g.date)))} ${side === 'home' ? 'vs' : 'at'} the ${esc(them.short)}`;
@@ -183,7 +185,7 @@
     else if (asksTake && pl.fg) line = `${esc(e.name)} took <b>${pl.fg[1]}</b> shots ${esc(dayWord(HW.ymdOf(g.date)))} and made ${pl.fg[0]}. ` + line;
     const facts = [['Points', pl.pts], ['FG', pl.fg ? `${pl.fg[0]}-${pl.fg[1]}` : ''], ['Missed', miss], ['3PT', pl.tp ? `${pl.tp[0]}-${pl.tp[1]}` : ''], ['FT', pl.ft ? `${pl.ft[0]}-${pl.ft[1]}` : ''], ['Rebounds', pl.reb], ['Assists', pl.ast], ['Steals', pl.stl], ['Blocks', pl.blk], ['Turnovers', pl.to], ['Minutes', pl.min], ['+/-', pl.pm]].filter(x => x[1] !== '' && x[1] != null);
     const shots = wantsShots || asksMiss ? await shotCard(L, lk, d, g, { pid: e.id, color: K().L_ ? _.teamColor(us, L) : undefined }) : '';
-    return { html: `<div class="xans xgm">${K().who(e)}${gameHead(L, g, lk)}<p class="xline">${line}</p>${shots}<div class="xfacts">${facts.map(fct => `<div><span>${esc(fct[0])}</span><b>${esc(String(fct[1]))}</b></div>`).join('')}</div><a class="xgo2" href="${_.href.game(lk, g.id)}/p/${esc(String(e.id))}">This game ${_.chev}</a><p class="xsrc">ESPN box score</p></div>`, kind: 'intent' };
+    return { html: `<div class="xans xgm">${K().who(e)}${gameHead(L, g, lk)}<p class="xline">${line}</p>${shots}<div class="xfacts">${facts.map(fct => `<div><span>${esc(fct[0])}</span><b>${esc(String(fct[1]))}</b></div>`).join('')}</div><a class="xgo2" href="${_.href.game(lk, g.id)}/p/${esc(String(e.id))}">This game ${_.chev}</a></div>`, kind: 'intent' };
   }
 
   /* ---------- leaders ---------- */
@@ -197,7 +199,7 @@
     if (!rows.length) return null; rows.sort((a, b) => b.v - a.v); const list = rows.slice(0, 10), top = list[0];
     const live = done.some(g => g.state === 'in');
     const line = `<b>${esc(top.a.displayName)}</b> had the most ${label.toLowerCase()} ${esc(when.word)} with <b>${top.v}</b> ${top.side === 'home' ? 'vs' : 'at'} ${esc(top.o.short)}${live ? ' (some games still on)' : ''}.`;
-    return { html: `<div class="xans"><span class="xk">${esc(L.label)} · ${esc(label)} ${esc(when.word)}</span><p class="xline">${line}</p><div class="xtops">${list.map((x, i) => `<a class="xtp" href="${_.href.player(lk, x.a.id)}"><span class="strk">${i + 1}</span>${_.headshot(x.a.headshot || '', _.teamColor(x.t, L), 34, x.a.displayName)}<span><b>${esc(x.a.displayName)}</b><em>${esc(x.t.short)} ${x.side === 'home' ? 'vs' : 'at'} ${esc(x.o.short)} · ${x.g.state === 'in' ? 'live' : `${x.t.score}-${x.o.score}`}</em></span><b class="xv">${x.v}</b></a>`).join('')}</div><p class="xsrc">Each team's leader from ESPN's scoreboard for that day.</p></div>`, kind: 'intent' };
+    return { html: `<div class="xans"><span class="xk">${esc(L.label)} · ${esc(label)} ${esc(when.word)}</span><p class="xline">${line}</p><div class="xtops">${list.map((x, i) => `<a class="xtp" href="${_.href.player(lk, x.a.id)}"><span class="strk">${i + 1}</span>${_.headshot(x.a.headshot || '', _.teamColor(x.t, L), 34, x.a.displayName)}<span><b>${esc(x.a.displayName)}</b><em>${esc(x.t.short)} ${x.side === 'home' ? 'vs' : 'at'} ${esc(x.o.short)} · ${x.g.state === 'in' ? 'live' : `${x.t.score}-${x.o.score}`}</em></span><b class="xv">${x.v}</b></a>`).join('')}</div><p class="xsrc">Each team's leader from that day's scoreboard.</p></div>`, kind: 'intent' };
   }
   async function leadersAnswer(nq, f) {
     const lk = leagueIn(nq) || 'nba', L = LEAGUES[lk]; const lg = await HW.hub.league(L).catch(() => null); if (!lg || !lg.players) return null;
@@ -208,7 +210,7 @@
     const idx = await V.teamsIndex(L).catch(() => ({})); const byAbbr = {}; Object.values(idx || {}).forEach(t => { if (t && t.abbr) byAbbr[t.abbr] = t; });
     const fmt = v => key === 'dd' ? String(Math.round(v)) : ['fg', 'tp', 'ft'].includes(key) ? pct1(v) : one(v);
     const top = list[0]; const line = `<b>${esc(top.p.n)}</b> leads the ${esc(L.label)}${rookies ? ' rookies' : ''} with <b>${fmt(top.v)}</b> ${esc(cat[3] || cat[2].toLowerCase())}${lg.lastSeason ? ' (last season\'s numbers until the new season has games)' : ''}.`;
-    return { html: `<div class="xans"><span class="xk">${esc(L.label)}${rookies ? ' rookie' : ''} leaders · ${esc(key === 'tp' ? 'Three-point %' : cat[2])}</span><p class="xline">${line}</p><div class="xtops">${list.map((x, i) => { const t = byAbbr[x.p.team] || {}; return `<a class="xtp" href="${_.href.player(lk, x.p.id)}"><span class="strk">${i + 1}</span>${_.headshot(x.p.img, _.teamColor({ abbr: x.p.team, id: t.id }, L), 34, x.p.n)}<span><b>${esc(x.p.n)}</b><em>${esc(t.short || x.p.teamName || x.p.team)}</em></span><i>${fmt(x.v)}</i></a>`; }).join('')}</div><a class="xgo2" href="#stats">All leaders in Stats ${_.chev}</a><p class="xsrc">ESPN stats, through RIVL's data file</p></div>`, kind: 'intent' };
+    return { html: `<div class="xans"><span class="xk">${esc(L.label)}${rookies ? ' rookie' : ''} leaders · ${esc(key === 'tp' ? 'Three-point %' : cat[2])}</span><p class="xline">${line}</p><div class="xtops">${list.map((x, i) => { const t = byAbbr[x.p.team] || {}; return `<a class="xtp" href="${_.href.player(lk, x.p.id)}"><span class="strk">${i + 1}</span>${_.headshot(x.p.img, _.teamColor({ abbr: x.p.team, id: t.id }, L), 34, x.p.n)}<span><b>${esc(x.p.n)}</b><em>${esc(t.short || x.p.teamName || x.p.team)}</em></span><i>${fmt(x.v)}</i></a>`; }).join('')}</div><a class="xgo2" href="#stats">All leaders in Stats ${_.chev}</a></div>`, kind: 'intent' };
   }
 
   /* ---------- standings ---------- */
@@ -222,16 +224,16 @@
     if (!list.length) return null;
     const row = (r, i) => { const t = idx[String(r.id)] || {}; return `<a class="xtp" href="${_.href.team(lk, r.id)}"><span class="strk">${r.pos || i + 1}</span>${t.logo ? `<img class="xlogo" src="${esc(t.logo)}" alt="" width="30" height="30" style="width:30px;height:30px">` : ''}<span><b>${esc(t.short || r.short || r.name)}</b><em>${esc(r.group || '')}</em></span><i>${r.w}-${r.l}</i></a>`; };
     if (team) { const r = st.byId[String(team.id)]; if (!r) return null; const grp = rows.filter(x => x.group === r.group).sort((a, b) => (a.pos || 99) - (b.pos || 99)); const i = grp.findIndex(x => String(x.id) === String(team.id));
-      return { html: `<div class="xans">${K().twho(team)}<p class="xline">The ${esc(team.t.name)} are <b>${r.w}-${r.l}</b>${r.pos ? `, ${ord(r.pos)} in the ${esc(r.group || L.label)}` : ''}${r.gb ? ` (${esc(String(r.gb))} back)` : ''}.</p><div class="xtops">${grp.slice(Math.max(0, i - 2), i + 3).map((x, k) => row(x, Math.max(0, i - 2) + k)).join('')}</div><a class="xgo2" href="#standings">Full standings ${_.chev}</a><p class="xsrc">ESPN standings</p></div>`, kind: 'intent' }; }
+      return { html: `<div class="xans">${K().twho(team)}<p class="xline">The ${esc(team.t.name)} are <b>${r.w}-${r.l}</b>${r.pos ? `, ${ord(r.pos)} in the ${esc(r.group || L.label)}` : ''}${r.gb ? ` (${esc(String(r.gb))} back)` : ''}.</p><div class="xtops">${grp.slice(Math.max(0, i - 2), i + 3).map((x, k) => row(x, Math.max(0, i - 2) + k)).join('')}</div><a class="xgo2" href="#standings">Full standings ${_.chev}</a></div>`, kind: 'intent' }; }
     const top = list[0], tt = idx[String(top.id)] || {};
-    return { html: `<div class="xans"><span class="xk">${esc(L.label)} standings${grpWord ? ' · ' + esc(grpWord.charAt(0).toUpperCase() + grpWord.slice(1)) : ''}</span><p class="xline"><b>${esc(tt.short || top.name)}</b> ${top.w + top.l ? `lead at <b>${top.w}-${top.l}</b>` : 'are first'}${list[1] ? `, ahead of ${esc((idx[String(list[1].id)] || {}).short || list[1].name)}` : ''}.</p><div class="xtops">${list.slice(0, 10).map(row).join('')}</div><a class="xgo2" href="#standings">Full standings ${_.chev}</a><p class="xsrc">ESPN standings</p></div>`, kind: 'intent' };
+    return { html: `<div class="xans"><span class="xk">${esc(L.label)} standings${grpWord ? ' · ' + esc(grpWord.charAt(0).toUpperCase() + grpWord.slice(1)) : ''}</span><p class="xline"><b>${esc(tt.short || top.name)}</b> ${top.w + top.l ? `lead at <b>${top.w}-${top.l}</b>` : 'are first'}${list[1] ? `, ahead of ${esc((idx[String(list[1].id)] || {}).short || list[1].name)}` : ''}.</p><div class="xtops">${list.slice(0, 10).map(row).join('')}</div><a class="xgo2" href="#standings">Full standings ${_.chev}</a></div>`, kind: 'intent' };
   }
 
   /* ---------- a player's season numbers in a sentence ---------- */
   function playerStatAnswer(e, nq) {
     const cat = CATS.find(c => c[0].test(nq)); if (!cat) return null; const { s, label } = K().statsOf(e.p); const key = /\b(percent(age)?|%|pct)\b/.test(nq) && cat[1] === 'tpm' ? 'tp' : cat[1]; const v = s[key]; if (v == null) return null;
     const fmt = ['fg', 'tp', 'ft'].includes(key) ? pct1(v) : one(v);
-    return { html: `<div class="xans">${K().who(e)}<p class="xline">${esc(e.name)} averages <b>${fmt}</b> ${esc(key === 'tp' ? 'from three' : (cat[3] || cat[2]).toLowerCase())}${label ? ` (${esc(label)})` : ' this season'} over ${s.gp || 0} games${s.min ? `, ${one(s.min)} minutes a game` : ''}.</p><div class="xfacts">${[['PTS', one(s.pts)], ['REB', one(s.reb)], ['AST', one(s.ast)], ['FG%', pct1(s.fg)], ['3P%', pct1(s.tp)], ['FT%', pct1(s.ft)]].map(x => `<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div><a class="xgo2" href="${K().pHref(e)}">Full stats ${_.chev}</a><p class="xsrc">ESPN stats, through RIVL's data file</p></div>`, kind: 'intent' };
+    return { html: `<div class="xans">${K().who(e)}<p class="xline">${esc(e.name)} averages <b>${fmt}</b> ${esc(key === 'tp' ? 'from three' : (cat[3] || cat[2]).toLowerCase())}${label ? ` (${esc(label)})` : ' this season'} over ${s.gp || 0} games${s.min ? `, ${one(s.min)} minutes a game` : ''}.</p><div class="xfacts">${[['PTS', one(s.pts)], ['REB', one(s.reb)], ['AST', one(s.ast)], ['FG%', pct1(s.fg)], ['3P%', pct1(s.tp)], ['FT%', pct1(s.ft)]].map(x => `<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div><a class="xgo2" href="${K().pHref(e)}">Full stats ${_.chev}</a></div>`, kind: 'intent' };
   }
 
   /* ---------- what if: a game without (or with) a player, as an estimate ---------- */
@@ -249,7 +251,7 @@
     const asksWithout = /\b(without|not play|doesn t play|misses|out|sits|hurt|injured)\b/.test(nq) && !/\b(wasn t|weren t|isn t|if he (was|were) (healthy|back)|played)\b/.test(nq);
     return { html: `<div class="xans">${K().who(e)}${gameHead(L, g, lk)}<p class="xline">${esc(tm.short)} ${side === 'home' ? 'vs' : 'at'} ${esc(them.short)} ${esc(dayWord(HW.ymdOf(g.date)))}: <b>${Math.round(withHim * 100)}%</b> with ${esc(e.name.split(' ').slice(-1)[0])}, <b>${Math.round(without * 100)}%</b> without${hurt ? ` (he's listed out, so RIVL's number today is the one without him)` : ''}.</p>
       <div class="xfacts"><div><span>With him</span><b>${Math.round(withHim * 100)}%</b></div><div><span>Without him</span><b>${Math.round(without * 100)}%</b></div><div><span>His swing</span><b>${one(swing)} pts</b></div><div><span>RIVL rating</span><b>${R ? R.ovr : '—'}</b></div></div>
-      <p class="xnote">An estimate. RIVL's game forecast is team-based (results, margin, rest, home court); it doesn't model who plays. The swing here comes from his RIVL rating and minutes: a ${R ? R.ovr : 74}-rated player at ${Math.round(mins)} minutes is worth about ${one(swing)} points of margin, and ${one(swing)} points moves a ${lk.startsWith('ncaa') ? 'college' : 'pro'} game's chances by about ${Math.round(swing * k * 25)} points of probability near even.</p><p class="xsrc">RIVL forecast and rating, ESPN schedule and injury report</p></div>`, kind: 'intent' };
+      <p class="xnote">An estimate. RIVL's game forecast is team-based (results, margin, rest, home court); it doesn't model who plays. The swing here comes from his RIVL rating and minutes: a ${R ? R.ovr : 74}-rated player at ${Math.round(mins)} minutes is worth about ${one(swing)} points of margin, and ${one(swing)} points moves a ${lk.startsWith('ncaa') ? 'college' : 'pro'} game's chances by about ${Math.round(swing * k * 25)} points of probability near even.</p><p class="xsrc">RIVL forecast and rating</p></div>`, kind: 'intent' };
   }
 
   /* ---------- champions: who won, when, how often, from RIVL's own list (Wikipedia-sourced, kept in data/champions.json) ---------- */

@@ -386,6 +386,34 @@
   });
   { const st0 = V.settings; V.settings = (cat = '', ...a) => { if (on() && !cat) { return you27(); } youEdit = false; return st0(cat === 'menu' ? '' : cat, ...a); }; }
 
+  /* ---------- Search (v492). The app's own search still does the finding; this gives it the new top (the field with
+     Cancel beside it), four Browse tiles, and a short list of questions in place of the wall of chips. ---------- */
+  const QI = { rec: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.500 14.600 9l6 .700-4.500 4.100 1.300 5.900L12 16.700 6.600 19.700l1.300-5.900L3.400 9.700l6-.700z"/></svg>',
+    rook: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18 10 12l4 4 6-8M15 8h5v5"/></svg>',
+    inj: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/><rect x="3.500" y="3.500" width="17" height="17" rx="4.500"/></svg>',
+    cmp: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14M4 9l4-4 4 4M12 15l4 4 4-4"/></svg>',
+    ask: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.500"/><path d="m20 20-4.200-4.200"/></svg>' };
+  function searchDecorate() {
+    if (!on() || root.dataset.page !== 'search') return; const pg = $main.querySelector('.xpage'); if (!pg || pg.classList.contains('q27')) return; const box = pg.querySelector('.xbox'), br = pg.querySelector('#xbrowse'); if (!box || !br) return;
+    pg.classList.add('q27', 'h27');
+    { const inp = box.querySelector('input'); if (inp) inp.placeholder = 'Players, teams, questions'; }
+    const inp0 = box.querySelector('input'), had = document.activeElement === inp0;   // moving the field drops the cursor; put it back
+    const top = document.createElement('div'); top.className = 'qtop27'; box.before(top); top.appendChild(box); if (had && inp0) { try { inp0.focus({ preventScroll: true }); } catch (e) {} } top.insertAdjacentHTML('beforeend', '<button class="qcx27" data-q27="cancel">Cancel</button>');
+    const pl = V.fplayers.all().filter(p => LEAGUES[p.lk]), a = pl[0], b = pl.find(p => a && p.lk === a.lk && p.id !== a.id), cmp = a && b ? `${a.name} vs ${b.name}` : 'Shai vs Luka';
+    const tiles = `<div class="sec qs27"><h2>Browse</h2></div><div class="qtl27"><button class="qt27 r" data-q27="recruits">${QI.rec}<b>Top recruits</b><small>The high school classes</small></button><button class="qt27 k" data-q27="rookies">${QI.rook}<b>Rookies</b><small>This year's class, ranked</small></button><button class="qt27 i" data-xq="Who is hurt on my teams">${QI.inj}<b>Injuries</b><small>Who is out on your teams</small></button><button class="qt27 c" data-xq="${esc(cmp)}">${QI.cmp}<b>Compare</b><small>Two players, side by side</small></button></div>`;
+    const tn = br.querySelector('#xtonight'); if (tn) tn.insertAdjacentHTML('beforebegin', tiles); else br.insertAdjacentHTML('afterbegin', tiles);
+    const qs = [...br.querySelectorAll('.xtryg')].map(g => g.querySelector('[data-xq]')).filter(Boolean).slice(0, 5).map(c => c.dataset.xq);
+    if (qs.length) br.insertAdjacentHTML('beforeend', `<div class="qal27">${qs.map(t => `<button class="qa27" data-xq="${esc(t)}">${QI.ask}<span>${esc(t)}</span></button>`).join('')}</div>`);
+    /* the search stats (this phone only) open from a long press on the magnifier, since the title they hung on is gone */
+    const mg = box.querySelector('svg'), h1 = pg.querySelector('.xtitle'); if (mg && h1) { mg.addEventListener('pointerdown', () => h1.dispatchEvent(new Event('pointerdown'))); ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => mg.addEventListener(ev, () => h1.dispatchEvent(new Event(ev)))); }
+  }
+  $main.addEventListener('click', e => { const b = e.target.closest('[data-q27]'); if (!b || !b.closest('.xpage')) return; e.preventDefault(); const k = b.dataset.q27;
+    if (k === 'cancel') { store.set('v5:xq', ''); if (history.length > 1) history.back(); else location.hash = '#home'; return; }
+    if (k === 'recruits') { store.set('v5:lk', 'ncaam'); store.set('v5:ldrec', true); if (V.applyAccent) V.applyAccent(); location.hash = '#stats'; return; }
+    if (k === 'rookies') { store.set('v5:lk', 'nba'); store.set('v5:ldrec', false); const st = store.get('v5:ld27', {}) || {}; st.who = 'rookies'; store.set('v5:ld27', st); if (V.applyAccent) V.applyAccent(); location.hash = '#stats'; return; } });
+  new MutationObserver(() => searchDecorate()).observe($main, { childList: true });
+  document.addEventListener('rivl:rendered', searchDecorate);
+
   /* ---------- the game page below its top (v478). The top stays as it is (Ray's ruling). Below it the page already had the
      board's parts (line score, leaders, win chance, team stats), so this only puts the game's clips first as a row of
      upright cards that open the full-screen player, and turns the tab row into the same pill switch as Scores. ---------- */
