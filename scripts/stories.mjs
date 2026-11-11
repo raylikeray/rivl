@@ -78,14 +78,14 @@ const addMore = (lk, id, ts, title, url, dur, a, tm, type, e, thumb) => { if (fe
   if (thumb && /^https:\/\//.test(thumb) && thumb !== `https://espnmedia-cdn.akamaized.net/espn/media/common/${m[1]}/${m[2]}.jpg`) it.th = thumb;   /* the picture is not always where the file's name says */
   const was = more.get(id); if (was && was.e && !it.e) it.e = was.e; if (was && was.th && !it.th) it.th = was.th; more.set(id, it); };
 /* v503 what kind of play a clip shows, read from the play record (not from the words in its title): the kind, whether it
-   was assisted, and whether it came in the last two minutes of the last period or overtime with the score within five. */
-const REG = { nba: 4, wnba: 4, ncaaw: 4, ncaam: 2 };
+   was assisted, and whether it came in the last five minutes of the last period or overtime with the score within five. */
+const REG = { nba: 4, wnba: 4, ncaaw: 4, ncaam: 2 }, KV = 2;   // KV: raise it and every game still in the clip file has its kinds read again
 const secs = s => { const m = /^(?:(\d+):)?(\d+(?:\.\d+)?)$/.exec(String(s || '').trim()); return m ? (+m[1] || 0) * 60 + +m[2] : 1e9; };
 const pkOf = q => { const ty = String((q.type || {}).text || ''), tx = String(q.text || ''), both = ty + ' ' + tx;
   if (/\bblocks?\b/i.test(tx)) return 'block'; if (/\bsteals?\b/i.test(tx)) return 'steal'; if (!q.scoringPlay) return '';
   return /dunk/i.test(both) ? 'dunk' : +q.scoreValue === 3 || /three point/i.test(both) ? 'three' : /lay-?up|finger roll|tip|putback/i.test(ty) ? 'layup' : /free throw/i.test(ty) ? 'ft' : /jump|hook|float|fade|bank|shot/i.test(ty) ? 'jumper' : ''; };
 const readKind = (lk, c, q) => { if (!q) return; const k = pkOf(q); if (k) c.pk = k; if (/assist/i.test(String(q.text || ''))) c.as = 1;
-  if (q.homeScore != null && q.awayScore != null && +(q.period || {}).number >= (REG[lk] || 4) && secs((q.clock || {}).displayValue) <= 120 && Math.abs(q.homeScore - q.awayScore) <= 5) c.cl = 1; };
+  if (q.homeScore != null && q.awayScore != null && +(q.period || {}).number >= (REG[lk] || 4) && secs((q.clock || {}).displayValue) <= 300 && Math.abs(q.homeScore - q.awayScore) <= 5) c.cl = 1; };
 /* A clip the video service left without a player (it happens most with rookies): if the title opens with the full name of
    a player in data/leaders.json for that league, and that player's team is one of the two in the game, the clip is his.
    One match only; two players who fit, or none, and the clip stays untagged. Marked an: 1 so it can be told apart. */
@@ -99,10 +99,10 @@ const wpDone = fresh ? {} : { ...(old.wp || {}) }; let cand = (old.top || []).fi
 const perLbl = p => { const d = String((p.period || {}).displayValue || ''), n = +(p.period || {}).number || 0; return /quarter/i.test(d) ? `Q${n}` : /half/i.test(d) ? (n === 1 ? '1st half' : '2nd half') : d.replace(/overtime/i, 'OT'); };
 const weigh = async (lk, path, e, vids) => {
   const ones = vids.filter(v => { const c = cm[String(v.id)]; return c && c.t === 'OnePlay' && c.p && (+v.duration || 0) < 45; });
-  if (wpDone[e.id] && wpDone[e.id].n === ones.length && wpDone[e.id].k) return; wpDone[e.id] = { n: ones.length, t: e.t, k: 1 }; if (!ones.length) return;
+  if (wpDone[e.id] && wpDone[e.id].n === ones.length && wpDone[e.id].k === KV) return; wpDone[e.id] = { n: ones.length, t: e.t, k: KV }; if (!ones.length) return;
   const s = await get(`${SITE}/${path}/summary?event=${e.id}`); if (!s) { delete wpDone[e.id]; return; }
   const wp = (s.winprobability || []).filter(x => x.homeWinPercentage != null); const at = new Map(wp.map((x, i) => [String(x.playId), i])); const plays = new Map((s.plays || []).map(q => [String(q.id), q]));
-  for (const v of ones) { const c = cm[String(v.id)]; readKind(lk, c, plays.get(c.p)); }
+  for (const v of ones) { const c = cm[String(v.id)]; delete c.cl; readKind(lk, c, plays.get(c.p)); }
   const comp = (((s.header || {}).competitions || [])[0] || {}).competitors || []; const side = ha => { const c = comp.find(x => x.homeAway === ha) || {}; const tm = c.team || {}; return { id: String(tm.id || ''), ab: tm.abbreviation || '', nm: tm.shortDisplayName || tm.name || tm.displayName || '', sc: c.score != null ? String(c.score) : '' }; };
   const H = side('home'), A = side('away'); if (!H.id || !A.id || wp.length < 20) return;
   const mine = [];
@@ -118,7 +118,7 @@ for (const [lk, path] of Object.entries(LG)) {
   const evs = new Map();
   for (const n of [0, 1, 2]) { const d = await get(`${SITE}/${path}/scoreboard?dates=${ymd(n)}${lk.startsWith('ncaa') ? '&groups=50&limit=400' : ''}`);
     ((d || {}).events || []).forEach(e => { const st = ((e.status || {}).type || {}); if (st.state === 'pre') return; const cs = (((e.competitions || [])[0] || {}).competitors) || []; EVT.set(String(e.id), cs.map(c => String((c.team || {}).abbreviation || '')).filter(Boolean)); evs.set(String(e.id), { id: String(e.id), done: !!st.completed, t: Date.parse(e.date) || now, tm: cs.map(c => String((c.team || {}).id || '')).filter(Boolean) }); }); }
-  const todo = [...evs.values()].filter(e => !(swept[e.id] && e.done && swept[e.id] - e.t > 12.5 * 36e5) || (e.done && !wpDone[e.id] && now - e.t < 36 * 36e5) || (e.done && wpDone[e.id] && !wpDone[e.id].k && now - e.t < 50 * 36e5) || firstMore);
+  const todo = [...evs.values()].filter(e => !(swept[e.id] && e.done && swept[e.id] - e.t > 12.5 * 36e5) || (e.done && !wpDone[e.id] && now - e.t < 36 * 36e5) || (e.done && wpDone[e.id] && wpDone[e.id].k !== KV && now - e.t < 50 * 36e5) || firstMore);
   for (let i = 0; i < todo.length; i += 8) {
     await Promise.all(todo.slice(i, i + 8).map(async e => {
       gamesAsked++; const d = await get(`${SITE}/${path}/videos?event=${e.id}`); if (!d) return; swept[e.id] = now;

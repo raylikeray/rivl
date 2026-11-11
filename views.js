@@ -940,7 +940,7 @@
   /* v503: the clip file also lists the longer videos (c.k: reel, talk, show, recap, feat). Only a reel has an upright cut;
      the rest play wide. A play's kind is the one read from the play record (c.pk) when the job has it, else the title's;
      a play the title calls a pass counts as one only when the record shows an assist. */
-  const pkOfC = c => { const t = playKind(c.t); return t === 'clutch' ? 'clutch' : t === 'pass' && c.as ? 'pass' : c.pk === 'ft' ? (t || '') : c.pk || (t === 'pass' ? '' : t); };
+  const pkOfC = c => { const t = playKind(c.t); return t === 'clutch' ? 'clutch' : t === 'pass' && c.as ? 'pass' : t === 'dunk' && c.pk === 'layup' ? 'dunk' : c.pk === 'ft' ? (t || '') : c.pk || (t === 'pass' ? '' : t); };   // college scorers often log a dunk as a layup; the title was written from the video
   const feedIt = c => { const id = c.u.split('/').pop(), vk = c.k || 'play', ck = vk === 'play' ? 'play' : vk === 'reel' ? 'reel' : 'talk';
       return { kind: 'vid', id: 'v' + c.id, ts: c.ts, url: `https://espnmedia-cdn.akamaized.net/espn/media/16x9/${c.u}/${id}.mp4`, v9: ck !== 'talk' && /^wsc\//.test(c.u) ? `https://cmp-espn.media.dssott.com/opp/hls/espn/9x16/${c.u}/${id}/playlist.m3u8` : '', title: c.t, dur: c.d || 20, thumb: c.th || `https://espnmedia-cdn.akamaized.net/espn/media/common/${c.u}/${id}.jpg`, ck, vk, pk: vk === 'play' ? pkOfC(c) : '', cl: vk === 'play' && c.cl ? 1 : 0, aths: c.a || [], L: LEAGUES[c.lk], sub: (LEAGUES[c.lk] || {}).short || '', w: c.w || 0, tms: c.tm || [], gid: c.e ? String(c.e) : '' }; };
   const feedSubject = (subs, now, seen, deep) => { feedLoad(); const fd = (feedD && feedD.items) || []; if (!fd.length) return null;
