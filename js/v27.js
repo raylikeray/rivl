@@ -715,18 +715,19 @@
   const SPARK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.500 14.300 9.200l6.700 2.300-6.700 2.300L12 20.500l-2.300-6.700L3 11.500l6.700-2.300z"/></svg>';
   const artOf = x => { if (x.art != null) return x.art; const it = (x.its || []).find(i => i.kind === 'vid' && i.thumb); return it ? it.thumb : ''; };
   const up916 = t => String(t || '').replace(/\.jpg(\?.*)?$/i, '_9x16.jpg');
-  const storyCard = x => { const plain = x.kind === 'league' || x.kind === 'feed' || x.kind === 'saved'; const art = plain ? artOf(x) : '';
+  const CATCH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3 2M3.500 12a8.500 8.500 0 1 0 2.600-6.100M3.500 4.500v3.800h3.800"/></svg>';
+  const storyCard = x => { const plain = x.kind === 'league' || x.kind === 'feed' || x.kind === 'saved' || x.kind === 'catch'; const art = plain ? artOf(x) : '';
     const name = x.kind === 'player' ? String(x.full || x.name).split(' ')[0] : x.name;
     const pic = x.kind === 'player' ? (x.hs ? `<span class="sp27">${U.imgSized(x.hs, 350, 254, 'loading="eager"', "HW.v5.rv27.miss(this,'sp27')")}</span>` : `<span class="sp27 no27">${I.me}</span>`)
       : x.kind === 'team' ? `<span class="sg27">${x.logo ? U.imgSized(x.logo, 160, 160, 'loading="eager"', "this.outerHTML='<b>" + esc(String(x.abbr || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 4)) + "</b>'") : `<b>${esc(String(x.abbr || '').slice(0, 4))}</b>`}</span>`
       : (art ? `<img class="sa27" src="${esc(up916(art))}" data-o="${esc(art)}" alt="" onerror="if(this.dataset.o){this.src=this.dataset.o;this.removeAttribute('data-o')}else{this.parentNode.parentNode.classList.remove('art');this.remove()}">` : '')
-        + (x.kind === 'league' ? `<i class="sb27">${esc(x.abbr || '')}</i>` : `<span class="si27">${x.kind === 'feed' ? SPARK : I.save}</span>`);
-    return `<button class="sc27${plain ? ` k-${x.kind}${art ? ' art' : ''}` : x.kind === 'player' && x.hs ? ' pl27' : ' tm27'}" data-s27="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span style="${plain ? '--c:#3a3f4b;--c1:#4b515d;--c2:#15171a' : cardVars(x.color)}">${pic}<small>${x.kind === 'feed' ? SPARK : ''}${esc(name)}</small></span></button>`; };
+        + (x.kind === 'league' ? `<i class="sb27">${esc(x.abbr || '')}</i>` : `<span class="si27">${x.kind === 'feed' ? SPARK : x.kind === 'catch' ? CATCH : I.save}</span>`);
+    return `<button class="sc27${plain ? ` k-${x.kind}${art ? ' art' : ''}` : x.kind === 'player' && x.hs ? ' pl27' : ' tm27'}" data-s27="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span style="${plain ? '--c:#3a3f4b;--c1:#4b515d;--c2:#15171a' : cardVars(x.color)}">${pic}<small>${x.kind === 'feed' ? SPARK : x.kind === 'catch' ? CATCH : ''}${esc(name)}</small></span></button>`; };
   const SC = 'v5:st27'; const stMem = new Map(); let stSig = '', stAt = 0, stT = 0, stOrder = [], stDirty = false, railAt = 0, railHeld = false;
   const stRank = () => { const F = favs.all(), P = V.fplayers.all(), r = new Map(); let n = 0;
     ORDER.forEach(lk => { (F[lk] || []).forEach(id => r.set(`${lk}:t${id}`, n++)); P.filter(p => p.lk === lk).forEach(p => r.set(`${lk}:p${p.id}`, n++)); r.set(`${lk}:top`, n++); });
-    r.set('all:feed', n++); r.set('all:saved', n++); return r; };
-  const stGroup = x => x.kind === 'feed' ? 0 : x.kind === 'saved' ? 3 : x.un ? 1 : 2;   // v469: For you leads the row, then what is new, then what has been watched, then Saved
+    r.set('all:feed', n++); r.set('all:saved', n++); r.set('all:catch', -1); return r; };
+  const stGroup = x => x.kind === 'catch' ? (x.un ? -1 : 2) : x.kind === 'feed' ? 0 : x.kind === 'saved' ? 3 : x.un ? 1 : 2;   // v469: For you leads the row, then what is new, then what has been watched, then Saved
   function storyList(fresh, loaded) {
     if (!stMem.size && !stAt) { (store.get(SC, []) || []).forEach(c => { if (c && c.key) { stMem.set(c.key, c); stOrder.push(c.key); } }); stOrder.sort((x, y) => (y === 'all:feed') - (x === 'all:feed')); }   // the row as it was last time
     fresh.forEach(x => stMem.set(x.key, x));
@@ -741,7 +742,7 @@
     if (!stOrder.length || ((settled || stDirty) && !open && !touched)) { stOrder = ideal; stDirty = false; }
     else { stOrder = stOrder.filter(k => stMem.has(k)); const at = new Map(ideal.map((k, i) => [k, i])); ideal.forEach(k => { if (stOrder.includes(k)) return; const i = stOrder.findIndex(o => at.get(o) > at.get(k)); if (i < 0) stOrder.push(k); else stOrder.splice(i, 0, k); });   // held: what is new takes its own place, nothing already there moves
       if ((settled || stDirty) && !open && touched) { clearTimeout(stT); stT = setTimeout(() => decorate(true), 1300); } }
-    if (settled) store.set(SC, stOrder.map(k => { const x = stMem.get(k); return { key: x.key, kind: x.kind, name: x.name, full: x.full || '', color: x.color || '', logo: x.logo || '', abbr: x.abbr || '', hs: x.hs || '', un: !!x.un, art: artOf(x) }; }));
+    if (settled) store.set(SC, stOrder.filter(k => k !== 'all:catch').map(k => { const x = stMem.get(k); return { key: x.key, kind: x.kind, name: x.name, full: x.full || '', color: x.color || '', logo: x.logo || '', abbr: x.abbr || '', hs: x.hs || '', un: !!x.un, art: artOf(x) }; }));
     return stOrder.map(k => stMem.get(k));
   }
   function railSync(rail, list) {

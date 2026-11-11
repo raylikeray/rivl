@@ -191,7 +191,10 @@
     const last = norm(e.name).split(' ').slice(-1)[0]; const items = (nw && nw.articles || []).filter(ar => norm((ar.headline || '') + ' ' + (ar.description || '')).includes(last)).slice(0, 2);
     const newsH = items.length ? `<div class="xnewsb"><span class="xk2">Latest</span>${items.map(ar => `<div class="xnews">${ar.images && ar.images[0] ? `<img src="${esc(ar.images[0].url)}" alt="" loading="lazy">` : ''}<span><b>${esc(ar.headline)}</b><em>${esc(HW.ago ? HW.ago(ar.published) : '')}</em></span></div>`).join('')}</div>` : '';
     const rate = R ? `<div class="xrate"><b class="rtb ${R.ovr >= 90 ? 't5' : R.ovr >= 80 ? 't4' : R.ovr >= 70 ? 't3' : R.ovr >= 60 ? 't2' : 't1'}">${R.ovr}</b><span><b>RIVL rating</b><em>${esc(HW.rating.summary(R))}</em></span></div>` : '';
-    return playerCard(e).replace(/<\/a>$/, '') .replace(/^<a class="xans xlink xpl"/, '<div class="xans xpl xpfull"') + status + game + rate + factsH + newsH + `<a class="xgo2" href="${pHref(e)}">Full profile, stats and game log ${_.chev}</a></div>`;
+    /* v512: the photo, the name and the arrow at the top are the way to the player's page. The card stopped being one big link
+       when it grew, and the top was left as plain text with an arrow on it. */
+    const head = playerCard(e).replace(/<\/a>$/, '').replace(/^<a class="xans xlink xpl" href="[^"]*"/, '<div class="xans xpl xpfull"').replace(/<span class="xwho">[\s\S]*?<\/span>(?=\s*<span class="xtrio">)/, who(e));
+    return head + status + game + rate + factsH + newsH + `<a class="xgo2" href="${pHref(e)}">Full profile, stats and game log ${_.chev}</a></div>`;
   }
   async function teamAns(e, has, I) {
     const L = L_(e.lk), t = e.t;

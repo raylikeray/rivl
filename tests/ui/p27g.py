@@ -15,7 +15,8 @@ with sync_playwright() as p:
     b = p.chromium.launch(args=['--autoplay-policy=no-user-gesture-required'])
     for scheme in ['dark', 'light']:
         ctx = b.new_context(viewport={'width': 412, 'height': 915}, service_workers='block', color_scheme=scheme, is_mobile=True, has_touch=True, device_scale_factor=2)
-        ctx.add_init_script(eval(init) + PL + FLAG); pg = ctx.new_page(); pg.on('pageerror', lambda e: E.append(str(e)[:400])); pg.route('**/*', rt)
+        # no time away: this test is about the row's order, not Catch up
+        ctx.add_init_script(eval(init) + PL + FLAG + "localStorage.setItem('hw:v5:last27', String(Date.now()));"); pg = ctx.new_page(); pg.on('pageerror', lambda e: E.append(str(e)[:400])); pg.route('**/*', rt)
         pg.goto('http://localhost:8777/rivl/#home')
         if scheme == 'dark':
             seq = []

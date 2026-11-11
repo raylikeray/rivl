@@ -975,6 +975,52 @@
     const lb = st.labels || st.names || []; const ix = l => lb.indexOf(l); const num = (a, l) => { const i = ix(l); const v = i >= 0 ? parseInt(a.stats[i], 10) : NaN; return Number.isFinite(v) ? v : null; };
     return (st.athletes || []).filter(a => a.athlete && a.stats && a.stats.length && !a.didNotPlay).map(a => ({ id: String(a.athlete.id), name: a.athlete.displayName || a.athlete.shortName || '', hs: hsUrl(a.athlete), pts: num(a, 'PTS'), reb: num(a, 'REB'), ast: num(a, 'AST') }))
       .filter(a => a.name && a.pts != null).sort((a, b) => b.pts - a.pts || (b.reb + b.ast) - (a.reb + a.ast)).slice(0, 3); };
+  /* v512 Catch up. The app keeps the time it was last on screen. Come back six hours or more later and the first story on
+     Home is yours alone: each game your teams finished while you were away (a recap card with the game's top scorer, then
+     the play that moved the win chance most), the lines of players you follow, the league's biggest plays, who went on or
+     came off the injury report, a move in the standings, and tonight's games with RIVL's projection. Everything in it is
+     read from what Home already has in hand; nothing is fetched for it. The first time this version runs there is no last
+     visit to count from, so it covers the last 18 hours. It is not made while scores are hidden. */
+  const CATCH_GAP = 6 * 36e5, CATCH_K = 'v5:catch27', LAST_K = 'v5:last27';
+  const catchMark = () => { const now = Date.now(), last = +store.get(LAST_K, 0) || 0;
+    if (!last) store.set(CATCH_K, { since: now - 18 * 36e5, at: now }); else if (now - last >= CATCH_GAP) store.set(CATCH_K, { since: last, at: now });
+    store.set(LAST_K, now); };
+  catchMark(); setInterval(() => { if (!document.hidden) store.set(LAST_K, Date.now()); }, 60000);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) store.set(LAST_K, Date.now()); else { catchMark(); if (homeRepaint && !stEl) homeRepaint(); } });
+  const INJ_W = { season: 'Out for the season', out: 'Out', doubtful: 'Doubtful', questionable: 'Questionable', dtd: 'Day-to-day', probable: 'Probable', listed: 'On the injury report', cleared: 'Off the injury report' };
+  function catchSubject(now, seen) {
+    if (!document.documentElement.classList.contains('rv27') || store.get('v5:hide27', false)) return null;
+    const C = store.get(CATCH_K, null); if (!C || !C.since || now - C.at > 18 * 36e5) return null;
+    const since = Math.max(C.since, now - ST_WIN), today = todayCT(), its = [], gids = new Set(), have = new Set(), nx = [], inj = [], mv = []; let t = since, lks = new Set();
+    const push = it => { if (have.has(it.id)) return; have.add(it.id); it.ts = ++t; its.push(it); };
+    ORDER.forEach(lk => { const o = feedSrc[lk] && feedSrc[lk].out; if (!o) return; const L = o.L; if (o.follows) lks.add(lk);
+      const games = [...(o.lastF || []), ...(o.doneAll || [])].filter((g, i, arr) => arr.findIndex(x => x.id === g.id) === i).filter(g => isDone(g) && !g.off && gEnd(g) > since).sort((a, b) => new Date(a.date) - new Date(b.date));
+      const final = (g, tid) => { const home = String(g.home.id) === String(tid), us = home ? g.home : g.away, them = home ? g.away : g.home; return `Final \u00b7 ${us.short} ${us.score}, ${them.short} ${them.score}`; };
+      (o.myTeams || []).forEach(tm => { const tid = String(tm.id);
+        games.filter(g => String(g.home.id) === tid || String(g.away.id) === tid).forEach(g => { if (gids.has(g.id)) return; gids.add(g.id); const S = sumGet(L, g), tp = S.st === 'ok' ? topsOf(S.d, tid) : [];
+          if (tp.length) push({ kind: 'recap', id: 'r' + g.id, g, L, tid, star: tp[0] }); else push({ kind: 'final', id: 'g' + g.id, g, L, tid });
+          const all = gameAll(g.id), clip = all.filter(i => i.vk === 'play').sort((a, b) => Math.abs(b.w || 0) - Math.abs(a.w || 0))[0] || all.find(i => i.vk === 'reel') || (S.st === 'ok' ? gameVids(S, g, L).find(v => v.ck === 'reel') : null);
+          if (clip) push(Object.assign({}, clip, { sub: final(g, tid) })); });
+        const g = tm.nx; if (g && !nx.some(n => n.id === g.id) && new Date(g.date).getTime() > now - 20 * 60000) { const home = String(g.home.id) === tid, f = prefs.get('forecast') && o.ctx ? safeF(L, g, o.ctx) : null, ph = f && isFinite(f.pHome) ? f.pHome : null;
+          nx.push({ id: g.id, lk, t: new Date(g.date).getTime(), home, us: home ? g.home : g.away, them: home ? g.away : g.home, when: `${relDay(HW.ymdOf(g.date))}, ${tipOf(g)}`, pj: ph == null ? '' : `${(ph >= .5 ? g.home : g.away).abbr || ''} ${Math.min(99, Math.max(1, Math.round(Math.max(ph, 1 - ph) * 100)))}%` }); }
+        const snap = store.get('v5:stsnap:' + lk, null), r = o.st && o.st.byId && o.st.byId[tm.id];
+        if (snap && snap.day === today && r && L.standingsMode !== 'conferences') { const a = (snap.prev || {})[tm.id], b = (snap.cur || {})[tm.id]; if (a && b && a !== b) mv.push({ lk, tm, txt: `${b < a ? 'Up' : 'Down'} to ${ordinal(b)} in the ${confName(r.group, r.groupAbbr)}, from ${ordinal(a)}` }); } });
+      /* a player you follow: his line, unless the recap card for that game is already his */
+      fplayers.all().filter(p => p.lk === lk).forEach(p => { const pid = String(p.id), k = String(p.team || '').toLowerCase(), is = x => (p.teamId && String(x.id) === String(p.teamId)) || (k && [x.abbr, x.short, x.name].some(y => String(y || '').toLowerCase() === k));
+        games.filter(g => is(g.home) || is(g.away)).forEach(g => { const S = sumGet(L, g); if (S.st !== 'ok' || its.some(i => i.kind === 'recap' && i.g.id === g.id && i.star.id === pid)) return; const ln = lineOf(S.d, pid); if (!ln) return;
+          const us = String(g.home.id) === ln.teamId ? g.home : g.away; push({ kind: 'line', id: `l${g.id}:${pid}`, g, L, ln, p: { full: p.name || '', name: p.short || p.name || '', hs: p.img || ln.hs, color: teamColor(us, L) } }); }); });
+      const log = store.get('v5:injlog:' + lk, null) || {};
+      Object.entries(log).forEach(([id, e]) => { if (id === '__seeded' || !e || !e.at || e.at <= since || !INJ_W[e.s] || !e.nm) return; const tm = (o.myTeams || []).find(x => String(x.id) === String(e.team)); if (tm) inj.push({ id, lk, nm: e.nm, s: e.s, tm, at: e.at }); });
+    });
+    /* the biggest plays since, from the leagues you follow (all of them when you follow nothing): three when your teams did not play, one when they did */
+    if (!lks.size) lks = new Set(ORDER);
+    ((feedD && feedD.items) || []).filter(c => c.u && lks.has(c.lk) && c.ts > since && !have.has('v' + c.id)).sort((a, b) => Math.abs(b.w || 0) - Math.abs(a.w || 0)).slice(0, Math.max(1, 3 - gids.size)).forEach(c => push(feedIt(c)));
+    if (inj.length || mv.length) push({ kind: 'notes', id: 'n' + C.at, inj: inj.sort((a, b) => b.at - a.at).slice(0, 4), mv: mv.slice(0, 3) });
+    if (its.length < 2) return null;
+    push({ kind: 'caught', id: 'cu' + C.at, nx: nx.sort((a, b) => a.t - b.t).slice(0, 3) });
+    const sn = new Set(seen['all:catch'] || []);
+    return { key: 'all:catch', lk: 'all', kind: 'catch', id: 'catch', name: 'Catch up', full: 'Catch up', color: '#2b1f7a', its, un: its.some(x => !sn.has(x.id)), last: now };
+  }
   function storySubjects() {
     storiesLoad(); const now = Date.now(); const subs = []; const posts = (storiesD && storiesD.items) || []; const seen = stSeen();
     ORDER.forEach(lk => {
@@ -1025,6 +1071,7 @@
           const sn = new Set(seen[`${lk}:top`] || []); subs.push({ key: `${lk}:top`, lk, kind: 'league', id: 'top', name: `Top ${its.length}`, abbr: L.short, full: `${L.short} biggest plays`, color: '#5b3df5', its, un: its.some(x => !sn.has(x.id)), last: Math.max(...its.map(x => x.ts)) }); } }
     });
     const fs = feedSubject(subs, now, seen); subs.sort((a, b) => (b.un - a.un) || (b.last - a.last)); if (fs) subs.push(fs);   // For you always sits last: it is where the rings lead
+    const cu = catchSubject(now, seen); if (cu) subs.unshift(cu);   // v512: what happened while you were away leads
     const sv = stSaved(); if (sv.length) subs.push({ key: 'all:saved', lk: 'all', kind: 'saved', id: 'saved', name: 'Saved', full: 'Saved', color: '#3a3f4b', its: sv.map(x => Object.assign({ kind: 'vid', L: LEAGUES[x.lk] || null }, x)), un: false, last: 0 });
     return subs;
   }
@@ -1062,7 +1109,7 @@
       x.its.slice(i, i + 2).forEach((it, k) => { if (it.kind !== 'vid' || !it.v9) return; const p = v9Pick(it.v9);
         // the opening seconds of the first clip in the first two unwatched rings are fetched ahead, so the tap has something to show at once
         if (n < 2 && k === 0 && x.un && !light && !stHead.has(it.v9)) { stHead.add(it.v9); p.then(u => u === it.v9 ? null : fetch(u).then(r => r.ok ? r.text() : '').then(tx => { const seg = String(tx).split(/\r?\n/).find(l => l && !l.startsWith('#')); if (seg) return fetch(new URL(seg.trim(), u).href).then(r => r.arrayBuffer()); })).catch(() => {}); } }); }); };
-  const stAvatar = (x, size) => x.kind === 'saved' ? `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.2a.6.6 0 0 1-1 .5L12 16.4l-5.5 4.3a.6.6 0 0 1-1-.5V5A1.5 1.5 0 0 1 7 3.5z"/></svg>` : x.kind === 'feed' ? `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a.9.9 0 0 0 1.4.8l10.4-6.8a.9.9 0 0 0 0-1.6L9.4 4.4A.9.9 0 0 0 8 5.2z"/></svg>` : x.kind === 'league' ? size > 24 ? `<b>${esc(x.abbr || '')}</b>` : `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.5 13.4h5.9L9.3 22l9.2-12.1h-6.1L13.2 2z"/></svg>` : x.kind === 'player' ? headshot(x.hs, x.color, size, x.full || x.name) : x.logo ? imgSized(x.logo, size * 2, size * 2) : `<b>${esc(x.abbr || '')}</b>`;
+  const stAvatar = (x, size) => x.kind === 'catch' ? `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v5l3 2M3.5 12a8.500 8.500 0 1 0 2.600-6.100M3.500 4.500v3.800h3.800"/></svg>` : x.kind === 'saved' ? `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.2a.6.6 0 0 1-1 .5L12 16.4l-5.5 4.3a.6.6 0 0 1-1-.5V5A1.5 1.5 0 0 1 7 3.5z"/></svg>` : x.kind === 'feed' ? `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a.9.9 0 0 0 1.4.8l10.4-6.8a.9.9 0 0 0 0-1.6L9.4 4.4A.9.9 0 0 0 8 5.2z"/></svg>` : x.kind === 'league' ? size > 24 ? `<b>${esc(x.abbr || '')}</b>` : `<svg class="stbolt" viewBox="0 0 24 24" width="${Math.round(size * .8)}" height="${Math.round(size * .8)}" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.5 13.4h5.9L9.3 22l9.2-12.1h-6.1L13.2 2z"/></svg>` : x.kind === 'player' ? headshot(x.hs, x.color, size, x.full || x.name) : x.logo ? imgSized(x.logo, size * 2, size * 2) : `<b>${esc(x.abbr || '')}</b>`;
   /* v470 the three Watch lists. Following: clips from the teams and players you follow, newest first, then everything else.
      For you: the whole clip file, what you have not watched first, best fit first. Top plays: each league's ranked plays,
      then the rest by how far each one moved the win chance. None of them ends: a list starts over. */
@@ -1167,7 +1214,7 @@
     const subs = (opt && opt.subs) || storySubjects(); let si = subs.findIndex(x => x.key === key); if (si < 0) return;
     if (!watch) { const lastSub = [...subs].reverse().find(x => x.kind !== 'saved'); const nx = [];
       ORDER.forEach(lk => { const o = feedSrc[lk] && feedSrc[lk].out; ((o && o.myTeams) || []).forEach(t => { const g = t.nx; if (!g || nx.some(n => n.id === g.id) || !(new Date(g.date).getTime() > Date.now() - 20 * 60000)) return; const home = String(g.home.id) === String(t.id); nx.push({ id: g.id, lk, t: new Date(g.date).getTime(), home, us: home ? g.home : g.away, them: home ? g.away : g.home, when: `${relDay(HW.ymdOf(g.date))}, ${tipOf(g)}` }); }); });
-      if (lastSub && subs[si].kind !== 'saved') lastSub.its = [...lastSub.its, { kind: 'caught', id: 'c' + todayCT(), ts: Date.now(), nx: nx.sort((a, b) => a.t - b.t).slice(0, 3) }]; }
+      if (lastSub && subs[si].kind !== 'saved' && !lastSub.its.some(y => y.kind === 'caught')) lastSub.its = [...lastSub.its, { kind: 'caught', id: 'c' + todayCT(), ts: Date.now(), nx: nx.sort((a, b) => a.t - b.t).slice(0, 3) }]; }
     const W = innerWidth, H = innerHeight, HYP = Math.ceil(Math.hypot(W, H) / 2) + 4;
     const el = document.createElement('div'); el.className = 'story' + (watch ? ' w27v' : '');
     el.innerHTML = `<div class="stdim"></div><div class="stpane"><div class="stbg"></div><div class="stblur"></div><div class="stmedia"><div class="stvdw" hidden><video class="on" playsinline preload="auto"></video><video playsinline preload="auto" muted></video></div><div class="stcd" hidden></div></div><div class="stchrome"><div class="stsegs"></div><div class="sthd"></div><div class="stact" hidden><button data-stb="like" aria-label="Like" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3 4.6 13a4.9 4.9 0 0 1 0-7 5 5 0 0 1 7 0l.4.4.4-.4a5 5 0 0 1 7 0 4.9 4.9 0 0 1 0 7L12 20.3z"/></svg></button><button data-stb="save" aria-label="Save" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.2a.6.6 0 0 1-1 .5L12 16.4l-5.5 4.3a.6.6 0 0 1-1-.5V5A1.5 1.5 0 0 1 7 3.5z"/></svg></button></div><div class="stcap"></div></div></div>`;
@@ -1260,16 +1307,28 @@
           const a = Math.round(mine(sw.from) * 100), b = Math.round(mine(sw.to) * 100); const q = sw.q; const ck = String((q.clock || {}).displayValue || '');
           const sc = q.homeScore != null ? ` \u00b7 ${us.abbr || us.short} ${home ? q.homeScore : q.awayScore}, ${them.abbr || them.short} ${home ? q.awayScore : q.homeScore}` : '';
           card.innerHTML = `<span class="fin">Biggest swing</span><div class="stsw"><svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none" aria-hidden="true">${sw.brk.map(i => `<line class="pb" x1="${X(i).toFixed(1)}" x2="${X(i).toFixed(1)}" y1="0" y2="${Hh}"/>`).join('')}<line class="mid" x1="0" x2="${W}" y1="${Hh / 2}" y2="${Hh / 2}"/><polygon class="ar" points="0,${Hh / 2} ${pts} ${W},${Hh / 2}"/><polyline class="ln" points="${pts}"/></svg><i class="dot" style="left:${(X(sw.i) / W * 100).toFixed(2)}%;top:${(Y(sw.to) / Hh * 100).toFixed(2)}%"></i><span class="ax t">${esc(us.abbr || us.short)}</span><span class="ax b">${esc(them.abbr || them.short)}</span></div><div class="stpc"><b>${a}%</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg><b class="${b >= a ? 'up' : 'dn'}">${b}%</b></div><span class="stpl">${esc(us.short)} win chance</span><p class="sttx">${esc(String(q.text))}</p><span class="stwh">${esc(perLbl(q))}${ck ? ' ' + esc(ck) : ''}${esc(sc)}</span>`;
+        } else if (it.kind === 'recap') { const home = String(g.home.id) === it.tid, us = home ? g.home : g.away, them = home ? g.away : g.home, won = +us.score > +them.score, a = it.star;
+          /* v512 the recap card: the game's top scorer for your team, cut out, over both teams' colours (the away side lights the left, the home side the right), his line, and the final */
+          const glow = tm => { let c = teamColor(tm, L) || '#5b6b8c'; const l = lumOf(c); return l < .1 ? mixTo(c, 255, .5) : l < .2 ? mixTo(c, 255, .22) : c; };
+          bg.style.background = `radial-gradient(95% 52% at 0% 4%,${glow(g.away)} 0%,rgba(0,0,0,0) 64%),radial-gradient(95% 52% at 100% 10%,${glow(g.home)} 0%,rgba(0,0,0,0) 64%),linear-gradient(180deg,#0b0c0f 30%,#050506)`;
+          const chips = [[a.pts, 'PTS'], [a.reb, 'REB'], [a.ast, 'AST']].filter(c => c[0] != null).map(c => `<s>${esc(String(c[0]))}<em>${c[1]}</em></s>`).join('');
+          const side = (tm, lose) => `<span class="${lose ? 'lo' : ''}">${tm.logo ? imgSized(tm.logo, 72, 72) : ''}<em>${esc(tm.abbr || tm.short)}</em><b>${esc(String(tm.score))}</b></span>`;
+          card.innerHTML = `<span class="fin">${esc(finalWord(g))} \u00b7 ${esc(won ? us.short : them.short)} win</span><span class="rcp27" style="--c:${glow(us)}">${a.hs ? imgSized(a.hs, 600, 436, 'class="rci27"', "this.parentNode.classList.add('no27');this.remove()") : ''}<i>${headshot('', teamColor(us, L), 132, a.name)}</i></span><b class="lnnm">${esc(a.name)}</b><span class="lnch">${chips}</span><span class="rcs27">${side(g.away, +g.away.score < +g.home.score)}<u></u>${side(g.home, +g.home.score < +g.away.score)}</span>`;
+          if (!a.hs) card.querySelector('.rcp27').classList.add('no27');
+        } else if (it.kind === 'notes') {
+          bg.style.background = 'linear-gradient(165deg,#0a0a0c 30%,#1d2a4a 140%)';
+          const row = (to, img, b, sm) => `<a data-stgo href="${esc(to)}">${img}<span><b>${esc(b)}</b><small>${esc(sm)}</small></span>${GOCH}</a>`;
+          card.innerHTML = `${it.inj.length ? `<span class="fin">Injury report</span><div class="stnx">${it.inj.map(n => row(href.player(n.lk, n.id), n.tm.logo ? imgSized(n.tm.logo, 56, 56) : '', n.nm, `${INJ_W[n.s]} \u00b7 ${n.tm.short || ''}`)).join('')}</div>` : ''}${it.mv.length ? `<span class="fin${it.inj.length ? ' stnxh' : ''}">Standings</span><div class="stnx">${it.mv.map(n => row(href.team(n.lk, n.tm.id), n.tm.logo ? imgSized(n.tm.logo, 56, 56) : '', n.tm.short || '', n.txt)).join('')}</div>` : ''}`;
         } else if (it.kind === 'caught') {
           bg.style.background = 'linear-gradient(165deg,#0a0a0c 30%,#2b1f7a 140%)';
-          card.innerHTML = `<svg class="stok" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="27"/><path d="M20 33.5l8.5 8.5L45 24.5"/></svg><b class="lnnm">You're caught up</b><span class="stpl">That is everything new from your teams and players.</span>${it.nx.length ? `<span class="fin stnxh">Next up</span><div class="stnx">${it.nx.map(n => `<a data-stgo href="${esc(href.game(n.lk, n.id))}">${n.us.logo ? imgSized(n.us.logo, 56, 56) : ''}<span><b>${esc(n.us.short)} ${n.home ? 'vs' : 'at'} ${esc(n.them.short)}</b><small>${esc(n.when)}</small></span>${GOCH}</a>`).join('')}</div>` : ''}`;
+          card.innerHTML = `<svg class="stok" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="27"/><path d="M20 33.5l8.5 8.5L45 24.5"/></svg><b class="lnnm">You're caught up</b><span class="stpl">That is everything new from your teams and players.</span>${it.nx.length ? `<span class="fin stnxh">Next up</span><div class="stnx">${it.nx.map(n => `<a data-stgo href="${esc(href.game(n.lk, n.id))}">${n.us.logo ? imgSized(n.us.logo, 56, 56) : ''}<span><b>${esc(n.us.short)} ${n.home ? 'vs' : 'at'} ${esc(n.them.short)}</b><small>${esc(n.when)}${n.pj ? ` \u00b7 RIVL: ${esc(n.pj)}` : ''}</small></span>${GOCH}</a>`).join('')}</div>` : ''}`;
         } else if (it.kind === 'tops') { const home = String(g.home.id) === it.tid; const us = home ? g.home : g.away, them = home ? g.away : g.home; const won = +us.score > +them.score;
           bg.style.background = `linear-gradient(165deg,#0a0a0c 35%,${x.color} 150%)`;
           card.innerHTML = `<span class="fin">Top scorers</span><div class="sttp">${it.tp.map(a => `<div class="tpr">${headshot(a.hs, x.color, 60, a.name)}<span><b>${esc(a.name)}</b><small>${[[a.pts, 'PTS'], [a.reb, 'REB'], [a.ast, 'AST']].filter(c => c[0] != null).map(c => `${c[0]} ${c[1]}`).join(' \u00b7 ')}</small></span></div>`).join('')}</div><span class="stwh">${esc(us.short)} ${esc(String(us.score))}, ${esc(them.short)} ${esc(String(them.score))} \u00b7 ${won ? 'Win' : 'Loss'}</span>`;
         } else { const ln = it.ln; const us = String(g.home.id) === ln.teamId ? g.home : g.away, them = us === g.home ? g.away : g.home; const won = +us.score > +them.score;
-          bg.style.background = `linear-gradient(165deg,#0a0a0c 35%,${x.color} 150%)`;
+          bg.style.background = `linear-gradient(165deg,#0a0a0c 35%,${(it.p || x).color} 150%)`;
           const chips = [[ln.pts, 'PTS'], [ln.reb, 'REB'], [ln.ast, 'AST'], [+ln.tpm > 0 ? ln.tpm : '', '3PM']].filter(c => c[0] !== '' && c[0] != null).map(c => `<s>${esc(String(c[0]))}<em>${c[1]}</em></s>`).join('');
-          card.innerHTML = `<span class="lnhs">${headshot(x.hs, x.color, 132, x.full || x.name)}</span><b class="lnnm">${esc(x.full || x.name)}</b><span class="lnres"><i class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</i>${esc(String(us.score))}-${esc(String(them.score))} ${us === g.home ? 'vs' : 'at'} ${esc(them.short)}</span><span class="lnch">${chips}</span>`; }
+          const P = it.p || x; card.innerHTML = `<span class="lnhs">${headshot(P.hs, P.color, 132, P.full || P.name)}</span><b class="lnnm">${esc(P.full || P.name)}</b><span class="lnres"><i class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</i>${esc(String(us.score))}-${esc(String(them.score))} ${us === g.home ? 'vs' : 'at'} ${esc(them.short)}</span><span class="lnch">${chips}</span>`; }
       }
       if (it.kind !== 'vid' && it.kind !== 'caught' && it.g && it.L) card.insertAdjacentHTML('beforeend', goGame(it.L.key, it.g.id));
       prep();

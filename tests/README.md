@@ -25,6 +25,8 @@ They need Python 3 with Playwright (`pip install playwright pillow`, then `playw
 | `p27lead.py`, `p27lead_shots.py` | Players' league view at 384 wide: the Leaders heading, More clear of the switches, the stat column measured; screenshots with the Following list |
 | `star.py` | The follow star on Following, Teams, Players and Leaders: centered in its circle, centered in its row, 14px from the card's edge |
 | `p27v511.py` | Watch's Game button and the way back, a name turning the scroll into that player's or team's clips, the highlights card on a game's page, hide scores, the way out of a story; screenshots at 384 wide |
+| `p27catch.py` | Catch up: made on a first run and after six hours away, leads the story row, its recap, line and closing cards, not made after a short absence, with scores hidden, or in the legacy design |
+| `p27qhead.py` | Search: the top of the player answer (photo, name, arrow) opens the player's page |
 | `p27default.py` | The new design as the default, the Legacy design switch both ways, a brand new visitor, the Watch shortcut |
 | `p27sc.py`, `p27gh.py`, `p27ring.py` | Score cards, the game header, the profile ring |
 | `audit.py`, `audit_b.py` | The audit: every page, light and dark, with counts for small tap targets, small text, faint text, missing names |

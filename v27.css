@@ -1160,3 +1160,29 @@ html body .story.w27v .stcap .wn27 a[data-wof]:active{opacity:.6}
 .gc27 .ghl27 b{font-size:18px;font-weight:700;letter-spacing:-.015em;text-shadow:0 1px 10px rgba(0,0,0,.5)}
 .gc27 .ghl27 small{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.86)}
 .gc27 .ghl27+.sec{margin-top:18px}
+
+/* ---------- v512: Catch up (the story that leads Home after time away) and the recap card ---------- */
+.h27 .sc27.k-catch:not(.art)>span{background:linear-gradient(160deg,#1f8f6a,#2f6bff 62%,#8a5cf6)}
+.h27 .sc27.k-catch small{display:flex;align-items:center;justify-content:center;gap:4px}
+.h27 .sc27.k-catch small svg,.h27 .sc27.k-catch .si27 svg{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.h27 .sc27.k-catch .si27 svg{stroke-width:1.9}
+html body .story .stcd .rcp27{--c:#5b6b8c;position:relative;display:block;width:min(310px,80vw);aspect-ratio:350/254;margin:14px 0 -4px}
+html body .story .stcd .rcp27:before{content:"";position:absolute;inset:10% 15% 2%;border-radius:50%;background:var(--c);filter:blur(34px);opacity:.8;animation:rcglow27 6s ease-in-out infinite alternate}
+html body .story .stcd .rcp27 .rci27{position:relative;display:block;width:100%;height:100%;object-fit:contain;-webkit-mask-image:linear-gradient(#000 74%,rgba(0,0,0,0) 99%);mask-image:linear-gradient(#000 74%,rgba(0,0,0,0) 99%);animation:rcin27 .55s cubic-bezier(.2,.8,.2,1) both}
+html body .story .stcd .rcp27>i{display:none}
+html body .story .stcd .rcp27.no27{width:auto;aspect-ratio:auto;margin:22px 0 0}
+html body .story .stcd .rcp27.no27:before{display:none}
+html body .story .stcd .rcp27.no27>i{display:block;font-style:normal}
+html body .story .stcd .rcp27.no27>i .hs{box-shadow:0 0 0 4px rgba(255,255,255,.14),0 18px 50px rgba(0,0,0,.5)}
+html body .story .stcd .rcp27+.lnnm{margin-top:14px}
+html body .story .stcd .rcp27~.lnch{margin-top:16px}
+html body .story .stcd .rcs27{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:22px;font-variant-numeric:tabular-nums}
+html body .story .stcd .rcs27>span{display:flex;align-items:center;gap:8px}
+html body .story .stcd .rcs27 img{width:30px;height:30px;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,0,0,.4))}
+html body .story .stcd .rcs27 em{font-style:normal;font-size:14px;font-weight:700;color:rgba(255,255,255,.78)}
+html body .story .stcd .rcs27 b{font-size:26px;font-weight:800;letter-spacing:-.02em}
+html body .story .stcd .rcs27 .lo b{opacity:.5}
+html body .story .stcd .rcs27 u{width:1px;height:22px;background:rgba(255,255,255,.22);text-decoration:none}
+@keyframes rcin27{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes rcglow27{from{transform:scale(.94);opacity:.7}to{transform:scale(1.06);opacity:.9}}
+@media (prefers-reduced-motion:reduce){ html body .story .stcd .rcp27:before,html body .story .stcd .rcp27 .rci27{animation:none} }

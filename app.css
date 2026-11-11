@@ -5505,3 +5505,6 @@ html body .story .stgm{pointer-events:auto;display:inline-flex;align-items:cente
 html body .story .stgm:active{transform:scale(.96);background:rgba(255,255,255,.26)}
 html body .story .stgm svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 html body .story .stcd .stgm{margin-top:26px}
+/* v512 the top of the player answer is a link again: give it a full-height touch area and a pressed state */
+.xpfull>a.xwho{min-height:48px;-webkit-tap-highlight-color:transparent;transition:opacity .12s}
+.xpfull>a.xwho:active{opacity:.6}
