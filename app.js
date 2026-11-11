@@ -716,7 +716,7 @@
     if (t === 'dark' || t === 'light') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme');
     // the status bar takes the top of the wash, so the screen is one surface from its top edge down; once the wash has scrolled
     // away it takes the plain ground, the way a translucent bar would show what is behind it
-    requestAnimationFrame(() => { statusBar.acc = cssColor('var(--wc)'); statusBar.bg = cssColor('var(--bg)'); statusBar.wash = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--wash')) / 100 || .2; statusBar(); });
+    requestAnimationFrame(() => { statusBar.b27 = ''; statusBar.acc = cssColor('var(--wc)'); statusBar.bg = cssColor('var(--bg)'); statusBar.wash = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--wash')) / 100 || .2; statusBar(); });
   }
   const cssColor = v => { const probe = document.createElement('i'); probe.style.cssText = 'position:absolute;visibility:hidden;background:' + v; document.body.appendChild(probe); const c = getComputedStyle(probe).backgroundColor; probe.remove(); const m = c.match(/color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)/) || c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/); if (!m) return ''; return '#' + [m[1], m[2], m[3]].map(x => Math.round(+x * (c.startsWith('color') ? 255 : 1))).map(n => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')).join(''); };   // a plain hex: the status bar parser is picky
   /* the colour behind the status bar follows the wash as the page scrolls: the same stops the stylesheet draws, read at the
@@ -728,6 +728,9 @@
     const y = window.scrollY; const root = document.documentElement;
     const on = root.classList.contains('scrolled'); root.classList.toggle('scrolled', y > (on ? 12 : 40));
     const meta = document.querySelector('meta[name="theme-color"]'); if (!meta || !statusBar.acc || !statusBar.bg) return;
+    /* v508: in the new design the page starts on its plain ground, so the strip behind the clock is that ground (it was a
+       gray left from the old design's colored wash) */
+    if (root.classList.contains('rv27')) { if (!statusBar.b27) statusBar.b27 = cssColor('var(--b27)'); if (statusBar.b27) { if (meta.getAttribute('content') !== statusBar.b27) meta.setAttribute('content', statusBar.b27); return; } }
     const t = Math.min(1, y / 560); let a = 0;
     for (let i = 1; i < STOPS.length; i++) { const [t0, a0] = STOPS[i - 1], [t1, a1] = STOPS[i]; if (t <= t1) { a = a0 + (a1 - a0) * (t - t0) / (t1 - t0); break; } }
     a *= (t <= .5 ? 1 : 1 - (t - .5) / .5) * statusBar.wash;

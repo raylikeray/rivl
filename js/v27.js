@@ -37,7 +37,7 @@
   const SCORES = ['scores', 'standings', 'stats'];
   const SUB = { teams: ['Teams', '#settings'], players: ['Players', '#settings'], record: ['Record', '#settings/about'], settings: ['Settings', '#settings'] };
   function paintBar() {
-    const live = on(); root.classList.toggle('rv27', live); if ($bar) $bar.hidden = !live; if (!live) { if ($seg) $seg.hidden = true; if ($sh) $sh.hidden = true; return; }
+    const live = on(), was27 = root.classList.contains('rv27'); root.classList.toggle('rv27', live); if (was27 !== live && V.applyTheme) V.applyTheme();   /* v508: the strip behind the clock follows the design */ if ($bar) $bar.hidden = !live; if (!live) { if ($seg) $seg.hidden = true; if ($sh) $sh.hidden = true; return; }
     const pg = root.dataset.page || 'home'; const old = document.querySelector('#tabs .tab.on'); const owner = old ? old.dataset.tab : 'home';
     const cur = root.classList.contains('w27on') ? 'watch' : ['settings', 'teams', 'players', 'record'].includes(pg) ? 'you' : SCORES.includes(owner) ? 'scores' : 'home';
     $bar.querySelectorAll('[data-t27]').forEach(a => { const is = a.dataset.t27 === cur; a.classList.toggle('on', is); if (is) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });

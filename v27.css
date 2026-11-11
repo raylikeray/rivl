@@ -1088,3 +1088,29 @@ html.rv27[data-page="players"] #main .pp .tgrp.plain{margin-top:12px!important}
 html.rv27[data-page="record"] #main > .rows, html.rv27[data-page="settings"] #main > .rows{padding:0}
 html.rv27[data-page="settings"] #main > .topbar .ib{width:40px!important;height:40px!important;margin:0!important;padding:0!important;background:var(--s27)!important}
 html.rv27[data-page="settings"] #main > .topbar .ttl{flex:1;margin:0!important;padding:0!important}
+
+/* ---------- v508: fixes from Ray's phone (Players' league view, the Following list, the strip behind the clock) ---------- */
+/* Leaders on Players: the heading stays on one line and "More" keeps clear of the row of switches under it */
+html.rv27[data-page="players"] #main .sec h2{display:flex;align-items:baseline;gap:8px;flex:1 1 auto;min-width:0;white-space:nowrap}
+html.rv27[data-page="players"] #main .sec h2 small{margin-left:0;min-width:0;overflow:hidden;text-overflow:ellipsis}
+html.rv27[data-page="players"] #main .sec > button{flex:none;margin-left:12px}
+html.rv27[data-page="players"] #main .leaders > .chips{margin-top:14px}
+/* the number at the end of a leader's row: digits of one width, so the points line up down the list; the number sits on
+   the name's line and "ppg" on the line under it */
+html.rv27[data-page="players"] #main .row.prow .r{flex:none;min-width:50px;margin:0;display:flex;flex-direction:column;align-items:flex-end;gap:5.9px;text-align:right;font-variant-numeric:tabular-nums}
+html.rv27[data-page="players"] #main .row.prow .r b{display:block;font:700 20px/16.3px var(--f27);letter-spacing:-.02em;color:var(--i27);font-variant-numeric:tabular-nums}
+html.rv27[data-page="players"] #main .row.prow .r span{display:block;font:600 12px/17.6px var(--f27);color:var(--i27c)}
+html.rv27[data-page="players"] #main .row.prow .lrk{font-variant-numeric:tabular-nums}
+/* a long name takes a second line; it is never cut short */
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .row.prow .t b{white-space:normal;overflow:visible;text-overflow:clip}
+/* Following: a team's name over its players is a plain line in the card, in line with the faces under it */
+html.rv27[data-page="settings"] #main > .rows .thead{display:flex;align-items:center;gap:9px;width:auto;min-height:0;margin:0;padding:16px 14px 6px;border:0;border-radius:0;background:none;box-shadow:none;font-family:var(--f27)}
+html.rv27[data-page="settings"] #main > .rows .thead .bar{display:none}
+html.rv27[data-page="settings"] #main > .rows .thead .logo{flex:none;width:24px;height:24px}
+html.rv27[data-page="settings"] #main > .rows .thead b{font:700 14px/1.2 var(--f27);letter-spacing:-.01em;color:var(--i27)}
+html.rv27[data-page="settings"] #main > .rows .thead .n{min-width:0;height:auto;padding:0;border-radius:0;background:none;font:500 13px/1 var(--f27);color:var(--i27c)}
+html.rv27[data-page="settings"] #main > .rows .thead + .row{padding-top:8px}
+/* a leader's row carries a number as well, so it closes up a little to leave the name its room */
+html.rv27[data-page="players"] #main .row.prow:has(> .r){gap:10px;padding-right:4px}
+html.rv27[data-page="players"] #main .row.prow:has(> .r) .star{width:40px;height:44px}
+html.rv27[data-page="players"] #main .row.prow:has(> .r) .go{gap:8px}
