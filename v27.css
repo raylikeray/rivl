@@ -486,8 +486,8 @@ html.rv27 body .approf header.aph::before{content:"";position:absolute;left:0;ri
 .bn27 .hs27{position:absolute;inset:0;background:linear-gradient(112deg,transparent 0 67%,var(--a2,#fff) 67% 71.5%,transparent 71.5% 74.5%,var(--a2,#fff) 74.5% 76.5%,transparent 76.5%);opacity:.92;animation:stripe27 .8s cubic-bezier(.2,.8,.2,1) both}
 .bn27 .hg27{position:absolute;right:-8px;top:calc(env(safe-area-inset-top,0px) + 38px);width:256px;height:256px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.34) 0%,rgba(255,255,255,.12) 42%,rgba(255,255,255,0) 68%)}
 .bn27 .hr27{position:absolute;right:10px;top:calc(env(safe-area-inset-top,0px) + 56px);width:220px;height:220px;box-sizing:border-box;border-radius:50%;padding:6px;background:rgba(255,255,255,.2);-webkit-mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);animation:ringin27 .9s cubic-bezier(.2,.9,.2,1) both}
-.bn27[data-ring="seen"] .hr27{background:rgba(196,202,212,.6)}
-.bn27[data-ring="new"] .hr27{padding:7px;background:conic-gradient(from 0deg,var(--a2,#ffb03a),#fff 22%,var(--a3,var(--a)) 48%,var(--a2,#ffb03a) 72%,#fff 88%,var(--a2,#ffb03a));animation:ringin27 .9s cubic-bezier(.2,.9,.2,1) both,spin27 7s linear .9s infinite}
+.bn27[data-ring="seen"] .hr27{padding:7px;background:rgba(150,156,166,.85)}
+.bn27[data-ring="new"] .hr27{padding:8px;background:conic-gradient(from 210deg,#4a9ae6,#8a5cf6 30%,#ff5e7a 55%,#ffb03a 75%,#4a9ae6);animation:ringin27 .9s cubic-bezier(.2,.9,.2,1) both,spin27 7s linear .9s infinite}
 .bn27 .hp27{position:absolute;right:10px;top:calc(env(safe-area-inset-top,0px) + 56px);width:220px;height:220px;box-sizing:border-box;border-radius:50%;border:2px solid var(--a2,#fff);opacity:0}
 .bn27[data-ring="new"] .hp27{animation:ping27 3.2s ease-out 1.2s infinite}
 .bn27 i{position:absolute;top:-30%;bottom:-30%;left:-40%;width:22%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.34),rgba(255,255,255,0));transform:skewX(-20deg);animation:glint27 6.5s ease-in-out 1.4s infinite}
@@ -907,3 +907,10 @@ html.rv27 body .g2 .g2df::after{content:"";position:absolute;left:var(--wp,50%);
 @media (prefers-reduced-motion:reduce){ html.rv27 body .g2 .ghbg i,html.rv27 body .g2 .g2top::after,html.rv27 body .g2 .g2dc::before,html.rv27 body .g2 .g2df::after,html.rv27 body .g2 .g2dl{animation:none!important} }
 /* the same in the small game pills along the top of a game (v494) */
 html.rv27 body .g2 .g2gp b+b::before{content:"";display:inline-block;width:6px;height:2px;margin:0 5px 0 0;vertical-align:middle;border-radius:1px;background:currentColor;opacity:.5}
+
+/* Profile story ring (v495). The ring wears the same colours as a story card while there is something new, turns gray once it
+   has all been watched, and the whole ring is a button, not only the photo. */
+.bn27 .hrb27{position:absolute;right:10px;top:calc(env(safe-area-inset-top,0px) + 56px);width:220px;height:220px;border-radius:50%;z-index:3;padding:0;background:none;border:0;-webkit-tap-highlight-color:transparent}
+html.rv27 body .approf header.aph .apid .apface[data-pstory]{cursor:pointer}
+/* the cutout's shadow was falling past the bottom of the header and showing as a gray smear on the page */
+html.rv27 body .approf header.aph .apid{overflow:hidden}
