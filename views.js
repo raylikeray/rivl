@@ -281,6 +281,8 @@
     return [a, b];
   };
   function duelCard(L, g, ctx, { kicker = '', foot = '', tvTop = true } = {}) {
+    /* v497: with the 2027 preview on, every game card is the Glow card from Scores, so the app has one game card */
+    { const R = window.HW && HW.v5 && HW.v5.rv27; if (R && R.on && R.on() && R.card) { try { return R.card(L, g, ctx); } catch (e) { } } }
     const lk = L.key; const live = isLive(g), done = g.state === 'post' && !g.off, pre = !live && !done;
     const [ca, cb] = duelColors(g, L);
     const f = !g.off ? safeF(L, g, ctx) : null; const ph = f && Number.isFinite(f.pHome) ? Math.min(.99, Math.max(.01, f.pHome)) : null;

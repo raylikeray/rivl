@@ -112,11 +112,12 @@
     const live = isLive(g) && !g.off, fin = g.state === 'post' && !g.off, h = +g.home.score || 0, a = +g.away.score || 0;
     const top = g.off ? esc(g.off) : live ? `<i></i>${esc(periodWord(L, g))}` : fin ? esc(finalWord(g)) : `${esc(relDay(ymd(g)))} · ${esc(noTz(tipOf(g)))}`;
     const mid = live || fin ? `<b class="${a < h ? 'lo' : ''}">${a}</b><em></em><b class="${h < a ? 'lo' : ''}">${h}</b>` : `<u>at</u>`;
-    const p = projWord(L, g, ctx), c = fin ? clipWord(g) : '', aw = p ? (p.home ? 100 - p.pct : p.pct) : 50;
+    const p = projWord(L, g, ctx), c = fin ? clipWord(g) : '', aw = p ? Math.min(99, Math.max(1, p.home ? 100 - p.pct : p.pct)) : 50;   // never 0 or 100: a projection is not a certainty
     const foot = p ? `<span class="gmt27"><i style="width:${aw}%"></i><u style="left:${aw}%"></u></span><span class="gft27"><b>${esc(g.away.abbr || '')} ${aw}%</b><span>RIVL projection</span><b>${100 - aw}% ${esc(g.home.abbr || '')}</b></span>` : `<span class="gft27 one"><b>${live ? leadWord(g) : c || (g.tv ? esc(String(g.tv).split(',')[0]) : '')}</b></span>`;
     const side = t => `<span class="gs27">${disc(t, 58)}<b>${esc(t.short)}</b></span>`;
     return `<a class="hero27 gw27${live ? ' lv' : ''}" href="${U.href.game(L.key, g.id)}" style="--a:${glowC(g.away)};--h:${glowC(g.home)}"><span class="gin27"><span class="gbl27 a"></span><span class="gbl27 h"></span><span class="gtp27">${top}</span><span class="grw27">${side(g.away)}<span class="gsc27">${mid}</span>${side(g.home)}</span>${foot}</span></a>`;
   }
+  V.rv27.card = (L, g, ctx) => sHero(L, g, ctx).replace('class="hero27 gw27', 'class="hero27 gw27 dk27 h27');
   const sSec = (label, list, L, ctx, pulse) => { if (!list.length) return ''; const N = 14, rows = list.map(g => sRow(L, g, ctx));
     return `<div class="sl27">${pulse ? '<i></i>' : ''}${label}${list.length > 3 ? `<span>${list.length}</span>` : ''}</div>${rows.slice(0, N).join('')}${rows.length > N ? `<div class="mo27" hidden>${rows.slice(N).join('')}</div><button class="mb27" data-a27="more">Show all ${rows.length}</button>` : ''}`; };
   function sBody(L, day, games, ctx, cal) {
