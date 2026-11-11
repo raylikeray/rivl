@@ -28,6 +28,7 @@ They need Python 3 with Playwright (`pip install playwright pillow`, then `playw
 | `p27catch.py` | Catch up: made on a first run and after six hours away, leads the story row, its recap, line and closing cards, not made after a short absence, with scores hidden, or in the legacy design |
 | `p27qhead.py` | Search: the top of the player answer (photo, name, arrow) opens the player's page |
 | `p27night.py` | The night data in the app: streaks and firsts as posts in Home's feed (one with a clip plays it), honors leading the league's story (Player, Thriller, Upset, Rookie, the season's count), the same lines in Catch up |
+| `p27daily.py` | The Daily: Home's strip, the list of games, each game played through (misses and clues in Mystery line, a wrong pick in More or less, the reveal in Blind pick), the result kept through a reload, the share text, the way back |
 | `p27default.py` | The new design as the default, the Legacy design switch both ways, a brand new visitor, the Watch shortcut |
 | `p27sc.py`, `p27gh.py`, `p27ring.py` | Score cards, the game header, the profile ring |
 | `audit.py`, `audit_b.py` | The audit: every page, light and dark, with counts for small tap targets, small text, faint text, missing names |

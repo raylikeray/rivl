@@ -37,7 +37,8 @@
 
   /* ---------- the shell: the four-tab bar, and Games / Standings / Leaders across the top of Scores ---------- */
   const SCORES = ['scores', 'standings', 'stats'];
-  const SUB = { teams: ['Teams', '#settings'], players: ['Players', '#settings'], record: ['Record', '#settings/about'], settings: ['Settings', '#settings'] };
+  const SUB = { teams: ['Teams', '#settings'], players: ['Players', '#settings'], record: ['Record', '#settings/about'], settings: ['Settings', '#settings'], daily: ['The Daily', '#home'] };
+  const DAILY = { mystery: 'Mystery line', more: 'More or less', blind: 'Blind pick' };
   const EYE = ['<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.500 12S6 5.500 12 5.500 21.500 12 21.500 12 18 18.500 12 18.500 2.500 12 2.500 12z"/><circle cx="12" cy="12" r="3"/></svg>', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5.700a8.600 8.600 0 0 1 2-.200c6 0 9.500 6.500 9.500 6.500a17 17 0 0 1-2.700 3.500M6.400 7.400A16.600 16.600 0 0 0 2.500 12S6 18.500 12 18.500a8.700 8.700 0 0 0 4.300-1.200M9.900 9.900a3 3 0 0 0 4.200 4.200M4 4l16 16"/></svg>'];
   function paintEye(show) { const b = $sh && $sh.querySelector('#she27'); if (!b) return; const hid = !!store.get('v5:hide27', false); b.hidden = !show; if (b.dataset.h !== String(hid)) { b.dataset.h = String(hid); b.innerHTML = EYE[hid ? 1 : 0]; b.classList.toggle('on', hid); b.setAttribute('aria-pressed', String(hid)); b.setAttribute('aria-label', hid ? 'Show scores' : 'Hide scores'); } }
   const setHide = v => { store.set('v5:hide27', !!v); paintEye(true); V.toast(v ? 'Scores are hidden. Tap the eye to bring them back.' : 'Scores are showing.'); const pg = $main.querySelector('#sc27'); if (pg && pg.dataset.lk) scores27(pg.dataset.lk); };
@@ -45,10 +46,10 @@
   function paintBar() {
     const live = on(), was27 = root.classList.contains('rv27'); root.classList.toggle('rv27', live); if (was27 !== live && V.applyTheme) V.applyTheme();   /* v508: the strip behind the clock follows the design */ if ($bar) $bar.hidden = !live; if (!live) { if ($seg) $seg.hidden = true; if ($sh) $sh.hidden = true; return; }
     const pg = root.dataset.page || 'home'; const old = document.querySelector('#tabs .tab.on'); const owner = old ? old.dataset.tab : 'home';
-    const cur = root.classList.contains('w27on') ? 'watch' : ['settings', 'teams', 'players', 'record'].includes(pg) ? 'you' : SCORES.includes(owner) ? 'scores' : 'home';
+    const cur = root.classList.contains('w27on') ? 'watch' : pg === 'daily' ? 'home' : ['settings', 'teams', 'players', 'record'].includes(pg) ? 'you' : SCORES.includes(owner) ? 'scores' : 'home';
     $bar.querySelectorAll('[data-t27]').forEach(a => { const is = a.dataset.t27 === cur; a.classList.toggle('on', is); if (is) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     /* v507: Teams, Players, Record and the Settings list carry the same title bar as Scores, with a way back */
-    const inScores = SCORES.includes(pg), sub = pg === 'settings' ? (/^#settings\/menu/.test(location.hash) ? SUB.settings : null) : SUB[pg] || null; $seg.hidden = !inScores;
+    const inScores = SCORES.includes(pg), dg = pg === 'daily' ? (/^#daily\/(\w+)/.exec(location.hash) || [])[1] : '', sub = pg === 'settings' ? (/^#settings\/menu/.test(location.hash) ? SUB.settings : null) : dg && DAILY[dg] ? [DAILY[dg], '#daily'] : SUB[pg] || null; $seg.hidden = !inScores;
     if ($sh) { $sh.hidden = !(inScores || sub); $sh.classList.toggle('sub27', !!sub); const h = $sh.querySelector('#sht27'), bk = $sh.querySelector('#shb27'), sr = $sh.querySelector('.shs27');
       if (h) h.textContent = sub ? sub[0] : 'Scores'; if (bk) { bk.hidden = !sub; if (sub) bk.setAttribute('href', sub[1]); } if (sr) sr.hidden = !!sub; paintEye(pg === 'scores' && !sub); }
     root.classList.toggle('sub27on', !!sub);
@@ -859,7 +860,7 @@
       if (force || !made || now - madeAt > 300) { madeAt = now; const outs = outsNow(); subsNow = outs.length ? X.storySubjects() : []; const P = settle(outs);
         const tops = subsNow.find(x => x.kind === 'league' && x.its.length >= 3), mine = subsNow.find(x => x.key === 'all:feed');
         const loaded = ORDER.every(lk => { const f = (favs.all()[lk] || []).length || V.fplayers.all().some(p => p.lk === lk); return !f || (V.feedSrc[lk] && V.feedSrc[lk].out); });
-        made = { top: topHtml(), stories: storyList(subsNow, loaded), list: [
+        made = { top: topHtml(), daily: dailyHtml(), stories: storyList(subsNow, loaded), list: [
           ['plays', 0, tops ? clipsHtml(`Biggest plays · ${(LEAGUES[tops.lk] || {}).short || ''}`, tops, tops.its.slice(0, 10)) : ''],
           ['picks', 3, picksHtml(outs, P)],
           ['clips', 9, mine ? clipsHtml('For you', mine, mine.its.slice(0, 10)) : ''],
@@ -869,7 +870,8 @@
       let top = $main.querySelector(':scope > .t27'); if (!top) { top = document.createElement('div'); top.className = 't27 h27'; }
       if ($main.firstElementChild !== top) $main.insertBefore(top, $main.firstChild);
       let hd = top.querySelector(':scope > .hd27'), rail = top.querySelector(':scope > .st27');
-      if (!hd) { top.innerHTML = '<div class="hd27"></div><div class="rl27 st27" hidden></div>'; hd = top.firstChild; rail = top.lastChild; }
+      if (!hd) { top.innerHTML = '<div class="hd27"></div><div class="rl27 st27" hidden></div><div class="dyh27w"></div>'; hd = top.firstChild; rail = top.children[1]; }
+      { const dw = top.querySelector(':scope > .dyh27w'), dh = hash(made.daily); if (dw && dw.dataset.h !== dh) { dw.dataset.h = dh; dw.innerHTML = made.daily; } }   /* v514: The Daily's strip sits under the stories */
       const th = hash(made.top); if (hd.dataset.h !== th) { hd.dataset.h = th; hd.innerHTML = made.top; }
       railSync(rail, made.stories);
       /* the blocks mixed into the feed: before the latest posts, then after the third, ninth and fourteenth */
@@ -900,6 +902,13 @@
     if (a === 'clip') { e.preventDefault(); stDirty = true; watch(b.dataset.id, b.dataset.key); return; }
   });
 
+  /* v514 The Daily: its code is fetched the first time the page is opened, with the same stamp as the rest of the app */
+  let dailyP = null;
+  const dailyLoad = () => dailyP || (dailyP = new Promise((ok, no) => { const me = document.querySelector('script[src*="js/v27.js"]'), q = me ? (/\?v=\d+/.exec(me.getAttribute('src')) || [''])[0] : ''; const sc = document.createElement('script'); sc.src = `js/daily.js${q}`; sc.onload = ok; sc.onerror = () => { dailyP = null; no(new Error('daily')); }; document.head.appendChild(sc); }));
+  V.daily = async g => { if (!on()) { location.hash = '#home'; return; } try { await dailyLoad(); } catch (e) { $main.innerHTML = `<div class="h27 dyp27"><div class="em27"><b>Could not load The Daily</b><p>Check the connection and try again.</p></div></div>`; return; } paintBar(); return V.daily27.open(g || ''); };
+  /* Home's way in: one strip above the feed with today's progress, read from the phone's own store */
+  const dailyHtml = () => { const d = (store.get('v5:daily27', {}) || {})[todayCT()] || {}, done = ['m', 'ml', 'bp'].map(k => !!(d[k] && d[k].done)), n = done.filter(Boolean).length;
+    return `<a class="dyhm27" href="#daily"><i class="dyb27 a"></i><i class="dyb27 b"></i><span><b>The Daily</b><small>${n === 3 ? 'All three done. New games tomorrow.' : n ? `${n} of 3 played today` : 'Three quick games. New every day.'}</small></span><span class="dyhd27">${done.map(x => `<i class="${x ? 'on' : ''}"></i>`).join('')}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>`; };
   /* with the preview on, Home is the Following feed and nothing else: one feed for what you follow */
   const home0 = V.home;
   V.home = (...a) => { if (on() && a[0] !== 'following') { store.set('v5:hometab', 'following'); return V.rerender(); } return home0(...a); };

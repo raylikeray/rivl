@@ -41,6 +41,7 @@
     if ((m = h.match(/^(player|team|game|article|venue)\/([a-z]+)\/([A-Za-z0-9]+)(?:\/p\/(\d+))?$/))) return { name: m[1], lk: lkOf(m[2]), args: m[4] ? [lkOf(m[2]), m[3], m[4]] : [lkOf(m[2]), m[3]] };   // a game can open on one player: #game/nba/401/p/1966
     if (LEAGUES[h]) { if (store.get('v5:lk') !== h) { store.set('v5:lk', h); if (V.applyAccent) V.applyAccent(); } const nm = store.get('v5:screen', 'home'); if (nm === 'home') store.set('v5:hometab', h); return { name: nm, lk: h, args: [nm === 'home' ? h : h] }; }
     if (h === 'search') return { name: 'search', lk: lkOf(store.get('v5:lk', 'nba')), args: [] };
+    let dm; if ((dm = h.match(/^daily(?:\/(mystery|more|blind))?$/))) return { name: 'daily', lk: lkOf(store.get('v5:lk', 'nba')), args: [dm[1] || ''] };   // v514: The Daily and its three games
     let um; if ((um = h.match(/^unr\/(club|game|player)\/([a-z0-9-]+)$/))) return { name: 'unr', lk: 'wnba', args: [um[1], um[2]] };   // v443: Unrivaled clubs, games, players
     let km; if ((km = h.match(/^recruit\/(boys|girls)\/(\d{4})\/([a-z0-9-]+)$/))) return { name: 'recruit', lk: km[1] === 'girls' ? 'ncaaw' : 'ncaam', args: [km[1], km[2], km[3]] };
     let rm; if ((rm = h.match(/^record(?:\/([a-z]+))?$/))) { const k = rm[1] && LEAGUES[rm[1]] ? rm[1] : lkOf(store.get('v5:lk', 'nba')); return { name: 'record', lk: k, args: [k] }; }
@@ -212,7 +213,7 @@
     const w = im.naturalWidth, h = im.naturalHeight; if (!w || !h) return; const ar = w / h;
     if (w < 300 || (ar > .8 && ar < 1.25)) { im.classList.add('imsm'); const f = im.closest('.fimg'); if (f) f.classList.add('imsm'); }
   }, true);
-  const TITLES = { home: 'Home', scores: 'Scores', standings: 'Standings', players: 'Players', teams: 'Teams', search: 'Search', settings: 'Settings', record: 'Record' };
+  const TITLES = { home: 'Home', scores: 'Scores', standings: 'Standings', players: 'Players', teams: 'Teams', search: 'Search', settings: 'Settings', record: 'Record', daily: 'The Daily' };
 
   /* ---------- render ---------- */
   let seq = 0, current = null;
