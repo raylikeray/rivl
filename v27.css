@@ -589,7 +589,7 @@ html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .t b{display:block;font:7
 html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .t b small{display:block;margin-bottom:2px;font:500 12px/1.2 var(--f27);color:var(--i27c);letter-spacing:0}
 html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .t>span{display:block;margin-top:3px;font:500 12px/1.2 var(--f27)!important;color:var(--i27c)!important}
 html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .v{display:block!important;padding:8px 12px 12px!important;margin:0!important;text-align:left!important;font:700 17px/1 var(--f27)!important;color:var(--i27)!important;font-variant-numeric:tabular-nums}
-html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .v small{display:inline!important;margin-left:5px;font:500 11px/1 var(--f27)!important;letter-spacing:.04em;color:var(--i27c)!important}
+html.rv27 body .approf .tpanel[data-pg="roster"] .aglp .v small{display:inline!important;margin-left:5px;font:500 12px/1 var(--f27)!important;letter-spacing:.04em;color:var(--i27c)!important}
 
 /* ---------- You (v486): the poster top in your top team's colours, then one thing per tab ---------- */
 .yp27{padding-bottom:8px}
@@ -942,3 +942,38 @@ html.rv27 body .dk .dks .logo::before,html.rv27 body .dk .dks .logo::after{displ
 .hero27.gw27.dk27 .lg27s img{width:100%;height:100%;object-fit:contain;display:block}
 /* v497: the two On the floor cards ran straight into Game leaders */
 html.rv27 body .g2 #gbody .fives{margin-bottom:14px}
+
+/* ---------- v506, from the audit ---------- */
+/* Small things to tap get a larger touch area. Nothing looks different: the extra area is see-through. */
+html.rv27 body .sht th > button, html.rv27 body tr > th > button{padding:11px 5px;margin:-11px -5px}
+html.rv27 body .ir27 > button{padding:14px 8px;margin:-14px -8px}
+html.rv27 body .aph3 button{padding:14px 8px;margin:-10px -8px -10px auto}
+html.rv27 body .q27 .xbox input{padding-block:12px;margin-block:-12px}
+html.rv27 body .lgsc{padding-block:6px;margin-block:-6px}
+html.rv27 body .lgt, html.rv27 body #seg27 > a, html.rv27 body #ytb27 nav > button, html.rv27 body .g2card > .seg > button, html.rv27 body .segc > button, html.rv27 body .fx2, html.rv27 body .itk, html.rv27 body .aform > a, html.rv27 body .g2ib{position:relative}
+html.rv27 body .lgt::after, html.rv27 body #seg27 > a::after, html.rv27 body #ytb27 nav > button::after{content:"";position:absolute;inset:-5px 0}
+html.rv27 body .g2card > .seg > button::after{content:"";position:absolute;inset:-6px 0}
+html.rv27 body .segc > button::after{content:"";position:absolute;inset:-8px 0}
+html.rv27 body .fx2::after{content:"";position:absolute;inset:-9px}
+html.rv27 body .itk::after{content:"";position:absolute;inset:-12px 0}
+html.rv27 body .aform > a::after{content:"";position:absolute;inset:-9px -2px}
+html.rv27 body .g2ib::after{content:"";position:absolute;inset:-3px}
+html.rv27 body .chips > .chip{position:relative}
+html.rv27 body .chips > .chip::before{content:"";position:absolute;inset:-6px 0}
+html.rv27 body .gpanel .sec > button::before{content:"";position:absolute;inset:-8px -2px}
+/* Nothing to read is smaller than 12px. */
+html.rv27 body .wp27 > a > span, html.rv27 body .prow .r > span, html.rv27 body .pfchips .chip > small, html.rv27 body .aglp .v small, html.rv27 body .clip .th em, html.rv27 body .pcarg > div > small,
+html.rv27 body .fchips > s > em, html.rv27 body .tbl td > i.rk, html.rv27 body .tbl td .rk, html.rv27 body .stats.tsg > div > span, html.rv27 body .stats.tsg > div > i.rk, html.rv27 body .cl27 > i.n, html.rv27 body .fx > span > small,
+html.rv27 body .ldh27 > span, html.rv27 body .offs .off > em, html.rv27 body .hi27 > small, html.rv27 body .sc27 .sb27{font-size:12px}
+/* Text that was a shade too faint: the gray on cards in dark, and the gray, blue and green on light. */
+html.rv27{--ink-3:#98989D}
+html.rv27[data-theme="light"]{--ink-3:#636368;--win:#137333;--tint-b:#0066D6}
+html.rv27[data-theme="light"] body .aph3 button, html.rv27[data-theme="light"] body .approf .sec a, html.rv27[data-theme="light"] body .approf .sec button, html.rv27[data-theme="light"] body .sht th.on, html.rv27[data-theme="light"] body .sht td.on, html.rv27[data-theme="light"] body .ldm.nw{color:#0066D6}
+html.rv27[data-theme="light"] body .aglr b.pos, html.rv27[data-theme="light"] body .ldm.up, html.rv27[data-theme="light"] body .ldm.st.w{color:#137333}
+@media (prefers-color-scheme:light){
+  html.rv27:not([data-theme="dark"]){--ink-3:#636368;--win:#137333;--tint-b:#0066D6}
+  html.rv27:not([data-theme="dark"]) body .aph3 button, html.rv27:not([data-theme="dark"]) body .approf .sec a, html.rv27:not([data-theme="dark"]) body .approf .sec button, html.rv27:not([data-theme="dark"]) body .sht th.on, html.rv27:not([data-theme="dark"]) body .sht td.on, html.rv27:not([data-theme="dark"]) body .ldm.nw{color:#0066D6}
+  html.rv27:not([data-theme="dark"]) body .aglr b.pos, html.rv27:not([data-theme="dark"]) body .ldm.up, html.rv27:not([data-theme="dark"]) body .ldm.st.w{color:#137333}
+}
+/* Zoom is allowed again. An iPhone zooms the page when a field with small type is tapped; 16px stops that. */
+@supports (-webkit-touch-callout:none){ input, select, textarea{font-size:16px!important} }

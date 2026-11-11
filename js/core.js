@@ -26,9 +26,16 @@ async function warm(url) {
     return { t, v: await r.json() };
   } catch { return null; }
 }
-async function j(url, ttl = 60000) {
+/* v506: two parts of a page that ask for the same address at the same moment share one request (Home was asking for
+   each league's standings and yesterday's scoreboard twice) */
+const flying = new Map();
+function j(url, ttl = 60000) {
   const hit = cache.get(url);
-  if (hit && Date.now() - hit.t < ttl) return hit.v;
+  if (hit && Date.now() - hit.t < ttl) return Promise.resolve(hit.v);
+  const now = flying.get(url); if (now) return now;
+  const p = jAsk(url, ttl, hit).finally(() => { if (flying.get(url) === p) flying.delete(url); }); flying.set(url, p); return p;
+}
+async function jAsk(url, ttl, hit) {
   if (!hit) { const w = await warm(url); if (w) { cache.set(url, w); return w.v; } }
   const ctl = new AbortController();
   const to = setTimeout(() => ctl.abort(), 25000);

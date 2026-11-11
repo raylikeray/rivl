@@ -1,0 +1,7 @@
+*.png
+!fake_*.png
+!sq.png
+audit/
+p27mix.json
+p27real.json
+__pycache__/

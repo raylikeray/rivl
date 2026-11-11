@@ -127,5 +127,4 @@ try { const s1 = (result.boys[2027] || [])[0]; if (s1) { const h = await get('ht
 debug.noStatus = [];
 for (const g of ['boys', 'girls']) for (const y of Object.keys(result[g])) result[g][y].forEach(r => { if (r._st && debug.noStatus.length < 12) debug.noStatus.push(r.n + ' :: ' + r._st); delete r._st; });
 writeFileSync('data/recruits.json', JSON.stringify(result));
-writeFileSync('data/prepranks-debug.json', JSON.stringify(debug, null, 1));
 console.log(JSON.stringify(debug, null, 1).slice(0, 4000));
