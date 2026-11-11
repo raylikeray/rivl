@@ -481,6 +481,7 @@
     if (r.kind === 'player' && bn.dataset.id !== r.id) { bn.dataset.id = r.id; setBand(''); X.athlete(L, r.id).then(b => { const p = b && (b.athlete || b); if (p && p.jersey != null && p.jersey !== '' && bn.dataset.id === r.id) setBand(p.jersey); }, () => {}); }
     /* the story ring */
     const av = hd.querySelector('.apface,.apcrest'), key = `${r.lk}:${r.kind === 'team' ? 't' : 'p'}${r.id}`, sub = X.storySubjects().find(x => x.key === key);
+    if (bn.dataset.k !== r.kind) bn.dataset.k = r.kind;
     if (av) { const st = sub ? (sub.un ? 'new' : 'seen') : ''; if (bn.dataset.ring !== st) bn.dataset.ring = st; { let rb = bn.querySelector('.hrb27'); if (st && !rb) { rb = document.createElement('button'); rb.className = 'hrb27'; rb.setAttribute('aria-label', 'Play the story'); bn.appendChild(rb); } if (rb) { if (st) rb.dataset.pstory = key; else rb.remove(); } } if (av.dataset.ring !== st) { av.dataset.ring = st; av.classList.toggle('rg27', !!st); av.classList.toggle('new', st === 'new'); if (st) { av.setAttribute('role', 'button'); av.setAttribute('aria-label', 'Play the story'); av.dataset.pstory = key; } else { av.removeAttribute('role'); av.removeAttribute('aria-label'); delete av.dataset.pstory; } } }
     /* v483 the Roster tab: each player is a card you can see the person on (two to a row, grouped by position as before).
        The page's own rows are kept and reshaped: number at the top left, first name small, last name bold, the photo
