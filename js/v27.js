@@ -94,21 +94,28 @@
   const projWord = (L, g, ctx) => { const ph = g.state === 'pre' && !g.off ? projOf(L, g, ctx) : null; if (ph == null) return null; const t = ph >= .5 ? g.home : g.away; return { t, pct: pctOf(ph), home: ph >= .5 }; };
   const clipWord = g => { const n = X.clipsOf(g.id); return n ? `Recap, ${n} clip${n === 1 ? '' : 's'}` : ''; };
   const sLine = (t, lead, lose, score) => `<span class="ln27">${disc(t, 28)}<span class="${lose ? 'lo' : ''}">${t.rank ? `<i>${t.rank}</i>` : ''}${lead ? `<b>${esc(t.short)}</b>` : esc(t.short)}${t.rec ? `<small>${esc(t.rec)}</small>` : ''}</span><strong class="${lose ? 'lo' : ''}">${score ? esc(String(t.score == null ? '' : t.score)) : ''}</strong></span>`;
+  /* Glow (v493, Ray's pick from Round 10): a dark card lit by each team's colour from its own side. A team whose colour is
+     near black (Spurs, Nets) glows in its second colour, or a lifted version of the first, so the light always shows. */
+  const hx6 = c => { c = String(c || '').replace('#', ''); return /^[0-9a-f]{6}$/i.test(c) ? '#' + c : ''; };
+  const glowC = t => { let c = hx6(t && t.color) || '#5b6b8c'; const al = hx6(t && (t.alt || t.alternateColor)), l = U.lumOf(c); if (l < .1) c = al && U.lumOf(al) > .2 && U.lumOf(al) < .92 ? al : U.mixTo(c, 255, .5); else if (l < .2) c = U.mixTo(c, 255, .22); return c; };
   function sRow(L, g, ctx) {
     const live = isLive(g) && !g.off, fin = g.state === 'post' && !g.off, h = +g.home.score || 0, a = +g.away.score || 0, sc = live || fin;
-    let st; if (g.off) st = `${esc(g.off)}`; else if (live) st = `<em>${esc(g.detail || 'Live')}</em><small>${leadWord(g)}</small>`;
+    let st; if (g.off) st = `${esc(g.off)}`; else if (live) st = `<em><i></i>${esc(g.detail || 'Live')}</em><small>${leadWord(g)}</small>`;
     else if (fin) { const c = clipWord(g); st = `${esc(finalWord(g))}${c ? `<small>${c}</small>` : ''}`; }
     else { const p = projWord(L, g, ctx); st = `${esc(noTz(tipOf(g)))}${p ? `<small>RIVL: ${esc(p.t.abbr)} ${p.pct}%</small>` : g.tv ? `<small>${esc(String(g.tv).split(',')[0])}</small>` : ''}`; }
-    return `<a class="g27${isFav(g) ? ' my' : ''}" href="${U.href.game(L.key, g.id)}"><span class="tm27">${sLine(g.away, sc && a > h, sc && fin && a < h || (live && a < h), sc)}${sLine(g.home, sc && h > a, sc && fin && h < a || (live && h < a), sc)}</span><span class="st27${live ? ' lv' : ''}">${st}</span></a>`;
+    const nm = t => { const n = t.short || t.name || t.abbr || ''; return n.length > 10 && t.abbr ? t.abbr : n; };
+    const side = (t, r, lose) => `<span class="gn27${r ? ' r' : ''}${lose ? ' lo' : ''}">${sc ? `<b class="n">${esc(String(t.score == null ? '' : t.score))}</b><small>${t.rank ? `${t.rank} ` : ''}${esc(nm(t))}</small>` : `<b>${t.rank ? `<i>${t.rank}</i>` : ''}${esc(nm(t))}</b>${t.rec ? `<small>${esc(t.rec)}</small>` : ''}`}</span>`;
+    const p2 = !sc && !g.off ? projWord(L, g, ctx) : null, aw = p2 ? (p2.home ? 100 - p2.pct : p2.pct) : 0;
+    return `<a class="g27 gw27${isFav(g) ? ' my' : ''}${live ? ' lv' : ''}" href="${U.href.game(L.key, g.id)}" style="--a:${glowC(g.away)};--h:${glowC(g.home)}">${disc(g.away, 40)}${side(g.away, 0, sc && a < h)}<span class="st27${live ? ' lv' : ''}">${st}</span>${side(g.home, 1, sc && h < a)}${disc(g.home, 40)}${p2 ? `<span class="gm27"><i style="width:${aw}%"></i></span>` : ''}</a>`;
   }
   function sHero(L, g, ctx) {
-    const live = isLive(g) && !g.off, fin = g.state === 'post' && !g.off, h = +g.home.score || 0, a = +g.away.score || 0, ca = tone(g.away.color), ch = tone(g.home.color);
-    const top = g.off ? esc(g.off) : live ? `<i></i>${esc(periodWord(L, g))}` : fin ? esc(finalWord(g)) : `${esc(relDay(ymd(g)))} \u00b7 ${esc(noTz(tipOf(g)))}`;
-    const mid = live || fin ? `<span class="${a < h ? 'lo' : ''}">${a}</span><span class="${h < a ? 'lo' : ''}">${h}</span>` : `<em>at</em>`;
-    const p = projWord(L, g, ctx), c = fin ? clipWord(g) : '';
-    const foot = p ? `<span class="hb27"><span class="${p.home ? 'r' : ''}" style="width:${p.pct}%"></span></span><span class="hf27"><span>RIVL projection</span><b>${esc(p.t.short)} ${p.pct}%</b></span>` : `<span class="hf27 one"><b>${live ? leadWord(g) : c || (g.tv ? esc(String(g.tv).split(',')[0]) : '')}</b></span>`;
-    const side = (t, r) => `<span class="hs27${r ? ' r' : ''}">${disc(t, 40)}<b>${esc(t.short)}</b></span>`;
-    return `<a class="hero27${live ? ' lv' : ''}" href="${U.href.game(L.key, g.id)}" style="background:linear-gradient(100deg,${U.mixTo(ca, 0, .45)} 0%,${ca} 40%,${ch} 60%,${U.mixTo(ch, 255, .12)} 100%)"><span class="hbl27 a" style="background:${U.mixTo(ca, 255, .25)}"></span><span class="hbl27 b" style="background:${U.mixTo(ch, 255, .3)}"></span><span class="hsh27"></span><span class="ht27">${top}</span><span class="hm27">${side(g.away)}<span class="hn27">${mid}</span>${side(g.home, 1)}</span><span class="hft27">${foot}</span></a>`;
+    const live = isLive(g) && !g.off, fin = g.state === 'post' && !g.off, h = +g.home.score || 0, a = +g.away.score || 0;
+    const top = g.off ? esc(g.off) : live ? `<i></i>${esc(periodWord(L, g))}` : fin ? esc(finalWord(g)) : `${esc(relDay(ymd(g)))} · ${esc(noTz(tipOf(g)))}`;
+    const mid = live || fin ? `<b class="${a < h ? 'lo' : ''}">${a}</b><em></em><b class="${h < a ? 'lo' : ''}">${h}</b>` : `<u>at</u>`;
+    const p = projWord(L, g, ctx), c = fin ? clipWord(g) : '', aw = p ? (p.home ? 100 - p.pct : p.pct) : 50;
+    const foot = p ? `<span class="gmt27"><i style="width:${aw}%"></i><u style="left:${aw}%"></u></span><span class="gft27"><b>${esc(g.away.abbr || '')} ${aw}%</b><span>RIVL projection</span><b>${100 - aw}% ${esc(g.home.abbr || '')}</b></span>` : `<span class="gft27 one"><b>${live ? leadWord(g) : c || (g.tv ? esc(String(g.tv).split(',')[0]) : '')}</b></span>`;
+    const side = t => `<span class="gs27">${disc(t, 58)}<b>${esc(t.short)}</b></span>`;
+    return `<a class="hero27 gw27${live ? ' lv' : ''}" href="${U.href.game(L.key, g.id)}" style="--a:${glowC(g.away)};--h:${glowC(g.home)}"><span class="gin27"><span class="gbl27 a"></span><span class="gbl27 h"></span><span class="gtp27">${top}</span><span class="grw27">${side(g.away)}<span class="gsc27">${mid}</span>${side(g.home)}</span>${foot}</span></a>`;
   }
   const sSec = (label, list, L, ctx, pulse) => { if (!list.length) return ''; const N = 14, rows = list.map(g => sRow(L, g, ctx));
     return `<div class="sl27">${pulse ? '<i></i>' : ''}${label}${list.length > 3 ? `<span>${list.length}</span>` : ''}</div>${rows.slice(0, N).join('')}${rows.length > N ? `<div class="mo27" hidden>${rows.slice(N).join('')}</div><button class="mb27" data-a27="more">Show all ${rows.length}</button>` : ''}`; };
@@ -418,6 +425,16 @@
      board's parts (line score, leaders, win chance, team stats), so this only puts the game's clips first as a row of
      upright cards that open the full-screen player, and turns the tab row into the same pill switch as Scores. ---------- */
   let gcAt = 0, gcT = 0;
+  /* Game header, Glow (v493, Ray's pick D): the colours and the win chance are handed to the page as variables; the look is CSS */
+  function gameGlow() {
+    if (!on() || root.dataset.page !== 'game') return; const pg = $main.querySelector('#gpage.g2'); if (!pg) return;
+    const col = a => { const m = a && /#team\/([a-z]+)\/([^/]+)/.exec(a.getAttribute('href') || ''), t = m && X.teamOf(m[1], m[2]); return t ? glowC(t) : ''; };
+    const ds = pg.querySelectorAll('#ghead .g2ds'), bg = pg.querySelector('.ghbg'), put = (k, v) => { if (v && pg.style.getPropertyValue(k) !== v) pg.style.setProperty(k, v); };
+    put('--gla', col(ds[0]) || (bg && glowC({ color: bg.style.getPropertyValue('--ga') })) || ''); put('--glh', col(ds[1]) || (bg && glowC({ color: bg.style.getPropertyValue('--gh') })) || '');
+    if (bg) put('--sh', bg.style.getPropertyValue('--sh'));
+    const f = pg.querySelector('#ghead .g2df b'), n = f && /(\d+)\s*%/.exec(f.textContent || ''); if (n) put('--wp', n[1] + '%');
+  }
+  { let q = 0; new MutationObserver(() => { if (q) return; q = requestAnimationFrame(() => { q = 0; gameGlow(); }); }).observe($main, { childList: true, subtree: true }); document.addEventListener('rivl:rendered', gameGlow); document.addEventListener('rivl:polled', gameGlow); }
   function gameDecorate() {
     if (!on() || root.dataset.page !== 'game') return; const now = Date.now(); if (now - gcAt < 300) { clearTimeout(gcT); gcT = setTimeout(gameDecorate, 320); return; } gcAt = now;
     const m = /^#game\/([a-z]+)\/([^/?]+)/.exec(location.hash || ''); const panel = $main.querySelector('#gbody .gpanel'); if (!m || !panel) return;
