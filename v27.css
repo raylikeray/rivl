@@ -1186,3 +1186,15 @@ html body .story .stcd .rcs27 u{width:1px;height:22px;background:rgba(255,255,25
 @keyframes rcin27{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
 @keyframes rcglow27{from{transform:scale(.94);opacity:.7}to{transform:scale(1.06);opacity:.9}}
 @media (prefers-reduced-motion:reduce){ html body .story .stcd .rcp27:before,html body .story .stcd .rcp27 .rci27{animation:none} }
+
+/* ---------- v513: nightly honors and streaks and firsts, in the league's story ---------- */
+html body .story .stcd .fin.hnr27{color:#ffd35c;letter-spacing:.16em}
+html body .story .stcd .rcp27~.stwh{margin-top:16px;line-height:1.5}
+html body .story .stcd .ssy27{display:flex;flex-direction:column;width:100%;max-width:340px;margin-top:22px;text-align:left}
+html body .story .stcd .ssy27>*{display:flex;align-items:center;gap:12px;padding:15px 0;color:#fff;text-decoration:none;-webkit-tap-highlight-color:transparent}
+html body .story .stcd .ssy27>*+*{box-shadow:inset 0 .6px 0 rgba(255,255,255,.16)}
+html body .story .stcd .ssy27 span{flex:1;min-width:0;font-size:17px;font-weight:650;line-height:1.32;letter-spacing:-.01em;text-wrap:pretty}
+html body .story .stcd .ssy27 small{display:block;margin-top:2px;font-size:13px;font-weight:600;color:rgba(255,255,255,.62)}
+html body .story .stcd .ssy27 b{flex:none;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+html body .story .stcd .ssy27 svg{flex:none;width:18px;height:18px;fill:none;stroke:rgba(255,255,255,.5);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+html body .story .stcd .ssy27 a:active{opacity:.6}

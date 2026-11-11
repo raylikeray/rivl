@@ -1,9 +1,10 @@
 // Builds data/night.json: what the box scores say about each night, in every league.
 //   Streaks and firsts: 30 or more in N straight games, a season high, a triple-double and how many that makes, a
 //   double-double streak, a team's run of wins or losses. Each is a plain sentence counted from the games themselves.
-//   Nightly honors: Player of the Night and Rookie of the Night by game score, Game of the Night by how often the lead
-//   and the win chance changed hands. The app adds Play of the Night (from the clip file) and Upset of the Night (from
+//   Nightly honors: Player of the Night and Rookie of the Night by game score, Thriller of the Night by how close it finished and how often the
+//   lead and the win chance changed hands. The app adds Play of the Night (from the clip file) and Upset of the Night (from
 //   RIVL's own record of its projections), which this job has no part in.
+// Thriller of the Night needs a finish within five points or overtime; a night without one names none.
 // Nothing is carried in from anywhere but the feed's scoreboards and box scores. A career high or a career total is
 // not claimed, because the job only knows this season: it has read every game since opening night, kept in
 // data/night-state.json (the job's own notebook; the app never loads it).
@@ -16,7 +17,7 @@ const SITE = 'https://site.api.espn.com/apis/site/v2/sports/basketball';
 const LG = { nba: 'nba', wnba: 'wnba', ncaam: 'mens-college-basketball', ncaaw: 'womens-college-basketball' };
 const now = Date.now();
 const FIRST = !existsSync('data/night-state.json');
-const BACK = Math.max(FIRST ? 30 : 2, Math.min(200, +process.env.BACKFILL || 2));   // days of games to read. The first run reads back 30 days, in order, so runs of games are counted from opening night
+const BACK = FIRST ? 30 : Math.max(2, Math.min(10, +process.env.BACKFILL || 2));   // days of games to read. The first run reads back 30 days, in order, so runs of games are counted from opening night
 const KEEP_DAYS = 4;                                                  // nights kept in the app's file
 const get = async u => { for (let i = 0; i < 3; i++) { try { const r = await fetch(u, { headers: { 'user-agent': UA, accept: 'application/json' } }); if (r.ok) return r.json(); if (r.status === 404) return null; } catch (e) {} await new Promise(r => setTimeout(r, 900 * (i + 1))); } return null; };
 const readJ = (p, d) => { try { return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : d; } catch (e) { return d; } };
@@ -33,14 +34,23 @@ const ord = n => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (
 const RULES = { nba: { hot: 30, hotRun: 3, high: 30, big: 40 }, wnba: { hot: 20, hotRun: 4, high: 25, big: 35 }, ncaam: { hot: 20, hotRun: 5, high: 28, big: 35 }, ncaaw: { hot: 20, hotRun: 5, high: 28, big: 35 } };
 // a player's season in the notebook: games, highs, runs in progress, triple-doubles
 const P0 = () => ({ g: 0, hp: 0, hr: 0, ha: 0, sh: 0, sd: 0, td: 0 });
+// The notebook is kept small, because every run that changes it is a commit. A player is a short list of numbers. A
+// college player is only written down once he has scored 15 or had a double-double: a season high has to be 28 or more
+// to be said at all, so nothing a forgotten player did earlier could have been his high. Game ids are kept for 12 days,
+// and after the first fill a run never reads further back than 10, so no game is counted twice.
+const PK = ['g', 'hp', 'hr', 'ha', 'sh', 'sd', 'td'];
+const unpack = o => { const m = {}; Object.entries(o || {}).forEach(([id, v]) => { m[id] = Array.isArray(v) ? Object.fromEntries(PK.map((k, i) => [k, v[i] || 0])) : v; }); return m; };
+const pack = (m, pro) => { const o = {}; Object.entries(m).forEach(([id, p]) => { if (pro || p.hp >= 15 || p.sd > 0 || p.td > 0) o[id] = PK.map(k => p[k] || 0); }); return o; };
 
 const out = { updated: new Date(now).toISOString(), lg: {} };
+const was = readJ('data/night.json', null);
 let asked = 0, read = 0;
 for (const [lk, path] of Object.entries(LG)) {
   const R = RULES[lk], pro = lk === 'nba' || lk === 'wnba';
   const S = state.lg[lk] = state.lg[lk] || { done: {}, p: {}, t: {}, days: {}, award: {}, tally: {}, last: 0 };
   // a new season starts the notebook over: nothing read for four months means the last one is finished
   if (S.last && now - S.last > 120 * 864e5) Object.assign(S, { done: {}, p: {}, t: {}, days: {}, award: {}, tally: {} });
+  S.p = unpack(S.p);
   const rookies = new Set((((leaders.leagues || {})[lk] || {}).players || []).filter(p => p.rookie).map(p => String(p.id)));
   const evs = new Map(), open = new Set();                             // open: nights with a game still to finish
   for (let n = BACK; n >= 0; n--) { const d = await get(`${SITE}/${path}/scoreboard?dates=${ymd(n)}${pro ? '' : '&groups=50&limit=400'}`);
@@ -56,16 +66,16 @@ for (const [lk, path] of Object.entries(LG)) {
       const comp = (((s || {}).header || {}).competitions || [])[0], cs = (comp && comp.competitors) || [], box = ((s || {}).boxscore || {}).players || [];
       const H = cs.find(c => c.homeAway === 'home'), A = cs.find(c => c.homeAway === 'away');
       if (!s || !H || !A || !box.length) continue;                      // not ready yet: asked again next run
-      read++; S.done[e.id] = 1; S.last = Math.max(S.last || 0, e.t);
+      read++; S.done[e.id] = e.t; S.last = Math.max(S.last || 0, e.t);
       const side = c => ({ id: String(c.team.id), ab: c.team.abbreviation || '', nm: pro ? (c.team.name || c.team.shortDisplayName || '') : (c.team.shortDisplayName || c.team.location || c.team.name || ''), sc: num(c.score) });
       const h = side(H), a = side(A), fresh = e.day >= cutoff;
       const D = fresh ? (S.days[e.day] = S.days[e.day] || { lines: [], games: [], notes: [] }) : null;
-      const note = (k, t, v, x) => { if (D) D.notes.push(Object.assign({ k, t, v: Math.round(v), e: e.id }, x)); };
+      const note = (k, t, v, x) => { if (D) D.notes.push(Object.assign({ k, t, v: Math.round(v), e: e.id, at: e.t }, x)); };
       // ---- the game: how many times the lead changed, how far the win chance travelled, overtime, the margin
       let lc = 0, lead = 0; ((s.plays || [])).forEach(q => { if (q.homeScore == null || q.awayScore == null) return; const sg = Math.sign(q.homeScore - q.awayScore); if (sg && lead && sg !== lead) lc++; if (sg) lead = sg; });
       const wp = (s.winprobability || []).map(x => x.homeWinPercentage).filter(x => x != null); let ex = 0; for (let k = 1; k < wp.length; k++) ex += Math.abs(wp[k] - wp[k - 1]);
       const periods = Math.max(((H.linescores || []).length), ((A.linescores || []).length)), ot = Math.max(0, periods - (lk === 'ncaam' ? 2 : 4)), mg = Math.abs(h.sc - a.sc);
-      if (D) D.games.push({ e: e.id, h, a, lc, ot, mg, x: +(lc * .6 + ex * 6 + ot * 4 + Math.max(0, 10 - mg)).toFixed(1) });
+      if (D) D.games.push({ e: e.id, h, a, lc, ot, mg, ex: +ex.toFixed(2), x: +(ot * 8 + (6 - Math.min(mg, 6)) * 2 + Math.min(lc, 20) * .5 + ex * 2).toFixed(1) });
       // ---- each team's run of wins or losses
       [[h, a], [a, h]].forEach(([us, them]) => { const won = us.sc > them.sc, was = S.t[us.id] || 0, run = won ? (was > 0 ? was + 1 : 1) : (was < 0 ? was - 1 : -1); S.t[us.id] = run;
         const name = pro ? `The ${us.nm} have` : `${us.nm} has`;
@@ -100,15 +110,18 @@ for (const [lk, path] of Object.entries(LG)) {
   const days = Object.keys(S.days).sort().reverse().map(d => { const D = S.days[d];
     D.lines.sort((x, y) => y.gs - x.gs); const rook = D.lines.filter(l => l.rk).slice(0, 3); D.lines = [...D.lines.slice(0, 12), ...rook.filter(r => !D.lines.slice(0, 12).includes(r))];
     D.notes.sort((x, y) => y.v - x.v); D.notes = D.notes.slice(0, 40);
-    const done = !open.has(d) && d < today && D.games.length > 0, pon = D.lines[0] || null, ron = D.lines.find(l => l.rk) || null, gon = [...D.games].sort((x, y) => y.x - x.x)[0] || null;
+    const done = !open.has(d) && d < today && D.games.length > 0, pon = D.lines[0] || null, ron = D.lines.find(l => l.rk) || null, gon = [...D.games].filter(g => g.ot || g.mg <= 5).sort((x, y) => y.x - x.x)[0] || null;   // no close finish, no thriller
     if (done && pon) award(d, pon);
-    return { d, done, games: D.games.map(g => g.e), pon: done ? pon : null, ron: done && ron && (!pon || ron.id !== pon.id) ? ron : null, gon: done ? gon : null, top: done ? D.lines.slice(0, 5) : [], notes: D.notes.slice(0, pro ? 14 : 24).map(({ k, t, v, e, p, tid }) => ({ k, t, v, e, p, tid })) }; });
+    return { d, done, games: D.games.map(g => g.e), pon: done ? pon : null, ron: done && ron && (!pon || ron.id !== pon.id) ? ron : null, gon: done ? gon : null, top: done ? D.lines.slice(0, 5) : [], notes: D.notes.slice(0, pro ? 14 : 24).map(({ k, t, v, e, at, p, tid }) => ({ k, t, v, e, at, p, tid })) }; });
   Object.keys(S.award).forEach(d => { if (d < dayOf(now - 300 * 864e5)) delete S.award[d]; });
+  Object.keys(S.done).forEach(id => { if (now - S.done[id] > 12 * 864e5) delete S.done[id]; });
+  S.p = pack(S.p, pro);
   const tally = Object.entries(S.tally).map(([id, t]) => ({ id, n: t.n, tm: t.tm, c: t.c })).sort((x, y) => y.c - x.c || x.n.localeCompare(y.n)).slice(0, 8);
   out.lg[lk] = { days, tally };
   console.log(lk, 'games in window', evs.size, 'new', todo.length, 'players', Object.keys(S.p).length, 'nights', days.map(d => `${d.d}${d.done ? '' : '*'}:${d.notes.length}`).join(' '));
 }
 writeFileSync('data/night-state.json', JSON.stringify(state));
-writeFileSync('data/night.json', JSON.stringify(out));
+// the app's file is only written when what it says has changed, so a quiet afternoon is not a commit
+if (!was || JSON.stringify(was.lg) !== JSON.stringify(out.lg)) writeFileSync('data/night.json', JSON.stringify(out));
 console.log('night asked', asked, 'read', read, 'bytes', JSON.stringify(out).length, 'notebook', JSON.stringify(state).length);
 Object.entries(out.lg).forEach(([lk, L]) => { const d = L.days.find(x => x.done); if (d) console.log(' ', lk, d.d, 'player', d.pon && `${d.pon.n} ${d.pon.gs}`, '| rookie', d.ron && d.ron.n, '| game', d.gon && `${d.gon.a.ab} ${d.gon.a.sc} ${d.gon.h.ab} ${d.gon.h.sc} lc${d.gon.lc}`, '|', d.notes.slice(0, 3).map(n => n.t).join(' ')); });

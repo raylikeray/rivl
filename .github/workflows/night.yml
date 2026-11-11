@@ -1,11 +1,11 @@
 name: Night
 on:
   schedule:
-    - cron: '17 */3 * * *'
+    - cron: '17 */4 * * *'
   workflow_dispatch:
     inputs:
       backfill:
-        description: 'Days of games to read (2 to 200). Older games already read are skipped.'
+        description: 'Days of games to read (2 to 10). To rebuild from opening night, delete data/night-state.json.'
         required: false
         default: '2'
   push:

@@ -27,6 +27,7 @@ They need Python 3 with Playwright (`pip install playwright pillow`, then `playw
 | `p27v511.py` | Watch's Game button and the way back, a name turning the scroll into that player's or team's clips, the highlights card on a game's page, hide scores, the way out of a story; screenshots at 384 wide |
 | `p27catch.py` | Catch up: made on a first run and after six hours away, leads the story row, its recap, line and closing cards, not made after a short absence, with scores hidden, or in the legacy design |
 | `p27qhead.py` | Search: the top of the player answer (photo, name, arrow) opens the player's page |
+| `p27night.py` | The night data in the app: streaks and firsts as posts in Home's feed (one with a clip plays it), honors leading the league's story (Player, Thriller, Upset, Rookie, the season's count), the same lines in Catch up |
 | `p27default.py` | The new design as the default, the Legacy design switch both ways, a brand new visitor, the Watch shortcut |
 | `p27sc.py`, `p27gh.py`, `p27ring.py` | Score cards, the game header, the profile ring |
 | `audit.py`, `audit_b.py` | The audit: every page, light and dark, with counts for small tap targets, small text, faint text, missing names |
@@ -37,7 +38,7 @@ They need Python 3 with Playwright (`pip install playwright pillow`, then `playw
 Screenshots land in `tests/ui` and `tests/ui/audit` and are not committed.
 
 ## Running the job tests
-`sh tests/job/run.sh` from the repo root. Needs Node 20 or newer.
+`sh tests/job/run.sh` from the repo root. Needs Node 20 or newer. It also dry-runs the nightly job (`scripts/night.mjs`) over seven made-up nights, twice, to show nothing is counted twice.
 
 ## Helpers
 `srv.py` starts the local server for you if none is running. `fixtures.py`, `feedfx.py`, `feedfx3.py` and `tourney.py` are the stand-in feeds.

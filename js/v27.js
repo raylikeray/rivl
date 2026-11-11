@@ -644,7 +644,7 @@
   function wItem(el, it, x, si) {
     const of = x.key === 'w:of'; wOf(el, of ? x : null);
     if (!of) { const l = el.__subs || [], k = l.findIndex(y => y.key === 'w:of'); if (k >= 0 && k === l.length - 1) l.pop(); store.set('v5:wtab', x.key); if (x.key !== 'w:game') store.set('v5:wtab0', x.key); }
-    { const gb = el.querySelector('[data-wact="game"]'), ok = !!(it.gid && it.L && x.key !== 'w:game'); if (gb) { gb.hidden = !ok; gb.dataset.to = ok ? `#game/${it.L.key}/${it.gid}` : ''; } }
+    { const gb = el.querySelector('[data-wact="game"]'), ok = !!(it.gid && it.L && (x.key !== 'w:game' || root.dataset.page !== 'game'));   /* a game's clips opened from its own page need no way to it */ if (gb) { gb.hidden = !ok; gb.dataset.to = ok ? `#game/${it.L.key}/${it.gid}` : ''; } }
     if (/^w:(fy|fol|top)$/.test(x.key)) { wLast = { key: x.key, it }; try { sessionStorage.setItem('rivl:wlast', JSON.stringify({ key: x.key, id: it.id })); } catch (e) {} }
     wInd(el, si, false);
     const who = el.querySelector('.wa27'), L = it.L, a = (it.aths || [])[0];

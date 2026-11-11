@@ -540,6 +540,14 @@
   const feedSrc = {};
   const HTABS = ['following', ...ORDER];
   const followsIn = lk => (favs.all()[lk] || []).length > 0 || fplayers.all().some(p => p.lk === lk);
+  /* v513 data/night.json: what the box scores said each night (scripts/night.mjs). Streaks and firsts as plain sentences,
+     Player, Rookie and Game of the Night, and the season's count of Player of the Night. Read once and shared. */
+  let nightD = null, nightP = null, nightAt = 0;
+  const nightGet = () => { if (nightP && Date.now() - nightAt < 20 * 60000) return nightP; nightAt = Date.now(); return (nightP = (HW.hub ? HW.hub.file('night.json') : Promise.resolve(null)).then(d => { if (d && d.lg) nightD = d; return nightD; }, () => nightD)); };
+  const ET_FMT = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }), ET_DAY = t => { try { return ET_FMT.format(new Date(t)); } catch (e) { return ''; } };
+  const nightEnd = (d, at) => at ? at + 2.4 * 36e5 : Date.parse(d + 'T23:30:00-05:00');   // when a night's line became true: after its game, or late that evening
+  const NOTE_K = { hot: 'Streak', dd: 'Streak', win: 'Streak', loss: 'Streak', high: 'Season high', big: 'Big night', td: 'Triple-double', 2020: 'Big night' };
+  const lineSay = l => { const parts = [[l.pts, 'points'], [l.reb, 'rebounds'], [l.ast, 'assists']].filter(v => v[0] > 0).map(v => `${v[0]} ${v[1]}`); return `${l.n} had ${parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts[0] || 'a quiet line'}.`; };
   function feedSource(lk) {
     const today = todayCT(); let s = feedSrc[lk];
     if (s && s.day === today && Date.now() - s.at < 10 * 60000 && s.sig === JSON.stringify([favs.all()[lk] || [], fplayers.all().filter(p => p.lk === lk).map(p => p.id), prefs.all()])) return s;
@@ -694,6 +702,25 @@
       if (P.teams && S0.st && S0.st.byId) teams.forEach(t => { const r = S0.st.byId[t.id]; const m = r && /^([WL])\s*(\d+)$/i.exec(String(r.strk || '').trim()); if (!m || +m[2] < 5) return;
         const g = pastG.filter(g => favTeam(g.home) && g.home.id === String(t.id) || favTeam(g.away) && g.away.id === String(t.id)).sort((a, b) => new Date(b.date) - new Date(a.date))[0];
         post(g ? endTs(g) : NOW - 864e5 / 2, href.team(lk, t.id), crest(t), esc(t.short), 'Streak', /w/i.test(m[1]) ? `<b>${m[2]} straight wins.</b> ${esc(`${r.w}-${r.l}`)}.` : `<b>${m[2]} straight losses.</b> ${esc(`${r.w}-${r.l}`)}.`); posts[posts.length - 1].t = 'x'; });
+      /* v513 streaks and firsts: lines counted from the box scores. Every one about your teams and players from the last
+         day and a half, and the league's two biggest besides. One line per run: the newest count is the one shown. A line
+         with a clip of that player from that game carries its picture and plays it. A team's run or a big night the
+         feed has already posted on its own (from the standings and the scoreboard) is not said twice. Then the Player
+         of the Night. */
+      tier = 6;
+      const NL = nightD && nightD.lg && nightD.lg[lk];
+      if (NL && P.news && (mine.length || fp.length)) { const rv = document.documentElement.classList.contains('rv27');
+        const all = (NL.days || []).flatMap(D => (D.notes || []).map(n => Object.assign({ d: D.d }, n))).filter(n => NOW - nightEnd(n.d, n.at) < 36 * 36e5);
+        const isMine = n => (n.tid && tIds.has(String(n.tid))) || (n.p && pIds.has(String(n.p))), said = new Set();
+        [...all.filter(isMine), ...all.filter(n => !isMine(n)).sort((a, b) => b.v - a.v).slice(0, 2)].forEach(n => { const key = n.k + ':' + (n.p || n.tid); if (said.has(key)) return; said.add(key);
+          if ((n.k === 'win' || n.k === 'loss') ? posts.some(pp => pp.t === 'x' && pp.html.includes(`"${href.team(lk, n.tid)}"`)) : (n.k === 'td' || n.k === 'big' || n.k === '2020') && posts.some(pp => pp.t === 'perf' && pp.html.includes(`/p/${n.p}"`))) return;
+          const tm = S0.tIdx[n.tid] || null, clip = n.p ? gameAll(n.e).find(i => i.vk === 'play' && (i.aths || []).map(String).includes(String(n.p))) : null;
+          const av = tm ? crest(tm) : `<span class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l5-5 4 3 7-8M15 7h5v5"/></svg></span>`;
+          post(nightEnd(n.d, n.at), clip && rv ? '' : n.k === 'win' || n.k === 'loss' ? href.team(lk, n.tid) : href.game(lk, n.e), av, esc(tm ? tm.short : L.label), NOTE_K[n.k] || 'Note', `<span class="fhl">${esc(n.t)}</span>`,
+            clip ? (rv ? `<span class="fimg"><img src="${esc(clip.thumb)}" alt="" loading="lazy" onerror="this.parentNode.remove()"><i class="play"></i></span>` : `<span class="fth"><img src="${esc(clip.thumb)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>`) : '', clip && rv ? ` data-gclip="${esc(clip.id)}" data-gid="${esc(String(n.e))}"` : '', '', 'fnw' + (clip && !rv ? ' hth' : '')); });
+        const HD = (NL.days || []).find(D => D.done && D.pon && NOW - nightEnd(D.d) < 32 * 36e5);
+        if (HD && rv) { const l = HD.pon, tm = S0.tIdx[l.tid] || null, c = ((NL.tally || []).find(t => t.id === l.id) || {}).c || 0, hs = headshot(l.hs || idHs(L, l.id), tm ? teamColor(tm, L) : '', 40, l.n);
+          post(nightEnd(HD.d) + 1, '', hs, esc(L.short || L.label), 'Player of the Night', `<span class="fhl">${esc(lineSay(l))}</span><span class="fd">${esc(`Game score ${l.gs}, the best in the ${L.short || L.label} last night.${c > 1 ? ` That is ${c} times this season.` : ''}`)}</span>`, '', ` data-act="story" data-key="${lk}:top"`, '', 'fnw'); } }
       /* 8 · RIVL's own voice: the game of the night in the afternoon, how the calls went in the morning */
       tier = 8;
       const RV = `<span class="frv"><img src="img/apple-touch-icon.png" alt=""></span>`;
@@ -739,7 +766,7 @@
       const finY = games.concat(last).filter((g, i, arr) => arr.findIndex(x => x.id === g.id) === i).filter(g => isDone(g) && !g.off && (isToday(g) || (HW.ymdOf(g.date) === yday && !slateStarted)));
       const lastF = finY.filter(isFav).sort((a, b) => new Date(b.date) - new Date(a.date));
       const lastL = finY.filter(g => !isFav(g)).sort((a, b) => Math.abs(+a.home.score - +a.away.score) - Math.abs(+b.home.score - +b.away.score)).slice(0, 4);
-      s.out = { L, lk, ctx, follows: mine.length > 0 || fp.length > 0, offS, unr, liveAll, preAll, digest, doneAll, myTeams, lastF, lastL, lines, st: S0.st, tIdx: S0.tIdx, todayAll: games.filter(g => isToday(g) && !g.off),
+      s.out = { L, lk, ctx, rec: S0.rec, follows: mine.length > 0 || fp.length > 0, offS, unr, liveAll, preAll, digest, doneAll, myTeams, lastF, lastL, lines, st: S0.st, tIdx: S0.tIdx, todayAll: games.filter(g => isToday(g) && !g.off),
         wire: posts.filter(p => p.tier === 0), river: posts.filter(p => p.tier >= 4), deep: s.depth < 7 };
       s.at = Date.now();
       s.subs.forEach(f => f());
@@ -774,6 +801,7 @@
     if (P.brief && fp.length && !games.length) later.push((async () => { S0.lp = await leaguePlayers(L).catch(() => null); if (dead()) return; build(); })());
     if (!S0.inj && mine.length && P.injuries) later.push((async () => { S0.inj = await injuries(L).catch(() => null); if (dead()) return; build(); })());
     later.push((async () => { S0.rec = HW.record ? await HW.record(L).catch(() => null) : null; if (dead()) return; build(); })());
+    later.push((async () => { const had = !!nightD; await nightGet(); if (dead() || had || !nightD) return; build(); })());
     Promise.all(later).catch(() => { });
 
     // ----- while the app sits on Home: scores every pass, the rest every few minutes, patched quietly -----
@@ -1015,6 +1043,10 @@
     /* the biggest plays since, from the leagues you follow (all of them when you follow nothing): three when your teams did not play, one when they did */
     if (!lks.size) lks = new Set(ORDER);
     ((feedD && feedD.items) || []).filter(c => c.u && lks.has(c.lk) && c.ts > since && !have.has('v' + c.id)).sort((a, b) => Math.abs(b.w || 0) - Math.abs(a.w || 0)).slice(0, Math.max(1, 3 - gids.size)).forEach(c => push(feedIt(c)));
+    { nightGet(); const said = new Set(), rows = [];
+      ORDER.forEach(lk => { const o = feedSrc[lk] && feedSrc[lk].out, NL = nightD && nightD.lg && nightD.lg[lk]; if (!o || !NL) return; const tI = new Set((o.myTeams || []).map(x => String(x.id))), pI = new Set(fplayers.all().filter(p => p.lk === lk).map(p => String(p.id)));
+        (NL.days || []).forEach(D => (D.notes || []).forEach(x => { const k = lk + x.k + (x.p || x.tid); if (said.has(k) || nightEnd(D.d, x.at) <= since || !((x.tid && tI.has(String(x.tid))) || (x.p && pI.has(String(x.p))))) return; said.add(k); rows.push({ t: x.t, to: x.k === 'win' || x.k === 'loss' ? href.team(lk, x.tid) : href.game(lk, x.e) }); })); });
+      if (rows.length) push({ kind: 'say', id: 's' + C.at, lab: 'Streaks and firsts', rows: rows.slice(0, 5) }); }
     if (inj.length || mv.length) push({ kind: 'notes', id: 'n' + C.at, inj: inj.sort((a, b) => b.at - a.at).slice(0, 4), mv: mv.slice(0, 3) });
     if (its.length < 2) return null;
     push({ kind: 'caught', id: 'cu' + C.at, nx: nx.sort((a, b) => a.t - b.t).slice(0, 3) });
@@ -1063,12 +1095,29 @@
       /* v459 the league's biggest plays: single-play clips from the last day of games, ranked by how far each moved the
          win chance (weighed by the Stories job from the feed's own line). Biggest first. A league you follow nothing in
          has no ring, and fewer than three plays is not a list. */
+      /* v513 honors lead the league's ring: Player of the Night, then Play of the Night (the biggest play, when it came
+         that night), Thriller of the Night (the game where the lead and the win chance changed hands most; Home already
+         uses "Game of the night" for tonight's game to watch), Upset of the Night (the winner RIVL's own projection liked least, under 40%),
+         Rookie of the Night, the night's streaks and firsts, and the season's count. All of it for the last finished night. */
+      const hon = []; let HD = null;
+      if (o.follows) { nightGet(); const NL = nightD && nightD.lg && nightD.lg[lk]; HD = (NL && (NL.days || []).find(D => D.done && D.pon && now - nightEnd(D.d) < 32 * 36e5)) || null;
+        if (HD) { const tmOf = id => (o.tIdx && o.tIdx[String(id)]) || null, col = id => { const tm = tmOf(id); return tm ? teamColor(tm, L) : ''; }; let n = 0; const add = it => hon.push(Object.assign(it, { L, ts: now - 5000 + n++ }));
+          const cnt = id => ((NL.tally || []).find(x => x.id === id) || {}).c || 0;
+          add({ kind: 'honor', id: 'hp' + HD.d, lab: 'Player of the Night', ln: HD.pon, col: col(HD.pon.tid), tm: tmOf(HD.pon.tid), c: cnt(HD.pon.id), g: { id: HD.pon.e } });
+          if (HD.gon) add({ kind: 'gon', id: 'hg' + HD.d, gon: HD.gon, th: tmOf(HD.gon.h.id), ta: tmOf(HD.gon.a.id), g: { id: HD.gon.e } });
+          const up = ((o.rec && o.rec.games) || []).filter(x => x.date === HD.d && x.hs != null && x.as != null && x.p != null && x.hs !== x.as).map(x => ({ x, wp: x.hs > x.as ? x.p : 1 - x.p })).filter(y => y.wp < .4).sort((a, b) => a.wp - b.wp)[0];
+          if (up) add({ kind: 'upset', id: 'hu' + HD.d, up: up.x, wp: up.wp, th: tmOf(up.x.hid), ta: tmOf(up.x.aid), g: { id: up.x.id } });
+          if (HD.ron) add({ kind: 'honor', id: 'hr' + HD.d, lab: 'Rookie of the Night', ln: HD.ron, col: col(HD.ron.tid), tm: tmOf(HD.ron.tid), c: 0, g: { id: HD.ron.e } });
+          const top = (HD.notes || []).slice(0, 5); if (top.length) add({ kind: 'say', id: 'hn' + HD.d, lab: 'Streaks and firsts', rows: top.map(x => ({ t: x.t, to: x.k === 'win' || x.k === 'loss' ? href.team(lk, x.tid) : href.game(lk, x.e) })) });
+          const tl = (NL.tally || []).filter(x => x.c >= 2).slice(0, 5); if (tl.length >= 2) add({ kind: 'say', id: 'ht' + HD.d, lab: 'Player of the Night, this season', rows: tl.map(x => ({ t: x.n, r: String(x.c), sm: x.tm })) }); } }
       if (o.follows) { const all = ((storiesD && storiesD.top) || []).filter(c => c.lk === lk && c.url); const by = (a, b) => Math.abs(b.w) - Math.abs(a.w);
         let tp = all.filter(c => now - c.gt < 30 * 36e5).sort(by).slice(0, 10); if (tp.length < 3) tp = all.filter(c => now - c.gt < 44 * 36e5).sort(by).slice(0, 10);
-        if (tp.length >= 3) { const its = tp.map((c, i) => { const home = c.w > 0; const us = home ? c.h : c.aw, them = home ? c.aw : c.h;
+        if (tp.length < 3 && hon.length) tp = [];
+        if (tp.length >= 3 || hon.length) { let its = tp.map((c, i) => { const home = c.w > 0; const us = home ? c.h : c.aw, them = home ? c.aw : c.h;
             return { kind: 'vid', id: 'v' + c.id, ts: c.ts, url: c.url, v9: vertOf(null, c.url), title: c.title, dur: c.dur || 20, thumb: c.thumb || '', ck: 'play', aths: c.a || [], L, rank: i + 1, wc: `${us.ab} win chance +${Math.round(Math.abs(c.w) * 100)}%`,
               tag: `${c.per}${c.ck ? ' ' + c.ck : ''} \u00b7 ${us.ab} ${home ? c.hs : c.as}, ${them.ab} ${home ? c.as : c.hs}`, sub: `Final \u00b7 ${us.nm} ${us.sc}, ${them.nm} ${them.sc}` }; });
-          const sn = new Set(seen[`${lk}:top`] || []); subs.push({ key: `${lk}:top`, lk, kind: 'league', id: 'top', name: `Top ${its.length}`, abbr: L.short, full: `${L.short} biggest plays`, color: '#5b3df5', its, un: its.some(x => !sn.has(x.id)), last: Math.max(...its.map(x => x.ts)) }); } }
+          const plays = its.length; if (hon.length) { if (its[0] && HD && ET_DAY(tp[0].gt) === HD.d) its[0].pon = 1; its = [hon[0], ...its.slice(0, 1), ...hon.slice(1), ...its.slice(1)]; }
+          const sn = new Set(seen[`${lk}:top`] || []); subs.push({ key: `${lk}:top`, lk, kind: 'league', id: 'top', name: hon.length ? 'Last night' : `Top ${plays}`, abbr: L.short, full: hon.length ? `${L.short} last night` : `${L.short} biggest plays`, color: '#5b3df5', its, un: its.some(x => !sn.has(x.id)), last: Math.max(...its.map(x => x.ts)) }); } }
     });
     const fs = feedSubject(subs, now, seen); subs.sort((a, b) => (b.un - a.un) || (b.last - a.last)); if (fs) subs.push(fs);   // For you always sits last: it is where the rings lead
     const cu = catchSubject(now, seen); if (cu) subs.unshift(cu);   // v512: what happened while you were away leads
@@ -1286,7 +1335,7 @@
           x.its.slice(ii + 1, ii + 5).forEach(y => { if (y.kind === 'vid' && y.v9 && upright(y)) v9Pick(y.v9); });
         } catch (e) {}
         const ln = it.ln, line = ln ? [[ln.pts, 'PTS'], [ln.reb, 'REB'], [ln.ast, 'AST']].filter(c => c[0] !== '' && c[0] != null).map(c => `${esc(String(c[0]))} ${c[1]}`).join(' \u00b7 ') : '';
-        const meta = `${it.rank ? `<span class="gw">No. ${it.rank}</span>` : ''}${it.gw ? '<span class="gw">Game winner</span>' : ''}${it.wc ? `<span>${esc(it.wc)}</span>` : ''}${it.tag ? `<span>${esc(it.tag)}</span>` : ''}${line ? `<span>${line}</span>` : ''}`;
+        const meta = `${it.pon ? '<span class="gw">Play of the Night</span>' : it.rank ? `<span class="gw">No. ${it.rank}</span>` : ''}${it.gw ? '<span class="gw">Game winner</span>' : ''}${it.wc ? `<span>${esc(it.wc)}</span>` : ''}${it.tag ? `<span>${esc(it.tag)}</span>` : ''}${line ? `<span>${line}</span>` : ''}`;
         cap.innerHTML = `${meta ? `<div class="stmeta">${meta}</div>` : ''}<b>${esc(it.title)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ''}${goGame((it.L || {}).key, it.gid)}`; cap.hidden = false;
       } else {
         try { vd.pause(); } catch (e) {} vw.hidden = true; bl.style.backgroundImage = 'none'; cap.hidden = true; card.hidden = false;
@@ -1315,6 +1364,24 @@
           const side = (tm, lose) => `<span class="${lose ? 'lo' : ''}">${tm.logo ? imgSized(tm.logo, 72, 72) : ''}<em>${esc(tm.abbr || tm.short)}</em><b>${esc(String(tm.score))}</b></span>`;
           card.innerHTML = `<span class="fin">${esc(finalWord(g))} \u00b7 ${esc(won ? us.short : them.short)} win</span><span class="rcp27" style="--c:${glow(us)}">${a.hs ? imgSized(a.hs, 600, 436, 'class="rci27"', "this.parentNode.classList.add('no27');this.remove()") : ''}<i>${headshot('', teamColor(us, L), 132, a.name)}</i></span><b class="lnnm">${esc(a.name)}</b><span class="lnch">${chips}</span><span class="rcs27">${side(g.away, +g.away.score < +g.home.score)}<u></u>${side(g.home, +g.home.score < +g.away.score)}</span>`;
           if (!a.hs) card.querySelector('.rcp27').classList.add('no27');
+        } else if (it.kind === 'honor') { const a = it.ln, c = it.col || '#5b6b8c', glow = lumOf(c) < .1 ? mixTo(c, 255, .5) : lumOf(c) < .2 ? mixTo(c, 255, .22) : c;
+          /* v513 Player (or Rookie) of the Night: the recap card's form, for the league's best line */
+          bg.style.background = `radial-gradient(110% 56% at 50% 0%,${glow} 0%,rgba(0,0,0,0) 66%),linear-gradient(180deg,#0b0c0f 30%,#050506)`;
+          const chips = [[a.pts, 'PTS'], [a.reb, 'REB'], [a.ast, 'AST'], [a.stl >= 4 ? a.stl : '', 'STL'], [a.blk >= 4 ? a.blk : '', 'BLK']].filter(v => v[0] !== '' && v[0] != null).slice(0, 4).map(v => `<s>${esc(String(v[0]))}<em>${v[1]}</em></s>`).join('');
+          card.innerHTML = `<span class="fin hnr27">${esc(it.lab)}</span><span class="rcp27" style="--c:${glow}">${a.hs ? imgSized(a.hs, 600, 436, 'class="rci27"', "this.parentNode.classList.add('no27');this.remove()") : ''}<i>${headshot('', c, 132, a.n)}</i></span><b class="lnnm">${esc(a.n)}</b><span class="lnch">${chips}</span><span class="stwh">${esc([it.tm ? it.tm.short : a.tm, `Game score ${a.gs}`].filter(Boolean).join(' \u00b7 '))}${it.c > 1 ? `<br>${esc(`${it.lab} ${it.c} times this season`)}` : ''}</span>`;
+          if (!a.hs) card.querySelector('.rcp27').classList.add('no27');
+        } else if (it.kind === 'gon' || it.kind === 'upset') { const G = it.kind === 'gon' ? it.gon : { h: { id: it.up.hid, ab: it.up.h, sc: it.up.hs }, a: { id: it.up.aid, ab: it.up.a, sc: it.up.as } };
+          const ca = it.ta ? teamColor(it.ta, L) : '#3a4a6a', ch = it.th ? teamColor(it.th, L) : '#6a3a4a';
+          bg.style.background = `linear-gradient(160deg,${ca} -30%,#0a0a0c 44%,${ch} 160%)`;
+          const side = (tm, s) => `<span class="tm">${tm && tm.logo ? imgSized(tm.logo, 128, 128) : ''}<span>${esc((tm && tm.short) || s.nm || s.ab || '')}</span></span>`, aw = +G.a.sc > +G.h.sc;
+          const row = `<div class="srw">${side(it.ta, G.a)}<b class="${aw ? '' : 'lo'}">${esc(String(G.a.sc))}</b><b class="${aw ? 'lo' : ''}">${esc(String(G.h.sc))}</b>${side(it.th, G.h)}</div>`;
+          if (it.kind === 'gon') { const tiles = [[String(G.lc), G.lc === 1 ? 'Lead change' : 'Lead changes'], [String(G.mg), G.mg === 1 ? 'Point apart' : 'Points apart'], G.ot ? [G.ot > 1 ? `${G.ot} OT` : 'OT', 'Went long'] : null].filter(Boolean);
+            card.innerHTML = `<span class="fin hnr27">Thriller of the Night</span>${row}<div class="stfl">${tiles.map(t => `<s>${esc(t[0])}<em>${esc(t[1])}</em></s>`).join('')}</div>`; }
+          else { const win = aw ? (it.ta && it.ta.short) || G.a.ab : (it.th && it.th.short) || G.h.ab, pc = Math.max(1, Math.round(it.wp * 100));
+            card.innerHTML = `<span class="fin hnr27">Upset of the Night</span>${row}<p class="sttx">${esc(`RIVL gave the ${win} a ${pc}% chance.`)}</p>`; }
+        } else if (it.kind === 'say') {
+          bg.style.background = 'linear-gradient(165deg,#0a0a0c 30%,#2b1f7a 150%)';
+          card.innerHTML = `<span class="fin hnr27">${esc(it.lab)}</span><div class="ssy27">${it.rows.map(r => r.to ? `<a data-stgo href="${esc(r.to)}"><span>${esc(r.t)}</span>${GOCH}</a>` : `<div><span>${esc(r.t)}${r.sm ? `<small>${esc(r.sm)}</small>` : ''}</span>${r.r ? `<b>${esc(r.r)}</b>` : ''}</div>`).join('')}</div>`;
         } else if (it.kind === 'notes') {
           bg.style.background = 'linear-gradient(165deg,#0a0a0c 30%,#1d2a4a 140%)';
           const row = (to, img, b, sm) => `<a data-stgo href="${esc(to)}">${img}<span><b>${esc(b)}</b><small>${esc(sm)}</small></span>${GOCH}</a>`;

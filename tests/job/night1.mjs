@@ -5,6 +5,7 @@ import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 const now = Date.now(), DAYS = 7;
 const tip = n => new Date(now - n * 864e5 - 20 * 36e5).toISOString();     // n nights ago, long finished
 const ET = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
+// the game three nights ago went to overtime: the only one that can be a Thriller of the Night (the rest finish 8 apart)
 const evs = []; for (let n = DAYS; n >= 1; n--) evs.push({ id: String(700 + n), n, date: tip(n) });
 mkdirSync('data', { recursive: true }); writeFileSync('data/leaders.json', JSON.stringify({ leagues: { nba: { players: [{ id: '9', rookie: true }] } } }));
 const L = ['MIN', 'PTS', 'FG', '3PT', 'FT', 'REB', 'AST', 'TO', 'STL', 'BLK', 'OREB', 'DREB', 'PF'];
@@ -23,6 +24,7 @@ globalThis.fetch = async u => { u = String(u); let j = null;
 await import('./scripts/night.mjs?run=' + (process.env.RUN || 1));
 const o = JSON.parse(readFileSync('data/night.json', 'utf8')), st = JSON.parse(readFileSync('data/night-state.json', 'utf8')), N = o.lg.nba, d0 = N.days.find(d => d.done);
 console.log('check nights', N.days.length, 'done', N.days.filter(d => d.done).length, 'star', JSON.stringify(st.lg.nba.p['1']), 'team run', st.lg.nba.t['25'], st.lg.nba.t['7']);
-console.log('check latest', d0.d, 'player', d0.pon.n, d0.pon.gs, 'rookie', d0.ron && d0.ron.n, 'game', d0.gon.e, 'lc', d0.gon.lc, 'tally', JSON.stringify(N.tally));
+console.log('check latest', d0.d, 'player', d0.pon.n, d0.pon.gs, 'rookie', d0.ron && d0.ron.n, 'thriller', d0.gon ? d0.gon.e : 'none (no close finish)', 'tally', JSON.stringify(N.tally));
+console.log('check thrillers', N.days.map(d => d.gon ? `${d.d}: game ${d.gon.e}${d.gon.ot ? ' OT' : ''}` : `${d.d}: none`).join(', '));
 d0.notes.forEach(n => console.log('note', n.k, n.v, n.t));
 N.days.filter(d => d !== d0).forEach(d => console.log('earlier', d.d, d.notes.map(n => n.k).join(',')));
