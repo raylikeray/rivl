@@ -64,6 +64,28 @@ const cm = { ...(old.cm || {}) }, swept = fresh ? {} : { ...(old.swept || {}) };
 const FEED_KEEP = 48 * 36e5; const oldFeed = existsSync('data/feed.json') ? JSON.parse(readFileSync('data/feed.json', 'utf8')) : { items: [] };
 const feed = new Map((oldFeed.items || []).filter(x => now - x.ts < FEED_KEEP).map(x => [x.id, x]));
 const WSC = /\/espn\/media\/16x9\/(wsc\/\d{4}\/\d{4}\/[0-9a-f-]{36})\//;
+/* v503 the longer videos, for Watch: game reels, interviews, analyst segments, player recaps and features. Same compact
+   form as a play (the folder its files live in), plus k, the kind. Kept four days, in their own list ('more') so an app
+   from before this still reads 'items' as plays only. A video whose kind the service did not say and the title does not
+   show is left out: Watch labels every clip, and a label is never guessed. */
+const MORE_KEEP = 96 * 36e5, MED = /\/espn\/media\/16x9\/((?:wsc\/)?\d{4}\/\d{4}\/([^\/]+))\/\2\.mp4/;
+const firstMore = !oldFeed.more;   // the first run with this list sweeps the last three days of games again, once, for their reels
+const more = new Map((oldFeed.more || []).filter(x => now - x.ts < MORE_KEEP).map(x => [x.id, x]));
+const vkOf = (type, title, url, dur) => /(game|full) highlights\s*$/i.test(title) || type === 'Final Game Highlight' ? 'reel' : /interview|press|sound/i.test(type) || /_interview_/i.test(url) ? 'talk'
+  : /analysis/i.test(type) ? 'show' : /feature/i.test(type) ? 'feat' : /highlight|oneplay/i.test(type) && dur >= 45 ? 'recap' : '';
+const addMore = (lk, id, ts, title, url, dur, a, tm, type, e, thumb) => { if (feed.has(id) || !title || !(now - ts < MORE_KEEP) || !(dur >= 30)) return; const m = MED.exec(url || ''), k = vkOf(String(type || ''), title, url || '', dur); if (!m || !k) return;
+  const it = { id, lk, ts, t: title, u: m[1], d: dur, a: (a || []).slice(0, 6), tm: tm || [], k }; if (e) it.e = e;
+  if (thumb && /^https:\/\//.test(thumb) && thumb !== `https://espnmedia-cdn.akamaized.net/espn/media/common/${m[1]}/${m[2]}.jpg`) it.th = thumb;   /* the picture is not always where the file's name says */
+  const was = more.get(id); if (was && was.e && !it.e) it.e = was.e; if (was && was.th && !it.th) it.th = was.th; more.set(id, it); };
+/* v503 what kind of play a clip shows, read from the play record (not from the words in its title): the kind, whether it
+   was assisted, and whether it came in the last two minutes of the last period or overtime with the score within five. */
+const REG = { nba: 4, wnba: 4, ncaaw: 4, ncaam: 2 };
+const secs = s => { const m = /^(?:(\d+):)?(\d+(?:\.\d+)?)$/.exec(String(s || '').trim()); return m ? (+m[1] || 0) * 60 + +m[2] : 1e9; };
+const pkOf = q => { const ty = String((q.type || {}).text || ''), tx = String(q.text || ''), both = ty + ' ' + tx;
+  if (/\bblocks?\b/i.test(tx)) return 'block'; if (/\bsteals?\b/i.test(tx)) return 'steal'; if (!q.scoringPlay) return '';
+  return /dunk/i.test(both) ? 'dunk' : +q.scoreValue === 3 || /three point/i.test(both) ? 'three' : /lay-?up|finger roll|tip|putback/i.test(ty) ? 'layup' : /free throw/i.test(ty) ? 'ft' : /jump|hook|float|fade|bank|shot/i.test(ty) ? 'jumper' : ''; };
+const readKind = (lk, c, q) => { if (!q) return; const k = pkOf(q); if (k) c.pk = k; if (/assist/i.test(String(q.text || ''))) c.as = 1;
+  if (q.homeScore != null && q.awayScore != null && +(q.period || {}).number >= (REG[lk] || 4) && secs((q.clock || {}).displayValue) <= 120 && Math.abs(q.homeScore - q.awayScore) <= 5) c.cl = 1; };
 /* A clip the video service left without a player (it happens most with rookies): if the title opens with the full name of
    a player in data/leaders.json for that league, and that player's team is one of the two in the game, the clip is his.
    One match only; two players who fit, or none, and the clip stays untagged. Marked an: 1 so it can be told apart. */
@@ -77,9 +99,10 @@ const wpDone = fresh ? {} : { ...(old.wp || {}) }; let cand = (old.top || []).fi
 const perLbl = p => { const d = String((p.period || {}).displayValue || ''), n = +(p.period || {}).number || 0; return /quarter/i.test(d) ? `Q${n}` : /half/i.test(d) ? (n === 1 ? '1st half' : '2nd half') : d.replace(/overtime/i, 'OT'); };
 const weigh = async (lk, path, e, vids) => {
   const ones = vids.filter(v => { const c = cm[String(v.id)]; return c && c.t === 'OnePlay' && c.p && (+v.duration || 0) < 45; });
-  if (wpDone[e.id] && wpDone[e.id].n === ones.length) return; wpDone[e.id] = { n: ones.length, t: e.t }; if (!ones.length) return;
+  if (wpDone[e.id] && wpDone[e.id].n === ones.length && wpDone[e.id].k) return; wpDone[e.id] = { n: ones.length, t: e.t, k: 1 }; if (!ones.length) return;
   const s = await get(`${SITE}/${path}/summary?event=${e.id}`); if (!s) { delete wpDone[e.id]; return; }
   const wp = (s.winprobability || []).filter(x => x.homeWinPercentage != null); const at = new Map(wp.map((x, i) => [String(x.playId), i])); const plays = new Map((s.plays || []).map(q => [String(q.id), q]));
+  for (const v of ones) { const c = cm[String(v.id)]; readKind(lk, c, plays.get(c.p)); }
   const comp = (((s.header || {}).competitions || [])[0] || {}).competitors || []; const side = ha => { const c = comp.find(x => x.homeAway === ha) || {}; const tm = c.team || {}; return { id: String(tm.id || ''), ab: tm.abbreviation || '', nm: tm.shortDisplayName || tm.name || tm.displayName || '', sc: c.score != null ? String(c.score) : '' }; };
   const H = side('home'), A = side('away'); if (!H.id || !A.id || wp.length < 20) return;
   const mine = [];
@@ -95,7 +118,7 @@ for (const [lk, path] of Object.entries(LG)) {
   const evs = new Map();
   for (const n of [0, 1, 2]) { const d = await get(`${SITE}/${path}/scoreboard?dates=${ymd(n)}${lk.startsWith('ncaa') ? '&groups=50&limit=400' : ''}`);
     ((d || {}).events || []).forEach(e => { const st = ((e.status || {}).type || {}); if (st.state === 'pre') return; const cs = (((e.competitions || [])[0] || {}).competitors) || []; EVT.set(String(e.id), cs.map(c => String((c.team || {}).abbreviation || '')).filter(Boolean)); evs.set(String(e.id), { id: String(e.id), done: !!st.completed, t: Date.parse(e.date) || now, tm: cs.map(c => String((c.team || {}).id || '')).filter(Boolean) }); }); }
-  const todo = [...evs.values()].filter(e => !(swept[e.id] && e.done && swept[e.id] - e.t > 12.5 * 36e5) || (e.done && !wpDone[e.id] && now - e.t < 36 * 36e5));
+  const todo = [...evs.values()].filter(e => !(swept[e.id] && e.done && swept[e.id] - e.t > 12.5 * 36e5) || (e.done && !wpDone[e.id] && now - e.t < 36 * 36e5) || (e.done && wpDone[e.id] && !wpDone[e.id].k && now - e.t < 50 * 36e5) || firstMore);
   for (let i = 0; i < todo.length; i += 8) {
     await Promise.all(todo.slice(i, i + 8).map(async e => {
       gamesAsked++; const d = await get(`${SITE}/${path}/videos?event=${e.id}`); if (!d) return; swept[e.id] = now;
@@ -107,7 +130,9 @@ for (const [lk, path] of Object.entries(LG)) {
       if (e.done) { try { await weigh(lk, path, e, d.videos || []); } catch (er) { console.log('weigh failed', e.id, String(er).slice(0, 80)); } }
       for (const v of d.videos || []) { const id = String(v.id || ''), c = cm[id]; if (!c || c.t !== 'OnePlay' || !((+v.duration || 0) < 45) || !(now - c.ts < FEED_KEEP)) continue;
         const m = WSC.exec((((v.links || {}).source) || {}).href || ''); const title = String(v.headline || '').trim(); if (!m || !title) continue;
-        const it = { id, lk, e: e.id, ts: c.ts, t: title, u: m[1], d: Math.round(+v.duration || 0), a: c.a, tm: e.tm }; if (c.w != null) it.w = c.w; feed.set(id, it); }
+        const it = { id, lk, e: e.id, ts: c.ts, t: title, u: m[1], d: Math.round(+v.duration || 0), a: c.a, tm: e.tm }; if (c.w != null) it.w = c.w; if (c.pk) it.pk = c.pk; if (c.as) it.as = 1; if (c.cl) it.cl = 1; feed.set(id, it); }
+      for (const v of d.videos || []) { const id = String(v.id || ''), c = cm[id], dur = Math.round(+v.duration || 0); if (!c || (c.t === 'OnePlay' && dur < 45)) continue;
+        addMore(lk, id, c.ts, String(v.headline || '').trim(), (((v.links || {}).source) || {}).href || '', dur, c.a, e.tm, c.t, e.id, String(v.thumbnail || '')); }
     }));
   }
   console.log(lk, 'games', evs.size, 'asked', todo.length);
@@ -120,8 +145,12 @@ const top = []; for (const lk of Object.keys(LG)) top.push(...cand.filter(c => c
 writeFileSync('data/stories.json', JSON.stringify({ ver: VER, updated: new Date().toISOString(), items: out, cm, swept, wp: wpDone, top }));
 let namedNow = 0; for (const it of feed.values()) { if ((it.a || []).length) continue; const a = named(it.lk, it.t || '', it.e); if (a.length) { it.a = a; it.an = 1; namedNow++; } }
 console.log('players read from titles', namedNow);
-writeFileSync('data/feed.json', JSON.stringify({ updated: new Date().toISOString(), items: [...feed.values()].sort((a, b) => b.ts - a.ts) }));
-console.log('feed', feed.size);
+for (const p of out) addMore(p.lk, String(p.id), Date.parse(p.ts) || now, p.title, p.url, p.dur, p.aths, p.teams, p.k || '', '', p.thumb || '');
+for (const id of more.keys()) if (feed.has(id)) more.delete(id);
+writeFileSync('data/feed.json', JSON.stringify({ updated: new Date().toISOString(), items: [...feed.values()].sort((a, b) => b.ts - a.ts), more: [...more.values()].sort((a, b) => b.ts - a.ts) }));
+const tally = l => { const o = {}; l.forEach(x => { o[x] = (o[x] || 0) + 1; }); return JSON.stringify(o); };
+console.log('feed', feed.size, 'kinds', tally([...feed.values()].map(x => x.pk || '?')), 'clutch', [...feed.values()].filter(x => x.cl).length);
+console.log('more', more.size, tally([...more.values()].map(x => x.lk + ':' + x.k)));
 console.log('top plays', top.length, top.slice(0, 3).map(c => `${c.lk} ${c.w} ${c.title}`));
 console.log('clip map', Object.keys(cm).length, 'games asked', gamesAsked, 'clips asked', cmAsked);
 console.log('stories', out.length, 'resolved now', asked, out.slice(0, 4).map(x => `${x.lk} ${x.title} [${x.aths.length}a ${x.teams.length}t]`));

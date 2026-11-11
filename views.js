@@ -932,12 +932,17 @@
   const PLAYKINDS = [['clutch', /buzzer|game[- ]winner|go-ahead|dagger|ties it/i], ['dunk', /dunk|slam|\bjam\b|flush|hammer|alley-oop|\blob\b/i], ['block', /block|swat|denies|stuff|reject/i], ['three', /3-point|three|triple|trey|from deep|downtown|behind the arc|\b3s?\b|the range/i], ['and1', /and-1|plus the (foul|contact)/i], ['steal', /steal/i], ['pass', /assist|pass|dime|finds|sets up/i]];
   const playKind = t => (PLAYKINDS.find(x => x[1].test(t || '')) || [''])[0];
   const taste = () => { const t = store.get('v5:taste', null); return t && t.a && t.k ? t : { a: {}, k: {} }; };
-  const stLearn = (it, by) => { if (!it || it.kind !== 'vid' || it.ck !== 'play') return; const T = taste(); const bump = (o, k, d) => { if (k) o[k] = Math.round(Math.max(-6, Math.min(12, (o[k] || 0) + d)) * 10) / 10; };
-    (it.aths || []).slice(0, 3).forEach(a => bump(T.a, a, by)); bump(T.k, playKind(it.title), by * .5);
+  const stLearn = (it, by) => { if (!it || it.kind !== 'vid') return; const T = taste(); const bump = (o, k, d) => { if (k) o[k] = Math.round(Math.max(-6, Math.min(12, (o[k] || 0) + d)) * 10) / 10; };
+    if (it.ck !== 'play') { if (!it.vk || it.vk === 'play') return; bump(T.k, 'v:' + it.vk, by * .5); store.set('v5:taste', T); return; }   // v503: a reel, an interview or a show counts for its kind of video only
+    (it.aths || []).slice(0, 3).forEach(a => bump(T.a, a, by)); bump(T.k, it.pk || playKind(it.title), by * .5);
     const ks = Object.keys(T.a); if (ks.length > 300) ks.sort((x, y) => Math.abs(T.a[x]) - Math.abs(T.a[y])).slice(0, ks.length - 300).forEach(k => delete T.a[k]); store.set('v5:taste', T); };
   /* one clip of the clip file as the player takes it */
-  const feedIt = c => { const id = c.u.split('/').pop();
-      return { kind: 'vid', id: 'v' + c.id, ts: c.ts, url: `https://espnmedia-cdn.akamaized.net/espn/media/16x9/${c.u}/${id}.mp4`, v9: `https://cmp-espn.media.dssott.com/opp/hls/espn/9x16/${c.u}/${id}/playlist.m3u8`, title: c.t, dur: c.d || 20, thumb: `https://espnmedia-cdn.akamaized.net/espn/media/common/${c.u}/${id}.jpg`, ck: 'play', aths: c.a || [], L: LEAGUES[c.lk], sub: (LEAGUES[c.lk] || {}).short || '', w: c.w || 0, tms: c.tm || [], gid: c.e ? String(c.e) : '' }; };
+  /* v503: the clip file also lists the longer videos (c.k: reel, talk, show, recap, feat). Only a reel has an upright cut;
+     the rest play wide. A play's kind is the one read from the play record (c.pk) when the job has it, else the title's;
+     a play the title calls a pass counts as one only when the record shows an assist. */
+  const pkOfC = c => { const t = playKind(c.t); return t === 'clutch' ? 'clutch' : t === 'pass' && c.as ? 'pass' : c.pk === 'ft' ? (t || '') : c.pk || (t === 'pass' ? '' : t); };
+  const feedIt = c => { const id = c.u.split('/').pop(), vk = c.k || 'play', ck = vk === 'play' ? 'play' : vk === 'reel' ? 'reel' : 'talk';
+      return { kind: 'vid', id: 'v' + c.id, ts: c.ts, url: `https://espnmedia-cdn.akamaized.net/espn/media/16x9/${c.u}/${id}.mp4`, v9: ck !== 'talk' && /^wsc\//.test(c.u) ? `https://cmp-espn.media.dssott.com/opp/hls/espn/9x16/${c.u}/${id}/playlist.m3u8` : '', title: c.t, dur: c.d || 20, thumb: c.th || `https://espnmedia-cdn.akamaized.net/espn/media/common/${c.u}/${id}.jpg`, ck, vk, pk: vk === 'play' ? pkOfC(c) : '', cl: vk === 'play' && c.cl ? 1 : 0, aths: c.a || [], L: LEAGUES[c.lk], sub: (LEAGUES[c.lk] || {}).short || '', w: c.w || 0, tms: c.tm || [], gid: c.e ? String(c.e) : '' }; };
   const feedSubject = (subs, now, seen, deep) => { feedLoad(); const fd = (feedD && feedD.items) || []; if (!fd.length) return null;
     let lks = new Set(ORDER.filter(lk => feedSrc[lk] && feedSrc[lk].out && feedSrc[lk].out.follows)); if (!lks.size) { if (!deep) return null; lks = new Set(ORDER); }   // v470: Watch plays every league when nothing is followed
     const T = taste(), fp = new Set(fplayers.all().map(p => String(p.id))), ft = {}; ORDER.forEach(lk => { const o = feedSrc[lk] && feedSrc[lk].out; ft[lk] = new Set(((o && o.myTeams) || []).map(t => String(t.id))); });
@@ -1061,13 +1066,48 @@
   /* v470 the three Watch lists. Following: clips from the teams and players you follow, newest first, then everything else.
      For you: the whole clip file, what you have not watched first, best fit first. Top plays: each league's ranked plays,
      then the rest by how far each one moved the win chance. None of them ends: a list starts over. */
+  /* v503 the Watch order. Everything in the clip file (plays and the longer videos) is scored for this phone, then laid
+     out so the scroll changes as it goes: no more than two of one kind of play in a row (and no more than three
+     in any nine clips, which is what holds the dunks to a third), not the same player twice within five clips, not three
+     in a row from one game, a longer video after every four plays
+     (and not the same kind of longer video twice running), and every league in the mix seen at least once in ten. When a rule cannot be met it is dropped for that one place,
+     the last-named first. What has been watched sits behind what has not. */
+  const mixKind = it => it.vk === 'play' ? (it.pk || 'play') : it.vk || it.ck;
+  const mixOrder = list => { const out = [], pool = list.slice(); const who = it => it.vk === 'reel' ? '' : (it.aths || [])[0] || '';
+    const lks = new Set(pool.map(it => (it.L || {}).key));
+    while (pool.length) { const n = out.length, l2 = out.slice(-2), l5 = out.slice(-5), l8 = out.slice(-8), l9 = out.slice(-9);
+      let run = 0; for (let i = n - 1; i >= 0 && out[i].vk === 'play'; i--) run++;
+      const hasLong = pool.some(it => it.vk !== 'play'), hasPlay = pool.some(it => it.vk === 'play');
+      let lastLong = null; for (let i = n - 1; i >= 0 && !lastLong; i--) if (out[i].vk !== 'play') lastLong = out[i];
+      const want = !hasPlay ? 'long' : !hasLong ? 'play' : run >= 4 ? 'long' : 'play';
+      const starved = n >= 9 ? new Set([...lks].filter(lk => !l9.some(o => (o.L || {}).key === lk) && pool.some(it => (it.L || {}).key === lk && (it.vk !== 'play') === (want === 'long')))) : new Set();
+      const p2 = out.filter(o => o.vk === 'play').slice(-2);
+      const bad = [it => it.vk === 'play' ? p2.length === 2 && p2.every(o => mixKind(o) === mixKind(it)) : l2.length === 2 && l2.every(o => mixKind(o) === mixKind(it)),
+        it => { const a = who(it); return !!a && l5.some(o => who(o) === a); },
+        it => !!it.gid && l2.length === 2 && l2.every(o => o.gid === it.gid),
+        it => it.vk === 'play' && l8.filter(o => mixKind(o) === mixKind(it)).length >= 3,
+        it => starved.size > 0 && !starved.has((it.L || {}).key),
+        it => it.vk !== 'play' && !!lastLong && mixKind(lastLong) === mixKind(it)];
+      let at = -1; for (let keep = bad.length; keep >= 0 && at < 0; keep--) at = pool.findIndex(it => (it.vk !== 'play') === (want === 'long') && !bad.slice(0, keep).some(f => f(it)));
+      out.push(pool.splice(at < 0 ? 0 : at, 1)[0]); }
+    return out; };
+  const watchAll = (now, seen) => { feedLoad(); if (!feedD) return []; let lks = new Set(ORDER.filter(lk => feedSrc[lk] && feedSrc[lk].out && feedSrc[lk].out.follows)); if (!lks.size) lks = new Set(ORDER);
+    const T = taste(), fp = new Set(fplayers.all().map(p => String(p.id))), ft = {}; ORDER.forEach(lk => { const o = feedSrc[lk] && feedSrc[lk].out; ft[lk] = new Set(((o && o.myTeams) || []).map(t => String(t.id))); });
+    const gone = new Set(); Object.values(seen).forEach(l => (l || []).forEach(id => gone.add(id)));
+    const score = (c, it) => { let v = -(now - c.ts) / 864e5 * 2; const mine = (c.tm || []).some(t => ft[c.lk] && ft[c.lk].has(t));
+      if (it.vk === 'play') { v += 25 * Math.abs(c.w || 0) + .6 * (T.k[it.pk] || 0) + (it.cl || it.pk === 'clutch' ? 3 : 0) + (it.pk === 'block' || it.pk === 'steal' || it.pk === 'pass' ? 1.2 : 0);
+        (c.a || []).forEach(a => { if (fp.has(a)) v += 6; v += Math.max(-3, Math.min(5, T.a[a] || 0)); }); if (mine) v += 3; }
+      else { v += .6 * (T.k['v:' + it.vk] || 0) + ((c.a || []).some(a => fp.has(a)) ? 5 : 0) + (mine ? 4 : 0); }
+      return v; };
+    const rows = [...(feedD.items || []), ...(feedD.more || [])].filter(c => c && c.u && lks.has(c.lk)).map(c => { const it = feedIt(c); return [score(c, it), it]; }).sort((a, b) => b[0] - a[0]).map(x => x[1]);
+    return [...mixOrder(rows.filter(it => !gone.has(it.id))), ...mixOrder(rows.filter(it => gone.has(it.id)))]; };
   const watchSubs = () => { const now = Date.now(), seen = stSeen(), subs = storySubjects();
-    const fy = feedSubject([], now, seen, true), all = fy ? fy.its : [];
+    const all = watchAll(now, seen);
     const uniq = l => { const s = new Set(); return l.filter(it => it.kind === 'vid' && !s.has(it.id) && s.add(it.id)); };
     const from = kinds => uniq(subs.filter(x => kinds.includes(x.kind)).flatMap(x => x.its.map(it => Object.assign({}, it, { sk: x.key }))));
     const fill = (head, rest) => { const s = new Set(head.map(i => i.id)); return [...head, ...rest.filter(i => !s.has(i.id))]; };
     const mk = (key, name, its) => ({ key, lk: 'all', kind: 'watch', id: key, name, full: name, color: '#15171a', its, un: true, last: now });
-    return [mk('w:fol', 'Following', fill(from(['team', 'player']).sort((a, b) => b.ts - a.ts), all)), mk('w:fy', 'For you', fill(all, from(['league', 'team', 'player']))), mk('w:top', 'Top plays', fill(from(['league']), [...all].sort((a, b) => Math.abs(b.w || 0) - Math.abs(a.w || 0))))].filter(x => x.its.length); };
+    return [mk('w:fol', 'Following', fill(from(['team', 'player']).sort((a, b) => b.ts - a.ts), all)), mk('w:fy', 'For you', fill(all, from(['league', 'team', 'player']))), mk('w:top', 'Top plays', fill(from(['league']), all.filter(it => it.vk === 'play').sort((a, b) => Math.abs(b.w || 0) - Math.abs(a.w || 0))))].filter(x => x.its.length); };
   function bubbles() {
     const subs = storySubjects(); if (!subs.length) return ''; stWarm(subs);
     return `<div class="sbubs">${subs.map(x => `<button class="sbub${x.un ? '' : ' seen'}${x.kind === 'player' ? ' pl' : ''}" data-act="story" data-key="${esc(x.key)}" aria-label="${esc(x.full || x.name)} story"><span class="ring"><span>${stAvatar(x, x.kind === 'player' ? 52 : 30)}</span></span><small>${esc(x.name)}</small></button>`).join('')}</div>`;
