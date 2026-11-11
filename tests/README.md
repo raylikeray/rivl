@@ -21,6 +21,7 @@ They need Python 3 with Playwright (`pip install playwright pillow`, then `playw
 | `st460.py` | Home's For you ring and what it learns |
 | `p27q.py` | Search |
 | `p27you.py`, `p27crop.py` | The You page and the photo crop screen |
+| `p27sub.py`, `left5.py` | Teams, Players, Record, Settings and its pages: title bar, back, league pills, stars, switches; screenshots of each |
 | `p27sc.py`, `p27gh.py`, `p27ring.py` | Score cards, the game header, the profile ring |
 | `audit.py`, `audit_b.py` | The audit: every page, light and dark, with counts for small tap targets, small text, faint text, missing names |
 | `audit2.py`, `audit3.py` | Start-up timing on a slowed processor, and what Home asks for |

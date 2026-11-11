@@ -220,19 +220,19 @@ html.rv27 .sh27:not([hidden]){display:flex;align-items:center;justify-content:sp
 .sh27 a{width:44px;height:44px;display:grid;place-items:center;color:var(--i27)}
 .sh27 svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}
 /* v475: the league names are chips, not bare words: the one you are on is filled */
-html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr{border-bottom:0}
-html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgtabs{height:auto;padding:12px 16px 2px;border-bottom:0}
-html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgsc{gap:8px;height:auto;overflow:visible;width:100%;padding:0;margin:0;-webkit-mask-image:none;mask-image:none}
-html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgt{flex:1 1 0;height:34px;padding:0 4px;place-items:center;border-radius:999px;background:var(--s27);font:600 13.5px/1 var(--f27);letter-spacing:0;color:var(--i27b);transition:none}
-html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgt.on{background:var(--a27);color:#fff;font-weight:700}
-html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgink{display:none}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"],[data-page="teams"],[data-page="players"]) body .hdr{border-bottom:0}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"],[data-page="teams"],[data-page="players"]) body .hdr .lgtabs{height:auto;padding:12px 16px 2px;border-bottom:0}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"],[data-page="teams"],[data-page="players"]) body .hdr .lgsc{gap:8px;height:auto;overflow:visible;width:100%;padding:0;margin:0;-webkit-mask-image:none;mask-image:none}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"],[data-page="teams"],[data-page="players"]) body .hdr .lgt{flex:1 1 0;height:34px;padding:0 4px;place-items:center;border-radius:999px;background:var(--s27);font:600 13.5px/1 var(--f27);letter-spacing:0;color:var(--i27b);transition:none}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"],[data-page="teams"],[data-page="players"]) body .hdr .lgt.on{background:var(--a27);color:#fff;font-weight:700}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"],[data-page="teams"],[data-page="players"]) body .hdr .lgink{display:none}
 /* v479: a league with a game on right now. The red light sits inside the chip, before the name, and pulses; the chip
    gets a thin red edge. (It was a dot hanging off the chip's corner.) */
-html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgt>span{display:inline-flex;flex-direction:row-reverse;align-items:center;gap:6px;padding:0}
-html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgd{position:static;flex:none;width:7px;height:7px;border-radius:50%;background:#ff453a;animation:live27 1.6s ease-out infinite}
-html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgd[hidden]{display:none}
-html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgt:has(.lgd:not([hidden])):not(.on){box-shadow:inset 0 0 0 1.5px rgba(255,69,58,.6);color:var(--i27)}
-html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"]) body .hdr .lgt.on .lgd{background:#fff;animation-name:live27w}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"],[data-page="teams"],[data-page="players"]) body .hdr .lgt>span{display:inline-flex;flex-direction:row-reverse;align-items:center;gap:6px;padding:0}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"],[data-page="teams"],[data-page="players"]) body .hdr .lgd{position:static;flex:none;width:7px;height:7px;border-radius:50%;background:#ff453a;animation:live27 1.6s ease-out infinite}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"],[data-page="teams"],[data-page="players"]) body .hdr .lgd[hidden]{display:none}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"],[data-page="teams"],[data-page="players"]) body .hdr .lgt:has(.lgd:not([hidden])):not(.on){box-shadow:inset 0 0 0 1.5px rgba(255,69,58,.6);color:var(--i27)}
+html.rv27:is([data-page="scores"],[data-page="standings"],[data-page="stats"],[data-page="teams"],[data-page="players"]) body .hdr .lgt.on .lgd{background:#fff;animation-name:live27w}
 @keyframes live27{0%{box-shadow:0 0 0 0 rgba(255,69,58,.6)}70%,100%{box-shadow:0 0 0 6px rgba(255,69,58,0)}}
 @keyframes live27w{0%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}70%,100%{box-shadow:0 0 0 6px rgba(255,255,255,0)}}
 @media (prefers-reduced-motion:reduce){ html.rv27 body .hdr .lgd{animation:none!important} }
@@ -977,3 +977,114 @@ html.rv27[data-theme="light"] body .aglr b.pos, html.rv27[data-theme="light"] bo
 }
 /* Zoom is allowed again. An iPhone zooms the page when a field with small type is tapped; 16px stops that. */
 @supports (-webkit-touch-callout:none){ input, select, textarea{font-size:16px!important} }
+
+/* ---------- v507: the screens reached from You (Teams, Players, Record, the Settings list) in the 2027 look ---------- */
+.sh27 .shb27[hidden], .sh27 .shs27[hidden]{display:none}
+html.rv27 .sh27.sub27:not([hidden]){justify-content:flex-start;gap:12px;padding:10px 16px 0 14px}
+.sh27.sub27 .shb27{flex:none;width:40px;height:40px;border-radius:50%;background:var(--s27);color:var(--i27)}
+.sh27.sub27 .shb27 svg{width:22px;height:22px;stroke-width:2.2;stroke-linejoin:round;margin-left:-2px}
+.sh27.sub27 h1{font-size:28px}
+html.rv27.sub27on #main{font-family:var(--f27)}
+/* the search field and the two-way switch on Teams and Players */
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .search{display:flex;align-items:center;gap:10px;height:46px;margin:14px 16px 0;padding:0 14px;border:0;border-radius:14px;background:var(--s27);box-shadow:none}
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .search svg{flex:none;width:19px;height:19px;color:var(--i27c)}
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .search input{flex:1;min-width:0;height:46px;border:0;background:none;font:500 16px/1 var(--f27);color:var(--i27)}
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .search input::placeholder{color:var(--i27c)}
+html.rv27[data-page="teams"] #main > .chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;height:40px;margin:12px 16px 0;padding:3px;box-sizing:border-box;border-radius:999px;background:var(--s27);overflow:hidden;-webkit-mask-image:none;mask-image:none}
+html.rv27[data-page="teams"] #main > .chips .chip{height:34px;min-height:0;padding:0;border:0;border-radius:999px;background:none;box-shadow:none;justify-content:center;font:500 14px/1 var(--f27);color:var(--i27b)}
+html.rv27[data-page="teams"] #main > .chips .chip.on{background:var(--i27);color:var(--b27);font-weight:700}
+/* lists sit in cards */
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .rows{margin:0;padding:0;border:0;border-radius:0;background:none}
+html.rv27[data-page="teams"] #main #tlist .fold, html.rv27[data-page="players"] #main .tgrp{margin:14px 16px 0;border:0;border-radius:20px;background:var(--s27);overflow:hidden;box-shadow:none}
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .row.prow{display:flex;align-items:center;gap:12px;min-height:66px;margin:0;padding:10px 10px 10px 14px;border:0;border-radius:0;background:none;box-shadow:inset 0 -1px 0 var(--l27)}
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .row.prow:last-child{box-shadow:none}
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .row.prow .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;color:inherit;text-decoration:none}
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .row.prow .t b{font:600 16px/1.2 var(--f27);letter-spacing:-.01em;color:var(--i27);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .row.prow .t span{font:500 13px/1.3 var(--f27);color:var(--i27c)}
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .row.prow .t .today{display:block;margin-top:2px;font-style:normal;font-weight:600;color:var(--i27b)}
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .row.prow .star{flex:none;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:50%;background:none;color:var(--i27c)}
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .row.prow .star.on{color:#F5B301}
+html.rv27:is([data-page="teams"],[data-page="players"]) #main .sec{display:flex;align-items:center;justify-content:space-between;margin:22px 16px 0;padding:0}
+html.rv27:is([data-page="teams"],[data-page="players"],[data-page="record"]) #main .sec h2{margin:0;font:700 20px/1.2 var(--f27);letter-spacing:-.02em;color:var(--i27)}
+html.rv27:is([data-page="teams"],[data-page="players"],[data-page="record"]) #main .sec h2 small{margin-left:8px;font:500 14px/1 var(--f27);letter-spacing:0;color:var(--i27c)}
+html.rv27[data-page="players"] #main .sec > button{height:34px;padding:0 14px;border:0;border-radius:999px;background:var(--s27);font:600 13px/1 var(--f27);color:var(--i27)}
+/* Players */
+html.rv27[data-page="players"] #main .page-h{margin:0;padding:10px 16px 0}
+html.rv27[data-page="players"] #main .page-h h1{display:none}
+html.rv27[data-page="players"] #main .page-h p{margin:0;font:500 14px/1.4 var(--f27);color:var(--i27b)}
+html.rv27[data-page="players"] #main .tgrp.plain{margin-top:12px}
+html.rv27[data-page="players"] #main .tgrp .thead{width:100%;min-height:60px;padding:10px 14px;border:0;border-radius:0;font-family:var(--f27)}
+html.rv27[data-page="players"] #main .tgrp .fold{margin:0;border:0;background:none}
+/* Record */
+html.rv27[data-page="record"] #main > .topbar{display:none}
+html.rv27[data-page="record"] #main > .chips{display:flex;gap:8px;margin:0;padding:12px 16px 2px;overflow:visible;-webkit-mask-image:none;mask-image:none}
+html.rv27[data-page="record"] #main > .chips .chip{flex:1 1 0;height:34px;min-height:0;padding:0 4px;border:0;border-radius:999px;background:var(--s27);box-shadow:none;justify-content:center;font:600 13.5px/1 var(--f27);color:var(--i27b)}
+html.rv27[data-page="record"] #main > .chips .chip.on{background:var(--a27);color:#fff;font-weight:700}
+html.rv27[data-page="record"] #main .sec{margin:22px 16px 0;padding:0}
+html.rv27[data-page="record"] #main .why{margin:12px 16px 0;padding:4px 14px;border:0;border-radius:20px;background:var(--s27);font-family:var(--f27)}
+html.rv27[data-page="record"] #main .why .why-r:last-child{border-bottom:0}
+html.rv27[data-page="record"] #main > .rows{margin:12px 16px 0;border:0;border-radius:20px;background:var(--s27);overflow:hidden}
+html.rv27[data-page="record"] #main > .rows .row{display:flex;align-items:center;gap:12px;min-height:62px;margin:0;padding:11px 14px;border:0;border-radius:0;background:none;box-shadow:inset 0 -1px 0 var(--l27);color:inherit;text-decoration:none;font-family:var(--f27)}
+html.rv27[data-page="record"] #main > .rows .row:last-child{box-shadow:none}
+html.rv27[data-page="record"] #main > .rows .row .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+html.rv27[data-page="record"] #main > .rows .row .t b{font:600 15.5px/1.2 var(--f27);letter-spacing:-.01em;color:var(--i27)}
+html.rv27[data-page="record"] #main > .rows .row .t span{font:500 12.5px/1.3 var(--f27);color:var(--i27c)}
+html.rv27[data-page="record"] #main > .rows .res{flex:none;height:26px;padding:0 11px;display:grid;place-items:center;border-radius:999px;font:700 12px/1 var(--f27);letter-spacing:0;text-transform:none}
+html.rv27[data-page="record"] #main > .rows .res.w{background:color-mix(in srgb,var(--ok27) 18%,transparent);color:var(--ok27)}
+html.rv27[data-page="record"] #main > .rows .res.l{background:color-mix(in srgb,#ff453a 16%,transparent);color:#ff5a4f}
+html.rv27[data-theme="light"][data-page="record"] #main > .rows .res.l{color:#b3231a}
+html.rv27[data-theme="light"][data-page="record"] #main > .rows .res.w{color:#0b6b33}
+@media (prefers-color-scheme:light){ html.rv27:not([data-theme="dark"])[data-page="record"] #main > .rows .res.l{color:#b3231a} html.rv27:not([data-theme="dark"])[data-page="record"] #main > .rows .res.w{color:#0b6b33} }
+html.rv27[data-page="record"] #main .legend{margin:16px 20px 0;font:500 12.5px/1.5 var(--f27);color:var(--i27c)}
+/* the Settings list */
+html.rv27.sub27on #main .set380 .ptl{display:none}
+html.rv27.sub27on #main .set380{padding:4px 0 0;font-family:var(--f27)}
+html.rv27.sub27on #main .set380 .gl{margin:14px 16px 0;border:0;border-radius:20px;background:var(--s27);overflow:hidden;box-shadow:none}
+html.rv27.sub27on #main .set380 .gr{min-height:62px;padding:11px 14px;border:0;background:none;box-shadow:inset 0 -1px 0 var(--l27);font-family:var(--f27)}
+html.rv27.sub27on #main .set380 .gl > .gr:last-child{box-shadow:none}
+html.rv27.sub27on #main .set380 .gm b{font:600 16px/1.2 var(--f27);letter-spacing:-.01em;color:var(--i27)}
+html.rv27.sub27on #main .set380 .gm span{font:500 13px/1.35 var(--f27);color:var(--i27c)}
+html.rv27.sub27on #main .set380 .sico{border-radius:10px}
+html.rv27.sub27on #main .set380 .segc{height:40px;padding:3px;box-sizing:border-box;border:0;border-radius:999px;background:var(--b27);overflow:hidden}
+html.rv27.sub27on #main .set380 .segc > button{height:34px;min-height:0;padding:0 12px;border:0;border-radius:999px;background:none;box-shadow:none;font:500 13px/1 var(--f27);color:var(--i27b)}
+html.rv27.sub27on #main .set380 .segc > button.on{background:var(--i27);color:var(--b27);font-weight:700}
+html.rv27.sub27on #main .set380 .switch{flex:none;position:relative;width:48px;height:28px;border:0;border-radius:999px;background:rgba(120,120,128,.36);box-shadow:none;transition:none}
+html.rv27.sub27on #main .set380 .switch::after, html.rv27.sub27on #main .set380 .switch::before{content:none}
+html.rv27.sub27on #main .set380 .switch::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transform:none;transition:none}
+html.rv27.sub27on #main .set380 [aria-checked="true"] .switch{background:var(--ok27)}
+html.rv27.sub27on #main .set380 [aria-checked="true"] .switch::after{left:23px}
+html.rv27.sub27on #main .set380 .vq27{margin:8px 22px 0;font:500 12.5px/1.45 var(--f27);color:var(--i27c)}
+/* the pages under Settings (Following, Home, Where you watch, App, About) */
+html.rv27[data-page="settings"] #main > .topbar{display:flex;align-items:center;gap:12px;height:auto;min-height:0;padding:10px 16px 0 14px;border:0;background:none;position:static}
+html.rv27[data-page="settings"] #main > .topbar .ib{flex:none;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:var(--s27);color:var(--i27)}
+html.rv27[data-page="settings"] #main > .topbar .ib svg{width:22px;height:22px;margin-left:-2px}
+html.rv27[data-page="settings"] #main > .topbar .ttl{position:static;transform:none;margin:0;font:700 28px/1.15 var(--f27);letter-spacing:-.02em;color:var(--i27);text-align:left}
+html.rv27[data-page="settings"] #main > .sec{display:flex;align-items:center;justify-content:space-between;margin:22px 16px 0;padding:0}
+html.rv27[data-page="settings"] #main > .sec h2{margin:0;font:700 20px/1.2 var(--f27);letter-spacing:-.02em;color:var(--i27)}
+html.rv27[data-page="settings"] #main > .sec h2 small{margin-left:8px;font:500 14px/1 var(--f27);letter-spacing:0;color:var(--i27c)}
+html.rv27[data-page="settings"] #main > .sec > a, html.rv27[data-page="settings"] #main > .sec > button{height:34px;padding:0 14px;display:grid;place-items:center;border:0;border-radius:999px;background:var(--s27);font:600 13px/1 var(--f27);color:var(--i27);text-decoration:none}
+html.rv27[data-page="settings"] #main > .rows{margin:12px 16px 0;border:0;border-radius:20px;background:var(--s27);overflow:hidden;box-shadow:none}
+html.rv27[data-page="settings"] #main > .rows .row{display:flex;align-items:center;gap:12px;width:100%;min-height:62px;margin:0;padding:11px 14px;border:0;border-radius:0;background:none;box-shadow:inset 0 -1px 0 var(--l27);color:inherit;text-align:left;text-decoration:none;font-family:var(--f27)}
+html.rv27[data-page="settings"] #main > .rows .row:last-child{box-shadow:none}
+html.rv27[data-page="settings"] #main > .rows .row .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;color:inherit;text-decoration:none}
+html.rv27[data-page="settings"] #main > .rows .row .t b{font:600 16px/1.2 var(--f27);letter-spacing:-.01em;color:var(--i27)}
+html.rv27[data-page="settings"] #main > .rows .row .t span{font:500 13px/1.35 var(--f27);color:var(--i27c)}
+html.rv27[data-page="settings"] #main > .rows .row .chev{flex:none;color:var(--i27c)}
+html.rv27[data-page="settings"] #main > .rows .row .star{flex:none;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:50%;background:none;color:var(--i27c)}
+html.rv27[data-page="settings"] #main > .rows .row .star.on{color:#F5B301}
+html.rv27[data-page="settings"] #main > .rows .sub{padding:14px 14px 2px;font:700 12px/1 var(--f27);letter-spacing:.04em;text-transform:uppercase;color:var(--i27c);background:none;border:0}
+html.rv27[data-page="settings"] #main > .rows .sub span{margin-left:6px;font-weight:500}
+html.rv27[data-page="settings"] #main .switch{flex:none;position:relative;width:48px;height:28px;border:0;border-radius:999px;background:rgba(120,120,128,.36);box-shadow:none;transition:none}
+html.rv27[data-page="settings"] #main .switch::before{content:none}
+html.rv27[data-page="settings"] #main .switch::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transform:none;transition:none}
+html.rv27[data-page="settings"] #main [aria-checked="true"] .switch{background:var(--ok27)}
+html.rv27[data-page="settings"] #main [aria-checked="true"] .switch::after{left:23px}
+html.rv27[data-page="settings"] #main > .chips.wrapchips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 16px 0;padding:0;overflow:visible;-webkit-mask-image:none;mask-image:none}
+html.rv27[data-page="settings"] #main > .chips.wrapchips .chip{height:38px;min-height:0;padding:0 15px;border:0;border-radius:999px;background:var(--s27);box-shadow:none;font:500 14px/1 var(--f27);color:var(--i27)}
+html.rv27[data-page="settings"] #main > .chips.wrapchips .chip[aria-pressed="true"]{background:var(--i27);color:var(--b27);font-weight:700}
+html.rv27[data-page="settings"] #main > .foot{margin:14px 20px 0;font:500 13px/1.5 var(--f27);color:var(--i27c)}
+html.rv27[data-page="players"] #main .pp .tgrp{margin:14px 16px 0!important;border-radius:20px!important;background:var(--s27)!important}
+html.rv27[data-page="players"] #main .pp .tgrp.plain{margin-top:12px!important}
+html.rv27[data-page="record"] #main > .rows, html.rv27[data-page="settings"] #main > .rows{padding:0}
+html.rv27[data-page="settings"] #main > .topbar .ib{width:40px!important;height:40px!important;margin:0!important;padding:0!important;background:var(--s27)!important}
+html.rv27[data-page="settings"] #main > .topbar .ttl{flex:1;margin:0!important;padding:0!important}

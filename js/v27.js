@@ -35,12 +35,17 @@
 
   /* ---------- the shell: the four-tab bar, and Games / Standings / Leaders across the top of Scores ---------- */
   const SCORES = ['scores', 'standings', 'stats'];
+  const SUB = { teams: ['Teams', '#settings'], players: ['Players', '#settings'], record: ['Record', '#settings/about'], settings: ['Settings', '#settings'] };
   function paintBar() {
     const live = on(); root.classList.toggle('rv27', live); if ($bar) $bar.hidden = !live; if (!live) { if ($seg) $seg.hidden = true; if ($sh) $sh.hidden = true; return; }
     const pg = root.dataset.page || 'home'; const old = document.querySelector('#tabs .tab.on'); const owner = old ? old.dataset.tab : 'home';
     const cur = root.classList.contains('w27on') ? 'watch' : ['settings', 'teams', 'players', 'record'].includes(pg) ? 'you' : SCORES.includes(owner) ? 'scores' : 'home';
     $bar.querySelectorAll('[data-t27]').forEach(a => { const is = a.dataset.t27 === cur; a.classList.toggle('on', is); if (is) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    const inScores = SCORES.includes(pg); $seg.hidden = !inScores; if ($sh) $sh.hidden = !inScores;
+    /* v507: Teams, Players, Record and the Settings list carry the same title bar as Scores, with a way back */
+    const inScores = SCORES.includes(pg), sub = pg === 'settings' ? (/^#settings\/menu/.test(location.hash) ? SUB.settings : null) : SUB[pg] || null; $seg.hidden = !inScores;
+    if ($sh) { $sh.hidden = !(inScores || sub); $sh.classList.toggle('sub27', !!sub); const h = $sh.querySelector('#sht27'), bk = $sh.querySelector('#shb27'), sr = $sh.querySelector('.shs27');
+      if (h) h.textContent = sub ? sub[0] : 'Scores'; if (bk) { bk.hidden = !sub; if (sub) bk.setAttribute('href', sub[1]); } if (sr) sr.hidden = !!sub; }
+    root.classList.toggle('sub27on', !!sub);
     if (inScores) { const lk = (V.route && V.route() || {}).lk || '', col = /^ncaa/.test(lk), rec = col && pg === 'stats' && !!store.get('v5:ldrec', false); $seg.classList.toggle('four', col);
       $seg.querySelectorAll('a').forEach(a => { const k = a.dataset.s27; if (k === 'recruits') a.hidden = !col; const is = k === 'recruits' ? rec : k === pg && !(k === 'stats' && rec); a.classList.toggle('on', is); if (is) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }); }
   }
