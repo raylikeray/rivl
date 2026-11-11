@@ -5490,8 +5490,18 @@ html body .story .stcd .stok path{stroke-dasharray:40;stroke-dashoffset:40;anima
 html body .story .stcd .lnnm+.stpl{margin-top:8px;max-width:300px;line-height:1.35}
 html body .story .stcd .stnxh{margin-top:34px}
 html body .story .stcd .stnx{display:flex;flex-direction:column;gap:14px;margin-top:16px;width:100%;max-width:330px;text-align:left}
-html body .story .stcd .stnx>div{display:flex;align-items:center;gap:12px;min-width:0}
+html body .story .stcd .stnx>div,html body .story .stcd .stnx>a{display:flex;align-items:center;gap:12px;min-width:0;color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
+html body .story .stcd .stnx>a{padding:6px 0;margin:-6px 0}
+html body .story .stcd .stnx>a:active{opacity:.7}
+html body .story .stcd .stnx>a>span{flex:1}
+html body .story .stcd .stnx>a>svg{flex:none;width:18px;height:18px;fill:none;stroke:rgba(255,255,255,.55);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 html body .story .stcd .stnx img{width:34px;height:34px;object-fit:contain;flex:none}
 html body .story .stcd .stnx span{min-width:0}
 html body .story .stcd .stnx b{display:block;font-size:16px;font-weight:800;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 html body .story .stcd .stnx small{display:block;margin-top:2px;font-size:13px;font-weight:650;color:rgba(255,255,255,.7)}
+
+/* v511 a way out of a story: the game a clip or a card is about */
+html body .story .stgm{pointer-events:auto;display:inline-flex;align-items:center;gap:2px;min-height:44px;margin-top:12px;padding:0 10px 0 16px;border-radius:999px;background:rgba(255,255,255,.16);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:inset 0 0 0 .6px rgba(255,255,255,.22);font-size:14px;font-weight:700;letter-spacing:-.005em;color:#fff;text-decoration:none;-webkit-tap-highlight-color:transparent;transition:transform .12s,background .12s}
+html body .story .stgm:active{transform:scale(.96);background:rgba(255,255,255,.26)}
+html body .story .stgm svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+html body .story .stcd .stgm{margin-top:26px}

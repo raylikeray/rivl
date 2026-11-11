@@ -1096,7 +1096,7 @@
      their older clips by name search (months back), and when the WNBA is in your mix but out of season, so do its eight
      top scorers, so the league is not missing from the scroll. */
   let oldD = null, oldAt = 0, oldDone = false, wnbaTop = null;
-  const oldLoad = () => { if (Date.now() - oldAt < 30 * 60000 || !HW.hub) return; oldAt = Date.now(); HW.hub.file('feed-old.json').then(d => { oldDone = true; if (d && d.items) oldD = d; }, () => { oldDone = true; }); };
+  const oldLoad = () => { if (Date.now() - oldAt < 30 * 60000 || !HW.hub) return; oldAt = Date.now(); HW.hub.file('feed-old.json').then(d => { oldDone = true; if (d && d.items) { oldD = d; document.dispatchEvent(new Event('rivl:lib')); } }, () => { oldDone = true; }); };
   const watchLks = () => { const l = new Set(ORDER.filter(lk => feedSrc[lk] && feedSrc[lk].out && feedSrc[lk].out.follows)); return l.size ? l : new Set(ORDER); };
   const watchNamed = lks => { const out = [], ps = fplayers.all().filter(p => LEAGUES[p.lk] && lks.has(p.lk)).slice(0, 14);
     ps.forEach(p => srchGet(p, LEAGUES[p.lk]).forEach(it => out.push(it)));
@@ -1126,6 +1126,19 @@
     const best = ((oldD && oldD.best) || []).filter(c => c && c.u && lks.has(c.lk) && !ids.has(c.id)).map(feedIt);
     return { all: [...lay(rows.filter(it => !gone.has(it.id))), ...lay(rows.filter(it => gone.has(it.id)))], mine: its.filter(isMine).sort((a, b) => b.ts - a.ts),
       plays: [...its.filter(it => it.vk === 'play' && !it.old), ...best].sort((a, b) => Math.abs(b.w || 0) - Math.abs(a.w || 0)) }; };
+  /* v511 more of this: every clip of one player or one team, newest first. Reads the clip file, the library and the season's
+     best; a player also brings the older clips found by name. A game's reel names everyone in it, so it counts for
+     the teams and not for any one player. Nothing is ranked here, it is simply all of them. */
+  const watchOf = q => { feedLoad(); oldLoad(); const ids = new Set(), its = [], id = String(q.ath || q.team || '');
+    [feedD, oldD].forEach(d => { if (d) [...(d.items || []), ...(d.more || []), ...(d.best || [])].forEach(c => { if (!c || !c.u || c.lk !== q.lk || ids.has(c.id) || (q.ath && c.k === 'reel') || !(q.ath ? c.a || [] : c.tm || []).map(String).includes(id)) return; ids.add(c.id); its.push(feedIt(c)); }); });
+    if (q.ath && q.name && LEAGUES[q.lk]) srchGet({ lk: q.lk, id, name: q.name }, LEAGUES[q.lk], true).forEach(it => { const k = it.id.slice(1); if (ids.has(k)) return; ids.add(k); its.push(Object.assign({}, it, { vk: 'play', pk: '', cl: 0, gw: 0, w: 0, tms: [], gid: '', sub: (it.L && it.L.short) || '', old: 1 })); });
+    return its.sort((a, b) => b.ts - a.ts); };
+  /* v511 a game's videos: its reel first (the whole game cut down), then its plays in the order they happened, then anything
+     else filed under the game. Reads the library too, so a game from last week still has them. */
+  const gameAll = gid => { feedLoad(); oldLoad(); const ids = new Set(), reel = [], plays = [], rest = []; gid = String(gid);
+    [feedD, oldD].forEach(d => { if (!d) return; [...(d.items || []), ...(d.best || [])].forEach(c => { if (c && c.u && String(c.e) === gid && !ids.has(c.id)) { ids.add(c.id); plays.push(c); } });
+      (d.more || []).forEach(c => { if (c && c.u && String(c.e) === gid && !ids.has(c.id)) { ids.add(c.id); (c.k === 'reel' ? reel : rest).push(c); } }); });
+    const byT = (a, b) => a.ts - b.ts; return [...reel.sort(byT).slice(-1), ...plays.sort(byT), ...rest.sort(byT)].map(feedIt); };
   /* v505: Following goes deep. After the newest clips from your teams' and players' stories come all of their clips in
      the library, newest first, then everything else. Top plays runs on into the season's biggest plays. */
   const watchSubs = () => { const now = Date.now(), seen = stSeen(), subs = storySubjects();
@@ -1153,7 +1166,7 @@
     const watch = !!(opt && opt.watch);
     const subs = (opt && opt.subs) || storySubjects(); let si = subs.findIndex(x => x.key === key); if (si < 0) return;
     if (!watch) { const lastSub = [...subs].reverse().find(x => x.kind !== 'saved'); const nx = [];
-      ORDER.forEach(lk => { const o = feedSrc[lk] && feedSrc[lk].out; ((o && o.myTeams) || []).forEach(t => { const g = t.nx; if (!g || nx.some(n => n.id === g.id) || !(new Date(g.date).getTime() > Date.now() - 20 * 60000)) return; const home = String(g.home.id) === String(t.id); nx.push({ id: g.id, t: new Date(g.date).getTime(), home, us: home ? g.home : g.away, them: home ? g.away : g.home, when: `${relDay(HW.ymdOf(g.date))}, ${tipOf(g)}` }); }); });
+      ORDER.forEach(lk => { const o = feedSrc[lk] && feedSrc[lk].out; ((o && o.myTeams) || []).forEach(t => { const g = t.nx; if (!g || nx.some(n => n.id === g.id) || !(new Date(g.date).getTime() > Date.now() - 20 * 60000)) return; const home = String(g.home.id) === String(t.id); nx.push({ id: g.id, lk, t: new Date(g.date).getTime(), home, us: home ? g.home : g.away, them: home ? g.away : g.home, when: `${relDay(HW.ymdOf(g.date))}, ${tipOf(g)}` }); }); });
       if (lastSub && subs[si].kind !== 'saved') lastSub.its = [...lastSub.its, { kind: 'caught', id: 'c' + todayCT(), ts: Date.now(), nx: nx.sort((a, b) => a.t - b.t).slice(0, 3) }]; }
     const W = innerWidth, H = innerHeight, HYP = Math.ceil(Math.hypot(W, H) / 2) + 4;
     const el = document.createElement('div'); el.className = 'story' + (watch ? ' w27v' : '');
@@ -1201,6 +1214,9 @@
       /* v473: the picture and the name at the top of a story open that player's or team's page */
       const to = x.kind === 'player' && x.id ? href.player(x.lk, x.id) : x.kind === 'team' && x.id ? href.team(x.lk, x.id) : '', o = to ? `<a class="stgo" data-stgo href="${esc(to)}" aria-label="${esc(x.full || x.name)}">` : '<span class="stgo">', c = to ? '</a>' : '</span>';
       pane.querySelector('.sthd').innerHTML = `${o}<span class="ring${x.kind === 'team' && x.logo ? ' tm' : ''}"><span>${stAvatar(x, x.kind === 'player' ? 34 : x.kind === 'team' ? 48 : 22)}</span></span><span class="who"><b>${esc(x.full || x.name)}</b><small>${esc(ago(new Date(it.ts).toISOString()).replace(/ ago$/, ''))}</small></span>${c}<button class="stx" data-stx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`; };
+    /* v511 a way out of a story: a clip or a card about a game links to that game. Watch has its own button for this. */
+    const GOCH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+    const goGame = (lk, id) => !watch && lk && id ? `<a class="stgm" data-stgo href="${esc(href.game(lk, id))}">Go to game${GOCH}</a>` : '';
     const render = () => {
       leave(); const x = sub(), it = item(); stMark(x.key, it.id); if (it.sk) stMark(it.sk, it.id); head(); segs(); t0 = performance.now(); rate = 1; if (watch && opt.onItem) opt.onItem(el, it, x, si);
       const act = pane.querySelector('.stact'); act.hidden = it.kind !== 'vid'; if (it.kind === 'vid') { const lk = stLikes().includes(it.id), sv = stSaved().some(y => y.id === it.id); const [bl2, bs2] = act.children; bl2.classList.toggle('on', lk); bl2.setAttribute('aria-pressed', lk); bs2.classList.toggle('on', sv); bs2.setAttribute('aria-pressed', sv); }
@@ -1224,7 +1240,7 @@
         } catch (e) {}
         const ln = it.ln, line = ln ? [[ln.pts, 'PTS'], [ln.reb, 'REB'], [ln.ast, 'AST']].filter(c => c[0] !== '' && c[0] != null).map(c => `${esc(String(c[0]))} ${c[1]}`).join(' \u00b7 ') : '';
         const meta = `${it.rank ? `<span class="gw">No. ${it.rank}</span>` : ''}${it.gw ? '<span class="gw">Game winner</span>' : ''}${it.wc ? `<span>${esc(it.wc)}</span>` : ''}${it.tag ? `<span>${esc(it.tag)}</span>` : ''}${line ? `<span>${line}</span>` : ''}`;
-        cap.innerHTML = `${meta ? `<div class="stmeta">${meta}</div>` : ''}<b>${esc(it.title)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ''}`; cap.hidden = false;
+        cap.innerHTML = `${meta ? `<div class="stmeta">${meta}</div>` : ''}<b>${esc(it.title)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ''}${goGame((it.L || {}).key, it.gid)}`; cap.hidden = false;
       } else {
         try { vd.pause(); } catch (e) {} vw.hidden = true; bl.style.backgroundImage = 'none'; cap.hidden = true; card.hidden = false;
         const g = it.g, L = it.L;
@@ -1246,7 +1262,7 @@
           card.innerHTML = `<span class="fin">Biggest swing</span><div class="stsw"><svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none" aria-hidden="true">${sw.brk.map(i => `<line class="pb" x1="${X(i).toFixed(1)}" x2="${X(i).toFixed(1)}" y1="0" y2="${Hh}"/>`).join('')}<line class="mid" x1="0" x2="${W}" y1="${Hh / 2}" y2="${Hh / 2}"/><polygon class="ar" points="0,${Hh / 2} ${pts} ${W},${Hh / 2}"/><polyline class="ln" points="${pts}"/></svg><i class="dot" style="left:${(X(sw.i) / W * 100).toFixed(2)}%;top:${(Y(sw.to) / Hh * 100).toFixed(2)}%"></i><span class="ax t">${esc(us.abbr || us.short)}</span><span class="ax b">${esc(them.abbr || them.short)}</span></div><div class="stpc"><b>${a}%</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg><b class="${b >= a ? 'up' : 'dn'}">${b}%</b></div><span class="stpl">${esc(us.short)} win chance</span><p class="sttx">${esc(String(q.text))}</p><span class="stwh">${esc(perLbl(q))}${ck ? ' ' + esc(ck) : ''}${esc(sc)}</span>`;
         } else if (it.kind === 'caught') {
           bg.style.background = 'linear-gradient(165deg,#0a0a0c 30%,#2b1f7a 140%)';
-          card.innerHTML = `<svg class="stok" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="27"/><path d="M20 33.5l8.5 8.5L45 24.5"/></svg><b class="lnnm">You're caught up</b><span class="stpl">That is everything new from your teams and players.</span>${it.nx.length ? `<span class="fin stnxh">Next up</span><div class="stnx">${it.nx.map(n => `<div>${n.us.logo ? imgSized(n.us.logo, 56, 56) : ''}<span><b>${esc(n.us.short)} ${n.home ? 'vs' : 'at'} ${esc(n.them.short)}</b><small>${esc(n.when)}</small></span></div>`).join('')}</div>` : ''}`;
+          card.innerHTML = `<svg class="stok" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="27"/><path d="M20 33.5l8.5 8.5L45 24.5"/></svg><b class="lnnm">You're caught up</b><span class="stpl">That is everything new from your teams and players.</span>${it.nx.length ? `<span class="fin stnxh">Next up</span><div class="stnx">${it.nx.map(n => `<a data-stgo href="${esc(href.game(n.lk, n.id))}">${n.us.logo ? imgSized(n.us.logo, 56, 56) : ''}<span><b>${esc(n.us.short)} ${n.home ? 'vs' : 'at'} ${esc(n.them.short)}</b><small>${esc(n.when)}</small></span>${GOCH}</a>`).join('')}</div>` : ''}`;
         } else if (it.kind === 'tops') { const home = String(g.home.id) === it.tid; const us = home ? g.home : g.away, them = home ? g.away : g.home; const won = +us.score > +them.score;
           bg.style.background = `linear-gradient(165deg,#0a0a0c 35%,${x.color} 150%)`;
           card.innerHTML = `<span class="fin">Top scorers</span><div class="sttp">${it.tp.map(a => `<div class="tpr">${headshot(a.hs, x.color, 60, a.name)}<span><b>${esc(a.name)}</b><small>${[[a.pts, 'PTS'], [a.reb, 'REB'], [a.ast, 'AST']].filter(c => c[0] != null).map(c => `${c[0]} ${c[1]}`).join(' \u00b7 ')}</small></span></div>`).join('')}</div><span class="stwh">${esc(us.short)} ${esc(String(us.score))}, ${esc(them.short)} ${esc(String(them.score))} \u00b7 ${won ? 'Win' : 'Loss'}</span>`;
@@ -1255,6 +1271,7 @@
           const chips = [[ln.pts, 'PTS'], [ln.reb, 'REB'], [ln.ast, 'AST'], [+ln.tpm > 0 ? ln.tpm : '', '3PM']].filter(c => c[0] !== '' && c[0] != null).map(c => `<s>${esc(String(c[0]))}<em>${c[1]}</em></s>`).join('');
           card.innerHTML = `<span class="lnhs">${headshot(x.hs, x.color, 132, x.full || x.name)}</span><b class="lnnm">${esc(x.full || x.name)}</b><span class="lnres"><i class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</i>${esc(String(us.score))}-${esc(String(them.score))} ${us === g.home ? 'vs' : 'at'} ${esc(them.short)}</span><span class="lnch">${chips}</span>`; }
       }
+      if (it.kind !== 'vid' && it.kind !== 'caught' && it.g && it.L) card.insertAdjacentHTML('beforeend', goGame(it.L.key, it.g.id));
       prep();
       cur = { it, v: vd, at: performance.now() };
       const m = pane.querySelector('.stmedia'); if (!RM() && !watch) m.animate(slide ? [{ opacity: .3, transform: 'translateY(56px)' }, { opacity: 1, transform: 'none' }] : [{ opacity: .35, transform: 'scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: slide ? 260 : 180, easing: slide ? EASE : 'ease-out' }); slide = false;
@@ -1314,12 +1331,16 @@
       pane.animate([{ transform: from }, { transform: `translateY(${-d * h}px)` }], { duration: 250, easing: EASE }).finished.then(done, done); };
     /* v471 the same sideways, between the lists: the clip follows the finger and the next list's first clip comes in beside
        it. A tab tapped slides the same way. opt.onSlide gets the position between tabs so the underline can travel with it. */
-    const tabItem = n => { const x = subs[n]; if (!x) return null; const sw = new Set(stSeen()[x.key] || []); return x.its[Math.max(0, x.its.findIndex(y => !sw.has(y.id)))] || null; };
+    /* v511: a list opened from inside another (more of one player) knows where it came from: sub.back is that list and
+       sub.backId the clip that was playing. Swiping it away goes back there, to that clip. */
+    const tabAt = (n, id) => { const x = subs[n]; if (!x) return -1; if (id) { const k = x.its.findIndex(y => y.id === id); if (k >= 0) return k; } const sw = new Set(stSeen()[x.key] || []); return Math.max(0, x.its.findIndex(y => !sw.has(y.id))); };
+    const tabItem = (n, id) => { const x = subs[n]; return (x && x.its[tabAt(n, id)]) || null; };
+    const sideOf = d => { const x = sub(); return x && x.back != null ? (d < 0 ? x.back : -1) : si + d; }, sideId = () => (sub() && sub().back != null && sub().backId) || '';
     const peekShow = (it, tf) => { if (!peek) { peek = document.createElement('div'); peek.className = 'wpeek27'; el.insertBefore(peek, pane); } peek.style.display = it ? '' : 'none'; if (!it) return; const u = it.thumb || ''; if (peek.dataset.u !== u) { peek.dataset.u = u; peek.style.backgroundImage = u ? `url("${u}")` : 'none'; } peek.style.transform = tf; };
     const slideTo = (f, live) => { if (opt.onSlide) opt.onSlide(el, f, live); };
-    const hDrag = dx => { const d = dx < 0 ? 1 : -1, nx = tabItem(si + d), x = nx ? dx : dx * .25; pane.style.transform = `translateX(${x}px)`; peekShow(nx, `translateX(${x + d * W}px)`); slideTo(si - x / W, true); };
-    function hGo(nsi, from) { if (busy || nsi === si || !subs[nsi]) return; const d = nsi > si ? 1 : -1, nx = tabItem(nsi);
-      const sw = () => { el.classList.remove('wpz'); paused = false; si = nsi; const s2 = new Set(stSeen()[sub().key] || []); ii = Math.max(0, sub().its.findIndex(y => !s2.has(y.id))); render(); };
+    const hDrag = dx => { const d = dx < 0 ? 1 : -1, nx = tabItem(sideOf(d), sideId()), x = nx ? dx : dx * .25; pane.style.transform = `translateX(${x}px)`; peekShow(nx, `translateX(${x + d * W}px)`); slideTo(si - x / W, true); };
+    function hGo(nsi, from, toId) { if (busy || nsi === si || !subs[nsi]) return; const d = nsi > si ? 1 : -1, nx = tabItem(nsi, toId);
+      const sw = () => { el.classList.remove('wpz'); paused = false; si = nsi; ii = tabAt(nsi, toId); render(); };
       pane.style.transform = ''; slideTo(nsi, false);
       if (RM()) { if (peek) peek.style.display = 'none'; return sw(); }
       const pf = from ? peek.style.transform : `translateX(${d * W}px)`; peekShow(nx, 'none'); busy = true; try { vd.pause(); } catch (e) {}
@@ -1327,8 +1348,8 @@
       if (nx) peek.animate([{ transform: pf }, { transform: 'none' }], o);
       const done = () => { busy = false; sw(); setTimeout(() => { if (peek) peek.style.display = 'none'; }, 120); };
       pane.animate([{ transform: from || 'none' }, { transform: `translateX(${-d * W}px)` }], o).finished.then(done, done); }
-    const hEnd = (dx, vx0) => { const d = dx < 0 ? 1 : -1, nsi = si + d, from = pane.style.transform || 'none';
-      if (subs[nsi] && (Math.abs(dx) > W * .22 || (Math.abs(vx0) > .4 && Math.abs(dx) > 28))) return hGo(nsi, from);
+    const hEnd = (dx, vx0) => { const d = dx < 0 ? 1 : -1, nsi = sideOf(d), from = pane.style.transform || 'none';
+      if (subs[nsi] && (Math.abs(dx) > W * .22 || (Math.abs(vx0) > .4 && Math.abs(dx) > 28))) return hGo(nsi, from, sideId());
       const pf = peek ? peek.style.transform : ''; pane.style.transform = ''; slideTo(si, false); if (RM()) { if (peek) peek.style.display = 'none'; return; }
       pane.animate([{ transform: from }, { transform: 'none' }], { duration: 240, easing: EASE }); if (peek && subs[nsi]) peek.animate([{ transform: pf }, { transform: `translateX(${d * W}px)` }], { duration: 240, easing: EASE }).finished.then(() => { peek.style.display = 'none'; }, () => {}); else if (peek) peek.style.display = 'none'; };
     let pd0 = 0;
@@ -1395,7 +1416,7 @@
       sk.addEventListener('pointermove', e => { if (sOn) sAt(e); });
       const sUp = () => { if (!sOn) return; sOn = false; el.classList.remove('wsk27'); if (sWas) resume(); }; sk.addEventListener('pointerup', sUp); sk.addEventListener('pointercancel', sUp);
       sk.addEventListener('click', e => e.stopPropagation()); }
-    el.__w = { tab(i) { if (i !== si) hGo(i); }, close(pop) { close(pop); }, get item() { return item(); }, get sub() { return sub(); }, get si() { return si; }, get paused() { return paused; }, pause() { pause(); el.classList.remove('held'); }, resume() { resume(); },
+    el.__w = { tab(i, id) { if (i !== si) hGo(i, null, id); else if (subs[i]) { ii = tabAt(i, id); render(); } }, close(pop) { close(pop); }, get item() { return item(); }, get sub() { return sub(); }, get si() { return si; }, get paused() { return paused; }, pause() { pause(); el.classList.remove('held'); }, resume() { resume(); },
       get rate() { return rate; }, setRate(v) { rate = +v || 1; setRate(); }, get auto() { return auto; }, setAuto(v) { auto = !!v; vd.loop = sb.loop = !auto; }, next() { step(1); } };
     el.__st = { get busy() { return busy; }, get ii() { return ii; }, get paused() { return paused; }, get si() { return si; }, get names() { return subs.map(x => x.name); }, get items() { return sub().its.map(x => x.kind === 'vid' ? `${x.ck || 'post'} | ${x.title} | ${x.tag || ''}${x.gw ? ' GW' : ''}${x.ln ? ' +line' : ''} | ${x.v9 ? 'v9' : 'wide'}` : x.kind); }, go(n) { ii = n; render(); }, last() { ii = sub().its.length - 1; render(); }, get kind() { return sub().kind; } };   // read by the test harness
     if (!RM()) { busy = true; dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: EASE });
@@ -2131,7 +2152,7 @@
   { let raf = 0; const run = () => { raf = 0; const h = document.querySelector('#main .aph'), fx = document.querySelector('#main .apfx'); if (!h || !fx) return; const on = h.getBoundingClientRect().bottom <= fx.offsetHeight + 1; if (fx.classList.contains('on') !== on) fx.classList.toggle('on', on); };   // v412: the bar takes over the moment the header no longer covers its space
     window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(run); }, { passive: true }); document.addEventListener('rivl:rendered', run); }
   /* v462: what the 2027 preview (js/v27.js) reads from here */
-  const x27 = { feedSource, storySubjects, watchSubs, watchWarm, watchReady, stLearn, stLikedItems, savedItems: () => stSaved().map(x => Object.assign({ kind: 'vid', L: LEAGUES[x.lk] || null }, x)), gameClips: gid => { feedLoad(); return ((feedD && feedD.items) || []).filter(c => c.u && String(c.e) === String(gid)).sort((a, b) => a.ts - b.ts).map(feedIt); }, sbMeta, clipsOf: gid => { feedLoad(); return ((feedD && feedD.items) || []).filter(c => String(c.e) === String(gid)).length; }, follow: p => fplayers.toggle(p), follows: (lk, id) => fplayers.has(lk, id), athlete: (L, id) => jSoft(`${WEB(L)}/athletes/${id}`, 3600000), headshotOf: (L, id) => idHs(L, id), teamOf: (lk, id) => { const o = feedSrc[lk] && feedSrc[lk].out; return (o && o.tIdx && o.tIdx[String(id)]) || null; }, stSeen, stLike, stSave, stLikes, stSaved, onData(f) { homeRepaint = f; }, warm(its) { if (hlsOk()) (its || []).forEach(it => { if (it && it.kind === 'vid' && it.v9) v9Pick(it.v9); }); } };
+  const x27 = { feedSource, storySubjects, watchSubs, watchWarm, watchReady, watchOf, stLearn, stLikedItems, savedItems: () => stSaved().map(x => Object.assign({ kind: 'vid', L: LEAGUES[x.lk] || null }, x)), gameClips: gameAll, sbMeta, clipsOf: gid => { feedLoad(); return ((feedD && feedD.items) || []).filter(c => String(c.e) === String(gid)).length; }, follow: p => fplayers.toggle(p), follows: (lk, id) => fplayers.has(lk, id), athlete: (L, id) => jSoft(`${WEB(L)}/athletes/${id}`, 3600000), headshotOf: (L, id) => idHs(L, id), teamOf: (lk, id) => { const o = feedSrc[lk] && feedSrc[lk].out; return (o && o.tIdx && o.tIdx[String(id)]) || null; }, stSeen, stLike, stSave, stLikes, stSaved, onData(f) { homeRepaint = f; }, warm(its) { if (hlsOk()) (its || []).forEach(it => { if (it && it.kind === 'vid' && it.v9) v9Pick(it.v9); }); } };
   HW.v5 = Object.assign(HW.v5 || {}, { x27, feedSrc, initDecks, unrivaledCard, unrivaledList, home, scores, todayPill, player, players, playerPicker, rosterOf, monthGames, lastName, fplayers, prefs, teamInfo, teamsIndex, gameCard, heroCard, storyOpen,
     _: { pager, duelPair, panelLogo, nearPanel, duelCard, duelBlock, deepen, h: H, logo, headshot, chev, sec, empty, skeleton, href, safeF, gameCard, heroCard, teamInfo, teamsIndex, fplayers, prefs, starSvg, starLine, tvLabel, teamColor, teamAlt, playerColor, tcv, distinctPalette, tint, V_lift, V_deep, V_panel, V_vivid, pairColors, dragOrder, orderTools, foldToggle, learn, statusWord, seriesLine, seriesShort, seriesPick, seriesPickText, confName, dayUTC, athId, hsUrl, initials, retInfo, scVars, scoreColor, lift: V_lift, deep: V_deep, sized, imgSized, tagWord, scoreRow, mixTo, lumOf, rgbDist, clip, injRow, apHead, apIcons } });
 })();

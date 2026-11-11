@@ -38,6 +38,10 @@
   /* ---------- the shell: the four-tab bar, and Games / Standings / Leaders across the top of Scores ---------- */
   const SCORES = ['scores', 'standings', 'stats'];
   const SUB = { teams: ['Teams', '#settings'], players: ['Players', '#settings'], record: ['Record', '#settings/about'], settings: ['Settings', '#settings'] };
+  const EYE = ['<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.500 12S6 5.500 12 5.500 21.500 12 21.500 12 18 18.500 12 18.500 2.500 12 2.500 12z"/><circle cx="12" cy="12" r="3"/></svg>', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5.700a8.600 8.600 0 0 1 2-.200c6 0 9.500 6.500 9.500 6.500a17 17 0 0 1-2.700 3.500M6.400 7.400A16.600 16.600 0 0 0 2.500 12S6 18.500 12 18.500a8.700 8.700 0 0 0 4.300-1.200M9.900 9.900a3 3 0 0 0 4.200 4.200M4 4l16 16"/></svg>'];
+  function paintEye(show) { const b = $sh && $sh.querySelector('#she27'); if (!b) return; const hid = !!store.get('v5:hide27', false); b.hidden = !show; if (b.dataset.h !== String(hid)) { b.dataset.h = String(hid); b.innerHTML = EYE[hid ? 1 : 0]; b.classList.toggle('on', hid); b.setAttribute('aria-pressed', String(hid)); b.setAttribute('aria-label', hid ? 'Show scores' : 'Hide scores'); } }
+  const setHide = v => { store.set('v5:hide27', !!v); paintEye(true); V.toast(v ? 'Scores are hidden. Tap the eye to bring them back.' : 'Scores are showing.'); const pg = $main.querySelector('#sc27'); if (pg && pg.dataset.lk) scores27(pg.dataset.lk); };
+  if ($sh) $sh.addEventListener('click', e => { const b = e.target.closest('#she27'); if (!b) return; e.preventDefault(); setHide(!store.get('v5:hide27', false)); });
   function paintBar() {
     const live = on(), was27 = root.classList.contains('rv27'); root.classList.toggle('rv27', live); if (was27 !== live && V.applyTheme) V.applyTheme();   /* v508: the strip behind the clock follows the design */ if ($bar) $bar.hidden = !live; if (!live) { if ($seg) $seg.hidden = true; if ($sh) $sh.hidden = true; return; }
     const pg = root.dataset.page || 'home'; const old = document.querySelector('#tabs .tab.on'); const owner = old ? old.dataset.tab : 'home';
@@ -46,7 +50,7 @@
     /* v507: Teams, Players, Record and the Settings list carry the same title bar as Scores, with a way back */
     const inScores = SCORES.includes(pg), sub = pg === 'settings' ? (/^#settings\/menu/.test(location.hash) ? SUB.settings : null) : SUB[pg] || null; $seg.hidden = !inScores;
     if ($sh) { $sh.hidden = !(inScores || sub); $sh.classList.toggle('sub27', !!sub); const h = $sh.querySelector('#sht27'), bk = $sh.querySelector('#shb27'), sr = $sh.querySelector('.shs27');
-      if (h) h.textContent = sub ? sub[0] : 'Scores'; if (bk) { bk.hidden = !sub; if (sub) bk.setAttribute('href', sub[1]); } if (sr) sr.hidden = !!sub; }
+      if (h) h.textContent = sub ? sub[0] : 'Scores'; if (bk) { bk.hidden = !sub; if (sub) bk.setAttribute('href', sub[1]); } if (sr) sr.hidden = !!sub; paintEye(pg === 'scores' && !sub); }
     root.classList.toggle('sub27on', !!sub);
     if (inScores) { const lk = (V.route && V.route() || {}).lk || '', col = /^ncaa/.test(lk), rec = col && pg === 'stats' && !!store.get('v5:ldrec', false); $seg.classList.toggle('four', col);
       $seg.querySelectorAll('a').forEach(a => { const k = a.dataset.s27; if (k === 'recruits') a.hidden = !col; const is = k === 'recruits' ? rec : k === pg && !(k === 'stats' && rec); a.classList.toggle('on', is); if (is) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }); }
@@ -105,22 +109,25 @@
      near black (Spurs, Nets) glows in its second colour, or a lifted version of the first, so the light always shows. */
   const hx6 = c => { c = String(c || '').replace('#', ''); return /^[0-9a-f]{6}$/i.test(c) ? '#' + c : ''; };
   const glowC = t => { let c = hx6(t && t.color) || '#5b6b8c'; const al = hx6(t && (t.alt || t.alternateColor)), l = U.lumOf(c); if (l < .1) c = al && U.lumOf(al) > .2 && U.lumOf(al) < .92 ? al : U.mixTo(c, 255, .5); else if (l < .2) c = U.mixTo(c, 255, .22); return c; };
+  /* v511 hide scores: for a game you mean to watch later. With it on, a game that has started shows its teams and where it
+     stands (live, final) and nothing that gives the result away: no score, no leader, no dimmed loser, no record. */
+  const hideSc = () => !!store.get('v5:hide27', false);
   function sRow(L, g, ctx) {
-    const live = isLive(g) && !g.off, fin = g.state === 'post' && !g.off, h = +g.home.score || 0, a = +g.away.score || 0, sc = live || fin;
-    let st; if (g.off) st = `${esc(g.off)}`; else if (live) st = `<em><i></i>${esc(g.detail || 'Live')}</em><small>${leadWord(g)}</small>`;
-    else if (fin) { const c = clipWord(g); st = `${esc(finalWord(g))}${c ? `<small>${c}</small>` : ''}`; }
+    const live = isLive(g) && !g.off, fin = g.state === 'post' && !g.off, hid = (live || fin) && hideSc(), h = +g.home.score || 0, a = +g.away.score || 0, sc = (live || fin) && !hid;
+    let st; if (g.off) st = `${esc(g.off)}`; else if (live) st = hid ? `<em><i></i>Live</em>` : `<em><i></i>${esc(g.detail || 'Live')}</em><small>${leadWord(g)}</small>`;
+    else if (fin) { const c = clipWord(g); st = hid ? 'Final' : `${esc(finalWord(g))}${c ? `<small>${c}</small>` : ''}`; }
     else { const p = projWord(L, g, ctx); st = `${esc(noTz(tipOf(g)))}${p ? `<small>RIVL: ${esc(p.t.abbr)} ${p.pct}%</small>` : g.tv ? `<small>${esc(String(g.tv).split(',')[0])}</small>` : ''}`; }
     const nm = t => { const n = t.short || t.name || t.abbr || ''; return n.length > 10 && t.abbr ? t.abbr : n; };
-    const side = (t, r, lose) => `<span class="gn27${r ? ' r' : ''}${lose ? ' lo' : ''}">${sc ? `<b class="n">${esc(String(t.score == null ? '' : t.score))}</b><small>${t.rank ? `${t.rank} ` : ''}${esc(nm(t))}</small>` : `<b>${t.rank ? `<i>${t.rank}</i>` : ''}${esc(nm(t))}</b>${t.rec ? `<small>${esc(t.rec)}</small>` : ''}`}</span>`;
-    const p2 = !sc && !g.off ? projWord(L, g, ctx) : null, aw = p2 ? (p2.home ? 100 - p2.pct : p2.pct) : 0;
+    const side = (t, r, lose) => `<span class="gn27${r ? ' r' : ''}${lose ? ' lo' : ''}">${sc ? `<b class="n">${esc(String(t.score == null ? '' : t.score))}</b><small>${t.rank ? `${t.rank} ` : ''}${esc(nm(t))}</small>` : `<b>${t.rank ? `<i>${t.rank}</i>` : ''}${esc(nm(t))}</b>${t.rec && !hid ? `<small>${esc(t.rec)}</small>` : ''}`}</span>`;
+    const p2 = !sc && !hid && !g.off ? projWord(L, g, ctx) : null, aw = p2 ? (p2.home ? 100 - p2.pct : p2.pct) : 0;
     return `<a class="g27 gw27${isFav(g) ? ' my' : ''}${live ? ' lv' : ''}" href="${U.href.game(L.key, g.id)}" style="--a:${glowC(g.away)};--h:${glowC(g.home)}">${disc(g.away, 40)}${side(g.away, 0, sc && a < h)}<span class="st27${live ? ' lv' : ''}">${st}</span>${side(g.home, 1, sc && h < a)}${disc(g.home, 40)}${p2 ? `<span class="gm27"><i style="width:${aw}%"></i></span>` : ''}</a>`;
   }
   function sHero(L, g, ctx) {
-    const live = isLive(g) && !g.off, fin = g.state === 'post' && !g.off, h = +g.home.score || 0, a = +g.away.score || 0;
-    const top = g.off ? esc(g.off) : live ? `<i></i>${esc(periodWord(L, g))}` : fin ? esc(finalWord(g)) : `${esc(relDay(ymd(g)))} · ${esc(noTz(tipOf(g)))}`;
-    const mid = live || fin ? `<b class="${a < h ? 'lo' : ''}">${a}</b><em></em><b class="${h < a ? 'lo' : ''}">${h}</b>` : `<u>at</u>`;
+    const live = isLive(g) && !g.off, fin = g.state === 'post' && !g.off, hid = (live || fin) && hideSc(), h = +g.home.score || 0, a = +g.away.score || 0;
+    const top = g.off ? esc(g.off) : hid ? (live ? '<i></i>Live' : 'Final') : live ? `<i></i>${esc(periodWord(L, g))}` : fin ? esc(finalWord(g)) : `${esc(relDay(ymd(g)))} · ${esc(noTz(tipOf(g)))}`;
+    const mid = (live || fin) && !hid ? `<b class="${a < h ? 'lo' : ''}">${a}</b><em></em><b class="${h < a ? 'lo' : ''}">${h}</b>` : `<u>at</u>`;
     const p = projWord(L, g, ctx), c = fin ? clipWord(g) : '', aw = p ? Math.min(99, Math.max(1, p.home ? 100 - p.pct : p.pct)) : 50;   // never 0 or 100: a projection is not a certainty
-    const foot = p ? `<span class="gmt27"><i style="width:${aw}%"></i><u style="left:${aw}%"></u></span><span class="gft27"><b>${esc(g.away.abbr || '')} ${aw}%</b><span>RIVL projection</span><b>${100 - aw}% ${esc(g.home.abbr || '')}</b></span>` : `<span class="gft27 one"><b>${live ? leadWord(g) : c || (g.tv ? esc(String(g.tv).split(',')[0]) : '')}</b></span>`;
+    const foot = p ? `<span class="gmt27"><i style="width:${aw}%"></i><u style="left:${aw}%"></u></span><span class="gft27"><b>${esc(g.away.abbr || '')} ${aw}%</b><span>RIVL projection</span><b>${100 - aw}% ${esc(g.home.abbr || '')}</b></span>` : `<span class="gft27 one"><b>${hid ? 'Score hidden' : live ? leadWord(g) : c || (g.tv ? esc(String(g.tv).split(',')[0]) : '')}</b></span>`;
     const side = t => `<span class="gs27">${disc(t, 58)}<b>${esc(t.short)}</b></span>`;
     return `<a class="hero27 gw27${live ? ' lv' : ''}" href="${U.href.game(L.key, g.id)}" style="--a:${glowC(g.away)};--h:${glowC(g.home)}"><span class="gin27"><span class="gbl27 a"></span><span class="gbl27 h"></span><span class="gtp27">${top}</span><span class="grw27">${side(g.away)}<span class="gsc27">${mid}</span>${side(g.home)}</span>${foot}</span></a>`;
   }
@@ -135,7 +142,8 @@
     const ok = games.filter(g => !g.tbd), mine = (x, y) => isFav(y) - isFav(x), byTip = (x, y) => new Date(x.date) - new Date(y.date);
     const hero = ok.find(g => isFav(g) && isLive(g) && !g.off) || ok.find(g => isFav(g) && g.state === 'pre' && !g.off) || ok.find(g => isFav(g) && !g.off) || null;
     const rest = games.filter(g => g !== hero), off = rest.filter(g => g.off), live = rest.filter(g => isLive(g) && !g.off).sort(mine), done = rest.filter(g => !isLive(g) && g.state === 'post' && !g.off).sort((x, y) => mine(x, y) || byTip(y, x)), ahead = rest.filter(g => !live.includes(g) && !done.includes(g) && !g.off).sort((x, y) => byTip(x, y) || mine(x, y));
-    return (hero ? sHero(L, hero, ctx) : '') + sSec('Live', live, L, ctx, true) + sSec(day === today ? esc(relDay(day)) : 'Scheduled', ahead, L, ctx) + sSec('Final', done, L, ctx) + sSec('Not played', off, L, ctx);
+    const note = hideSc() && games.some(g => !g.off && (isLive(g) || g.state === 'post')) ? `<div class="shn27"><span>Scores are hidden</span><button data-a27="showsc">Show</button></div>` : '';
+    return note + (hero ? sHero(L, hero, ctx) : '') + sSec('Live', live, L, ctx, true) + sSec(day === today ? esc(relDay(day)) : 'Scheduled', ahead, L, ctx) + sSec('Final', done, L, ctx) + sSec('Not played', off, L, ctx);
   }
   function sWeeks(day, cal) {
     const today = todayCT(), m0 = monOf(day), gd = new Set(cal || []); let h = '';
@@ -166,6 +174,7 @@
     body.dataset.d = day;
     V.refresh = () => scores27(lk, true); V.refresh.every = 25000;
   }
+  $main.addEventListener('click', e => { const b = e.target.closest('[data-a27="showsc"]'); if (!b) return; e.preventDefault(); setHide(false); });
   $main.addEventListener('click', e => { const b = e.target.closest('[data-a27="more"]'); if (!b) return; e.preventDefault(); const m = b.previousElementSibling; if (m) m.hidden = false; b.remove(); });
   { const sc0 = V.scores; V.scores = (lk, ...a) => on() && !(lk === 'wnba' && (V.unrOn ? V.unrOn() : store.get('v5:scunr', false))) ? scores27(lk) : sc0(lk, ...a); }
 
@@ -448,9 +457,12 @@
   function gameDecorate() {
     if (!on() || root.dataset.page !== 'game') return; const now = Date.now(); if (now - gcAt < 300) { clearTimeout(gcT); gcT = setTimeout(gameDecorate, 320); return; } gcAt = now;
     const m = /^#game\/([a-z]+)\/([^/?]+)/.exec(location.hash || ''); const panel = $main.querySelector('#gbody .gpanel'); if (!m || !panel) return;
-    const its = X.gameClips(m[2]); const have = panel.querySelector('.gc27');
-    if (its.length < 2) { if (have) have.remove(); panel.classList.remove('gcon27'); return; }
-    const html = `<div class="sec"><h2>Clips from this game</h2><span class="cnt27">${its.length}</span></div><div class="rl27 cv27">${its.map(it => `<button class="cl27" data-gclip="${esc(it.id)}" data-gid="${esc(m[2])}" aria-label="${esc(it.title)}">${it.thumb ? `<img src="${esc(up916(it.thumb))}" data-o="${esc(it.thumb)}" alt="" loading="lazy" onerror="if(this.dataset.o){this.src=this.dataset.o;this.removeAttribute('data-o')}else this.remove()">` : ''}<i class="pl">${I.play}</i><b>${esc(it.title)}</b></button>`).join('')}</div>`, h = hash(html);
+    const all = X.gameClips(m[2]), reel = all.find(i => i.vk === 'reel'), its = all.filter(i => i !== reel), row = its.length >= (reel ? 1 : 2); const have = panel.querySelector('.gc27');
+    if (!reel && !row) { if (have) have.remove(); panel.classList.remove('gcon27'); return; }
+    const len = d => `${Math.floor(d / 60)}:${String(Math.round(d % 60)).padStart(2, '0')}`;
+    /* v511 the whole game cut down to about a minute, one tap from the top of its page */
+    const top = reel ? `<button class="ghl27" data-gclip="${esc(reel.id)}" data-gid="${esc(m[2])}" aria-label="Game highlights, ${Math.floor(reel.dur / 60)} min ${Math.round(reel.dur % 60)} sec">${reel.thumb ? `<img src="${esc(reel.thumb)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<i>${I.play}</i><span><b>Game highlights</b><small>${len(reel.dur)}</small></span></button>` : '';
+    const html = top + (!row ? '' : `<div class="sec"><h2>Clips from this game</h2><span class="cnt27">${its.length}</span></div><div class="rl27 cv27">${its.map(it => `<button class="cl27" data-gclip="${esc(it.id)}" data-gid="${esc(m[2])}" aria-label="${esc(it.title)}">${it.thumb ? `<img src="${esc(up916(it.thumb))}" data-o="${esc(it.thumb)}" alt="" loading="lazy" onerror="if(this.dataset.o){this.src=this.dataset.o;this.removeAttribute('data-o')}else this.remove()">` : ''}<i class="pl">${I.play}</i><b>${esc(it.title)}</b></button>`).join('')}</div>`), h = hash(html);
     if (have && have.dataset.h === h && have === panel.firstElementChild) return;
     const el = have || document.createElement('div'); el.className = 'gc27 h27'; el.dataset.h = h; el.innerHTML = html; if (el !== panel.firstElementChild) panel.insertBefore(el, panel.firstChild); panel.classList.add('gcon27');
   }
@@ -460,6 +472,7 @@
   const gamePin = () => { pinRaf = 0; if (root.dataset.page !== 'game') return; const pg = $main.querySelector('#gpage.g2'); if (!pg) return; const tb = pg.querySelector('#gtabs'), bar = pg.querySelector('.g2fx'); if (!tb || !bar) return;
     const pin = on() && window.scrollY > 4 && tb.getBoundingClientRect().top <= bar.offsetHeight + 1; if (pin) pg.style.setProperty('--tb27h', tb.offsetHeight + 'px'); if (pg.classList.contains('pin27') !== pin) pg.classList.toggle('pin27', pin); };
   window.addEventListener('scroll', () => { if (!pinRaf && root.dataset.page === 'game') pinRaf = requestAnimationFrame(gamePin); }, { passive: true });
+  document.addEventListener('rivl:lib', () => gameDecorate());
   document.addEventListener('rivl:rendered', () => setTimeout(() => { gameDecorate(); gamePin(); }, 0)); document.addEventListener('rivl:polled', () => setTimeout(() => { gameDecorate(); gamePin(); }, 0));
   new MutationObserver(() => { if (root.dataset.page === 'game' && on()) gameDecorate(); }).observe($main, { childList: true, subtree: true });
   $main.addEventListener('click', e => { const b = e.target.closest('[data-gclip]'); if (!b) return; e.preventDefault(); const its = X.gameClips(b.dataset.gid); if (!its.length || document.querySelector('.story')) return;
@@ -523,7 +536,9 @@
   const WI = {
     share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.500 4.500 21 11.500l-7.500 7v-4.300C8.300 14.200 5 15.800 3 19.500c.300-5.600 3.600-10.300 10.500-10.800z"/></svg>',
     plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>',
-    tick: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12.500 4 4 8-9"/></svg>' };
+    tick: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12.500 4 4 8-9"/></svg>',
+    game: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.700"/><path d="M12 3.300v17.400M3.300 12h17.400M5.900 5.900c2.300 1.600 3.500 3.700 3.500 6.100s-1.200 4.500-3.500 6.100M18.100 5.900c-2.300 1.600-3.500 3.700-3.500 6.100s1.200 4.500 3.500 6.100"/></svg>',
+    back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>' };
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   /* ---------- Watch: the options sheet and the first-time guide (v491). Holding the middle of a clip brings the sheet up
      from the bottom: speed, auto scroll, clear display, not interested. The guide shows once, the first time Watch opens,
@@ -536,6 +551,7 @@
     tips: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.500"/><path d="M9.700 9.600a2.400 2.400 0 1 1 3.500 2.100c-.800.500-1.200 1-1.200 1.900M12 16.700v.1"/></svg>',
     up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
     side: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4"/></svg>',
+    name: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.500" r="3.600"/><path d="M4.800 19.500c.900-3.400 3.700-5.200 7.200-5.200s6.300 1.800 7.200 5.200"/></svg>',
     tap: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.200"/><circle cx="12" cy="12" r="8.500" opacity=".5"/></svg>',
     fast: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6v12l8.500-6zM12.500 6v12L21 12z" fill="currentColor" stroke="none"/></svg>',
     line: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18"/><circle cx="14" cy="12" r="3" fill="currentColor"/></svg>',
@@ -560,7 +576,7 @@
       if (a === 'no') { if (X.stLearn) X.stLearn(it, -3); V.toast('Got it. Fewer clips like that.'); wShut(el); return el.__w.next(); }
       if (a === 'tips') { wShut(el); return wTips(el, true); } });
   }
-  const TIPS = [['up', 'Swipe up for the next clip'], ['side', 'Swipe sideways to change lists'], ['tap', 'Tap to pause or play'], ['fast', 'Hold either side to play at 2x speed'], ['hold', 'Hold the middle for speed, auto scroll and more'], ['line', 'Drag the white line to move through the clip']];
+  const TIPS = [['up', 'Swipe up for the next clip'], ['side', 'Swipe sideways to change lists'], ['tap', 'Tap to pause or play'], ['name', 'Tap a name for more from that player or team'], ['fast', 'Hold either side to play at 2x speed'], ['hold', 'Hold the middle for speed, auto scroll and more'], ['line', 'Drag the white line to move through the clip']];
   function wTips(el, asked) {
     if (!el || el.querySelector('.wtp27') || (!asked && store.get('v5:wtips27', false))) return;
     el.insertAdjacentHTML('beforeend', `<div class="wtp27" data-w27 role="dialog" aria-label="How Watch works"><div><h2>How Watch works</h2><ul>${TIPS.filter(t => t[0] !== 'side' || !el.classList.contains('one27')).map(t => `<li>${SI[t[0]]}<span>${t[1]}</span></li>`).join('')}</ul><button data-wtp>Got it</button></div></div>`);
@@ -570,22 +586,45 @@
   function wChrome(el) {
     el.style.bottom = `${$bar ? $bar.offsetHeight : 0}px`;
     const subs = el.__subs || [], act = el.querySelector('.stact');   // the tabs and search sit over the clips and stay put while a clip slides
-    el.insertAdjacentHTML('beforeend', `<div class="wt27" data-w27 role="tablist" aria-label="Watch">${subs.map((x, i) => `<button data-wtab="${i}" role="tab">${esc(x.name)}</button>`).join('')}<i class="wi27"></i></div><a class="ws27" data-w27 href="#search" aria-label="Search">${I.search}</a>`);
+    el.insertAdjacentHTML('beforeend', `<div class="wt27" data-w27 role="tablist" aria-label="Watch">${subs.map((x, i) => `<button data-wtab="${i}" role="tab">${esc(x.name)}</button>`).join('')}<i class="wi27"></i></div><div class="wo27" data-w27 hidden><button data-wofx aria-label="Back to all clips">${WI.back}</button><b></b></div><a class="ws27" data-w27 href="#search" aria-label="Search">${I.search}</a>`);
     act.insertAdjacentHTML('afterbegin', `<span class="wa27" data-w27 hidden></span>`);
-    act.insertAdjacentHTML('beforeend', `<button data-w27 data-wact="share" aria-label="Share">${WI.share}</button>`);
+    act.insertAdjacentHTML('beforeend', `<button data-w27 data-wact="game" aria-label="Go to the game" hidden>${WI.game}</button><button data-w27 data-wact="share" aria-label="Share">${WI.share}</button>`);
     el.querySelector('.stpane').insertAdjacentHTML('beforeend', `<div class="wpl27" aria-hidden="true">${I.play}</div>`);
     el.insertAdjacentHTML('beforeend', `<button class="wcx27" data-w27 data-wcx aria-label="Show the buttons and text">${SI.clear}<span>Show</span></button>`);
     el.querySelector('[data-wcx]').addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); el.classList.remove('wcl27'); });
     setTimeout(() => { if (document.body.contains(el)) wTips(el); }, 900);
     el.addEventListener('click', e => {
       const t = e.target.closest('[data-wtab]'); if (t) { e.preventDefault(); el.__w.tab(+t.dataset.wtab); return; }
+      if (e.target.closest('[data-wofx]')) { e.preventDefault(); const x = el.__w.sub; if (x && x.back != null) el.__w.tab(x.back, x.backId); return; }
       const b = e.target.closest('[data-wact]'); if (!b) return; e.preventDefault(); const it = el.__w.item; if (!it) return;
+      if (b.dataset.wact === 'game') { if (b.dataset.to) wLeave(el, b.dataset.to); return; }
       if (b.dataset.wact === 'share') return wShare(it);
       if (b.dataset.wact === 'follow') return wFollow(el, b);
     });
     /* a link out of Watch (the player, search) puts Watch away first, then goes */
-    el.addEventListener('click', e => { const a = e.target.closest('a[href^="#"]'); if (!a) return; e.preventDefault(); const to = a.getAttribute('href'); if (el.dataset.leaving) return; el.dataset.leaving = '1'; addEventListener('popstate', () => setTimeout(() => { location.hash = to; }, 0), { once: true }); history.back(); });
+    el.addEventListener('click', e => { const a = e.target.closest('a[href^="#"]'); if (!a) return; e.preventDefault(); if (a.dataset.wof && wMore(el, a)) return; wLeave(el, a.getAttribute('href')); });
   }
+  /* v511 out of Watch and back. Leaving by a link inside Watch (the game, the player, search) marks the page Watch was
+     sitting on; coming back to that page with Back opens Watch again on the clip you left. A list opened from a page
+     (a game's clips, Liked) is not marked: Back from there is that page. */
+  function wLeave(el, to) {
+    if (!to || el.dataset.leaving) return; el.dataset.leaving = '1'; const ret = !el.classList.contains('one27');
+    addEventListener('popstate', () => { if (ret) { try { history.replaceState(Object.assign({}, history.state || {}, { wret27: 1 }), ''); } catch (e) {} } setTimeout(() => { location.hash = to; }, 0); }, { once: true }); history.back();
+  }
+  addEventListener('popstate', e => { const st = e.state; if (!st || !st.wret27 || !on()) return; try { history.replaceState(Object.assign({}, st, { wret27: 0 }), ''); } catch (er) {} setTimeout(() => { if (!document.querySelector('.story')) watchTab(); }, 80); });
+  /* v511 more of this: a name in Watch turns the scroll into that player's or that team's clips only. The list sits beside
+     the one it was opened from: the arrow, or a swipe to the right, goes back to the clip you were on. Tapping the name
+     again, inside its own list, opens the page. Returns false when there is nothing more to show, and the link is followed. */
+  function wMore(el, a) {
+    const cur = el.__w.item, subs = el.__subs, from = el.__w.sub; if (!cur || !subs || !from || !X.watchOf) return false;
+    const q = { lk: a.dataset.lk, name: a.dataset.nm || '' }; if (a.dataset.wof === 'p') q.ath = a.dataset.id; else q.team = a.dataset.id;
+    const inOf = from.key === 'w:of'; if (inOf && from.q && from.q.lk === q.lk && String(from.q.ath || '') === String(q.ath || '') && String(from.q.team || '') === String(q.team || '')) return false;
+    const all = X.watchOf(q), rest = all.filter(i => i.id !== cur.id); if (!rest.length) return false;
+    const sub = { key: 'w:of', lk: 'all', kind: 'watch', id: 'w:of', name: q.name, full: q.name, color: '#15171a', its: [...rest, ...all.filter(i => i.id === cur.id)], un: true, last: Date.now(), back: inOf ? from.back : el.__w.si, backId: inOf ? from.backId : cur.id, q };
+    const k = subs.findIndex(x => x.key === 'w:of'); if (k >= 0) subs[k] = sub; else subs.push(sub);
+    wOf(el, sub); el.__w.tab(subs.indexOf(sub), rest[0].id); return true;
+  }
+  function wOf(el, sub) { const oh = el.querySelector('.wo27'); el.classList.toggle('wof27', !!sub); if (oh) { oh.hidden = !sub; if (sub) oh.querySelector('b').textContent = sub.name; } }
   /* the underline under the tabs: f is the place between tabs (1.4 is partway from the second to the third). It travels
      with the finger while a list is being dragged (live) and glides when a tab is tapped or the drag is let go. */
   function wInd(el, f, live) {
@@ -603,7 +642,9 @@
   let wLast = null;
   const wLastGet = () => { if (wLast) return wLast; try { const j = JSON.parse(sessionStorage.getItem('rivl:wlast') || 'null'); return j && j.id ? { key: j.key, it: { id: j.id } } : null; } catch (e) { return null; } };
   function wItem(el, it, x, si) {
-    store.set('v5:wtab', x.key); if (x.key !== 'w:game') store.set('v5:wtab0', x.key);
+    const of = x.key === 'w:of'; wOf(el, of ? x : null);
+    if (!of) { const l = el.__subs || [], k = l.findIndex(y => y.key === 'w:of'); if (k >= 0 && k === l.length - 1) l.pop(); store.set('v5:wtab', x.key); if (x.key !== 'w:game') store.set('v5:wtab0', x.key); }
+    { const gb = el.querySelector('[data-wact="game"]'), ok = !!(it.gid && it.L && x.key !== 'w:game'); if (gb) { gb.hidden = !ok; gb.dataset.to = ok ? `#game/${it.L.key}/${it.gid}` : ''; } }
     if (/^w:(fy|fol|top)$/.test(x.key)) { wLast = { key: x.key, it }; try { sessionStorage.setItem('rivl:wlast', JSON.stringify({ key: x.key, id: it.id })); } catch (e) {} }
     wInd(el, si, false);
     const who = el.querySelector('.wa27'), L = it.L, a = (it.aths || [])[0];
@@ -614,7 +655,7 @@
     who.hidden = false; who.innerHTML = `<a href="#player/${esc(lk)}/${esc(a)}" aria-label="Player page"><span><img src="${esc(src)}" alt="" onerror="this.closest('.wa27').hidden=true"></span></a>${fol ? '' : `<button data-wact="follow" data-lk="${esc(lk)}" data-id="${esc(a)}" aria-label="Follow this player">${WI.plus}</button>`}`;
     /* the player's name goes over the words once the feed has said who it is; the words are written after this runs */
     const show = w => Promise.resolve().then(() => { if (!el.__w || el.__w.item !== it || !w || !w.name) return; const cap = el.querySelector('.stcap'); if (!cap || cap.querySelector('.wn27')) return;
-      const nm = document.createElement('div'); nm.className = 'wn27'; nm.dataset.w27 = ''; nm.innerHTML = `<a href="#player/${esc(lk)}/${esc(a)}">${esc(w.name)}</a>${w.team ? (w.teamId ? `<a class="tm" href="#team/${esc(lk)}/${esc(w.teamId)}">${esc(w.team)}</a>` : `<span>${esc(w.team)}</span>`) : ''}`; cap.prepend(nm); });
+      const nm = document.createElement('div'); nm.className = 'wn27'; nm.dataset.w27 = ''; nm.innerHTML = `<a href="#player/${esc(lk)}/${esc(a)}" data-wof="p" data-lk="${esc(lk)}" data-id="${esc(a)}" data-nm="${esc(w.name)}">${esc(w.name)}</a>${w.team ? (w.teamId ? `<a class="tm" href="#team/${esc(lk)}/${esc(w.teamId)}" data-wof="t" data-lk="${esc(lk)}" data-id="${esc(w.teamId)}" data-nm="${esc(w.team)}">${esc(w.team)}</a>` : `<span>${esc(w.team)}</span>`) : ''}`; cap.prepend(nm); });
     if (known) return show(known);
     X.athlete(L, a).then(bio => { const p = bio && (bio.athlete || bio); if (!p || !p.displayName) return; const tm = p.team || {};
       const w = { name: p.displayName, short: p.shortName || p.displayName, team: tm.shortDisplayName || tm.name || tm.abbreviation || '', abbr: tm.abbreviation || '', teamId: tm.id ? String(tm.id) : '', img: (p.headshot && p.headshot.href) || src, color: wColor(lk, tm) };
