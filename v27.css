@@ -1340,3 +1340,58 @@ a.dyc27:active{transform:scale(.98)}
 .t27 .dyh27w{padding:14px 0 2px}
 .t27 .dyh27w:empty{display:none}
 .dyp27 a.dyc27,.dyp27 .dyc27,.h27 a.dyhm27{color:#fff}
+
+/* ---------- v515: a short story row, the All card, the Following sheet, the story ring in Search ---------- */
+.h27 .sc27.k-more .sm27{position:absolute;left:50%;top:13px;width:70px;margin-left:-35px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.h27 .sc27.k-more .sm27 i{width:32px;height:32px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-style:normal;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 82%,#fff),var(--c) 60%,color-mix(in srgb,var(--c) 60%,#000))}
+.h27 .sc27.k-more .sm27 i.t img{width:68%;height:68%;object-fit:contain;display:block;filter:drop-shadow(0 0 .6px rgba(255,255,255,.9))}
+.h27 .sc27.k-more .sm27 i.p img{width:100%;height:100%;object-fit:cover;object-position:50% 0;transform:scale(1.3);transform-origin:50% 16%;display:block}
+.h27 .sc27.k-more .sm27 i.l{background:linear-gradient(160deg,#5B93FF,#8a5cf6 58%,#ff5e7a)}
+.h27 .sc27.k-more .sm27 b{font-size:9px;font-weight:800;letter-spacing:-.02em}
+.h27 .sc27.k-more small{font-size:12.5px}
+html.fa27on,html.fa27on body{overflow:hidden}
+.fa27{position:fixed;inset:0;z-index:70;font-family:var(--f27);color:var(--i27)}
+.fab27{position:absolute;inset:0;background:rgba(0,0,0,.52);opacity:0;transition:opacity .24s}
+.fap27{position:absolute;left:0;right:0;bottom:0;max-height:calc(100% - 44px);display:flex;flex-direction:column;border-radius:26px 26px 0 0;background:var(--b27);box-shadow:0 -10px 40px rgba(0,0,0,.35);transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.fa27.in .fab27{opacity:1}
+.fa27.in .fap27{transform:none}
+.fah27{position:relative;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:24px 12px 4px 20px;touch-action:none}
+.fah27>i{position:absolute;left:50%;top:9px;width:38px;height:5px;margin-left:-19px;border-radius:3px;background:var(--l27)}
+.fah27 h2{margin:0;font-size:25px;font-weight:800;letter-spacing:-.025em;line-height:1.1}
+.fah27 p{margin:3px 0 0;font-size:13.5px;font-weight:500;color:var(--i27c)}
+.fah27 button{flex:none;width:44px;height:44px;border:0;padding:0;border-radius:50%;background:none;color:var(--i27);display:grid;place-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.fah27 button svg{width:30px;height:30px;padding:6px;box-sizing:border-box;border-radius:50%;background:var(--s27);fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
+.fas27{flex:none;display:flex;align-items:center;gap:8px;height:46px;margin:10px 16px 2px;padding:0 14px;border-radius:14px;background:var(--s27)}
+.fas27 svg{flex:none;width:20px;height:20px;fill:none;stroke:var(--i27c);stroke-width:2;stroke-linecap:round}
+.fas27 input{flex:1;min-width:0;height:100%;border:0;padding:0;background:none;color:var(--i27);font:500 16px/1 var(--f27);outline:none;-webkit-appearance:none;appearance:none}
+.fas27 input::placeholder{color:var(--i27c)}
+.fal27{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:2px 12px calc(env(safe-area-inset-bottom,0px) + 26px)}
+.fal27 section[hidden]{display:none}
+.fal27 h3{margin:20px 8px 12px;font-size:12.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--i27c)}
+.fg27{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 2px}
+.fcl27{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;border:0;padding:0;background:none;color:var(--i27);font-family:var(--f27);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease}
+.fcl27:active{transform:scale(.94)}
+.fcl27[hidden]{display:none}
+.fr27{width:76px;height:76px;box-sizing:border-box;padding:5.500px;border-radius:50%;display:grid}
+.fcl27.new .fr27{background:conic-gradient(from 210deg,#4a9ae6,#8a5cf6 30%,#ff5e7a 55%,#ffb03a 75%,#4a9ae6)}
+.fcl27.seen .fr27{background:rgba(142,148,158,.55)}
+.ff27{position:relative;display:grid;place-items:center;border-radius:50%;overflow:hidden;color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 80%,#fff),var(--c) 56%,color-mix(in srgb,var(--c) 58%,#000));box-shadow:0 0 0 2.500px var(--b27)}
+.fcl27.team .ff27 img{width:64%;height:64%;object-fit:contain;display:block;filter:drop-shadow(0 0 .8px rgba(255,255,255,.95)) drop-shadow(0 3px 5px rgba(0,0,0,.25))}
+.fcl27.player .ff27 img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 0;transform:scale(1.28);transform-origin:50% 16%;display:block}
+.ff27 svg{display:none}
+.ff27.no27 svg{display:block;width:62%;height:62%;fill:rgba(255,255,255,.5)}
+.fcl27.league .ff27{background:linear-gradient(160deg,#5B93FF,#8a5cf6 58%,#ff5e7a)}
+.ff27 b{font-size:16px;font-weight:800;letter-spacing:-.02em}
+.fcl27 small{max-width:100%;padding:0 1px;box-sizing:border-box;font-size:12.5px;font-weight:600;line-height:1.2;letter-spacing:-.01em;text-align:center;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:normal;word-break:normal}
+.fcl27 small.n2{font-size:11.5px;letter-spacing:-.02em}
+.fcl27 small.n3{font-size:10.5px;letter-spacing:-.025em}
+.fae27,.faf27{margin:26px 12px 0;font-size:13px;font-weight:500;line-height:1.4;color:var(--i27c);text-align:center}
+.fae27[hidden],.faf27[hidden]{display:none}
+.srg27{flex:none;display:grid;place-items:center;padding:2.500px;border-radius:50%;background:rgba(142,148,158,.6);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease}
+.srg27.new{background:conic-gradient(from 210deg,#4a9ae6,#8a5cf6 30%,#ff5e7a 55%,#ffb03a 75%,#4a9ae6)}
+.srg27:active{transform:scale(.92)}
+.srg27>span{display:grid;place-items:center;padding:2.500px;border-radius:50%;background:var(--s27)}
+/* Search's own rule stretches any span beside the name; the ring is not one of those */
+html.rv27 body .xwho>span.srg27{flex:none;display:grid;gap:0}
+html.rv27 body .xwho>span.srg27>span{flex:none;display:grid;gap:0}
+@media (prefers-reduced-motion:reduce){ .fap27,.fab27{transition:none} }

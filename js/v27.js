@@ -531,7 +531,7 @@
   window.addEventListener('scroll', () => { const pg = root.dataset.page; if (!ppRaf && (pg === 'player' || pg === 'team')) ppRaf = requestAnimationFrame(profPin); }, { passive: true });
   document.addEventListener('rivl:rendered', () => setTimeout(() => { profDecorate(); profPin(); }, 0)); document.addEventListener('rivl:polled', () => setTimeout(profDecorate, 0));
   new MutationObserver(() => { const pg = root.dataset.page; if ((pg === 'player' || pg === 'team') && on()) profDecorate(); }).observe($main, { childList: true, subtree: true });
-  $main.addEventListener('click', e => { const a = e.target.closest('[data-pstory]'); if (!a || !on()) return; e.preventDefault(); stDirty = true; V.storyOpen(a.dataset.pstory); });
+  $main.addEventListener('click', e => { const a = e.target.closest('[data-pstory]'); if (!a || !on()) return; e.preventDefault(); stDirty = true; affBump(a.dataset.pstory); V.storyOpen(a.dataset.pstory); });
 
   /* ---------- Watch: one clip to a screen, Following / For you / Top plays ---------- */
   const WI = {
@@ -728,6 +728,14 @@
   const stRank = () => { const F = favs.all(), P = V.fplayers.all(), r = new Map(); let n = 0;
     ORDER.forEach(lk => { (F[lk] || []).forEach(id => r.set(`${lk}:t${id}`, n++)); P.filter(p => p.lk === lk).forEach(p => r.set(`${lk}:p${p.id}`, n++)); r.set(`${lk}:top`, n++); });
     r.set('all:feed', n++); r.set('all:saved', n++); r.set('all:catch', -1); return r; };
+  /* v515 the stories you open most come first. Each story opened by hand (from the row, the All sheet, a team's or
+     player's page, Search) adds one to its count, and a count halves every 14 days it is left alone. Inside "new" and
+     inside "watched" the row is in that order, and in the order you follow things for the ones never opened. Stories
+     that play on their own as you swipe through do not count. */
+  const AFK = 'v5:stopen27'; let afM = null;
+  const afAll = () => afM || (afM = store.get(AFK, {}) || {});
+  const aff = key => { const e = afAll()[key]; return e ? e[0] * Math.pow(.5, (Date.now() - e[1]) / (14 * 864e5)) : 0; };
+  const affBump = key => { if (!/:[tp]|:top$/.test(key)) return; const m = afAll(); m[key] = [+(aff(key) + 1).toFixed(3), Date.now()]; Object.keys(m).forEach(k => { if (k !== key && aff(k) < .05) delete m[k]; }); store.set(AFK, m); };
   const stGroup = x => x.kind === 'catch' ? (x.un ? -1 : 2) : x.kind === 'feed' ? 0 : x.kind === 'saved' ? 3 : x.un ? 1 : 2;   // v469: For you leads the row, then what is new, then what has been watched, then Saved
   function storyList(fresh, loaded) {
     if (!stMem.size && !stAt) { (store.get(SC, []) || []).forEach(c => { if (c && c.key) { stMem.set(c.key, c); stOrder.push(c.key); } }); stOrder.sort((x, y) => (y === 'all:feed') - (x === 'all:feed')); }   // the row as it was last time
@@ -738,7 +746,7 @@
     const settled = loaded && now - stAt >= 6000;
     /* a story that has ended leaves only once every league has loaded and the list has held still for six seconds */
     if (settled) { const live = new Set(fresh.map(x => x.key)); [...stMem.keys()].forEach(k => { if (!live.has(k)) stMem.delete(k); }); }
-    const ideal = [...stMem.values()].sort((a, b) => (stGroup(a) - stGroup(b)) || (rank.get(a.key) - rank.get(b.key))).map(x => x.key);
+    const ideal = [...stMem.values()].sort((a, b) => (stGroup(a) - stGroup(b)) || (aff(b.key) - aff(a.key)) || (rank.get(a.key) - rank.get(b.key))).map(x => x.key);
     const open = !!document.querySelector('.story'), touched = railHeld || now - railAt < 1200;
     if (!stOrder.length || ((settled || stDirty) && !open && !touched)) { stOrder = ideal; stDirty = false; }
     else { stOrder = stOrder.filter(k => stMem.has(k)); const at = new Map(ideal.map((k, i) => [k, i])); ideal.forEach(k => { if (stOrder.includes(k)) return; const i = stOrder.findIndex(o => at.get(o) > at.get(k)); if (i < 0) stOrder.push(k); else stOrder.splice(i, 0, k); });   // held: what is new takes its own place, nothing already there moves
@@ -746,16 +754,34 @@
     if (settled) store.set(SC, stOrder.filter(k => k !== 'all:catch').map(k => { const x = stMem.get(k); return { key: x.key, kind: x.kind, name: x.name, full: x.full || '', color: x.color || '', logo: x.logo || '', abbr: x.abbr || '', hs: x.hs || '', un: !!x.un, art: artOf(x) }; }));
     return stOrder.map(k => stMem.get(k));
   }
+  /* v515 a short row and a way to everything. Someone who follows forty teams and players should not have to swipe
+     through forty cards: the row shows Catch up, For you, the first eight team and player stories in its order, each league's
+     Last night, Saved, and then an All card. All opens a sheet with every team and player you follow, the ones with a story ringed. The card appears once
+     you follow more than eight things, or whenever stories are left off the row. Its edge is bright while a story
+     left off the row has something new. */
+  const ROW_MAX = 8;
+  const followAll = () => { const outs = outsNow(), subs = new Map(X.storySubjects().map(x => [x.key, x])), out = [];
+    followedTeams(outs).forEach(({ lk, t }) => { const key = `${lk}:t${t.id}`; out.push({ key, lk, kind: 'team', id: String(t.id), name: t.short || t.name || 'Team', logo: t.logo || '', abbr: t.abbr || '', color: U.teamColor(t, LEAGUES[lk]) || '#3a4a6a', sub: subs.get(key) || null }); });
+    V.fplayers.all().filter(p => LEAGUES[p.lk]).forEach(p => { const key = `${p.lk}:p${p.id}`, sb = subs.get(key) || null; out.push({ key, lk: p.lk, kind: 'player', id: String(p.id), name: p.name || p.short || 'Player', hs: p.img || (sb && sb.hs) || '', color: (sb && sb.color) || '#3a4a6a', sub: sb }); });
+    return out; };
+  const miniFace = x => x.kind === 'player' ? `<i class="p" style="--c:${tone(x.color)}">${x.hs ? U.imgSized(x.hs, 140, 102, 'loading="lazy"', 'this.remove()') : ''}</i>` : x.kind === 'team' ? `<i class="t" style="--c:${tone(x.color)}">${x.logo ? U.imgSized(x.logo, 80, 80, 'loading="lazy"', 'this.remove()') : `<b>${esc(String(x.abbr || '').slice(0, 3))}</b>`}</i>` : `<i class="l"><b>${esc(x.abbr || '')}</b></i>`;
+  function railCut(list) {
+    const special = x => x.kind === 'catch' || x.kind === 'feed' || x.kind === 'saved' || x.kind === 'league', rest = list.filter(x => !special(x)), nFollow = ORDER.reduce((n, lk) => n + (favs.all()[lk] || []).length, 0) + V.fplayers.all().filter(p => LEAGUES[p.lk]).length;
+    if (rest.length <= ROW_MAX && nFollow <= ROW_MAX) return list;
+    const keep = new Set(rest.slice(0, ROW_MAX).map(x => x.key)), cut = rest.slice(ROW_MAX), peek = [...cut, ...followAll().filter(x => !x.sub)].slice(0, 4);   /* the four faces on the card: stories left off the row first, then follows with nothing to play */
+    return [...list.filter(x => special(x) ? x.kind !== 'saved' : keep.has(x.key)), ...list.filter(x => x.kind === 'saved'), { key: 'all:more', kind: 'more', name: 'All', n: nFollow, un: cut.some(x => x.un), peek }];
+  }
+  const moreCard = x => `<button class="sc27 k-more" data-s27="all" data-key="all:more" aria-label="All ${x.n} teams and players you follow"><span style="--c:#2a2e36;--c1:#3a3f4b;--c2:#15171a"><span class="sm27">${x.peek.map(miniFace).join('')}</span><small>All ${x.n}</small></span></button>`;
   function railSync(rail, list) {
     const have = new Map([...rail.children].map(el => [el.dataset.key, el])); let prev = null;
-    list.forEach(x => { const html = storyCard(x), h = hash(html); let el = have.get(x.key);
+    list.forEach(x => { const html = x.kind === 'more' ? moreCard(x) : storyCard(x), h = hash(html); let el = have.get(x.key);
       if (!el || el.dataset.h !== h) { const t = document.createElement('template'); t.innerHTML = html; const neu = t.content.firstElementChild; neu.dataset.h = h; if (el) el.replaceWith(neu); el = neu; }
       el.classList.toggle('seen', !x.un); have.delete(x.key);
       const want = prev ? prev.nextSibling : rail.firstChild; if (el !== want) rail.insertBefore(el, want); prev = el; });
     have.forEach(el => el.remove()); rail.hidden = !list.length;
   }
   /* a card can be on screen a moment before its story has loaded (the row opens from last time): the tap waits for it */
-  async function openStory(key) { stDirty = true;
+  async function openStory(key) { stDirty = true; affBump(key);
     for (let i = 0; i < 18; i++) { if (X.storySubjects().some(x => x.key === key)) { V.busy(false); V.storyOpen(key); return; } if (i === 1) V.busy(true); await new Promise(r => setTimeout(r, 300)); }
     V.busy(false); V.toast('That story is still loading. Try again in a moment.');
   }
@@ -873,7 +899,7 @@
       if (!hd) { top.innerHTML = '<div class="hd27"></div><div class="rl27 st27" hidden></div><div class="dyh27w"></div>'; hd = top.firstChild; rail = top.children[1]; }
       { const dw = top.querySelector(':scope > .dyh27w'), dh = hash(made.daily); if (dw && dw.dataset.h !== dh) { dw.dataset.h = dh; dw.innerHTML = made.daily; } }   /* v514: The Daily's strip sits under the stories */
       const th = hash(made.top); if (hd.dataset.h !== th) { hd.dataset.h = th; hd.innerHTML = made.top; }
-      railSync(rail, made.stories);
+      railSync(rail, railCut(made.stories));
       /* the blocks mixed into the feed: before the latest posts, then after the third, ninth and fourteenth */
       const hf = $main.querySelector(':scope > .hfeed');
       if (hf) { hf.setAttribute('data-noswipe', '');
@@ -899,9 +925,58 @@
     const b = e.target.closest('[data-s27]'); if (!b || !b.closest('.h27')) return; const a = b.dataset.s27;
     if (a === 'watch') { e.preventDefault(); watch(); return; }
     if (a === 'story') { e.preventDefault(); openStory(b.dataset.key); return; }
+    if (a === 'all') { e.preventDefault(); allOpen(); return; }
     if (a === 'clip') { e.preventDefault(); stDirty = true; watch(b.dataset.id, b.dataset.key); return; }
   });
 
+  /* v515 the All sheet: every team and player you follow in one grid. What has something new comes first, then each
+     league with its teams and then its players. A bright ring is a story with something new, a gray ring one you have
+     watched, no ring nothing to play: that one opens the page. Typing in the field narrows the grid. Back closes it. */
+  const SRCH = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.500"/><path d="m16 16 4.500 4.500"/></svg>', XI = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  const lastName = n => { const w = String(n || '').trim().split(/\s+/).filter(x => !/^(jr\.?|sr\.?|ii|iii|iv|v)$/i.test(x)); return w.length > 1 ? w.slice(1).join(' ') : w[0] || String(n || ''); };   /* everything after the first name, without Jr. or III */
+  const allCell = x => { const st = x.sub ? (x.sub.un ? 'new' : 'seen') : '', to = x.kind === 'team' ? U.href.team(x.lk, x.id) : x.kind === 'player' ? U.href.player(x.lk, x.id) : '';
+    const face = x.kind === 'player' ? (x.hs ? U.imgSized(x.hs, 350, 254, 'loading="lazy"', "this.parentNode.classList.add('no27');this.remove()") : '') : x.kind === 'team' ? (x.logo ? U.imgSized(x.logo, 160, 160, 'loading="lazy"', 'this.remove()') : `<b>${esc(String(x.abbr || '').slice(0, 4))}</b>`) : `<b>${esc(x.abbr || '')}</b>`;
+    const label = x.kind === 'player' ? lastName(x.name) : x.name, wide = Math.max(...label.split(/[\s-]+/).map(w => w.length));   /* a long single word gets smaller type so it is not cut or broken */
+    return `<button class="fcl27 ${x.kind}${st ? ' ' + st : ''}" data-fa="${st ? 'story' : 'page'}" data-key="${esc(x.key)}" data-to="${esc(to)}" data-n="${esc(String(x.name).toLowerCase())}" aria-label="${esc(x.name)}${st === 'new' ? ', new story' : st ? ', story' : ''}"><span class="fr27"><span class="ff27${x.kind === 'player' && !x.hs ? ' no27' : ''}" style="--c:${tone(x.color || '#3a4a6a')}">${face}${x.kind === 'player' ? I.me : ''}</span></span><small${wide > 12 ? ' class="n3"' : wide > 9 ? ' class="n2"' : ''}>${esc(label)}</small></button>`; };
+  function allHtml() {
+    const all = followAll(), subs = X.storySubjects(), lg = subs.filter(x => x.kind === 'league').map(x => ({ key: x.key, lk: x.lk, kind: 'league', id: 'top', name: x.name, abbr: x.abbr, color: '#5b3df5', sub: x }));
+    const byAff = (a, b) => aff(b.key) - aff(a.key), fresh = [...all.filter(x => x.sub && x.sub.un), ...lg.filter(x => x.sub.un)].sort(byAff), took = new Set(fresh.map(x => x.key));
+    const sec = (t, items) => items.length ? `<section data-fs><h3>${esc(t)}</h3><div class="fg27">${items.map(allCell).join('')}</div></section>` : '';
+    const nT = all.filter(x => x.kind === 'team').length, nP = all.length - nT, cnt = [nT ? `${nT} ${nT === 1 ? 'team' : 'teams'}` : '', nP ? `${nP} ${nP === 1 ? 'player' : 'players'}` : ''].filter(Boolean).join(', ');
+    return `<div class="fab27" data-fa="x"></div><div class="fap27" role="dialog" aria-modal="true" aria-label="Everything you follow"><div class="fah27"><i></i><div><h2>Following</h2><p>${esc(cnt)}</p></div><button data-fa="x" aria-label="Close">${XI}</button></div>
+      <label class="fas27">${SRCH}<input type="text" inputmode="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Find a team or player" aria-label="Find a team or player"></label>
+      <div class="fal27">${sec('New', fresh)}${ORDER.map(lk => sec(LEAGUES[lk].label || LEAGUES[lk].short || lk, [...all.filter(x => x.lk === lk && !took.has(x.key)), ...lg.filter(x => x.lk === lk && !took.has(x.key))])).join('')}<p class="fae27" hidden>Nothing you follow matches that.</p><p class="faf27">A ring means there is a story to play. No ring opens the page.</p></div></div>`;
+  }
+  let allEl = null;
+  function allShut(then) { const el = allEl; if (!el) return; allEl = null; root.classList.remove('fa27on'); el.classList.remove('in'); setTimeout(() => el.remove(), 260); if (then) setTimeout(then, 30); }
+  function allOpen() {
+    if (allEl || document.querySelector('.story')) return; const el = allEl = document.createElement('div'); el.className = 'fa27'; el.innerHTML = allHtml(); document.body.appendChild(el); root.classList.add('fa27on');
+    try { history.pushState({ fa27: 1 }, '', location.href); } catch (e) {}
+    requestAnimationFrame(() => el.classList.add('in'));
+    const leave = then => { if (allEl !== el) return; addEventListener('popstate', () => setTimeout(then, 0), { once: true }); history.back(); };   // Back closes the sheet; what was asked for follows once it has
+    el.addEventListener('click', e => { const b = e.target.closest('[data-fa]'); if (!b) return; e.preventDefault(); const a = b.dataset.fa;
+      if (a === 'x') history.back(); else if (a === 'story') leave(() => openStory(b.dataset.key)); else if (a === 'page' && b.dataset.to) leave(() => { location.hash = b.dataset.to; }); });
+    const inp = el.querySelector('.fas27 input'); inp.addEventListener('input', () => { const q = inp.value.trim().toLowerCase(); let any = false;
+      el.querySelectorAll('[data-fs]').forEach(s => { let n = 0; s.querySelectorAll('.fcl27').forEach(c => { const hit = !q || c.dataset.n.split(/\s+/).some(w => w.startsWith(q)) || c.dataset.n.includes(q); c.hidden = !hit; if (hit) n++; }); s.hidden = !n; if (n) any = true; });
+      el.querySelector('.fae27').hidden = any; el.querySelector('.faf27').hidden = !any; });
+    /* pull the handle down to close */
+    const pn = el.querySelector('.fap27'), hd = el.querySelector('.fah27'); let y0 = null, dy = 0;
+    hd.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; dy = 0; pn.style.transition = 'none'; }, { passive: true });
+    hd.addEventListener('touchmove', e => { if (y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0); pn.style.transform = `translateY(${dy}px)`; }, { passive: true });
+    hd.addEventListener('touchend', () => { if (y0 == null) return; y0 = null; pn.style.transition = ''; pn.style.transform = ''; if (dy > 90) history.back(); }, { passive: true });
+  }
+  addEventListener('popstate', () => { if (allEl) allShut(); });
+  addEventListener('hashchange', () => { if (allEl) allShut(); });
+  /* v515 Search: when the team or player in an answer has a story, its crest or photo wears the ring and plays it.
+     The name and the arrow still open the page. */
+  function searchRing() { if (!on() || root.dataset.page !== 'search') return; const subs = X.storySubjects(); if (!subs.length) return;
+    $main.querySelectorAll('a.xwho[href]').forEach(a => { const m = /^#(team|player)\/([a-z]+)\/([^/?#]+)/.exec(a.getAttribute('href') || ''); if (!m) return; const key = `${m[2]}:${m[1] === 'team' ? 't' : 'p'}${m[3]}`, sb = subs.find(x => x.key === key), st = sb ? (sb.un ? 'new' : 'seen') : '';
+      let w = a.querySelector(':scope > .srg27'); if (!st) { if (w) { w.replaceWith(w.firstElementChild.firstElementChild); } return; }
+      if (!w) { const f = a.firstElementChild; if (!f || f.tagName === 'SPAN' && !f.classList.contains('hs')) return; const card = a.closest('.xans') || a, bg = getComputedStyle(card).backgroundColor;
+        w = document.createElement('span'); w.className = 'srg27'; w.setAttribute('role', 'button'); w.setAttribute('aria-label', 'Play the story'); const inner = document.createElement('span'); if (bg && !/rgba\(0, 0, 0, 0\)|transparent/.test(bg)) inner.style.background = bg; a.insertBefore(w, f); inner.appendChild(f); w.appendChild(inner); }
+      w.dataset.sstory = key; w.classList.toggle('new', st === 'new'); }); }
+  let srT = 0; new MutationObserver(() => { if (root.dataset.page !== 'search' || !on()) return; clearTimeout(srT); srT = setTimeout(searchRing, 120); }).observe($main, { childList: true, subtree: true });
+  $main.addEventListener('click', e => { const f = e.target.closest('[data-sstory]'); if (!f || !on()) return; e.preventDefault(); e.stopPropagation(); openStory(f.dataset.sstory); }, true);
   /* v514 The Daily: its code is fetched the first time the page is opened, with the same stamp as the rest of the app */
   let dailyP = null;
   const dailyLoad = () => dailyP || (dailyP = new Promise((ok, no) => { const me = document.querySelector('script[src*="js/v27.js"]'), q = me ? (/\?v=\d+/.exec(me.getAttribute('src')) || [''])[0] : ''; const sc = document.createElement('script'); sc.src = `js/daily.js${q}`; sc.onload = ok; sc.onerror = () => { dailyP = null; no(new Error('daily')); }; document.head.appendChild(sc); }));
